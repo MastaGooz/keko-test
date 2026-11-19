@@ -12,7 +12,7 @@
  */
 import './vaisseau.css'
 import * as noyau from 'pixelfx'
-import { frontDeLaNova, ancreDansLeMonde, zoneDuDe, coupeDUnCube, formeDeLaCoupe, liesAuDrain, encaisser, type Ennemi, type Evenement, type Monde, impactDuRayon, asteroidesVisibles, avancerLeMonde, finDuTrio, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur, xpDuNiveau, ennemiLePlusProche, ennemiVerrouille, verrouiller, angleDuBalayage } from '../../logic/vaisseau/jeu.ts'
+import { placeDeLEcharde, frontDeLaNova, ancreDansLeMonde, zoneDuDe, coupeDUnCube, formeDeLaCoupe, liesAuDrain, encaisser, type Ennemi, type Evenement, type Monde, impactDuRayon, asteroidesVisibles, avancerLeMonde, finDuTrio, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur, xpDuNiveau, ennemiLePlusProche, ennemiVerrouille, verrouiller, angleDuBalayage } from '../../logic/vaisseau/jeu.ts'
 import { ETALONS as ETALONS_DU_BANC, acheter, ajouterLesPiecesDEssai, capacite, poidsTotal, POIDS_SERIE, configDuHangar, demonter, demonterA, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, montantCourt, monteeA, monter, monterA, peutAcheter, peutMonter, perdreLesMontees, estDeBase, exemplaires, libres, pieceDe, piecesDe, placeLourde, possede, aimantMonte, radarMonte, type Jauge, type Piece, type Sorte } from '../../logic/vaisseau/hangar.ts'
 import { drawWord, spell } from 'pixelfx/fx/ui/_lib'
 import { firePuff, hotFirst, smokePuff } from 'pixelfx/fx/fire/_lib'
@@ -953,7 +953,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         else if (canon?.nuee !== undefined || canon?.rejeton !== undefined || canon?.mine !== undefined || canon?.fleau !== undefined || canon?.parasite !== undefined || canon?.drain !== undefined || canon?.vrille !== undefined || canon?.ponte !== undefined || canon?.epines !== undefined || canon?.hypercube !== undefined || canon?.de !== undefined || canon?.coupe !== undefined) conf = { ...conf, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0 }] }
         // (LE LANCE-TOURELLES ET LE LANCE-SCIE DE L'INGÉNIEUR ont leur bouche — Keko, 18/11 : ce qu'ils lancent en sort)
         else if (canon?.pose !== undefined || canon?.scie !== undefined) conf = { ...conf, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0, bouche: boucheMontee(monteeA(hangar, 'coque').cran, canon.id, 0) }] }
-        else if (canon?.balise !== undefined || canon?.givre !== undefined || canon?.nova !== undefined || canon?.salve !== undefined || canon?.tornade !== undefined) conf = { ...conf, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0 }] }
+        else if (canon?.balise !== undefined || canon?.givre !== undefined || canon?.nova !== undefined || canon?.salve !== undefined || canon?.condense !== undefined || canon?.tornade !== undefined) conf = { ...conf, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0 }] }
         else if (canon?.orbite !== undefined) conf = { ...conf, marcheArriere: 1, alternance: false, armes: [0, 1, 2].map((k) => ({ ...canon, place: k, orbite: { ...canon.orbite!, phase: (k * 2 * Math.PI) / 3 } })) }
         else if (canon?.flamme !== undefined) conf = { ...conf, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0, bouche: boucheMontee(monteeA(hangar, 'coque').cran, canon.id, 0) }] }
         else if (canon !== undefined) conf = { ...conf, marcheArriere: 1, alternance: true, arcDeTir: tirA360 ? 0 : ARC_DU_VORTEX, armes: [0, 1].map((place) => ({ ...canon, cadence: canon.cadence * 2, place, bouche: boucheMontee(monteeA(hangar, 'coque').cran, canon.id, place) })) }
@@ -1127,7 +1127,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const placeDeLaForeuse = (): number => Math.max(0, hangar.outils.indexOf(foreuseMontee(hangar)?.id ?? ''))
   // (LE LANCE-TOURELLES ET LE LANCE-SCIE DE L'INGÉNIEUR SE DESSINENT — Keko, 18/11 : leurs armes ne sont plus dans la liste
   // de celles qu'on ne voit pas sur le vaisseau)
-  const allureMontee = (bouclier: number): Allure => ({ propulseur: monteeA(hangar, 'propulseur').cran, coque: monteeA(hangar, 'coque').cran, foreuse: parametres.has('vortex') ? (((pieceDe(armeDuVortex())?.arme?.canalise !== undefined && pieceDe(armeDuVortex())?.arme?.id !== 'faisceau') || pieceDe(armeDuVortex())?.arme?.balayage?.trace !== undefined) ? 3 : 0) : (foreuseMontee(hangar)?.cran ?? 0), radar: radarMonte(hangar) > 0, aimant: aimantMonte(hangar) > 1, armes: parametres.has('vortex') ? (pieceDe(armeDuVortex())?.arme?.balayage?.trace !== undefined || pieceDe(armeDuVortex())?.arme?.orbite !== undefined || pieceDe(armeDuVortex())?.arme?.canalise !== undefined || pieceDe(armeDuVortex())?.arme?.chaine !== undefined || pieceDe(armeDuVortex())?.arme?.aura !== undefined || pieceDe(armeDuVortex())?.arme?.balise !== undefined || pieceDe(armeDuVortex())?.arme?.givre !== undefined || pieceDe(armeDuVortex())?.arme?.nova !== undefined || pieceDe(armeDuVortex())?.arme?.salve !== undefined || pieceDe(armeDuVortex())?.arme?.tornade !== undefined || pieceDe(armeDuVortex())?.arme?.plasma !== undefined || pieceDe(armeDuVortex())?.arme?.essaim !== undefined || pieceDe(armeDuVortex())?.arme?.sphere !== undefined || pieceDe(armeDuVortex())?.arme?.puits !== undefined || pieceDe(armeDuVortex())?.arme?.meteore !== undefined || pieceDe(armeDuVortex())?.arme?.rail !== undefined || pieceDe(armeDuVortex())?.arme?.tentacule !== undefined || pieceDe(armeDuVortex())?.arme?.nuee !== undefined || pieceDe(armeDuVortex())?.arme?.rejeton !== undefined || pieceDe(armeDuVortex())?.arme?.crachat !== undefined || pieceDe(armeDuVortex())?.arme?.mine !== undefined || pieceDe(armeDuVortex())?.arme?.fleau !== undefined || pieceDe(armeDuVortex())?.arme?.parasite !== undefined || pieceDe(armeDuVortex())?.arme?.drain !== undefined || pieceDe(armeDuVortex())?.arme?.vrille !== undefined || pieceDe(armeDuVortex())?.arme?.ponte !== undefined || pieceDe(armeDuVortex())?.arme?.epines !== undefined ? [] : pieceDe(armeDuVortex())?.arme?.flamme !== undefined || pieceDe(armeDuVortex())?.arme?.napalm !== undefined || pieceDe(armeDuVortex())?.arme?.balayage !== undefined ? [0] : [0, 1]).map(() => pieceDe(armeDuVortex())?.arme?.id ?? '') : Array.from({ length: capacite(hangar, 'arme') }, (_, k) => pieceDe(hangar.armes[k] ?? '')?.arme?.id ?? ''), bouclier, outils: outilsParPlace(), foreusePlace: placeDeLaForeuse(), habit: habitDuJoueur(monteeA(hangar, 'coque').cran), kraken: krakenDeLAllure(), vouivre: vouivreDeLAllure(), ver: verDeLAllure(), sentinelle: sentinelleDeLAllure(), frimas: frimasDeLAllure(), pulsar: pulsarDeLAllure() })
+  const allureMontee = (bouclier: number): Allure => ({ propulseur: monteeA(hangar, 'propulseur').cran, coque: monteeA(hangar, 'coque').cran, foreuse: parametres.has('vortex') ? (((pieceDe(armeDuVortex())?.arme?.canalise !== undefined && pieceDe(armeDuVortex())?.arme?.id !== 'faisceau') || pieceDe(armeDuVortex())?.arme?.balayage?.trace !== undefined) ? 3 : 0) : (foreuseMontee(hangar)?.cran ?? 0), radar: radarMonte(hangar) > 0, aimant: aimantMonte(hangar) > 1, armes: parametres.has('vortex') ? (pieceDe(armeDuVortex())?.arme?.balayage?.trace !== undefined || pieceDe(armeDuVortex())?.arme?.orbite !== undefined || pieceDe(armeDuVortex())?.arme?.canalise !== undefined || pieceDe(armeDuVortex())?.arme?.chaine !== undefined || pieceDe(armeDuVortex())?.arme?.aura !== undefined || pieceDe(armeDuVortex())?.arme?.balise !== undefined || pieceDe(armeDuVortex())?.arme?.givre !== undefined || pieceDe(armeDuVortex())?.arme?.nova !== undefined || pieceDe(armeDuVortex())?.arme?.salve !== undefined || pieceDe(armeDuVortex())?.arme?.condense !== undefined || pieceDe(armeDuVortex())?.arme?.tornade !== undefined || pieceDe(armeDuVortex())?.arme?.plasma !== undefined || pieceDe(armeDuVortex())?.arme?.essaim !== undefined || pieceDe(armeDuVortex())?.arme?.sphere !== undefined || pieceDe(armeDuVortex())?.arme?.puits !== undefined || pieceDe(armeDuVortex())?.arme?.meteore !== undefined || pieceDe(armeDuVortex())?.arme?.rail !== undefined || pieceDe(armeDuVortex())?.arme?.tentacule !== undefined || pieceDe(armeDuVortex())?.arme?.nuee !== undefined || pieceDe(armeDuVortex())?.arme?.rejeton !== undefined || pieceDe(armeDuVortex())?.arme?.crachat !== undefined || pieceDe(armeDuVortex())?.arme?.mine !== undefined || pieceDe(armeDuVortex())?.arme?.fleau !== undefined || pieceDe(armeDuVortex())?.arme?.parasite !== undefined || pieceDe(armeDuVortex())?.arme?.drain !== undefined || pieceDe(armeDuVortex())?.arme?.vrille !== undefined || pieceDe(armeDuVortex())?.arme?.ponte !== undefined || pieceDe(armeDuVortex())?.arme?.epines !== undefined ? [] : pieceDe(armeDuVortex())?.arme?.flamme !== undefined || pieceDe(armeDuVortex())?.arme?.napalm !== undefined || pieceDe(armeDuVortex())?.arme?.balayage !== undefined ? [0] : [0, 1]).map(() => pieceDe(armeDuVortex())?.arme?.id ?? '') : Array.from({ length: capacite(hangar, 'arme') }, (_, k) => pieceDe(hangar.armes[k] ?? '')?.arme?.id ?? ''), bouclier, outils: outilsParPlace(), foreusePlace: placeDeLaForeuse(), habit: habitDuJoueur(monteeA(hangar, 'coque').cran), kraken: krakenDeLAllure(), vouivre: vouivreDeLAllure(), ver: verDeLAllure(), sentinelle: sentinelleDeLAllure(), frimas: frimasDeLAllure(), pulsar: pulsarDeLAllure() })
   /**
    * CE QUE LES ARMES DU KRAKEN CHANGENT À SON CORPS (voir `Allure.kraken`) : les crochets de la Tentacule, le rejeton
    * accroché au dos — parti quand un rejeton naît (`rejetonPartiA`), il repousse : rien pendant 0,4 s, puis il grandit en
@@ -1147,7 +1147,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (!parametres.has('vortex')) return undefined
     const a = pieceDe(armeDuVortex())?.arme
     if (a?.nova !== undefined) return { nova: true }
-    if (a?.salve !== undefined) return { eclats: true }
+    if (a?.salve !== undefined || a?.condense !== undefined) return { eclats: true }
     if (a?.tornade !== undefined) return { blizzard: true }
     return undefined
   }
@@ -1947,6 +1947,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const reste = (m.armesA[i] ?? 0) - m.t
       // (les balises : leur heure est celle de la pose, pas d'un tir — rien à annoncer)
       if (arme.balise !== undefined) return
+      // (les échardes : leur heure est celle de la condensation, pas d'un tir — elles sonnent à leur départ)
+      if (arme.condense !== undefined) return
       if (reste <= 0 || reste > avance || t - (armeAnnonceeA.get(arme.id) ?? -10) < 0.4) return
       // (la nova et le blizzard du Frimas partent même sans personne — Keko, 19/11 : leur coup s'annonce toujours)
       if (arme.nova === undefined && arme.tornade === undefined && !m.ennemis.some((e) => Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= arme.portee)) return
@@ -3841,7 +3843,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     'arme-epines': 'Une grande épine d’os, qui transperce tout sur son passage.',
     // (… PLUS COURTES — Keko, 19/11 : « elles dépassent trois lignes, on ne voit pas la suite »)
     'arme-oeufs': 'Lâche des œufs qui libèrent des vers agressifs.',
-    'arme-eclats': 'Projette des éclats de glace dans toutes les directions, qui gèlent les ennemis.',
+    'arme-eclats': 'Condense des échardes de givre qui foncent sur les ennemis à portée et les gèlent.',
     // (… LES NOMS DU FRIMAS ET DU PULSAR — Keko, 19/11 : le Blizzard ; l'Orbe de plasma, le Missile ionique, la Décharge arcanique)
     'arme-tornade': 'Un blizzard qui poursuit les ennemis, les gèle et les lacère.',
     // (… LE PULSAR REDIT — Keko, 19/11)
@@ -4024,6 +4026,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       dessinerLesEpines(p)
       dessinerLesFleaux(p)
       dessinerLeVaisseau(p)
+      dessinerLesEchardes(p)
       dessinerLesTirs(p)
       dessinerLesScies(p)
       dessinerLesTornades(p)
@@ -6999,7 +7002,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // (… NI L'INGÉNIEUR : ses tourelles visent seules)
     // (… SAUF AVEC SA SCIE — Keko, 18/11 : « quand on a la scie équipée, l'appareil se tourne toujours de face vers les
     // ennemis » : il la lance de sa proue)
-    if (VORTEX && CONF.armes.length > 0 && CONF.armes.every((a) => a.orbite !== undefined || a.pose !== undefined || a.chaine !== undefined || a.aura !== undefined || a.balise !== undefined || a.givre !== undefined || a.nova !== undefined || a.salve !== undefined || a.tornade !== undefined || a.nuee !== undefined || a.rejeton !== undefined || a.mine !== undefined || a.fleau !== undefined || a.drain !== undefined || a.vrille !== undefined || a.ponte !== undefined)) return undefined
+    if (VORTEX && CONF.armes.length > 0 && CONF.armes.every((a) => a.orbite !== undefined || a.pose !== undefined || a.chaine !== undefined || a.aura !== undefined || a.balise !== undefined || a.givre !== undefined || a.nova !== undefined || a.salve !== undefined || a.condense !== undefined || a.tornade !== undefined || a.nuee !== undefined || a.rejeton !== undefined || a.mine !== undefined || a.fleau !== undefined || a.drain !== undefined || a.vrille !== undefined || a.ponte !== undefined)) return undefined
     if (VORTEX) {
       // (… D'ASSEZ LOIN pour être prêt, même avec une arme courte : le lance-flammes ne porte qu'à 45)
       const cible = enJeu && m.phase === 'vol' ? ennemiLePlusProche(m, Math.max(110, Math.max(0, ...CONF.armes.map((a) => a.portee)) * 1.35)) : null
@@ -10974,6 +10977,48 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const MITRAILLE = ['#7a4a08', '#d99a1c', '#ffd23a', '#fff4b0'].map((c) => N.hex(c))
   /** Le vert du canon laser, du sombre au blanc. */
   const LASER_VERT = ['#0a3a12', '#1a8a2a', '#36d856', '#8dffa0', '#e8ffe8'].map((c) => N.hex(c))
+  /**
+   * LES ÉCHARDES DE GIVRE QUI ATTENDENT (voir `Arme.condense` — Keko, 19/11 : « comme si l'humidité de l'air se condensait
+   * pour former un éclat de givre ») : elles SE CONDENSENT — de la buée qui se resserre en tournant sur leur place, puis un
+   * cristal qui pousse, un éclair blanc quand il est prêt — ; prêtes, de petits cristaux en losange, la pointe vers le
+   * dehors, qui flottent autour du vaisseau en tournant, leur lueur froide, un reflet de temps en temps. En partant, elles
+   * deviennent les éclats de glace en vol (leur traînée comprise).
+   */
+  function dessinerLesEchardes(p: Peintre): void {
+    if (m.echardes.length === 0) return
+    p.place(W / 2 - camera.x, centreY() - camera.y)
+    for (const e of m.echardes) {
+      const cd = CONF.armes[e.arme]?.condense
+      if (cd === undefined) continue
+      const { x, y, an } = placeDeLEcharde(CONF, m, e)
+      const age = m.t - e.nee
+      const u = Math.min(1, age / cd.apparition)
+      if (u < 1)
+        for (let j = 0; j < 7; j++) {
+          const a = (j / 7) * Math.PI * 2 + m.t * 4 + e.id
+          const d = (1 - u) * 8 + 0.5
+          p.dot(x + Math.cos(a) * d, y + Math.sin(a) * d, j % 2 === 0 ? GLACE[6] : GLACE[5], 0.3 + 0.6 * u)
+        }
+      const k = u * u
+      if (k < 0.08) continue
+      const bob = Math.sin(m.t * 3 + e.id) * 0.6
+      const ux = Math.cos(an)
+      const uy = Math.sin(an)
+      const nx = -uy
+      const ny = ux
+      const cx = x + ux * bob
+      const cy = y + uy * bob
+      const pt = (a: number, b: number): number[] => [cx + ux * a * k + nx * b * k, cy + uy * a * k + ny * b * k]
+      p.glow(cx, cy, 6, GLACE[4], 0.35 * k)
+      p.poly([pt(4.5, 0), pt(-1, 2), pt(-4, 0), pt(-1, -2)], GLACE[1])
+      p.poly([pt(3.6, 0), pt(-0.8, 1.4), pt(-3.2, 0)], GLACE[4])
+      p.poly([pt(3.6, 0), pt(-3.2, 0), pt(-0.8, -1.4)], GLACE[6])
+      p.px(Math.round(cx + ux * 3.5 * k), Math.round(cy + uy * 3.5 * k), N.WHITE)
+      if (u >= 1 && age - cd.apparition < 0.12) p.glow(cx, cy, 8, N.WHITE, 0.6 * (1 - (age - cd.apparition) / 0.12))
+      else if (u >= 1 && Math.sin(m.t * 2.3 + e.id * 1.7) > 0.97) N.sparkle(p, cx, cy, 2, N.WHITE, GLACE[5], 0.8)
+    }
+    p.place(0, 0)
+  }
   function dessinerLesTirs(p: Peintre): void {
     p.place(W / 2 - camera.x, centreY() - camera.y)
     for (const tr of m.tirs) {
@@ -13354,6 +13399,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           }
           break
         }
+        case 'condensation':
+          // (une écharde se condense : son souffle qui se resserre, à peine)
+          jouer('condense', { dx: ev.x - v.x, dy: ev.y - v.y })
+          break
+        case 'echarde': {
+          // (une écharde part : son « tsiou », un petit éclat de givre là d'où elle part)
+          jouer('echarde', { dx: ev.x - v.x, dy: ev.y - v.y })
+          for (let i = 0; i < 3; i++) etincelles.ajouter('etincelle', ev.x, ev.y, R.range(-30, 30), R.range(-30, 30), R.range(0.1, 0.2), R.next() < 0.5 ? N.WHITE : GLACE[5], 1, 1.2)
+          break
+        }
         case 'eclatement': {
           // (UN ÉCLAT SE BRISE : celui de l'Ice Shatter — un éclair blanc, une étoile, de la poudre de glace et des
           // paillettes qui partent en cône derrière l'insecte, le tintement du verre)
@@ -14363,6 +14418,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     dessinerLesEpines(p)
     dessinerLesFleaux(p)
     if ((m.phase === 'vol' && t - arriveA >= ARRIVE_A) || (m.phase === 'extrait' && t - perduA < TELEPORTE_A)) dessinerLeVaisseau(p)
+    dessinerLesEchardes(p)
     dessinerLesTirs(p)
     dessinerLesScies(p)
     dessinerLesTornades(p)

@@ -6432,3 +6432,20 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
 - LA PLAQUE DE LA NOVA A SA TAILLE (Keko, 19/11 : « que la zone qu'on laisse après la nova ait la même taille que la nova
   prend au moment de l'explosion ») : 56 au lieu de 30 — la règle (elle ralentit et ronge sur tout ce rayon) comme le
   dessin ; ses éclats et sa poussière suivent sa surface (`rayon × 0,6` : 34). Vérifié ; 95 images par seconde en vol.
+- LES ÉCLATS DE GLACE DEVIENNENT DES ÉCHARDES QUI SE CONDENSENT (Keko, 19/11 : « un conflit entre la nova et les éclats :
+  tous les deux une zone autour du vaisseau frappée à intervalles réguliers » ; puis « que les éclats se matérialisent
+  autour du vaisseau, comme si l'humidité de l'air se condensait pour former un éclat de givre, et foncent vers une cible à
+  portée, à peu près comme le canon du chasseur ; ils gèlent la cible ; le vaisseau crée des échardes autour de lui jusqu'à
+  5, et dès qu'il passe à portée d'un ennemi, les 5 foncent, chacune à leur tour, très rapidement, vers les ennemis aux
+  alentours ») : une nouvelle sorte d'arme, `Arme.condense` (`Monde.echardes`, `placeDeLEcharde` ; la salve reste écrite) :
+  - UNE ÉCHARDE SE FORME toutes les 0,6 s à une place libre, cinq places sur un cercle de 22 autour du vaisseau (16 d'abord :
+    elles se confondaient avec le bord du bouclier, vu à la capture), qui tourne lentement ; PRÊTE après 0,35 s ;
+  - DÈS QU'UN INSECTE EST À 120 (la portée du canon laser), toutes les prêtes partent, UNE TOUTES LES 0,07 S, chacune vers
+    un insecte à portée — le verrouillé d'abord, puis du plus proche au plus lointain, en boucle —, à 320, ACCROCHÉE À LUI
+    (elle ne le manque pas) : 6 points, gelé à moitié de sa vitesse 1,5 s ; pleines, elles attendent ;
+  - À L'ÉCRAN : de la buée qui se resserre en tournant sur sa place, un cristal qui pousse, un éclair blanc quand il est
+    prêt ; prêtes, de petits losanges de glace pointés vers le dehors, qui flottent, leur lueur, un reflet ; en partant,
+    elles deviennent les éclats en vol, leur traînée comprise. DEUX SONS : `condense` (un souffle qui se resserre, un
+    tintement, à peine) et `echarde` (un « tsiou » de verre bref) ; l'annonce en avance ne les touche pas.
+  Cadence, dégâts, vitesse, apparition et intervalle sont de moi, à rejuger. Vérifié (`npm run verif`) : cinq au plus sans
+  insecte ; rien à 160 ; à 110, les cinq partent en 0,3 s, touchent et gèlent ; vu dans l'aperçu du hangar.

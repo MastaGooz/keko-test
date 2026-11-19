@@ -527,6 +527,19 @@ export type Arme = {
    */
   salve?: { nombre: number; perce?: boolean; eclatement?: { nombre: number; cone: number; vitesse: number; vie: number; degats: number } }
   /**
+   * DES ÉCHARDES DE GIVRE QUI SE CONDENSENT (le Frimas, à la place de sa salve — Keko, 19/11 : « les éclats se matérialisent
+   * quelque part autour du vaisseau, comme si l'humidité de l'air se condensait pour former un éclat de givre, et foncent
+   * vers une cible à portée, une portée à peu près comme le canon du chasseur ; ils gèlent la cible ; le vaisseau crée des
+   * échardes autour de lui jusqu'à un certain nombre, disons 5, et dès qu'il passe à portée d'un ennemi, les 5 foncent,
+   * chacune à leur tour, très rapidement, vers les ennemis aux alentours ») : une écharde se forme toutes les `cadence`
+   * secondes à une place libre autour du vaisseau (`max` places sur un cercle de `rayon`, qui tourne lentement), PRÊTE
+   * après `apparition` secondes ; dès qu'un insecte est à `portee`, toutes les prêtes partent, une toutes les `intervalle`
+   * secondes, chacune vers un insecte à portée — le verrouillé d'abord, puis du plus proche au plus lointain, en boucle —,
+   * ACCROCHÉE À LUI (elle ne le manque pas) : ses `degats`, et `gel`. Pleines, elles attendent ; partie une, la suivante
+   * se forme `cadence` secondes plus tard. L'état est `Monde.echardes`.
+   */
+  condense?: { max: number; rayon: number; apparition: number; intervalle: number }
+  /**
    * UNE TORNADE DE GIVRE (la troisième arme du Frimas, Keko, 15/11 : « une tornade de givre qui part du vaisseau et qui
    * suit automatiquement les ennemis, et disparaît au bout d'un certain temps ; elle crée une petite zone dans laquelle
    * les ennemis sont ralentis et prennent des dégâts tant qu'ils sont dedans ») : à sa cadence, un insecte à portée, une
@@ -982,6 +995,8 @@ export type Monde = {
   tornades: Tornade[]
   /** LES ONDES DE NOVA qui s'ouvrent (voir `Arme.nova`) : leur arme, leur cœur, leur naissance, les insectes déjà frappés. */
   novas: { arme: number; x: number; y: number; nee: number; frappes: number[] }[]
+  /** LES ÉCHARDES DE GIVRE qui attendent autour du vaisseau (voir `Arme.condense`) : leur arme, leur naissance, leur place, leur départ prévu et leur rang dans la rafale. */
+  echardes: { id: number; arme: number; nee: number; place: number; depart?: number; rang?: number }[]
   /** LES SPHÈRES DE PLASMA (voir `Arme.sphere`). */
   spheres: Sphere[]
   /** LES PUITS DE PLASMA (voir `Arme.puits`). */
@@ -1104,6 +1119,9 @@ export type Evenement =
   | { type: 'tornadeFinie'; x: number; y: number }
   /** Une salve part tout autour du vaisseau (voir `Arme.salve`). */
   | { type: 'salve'; x: number; y: number; arme: string }
+  /** Une écharde de givre se condense autour du vaisseau ; une écharde part (voir `Arme.condense`). */
+  | { type: 'condensation'; x: number; y: number }
+  | { type: 'echarde'; x: number; y: number; arme: string }
   /** Un éclat se brise sur un insecte, ses fragments partent en cône derrière lui, le long de `cap` (voir `Arme.salve`). */
   | { type: 'eclatement'; x: number; y: number; cap: number }
   /** Un essaim de missiles part (voir `Arme.essaim`), de la bouche. */
@@ -1194,7 +1212,7 @@ export function nouveauVaisseau(): Vaisseau {
 }
 
 export function nouveauMonde(c: ConfigVaisseau = VAISSEAU, graine = 1): Monde {
-  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, plaques: Array.from({ length: c.plaques }, () => true), intouchableJusque: -1, corruption: 0, toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, scies: [], balises: [], givres: [], tornades: [], novas: [], spheres: [], puits: [], meteores: [], tentacules: [], nuees: [], rejetons: [], flaquesAcides: [], mines: [], fleaux: [], parasites: [], vrilles: [], liens: [], oeufs: [], brochettes: [], miniVers: [], hypercubes: [], des: [], coupes: [], rayonVu: null }
+  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, plaques: Array.from({ length: c.plaques }, () => true), intouchableJusque: -1, corruption: 0, toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, scies: [], balises: [], givres: [], tornades: [], novas: [], echardes: [], spheres: [], puits: [], meteores: [], tentacules: [], nuees: [], rejetons: [], flaquesAcides: [], mines: [], fleaux: [], parasites: [], vrilles: [], liens: [], oeufs: [], brochettes: [], miniVers: [], hypercubes: [], des: [], coupes: [], rayonVu: null }
 }
 
 /** Un hachage entier déterministe (celui de pixelfx), et un réel dans [0, 1) qui en sort. */
@@ -2170,6 +2188,64 @@ function tirerLesSalves(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
       m.obus.push({ id: m.prochainId++, x: v.x + Math.cos(an) * (c.rayon + 2), y: v.y + Math.sin(an) * (c.rayon + 2), vx: Math.cos(an) * a.vitesse, vy: Math.sin(an) * a.vitesse, vie: a.vie, degats: a.degats * (critique ? c.passifs.critiqueFacteur : 1), guide: false, arme: a.id, critique, ...(a.gel === undefined ? {} : { gel: a.gel }), ...(sa.perce === true ? { perce: [] } : {}), ...(sa.eclatement === undefined ? {} : { eclatement: sa.eclatement }) })
     }
     ev.push({ type: 'salve', x: v.x, y: v.y, arme: a.id })
+  })
+}
+
+/** Où est une écharde de givre (voir `Arme.condense`) : sa place sur son cercle, qui tourne lentement autour du vaisseau. */
+export function placeDeLEcharde(c: ConfigVaisseau, m: Monde, e: Monde['echardes'][number]): { x: number; y: number; an: number } {
+  const cd = c.armes[e.arme]?.condense
+  const an = (e.place / (cd?.max ?? 5)) * Math.PI * 2 + m.t * 0.7
+  const r = cd?.rayon ?? 16
+  return { x: m.vaisseau.x + Math.cos(an) * r, y: m.vaisseau.y + Math.sin(an) * r, an }
+}
+/** LES ÉCHARDES DE GIVRE (voir `Arme.condense`) : elles se forment, attendent, et partent en rafale vers les insectes à portée. */
+function condenserLesEchardes(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
+  const v = m.vaisseau
+  c.armes.forEach((a, i) => {
+    const cd = a.condense
+    if (cd === undefined || m.phase !== 'vol') return
+    const miennes = m.echardes.filter((e) => e.arme === i)
+    // (la formation : une place libre ; pleines, l'horloge attend — la suivante viendra `cadence` après un départ)
+    if (miennes.length >= cd.max) m.armesA[i] = Math.max(m.armesA[i] ?? 0, m.t + a.cadence)
+    else if (m.t >= (m.armesA[i] ?? 0)) {
+      const prises = new Set(miennes.map((e) => e.place))
+      let place = 0
+      while (prises.has(place)) place++
+      const e = { id: m.prochainId++, arme: i, nee: m.t, place }
+      m.echardes.push(e)
+      miennes.push(e)
+      m.armesA[i] = m.t + a.cadence
+      const pe = placeDeLEcharde(c, m, e)
+      ev.push({ type: 'condensation', x: pe.x, y: pe.y })
+    }
+    // (les cibles : à portée, le verrouillé d'abord, puis du plus proche au plus lointain)
+    const ve = ennemiVerrouille(m)
+    const cibles = m.ennemis
+      .filter((e) => e.pv > 0 && Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= a.portee + c.ennemi.rayon)
+      .sort((p, q) => (p === ve ? -1 : q === ve ? 1 : Math.hypot(p.corps.x - v.x, p.corps.y - v.y) - Math.hypot(q.corps.x - v.x, q.corps.y - v.y)))
+    // (la rafale : toutes les prêtes, l'une après l'autre)
+    if (cibles.length > 0 && !miennes.some((e) => e.depart !== undefined)) {
+      const pretes = miennes.filter((e) => m.t - e.nee >= cd.apparition).sort((p, q) => p.place - q.place)
+      pretes.forEach((e, k) => {
+        e.depart = m.t + k * cd.intervalle
+        e.rang = k
+      })
+    }
+    for (const e of miennes) {
+      if (e.depart === undefined || m.t < e.depart) continue
+      // (plus personne à portée : elle reste, et attendra la prochaine rafale)
+      if (cibles.length === 0) {
+        delete e.depart
+        continue
+      }
+      const cible = cibles[(e.rang ?? 0) % cibles.length]
+      const p = placeDeLEcharde(c, m, e)
+      m.echardes.splice(m.echardes.indexOf(e), 1)
+      const an = Math.atan2(cible.corps.y - p.y, cible.corps.x - p.x)
+      const critique = c.passifs.critique > 0 && tire(m.graine, m.prochainId, 12) < c.passifs.critique
+      m.obus.push({ id: m.prochainId++, x: p.x, y: p.y, vx: Math.cos(an) * a.vitesse, vy: Math.sin(an) * a.vitesse, vie: a.vie, degats: a.degats * (critique ? c.passifs.critiqueFacteur : 1), guide: false, arme: a.id, critique, verrou: cible.id, ...(a.gel === undefined ? {} : { gel: a.gel }) })
+      ev.push({ type: 'echarde', x: p.x, y: p.y, arme: a.id })
+    }
   })
 }
 
@@ -4131,7 +4207,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   // (le lance-flammes ne crache qu'en vol, à ce pas : abattu, il se tait — Keko, 15/11 : « quand je meurs, le souffle
   // du lance-flammes reste en place pendant le compte du retour »)
   m.crache = false
-  if (m.phase !== 'vol') (m.drones = []), (m.balayage = null), (m.canal = null), (m.scies = []), (m.tornades = []), (m.novas = []), (m.spheres = []), (m.puits = []), (m.meteores = []), (m.tentacules = []), (m.nuees = []), (m.rejetons = []), (m.flaquesAcides = []), (m.mines = []), (m.fleaux = []), (m.parasites = []), (m.vrilles = []), (m.liens = []), (m.oeufs = []), (m.brochettes = []), (m.miniVers = []), (m.hypercubes = []), (m.des = []), (m.coupes = [])
+  if (m.phase !== 'vol') (m.drones = []), (m.balayage = null), (m.canal = null), (m.scies = []), (m.tornades = []), (m.novas = []), (m.echardes = []), (m.spheres = []), (m.puits = []), (m.meteores = []), (m.tentacules = []), (m.nuees = []), (m.rejetons = []), (m.flaquesAcides = []), (m.mines = []), (m.fleaux = []), (m.parasites = []), (m.vrilles = []), (m.liens = []), (m.oeufs = []), (m.brochettes = []), (m.miniVers = []), (m.hypercubes = []), (m.des = []), (m.coupes = [])
   // (le portail tombé, la partie est finie : plus rien n'avance)
   if (m.invasion.finie) return { chocs: [], evenements: ev }
   if (m.verrou !== null && ennemiVerrouille(m) === null) m.verrou = null
@@ -4234,6 +4310,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   menerLeGivre(c, m, dt, ev)
   lancerLesNovas(c, m, ev)
   tirerLesSalves(c, m, ev)
+  condenserLesEchardes(c, m, ev)
   tirerLesEssaims(c, m, ev)
   menerLesSpheres(c, m, dt, ev)
   menerLesPuits(c, m, dt, ev)
@@ -4256,7 +4333,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   menerLesTornades(c, m, dt, ev)
   c.armes.forEach((arme, i) => {
     if (arme.flamme !== undefined) return cracherLaFlamme(c, m, arme, arme.flamme, dt, ev)
-    if (arme.orbite !== undefined || arme.pose !== undefined || arme.balayage !== undefined || arme.canalise !== undefined || arme.chaine !== undefined || arme.aura !== undefined || arme.scie !== undefined || arme.balise !== undefined || arme.givre !== undefined || arme.nova !== undefined || arme.salve !== undefined || arme.tornade !== undefined || arme.essaim !== undefined || arme.sphere !== undefined || arme.puits !== undefined || arme.meteore !== undefined || arme.rail !== undefined || arme.tentacule !== undefined || arme.nuee !== undefined || arme.rejeton !== undefined || arme.crachat !== undefined || arme.mine !== undefined || arme.fleau !== undefined || arme.parasite !== undefined || arme.drain !== undefined || arme.vrille !== undefined || arme.ponte !== undefined || arme.epines !== undefined || arme.hypercube !== undefined || arme.de !== undefined || arme.coupe !== undefined) return
+    if (arme.orbite !== undefined || arme.pose !== undefined || arme.balayage !== undefined || arme.canalise !== undefined || arme.chaine !== undefined || arme.aura !== undefined || arme.scie !== undefined || arme.balise !== undefined || arme.givre !== undefined || arme.nova !== undefined || arme.salve !== undefined || arme.condense !== undefined || arme.tornade !== undefined || arme.essaim !== undefined || arme.sphere !== undefined || arme.puits !== undefined || arme.meteore !== undefined || arme.rail !== undefined || arme.tentacule !== undefined || arme.nuee !== undefined || arme.rejeton !== undefined || arme.crachat !== undefined || arme.mine !== undefined || arme.fleau !== undefined || arme.parasite !== undefined || arme.drain !== undefined || arme.vrille !== undefined || arme.ponte !== undefined || arme.epines !== undefined || arme.hypercube !== undefined || arme.de !== undefined || arme.coupe !== undefined) return
     if (m.t < (m.armesA[i] ?? 0)) return
     // (les missiles aussi — Keko : « de toute façon ils suivent pareil, et s'il n'y a rien à suivre ils vont tout droit »)
     const aLaMain = manuel && regard !== undefined && Math.hypot(regard.x, regard.y) > 0.05

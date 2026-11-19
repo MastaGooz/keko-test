@@ -1023,6 +1023,26 @@ const RECETTES = {
       for (let k = 0; k < 3; k++) note(m, 0.005 + 0.035 * k * (0.7 + 0.6 * h.next()), 0.45 * (1 - k / 4), (h.next() - 0.5) * 0.7, { f: 2600 + 2400 * h.next(), a: 0.001, d: 0.06 + 0.08 * h.next(), partiels: [[1, 1, 1], [2.76, 0.3, 0.5]] })
     },
   },
+  /**
+   * UNE ÉCHARDE DE GIVRE SE CONDENSE (le Frimas, Keko, 19/11 : « comme si l'humidité de l'air se condensait ») : un souffle
+   * qui se resserre en montant, puis un tintement de verre, à peine
+   */
+  condense: {
+    duree: 0.5, niveau: 0.05, salle: [0.5, 0.2], variantes: 3,
+    faire: (m, h) => {
+      souffle(m, h, 0, 0.6, (h.next() - 0.5) * 0.6, { f: 2400, glisse: { vers: 5200, en: 0.3, droit: true }, q: 3, bande: true, a: 0.2, d: 0.12 })
+      note(m, 0.3, 0.5, (h.next() - 0.5) * 0.6, { f: 3000 + 1500 * h.next(), a: 0.001, d: 0.2, partiels: VERRE })
+    },
+  },
+  /** UNE ÉCHARDE DE GIVRE PART : un « tsiou » de verre qui file, bref — elles partent l'une après l'autre, très vite */
+  echarde: {
+    duree: 0.35, niveau: 0.12, salle: [0.3, 0.12], variantes: 4,
+    faire: (m, h) => {
+      souffle(m, h, 0, 0.7, 0, { f: 5200, glisse: { vers: 2200, en: 0.06 }, q: 2, bande: true, a: 0.001, d: 0.06 })
+      const f = 2600 + 1200 * h.next()
+      note(m, 0, 0.4, (h.next() - 0.5) * 0.5, { f, glisse: { vers: f * 0.7, en: 0.06 }, a: 0.001, d: 0.08, partiels: [[1, 1, 1], [2.76, 0.3, 0.5]] })
+    },
+  },
   /** UNE BALISE EST PLANTÉE : un « tchok » métallique bref, puis un bip court qui l'arme */
   balisePosee: {
     duree: 0.3, niveau: 0.14, salle: [0.22, 0.09], variantes: 2,

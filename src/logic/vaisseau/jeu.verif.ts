@@ -2521,7 +2521,6 @@ if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)
   const novas = ev.filter((e) => e.type === 'nova').length
   const tornades = ev.filter((e) => e.type === 'tornade').length
   verifier(`sans insecte, la nova part à sa cadence (${novas} en 7 s) et le blizzard aussi (${tornades}), droit devant le nez`, w.ennemis.length === 0 && novas >= 2 && tornades >= 1 && w.tornades.every((tn) => Math.abs(Math.atan2(tn.vy, tn.vx) - Math.PI / 2) < 1e-6))
-  verifier('les éclats de glace sont seize', pieceDe('arme-eclats')!.arme!.salve?.nombre === 16)
 }
 // LA NOVA, UNE ONDE QUI S'OUVRE (Keko, 19/11 : « le cercle touche visuellement les ennemis, mais ils ne subissent pas de
 // dégâts ; agrandis la nova pour qu'elle matche sa pleine distance visuelle ») : sa portée est 56 ; son front s'ouvre en
@@ -2544,3 +2543,32 @@ if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)
 // LA PLAQUE DE LA NOVA A SA TAILLE (Keko, 19/11 : « que la zone qu'on laisse après la nova ait la même taille que la nova
 // prend au moment de l'explosion »)
 verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe('arme-nova')!.arme!.nova!.plaque.rayon === pieceDe('arme-nova')!.arme!.nova!.rayon)
+// LES ÉCHARDES DE GIVRE DU FRIMAS (Keko, 19/11 : « elles se matérialisent autour du vaisseau, jusqu'à 5 ; dès qu'il passe
+// à portée d'un ennemi, elles foncent, chacune à son tour, très rapidement, vers les ennemis aux alentours ; elles gèlent ;
+// une portée comme le canon du chasseur ») : sans insecte, elles se forment, cinq au plus ; un insecte à 110, toutes
+// partent en un tiers de seconde, chacune le touche et le gèle ; un insecte à 160, aucune ne part
+{
+  const insecte = (id: number, x: number, y: number) => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv: 1000, fait: 'marche' as const, roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, calmeA: 1e9 })
+  const eclats = { ...pieceDe('arme-eclats')!.arme!, place: 0 }
+  const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, armes: [eclats], ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, pv: 1000, vitesseMax: 0, poussee: 0 } }
+  const w = nouveauMonde(cfg, 4)
+  const pas = (n: number): Evenement[] => {
+    const ev: Evenement[] = []
+    for (let i = 0; i < n; i++) {
+      w.vaisseau = { ...w.vaisseau, x: 0, y: 0, vx: 0, vy: 0 }
+      ev.push(...avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements)
+    }
+    return ev
+  }
+  pas(60 * 5)
+  verifier(`sans insecte, elles se forment autour du vaisseau, cinq au plus (${w.echardes.length})`, w.echardes.length === 5 && w.obus.length === 0)
+  w.ennemis.push(insecte(1, 160, 0))
+  const loin = pas(30)
+  verifier('un insecte à 160 (au-delà de 120) : aucune ne part', !loin.some((e) => e.type === 'echarde') && w.echardes.length === 5)
+  w.ennemis[0].corps = { ...w.ennemis[0].corps, x: 110, y: 0 }
+  // (la dernière part à 0,28 s, et file 110 à 320 : 0,8 s suffit)
+  const ev = pas(48)
+  const parties = ev.filter((e) => e.type === 'echarde').length
+  const touches = ev.filter((e) => e.type === 'ennemiTouche').length
+  verifier(`un insecte à 110 : les cinq partent l'une après l'autre en 0,3 s (${parties}), le touchent (${touches}) et le gèlent`, parties === 5 && touches === 5 && (w.ennemis[0].geleA ?? 0) > w.t && w.ennemis[0].pv === 1000 - 5 * eclats.degats)
+}
