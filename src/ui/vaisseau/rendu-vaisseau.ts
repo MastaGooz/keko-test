@@ -642,6 +642,18 @@ export type Allure = {
    * l'une à l'autre. (Les drones, eux, tournent autour d'elle : la page les dessine.)
    */
   sentinelle?: { tempete?: boolean; chaine?: boolean }
+  /**
+   * LE FRIMAS ET SES ARMES (Keko, 19/11 : « qu'on voie le type d'arme sélectionné, comme pour les autres vaisseaux ; je te
+   * laisse être créatif ») : `nova`, une couronne de givre hérissée autour de son cœur, qui bat ; `eclats`, des éclats de
+   * glace plantés en épis sur son dos ; `blizzard`, un tourbillon de neige qui tourne sur sa poupe.
+   */
+  frimas?: { nova?: boolean; eclats?: boolean; blizzard?: boolean }
+  /**
+   * LE PULSAR ET SES ARMES (Keko, 19/11) : `orbe`, un orbe de plasma qui palpite entre ses deux cornes ; `missiles`, deux
+   * nacelles de trois missiles sur ses flancs ; `decharge`, un cadre d'arcane qui tourne autour de son cœur, des étincelles
+   * à ses coins.
+   */
+  pulsar?: { orbe?: boolean; missiles?: boolean; decharge?: boolean }
 }
 /**
  * LES DÉTAILS D'UNE APPARENCE (Keko, 17/11 : « on va enlever le petit marquage coloré des vaisseaux… on va le remplacer
@@ -1020,6 +1032,88 @@ const hasardDe = (a: number, b: number): number => {
   let h = (a * 374761393 + b * 668265263) | 0
   h = (h ^ (h >>> 13)) * 1274126177
   return ((h ^ (h >>> 16)) >>> 0) / 4294967296
+}
+/** CE QUE LES ARMES DU FRIMAS CHANGENT À SON CORPS (voir `Allure.frimas`). */
+function formesDuFrimasArme(fr: NonNullable<Allure['frimas']>, t: number): Forme[] {
+  // (… CONTRASTÉS — mesuré à la capture : de la glace claire sur sa nacre presque blanche, ils ne se voyaient pas : leurs
+  // corps sont d'indigo, la glace n'en est que la lumière)
+  const f: Forme[] = []
+  if (fr.nova === true) {
+    // LA COURONNE DE GIVRE : un anneau d'indigo autour du cœur, huit pointes qui en sortent et dépassent du corps, un filet
+    // de glace qui luit dans chacune ; elles battent ensemble
+    const bat = t === 0 ? 1 : 1 + 0.1 * Math.max(0, Math.sin(t * 3))
+    const [cx, cy] = [0.2, 0]
+    for (let k = 0; k < 8; k++) {
+      const a = (k * Math.PI) / 4 + Math.PI / 8
+      const [ux, uy] = [Math.cos(a), Math.sin(a)]
+      const lg = (k % 2 === 0 ? 5 : 4) * bat
+      f.push({ pts: [[cx + ux * 2 - uy * 0.7, cy + uy * 2 + ux * 0.7], [cx + ux * lg, cy + uy * lg], [cx + ux * 2 + uy * 0.7, cy + uy * 2 - ux * 0.7]], mat: 'indigo', relief: 'plat' })
+      f.push({ pts: barre(cx + ux * 2.2, cy + uy * 2.2, cx + ux * (lg - 0.8), cy + uy * (lg - 0.8), 0.16), mat: 'glace', relief: 'lueur', ton: 5 })
+    }
+    for (let k = 0; k < 16; k++) {
+      const a0 = (k / 16) * Math.PI * 2
+      const a1 = ((k + 1) / 16) * Math.PI * 2
+      f.push({ pts: barre(cx + Math.cos(a0) * 2.15, cy + Math.sin(a0) * 2.15, cx + Math.cos(a1) * 2.15, cy + Math.sin(a1) * 2.15, 0.5), mat: 'indigo', relief: 'plat' })
+    }
+  }
+  if (fr.eclats === true) {
+    // LES ÉCLATS EN ÉPIS : trois paires d'éclats de glace plantés sur les chevrons du dos, couchés vers l'arrière et le dehors,
+    // longs, cernés d'indigo
+    for (const [x, lg] of [[-1.4, 5], [-3.2, 4.4], [-5, 3.6]] as [number, number][])
+      for (const sg of [-1, 1]) {
+        const [bx, by] = [x, sg * 1]
+        const [px, py] = [x - lg * 0.5, sg * (1 + lg * 0.85)]
+        f.push({ pts: [[bx + 0.75, by], [px, py], [bx - 0.75, by]], mat: 'indigo', relief: 'plat' })
+        f.push({ pts: [[bx + 0.4, by], [px + (bx - px) * 0.15, py + (by - py) * 0.15], [bx - 0.4, by]], mat: 'glace', relief: 'cyl' })
+      }
+  }
+  if (fr.blizzard === true) {
+    // LE TOURBILLON DE NEIGE : trois bras d'indigo qui s'enroulent et tournent sur la poupe, des flocons de glace qui y
+    // luisent, un œil clair au milieu
+    const [cx, cy] = [-4.4, 0]
+    for (let b = 0; b < 3; b++)
+      for (let k = 0; k < 7; k++) {
+        const r = 0.6 + k * 0.42
+        const a = -t * 3 + b * ((Math.PI * 2) / 3) + r * 1.2
+        const [x, y] = [cx + Math.cos(a) * r, cy + Math.sin(a) * r]
+        const w = 0.55 - 0.04 * k
+        f.push({ pts: ovale(x, y, w, w, 6), mat: 'indigo', relief: 'plat' })
+        if (k % 2 === 0) f.push({ pts: ovale(x, y, w * 0.5, w * 0.5, 5), mat: 'glace', relief: 'lueur', ton: 5 })
+      }
+    f.push({ pts: ovale(cx, cy, 0.7, 0.7, 8), mat: 'glace', relief: 'lueur', ton: 5 })
+  }
+  return f
+}
+/** CE QUE LES ARMES DU PULSAR CHANGENT À SON CORPS (voir `Allure.pulsar`). */
+function formesDuPulsarArme(pu: NonNullable<Allure['pulsar']>, t: number): Forme[] {
+  const f: Forme[] = []
+  if (pu.orbe === true) {
+    // L'ORBE : entre les deux cornes, un orbe de plasma qui palpite, un anneau qui l'entoure
+    const r = t === 0 ? 1.15 : 1.15 * (1 + 0.15 * Math.sin(t * 5))
+    f.push({ pts: ovale(8.4, 0, r + 0.45, r + 0.45, 12), mat: 'feuArcane', relief: 'lueur', ton: 3 })
+    f.push({ pts: ovale(8.4, 0, r, r, 12), mat: 'plasma', relief: 'dome', dome: { x: 8.4, y: 0, rx: r, ry: r } })
+    f.push({ pts: ovale(8.15, -0.3, r * 0.35, r * 0.35, 6), mat: 'plasma', relief: 'lueur', ton: 5 })
+  }
+  if (pu.missiles === true) {
+    // LES NACELLES : sur chaque flanc, un berceau d'obsidienne et trois petits missiles côte à côte, la pointe de plasma devant
+    for (const sg of [-1, 1]) {
+      f.push({ pts: [[2, sg * 4.6], [-2, sg * 4.6], [-2.4, sg * 6.6], [1.6, sg * 6.6]], mat: 'obsidienne', relief: 'plat', penche: sg })
+      for (const dy of [5, 5.6, 6.2]) {
+        f.push({ pts: barre(-1.8, sg * dy, 1.2, sg * dy, 0.24), mat: 'metal', relief: 'cyl' })
+        f.push({ pts: [[2, sg * dy], [1.2, sg * (dy - 0.24)], [1.2, sg * (dy + 0.24)]], mat: 'plasma', relief: 'lueur', ton: 4 })
+      }
+    }
+  }
+  if (pu.decharge === true) {
+    // LE CADRE D'ARCANE : deux carrés qui tournent à rebours autour du cœur, une étincelle à chaque coin
+    for (const [r, sens] of [[3.1, 1], [2.7, -1]] as [number, number][]) {
+      const a0 = sens * t * 1.4 + (sens > 0 ? 0 : Math.PI / 4)
+      const coins = [0, 1, 2, 3].map((k): [number, number] => [Math.cos(a0 + (k * Math.PI) / 2) * r, Math.sin(a0 + (k * Math.PI) / 2) * r])
+      for (let k = 0; k < 4; k++) f.push({ pts: barre(coins[k][0], coins[k][1], coins[(k + 1) % 4][0], coins[(k + 1) % 4][1], 0.2), mat: 'feuArcane', relief: 'lueur', ton: sens > 0 ? 4 : 3 })
+      if (sens > 0) for (const [x, y] of coins) f.push({ pts: ovale(x, y, 0.45, 0.45, 6), mat: 'feuArcane', relief: 'lueur', ton: 5 })
+    }
+  }
+  return f
 }
 /** CE QUE LES ARMES DE LA SENTINELLE CHANGENT À SON CORPS (voir `Allure.sentinelle`), par-dessus son dôme. */
 function formesDeLaSentinelleArmee(se: NonNullable<Allure['sentinelle']>, t: number): Forme[] {
@@ -2251,7 +2345,7 @@ export function formesDuVaisseau(a: Allure, flamme: number, t: number, vise = 0,
   const feux = f.filter((x) => x.relief === 'emis')
   const reste = f.filter((x) => x.relief !== 'emis')
   // (LE VER ONDULE : sa coque se refait de sa poussée et de son virage)
-  const coque = [...sansMarque(a.coque === 14 ? formesDuVer(t, flamme, devie, a.habit?.motif, a.chemin, a.ver) : formesDeLaCoque(a.coque, t)), ...(a.habit?.coque ?? []), ...(a.coque === 6 && a.sentinelle !== undefined ? formesDeLaSentinelleArmee(a.sentinelle, t) : [])]
+  const coque = [...sansMarque(a.coque === 14 ? formesDuVer(t, flamme, devie, a.habit?.motif, a.chemin, a.ver) : formesDeLaCoque(a.coque, t)), ...(a.habit?.coque ?? []), ...(a.coque === 6 && a.sentinelle !== undefined ? formesDeLaSentinelleArmee(a.sentinelle, t) : []), ...(a.coque === 8 && a.frimas !== undefined ? formesDuFrimasArme(a.frimas, t) : []), ...(a.coque === 9 && a.pulsar !== undefined ? formesDuPulsarArme(a.pulsar, t) : [])]
   const tout = [...feux, ...reste, ...(a.coque === 6 ? tourner(coque, t * TOUR_DE_LA_SENTINELLE) : coque)]
   if (g.surLePont) tout.push(...armes)
   tout.push(...surLeDos)

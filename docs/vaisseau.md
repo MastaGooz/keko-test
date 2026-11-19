@@ -6261,3 +6261,12 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   (`feuDeLaCoque`, `lueurDeLaFlamme`) pour la lueur de la tuyère, les braises du vol, les éclats du décollage et la traînée
   de l'accueil. Celle du Pulsar suivait le plasma de son apparence (orange en Nova, magenta en Nébuleuse) ; celle du
   Frimas, l'ion du propulseur. Vu au décollage, deux apparences chacun.
+- LES ARMES DU FRIMAS ET DU PULSAR SE VOIENT SUR EUX (Keko, 19/11 : « qu'on voie le type d'arme sélectionné, comme pour
+  les autres vaisseaux ; je te laisse être créatif ») — `Allure.frimas`, `Allure.pulsar`, `formesDuFrimasArme`,
+  `formesDuPulsarArme` : LE FRIMAS — la Nova, une COURONNE DE GIVRE d'indigo autour de son cœur, huit pointes qui dépassent
+  du corps et battent ensemble, un filet de glace qui luit dans chacune ; les Éclats, des ÉCLATS EN ÉPIS, trois paires
+  plantées sur les chevrons du dos, couchées vers l'arrière ; le Blizzard, un TOURBILLON de trois bras d'indigo semés de
+  flocons qui tourne sur sa poupe. *Mesuré à la capture* : de glace claire sur sa nacre presque blanche, ils ne se
+  voyaient pas — leurs corps sont d'indigo. LE PULSAR — l'Orbe de plasma, un ORBE qui palpite entre ses deux cornes, d'où
+  il part ; le Missile ionique, deux NACELLES de trois missiles sur ses flancs ; la Décharge arcanique, un CADRE D'ARCANE
+  — deux carrés qui tournent à rebours autour de son cœur, une étincelle à chaque coin.
