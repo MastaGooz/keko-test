@@ -2541,3 +2541,6 @@ if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)
   }
   verifier(`l'onde frappe au bord de sa portée (56) une fois, celui qui y entre en chemin aussi, rien au-delà (${[1, 2, 3].map((id) => touches.get(id) ?? 0).join(', ')})`, nova.nova?.rayon === 56 && touches.get(1) === 1 && !touches.has(2) && touches.get(3) === 1 && w.novas.length === 0)
 }
+// LA PLAQUE DE LA NOVA A SA TAILLE (Keko, 19/11 : « que la zone qu'on laisse après la nova ait la même taille que la nova
+// prend au moment de l'explosion »)
+verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe('arme-nova')!.arme!.nova!.plaque.rayon === pieceDe('arme-nova')!.arme!.nova!.rayon)

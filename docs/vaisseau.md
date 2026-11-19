@@ -6429,3 +6429,6 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   - LE VENT DE GLACE : des rafales qui tournent lentement autour du cœur et ondulent — les veines du poison enroulées en
     spirale —, leur fil clair, leur traîne, la brume entre elles, en transparence et plus légères au bord ; en bleus de
     glace (le blanc, transparent sur le noir, sortait gris à la capture).
+- LA PLAQUE DE LA NOVA A SA TAILLE (Keko, 19/11 : « que la zone qu'on laisse après la nova ait la même taille que la nova
+  prend au moment de l'explosion ») : 56 au lieu de 30 — la règle (elle ralentit et ronge sur tout ce rayon) comme le
+  dessin ; ses éclats et sa poussière suivent sa surface (`rayon × 0,6` : 34). Vérifié ; 95 images par seconde en vol.

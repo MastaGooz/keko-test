@@ -7946,7 +7946,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         return (rafale < 0.14 ? 0.34 : rafale < 0.4 ? 0.2 : 0.1 * (1 - d)) * bord * k * nait
       })
       const eclats: object[] = []
-      for (let j = 0; j < 18; j++) {
+      // (autant d'éclats que la plaque en demande : dix-huit sur 30 — Keko, 19/11 : la plaque a pris la taille de la nova)
+      const nEclats = Math.round(g.rayon * 0.6)
+      for (let j = 0; j < nEclats; j++) {
         const a = alea(g.id, j, 51) * Math.PI * 2
         const d = Math.sqrt(0.04 + 0.96 * alea(g.id, j, 52)) * g.rayon * 0.92 * (1 - Math.exp(-age * 7))
         const taille = (2 + 3.6 * alea(g.id, j, 53)) * (0.45 + 0.55 * k)
@@ -7973,7 +7975,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       brisDeGlace.list = eclats
       brisDeGlace.draw(p, GLACE)
       // (la poussière de glace, qui scintille entre les éclats)
-      for (let j = 0; j < 16; j++) {
+      for (let j = 0; j < nEclats; j++) {
         const a = alea(g.id, j, 63) * Math.PI * 2
         const d = Math.sqrt(alea(g.id, j, 64)) * g.rayon * (1 - Math.exp(-age * 5))
         const sc = 0.5 + 0.5 * Math.sin(m.t * (2 + 3 * alea(g.id, j, 65)) + alea(g.id, j, 66) * 6)
