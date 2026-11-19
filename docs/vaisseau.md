@@ -6477,3 +6477,10 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     taille d'origine (`gabaritNu`). La règle ne change pas. Chiffres de moi. Vus à la capture.
   - L'ÉPERON DU NÉANT est retiré (le triangle d'obsidienne, sa pointe allumée, la bande de marque) ; ses coups partent
     toujours de sa place d'arme. Les détails de ses apparences peints sur l'éperon (Supernova, Abîme) partent avec lui.
+- LES ARMES DU PRISME À LA COULEUR DE SON CRISTAL ; LE RAILGUN DEVIENT LA DÉSINTÉGRATION (Keko, 19/11 : « que toutes les
+  attaques du prisme soient de la même couleur que le vaisseau ; les rayons sont bleus, c'est pas très thématique avec le
+  concept de la lumière ; pareil pour les rayons qui relient les balises » ; « renommer l'attaque Railgun par
+  désintégration ») : la palette bleue fixe (`FAISCEAU`) devient `lumiereDuPrisme()`, la matière `energie` de son
+  apparence — l'or blanc de l'origine, le rouge du Rubis, le vert de l'Émeraude — pour son rayon, sa désintégration, ses
+  cristaux posés (peints aussi à son apparence), leurs liens, leurs éclats, l'irradiation, les étincelles. L'arme `rail`
+  s'appelle « Désintégration » (son identifiant reste). Vu dans l'aperçu, origine et Rubis.

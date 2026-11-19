@@ -8416,16 +8416,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const demi = Math.max(0, Math.round(3 * v1))
       for (let o = -demi - 1; o <= demi + 1; o++) {
         const bord = Math.abs(o) / (demi + 1)
-        const c = bord < 0.3 ? N.WHITE : bord < 0.7 ? FAISCEAU[3] : FAISCEAU[1]
+        const c = bord < 0.3 ? N.WHITE : bord < 0.7 ? lumiereDuPrisme()[3] : lumiereDuPrisme()[1]
         p.line(r.x0 + nx * o, r.y0 + ny * o, r.x1 + nx * o, r.y1 + ny * o, c, (bord < 0.3 ? 1 : 0.75) * v1)
       }
       // (des nœuds de lumière le long du trait, et le flash à la bouche)
-      for (let q = 0; q <= 8; q++) p.glow(r.x0 + ((r.x1 - r.x0) * q) / 8, r.y0 + ((r.y1 - r.y0) * q) / 8, 6 * v1 + 2, q % 2 === 0 ? FAISCEAU[3] : FAISCEAU[1], 0.4 * v1)
+      for (let q = 0; q <= 8; q++) p.glow(r.x0 + ((r.x1 - r.x0) * q) / 8, r.y0 + ((r.y1 - r.y0) * q) / 8, 6 * v1 + 2, q % 2 === 0 ? lumiereDuPrisme()[3] : lumiereDuPrisme()[1], 0.4 * v1)
       if (u < 0.3) p.glow(r.x0, r.y0, 10, N.WHITE, 0.8 * (1 - u / 0.3))
       // (une spirale d'énergie autour du trait, qui s'efface)
       for (let d = 0; d < L; d += 2) {
         const off = Math.sin(d * 0.35 - t * 40) * (3 + 3 * u)
-        p.dot(r.x0 + ((r.x1 - r.x0) * d) / L + nx * off, r.y0 + ((r.y1 - r.y0) * d) / L + ny * off, FAISCEAU[2], 0.7 * v1)
+        p.dot(r.x0 + ((r.x1 - r.x0) * d) / L + nx * off, r.y0 + ((r.y1 - r.y0) * d) / L + ny * off, lumiereDuPrisme()[2], 0.7 * v1)
       }
     }
   }
@@ -10803,13 +10803,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const y0 = l.y0 - camera.y + centreY()
       const x1 = l.x1 - camera.x + W / 2
       const y1 = l.y1 - camera.y + centreY()
-      // (LE FAISCEAU D'UN CRISTAL S'ACTIVE : une gaine bleue large, un corps cyan, une âme blanche — le rayon du Prisme)
+      // (LE FAISCEAU D'UN CRISTAL S'ACTIVE : une gaine large, un corps clair, une âme blanche — le rayon du Prisme, à sa couleur)
       if (l.bleu === true) {
-        p.glowLine(x0, y0, x1, y1, 8, FAISCEAU[2], 0.6 * (1 - u))
+        p.glowLine(x0, y0, x1, y1, 8, lumiereDuPrisme()[2], 0.6 * (1 - u))
         const nx = -(y1 - y0) / (Math.hypot(x1 - x0, y1 - y0) || 1)
         const ny = (x1 - x0) / (Math.hypot(x1 - x0, y1 - y0) || 1)
-        if (u < 0.6) for (const o of [-1, 1]) p.line(x0 + nx * o, y0 + ny * o, x1 + nx * o, y1 + ny * o, FAISCEAU[3], 0.8 * (1 - u / 0.6))
-        p.line(x0, y0, x1, y1, u < 0.5 ? N.WHITE : FAISCEAU[4], 1 - u)
+        if (u < 0.6) for (const o of [-1, 1]) p.line(x0 + nx * o, y0 + ny * o, x1 + nx * o, y1 + ny * o, lumiereDuPrisme()[3], 0.8 * (1 - u / 0.6))
+        p.line(x0, y0, x1, y1, u < 0.5 ? N.WHITE : lumiereDuPrisme()[4], 1 - u)
         continue
       }
       p.glowLine(x0, y0, x1, y1, 6, PEPITE[2], 0.55 * (1 - u))
@@ -10830,12 +10830,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // (DEUX CRISTAUX : un faisceau d'énergie qui les relie en permanence, faible, où des impulsions filent — on voit le
       // piège ; il s'allume quand on le traverse)
       if (cristal(b)) {
-        p.glowLine(x0, y0 - 2, x1, y1 - 2, 3, FAISCEAU[2], 0.2 + 0.06 * Math.sin(m.t * 4 + b.id))
-        p.line(x0, y0 - 2, x1, y1 - 2, FAISCEAU[2], 0.5)
+        p.glowLine(x0, y0 - 2, x1, y1 - 2, 3, lumiereDuPrisme()[2], 0.2 + 0.06 * Math.sin(m.t * 4 + b.id))
+        p.line(x0, y0 - 2, x1, y1 - 2, lumiereDuPrisme()[2], 0.5)
         const pas = (m.t * 1.5 + b.id * 0.37) % 1
         for (let k = 0; k < 3; k++) {
           const u = (k / 3 + pas) % 1
-          p.rect(Math.round(x0 + (x1 - x0) * u), Math.round(y0 - 2 + (y1 - y0) * u), 1, 1, FAISCEAU[4], 0.9)
+          p.rect(Math.round(x0 + (x1 - x0) * u), Math.round(y0 - 2 + (y1 - y0) * u), 1, 1, lumiereDuPrisme()[4], 0.9)
         }
         continue
       }
@@ -10858,10 +10858,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const [sx, sy] = ecran(b.x, b.y)
       // (UN CRISTAL : il pousse du sol en naissant, une onde bleue ; son âme palpite)
       if (cristal(b)) {
-        if (age < 0.35) p.ring(sx, sy, 4 + age * 30, 1, FAISCEAU[3], 1 - age / 0.35)
+        if (age < 0.35) p.ring(sx, sy, 4 + age * 30, 1, lumiereDuPrisme()[3], 1 - age / 0.35)
         p.circle(sx, sy + 2, 3, N.hex('#0a0608'), 0.4)
-        peindreFormes(p, CRISTAL, sx, sy, k * 1.2, { cap: 0, lumiere: LUMIERE_DU_VOL, reflet: REFLET_DU_VOL })
-        p.glow(sx, sy - 2, 5, FAISCEAU[3], 0.3 + 0.2 * Math.sin(m.t * 5 + b.id))
+        peindreFormes(p, CRISTAL, sx, sy, k * 1.2, { cap: 0, lumiere: LUMIERE_DU_VOL, rampes: rampesDuJoueur(), reflet: REFLET_DU_VOL })
+        p.glow(sx, sy - 2, 5, lumiereDuPrisme()[3], 0.3 + 0.2 * Math.sin(m.t * 5 + b.id))
         continue
       }
       if (age < 0.35) p.ring(sx, sy, 4 + age * 30, 1, N.hex('#8a8a96'), 1 - age / 0.35)
@@ -10920,10 +10920,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         }
         // IL EST IRRADIÉ (les cristaux du Prisme) : une lueur bleue qui bat, des étincelles d'énergie qui montent
         if (e.irradie !== undefined && e.irradie.jusque > m.t) {
-          p.glow(sx, sy, 7, FAISCEAU[3], 0.35 + 0.15 * Math.sin(t * 17 + e.id))
+          p.glow(sx, sy, 7, lumiereDuPrisme()[3], 0.35 + 0.15 * Math.sin(t * 17 + e.id))
           for (let k = 0; k < 3; k++) {
             const ph = (t * 1.8 + k / 3 + e.id * 0.41) % 1
-            p.rect(Math.round(sx + Math.sin(e.id * 2.7 + k * 2.1) * 3), Math.round(sy - 2 - ph * 8), 1, 1, ph < 0.4 ? N.WHITE : FAISCEAU[4], 1 - ph)
+            p.rect(Math.round(sx + Math.sin(e.id * 2.7 + k * 2.1) * 3), Math.round(sy - 2 - ph * 8), 1, 1, ph < 0.4 ? N.WHITE : lumiereDuPrisme()[4], 1 - ph)
           }
         }
         // IL BRÛLE (le lance-flammes) : il rougeoie, et des braises s'en échappent
@@ -11283,7 +11283,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * cible, une lueur ondulante le long ; au départ, le cristal s'illumine ; à l'impact, un éclat blanc et un anneau qui
    * bat.
    */
-  const FAISCEAU = ['#0a2a6a', '#1a5ad0', '#40a0ff', '#80d8ff', '#c8f4ff', '#ffffff'].map((c) => N.hex(c))
+  /**
+   * LA LUMIÈRE DU PRISME (Keko, 16/11 : « le rayon est bleu, énergie pure ») — PUIS LA COULEUR DE SON CRISTAL (Keko, 19/11 :
+   * « que toutes les attaques du prisme soient de la même couleur que le vaisseau ; les rayons sont bleus, c'est pas très
+   * thématique avec le concept de la lumière ; pareil pour les rayons qui relient les balises ») : son rayon, son railgun,
+   * ses cristaux posés, leurs liens, leurs éclats et l'irradiation sont de la matière `energie` de son apparence — l'or
+   * blanc de son origine, le rouge ou le vert des deux autres. Six tons, du sombre au blanc.
+   */
+  const lumiereDuPrisme = (): number[] => rampesDuJoueur()?.energie ?? rampeDeLaMatiere('energie')
   function dessinerLeFaisceau(p: Peintre, a: { bouche?: { x: number; y: number } }, tx: number, ty: number, chauffe: number): void {
     const bo = a.bouche ?? { x: 0, y: 0 }
     const x0 = v.x + Math.cos(v.cap) * bo.x - Math.sin(v.cap) * bo.y
@@ -11294,20 +11301,20 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const px = -uy
     const py = ux
     const large = 1 + Math.round(chauffe * 1.5)
-    p.glowLine(x0, y0, tx, ty, 5 + 3 * chauffe, FAISCEAU[2], 0.35 + 0.25 * chauffe)
+    p.glowLine(x0, y0, tx, ty, 5 + 3 * chauffe, lumiereDuPrisme()[2], 0.35 + 0.25 * chauffe)
     for (let o = -large; o <= large; o++) {
       const bord = Math.abs(o) / (large + 0.5)
-      p.line(x0 + px * o, y0 + py * o, tx + px * o, ty + py * o, bord > 0.6 ? FAISCEAU[2] : FAISCEAU[3], bord > 0.6 ? 0.7 : 0.9)
+      p.line(x0 + px * o, y0 + py * o, tx + px * o, ty + py * o, bord > 0.6 ? lumiereDuPrisme()[2] : lumiereDuPrisme()[3], bord > 0.6 ? 0.7 : 0.9)
     }
-    ;(p.line as unknown as (x0: number, y0: number, x1: number, y1: number, c: (u: number) => number) => void)(x0, y0, tx, ty, (u: number) => ((((u * 4 - t * 4) % 1) + 1) % 1 < 0.15 ? FAISCEAU[4] : N.WHITE))
+    ;(p.line as unknown as (x0: number, y0: number, x1: number, y1: number, c: (u: number) => number) => void)(x0, y0, tx, ty, (u: number) => ((((u * 4 - t * 4) % 1) + 1) % 1 < 0.15 ? lumiereDuPrisme()[4] : N.WHITE))
     for (let d = 0; d <= L; d += 6) {
       const h = 0.5 + 0.5 * Math.sin(d * 0.4 - t * 12)
-      p.glow(x0 + ux * d, y0 + uy * d, 3 + 3 * h, FAISCEAU[3], 0.12 + 0.2 * h)
+      p.glow(x0 + ux * d, y0 + uy * d, 3 + 3 * h, lumiereDuPrisme()[3], 0.12 + 0.2 * h)
     }
-    p.glow(x0, y0, 7 + 3 * chauffe, FAISCEAU[4], 0.7)
+    p.glow(x0, y0, 7 + 3 * chauffe, lumiereDuPrisme()[4], 0.7)
     p.circle(tx, ty, 1.5 + chauffe * 1.5, N.WHITE)
-    p.ring(tx, ty, 3 + 2 * chauffe + Math.sin(t * 20), 1, FAISCEAU[3], 0.7)
-    p.glow(tx, ty, 8 + 8 * chauffe, FAISCEAU[3], 0.6)
+    p.ring(tx, ty, 3 + 2 * chauffe + Math.sin(t * 20), 1, lumiereDuPrisme()[3], 0.7)
+    p.glow(tx, ty, 8 + 8 * chauffe, lumiereDuPrisme()[3], 0.6)
   }
   /** Un rayon de foreur : du canon au point d'impact, un cœur blanc qui tremble entre deux bords colorés, une lueur ; l'impact brûle. */
   function dessinerUnLaser(p: Peintre, depuis: Vaisseau, f: Forage, teintes: number[], cran: number, place: { x: number; y: number } = { x: 0, y: 0 }): void {
@@ -13212,13 +13219,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           jouer(ev.arme === 'cristal' ? 'cristalPose' : 'balisePosee', { dx: ev.x - v.x, dy: ev.y - v.y })
           for (let i = 0; i < 5; i++) {
             const a = R.range(0, Math.PI * 2)
-            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(10, 30), Math.sin(a) * R.range(10, 30), R.range(0.15, 0.3), ev.arme === 'cristal' ? FAISCEAU[R.next() < 0.5 ? 3 : 4] : N.hex('#8a8a96'), 1, 2)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(10, 30), Math.sin(a) * R.range(10, 30), R.range(0.15, 0.3), ev.arme === 'cristal' ? lumiereDuPrisme()[R.next() < 0.5 ? 3 : 4] : N.hex('#8a8a96'), 1, 2)
           }
           break
         case 'baliseFinie':
           for (let i = 0; i < 4; i++) {
             const a = R.range(0, Math.PI * 2)
-            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(10, 25), Math.sin(a) * R.range(10, 25), R.range(0.2, 0.3), R.next() < 0.5 ? N.WHITE : ev.arme === 'cristal' ? FAISCEAU[3] : PEPITE[2], 1, 2)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(10, 25), Math.sin(a) * R.range(10, 25), R.range(0.2, 0.3), R.next() < 0.5 ? N.WHITE : ev.arme === 'cristal' ? lumiereDuPrisme()[3] : PEPITE[2], 1, 2)
           }
           break
         case 'ligne':
@@ -13814,7 +13821,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           for (let i = 0; i < 18; i++) {
             const q = R.next()
             const a = R.range(0, Math.PI * 2)
-            etincelles.ajouter('etincelle', ev.x0 + (ev.x1 - ev.x0) * q, ev.y0 + (ev.y1 - ev.y0) * q, Math.cos(a) * R.range(15, 50), Math.sin(a) * R.range(15, 50), R.range(0.15, 0.35), [N.WHITE, FAISCEAU[4], FAISCEAU[2]][Math.floor(R.next() * 3)], 1, 1.5)
+            etincelles.ajouter('etincelle', ev.x0 + (ev.x1 - ev.x0) * q, ev.y0 + (ev.y1 - ev.y0) * q, Math.cos(a) * R.range(15, 50), Math.sin(a) * R.range(15, 50), R.range(0.15, 0.35), [N.WHITE, lumiereDuPrisme()[4], lumiereDuPrisme()[2]][Math.floor(R.next() * 3)], 1, 1.5)
           }
           secousse = Math.max(secousse, 0.25)
           break
@@ -14091,7 +14098,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
             const a = R.range(0, Math.PI * 2)
             const vit = R.range(30, 90)
             const bleu = CONF.armes[m.canal.arme]?.id === 'faisceau'
-            etincelles.ajouter('etincelle', m.canal.x, m.canal.y, Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.12, 0.3), R.next() < 0.4 ? N.WHITE : bleu ? FAISCEAU[R.next() < 0.5 ? 4 : 3] : RAMPE_DU_LASER[R.next() < 0.5 ? 6 : 4], 1, 1.5)
+            etincelles.ajouter('etincelle', m.canal.x, m.canal.y, Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.12, 0.3), R.next() < 0.4 ? N.WHITE : bleu ? lumiereDuPrisme()[R.next() < 0.5 ? 4 : 3] : RAMPE_DU_LASER[R.next() < 0.5 ? 6 : 4], 1, 1.5)
           }
           if (CONF.armes[m.canal.arme]?.id !== 'faisceau' && R.next() < 0.2 + 0.4 * ch) flammesDesBrules.push({ x: m.canal.x + R.range(-2, 2), y: m.canal.y + R.range(-2, 2), vx: R.range(-6, 6), vy: R.range(-14, -4), t0: t, vie: R.range(0.15, 0.3) })
         }
