@@ -6303,3 +6303,20 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   même couleur que chaque image recopie ; l'anneau d'or de l'aire est un anneau peint selon l'angle, plus quatre arcs : 92.
   LE HANGAR DES XÉNOÏDES, pareil pour ses soixante-dix cellules (`bandesDuSolDesXenoides`) : de 68 à 99 avec la Vouivre,
   de 63 à 91 avec le Kraken. Dessins inchangés (vus à la capture).
+- LES HANGARS RETRAVAILLÉS (Keko, 19/11) :
+  - L'EMPIRE (« très bof ; quelques machines, des tuyaux un petit peu plus intéressants ; là, il fait un peu vide et
+    bâclé ») : UN RÉSEAU DE TUYAUX au plafond — un gros tuyau d'acier à brides boulonnées, un tuyau de cuivre gainé de
+    bandes —, qui descendent le long des murs ; à gauche, UN MANOMÈTRE dont l'aiguille hésite, UNE VANNE qui tourne
+    lentement, UN ÉVENT qui crache des bouffées de vapeur ; à droite, UN GÉNÉRATEUR — son ventilateur qui tourne derrière
+    sa grille, ses voyants, sa bande de danger, une chaleur orange — et SON CÂBLE qui serpente au sol jusqu'à l'aire ; des
+    taches d'huile ; les grilles d'aération passées au sol, au bas de l'aire.
+  - LES XÉNOÏDES (« un petit côté luisant aux textures, qu'on comprenne bien que c'est de la muqueuse, organique ; là, les
+    trucs sont très plats ») : chaque cellule a son OMBRE en bas à droite et UN REFLET MOUILLÉ en haut à gauche, une tache
+    claire au cœur presque blanc (calculés avec le sol) ; six reflets à la fois qui S'ALLUMENT un instant ; un fil clair
+    sur les veines qui battent ; UNE GOUTTE DE MUCUS qui perle au bout de chaque vrille, s'étire et tombe ; le sphincter
+    de l'aire, un reflet mouillé sur sa membrane et ses lèvres.
+  - LES YHG'THARR (« un peu de texture, ou des petits éléments de particules ») : UNE BRUME DU VIDE en volutes, un bruit
+    lissé tramé en trois tons (calculée une fois, `bandesDeLaBrume`) ; UNE FISSURE QUI LUIT dans chaque dalle ; DES
+    PARTICULES qui tournent lentement autour de l'aire, chacune sa traîne ; DES ÉCLAIRS DE VIDE qui crépitent sur les
+    bords, ici puis là ; DES FUMEROLLES au bout des tentacules.
+  *Mesuré* : 107 images par seconde à l'Empire, 86 aux Xénoïdes, 95 aux Yhg'tharr (Chrome sans tête).

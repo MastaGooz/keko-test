@@ -69,6 +69,16 @@ function solDeLEmpire(p: Peintre, s: Scene): void {
         p.rect(gx + rx + 1, gy + ry + 1, 1, 1, ACIER[0])
       }
     }
+  // (… PLUS GARNI, PLUS MACHINE — Keko, 19/11 : « celui des humains très bof ; quelques machines, des tuyaux un petit peu
+  // plus intéressants ; là, il fait un peu vide et bâclé »)
+  // des taches d'huile sur les plaques
+  for (let i = 0; i < 5; i++) {
+    const x = hasard(i, 1, 71) * W
+    const y = y0 + hasard(i, 2, 71) * hautScene
+    if (Math.hypot(x - cx, y - cy) < 66) continue
+    p.circle(x, y, 3 + hasard(i, 3, 71) * 4, hex('#0c1018'), 0.6)
+    p.circle(x - 1, y - 1, 1.2, hex('#2a3448'), 0.5)
+  }
   // des équerres peintes au sol, aux quatre coins de la zone d'appontage, usées
   for (const [sx, sy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
     const ex = cx + sx * 74
@@ -79,20 +89,92 @@ function solDeLEmpire(p: Peintre, s: Scene): void {
       p.rect(ex, ey - sy * k, 2, 1, OR[1], 0.7)
     }
   }
-  // LA CONDUITE, à gauche : un tuyau qui court le long du mur, ses colliers, une vanne à volant
-  const xc = 4
-  p.rect(xc - 2, y0, 5, hautScene, ACIER[0])
-  p.rect(xc - 1, y0, 3, hautScene, ACIER[4])
-  p.rect(xc - 1, y0, 1, hautScene, ACIER[6])
-  for (let y = y0 + 10; y < y1; y += 22) p.rect(xc - 3, y, 7, 2, ACIER[2])
-  const yv = Math.round(cy - 18)
-  p.circle(xc + 1, yv, 4, ACIER[0])
-  p.ring(xc + 1, yv, 3, 1, hex('#a83a2a'))
-  p.line(xc - 2, yv, xc + 4, yv, hex('#a83a2a'))
-  p.line(xc + 1, yv - 3, xc + 1, yv + 3, hex('#a83a2a'))
+  // LE RÉSEAU DE TUYAUX AU PLAFOND : un gros tuyau d'acier tout du long, ses brides boulonnées ; dessous, un tuyau de cuivre
+  // gainé de bandes ; ils descendent le long des deux murs
+  const tuyau = (x0: number, ya: number, x1: number, e: number, clair: number, moyen: number, sombre: number): void => {
+    p.rect(x0, ya, x1 - x0, e, sombre)
+    p.rect(x0, ya, x1 - x0, e - 1, moyen)
+    p.rect(x0, ya, x1 - x0, 1, clair)
+  }
+  const colonne = (xa: number, ya: number, yb: number, e: number, clair: number, moyen: number, sombre: number): void => {
+    p.rect(xa, ya, e, yb - ya, sombre)
+    p.rect(xa, ya, e - 1, yb - ya, moyen)
+    p.rect(xa, ya, 1, yb - ya, clair)
+  }
+  const yT = y0 + 2
+  tuyau(0, yT, W, 5, ACIER[6], ACIER[4], ACIER[0])
+  for (let x = 8; x < W; x += 26) {
+    p.rect(x, yT - 1, 3, 7, ACIER[2])
+    p.rect(x, yT - 1, 3, 1, ACIER[5])
+    p.px(x + 1, yT + 1, ACIER[6])
+  }
+  const CUIVRE = [hex('#2a1408'), hex('#7a3e1a'), hex('#b8682e'), hex('#e8a060')]
+  tuyau(0, yT + 7, W, 4, CUIVRE[3], CUIVRE[2], CUIVRE[0])
+  for (let x = 4; x < W; x += 9) p.rect(x, yT + 7, 2, 4, CUIVRE[1])
+  // (les descentes : l'acier à gauche, le cuivre à droite jusqu'au générateur ; un coude à chaque angle)
+  colonne(3, yT + 4, y1, 5, ACIER[6], ACIER[4], ACIER[0])
+  p.rect(2, yT + 3, 7, 3, ACIER[2])
+  for (let y = yT + 22; y < y1; y += 22) p.rect(2, y, 7, 2, ACIER[2])
+  const xG = W - 24
+  const yG = Math.round(cy - 6)
+  colonne(W - 7, yT + 10, yG, 4, CUIVRE[3], CUIVRE[2], CUIVRE[0])
+  p.rect(W - 8, yT + 9, 6, 3, CUIVRE[1])
+  // LE MANOMÈTRE, sur la descente de gauche : un cadran blanc, son aiguille qui hésite
+  const ym = Math.round(cy - 30)
+  p.circle(11, ym, 5, ACIER[0])
+  p.circle(11, ym, 4, hex('#d8dce4'))
+  p.ring(11, ym, 4, 1, ACIER[5])
+  const aig = -Math.PI * 0.75 + (0.9 + 0.25 * Math.sin(t * 1.3) + 0.06 * Math.sin(t * 9)) * Math.PI * 0.6
+  p.line(11, ym, 11 + Math.cos(aig) * 3, ym + Math.sin(aig) * 3, hex('#a82a1a'))
+  p.rect(6, ym, 2, 1, ACIER[2])
+  // LA VANNE, qui tourne lentement
+  const yv = Math.round(cy + 6)
+  const av = t * 0.6
+  p.circle(6, yv, 5, ACIER[0])
+  p.ring(6, yv, 4, 1, hex('#a83a2a'))
+  for (let k = 0; k < 3; k++) {
+    const a = av + (k * Math.PI) / 3
+    p.line(6 - Math.cos(a) * 4, yv - Math.sin(a) * 4, 6 + Math.cos(a) * 4, yv + Math.sin(a) * 4, hex('#c84a34'))
+  }
+  p.circle(6, yv, 1, hex('#5a1a10'))
+  // L'ÉVENT, au coude du haut à gauche : des bouffées de vapeur qui s'en échappent
+  for (let k = 0; k < 4; k++) {
+    const u = (t * 0.8 + k / 4) % 1
+    const x = 12 + u * 10 + Math.sin(u * 6 + k) * 2
+    const y = yT + 12 + u * 6
+    p.circle(x, y, 1.5 + u * 3, hex('#c8d0dc'), 0.35 * (1 - u))
+  }
+  // LE GÉNÉRATEUR, à droite : un caisson, son ventilateur qui tourne derrière sa grille, des voyants, une bande de danger
+  p.rect(xG, yG, 21, 30, ACIER[0])
+  p.rect(xG + 1, yG + 1, 19, 28, ACIER[3])
+  p.rect(xG + 1, yG + 1, 19, 1, ACIER[5])
+  for (let k = 0; k < 5; k++) p.rect(xG + 1 + k * 4, yG + 25, 2, 3, k % 2 === 0 ? OR[2] : hex('#15131a'))
+  const [fx, fy] = [xG + 10, yG + 11]
+  p.circle(fx, fy, 7, ACIER[0])
+  p.circle(fx, fy, 6, hex('#141a26'))
+  const af = t * 9
+  for (let k = 0; k < 4; k++) {
+    const a = af + (k * Math.PI) / 2
+    p.poly([[fx, fy], [fx + Math.cos(a) * 5.5, fy + Math.sin(a) * 5.5], [fx + Math.cos(a + 0.6) * 5, fy + Math.sin(a + 0.6) * 5]], ACIER[4])
+  }
+  p.circle(fx, fy, 1.5, ACIER[6])
+  for (const dy of [-4, -2, 0, 2, 4]) p.rect(fx - 6, fy + dy, 13, 1, ACIER[2], 0.5)
+  for (let k = 0; k < 3; k++) p.rect(xG + 3 + k * 4, yG + 20, 2, 2, Math.floor(t * 2 + k * 0.7) % 3 === k ? hex('#3ad07a') : hex('#14301e'))
+  p.glow(fx, fy, 12, hex('#ff9a40'), 0.05 + 0.03 * Math.sin(t * 5))
+  // (son câble, qui serpente au sol jusqu'au bord de l'aire)
+  let [px, py] = [xG + 2, yG + 30]
+  for (let k = 1; k <= 10; k++) {
+    const u = k / 10
+    const x = xG + 2 + (cx + 46 - xG - 2) * u + Math.sin(u * Math.PI * 2) * 4
+    const y = yG + 30 + (cy + 40 - yG - 30) * u
+    p.line(px, py + 1, x, y + 1, ACIER[0])
+    p.line(px, py, x, y, hex('#2a2e36'))
+    px = x
+    py = y
+  }
   // UNE CONSOLE, en haut à droite : un pupitre, son écran vert, des voyants qui clignotent
-  const xk = W - 22
-  const yk = y0 + 26
+  const xk = W - 34
+  const yk = y0 + 20
   p.rect(xk, yk, 16, 11, ACIER[0])
   p.rect(xk + 1, yk + 1, 14, 9, ACIER[3])
   p.rect(xk + 2, yk + 2, 8, 5, hex('#0e2a1a'))
@@ -109,21 +191,22 @@ function solDeLEmpire(p: Peintre, s: Scene): void {
   }
   caisse(W - 20, y1 - 22, 14, 11)
   caisse(W - 18, y1 - 32, 11, 10)
-  caisse(10, y1 - 20, 12, 10)
-  const xb = 14
+  caisse(12, y1 - 20, 12, 10)
+  const xb = 16
   const yb = y1 - 34
   p.rect(xb - 4, yb, 9, 12, hex('#0a0806'))
   p.rect(xb - 3, yb + 1, 7, 10, hex('#7a2418'))
   p.rect(xb - 3, yb + 1, 2, 10, hex('#a83a2a'))
   for (const dy of [3, 8]) p.rect(xb - 3, yb + dy, 7, 1, hex('#3a120c'))
-  // LES GRILLES D'AÉRATION, de part et d'autre de l'aire : elles rougeoient doucement
+  // LES GRILLES D'AÉRATION, au sol, de part et d'autre du bas de l'aire : elles rougeoient doucement
   for (const sg of [-1, 1]) {
-    const gx = Math.round(cx + sg * 70) - 5
-    const gy = Math.round(cy) - 6
-    p.rect(gx, gy, 10, 12, ACIER[0])
+    const gx = Math.round(cx + sg * 48) - 5
+    const gy = Math.round(cy + 56)
+    if (gy + 8 > y1 - 5) continue
+    p.rect(gx, gy, 10, 8, ACIER[0])
     const rouge = 0.5 + 0.5 * Math.sin(t * 1.7 + sg)
-    for (let k = 0; k < 5; k++) p.rect(gx + 1, gy + 1 + k * 2, 8, 1, rouge > 0.6 && k % 2 === 0 ? hex('#7a3010') : ACIER[3])
-    p.glow(gx + 5, gy + 6, 9, hex('#ff7a30'), 0.06 + 0.06 * rouge)
+    for (let k = 0; k < 4; k++) p.rect(gx + 1, gy + 1 + k * 2, 8, 1, rouge > 0.6 && k % 2 === 0 ? hex('#7a3010') : ACIER[3])
+    p.glow(gx + 5, gy + 4, 8, hex('#ff7a30'), 0.06 + 0.06 * rouge)
   }
   // les bandes de sécurité au pied de l'aire : des chevrons jaunes et noirs, usés
   const ybd = y1 - 4
@@ -176,20 +259,39 @@ const BILE = H('#1a2a06', '#3a5a0c', '#6a9a14', '#a8d42a', '#e0f870')
  * cellule qui le couvre — son cerne, son dedans, son reflet en haut à gauche —, rangé en bandes d'une même couleur.
  */
 const solsDesXenoides = new Map<string, number[]>()
+/** Les cellules de l'antre d'une scène (leur place, leur rayon, leur matière) : le sol calculé et ses reflets les lisent. */
+const cellulesDesXenoides = (W: number, y0: number, y1: number): { x: number; y: number; r: number; chitine: boolean }[] =>
+  Array.from({ length: 70 }, (_, i) => ({ x: hasard(i, 1, 11) * (W + 20) - 10, y: y0 + hasard(i, 2, 11) * (y1 - y0 + 20) - 10, r: 6 + hasard(i, 3, 11) * 9, chitine: hasard(i, 4, 11) < 0.35 }))
+// (LES TONS LUISANTS — Keko, 19/11 : « donner un côté un peu luisant aux textures, qu'on comprenne bien que c'est de la
+// muqueuse, organique ; là, les trucs sont très plats » : chaque cellule a son ombre en bas à droite, et UN REFLET MOUILLÉ
+// en haut à gauche — une tache claire, son cœur presque blanc)
+const MUQUEUSE = H('#c86a88', '#f0b4c8', '#fff0f4')
+const CHITINE_LUISANTE = H('#8a7484', '#d8c8d4', '#fbf4f8')
 function bandesDuSolDesXenoides(W: number, y0: number, y1: number): number[] {
   const cle = `${W}:${y0}:${y1}`
   const deja = solsDesXenoides.get(cle)
   if (deja !== undefined) return deja
-  const hautScene = y1 - y0
-  const cellules = Array.from({ length: 70 }, (_, i) => ({ x: hasard(i, 1, 11) * (W + 20) - 10, y: y0 + hasard(i, 2, 11) * (hautScene + 20) - 10, r: 6 + hasard(i, 3, 11) * 9, chitine: hasard(i, 4, 11) < 0.35 }))
+  const cellules = cellulesDesXenoides(W, y0, y1)
   const couleur = (x: number, y: number): number => {
     for (let i = cellules.length - 1; i >= 0; i--) {
       const c = cellules[i]
-      const d = Math.hypot(x + 0.5 - c.x, y + 0.5 - c.y)
+      const dx = x + 0.5 - c.x
+      const dy = y + 0.5 - c.y
+      const d = Math.hypot(dx, dy)
       if (d > c.r) continue
       if (d > c.r - 1.5) return c.chitine ? CHITINE[1] : CHAIR[2]
-      const a = Math.atan2(y + 0.5 - c.y, x + 0.5 - c.x)
-      if (Math.abs(d - (c.r - 2)) < 0.6 && a < -Math.PI * 0.5 && a > -Math.PI * 0.95) return c.chitine ? CHITINE[3] : CHAIR[4]
+      // (le reflet : une tache claire en haut à gauche, son cœur presque blanc ; son halo)
+      const sx = dx + c.r * 0.38
+      const sy = dy + c.r * 0.42
+      const ds = Math.hypot(sx * 1.3, sy)
+      const L = c.chitine ? CHITINE_LUISANTE : MUQUEUSE
+      if (ds < c.r * 0.09 + 0.6) return L[2]
+      if (ds < c.r * 0.2) return L[1]
+      if (ds < c.r * 0.3) return L[0]
+      // (l'ombre, en bas à droite)
+      const lum = -(dx * 0.6 + dy * 0.8) / c.r
+      if (lum < -0.45) return c.chitine ? CHITINE[1] : CHAIR[2]
+      if (lum > 0.35) return c.chitine ? CHITINE[3] : CHAIR[4]
       return c.chitine ? CHITINE[2] : CHAIR[3]
     }
     return CHAIR[1]
@@ -224,8 +326,25 @@ function solDesXenoides(p: Peintre, s: Scene): void {
       const y = yv + Math.sin(x * 0.06 + v * 1.7) * 6 + Math.sin(x * 0.17 + v) * 2
       const bat = Math.max(0, Math.sin(x * 0.05 - t * 3 + v * 2)) ** 6
       p.line(px, py, x, y, bat > 0.4 ? CHAIR[6] : CHAIR[0])
+      // (… LUISANTES : un fil clair dessus, mouillé, plus vif au battement)
+      if (bat > 0.15) p.line(px, py - 1, x, y - 1, MUQUEUSE[bat > 0.6 ? 1 : 0], 0.4 + 0.5 * bat)
       px = x
       py = y
+    }
+  }
+  // LES REFLETS QUI SCINTILLENT : sur six cellules à la fois, le reflet mouillé s'allume un instant, comme la lumière qui
+  // glisse sur une muqueuse qui respire
+  {
+    const cellules = cellulesDesXenoides(W, Math.round(y0), Math.round(y1))
+    for (let k = 0; k < 6; k++) {
+      const ph = t * 0.5 + k / 6
+      const c = cellules[Math.floor(hasard(Math.floor(ph), k, 13) * cellules.length)]
+      const u = ph % 1
+      const e = Math.sin(Math.PI * u)
+      const [gx, gy] = [Math.round(c.x - c.r * 0.38), Math.round(c.y - c.r * 0.42)]
+      p.px(gx, gy, MUQUEUSE[2])
+      if (e > 0.5) for (const [ax, ay] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) p.rect(gx + ax, gy + ay, 1, 1, MUQUEUSE[2], e - 0.4)
+      p.glow(gx, gy, 3 + 2 * e, MUQUEUSE[1], 0.25 * e)
     }
   }
   // LES ŒUFS, en grappes aux coins du bas : des coques pâles cernées de sombre, une ombre qui remue dedans
@@ -275,6 +394,11 @@ function aireDesXenoides(p: Peintre, cx: number, cy: number, R0: number, t: numb
   }
   const souffle = 1 + 0.05 * Math.sin(t * 1.6)
   for (const [r, c] of [[16, CHAIR[2]], [11, CHAIR[4]], [6, CHAIR[1]]] as [number, number][]) p.ring(cx, cy, r * souffle, 2, c)
+  // (… LUISANTE — Keko, 19/11 : un reflet mouillé sur la membrane, en haut à gauche, et sur les lèvres du sphincter)
+  p.arc(cx, cy, R0 - 12, 2, Math.PI * 1.08, Math.PI * 1.42, MUQUEUSE[0], 0.55)
+  p.arc(cx, cy, R0 - 13, 1, Math.PI * 1.15, Math.PI * 1.32, MUQUEUSE[1], 0.6)
+  p.arc(cx, cy, 16 * souffle, 1, Math.PI * 1.1, Math.PI * 1.45, MUQUEUSE[1], 0.7)
+  p.arc(cx, cy, 11 * souffle, 1, Math.PI * 1.15, Math.PI * 1.4, MUQUEUSE[2], 0.6)
   // ses huit feux : des pustules de bile qui battent, l'une après l'autre
   for (let i = 0; i < 8; i++) {
     const a = (i / 8) * Math.PI * 2
@@ -301,6 +425,14 @@ function lampesDesXenoides(p: Peintre, s: Scene): void {
       p.line(px + 1, py, x + 1, y, CHITINE[1])
       px = x
       py = y
+    }
+    // (… ET UNE GOUTTE DE MUCUS qui perle à leur bout, s'étire et tombe — Keko, 19/11 : luisant)
+    const u = (t * 0.45 + hasard(k, 8) ) % 1
+    const yg = py + (u < 0.4 ? 0 : (u - 0.4) * (u - 0.4) * 160)
+    const gros = u < 0.4 ? 0.6 + u * 2 : 1.4
+    if (yg < py + 70) {
+      p.circle(px, yg + 1, gros, CHAIR[5])
+      p.px(Math.round(px - 0.4), Math.round(yg), MUQUEUSE[2])
     }
   }
   for (const lx of [12, W - 13]) {
@@ -468,10 +600,51 @@ function lampesDesVectrans(p: Peintre, s: Scene): void {
 
 // --------------------------------------------------------------------------------------------------------- LES YHG'THARR
 const VIDE = H('#030206', '#07040c', '#0e0818', '#160c26', '#22123a', '#3a1e5c', '#6a3aa0', '#b070ff', '#e8c8ff')
+/**
+ * LA BRUME DU VIDE, CALCULÉE UNE FOIS (Keko, 19/11 : « rajouter un peu de texture, ou des petits éléments de
+ * particules ») : des volutes de brume violette, d'un bruit lissé tramé en trois tons, rangées en bandes.
+ */
+const brumesDuVide = new Map<string, number[]>()
+function bandesDeLaBrume(W: number, y0: number, y1: number): number[] {
+  const cle = `${W}:${y0}:${y1}`
+  const deja = brumesDuVide.get(cle)
+  if (deja !== undefined) return deja
+  const lisse = (u: number): number => u * u * (3 - 2 * u)
+  const bruit = (x: number, y: number, pas: number, g: number): number => {
+    const gx = Math.floor(x / pas)
+    const gy = Math.floor(y / pas)
+    const fx = lisse(x / pas - gx)
+    const fy = lisse(y / pas - gy)
+    const v = (i: number, j: number): number => hasard(gx + i, gy + j, g)
+    return (v(0, 0) * (1 - fx) + v(1, 0) * fx) * (1 - fy) + (v(0, 1) * (1 - fx) + v(1, 1) * fx) * fy
+  }
+  const BAYER = [0, 0.5, 0.75, 0.25]
+  const couleur = (x: number, y: number): number => {
+    const n = 0.6 * bruit(x, y, 26, 91) + 0.4 * bruit(x, y, 11, 92)
+    const seuil = BAYER[(x % 2) + 2 * (y % 2)] * 0.12
+    return n + seuil > 0.72 ? VIDE[3] : n + seuil > 0.6 ? VIDE[2] : VIDE[1]
+  }
+  const bandes: number[] = []
+  for (let y = y0; y < y1; y++) {
+    let x0 = 0
+    let c0 = couleur(0, y)
+    for (let x = 1; x <= W; x++) {
+      const c = x < W ? couleur(x, y) : -1
+      if (c !== c0) {
+        bandes.push(x0, y, x - x0, c0)
+        x0 = x
+        c0 = c
+      }
+    }
+  }
+  brumesDuVide.set(cle, bandes)
+  return bandes
+}
 function solDesYhgtharr(p: Peintre, s: Scene): void {
   const { W, y0, y1, cx, cy, t } = s
   const hautScene = y1 - y0
-  p.rect(0, y0, W, hautScene, VIDE[1])
+  const bb = bandesDeLaBrume(W, Math.round(y0), Math.round(y1))
+  for (let i = 0; i < bb.length; i += 4) p.rect(bb[i], bb[i + 1], bb[i + 2], 1, bb[i + 3])
   // le vide, piqué de lueurs lointaines
   for (let i = 0; i < 40; i++) {
     const x = Math.floor(hasard(i, 1, 41) * W)
@@ -494,6 +667,10 @@ function solDesYhgtharr(p: Peintre, s: Scene): void {
     p.poly(pts.map(([a, b]) => [a + 1, b + 2]), VIDE[0])
     p.poly(pts, VIDE[3])
     for (let k = 0; k < 6; k++) p.line(pts[k][0], pts[k][1], pts[(k + 1) % 6][0], pts[(k + 1) % 6][1], k < 3 ? VIDE[5] : VIDE[2])
+    // (… UNE FISSURE QUI LUIT dans la pierre, qui bat lentement)
+    const lu = 0.4 + 0.6 * Math.max(0, Math.sin(t * 1.2 + i * 1.7))
+    p.line(pts[0][0] * 0.6 + x * 0.4, pts[0][1] * 0.6 + y * 0.4 + flotte * 0.4, x, y + flotte, VIDE[6], 0.5 * lu)
+    p.line(x, y + flotte, pts[3][0] * 0.5 + x * 0.5, pts[3][1] * 0.5 + (y + flotte) * 0.5, VIDE[7], 0.4 * lu)
   }
   // DES TENTACULES qui montent des coins du bas et ondulent : épais à la base, effilés, d'une ombre violette
   for (const [x0, sg, lg] of [[4, 1, 70], [W - 4, -1, 64], [22, 1, 40], [W - 20, -1, 44]] as [number, number, number][]) {
@@ -511,8 +688,11 @@ function solDesYhgtharr(p: Peintre, s: Scene): void {
       px = x
       py = y
     }
-    void px
-    void py
+    // (… DES FUMEROLLES qui montent du bout de chaque tentacule)
+    for (let k = 0; k < 3; k++) {
+      const u = (t * 0.5 + k / 3 + x0 * 0.01) % 1
+      p.circle(px + Math.sin(u * 5 + k) * 2, py - u * 14, 0.8 + u * 1.6, VIDE[5], 0.5 * (1 - u))
+    }
   }
   // DES YEUX QUI S'OUVRENT DANS LE NOIR, sur les côtés : une fente violette, qui cligne
   for (let i = 0; i < 4; i++) {
@@ -524,6 +704,34 @@ function solDesYhgtharr(p: Peintre, s: Scene): void {
     p.poly([[x - 4, y], [x, y - h], [x + 4, y], [x, y + h]], VIDE[6])
     p.rect(x, y - h + 1, 1, 2 * h - 1, VIDE[0])
     p.glow(x, y, 6, VIDE[7], 0.25 * ouvert)
+  }
+  // DES PARTICULES QUI TOURNENT AUTOUR DE L'AIRE, lentement, chacune sa petite traîne
+  for (let i = 0; i < 22; i++) {
+    const r = 70 + hasard(i, 1, 51) * 40
+    const v = (0.12 + 0.1 * hasard(i, 2, 51)) * (i % 2 === 0 ? 1 : -1)
+    const a = hasard(i, 3, 51) * Math.PI * 2 + t * v
+    for (let j = 0; j < 3; j++) {
+      const aj = a - j * 0.04 * Math.sign(v)
+      p.rect(Math.round(cx + Math.cos(aj) * r), Math.round(cy + Math.sin(aj) * r * 0.85), 1, 1, j === 0 ? VIDE[7] : VIDE[5], 0.8 - j * 0.25)
+    }
+  }
+  // DES ÉCLAIRS DE VIDE qui crépitent sur les bords, un instant, ici puis là
+  {
+    const n = Math.floor(t * 0.8)
+    const u = t * 0.8 - n
+    if (u < 0.22) {
+      const gauche = hasard(n, 1, 61) < 0.5
+      let x = gauche ? 2 : W - 2
+      let y = y0 + 10 + hasard(n, 2, 61) * (hautScene - 20)
+      for (let k = 0; k < 6; k++) {
+        const nx = x + (gauche ? 1 : -1) * (3 + hasard(n, k, 62) * 5)
+        const ny = y + (hasard(n, k, 63) - 0.5) * 9
+        p.line(x, y, nx, ny, u < 0.08 ? VIDE[8] : VIDE[7], 1 - u / 0.22)
+        x = nx
+        y = ny
+      }
+      p.glow(gauche ? 8 : W - 8, y, 10, VIDE[7], 0.4 * (1 - u / 0.22))
+    }
   }
   // des braises violettes qui montent
   for (let i = 0; i < 16; i++) {
