@@ -2959,7 +2959,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // l'ombre du vaisseau sur l'aire, décalée à l'opposé des lampes ; elle suit sa respiration
     const al = allureMontee(aUnBouclierAuRepos() ? 1 : 0)
     const haut = cy - sy
-    if (haut < 60) {
+    // (… PAS CHEZ LES YHG'THARR — Keko, 19/11 : « leur ombre est vraiment bizarre sur la plateforme, ovale et pas vraiment
+    // sous le vaisseau ; je sais même pas si on a envie de dessiner une ombre à cet endroit » : au bord du vide, rien
+    // n'en porte)
+    if (haut < 60 && raceDuHangar() !== 'innommes') {
       const k = Math.max(0.4, 1 - haut / 60)
       p.poly(ovale(cx + 3, cy + 5, 13 * k * kG * g.echelle, 19 * k * kG * g.echelle, 18).map(([x, y]) => [x, y]), N.hex('#15161d'), 0.85 * k)
     }

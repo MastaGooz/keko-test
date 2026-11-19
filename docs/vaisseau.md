@@ -6501,3 +6501,6 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   portrait est décalé de 8 % de la case vers le haut et la droite (ses arches et ses éclats tiraient la boîte vers
   l'arrière) — son cristal au milieu, vu à la capture ; l'hypercube dit « Lance un cube qui rebondit trois fois et grossit
   à chaque rebond. »
+- PLUS D'OMBRE AU HANGAR DES YHG'THARR (Keko, 19/11 : « leur ombre est vraiment bizarre sur la plateforme, ovale et pas
+  vraiment sous le vaisseau ; je sais même pas si on a envie de dessiner une ombre à cet endroit ; on peut essayer de
+  l'enlever ») : au bord du vide, rien n'en porte ; les autres hangars gardent la leur. Vu à la capture.
