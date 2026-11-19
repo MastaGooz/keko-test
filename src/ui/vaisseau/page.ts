@@ -1073,7 +1073,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
 
   // ---------------------------------------------------------------- le hangar, en pixels
   /** L'allure du vaisseau : les crans des pièces montées et ses armes PLACE PAR PLACE ('' : une place libre — la place 1 est l'aile gauche, la 2 la droite), lus par le dessin (le rival est de série, sans arme) ; `bouclier` : la part du bouclier qui reste, pour son anneau. */
-  type Allure = { /** Le ver : ses anneaux sur le chemin de sa tête (voir `cheminDuVer`). */ chemin?: [number, number][]; propulseur: number; coque: number; /** Le cran de la foreuse montée, 0 sans foreuse. */ foreuse: number; radar: boolean; aimant: boolean; armes: string[]; bouclier: number; outils?: ({ famille: string; cran: number } | null)[]; foreusePlace?: number; vises?: number[]; habit?: Habit; /** Le Kraken et ses armes (voir `Allure.kraken` du rendu). */ kraken?: { crochets?: boolean; rejeton?: number; sorties?: number[] }; /** La Vouivre et ses armes (voir `Allure.vouivre` du rendu). */ vouivre?: { tete?: boolean; mine?: number; reserve?: boolean }; /** Le Ver et ses armes (voir `Allure.ver` du rendu). */ ver?: { oeufs?: boolean; parasite?: number; epine?: number } }
+  type Allure = { /** Le ver : ses anneaux sur le chemin de sa tête (voir `cheminDuVer`). */ chemin?: [number, number][]; propulseur: number; coque: number; /** Le cran de la foreuse montée, 0 sans foreuse. */ foreuse: number; radar: boolean; aimant: boolean; armes: string[]; bouclier: number; outils?: ({ famille: string; cran: number } | null)[]; foreusePlace?: number; vises?: number[]; habit?: Habit; /** Le Kraken et ses armes (voir `Allure.kraken` du rendu). */ kraken?: { crochets?: boolean; rejeton?: number; sorties?: number[] }; /** La Vouivre et ses armes (voir `Allure.vouivre` du rendu). */ vouivre?: { tete?: boolean; mine?: number; reserve?: boolean }; /** Le Ver et ses armes (voir `Allure.ver` du rendu). */ ver?: { oeufs?: boolean; parasite?: number; epine?: number }; /** La Sentinelle et ses armes (voir `Allure.sentinelle` du rendu). */ sentinelle?: { tempete?: boolean; chaine?: boolean } }
   /**
    * L'ARME DU JEU DU VORTEX (Keko, 15/11 : « Arme et le nom de l'arme, avec un bouton pour changer ») : le canon, un par
    * aile — LA MÊME SUR LES DEUX AILES, et c'est elle que le vaisseau porte au hangar comme en vol, et qui tire.
@@ -1115,7 +1115,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const placeDeLaForeuse = (): number => Math.max(0, hangar.outils.indexOf(foreuseMontee(hangar)?.id ?? ''))
   // (LE LANCE-TOURELLES ET LE LANCE-SCIE DE L'INGÉNIEUR SE DESSINENT — Keko, 18/11 : leurs armes ne sont plus dans la liste
   // de celles qu'on ne voit pas sur le vaisseau)
-  const allureMontee = (bouclier: number): Allure => ({ propulseur: monteeA(hangar, 'propulseur').cran, coque: monteeA(hangar, 'coque').cran, foreuse: parametres.has('vortex') ? (((pieceDe(armeDuVortex())?.arme?.canalise !== undefined && pieceDe(armeDuVortex())?.arme?.id !== 'faisceau') || pieceDe(armeDuVortex())?.arme?.balayage?.trace !== undefined) ? 3 : 0) : (foreuseMontee(hangar)?.cran ?? 0), radar: radarMonte(hangar) > 0, aimant: aimantMonte(hangar) > 1, armes: parametres.has('vortex') ? (pieceDe(armeDuVortex())?.arme?.balayage?.trace !== undefined || pieceDe(armeDuVortex())?.arme?.orbite !== undefined || pieceDe(armeDuVortex())?.arme?.canalise !== undefined || pieceDe(armeDuVortex())?.arme?.chaine !== undefined || pieceDe(armeDuVortex())?.arme?.aura !== undefined || pieceDe(armeDuVortex())?.arme?.balise !== undefined || pieceDe(armeDuVortex())?.arme?.givre !== undefined || pieceDe(armeDuVortex())?.arme?.nova !== undefined || pieceDe(armeDuVortex())?.arme?.salve !== undefined || pieceDe(armeDuVortex())?.arme?.tornade !== undefined || pieceDe(armeDuVortex())?.arme?.plasma !== undefined || pieceDe(armeDuVortex())?.arme?.essaim !== undefined || pieceDe(armeDuVortex())?.arme?.sphere !== undefined || pieceDe(armeDuVortex())?.arme?.puits !== undefined || pieceDe(armeDuVortex())?.arme?.meteore !== undefined || pieceDe(armeDuVortex())?.arme?.rail !== undefined || pieceDe(armeDuVortex())?.arme?.tentacule !== undefined || pieceDe(armeDuVortex())?.arme?.nuee !== undefined || pieceDe(armeDuVortex())?.arme?.rejeton !== undefined || pieceDe(armeDuVortex())?.arme?.crachat !== undefined || pieceDe(armeDuVortex())?.arme?.mine !== undefined || pieceDe(armeDuVortex())?.arme?.fleau !== undefined || pieceDe(armeDuVortex())?.arme?.parasite !== undefined || pieceDe(armeDuVortex())?.arme?.drain !== undefined || pieceDe(armeDuVortex())?.arme?.vrille !== undefined || pieceDe(armeDuVortex())?.arme?.ponte !== undefined || pieceDe(armeDuVortex())?.arme?.epines !== undefined ? [] : pieceDe(armeDuVortex())?.arme?.flamme !== undefined || pieceDe(armeDuVortex())?.arme?.napalm !== undefined || pieceDe(armeDuVortex())?.arme?.balayage !== undefined ? [0] : [0, 1]).map(() => pieceDe(armeDuVortex())?.arme?.id ?? '') : Array.from({ length: capacite(hangar, 'arme') }, (_, k) => pieceDe(hangar.armes[k] ?? '')?.arme?.id ?? ''), bouclier, outils: outilsParPlace(), foreusePlace: placeDeLaForeuse(), habit: habitDuJoueur(monteeA(hangar, 'coque').cran), kraken: krakenDeLAllure(), vouivre: vouivreDeLAllure(), ver: verDeLAllure() })
+  const allureMontee = (bouclier: number): Allure => ({ propulseur: monteeA(hangar, 'propulseur').cran, coque: monteeA(hangar, 'coque').cran, foreuse: parametres.has('vortex') ? (((pieceDe(armeDuVortex())?.arme?.canalise !== undefined && pieceDe(armeDuVortex())?.arme?.id !== 'faisceau') || pieceDe(armeDuVortex())?.arme?.balayage?.trace !== undefined) ? 3 : 0) : (foreuseMontee(hangar)?.cran ?? 0), radar: radarMonte(hangar) > 0, aimant: aimantMonte(hangar) > 1, armes: parametres.has('vortex') ? (pieceDe(armeDuVortex())?.arme?.balayage?.trace !== undefined || pieceDe(armeDuVortex())?.arme?.orbite !== undefined || pieceDe(armeDuVortex())?.arme?.canalise !== undefined || pieceDe(armeDuVortex())?.arme?.chaine !== undefined || pieceDe(armeDuVortex())?.arme?.aura !== undefined || pieceDe(armeDuVortex())?.arme?.balise !== undefined || pieceDe(armeDuVortex())?.arme?.givre !== undefined || pieceDe(armeDuVortex())?.arme?.nova !== undefined || pieceDe(armeDuVortex())?.arme?.salve !== undefined || pieceDe(armeDuVortex())?.arme?.tornade !== undefined || pieceDe(armeDuVortex())?.arme?.plasma !== undefined || pieceDe(armeDuVortex())?.arme?.essaim !== undefined || pieceDe(armeDuVortex())?.arme?.sphere !== undefined || pieceDe(armeDuVortex())?.arme?.puits !== undefined || pieceDe(armeDuVortex())?.arme?.meteore !== undefined || pieceDe(armeDuVortex())?.arme?.rail !== undefined || pieceDe(armeDuVortex())?.arme?.tentacule !== undefined || pieceDe(armeDuVortex())?.arme?.nuee !== undefined || pieceDe(armeDuVortex())?.arme?.rejeton !== undefined || pieceDe(armeDuVortex())?.arme?.crachat !== undefined || pieceDe(armeDuVortex())?.arme?.mine !== undefined || pieceDe(armeDuVortex())?.arme?.fleau !== undefined || pieceDe(armeDuVortex())?.arme?.parasite !== undefined || pieceDe(armeDuVortex())?.arme?.drain !== undefined || pieceDe(armeDuVortex())?.arme?.vrille !== undefined || pieceDe(armeDuVortex())?.arme?.ponte !== undefined || pieceDe(armeDuVortex())?.arme?.epines !== undefined ? [] : pieceDe(armeDuVortex())?.arme?.flamme !== undefined || pieceDe(armeDuVortex())?.arme?.napalm !== undefined || pieceDe(armeDuVortex())?.arme?.balayage !== undefined ? [0] : [0, 1]).map(() => pieceDe(armeDuVortex())?.arme?.id ?? '') : Array.from({ length: capacite(hangar, 'arme') }, (_, k) => pieceDe(hangar.armes[k] ?? '')?.arme?.id ?? ''), bouclier, outils: outilsParPlace(), foreusePlace: placeDeLaForeuse(), habit: habitDuJoueur(monteeA(hangar, 'coque').cran), kraken: krakenDeLAllure(), vouivre: vouivreDeLAllure(), ver: verDeLAllure(), sentinelle: sentinelleDeLAllure() })
   /**
    * CE QUE LES ARMES DU KRAKEN CHANGENT À SON CORPS (voir `Allure.kraken`) : les crochets de la Tentacule, le rejeton
    * accroché au dos — parti quand un rejeton naît (`rejetonPartiA`), il repousse : rien pendant 0,4 s, puis il grandit en
@@ -1130,6 +1130,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * CE QUE LES ARMES DU VER CHANGENT À SON CORPS (voir `Allure.ver`) : les œufs qu'il porte ; le parasite de sa nuque et
    * l'épine de sa gueule — partis au tir (`parasitePartiA`, `epinePartieA`), ils repoussent.
    */
+  /** CE QUE LES ARMES DE LA SENTINELLE CHANGENT À SON CORPS (voir `Allure.sentinelle`) : la cage de la Tempête, la bobine de la Chaîne. */
+  function sentinelleDeLAllure(): Allure['sentinelle'] {
+    if (!parametres.has('vortex')) return undefined
+    const a = pieceDe(armeDuVortex())?.arme
+    if (a?.aura !== undefined) return { tempete: true }
+    if (a?.chaine !== undefined) return { chaine: true }
+    return undefined
+  }
   let parasitePartiA = -1e9
   let epinePartieA = -1e9
   function verDeLAllure(): Allure['ver'] {
@@ -2918,6 +2926,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const formes = formesDuVaisseau(al, flam, t)
     peindreFormes(p, formes, cx + jit, sy, ECH, { blanc: t - equipeA < 0.08 ? 1 : 0, rampes: rampesDuJoueur() })
     dessinerLaNueeAuRepos(p, cx + jit, sy, ECH)
+    dessinerLesDronesAuRepos(p, cx + jit, sy, ECH)
     // (UNE SOUCOUPE : au décollage, celles du dessous soufflent fort — Keko, 15/11 : « au garage, quand le vaisseau décolle,
     // on ne voit pas de propulsion » ; À L'ARRÊT, RIEN — « n'allume pas les propulseurs à l'arrêt dans le hangar »)
     if (g.omni !== undefined && decollageA !== null) dessinerLesJetsOmni(p, coqueMontee, cx + jit, sy, -Math.PI / 2, ECH, flam, 0, 0, ECH * 0.6)
@@ -3779,18 +3788,21 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     'arme-scie': 'Une scie circulaire lancée vers l’ennemi, qui coupe tout à l’aller et au retour.',
     'arme-fleau': 'Une masse à pics qui tourne sans cesse autour, au bout d’une chaîne.',
     'arme-givre': 'Laisse derrière lui une traînée de givre, qui ralentit et gèle les ennemis.',
-    'arme-nova': 'Une onde de froid tout autour, qui gèle et laisse le sol en verglas.',
+    // (… LE FRIMAS REDIT — Keko, 19/11 : la nova « gèle l'espace autour du vaisseau » ; le blizzard gèle — « le gel étant par
+    // définition un effet ralentissant » ; les éclats « dans toutes les directions »)
+    'arme-nova': 'Déclenche une nova qui gèle l’espace autour du vaisseau.',
     'arme-poison': 'Laisse derrière lui une traînée d’acide corrosive, qui ronge les ennemis qui passent dessus.',
     // (… LE VER — Keko, 19/11 : l'épine « transperce tout sur son passage » ; les œufs « éclosent après un certain temps,
     // libérant des vers » ; les parasites sans leurs cerveaux à crocs, qui « prennent une nouvelle cible »)
     'arme-epines': 'Une grande épine d’os, qui transperce tout sur son passage.',
     // (… PLUS COURTES — Keko, 19/11 : « elles dépassent trois lignes, on ne voit pas la suite »)
     'arme-oeufs': 'Lâche des œufs qui libèrent des vers agressifs.',
-    'arme-eclats': 'De gros éclats de glace tout autour, le premier droit sur la cible : ils gèlent ce qu’ils touchent.',
-    'arme-tornade': 'Une tornade de givre qui poursuit les ennemis, les ralentit et les lacère.',
-    'arme-plasma': 'Une lente sphère de plasma, qui lance de petits traits sur tout ce qui passe près d’elle.',
-    'arme-essaim': 'Une gerbe de petits missiles de plasma, qui zigzaguent puis fondent sur les ennemis.',
-    'arme-meteore': 'Une météore d’arcane tombe du ciel sur un ennemi, sans jamais le manquer.',
+    'arme-eclats': 'Projette des éclats de glace dans toutes les directions autour du vaisseau.',
+    // (… LES NOMS DU FRIMAS ET DU PULSAR — Keko, 19/11 : le Blizzard ; l'Orbe de plasma, le Missile ionique, la Décharge arcanique)
+    'arme-tornade': 'Un blizzard qui poursuit les ennemis, les gèle et les lacère.',
+    'arme-plasma': 'Un lent orbe de plasma, qui lance de petits traits sur tout ce qui passe près de lui.',
+    'arme-essaim': 'Une gerbe de petits missiles ioniques, qui zigzaguent puis fondent sur les ennemis.',
+    'arme-meteore': 'Une décharge arcanique tombe du ciel sur un ennemi, sans jamais le manquer.',
     'arme-tentacules': 'Des tentacules à crochets d’os, qui se projettent et transpercent les ennemis.',
     'arme-nuee': 'Une nuée de minuscules insectes, qui se jette sur les ennemis proches pour les dévorer.',
     'arme-rejetons': 'Des rejetons, qui se déplacent vers les ennemis et les transpercent de leurs aiguilles.',
@@ -9656,6 +9668,55 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * Kraken comme en vol ») : vingt moucherons sur leurs orbites autour de (`cx`, `cy`), à l'échelle `ech` du vaisseau —
    * le rayon de la nuée du vol, rapporté à l'échelle où il est peint en vol.
    */
+  /**
+   * UN DRONE DE LA SENTINELLE en (x, y), filant à (vx, vy), à l'échelle `k` (1 en vol) : sa traînée, sa sphère, son œil, sa
+   * lueur — aux couleurs de son apparence — et TROIS PETITS PICS autour de lui, qui tournent (Keko, 19/11 : « leur ajouter 3
+   * tout petits pics discrets autour de la sphère, car la forme fait qu'on les confond encore avec les pépites »).
+   */
+  function dessinerUnDrone(p: Peintre, x: number, y: number, vx: number, vy: number, k: number, chasse: boolean, rang: number): void {
+    const ru = rampesDuJoueur()
+    const perle = ru?.perle ?? [0, 0, ...tonsDeLaMatiere('perle')]
+    const verre = ru?.verre ?? [0, 0, ...tonsDeLaMatiere('verre')]
+    const [sombre, moyen, clair] = [perle[2], perle[3], perle[4]]
+    const oeil = VORTEX_ ? peauCourante().accent[4] : N.WHITE
+    for (let i = 4; i >= 1; i--) p.circle(x - vx * i * 0.014, y - vy * i * 0.014, 1.8 * k * (1 - i / 5), verre[3], 0.45 * (1 - i / 5))
+    // (les trois pics : de petites pointes claires, cernées, qui tournent autour de la sphère)
+    for (let i = 0; i < 3; i++) {
+      const a = t * 2.2 + rang * 1.3 + (i * 2 * Math.PI) / 3
+      const [ux, uy] = [Math.cos(a), Math.sin(a)]
+      p.line(x + ux * 3 * k, y + uy * 3 * k, x + ux * 4.9 * k, y + uy * 4.9 * k, MATIERES.encre.contour)
+      p.line(x + ux * 3 * k, y + uy * 3 * k, x + ux * 4.4 * k, y + uy * 4.4 * k, clair)
+    }
+    // (un peu plus gros qu'un point : sur le portail, on les perdait)
+    p.circle(x, y, 3.3 * k, MATIERES.encre.contour)
+    p.circle(x, y, 2.6 * k, moyen)
+    if (k <= 1.2) {
+      p.rect(Math.round(x) - 2, Math.round(y) - 1, 2, 1, clair)
+      p.rect(Math.round(x) - 1, Math.round(y) + 1, 3, 1, sombre)
+      p.rect(Math.round(x) - 1, Math.round(y), 3, 1, oeil)
+    } else {
+      p.circle(x - k * 0.8, y - k * 0.8, 1.1 * k, clair)
+      p.circle(x + k * 0.3, y + k * 1.1, 0.9 * k, sombre)
+      p.rect(Math.round(x - k * 1.2), Math.round(y), Math.round(k * 2.4), Math.max(1, Math.round(k * 0.7)), oeil)
+    }
+    p.glow(x, y, 6 * k, verre[4], chasse ? 0.55 : 0.35)
+  }
+  /**
+   * LES DRONES AU HANGAR ET À L'ACCUEIL (Keko, 19/11 : « on affiche les drones dans le menu de lancement et dans le hangar,
+   * qui tournent autour du vaisseau ») : trois, sur l'orbite du vol, à l'échelle `ech` du vaisseau.
+   */
+  function dessinerLesDronesAuRepos(p: Peintre, cx: number, cy: number, ech: number): void {
+    if (!parametres.has('vortex')) return
+    const orb = pieceDe(armeDuVortex())?.arme?.orbite
+    if (orb === undefined) return
+    const k = ech / ECHELLE_EN_VOL
+    const R = orb.rayon * k
+    for (let i = 0; i < 3; i++) {
+      const a = t * orb.vitesse + (i * 2 * Math.PI) / 3
+      const v = orb.vitesse * orb.rayon
+      dessinerUnDrone(p, cx + Math.cos(a) * R, cy + Math.sin(a) * R, -Math.sin(a) * v * k, Math.cos(a) * v * k, k * 0.8, false, i)
+    }
+  }
   function dessinerLaNueeAuRepos(p: Peintre, cx: number, cy: number, ech: number): void {
     if (!parametres.has('vortex')) return
     const nu = pieceDe(armeDuVortex())?.arme?.nuee
@@ -10948,21 +11009,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // que la couleur des drones change en fonction du skin du vaisseau et de sa couleur » : le corps de la perle de son
       // disque, la traînée et la lueur de sa verrière, l'œil à son accent — d'origine, de l'argent et du bleu, loin du
       // vert d'eau des pépites)
-      const ru = rampesDuJoueur()
-      const perle = ru?.perle ?? [0, 0, ...tonsDeLaMatiere('perle')]
-      const verre = ru?.verre ?? [0, 0, ...tonsDeLaMatiere('verre')]
-      const [sombre, moyen, clair] = [perle[2], perle[3], perle[4]]
-      const oeil = VORTEX_ ? peauCourante().accent[4] : N.WHITE
-      for (const d of m.drones) {
-        for (let k = 4; k >= 1; k--) p.circle(d.x - d.vx * k * 0.014, d.y - d.vy * k * 0.014, 1.8 * (1 - k / 5), verre[3], 0.45 * (1 - k / 5))
-        // (un peu plus gros qu'un point : sur le portail, on les perdait)
-        p.circle(d.x, d.y, 3.3, MATIERES.encre.contour)
-        p.circle(d.x, d.y, 2.6, moyen)
-        p.rect(Math.round(d.x) - 2, Math.round(d.y) - 1, 2, 1, clair)
-        p.rect(Math.round(d.x) - 1, Math.round(d.y) + 1, 3, 1, sombre)
-        p.rect(Math.round(d.x) - 1, Math.round(d.y), 3, 1, oeil)
-        p.glow(d.x, d.y, 6, verre[4], d.cible === null ? 0.35 : 0.55)
-      }
+      m.drones.forEach((d, k) => dessinerUnDrone(p, d.x, d.y, d.vx, d.vy, 1, d.cible !== null, k))
     }
     // LE RAYON THERMIQUE, À LA MANIÈRE DE « LASER GRID » DU DÉPÔT (Keko, 15/11 : « tu peux utiliser laser grid pour
     // t'inspirer ») : un CŒUR BLANC où des impulsions défilent vers la pointe, un CORPS ROUGE de part et d'autre (clair
@@ -12539,6 +12586,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
     peindreFormes(p, formesDuVaisseau(al, flam, t), cx, sy, E, { rampes: rampesDuJoueur() })
     dessinerLaNueeAuRepos(p, cx, sy, E)
+    dessinerLesDronesAuRepos(p, cx, sy, E)
     if (aUnBouclierAuRepos()) dessinerLeBouclier(p, cx, sy, gA.anneau * E, t, 1, [])
     // (UNE SOUCOUPE, à l'accueil : ses jets du dessous la portent, plus forts quand elle s'arrache — Keko, 15/11)
     if (gA.omni !== undefined) dessinerLesJetsOmni(p, monteeA(hangar, 'coque').cran, cx, sy, -Math.PI / 2, E, flam, 0, 0, E * 0.6)

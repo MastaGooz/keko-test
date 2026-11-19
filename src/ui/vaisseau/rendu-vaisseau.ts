@@ -630,6 +630,13 @@ export type Allure = {
    * repoussent.
    */
   ver?: { oeufs?: boolean; parasite?: number; epine?: number }
+  /**
+   * LA SENTINELLE ET SES ARMES (Keko, 19/11 : « changer l'armement de manière visible sur la sentinelle ») : `tempete`, la
+   * Tempête montée — une cage sphérique par-dessus son dôme, l'électricité qui crépite dedans ; `chaine`, la Chaîne
+   * d'éclairs montée — une bobine : trois antennes à boule autour du dôme, ses spires de cuivre, des arcs qui sautent de
+   * l'une à l'autre. (Les drones, eux, tournent autour d'elle : la page les dessine.)
+   */
+  sentinelle?: { tempete?: boolean; chaine?: boolean }
 }
 /**
  * LES DÉTAILS D'UNE APPARENCE (Keko, 17/11 : « on va enlever le petit marquage coloré des vaisseaux… on va le remplacer
@@ -987,6 +994,76 @@ export function formesDeLaTeteDeTourelle(): Forme[] {
   ]
 }
 /** Des formes déplacées de (dx, dy) — une arme à sa place, une tuyère à la sienne. */
+/** Un éclair qui crépite, de (x0, y0) à (x1, y1) : quatre zigzags tirés de `graine`, d'une lumière d'ion. */
+function eclairQuiCrepite(x0: number, y0: number, x1: number, y1: number, graine: number, largeur = 0.22): Forme[] {
+  const f: Forme[] = []
+  const L = Math.hypot(x1 - x0, y1 - y0) || 1
+  const [nx, ny] = [-(y1 - y0) / L, (x1 - x0) / L]
+  let [px, py] = [x0, y0]
+  for (let k = 1; k <= 4; k++) {
+    const u = k / 4
+    const ec = k === 4 ? 0 : (hasardDe(graine, k) - 0.5) * L * 0.5
+    const [x, y] = [x0 + (x1 - x0) * u + nx * ec, y0 + (y1 - y0) * u + ny * ec]
+    f.push({ pts: barre(px, py, x, y, largeur), mat: 'ion', relief: 'lueur', ton: 5 })
+    px = x
+    py = y
+  }
+  return f
+}
+/** Un petit hachage de deux entiers, de 0 à 1 (le crépitement). */
+const hasardDe = (a: number, b: number): number => {
+  let h = (a * 374761393 + b * 668265263) | 0
+  h = (h ^ (h >>> 13)) * 1274126177
+  return ((h ^ (h >>> 16)) >>> 0) / 4294967296
+}
+/** CE QUE LES ARMES DE LA SENTINELLE CHANGENT À SON CORPS (voir `Allure.sentinelle`), par-dessus son dôme. */
+function formesDeLaSentinelleArmee(se: NonNullable<Allure['sentinelle']>, t: number): Forme[] {
+  const f: Forme[] = []
+  const tic = Math.floor(t * 14)
+  if (se.tempete === true) {
+    // LA CAGE : un cercle d'acier, deux méridiens, une coiffe ; dedans, trois éclairs qui crépitent du cœur vers la cage
+    // (… SOMBRE ET PLUS GRANDE — mesuré à la capture : d'acier clair sur le disque de perle, elle ne se voyait pas)
+    const R = 3.9
+    for (let k = 0; k < 20; k++) {
+      const a0 = (k / 20) * Math.PI * 2
+      const a1 = ((k + 1) / 20) * Math.PI * 2
+      f.push({ pts: barre(Math.cos(a0) * R, Math.sin(a0) * R, Math.cos(a1) * R, Math.sin(a1) * R, 0.5), mat: 'graphite', relief: 'plat' })
+      for (const [rx, ry] of [[R, R * 0.4], [R * 0.4, R]] as [number, number][]) f.push({ pts: barre(Math.cos(a0) * rx, Math.sin(a0) * ry, Math.cos(a1) * rx, Math.sin(a1) * ry, 0.32), mat: 'graphite', relief: 'plat' })
+    }
+    for (let k = 0; k < 4; k++) {
+      const a = (k * Math.PI) / 2 + Math.PI / 4
+      f.push({ pts: ovale(Math.cos(a) * R, Math.sin(a) * R, 0.55, 0.55, 8), mat: 'metal', relief: 'dome', dome: { x: Math.cos(a) * R, y: Math.sin(a) * R, rx: 0.55, ry: 0.55 } })
+    }
+    for (let k = 0; k < 3; k++) {
+      const a = hasardDe(tic, k) * Math.PI * 2
+      f.push(...eclairQuiCrepite(0, 0, Math.cos(a) * R * 0.95, Math.sin(a) * R * 0.95, tic * 7 + k))
+    }
+    f.push({ pts: ovale(0, 0, 0.7, 0.7, 8), mat: 'ion', relief: 'lueur', ton: 5 })
+  }
+  if (se.chaine === true) {
+    // LA BOBINE : deux spires de cuivre autour du dôme ; trois antennes d'acier, une boule au bout ; un arc qui saute
+    // d'une boule à la suivante, l'une après l'autre
+    for (const r of [2.75, 3.3])
+      for (let k = 0; k < 16; k++) {
+        const a0 = (k / 16) * Math.PI * 2
+        const a1 = ((k + 0.8) / 16) * Math.PI * 2
+        f.push({ pts: barre(Math.cos(a0) * r, Math.sin(a0) * r, Math.cos(a1) * r, Math.sin(a1) * r, 0.24), mat: 'cuivre', relief: 'plat' })
+      }
+    const bouts: [number, number][] = []
+    for (let k = 0; k < 3; k++) {
+      const a = Math.PI / 2 + (k * 2 * Math.PI) / 3
+      const [ux, uy] = [Math.cos(a), Math.sin(a)]
+      // (… SOMBRES — mesuré à la capture : d'acier clair sur la perle, on ne les voyait pas)
+      f.push({ pts: barre(ux * 3.2, uy * 3.2, ux * 6, uy * 6, 0.6), mat: 'graphite', relief: 'cyl' })
+      f.push({ pts: ovale(ux * 6.3, uy * 6.3, 0.95, 0.95, 10), mat: 'cuivre', relief: 'dome', dome: { x: ux * 6.3, y: uy * 6.3, rx: 0.95, ry: 0.95 } })
+      bouts.push([ux * 6.3, uy * 6.3])
+    }
+    const k = Math.floor(t * 9) % 3
+    const [a, b] = [bouts[k], bouts[(k + 1) % 3]]
+    f.push(...eclairQuiCrepite(a[0], a[1], b[0], b[1], tic * 3 + k, 0.18))
+  }
+  return f
+}
 /** LA SENTINELLE TOURNE SUR ELLE-MÊME (Keko, 19/11) : son disque, ses rivets, ses berceaux, ses voyants — en radians par seconde. */
 const TOUR_DE_LA_SENTINELLE = 0.9
 /** Des formes tournées de `an` autour du centre du vaisseau (leurs dômes avec). */
@@ -2169,7 +2246,7 @@ export function formesDuVaisseau(a: Allure, flamme: number, t: number, vise = 0,
   const feux = f.filter((x) => x.relief === 'emis')
   const reste = f.filter((x) => x.relief !== 'emis')
   // (LE VER ONDULE : sa coque se refait de sa poussée et de son virage)
-  const coque = [...sansMarque(a.coque === 14 ? formesDuVer(t, flamme, devie, a.habit?.motif, a.chemin, a.ver) : formesDeLaCoque(a.coque, t)), ...(a.habit?.coque ?? [])]
+  const coque = [...sansMarque(a.coque === 14 ? formesDuVer(t, flamme, devie, a.habit?.motif, a.chemin, a.ver) : formesDeLaCoque(a.coque, t)), ...(a.habit?.coque ?? []), ...(a.coque === 6 && a.sentinelle !== undefined ? formesDeLaSentinelleArmee(a.sentinelle, t) : [])]
   const tout = [...feux, ...reste, ...(a.coque === 6 ? tourner(coque, t * TOUR_DE_LA_SENTINELLE) : coque)]
   if (g.surLePont) tout.push(...armes)
   tout.push(...surLeDos)

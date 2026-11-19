@@ -6231,3 +6231,16 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   skin du vaisseau et de sa couleur ») : ils étaient à la sarcelle d'origine, le vert d'eau des pépites d'expérience ; leur
   corps prend la perle de son disque, leur traînée et leur lueur sa verrière, leur œil son accent — d'origine, de l'argent
   et du bleu ; Ambre, du bronze. Vu à la capture.
+- LES NOMS DU FRIMAS ET DU PULSAR (Keko, 19/11) : la Tornade de givre devient le BLIZZARD ; la Sphère de plasma l'ORBE DE
+  PLASMA, l'Essaim de plasma le MISSILE IONIQUE, le Météore d'arcane la DÉCHARGE ARCANIQUE (leurs descriptions suivent). Le
+  Frimas redit : « Déclenche une nova qui gèle l'espace autour du vaisseau. » ; « Un blizzard qui poursuit les ennemis, les
+  gèle et les lacère. » (« le gel étant par définition un effet ralentissant ») ; « Projette des éclats de glace dans
+  toutes les directions autour du vaisseau. »
+- LES ARMES DE LA SENTINELLE SE VOIENT SUR ELLE (Keko, 19/11 ; `Allure.sentinelle`, `formesDeLaSentinelleArmee`) : LES
+  DRONES, la soucoupe telle quelle, mais ils tournent autour d'elle au hangar et à l'accueil (`dessinerLesDronesAuRepos`,
+  sur l'orbite du vol) ; et TROIS PETITS PICS autour de chacun, qui tournent (« la forme fait qu'on les confond encore avec
+  les pépites » ; `dessinerUnDrone`, à toute échelle) ; LA TEMPÊTE, une CAGE sphérique par-dessus son dôme — un cercle,
+  deux méridiens, quatre rivets —, trois éclairs qui crépitent du cœur vers elle ; LA CHAÎNE D'ÉCLAIRS, une BOBINE — deux
+  spires de cuivre autour du dôme, trois antennes à boule de cuivre, un arc qui saute de l'une à l'autre. *Mesuré à la
+  capture* : d'acier clair sur la perle du disque, la cage et les antennes ne se voyaient pas — en graphite, plus grandes.
+  Elles tournent avec le disque.
