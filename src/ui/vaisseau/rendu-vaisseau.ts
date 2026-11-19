@@ -729,15 +729,31 @@ export function cordesDuKraken(flamme: number, t: number, devie = 0): [number, n
     return c
   })
 }
-/** UN CROCHET D'OS au bout d'une tentacule (en `x`, `y`, tournée vers `an`) : une griffe recourbée d'un côté (`sg`), une épine de l'autre. */
+/**
+ * LE CONTOUR D'UN CROCHET D'OS, en (avant, côté) : une griffe en faucille — elle part droit dans le prolongement de la
+ * tentacule, large à sa base, puis se recourbe d'un côté en s'effilant jusqu'à sa pointe, qui revient un peu en arrière.
+ * (… PLUS UNE GRIFFE EN FAUCILLE — Keko, 19/11 : « on dirait des chaussures à talons » : la griffe épaisse et son épine
+ * de l'autre côté faisaient un escarpin ; plus d'épine.) `epais` : 1, le crochet ; moins, son reflet, plus mince.
+ */
+export function contourDuCrochet(epais = 1): [number, number][] {
+  const r = 1.35
+  const ext: [number, number][] = []
+  const int: [number, number][] = []
+  const n = 8
+  for (let i = 0; i <= n; i++) {
+    const s = i / n
+    const th = -Math.PI / 2 + s * 2.5
+    const w = 0.55 * (1 - s) * epais
+    ext.push([Math.cos(th) * (r + w), r + Math.sin(th) * (r + w)])
+    int.unshift([Math.cos(th) * (r - w), r + Math.sin(th) * (r - w)])
+  }
+  return [[-0.5, -0.55 * epais], ...ext, ...int, [-0.5, 0.55 * epais]]
+}
+/** UN CROCHET D'OS au bout d'une tentacule (en `x`, `y`, tournée vers `an`), recourbé du côté `sg` (voir `contourDuCrochet`). */
 export function formesDuCrochet(x: number, y: number, an: number, sg: number): Forme[] {
   const ux = Math.cos(an)
   const uy = Math.sin(an)
-  const p = (av: number, co: number): [number, number] => [x + ux * av - uy * co * sg, y + uy * av + ux * co * sg]
-  return [
-    { pts: [p(-0.4, -0.7), p(0.9, -0.5), p(1.9, 0.1), p(2, 1.3), p(1.5, 0.5), p(0.7, 0.2), p(-0.4, 0.7)], mat: 'os', relief: 'plat' },
-    { pts: [p(0.1, -0.5), p(0.6, -1.5), p(0.8, -0.4)], mat: 'os', relief: 'plat' },
-  ]
+  return [{ pts: contourDuCrochet().map(([av, co]): [number, number] => [x + ux * av - uy * co * sg, y + uy * av + ux * co * sg]), mat: 'os', relief: 'plat' }]
 }
 /**
  * LE REJETON ACCROCHÉ AU DOS DU KRAKEN (Keko, 19/11 : « un rejeton fixé sur son dos, qui partirait lorsqu'un rejeton est

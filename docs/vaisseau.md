@@ -6080,3 +6080,7 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   - LES REJETONS UN PEU PLUS PETITS (« diminuer un tout petit peu la taille des rejetons en jeu ») : tout aux quatre
     cinquièmes (`TAILLE_DU_REJETON`).
   - La description de la Tentacule : « Des tentacules à crochets d'os, qui se projettent et transpercent les ennemis. »
+- LES CROCHETS EN FAUCILLE (Keko, 19/11 : « on dirait des chaussures à talons ») : la griffe épaisse et l'épine de
+  l'autre côté faisaient un escarpin. Une seule griffe en faucille (`contourDuCrochet`, lue par le corps et par la
+  tentacule projetée) : elle part dans le prolongement de la tentacule, large à sa base, se recourbe d'un côté en
+  s'effilant, la pointe revenant un peu en arrière. Vu à la capture.

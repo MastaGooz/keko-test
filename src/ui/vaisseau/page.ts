@@ -20,7 +20,7 @@ import { VOLT, bowed, crackle, stroke, zigzag } from 'pixelfx/fx/lightning/_lib'
 import { snowflake } from 'pixelfx/fx/ice/_lib'
 import { textWidth } from 'pixelfx'
 import { HAUT_ACCENTS } from './police.ts'
-import { RACINES_DU_KRAKEN, cordesDuKraken } from './rendu-vaisseau.ts'
+import { RACINES_DU_KRAKEN, contourDuCrochet, cordesDuKraken } from './rendu-vaisseau.ts'
 import { boucheMontee, gabaritDe, placeDOutil, queueDe, tuyeresOmni, formesDuSocleDeTourelle, formesDeLaTeteDeTourelle, formesDeLaCapsule, formesDuCristalPose, formesDeLaScie, formesDeLaBalise, formesDuBecDeBalise, canonDeLaForeuse, formesDeLAimant, formesDuChassis, formesDeLaForeuse, formesDeLArme, formesDuPropulseur, formesDuRadar, formesDuVaisseau, formesDuVer, CRISTAL_DU_PRISME, sommetsDUnHypercube, ARETES_DE_L_HYPERCUBE, rampeDeLaMatiere, LIVREES, COULEURS_DE_JOUEUR, ovale, peindreDansUneCase, peindreFormes, rampesDeLaLivree, tonsDeLaLivree, tonsDeLaMatiere, ANCRES_DU_KRAKEN, type Habit } from './rendu-vaisseau.ts'
 import { peauDe, peauxDe, rampesDeLaPeau, tonsDeLaPeau, type Peau } from './peaux.ts'
 import { boiteDe } from './rendu-vaisseau.ts'
@@ -9565,10 +9565,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const uy = (y1 - y0) / tl
     const k = 1.25 * E
     const crochet = (av: number, co: number): [number, number] => [x1 + (ux * av - uy * co * cote) * k, y1 + (uy * av + ux * co * cote) * k]
-    const contour = [crochet(-0.4, -0.7), crochet(0.9, -0.5), crochet(1.9, 0.1), crochet(2, 1.3), crochet(1.5, 0.5), crochet(0.7, 0.2), crochet(-0.4, 0.7)]
-    p.poly(contour, OS[0])
-    p.poly([crochet(-0.2, -0.4), crochet(0.9, -0.25), crochet(1.7, 0.2), crochet(1.8, 0.9), crochet(1.3, 0.35), crochet(0.6, 0.1), crochet(-0.2, 0.4)], OS[2])
-    p.px(Math.round(crochet(2, 1.3)[0]), Math.round(crochet(2, 1.3)[1]), OS[3])
+    // (la faucille du corps, sa lumière plus mince dedans, la pointe claire)
+    p.poly(contourDuCrochet().map(([av, co]) => crochet(av, co)), OS[0])
+    p.poly(contourDuCrochet(0.5).map(([av, co]) => crochet(av, co)), OS[2])
+    const pointe = crochet(Math.cos(-Math.PI / 2 + 2.5) * 1.35, 1.35 + Math.sin(-Math.PI / 2 + 2.5) * 1.35)
+    p.px(Math.round(pointe[0]), Math.round(pointe[1]), OS[3])
     if (plantee) p.glow(tn.tx, tn.ty, 5, BILE[1], 0.35)
   }
   function dessinerLesTentacules(p: Peintre): void {
