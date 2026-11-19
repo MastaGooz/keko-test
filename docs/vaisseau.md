@@ -6117,3 +6117,10 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     les mines, leur lueur, leurs éclats et le miasme de leur nuage (`teintesDesMines`) ; et les bouffées et bulles de
     propulsion de la Vouivre et du Kraken (`couleursDesBulles`). Les glandes des apparences sont sur les nouvelles
     pustules.
+- LE GAZ DE LA VOUIVRE EN PIXELS (Keko, 19/11 : « un effet gazeux un peu flou, on perd le côté pixel ; une texture plus
+  pixelisée, plus fidèle au style graphique ») : plus de disque en dégradé transparent — trois boules serrées à aplats
+  (`dessinerUneBouffee`), cernées d'un ton sombre, d'un ton moyen, un reflet clair sur la première, sans transparence ;
+  elles gonflent, puis CRÈVENT en cinq pixels qui s'écartent, comme les bulles du Kraken. Aux teintes de son venin.
+- L'EXPLOSION DES MINES AUX COULEURS DE L'APPARENCE (Keko, 19/11 : « l'explosion reste une explosion verte de poison ») :
+  le nuage suivait déjà, pas ce qu'il laisse sur les ennemis — leur tache d'acide, sa lueur, sa vapeur et les étoiles qui
+  y pètent, dessinées en vert fixe (`ECLABOUSSURE`) : elles prennent le venin de l'apparence (`teintesDesMines`).

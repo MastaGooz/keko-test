@@ -10167,7 +10167,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           const u = boucle(t * (1.4 + us * 2) + k / 7 + (dehors > 0 ? 0.5 : 0), 1)
           const x = cx + tu.y * E + dehors * u * (4 + 3 * us) * (E / 2)
           const y = sy - tu.x * E + u * (8 + 22 * us) * (E / 2)
-          dessinerUneBouffee(p, x, y, (1 + 0.5 * ((k * 0.618) % 1)) * (E / 2), u, cb, cl)
+          dessinerUneBouffee(p, x, y, (1 + 0.5 * ((k * 0.618) % 1)) * (E / 2), u, k + (dehors > 0 ? 10 : 0))
         }
       }
       return
@@ -10196,12 +10196,32 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const bulles: { x: number; y: number; vx: number; vy: number; t0: number; vie: number; r: number; c: number; /** une bouffée de gaz (la Vouivre), pas une bulle */ gaz?: boolean }[] = []
   /**
    * UNE BOUFFÉE DE GAZ (les pustules propulsives de la Vouivre, Keko, 19/11 : « deux pustules latérales qui cracheraient du
-   * gaz ») : un nuage rond, clair au cœur, qui gonfle de `r` à deux fois et demie et s'efface ; `u` son âge (0 à 1).
+   * gaz ») : `u` son âge (0 à 1), `graine` sa forme.
+   * (… EN PIXELS, PAS EN FLOU — Keko, 19/11 : « un effet gazeux un peu flou, on perd le côté pixel ; une texture plus
+   * pixelisée, plus fidèle au style graphique » : un nuage à aplats — trois boules serrées, cernées d'un ton sombre, d'un
+   * ton moyen, un reflet clair sur la première —, sans transparence ; il gonfle, puis CRÈVE en quelques pixels qui
+   * s'écartent, comme les bulles du Kraken. Aux teintes du venin de son apparence)
    */
-  function dessinerUneBouffee(p: Peintre, x: number, y: number, r: number, u: number, c: number, cl: number): void {
-    const rr = r * (1 + 1.5 * Math.sqrt(u))
-    const a = 0.55 * (1 - u)
-    p.disc(x, y, rr, (d) => (d < 0.45 ? cl : c), (d) => (1 - d * d) * a)
+  function dessinerUneBouffee(p: Peintre, x: number, y: number, r: number, u: number, graine: number): void {
+    const ve = teintesDesMines().venin
+    if (u > 0.72) {
+      const q = (u - 0.72) / 0.28
+      for (let j = 0; j < 5; j++) {
+        const a = graine * 3.7 + j * 1.26
+        p.px(Math.round(x + Math.cos(a) * r * (1.6 + 1.4 * q)), Math.round(y + Math.sin(a) * r * (1.6 + 1.4 * q)), j % 2 === 0 ? ve[3] : ve[2])
+      }
+      return
+    }
+    const g = 1 + 0.9 * Math.sqrt(u / 0.72)
+    const boules = [0, 1, 2].map((j): [number, number, number] => {
+      const a = graine * 7.1 + j * 2.1
+      const d = j === 0 ? 0 : r * 0.55 * g
+      return [x + Math.cos(a) * d, y + Math.sin(a) * d, Math.max(0.8, r * g * (j === 0 ? 0.75 : 0.5))]
+    })
+    for (const [bx, by, br] of boules) p.circle(Math.round(bx), Math.round(by), br + 1, ve[1])
+    for (const [bx, by, br] of boules) p.circle(Math.round(bx), Math.round(by), br, u < 0.4 ? ve[3] : ve[2])
+    const [hx, hy, hr] = boules[0]
+    if (hr >= 1.4) p.circle(Math.round(hx - hr * 0.35), Math.round(hy - hr * 0.35), Math.max(0.6, hr * 0.4), ve[4])
   }
   function dessinerLesBulles(p: Peintre): void {
     for (let i = bulles.length - 1; i >= 0; i--) if (t - bulles[i].t0 > bulles[i].vie) bulles.splice(i, 1)
@@ -10213,7 +10233,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // (elles ralentissent vite : une bulle n'a pas d'élan)
       const frein = (1 - Math.exp(-age * 3)) / 3
       if (b.gaz === true) {
-        dessinerUneBouffee(p, b.x + b.vx * frein, b.y + b.vy * frein, b.r, u, b.c, couleursDesBulles(11)[1])
+        dessinerUneBouffee(p, b.x + b.vx * frein, b.y + b.vy * frein, b.r, u, b.r * 13 + b.t0)
         continue
       }
       const x = b.x + b.vx * frein + Math.sin(age * 6 + b.r * 9) * 0.8
@@ -10698,13 +10718,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         }
         // IL EST RONGÉ (l'acide de la Vouivre) : une tache verte sur lui, qui fume — trois volutes qui montent et pâlissent
         if (e.acide !== undefined && e.acide.jusque > m.t) {
-          p.glow(sx, sy, 7, VENIN[3], 0.3 + 0.1 * Math.sin(t * 9 + e.id))
-          p.circle(sx, sy, 3.5, VENIN[2], 0.35)
+          // (… AUX TEINTES DU VENIN DE L'APPARENCE — Keko, 19/11 : « tu changes la couleur des mines en fonction du skin,
+          // mais l'explosion reste une explosion verte de poison » : ce qu'elle laisse sur les ennemis, leur tache et sa vapeur)
+          const ve = teintesDesMines().venin
+          p.glow(sx, sy, 7, ve[3], 0.3 + 0.1 * Math.sin(t * 9 + e.id))
+          p.circle(sx, sy, 3.5, ve[2], 0.35)
           // (… ET IL GRÉSILLE, comme l'éclaboussure de pixelfx — Keko, 17/11 : une vapeur pâle qui monte en ondulant, et de
           // petites étoiles blanches qui pètent sur lui)
           for (let k = 0; k < 2; k++) {
             const ph = (t * 0.9 + k / 2 + e.id * 0.29) % 1
-            for (let h = 0; h < 6; h += 0.5) p.blend(sx + Math.sin(e.id * 2.3 + k * 2.1 + h * 0.5 + t * 2) * (1 + h * 0.3), sy - 2 - ph * 6 - h, h < 2 ? ECLABOUSSURE[6] : VAPEUR, 0.35 * (1 - ph) * Math.sin((Math.PI * h) / 6))
+            for (let h = 0; h < 6; h += 0.5) p.blend(sx + Math.sin(e.id * 2.3 + k * 2.1 + h * 0.5 + t * 2) * (1 + h * 0.3), sy - 2 - ph * 6 - h, h < 2 ? ve[4] : VAPEUR, 0.35 * (1 - ph) * Math.sin((Math.PI * h) / 6))
           }
           const pet = (t * 5 + e.id * 0.37) % 1
           if (pet < 0.35) {
@@ -10713,7 +10736,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
             const oy = sy + (alea(e.id, n, 2) - 0.5) * 6
             const q = pet / 0.35
             p.px(Math.round(ox), Math.round(oy), N.WHITE)
-            for (const [dx, dy] of [[1, 0], [-1, 0], [0, -1]]) p.dot(ox + dx * (1 + q * 2), oy + dy * (1 + q * 2), ECLABOUSSURE[7], 1 - q)
+            for (const [dx, dy] of [[1, 0], [-1, 0], [0, -1]]) p.dot(ox + dx * (1 + q * 2), oy + dy * (1 + q * 2), ve[5], 1 - q)
           }
         }
         // IL EST IRRADIÉ (les cristaux du Prisme) : une lueur bleue qui bat, des étincelles d'énergie qui montent
