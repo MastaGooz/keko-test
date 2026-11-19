@@ -34,9 +34,12 @@ export const NOMS_CLASSE: Record<Classe, string> = { chasseur: 'Classe légère'
  * des trois races d'aliens sont de moi, à rejuger.
  */
 export type Race = 'humains' | 'essaim' | 'etheres' | 'innommes'
+// (… DES NOMS DE RACES — Keko, 19/11 : « remplacer « essaim » par un nom de race, un peu plus évocateur, comme les
+// Tyranides ; et renommer les humains par un nom de faction humaine, du style l'Empire » : L'EMPIRE, LES XÉNOÏDES ; les
+// identifiants du code restent)
 export const RACES: { id: Race; nom: string }[] = [
-  { id: 'humains', nom: 'Humains' },
-  { id: 'essaim', nom: 'L’Essaim' },
+  { id: 'humains', nom: 'L’Empire' },
+  { id: 'essaim', nom: 'Les Xénoïdes' },
   { id: 'etheres', nom: 'Les Éthérés' },
   { id: 'innommes', nom: 'Les Innommés' },
 ]
@@ -237,7 +240,8 @@ export const MODELES: ModeleDeVaisseau[] = [
     // ver de l'espace, qui se déplace par ondulation » ; son arme reste la Nuée. L'identifiant reste `mante` : les
     // sauvegardes et les armes choisies y sont rangées)
     id: 'mante',
-    nom: 'Ver',
+    // (… PUIS LE DÉVOREUR — Keko, 19/11 : « le ver, c'est trop banal » ; l'identifiant reste `mante`)
+    nom: 'Dévoreur',
     classe: 'chasseur',
     race: 'essaim',
     dit: 'Un ver épineux, tout en anneaux, qui nage dans le vide en ondulant comme un serpent.',

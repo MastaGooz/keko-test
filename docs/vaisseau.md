@@ -6161,3 +6161,7 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   plus petites (×0,7), plus serrées, plus brèves ; au hangar et à l'accueil, onze bulles au lieu de seize, plus petites.
 - LA MORSURE DES MINI-VERS PLUS BASSE (Keko, 19/11 : « un petit peu trop fort ») : un son à elle (`morsureVer`), le
   bourdonnement de la nuée à moitié de son niveau ; la nuée garde le sien.
+- DES NOMS (Keko, 19/11 : « trouver un autre nom que le ver, c'est trop banal » ; « remplacer essaim par un nom de race,
+  plus évocateur, comme les Tyranides » ; « renommer les humains par un nom de faction humaine, du style l'Empire ») :
+  choisis par Keko parmi mes propositions — LE DÉVOREUR, LES XÉNOÏDES, L'EMPIRE (`RACES`, `nom` du modèle ; les
+  identifiants `mante`, `essaim`, `humains` restent).
