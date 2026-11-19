@@ -6254,3 +6254,10 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   atterrir la météore sur la cible ») : plus d'étoile qui monte de la proue, ni d'éclair, ni de cercle de runes au lancer —
   le vaisseau BRILLE D'ÉNERGIE 0,55 s (un halo d'arcane qui monte et retombe, des étincelles qui scintillent sur sa coque) ;
   la météore, elle, tombe du ciel sur sa cible comme avant. Vu à la capture.
+- LES FLAMMES DU FRIMAS ET DU PULSAR, FIXES (Keko, 19/11 : « la lumière des propulseurs du Frimas toujours très claire,
+  presque blanche, comme un propulseur au feu de glace ; celui du Pulsar toujours bleu-violet ; pour les deux, ne change
+  pas la couleur du réacteur avec le skin ») : deux matières de flamme que les apparences ne touchent pas — `feuDeGlace`
+  (presque blanche, un soupçon de cyan) et `feuArcane` (bleu-violet) — pour la flamme dessinée, et leurs tons dans la page
+  (`feuDeLaCoque`, `lueurDeLaFlamme`) pour la lueur de la tuyère, les braises du vol, les éclats du décollage et la traînée
+  de l'accueil. Celle du Pulsar suivait le plasma de son apparence (orange en Nova, magenta en Nébuleuse) ; celle du
+  Frimas, l'ion du propulseur. Vu au décollage, deux apparences chacun.

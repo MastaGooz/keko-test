@@ -103,6 +103,14 @@ const RUNE = N.fit(['#0a3a1e', '#1f8a4a', '#4ee08a', '#b8ffd0', '#ffffff'], 5)
 const FEU = N.fit(N.PAL.fire, 8)
 /** La flamme du propulseur ionique (cran 3 du hangar) : bleue. */
 const ION = N.fit(['#061a3a', '#0a3a7a', '#1a7ad0', '#3ab0ff', '#80e0ff', '#c8f4ff', '#ffffff', '#ffffff'], 8)
+// (LE FEU DE GLACE DU FRIMAS, presque blanc ; LE FEU D'ARCANE DU PULSAR, bleu-violet — Keko, 19/11 : quelle que soit
+// l'apparence, voir `feuDeLaCoque`)
+const FEU_DE_GLACE = N.fit(['#3a5a6a', '#7aa8bc', '#b8e0ee', '#e0f6ff', '#f4fcff', '#ffffff', '#ffffff', '#ffffff'], 8)
+const FEU_ARCANE = N.fit(['#140a3a', '#2a1a7a', '#4a3ac0', '#6a6aff', '#9aa0ff', '#c8ccff', '#eef0ff', '#ffffff'], 8)
+/** Les tons de la flamme d'une coque : le feu de glace du Frimas, le feu d'arcane du Pulsar, sinon l'ion ou le feu du propulseur. */
+const feuDeLaCoque = (coque: number, cranP: number): number[] => (coque === 8 ? FEU_DE_GLACE : coque === 9 ? FEU_ARCANE : cranP >= 3 ? ION : FEU)
+/** La lueur de cette flamme. */
+const lueurDeLaFlamme = (coque: number, cranP: number): number => (coque === 8 ? FEU_DE_GLACE[5] : coque === 9 ? FEU_ARCANE[4] : cranP >= 3 ? ION[4] : FEU[5])
 const LASER = N.fit(['#3a0a10', '#a01020', '#ff2a3a', '#ff7a5a', '#ffd0a0', '#ffffff'], 6)
 const PEPITE = N.fit(['#3a2a06', '#b8860b', '#ffd23a', '#fff6c0', '#ffffff'], 5)
 /** L'ennemi : une coque rouge sombre, une verrière orange, un laser violet. */
@@ -702,6 +710,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     p.place(0, 0)
   }
   const BRAISES_D_ION = [ION[6], ION[5], ION[4], ION[3], ION[3], ION[2], ION[2], ION[1]]
+  const BRAISES_DE_GLACE = [FEU_DE_GLACE[7], FEU_DE_GLACE[6], FEU_DE_GLACE[5], FEU_DE_GLACE[4], FEU_DE_GLACE[3], FEU_DE_GLACE[2], FEU_DE_GLACE[2], FEU_DE_GLACE[1]]
+  const BRAISES_D_ARCANE = [FEU_ARCANE[6], FEU_ARCANE[5], FEU_ARCANE[4], FEU_ARCANE[3], FEU_ARCANE[3], FEU_ARCANE[2], FEU_ARCANE[2], FEU_ARCANE[1]]
   /** Les étincelles des chocs vivent DANS LE MONDE : on garde leur point et on les replace sous la caméra à chaque image. */
   let effets: { fx: Instance; x: number; y: number }[] = []
   /** Le forage : les étincelles du point d'impact, les morceaux des roches éclatées (sans pesanteur : l'espace), les flashs. */
@@ -2885,7 +2895,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // (… DE CHACUNE DE SES TUYÈRES — Keko, 19/11 : « quand la Salamandre décolle du hangar, la traînée de particules est
       // toujours au milieu du vaisseau, au lieu d'une traînée à chacun des deux réacteurs » : une tuyère tirée au hasard,
       // sur toute sa largeur pour l'Ingénieur, comme les braises du vol)
-      if (g.omni === undefined && !organique(coqueMontee) && R.next() < 0.85) eclats.push({ x: cx + ecartDeTuyere(g.tuyeres) * ECH + (R.next() - 0.5) * 3, y: sy + bout, vx: (R.next() - 0.5) * (g.tuyeres.length > 1 ? 8 : 30), vy: 40 + R.next() * 50, t0: t, vie: 0.3 + 0.3 * R.next(), c: (cranP >= 3 ? ION : FEU)[3 + Math.floor(R.next() * 4)] })
+      if (g.omni === undefined && !organique(coqueMontee) && R.next() < 0.85) eclats.push({ x: cx + ecartDeTuyere(g.tuyeres) * ECH + (R.next() - 0.5) * 3, y: sy + bout, vx: (R.next() - 0.5) * (g.tuyeres.length > 1 ? 8 : 30), vy: 40 + R.next() * 50, t0: t, vie: 0.3 + 0.3 * R.next(), c: feuDeLaCoque(coqueMontee, cranP)[3 + Math.floor(R.next() * 4)] })
       // (PLUS DE FUMÉE AU DÉCOLLAGE — Keko, 19/11 : « l'espèce de poussière ou de fumée au décollage, elle est par-dessus le
       // vaisseau, c'est vraiment pas joli » : ses bouffées grises étaient semées sur la couche de l'interface)
       if (u >= 1) {
@@ -2922,7 +2932,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // (UN VAISSEAU SANS TUYÈRE, au décollage : les ondes ou les bulles de l'accueil et du vol, sous lui)
     if (organique(coqueMontee) && decollageA !== null) dessinerLaPousseeSansTuyere(p, coqueMontee, nozzle[0], nozzle[1], ECH, flam)
     if (g.omni === undefined && !organique(coqueMontee))
-      for (const tu of g.tuyeres) p.glow(nozzle[0] + tu.y * ECH, nozzle[1], (8 + 14 * flam) / Math.sqrt(g.tuyeres.length), al.propulseur >= 3 ? ION[4] : FEU[5], 0.35 + 0.5 * flam + 0.08 * Math.sin(t * 9))
+      for (const tu of g.tuyeres) p.glow(nozzle[0] + tu.y * ECH, nozzle[1], (8 + 14 * flam) / Math.sqrt(g.tuyeres.length), lueurDeLaFlamme(coqueMontee, al.propulseur), 0.35 + 0.5 * flam + 0.08 * Math.sin(t * 9))
     const formes = formesDuVaisseau(al, flam, t)
     peindreFormes(p, formes, cx + jit, sy, ECH, { blanc: t - equipeA < 0.08 ? 1 : 0, rampes: rampesDuJoueur() })
     dessinerLaNueeAuRepos(p, cx + jit, sy, ECH)
@@ -7257,7 +7267,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const g = gabaritDe(allure.coque)
     if (flam > 0.02 && g.omni === undefined && !organique(allure.coque)) {
       const [fx, fy] = ici(queueDe(allure.coque) - 0.5 * (cp - 1) - (1 + 3 * flam), 0)
-      p.glow(fx, fy, (5 + 7 * flam + 2 * (cp - 1)) * E, rival ? FEU[4] : cp >= 3 ? ION[4] : FEU[5], 0.4 + 0.45 * flam + 0.08 * Math.sin(t * 9))
+      p.glow(fx, fy, (5 + 7 * flam + 2 * (cp - 1)) * E, rival ? FEU[4] : lueurDeLaFlamme(allure.coque, cp), 0.4 + 0.45 * flam + 0.08 * Math.sin(t * 9))
     }
     peindreFormes(p, formesDuVaisseau(allure, flam, t, vise, devie), sx, sy, E, { cap: corps.cap, lumiere: LUMIERE_DU_VOL, blanc: blanchi ? 1 : 0, matieres: rival ? MATIERES_DU_RIVAL : undefined, rampes: rival ? undefined : rampesDuJoueur(), reflet: rival ? REFLET_DU_RIVAL : REFLET_DU_VOL })
     // (LE CRISTAL DU PRISME RAYONNE — Keko, 18/11 : « le vaisseau de lumière » : une lueur d'or blanc qui respire, sur son
@@ -12546,7 +12556,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // au départ. Un vaisseau organique garde une poussée stable, qui glisse jusqu'à 1 en partant)
     const flam = organique(monteeA(hangar, 'coque').cran) ? 0.55 + 0.45 * us : accueilQuitteA === null ? 0.55 + 0.12 * Math.sin(t * 11) : 1
     const al = allureMontee(0)
-    const chaud = al.propulseur >= 3 ? ION : FEU
+    const chaud = feuDeLaCoque(monteeA(hangar, 'coque').cran, al.propulseur)
     const ty = sy + (0.2 - queueDe(monteeA(hangar, 'coque').cran)) * E
     // (UNE BÊTE, à l'accueil aussi, lâche des bulles et pas de feu — Keko, 16/11 : « n'oublie pas l'effet de propulsion dans
     // l'écran d'accueil ») : une colonne de bulles qui s'écartent, enflent et crèvent en s'éloignant
@@ -12562,7 +12572,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         const large = tu.large === undefined ? 0 : Math.sin(k * 3.1) * 1.6 * tu.large * E
         p.dot(cx + tu.y * E + large + Math.sin(k * 7.3) * (1.5 + u * 5), ty + 3 + u * (46 + us * 70), chaud[Math.max(1, 6 - Math.floor(u * 5))], (1 - u) * 0.9)
       }
-      for (const tu of tus) p.glow(cx + tu.y * E, ty, (12 + 16 * flam) / Math.sqrt(tus.length), al.propulseur >= 3 ? ION[4] : FEU[5], 0.4 + 0.45 * flam + 0.08 * Math.sin(t * 9))
+      for (const tu of tus) p.glow(cx + tu.y * E, ty, (12 + 16 * flam) / Math.sqrt(tus.length), lueurDeLaFlamme(monteeA(hangar, 'coque').cran, al.propulseur), 0.4 + 0.45 * flam + 0.08 * Math.sin(t * 9))
     }
     peindreFormes(p, formesDuVaisseau(al, flam, t), cx, sy, E, { rampes: rampesDuJoueur() })
     dessinerLaNueeAuRepos(p, cx, sy, E)
@@ -14036,7 +14046,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
                 bulles.push({ x: bx - Math.sin(v.cap) * cote * 2.5, y: by + Math.cos(v.cap) * cote * 2.5, vx: -Math.cos(v.cap) * vitesse * 0.13 - Math.sin(v.cap) * cote * 11 + R.range(-4, 4), vy: -Math.sin(v.cap) * vitesse * 0.13 + Math.cos(v.cap) * cote * 11 + R.range(-4, 4), t0: t, vie: R.range(0.18, 0.35) * (ver ? 0.8 : 1), r: (R.next() < 0.35 ? R.range(1.6, 2.6) : R.range(0.5, 1.2)) * (ver ? 0.7 : 1), c: couleursDesBulles(coque)[R.next() < 0.6 ? 0 : 1] })
               }
             }
-            else braises.ajouter('braise', bx + R.range(-1, 1), by + R.range(-1, 1), v.vx * 0.3 - Math.cos(v.cap) * vitesse + R.range(-8, 8), v.vy * 0.3 - Math.sin(v.cap) * vitesse + R.range(-8, 8), R.range(0.25, 0.5), cran >= 3 ? BRAISES_D_ION : 0, 1, 2)
+            else braises.ajouter('braise', bx + R.range(-1, 1), by + R.range(-1, 1), v.vx * 0.3 - Math.cos(v.cap) * vitesse + R.range(-8, 8), v.vy * 0.3 - Math.sin(v.cap) * vitesse + R.range(-8, 8), R.range(0.25, 0.5), coque === 8 ? BRAISES_DE_GLACE : coque === 9 ? BRAISES_D_ARCANE : cran >= 3 ? BRAISES_D_ION : 0, 1, 2)
           }
         }
       }

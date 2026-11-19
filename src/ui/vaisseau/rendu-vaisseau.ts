@@ -20,7 +20,7 @@ type Peintre = { rect(x: number, y: number, w: number, h: number, c: number, a?:
 const hex = (noyau as unknown as { hex(h: string): number }).hex
 const mix = (noyau as unknown as { mix(a: number, b: number, t: number): number }).mix
 
-export type Matiere = 'coque' | 'blinde' | 'aile' | 'verre' | 'metal' | 'acier' | 'rouge' | 'or' | 'feu' | 'ion' | 'laser' | 'emeraude' | 'carmin' | 'grenat' | 'ambre' | 'violet' | 'glace' | 'marque' | 'suie' | 'cuivre' | 'perle' | 'sarcelle' | 'kaki' | 'graphite' | 'nacre' | 'indigo' | 'obsidienne' | 'mauve' | 'plasma' | 'chitine' | 'chair' | 'bile' | 'os' | 'ecaille' | 'venin' | 'lie' | 'quartz' | 'facette' | 'energie' | 'neant' | 'rayonnement' | 'decor' | 'decor2' | 'mante' | 'elytre' | 'membrane' | 'spectre' | 'lumiere' | 'ver' | 'anneau' | 'cerveau' | 'voile' | 'oeuf'
+export type Matiere = 'coque' | 'blinde' | 'aile' | 'verre' | 'metal' | 'acier' | 'rouge' | 'or' | 'feu' | 'ion' | 'laser' | 'emeraude' | 'carmin' | 'grenat' | 'ambre' | 'violet' | 'glace' | 'marque' | 'suie' | 'cuivre' | 'perle' | 'sarcelle' | 'kaki' | 'graphite' | 'nacre' | 'indigo' | 'obsidienne' | 'mauve' | 'plasma' | 'chitine' | 'chair' | 'bile' | 'os' | 'ecaille' | 'venin' | 'lie' | 'quartz' | 'facette' | 'energie' | 'neant' | 'rayonnement' | 'decor' | 'decor2' | 'mante' | 'elytre' | 'membrane' | 'spectre' | 'lumiere' | 'ver' | 'anneau' | 'cerveau' | 'voile' | 'oeuf' | 'feuDeGlace' | 'feuArcane'
 /** `coeur` : LE CŒUR DU NÉANT, peint pixel par pixel (voir `Forme.coeur`) ; `lueur` : une lumière d'un seul ton (`Forme.ton`), sans ombre ni contour. */
 export type Relief = 'cyl' | 'plat' | 'dome' | 'emis' | 'coeur' | 'lueur'
 export type Forme = {
@@ -88,6 +88,11 @@ const RAMPES: Record<Matiere, number[]> = {
   // (LE CERVEAU ET LA MEMBRANE DES PARASITES DU VER, LA COQUE DE SES ŒUFS — Keko, 19/11 : « que le skin des œufs et des
   // parasites soit le même que le skin du corps, qu'on puisse faire le lien » : des matières à eux, que ses apparences
   // teintent — celles-ci sont celles d'origine, le mauve, le turquoise (`voile`, sa membrane), le vert pâle)
+  // (LES FLAMMES DU FRIMAS ET DU PULSAR, que leurs apparences ne touchent pas — Keko, 19/11 : « que la lumière des
+  // propulseurs du Frimas soit toujours très claire, presque blanche, comme un propulseur au feu de glace ; celui du Pulsar
+  // toujours bleu-violet ; ne change pas la couleur du réacteur avec le skin »)
+  feuDeGlace: ['#3a5a6a', '#7aa8bc', '#b8e0ee', '#e0f6ff', '#f4fcff', '#ffffff'].map(hex),
+  feuArcane: ['#140a3a', '#2a1a7a', '#4a3ac0', '#6a6aff', '#a8b0ff', '#e8ecff'].map(hex),
   cerveau: ['#1c0a2e', '#3a2460', '#5a3a8e', '#a084dc', '#d4c4fa', '#ffffff'].map(hex),
   voile: ['#04181c', '#0a3a40', '#167070', '#2aa8a8', '#7af0e0', '#d0fff8'].map(hex),
   oeuf: ['#10160a', '#2c3814', '#56682a', '#8ea050', '#c4d488', '#eef6c8'].map(hex),
@@ -2203,7 +2208,7 @@ export function formesDuVaisseau(a: Allure, flamme: number, t: number, vise = 0,
   // (LE KRAKEN ET LA VOUIVRE N'ONT PLUS DE FLAMME — Keko, 16/11 : « l'aspect feu, c'est pas très cohérent » pour des bêtes :
   // ils poussent en lâchant des bulles, que la page sème ; leurs tentacules et leurs vrilles battent plus fort)
   // (NI LE PRISME, NI LA MANTE, NI LE TESSERACT — Keko, 17/11 : un cristal qui flotte, une bête, une forme d'ailleurs)
-  if (a.coque < 10) for (const tu of g.tuyeres) f.push(...decaler(formesDuPropulseur(a.propulseur, flamme, t, devie).map((x): Forme => (tu.large === undefined ? x : { ...x, pts: x.pts.map(([px, py]) => [px, py * tu.large!]) })).filter((x) => !organique || x.relief === 'emis').map((x): Forme => (x.relief === 'emis' && a.coque === 9 ? { ...x, mat: 'plasma' } : x.relief === 'emis' && a.coque === 10 ? { ...x, mat: 'bile' } : x.relief === 'emis' && a.coque === 11 ? { ...x, mat: 'venin' } : x)), tu.x, tu.y))
+  if (a.coque < 10) for (const tu of g.tuyeres) f.push(...decaler(formesDuPropulseur(a.propulseur, flamme, t, devie).map((x): Forme => (tu.large === undefined ? x : { ...x, pts: x.pts.map(([px, py]) => [px, py * tu.large!]) })).filter((x) => !organique || x.relief === 'emis').map((x): Forme => (x.relief === 'emis' && a.coque === 9 ? { ...x, mat: 'feuArcane' } : x.relief === 'emis' && a.coque === 8 ? { ...x, mat: 'feuDeGlace' } : x.relief === 'emis' && a.coque === 10 ? { ...x, mat: 'bile' } : x.relief === 'emis' && a.coque === 11 ? { ...x, mat: 'venin' } : x)), tu.x, tu.y))
   // (LA VOUIVRE TRAÎNE TROIS VRILLES DÉCHIRÉES, de travers, qui ondulent lentement — Keko, 16/11 : plus organique)
   // (… PUIS SOUS SES DEUX PUSTULES PROPULSIVES — Keko, 19/11 : « réutiliser les petites tentacules qu'il a à l'arrière pour
   // les placer sous les pustules » : deux sous l'une, une sous l'autre, qui pendent de leur bord arrière)
