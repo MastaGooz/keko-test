@@ -3861,8 +3861,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     'arme-cristaux': 'Des cristaux posés par trois, reliés de faisceaux qui brûlent ce qui les traverse.',
     'arme-rail': 'Un trait d’énergie instantané, qui traverse toute une ligne d’ennemis.',
     'arme-puits': 'Une singularité qui aspire les ennemis vers son cœur, puis éclate.',
-    'arme-drain': 'Accroche les âmes des ennemis proches et les draine à toute distance : leur vie purge la corruption.',
-    'arme-vrilles': 'Des tentacules d’ombre sortent du sol tout autour et fouettent les ennemis.',
+    // (… L'INTRICATION ET LES VRILLES REDITES — Keko, 19/11)
+    'arme-drain': 'Crée un lien infini avec les ennemis proches et les draine.',
+    'arme-vrilles': 'Saisit et blesse les ennemis, qui subissent de gros dégâts s’ils s’éloignent.',
     'arme-balises': 'Des glyphes posés par trois, reliés de rayons qui frappent ce qui les franchit.',
     'arme-hypercube': 'Un hypercube lancé en cloche, qui rebondit trois fois à pas égaux en grossissant : chaque rebond frappe autour de lui, plus large.',
     'arme-coupe': 'Un cube traverse le plan en biais : on n’en voit que la tranche, un triangle qui devient hexagone, qui frappe tout ce qu’il couvre.',

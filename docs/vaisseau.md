@@ -6489,3 +6489,5 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
 - LES ARMES DU NÉANT RENOMMÉES (Keko, 19/11 : « singularité, pour celle qui fait un trou noir ; intrication à la place de
   drain d'âme ; vrille de l'ombre, on le laisse tel qu'il est ») : le Puits s'appelle « Singularité », le Drain d'âme
   « Intrication » ; les identifiants (`puits`, `drain`) et les descriptions restent.
+- L'INTRICATION ET LES VRILLES REDITES (Keko, 19/11) : l'Intrication dit « Crée un lien infini avec les ennemis proches et
+  les draine. » ; les Vrilles d'ombre, « Saisit et blesse les ennemis, qui subissent de gros dégâts s'ils s'éloignent. »
