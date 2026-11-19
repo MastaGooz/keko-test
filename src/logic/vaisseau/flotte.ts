@@ -141,7 +141,8 @@ export const MODELES: ModeleDeVaisseau[] = [
     nom: 'Sentinelle',
     classe: 'chasseur',
     race: 'etheres',
-    dit: 'Une soucoupe sans avant ni arrière, chargée d’électricité : elle veille et foudroie.',
+    // (… REDITE — Keko, 19/11 : « inutile de dire qu'elle n'a pas d'avant ni d'arrière »)
+    dit: 'Une soucoupe surchargée, qui libère la puissance de la foudre sur ses ennemis.',
     pieces: ['coque-6', 'propulseur-g1', 'arme-drones', 'arme-chaine', 'arme-aura'],
     serie: { possedees: ['coque-6', 'propulseur-g1', 'arme-drones', 'arme-chaine', 'arme-aura'], montees: { coque: 'coque-6', propulseur: 'propulseur-g1' }, outils: [], armes: ['arme-drones'] },
     chaine: [],
@@ -168,7 +169,8 @@ export const MODELES: ModeleDeVaisseau[] = [
     nom: 'Frimas',
     classe: 'chasseur',
     race: 'etheres',
-    dit: 'Le vaisseau du grand froid : ce qui l’approche ralentit, se fige et se brise.',
+    // (… REDITE — Keko, 19/11)
+    dit: 'Un vaisseau redoutable, qui congèle ses ennemis.',
     pieces: ['coque-8', 'propulseur-c3', 'arme-nova', 'arme-eclats', 'arme-tornade'],
     serie: { possedees: ['coque-8', 'propulseur-c3', 'arme-nova', 'arme-eclats', 'arme-tornade'], montees: { coque: 'coque-8', propulseur: 'propulseur-c3' }, outils: [], armes: ['arme-nova'] },
     chaine: [],
@@ -180,7 +182,8 @@ export const MODELES: ModeleDeVaisseau[] = [
     nom: 'Pulsar',
     classe: 'chasseur',
     race: 'etheres',
-    dit: 'Il dompte le plasma et les arcanes, des énergies instables et dévastatrices.',
+    // (… REDITE — Keko, 19/11)
+    dit: 'Une technologie avancée, qui contrôle l’énergie pure.',
     pieces: ['coque-9', 'propulseur-p3', 'arme-plasma', 'arme-essaim', 'arme-meteore'],
     serie: { possedees: ['coque-9', 'propulseur-p3', 'arme-plasma', 'arme-essaim', 'arme-meteore'], montees: { coque: 'coque-9', propulseur: 'propulseur-p3' }, outils: [], armes: ['arme-plasma'] },
     chaine: [],

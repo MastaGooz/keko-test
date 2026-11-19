@@ -6206,3 +6206,6 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   (devant, derrière, les flancs) et quatre petites entre elles, larges à la base (*mesuré à la capture* : fines, elles
   faisaient une croix) ; un fin cercle mauve à la place de l'hexagone ; une rune au bout des quatre grandes ; le cercle
   de runes en porte quatre, sur les diagonales. Ses apparences suivent (l'or au bout des grandes pointes, huit étoiles).
+- LES VECTRANS REDITS (Keko, 19/11) : la Sentinelle, « Une soucoupe surchargée, qui libère la puissance de la foudre sur ses
+  ennemis. » (« inutile de dire qu'elle n'a pas d'avant ni d'arrière ») ; le Frimas, « Un vaisseau redoutable, qui congèle
+  ses ennemis. » ; le Pulsar, « Une technologie avancée, qui contrôle l'énergie pure. »
