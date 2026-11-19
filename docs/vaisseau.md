@@ -6185,3 +6185,19 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   comme les Xénoïdes ». Le nom sous le médaillon perd aussi « La » et « Le » (`lignesDuNomDeRace`).
 - … PUIS LES YHG'THARR (Keko, 19/11 : « Xl'qoth commence par un X alors qu'on a déjà un X pour les Xénoïdes ») : choisi par
   Keko parmi mes propositions, sans X.
+- LE PULSAR, UN SCEAU ARCANIQUE (Keko, 19/11 : « qu'il évoque un peu plus les arcanes et la magie ; là, il a une structure
+  qui ressemble beaucoup au chasseur ») : plus de fuselage ni de nageoires — UNE ÉTOILE À SIX BRANCHES d'obsidienne (deux
+  triangles croisés), cernée d'un fin hexagone mauve, une rune qui luit au bout de chaque branche ; au milieu son CŒUR DE
+  PLASMA dans sa bague, un losange mauve derrière ; au nez, DEUX CORNES en croissant (l'orbe et l'essaim partent toujours
+  d'entre elles, 9,6) ; autour, LE CERCLE DE RUNES (à la place des nageoires, `formesDesAiles`) : un anneau mauve coupé
+  de six runes de plasma, qui TOURNE lentement ; plus de feux de position. Ses apparences posent leur or ou leurs étoiles
+  sur le sceau.
+- LA SENTINELLE TOURNE SUR ELLE-MÊME (Keko, 19/11 : « une impression de rotation sur elle-même ») : son disque, ses rivets,
+  ses berceaux, ses voyants et les détails de son apparence tournent (`TOUR_DE_LA_SENTINELLE`, 0,9 rad/s, `tourner`) ;
+  douze encoches sombres sur son anneau tournent à rebours. Ses tuyères restent fixes (la règle les lit).
+- LE BOUCLIER DES VECTRANS (Keko, 19/11 : « un côté du bouclier très blanc, l'autre très bleu foncé ; une couleur bleue
+  plus unie sur la périphérie ; que l'effet de luisance qui révèle les hexagones se voie un petit peu plus ; et qu'on voie
+  le bouclier dans l'écran d'accueil et dans le hangar ») : LE BORD, le même bleu clair tout autour, à demi transparent (le
+  blanc ne revient qu'aux coups et sous le balayage) ; LE BALAYAGE toutes les 2,6 s (4 avant), plus large, deux fois plus
+  vif sur les joints et le verre ; LA BULLE AU HANGAR ET À L'ACCUEIL (`aUnBouclierAuRepos` : au vortex, le bouclier vient
+  de la race, la coque n'en disait rien).

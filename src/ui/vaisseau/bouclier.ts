@@ -93,8 +93,10 @@ export function dessinerLeBouclier(p: Peintre, cx: number, cy: number, R: number
   // les points d'impact sur la sphère : près du bord, du côté d'où vient le coup
   const impacts = coups.filter((c) => c.age < 1).map((c) => ({ ...c, N: [Math.cos(c.angle) * 0.9, Math.sin(c.angle) * 0.9, Math.sqrt(1 - 0.81)] as [number, number, number] }))
   // le balayage : une bande de lumière qui traverse la bulle en diagonale, toutes les quatre secondes
-  const ph = (t % 4) / 4
-  const sk = clamp((ph - 0.7) / 0.28)
+  // (… PLUS SOUVENT, PLUS LARGE, PLUS FORT — Keko, 19/11 : « que l'effet de luisance qui révèle les différents hexagones
+  // du bouclier se voie un petit peu plus » : toutes les 2,6 s, la bande plus large, ses joints et son verre plus vifs)
+  const ph = (t % 2.6) / 2.6
+  const sk = clamp((ph - 0.55) / 0.43)
   const balaye = Math.sin(Math.PI * sk)
   const N = Math.ceil(R)
   const W = 2 * N + 1
@@ -137,7 +139,7 @@ export function dessinerLeBouclier(p: Peintre, cx: number, cy: number, R: number
       const age = (t + hasard(q.q, q.r, 7) * 3.4) % 3.4
       if (age < 0.45) scint = 1 - age / 0.45
     }
-    const sc = balaye * Math.exp(-((((q.u + q.v) * 0.7 - (-1.4 + sk * 2.8)) / 0.16) ** 2))
+    const sc = balaye * Math.exp(-((((q.u + q.v) * 0.7 - (-1.4 + sk * 2.8)) / 0.24) ** 2))
     const droite = a(q.x + 1, q.y)
     const dessous = a(q.x, q.y + 1)
     const joint = (droite !== -2147483648 && droite !== q.id) || (dessous !== -2147483648 && dessous !== q.id)
@@ -148,12 +150,14 @@ export function dessinerLeBouclier(p: Peintre, cx: number, cy: number, R: number
     const Y = cy + q.y
     if (q.bord < 1.15) {
       // le bord : un liseré vif, blanc là où la lumière le prend (d'en haut à gauche)
-      const lit = -q.u * 0.6 - q.v * 0.8
       // (MESURÉ : un liseré plein tout autour pesait plus que le vaisseau ; côté ombre, il n'est plus qu'un voile)
-      const c = onde > 0.4 || chaud >= 2 || lit > 0.75 ? BLANC : lit > 0.25 ? C[6] : C[5]
-      if (onde > 0.3 || chaud >= 2 || (lit > 0.25 && part > 0.34)) p.px(X, Y, c)
-      else p.blend(X + 0.5, Y + 0.5, lit > 0.25 ? c : C[4], (lit > 0.25 ? 0.75 : 0.45) * usure)
-      if (lit > 0.25) p.light(X, Y, C[4], 0.2 * usure)
+      // (… PUIS UN BLEU UNI TOUT AUTOUR — Keko, 19/11 : « un côté du bouclier très blanc, l'autre très bleu foncé ; je voudrais
+      // une couleur bleue plus unie sur la périphérie » : le même bleu clair partout, à demi transparent ; le blanc ne
+      // revient qu'aux coups et sous le balayage)
+      const c = onde > 0.4 || chaud >= 2 ? BLANC : sc > 0.5 ? C[6] : C[5]
+      if (onde > 0.3 || chaud >= 2) p.px(X, Y, c)
+      else p.blend(X + 0.5, Y + 0.5, c, (0.62 + 0.3 * sc) * usure)
+      p.light(X, Y, C[4], 0.12 * usure)
       continue
     }
     if (chaud >= 2) {
@@ -163,14 +167,14 @@ export function dessinerLeBouclier(p: Peintre, cx: number, cy: number, R: number
     }
     if (joint) {
       // (DE FACE, LES JOINTS SONT À PEINE LÀ — mesuré : ils grillageaient le vaisseau ; ils s'épaississent vers le bord)
-      const I = (0.04 + 0.55 * ff + 0.06 * Math.sin(q.lat * 3 - t * 1.6) + (q.coin < 0.32 ? 0.1 * (0.3 + ff) : 0)) * usure + 0.9 * scint + 0.7 * sc + 1.3 * onde + chaud
+      const I = (0.04 + 0.55 * ff + 0.06 * Math.sin(q.lat * 3 - t * 1.6) + (q.coin < 0.32 ? 0.1 * (0.3 + ff) : 0)) * usure + 0.9 * scint + 1.3 * sc + 1.3 * onde + chaud
       const c = scint > 0.6 || onde > 0.55 || chaud > 0.5 ? BLANC : I > 0.8 ? C[6] : I > 0.55 ? C[5] : C[4]
       if (I > 0.5) p.px(X, Y, c)
       else p.blend(X + 0.5, Y + 0.5, c, Math.min(1, 0.06 + 0.9 * I))
       if (I > 0.3) p.light(X, Y, C[4], 0.06 * I)
     } else {
       // le verre : presque rien de face, plus épais vers le bord, un liseré clair en haut à gauche de chaque plaque
-      const al = (0.01 + 0.3 * ff * rim + (biseau ? 0.03 + 0.18 * ff : 0)) * usure + 0.35 * scint + 0.12 * sc + 0.3 * onde + 0.6 * chaud
+      const al = (0.01 + 0.3 * ff * rim + (biseau ? 0.03 + 0.18 * ff : 0)) * usure + 0.35 * scint + 0.3 * sc + 0.3 * onde + 0.6 * chaud
       const c = chaud > 0.6 ? BLANC : chaud > 0.3 || scint > 0.5 ? C[6] : onde > 0.4 || biseau ? C[5] : ff > 0.5 ? C[4] : C[3]
       p.blend(X + 0.5, Y + 0.5, c, clamp(al))
       if (onde > 0.1 || chaud > 0 || scint > 0) p.light(X, Y, C[4], 0.06 * (onde + chaud + scint))

@@ -226,9 +226,10 @@ const PEAUX: Record<string, Peau[]> = {
       principale: 'mauve',
       rampes: { obsidienne: T(228, 0.45, 0.62), mauve: T(32, 0.85, 1), plasma: R('#3a0a04', '#8a2a06', '#e06a10', '#ffb030', '#ffe890', '#ffffff'), decor: T(44, 0.9, 1.12) },
       accent: T(44, 0.9, 1.12),
+      // (… SUR LE SCEAU — Keko, 19/11 : ses nageoires sont parties ; l'or au bout des six branches de son étoile)
       habit: () => ({
-        ailes: COTES.map((sg) => goutte(-5.3, sg * 9.2, 0.8, 'decor')),
-        coque: [plat(barre(1.4, 0, 4.4, 0, 0.4), 'decor')],
+        ailes: [],
+        coque: [plat(barre(1.4, 0, 4.4, 0, 0.4), 'decor'), ...[0, 1, 2, 3, 4, 5].map((k) => goutte(Math.cos((k * Math.PI) / 3) * 6, Math.sin((k * Math.PI) / 3) * 6, 0.45, 'decor'))],
       }),
     },
     {
@@ -239,8 +240,9 @@ const PEAUX: Record<string, Peau[]> = {
       rampes: { obsidienne: T(190, 0.4, 0.58), mauve: T(185, 0.7, 0.95), plasma: R('#2a0630', '#6a1060', '#c02a9a', '#ff5ac8', '#ffb0ec', '#ffffff'), decor: T(320, 0.6, 1.15) },
       accent: T(320, 0.6, 1.15),
       habit: () => ({
-        ailes: COTES.flatMap((sg) => [goutte(-5.3, sg * 9.2, 0.7, 'decor'), ...([[-4.6, 4.2], [-4.4, 8.5], [-1.6, 3]] as [number, number][]).map(([x, y]) => goutte(x, sg * y, 0.28, 'decor'))]),
-        coque: [],
+        // (… SUR LE SCEAU — Keko, 19/11 : des étoiles roses semées entre les branches)
+        ailes: [],
+        coque: [0, 1, 2, 3, 4, 5].map((k) => goutte(Math.cos(Math.PI / 6 + (k * Math.PI) / 3) * 4.3, Math.sin(Math.PI / 6 + (k * Math.PI) / 3) * 4.3, 0.3, 'decor')),
       }),
     },
   ],

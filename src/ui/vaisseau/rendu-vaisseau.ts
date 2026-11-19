@@ -706,7 +706,7 @@ const GABARIT_DE_L_INGENIEUR: Gabarit = { tuyeres: [{ x: 0.2, y: 0, large: 2.4 }
 const GABARIT_DU_FRIMAS: Gabarit = { tuyeres: [{ x: 2.4, y: 0 }], armes: [{ x: 0, y: 0, s: 1 }], feux: { x: 7.1, y: 3.9 }, verriere: 4.2, nez: 7.6, flanc: 6.5, anneau: 12.5, echelle: 1 }
 // LE PULSAR (Keko, 16/11 : « alien, exotique, le plasma et l'énergie ») : une raie — deux grandes ailes en nageoires — autour
 // d'un CŒUR DE PLASMA, deux cornes de décharge au nez entre lesquelles l'orbe se forme ; une tuyère, à la queue
-const GABARIT_DU_PULSAR: Gabarit = { tuyeres: [{ x: 1.6, y: 0 }], armes: [{ x: 0, y: 0, s: 1 }], feux: { x: -5.3, y: 9.6 }, verriere: -1.4, nez: 9.4, flanc: 6, anneau: 12.5, echelle: 1 }
+const GABARIT_DU_PULSAR: Gabarit = { tuyeres: [{ x: 1.6, y: 0 }], armes: [{ x: 0, y: 0, s: 1 }], feux: null, verriere: -1.4, nez: 9.4, flanc: 6, anneau: 12.5, echelle: 1 }
 // LE KRAKEN (Keko, 16/11) : un manteau de chitine sur de la chair, deux nageoires de chair, des tentacules qui traînent
 // derrière ; ses trois tentacules à aiguille partent de trois racines, à l'avant (`ANCRES_DU_KRAKEN`) ; un jet de bile
 // à la queue
@@ -987,6 +987,20 @@ export function formesDeLaTeteDeTourelle(): Forme[] {
   ]
 }
 /** Des formes déplacées de (dx, dy) — une arme à sa place, une tuyère à la sienne. */
+/** LA SENTINELLE TOURNE SUR ELLE-MÊME (Keko, 19/11) : son disque, ses rivets, ses berceaux, ses voyants — en radians par seconde. */
+const TOUR_DE_LA_SENTINELLE = 0.9
+/** Des formes tournées de `an` autour du centre du vaisseau (leurs dômes avec). */
+function tourner(formes: Forme[], an: number): Forme[] {
+  if (an === 0) return formes
+  const c = Math.cos(an)
+  const s = Math.sin(an)
+  const r = (x: number, y: number): [number, number] => [x * c - y * s, x * s + y * c]
+  return formes.map((f) => {
+    if (f.dome === undefined) return { ...f, pts: f.pts.map(([x, y]) => r(x, y)) }
+    const [dx, dy] = r(f.dome.x, f.dome.y)
+    return { ...f, pts: f.pts.map(([x, y]) => r(x, y)), dome: { ...f.dome, x: dx, y: dy } }
+  })
+}
 function decaler(formes: Forme[], dx: number, dy: number): Forme[] {
   if (dx === 0 && dy === 0) return formes
   return formes.map((f) => ({ ...f, pts: f.pts.map(([x, y]): [number, number] => [x + dx, y + dy]), dome: f.dome === undefined ? undefined : { ...f.dome, x: f.dome.x + dx, y: f.dome.y + dy }, feu: f.feu === undefined ? undefined : { base: f.feu.base + dx, pointe: f.feu.pointe + dx } }))
@@ -1368,14 +1382,35 @@ export function formesDeLaCoque(cran: number, t = 0, motif?: MotifDuVer): Forme[
   if (cran === 9) {
     // LE PULSAR, UNE CARAPACE D'OBSIDIENNE : un corps fuselé, le CŒUR DE PLASMA au milieu dans sa bague, deux évents qui
     // luisent sur l'échine ; au nez, DEUX CORNES DE DÉCHARGE mauves, une étincelle de plasma au bout de chacune
-    const f: Forme[] = [{ pts: [[6.2, 0], [4.6, -1.6], [1.6, -2.6], [-2, -2.8], [-5.2, -2.2], [-7.4, -1], [-7.8, 0], [-7.4, 1], [-5.2, 2.2], [-2, 2.8], [1.6, 2.6], [4.6, 1.6]], mat: 'obsidienne', relief: 'cyl' }]
+    // (… PUIS UN SCEAU ARCANIQUE — Keko, 19/11 : « qu'il évoque un peu plus les arcanes et la magie ; là, il a une structure
+    // qui ressemble beaucoup au chasseur » : plus de fuselage ni de nageoires — UNE ÉTOILE À SIX BRANCHES d'obsidienne, deux
+    // triangles croisés, cernée d'un fin hexagone mauve ; au milieu, son CŒUR DE PLASMA dans sa bague, un losange mauve
+    // derrière ; une rune luit au bout de chaque branche ; au nez, les DEUX CORNES en croissant, entre lesquelles l'orbe se
+    // forme ; autour de lui, LE CERCLE DE RUNES qui tourne — voir `formesDesAiles`)
+    const f: Forme[] = []
+    const etoile = (a0: number, r: number): [number, number][] => [0, 1, 2].map((k): [number, number] => [Math.cos(a0 + (k * 2 * Math.PI) / 3) * r, Math.sin(a0 + (k * 2 * Math.PI) / 3) * r])
     for (const sg of [-1, 1]) {
-      f.push({ pts: [[3, sg * 0.9], [6.4, sg * 0.9], [9.4, sg * 0.55], [9.7, sg * 1.1], [6.6, sg * 2], [2.8, sg * 2.4]], mat: 'mauve', relief: 'plat', penche: sg })
-      f.push({ pts: ovale(9.25, sg * 0.85, 0.5, 0.5, 8), mat: 'plasma', relief: 'dome', dome: { x: 9.25, y: sg * 0.85, rx: 0.5, ry: 0.5 } })
+      f.push({ pts: [[3.4, sg * 2.4], [6.2, sg * 3.1], [8.6, sg * 2.5], [9.9, sg * 1], [8.7, sg * 1.5], [6.4, sg * 2], [4, sg * 1.5]], mat: 'mauve', relief: 'plat', penche: sg })
+      f.push({ pts: ovale(9.6, sg * 1.05, 0.5, 0.5, 8), mat: 'plasma', relief: 'dome', dome: { x: 9.6, y: sg * 1.05, rx: 0.5, ry: 0.5 } })
     }
-    for (const [x, r] of [[-4.3, 0.55], [-5.8, 0.42]]) f.push({ pts: ovale(x, 0, r, r, 8), mat: 'plasma', relief: 'dome', dome: { x, y: 0, rx: r, ry: r } })
-    f.push({ pts: ovale(-1.4, 0, 2.6, 2.6, 18), mat: 'metal', relief: 'dome', dome: { x: -1.4, y: 0, rx: 2.6, ry: 2.6 } })
-    f.push({ pts: ovale(-1.4, 0, 1.9, 1.9, 16), mat: 'plasma', relief: 'dome', dome: { x: -1.4, y: 0, rx: 1.9, ry: 1.9 } })
+    f.push({ pts: etoile(0, 6.4), mat: 'obsidienne', relief: 'plat' })
+    f.push({ pts: etoile(Math.PI / 3, 6.4), mat: 'obsidienne', relief: 'plat' })
+    // (le fin hexagone mauve qui joint les creux de l'étoile)
+    for (let k = 0; k < 6; k++) {
+      const a0 = Math.PI / 6 + (k * Math.PI) / 3
+      const a1 = a0 + Math.PI / 3
+      f.push({ pts: barre(Math.cos(a0) * 3.7, Math.sin(a0) * 3.7, Math.cos(a1) * 3.7, Math.sin(a1) * 3.7, 0.28), mat: 'mauve', relief: 'plat' })
+    }
+    // (une rune au bout de chaque branche : un trait et sa barre, qui luisent)
+    for (let k = 0; k < 6; k++) {
+      const a = (k * Math.PI) / 3
+      const [ux, uy] = [Math.cos(a), Math.sin(a)]
+      f.push({ pts: barre(ux * 4.3, uy * 4.3, ux * 5.5, uy * 5.5, 0.22), mat: 'plasma', relief: 'lueur', ton: 4 })
+      f.push({ pts: barre(ux * 4.9 - uy * 0.45, uy * 4.9 + ux * 0.45, ux * 4.9 + uy * 0.45, uy * 4.9 - ux * 0.45, 0.2), mat: 'plasma', relief: 'lueur', ton: 4 })
+    }
+    f.push({ pts: [[2.6, 0], [0, -2.6], [-2.6, 0], [0, 2.6]], mat: 'mauve', relief: 'plat' })
+    f.push({ pts: ovale(0, 0, 2.3, 2.3, 18), mat: 'metal', relief: 'dome', dome: { x: 0, y: 0, rx: 2.3, ry: 2.3 } })
+    f.push({ pts: ovale(0, 0, 1.75, 1.75, 16), mat: 'plasma', relief: 'dome', dome: { x: 0, y: 0, rx: 1.75, ry: 1.75 } })
     return f
   }
   if (cran === 8) {
@@ -1585,14 +1620,23 @@ export function formesDesAiles(coque = 1, t = 0): Forme[] {
     return f
   }
   if (coque === 9) {
-    // (le pulsar : deux grandes NAGEOIRES de raie, mauves, le bord d'attaque sombre, parcourues de deux veines de plasma ;
-    // le bout est la marque du joueur)
-    for (const sg of [-1, 1]) {
-      f.push({ pts: [[3.2, sg * 2.2], [1.4, sg * 4.6], [-1.4, sg * 7.4], [-4.6, sg * 9.6], [-6, sg * 9.4], [-5.2, sg * 7.4], [-5.6, sg * 5], [-6.8, sg * 2.6]], mat: 'mauve', relief: 'plat', penche: sg })
-      f.push({ pts: [[3.2, sg * 2.2], [1.4, sg * 4.6], [-1.4, sg * 7.4], [-4.6, sg * 9.6], [-4.9, sg * 9], [-1.9, sg * 6.9], [0.7, sg * 4.4], [2.4, sg * 2.3]], mat: 'obsidienne', relief: 'plat', penche: sg })
-      f.push({ pts: barre(0.2, sg * 3.4, -3.8, sg * 7.8, 0.55), mat: 'plasma', relief: 'plat' })
-      f.push({ pts: barre(-2.6, sg * 3, -4.7, sg * 6.4, 0.45), mat: 'plasma', relief: 'plat' })
-      f.push({ pts: ovale(-5.3, sg * 9.2, 0.8, 0.8, 8), mat: 'marque', relief: 'dome', dome: { x: -5.3, y: sg * 9.2, rx: 0.8, ry: 0.8 } })
+    // (le pulsar : deux grandes NAGEOIRES de raie, mauves…)
+    // (… PUIS LE CERCLE DE RUNES — Keko, 19/11 : « qu'il évoque les arcanes et la magie » : un anneau mauve, coupé de six
+    // runes de plasma qui luisent, qui TOURNE lentement autour de lui ; une marque à la rune de tête)
+    const rot = t * 0.35
+    const R0 = 7.6
+    for (let k = 0; k < 6; k++) {
+      const base = rot + (k * Math.PI) / 3
+      // (l'arc entre deux runes, en trois segments)
+      for (let j = 0; j < 3; j++) {
+        const a0 = base + 0.16 + (j * (Math.PI / 3 - 0.32)) / 3
+        const a1 = base + 0.16 + ((j + 1) * (Math.PI / 3 - 0.32)) / 3
+        f.push({ pts: barre(Math.cos(a0) * R0, Math.sin(a0) * R0, Math.cos(a1) * R0, Math.sin(a1) * R0, 0.36), mat: 'mauve', relief: 'plat' })
+      }
+      // (la rune : un losange de plasma barré d'un trait, dans la coupure)
+      const [ux, uy] = [Math.cos(base), Math.sin(base)]
+      const [cx, cy] = [ux * R0, uy * R0]
+      f.push({ pts: [[cx + ux * 0.75, cy + uy * 0.75], [cx - uy * 0.5, cy + ux * 0.5], [cx - ux * 0.75, cy - uy * 0.75], [cx + uy * 0.5, cy - ux * 0.5]], mat: k === 0 ? 'marque' : 'plasma', relief: 'lueur', ton: 4 })
     }
     return f
   }
@@ -1625,6 +1669,12 @@ export function formesDesAiles(coque = 1, t = 0): Forme[] {
     // (la soucoupe : PAS D'AILES — un ANNEAU tout autour d'elle, où sont fixées ses huit tuyères)
     f.push({ pts: ovale(0, 0, 9.6, 9.6, 32), mat: 'sarcelle', relief: 'plat' })
     f.push({ pts: ovale(0, 0, 8.3, 8.3, 32), mat: 'acier', relief: 'plat' })
+    // (… QUI TOURNE — Keko, 19/11 : « qu'elle donne une impression de rotation sur elle-même » : douze encoches sombres sur
+    // l'anneau, qui tournent à rebours du disque — voir `TOUR_DE_LA_SENTINELLE`)
+    for (let k = 0; k < 12; k++) {
+      const a = -t * 0.5 + (k * Math.PI) / 6
+      f.push({ pts: barre(Math.cos(a) * 8.5, Math.sin(a) * 8.5, Math.cos(a) * 9.4, Math.sin(a) * 9.4, 0.42), mat: 'graphite', relief: 'plat' })
+    }
     return f
   }
   if (coque === 5) {
@@ -2110,7 +2160,8 @@ export function formesDuVaisseau(a: Allure, flamme: number, t: number, vise = 0,
   const feux = f.filter((x) => x.relief === 'emis')
   const reste = f.filter((x) => x.relief !== 'emis')
   // (LE VER ONDULE : sa coque se refait de sa poussée et de son virage)
-  const tout = [...feux, ...reste, ...sansMarque(a.coque === 14 ? formesDuVer(t, flamme, devie, a.habit?.motif, a.chemin, a.ver) : formesDeLaCoque(a.coque, t)), ...(a.habit?.coque ?? [])]
+  const coque = [...sansMarque(a.coque === 14 ? formesDuVer(t, flamme, devie, a.habit?.motif, a.chemin, a.ver) : formesDeLaCoque(a.coque, t)), ...(a.habit?.coque ?? [])]
+  const tout = [...feux, ...reste, ...(a.coque === 6 ? tourner(coque, t * TOUR_DE_LA_SENTINELLE) : coque)]
   if (g.surLePont) tout.push(...armes)
   tout.push(...surLeDos)
   if (a.coque === 10 && a.kraken?.rejeton !== undefined) tout.push(...formesDuRejetonDuDos(a.kraken.rejeton, t))

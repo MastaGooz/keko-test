@@ -2872,6 +2872,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const tu = tuyeres[Math.floor(R.next() * tuyeres.length)]
     return tu.y + (tu.large === undefined ? 0 : R.range(-1, 1) * 1.6 * tu.large)
   }
+  /**
+   * S'IL A UN BOUCLIER, AU HANGAR ET À L'ACCUEIL (Keko, 19/11 : « il faut bien qu'on voie le bouclier de ce type de vaisseau
+   * dans l'écran d'accueil et dans le hangar ») : sa coque en porte un, ou — au vortex — sa race (les Vectrans, voir
+   * `vieSelonLaRace`) : la coque n'en disait rien, la bulle ne paraissait qu'en vol.
+   */
+  const aUnBouclierAuRepos = (): boolean => (VORTEX ? modeleDeVaisseau(flotte.actif).race === 'etheres' : false) || (monteeA(hangar, 'coque').bouclier ?? 0) > 0
   function dessinerLeHangarEnScene(p: Peintre, cx: number, cy: number, y0: number, y1: number): void {
     // (le gabarit de la coque montée : un cuirassé est montré plus petit, ses repères sont ailleurs)
     const coqueMontee = monteeA(hangar, 'coque').cran
@@ -2935,7 +2941,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.glow(cx, cy, 40 * (1 - ue), PEPITE[2], 0.4 * (1 - ue))
     }
     // l'ombre du vaisseau sur l'aire, décalée à l'opposé des lampes ; elle suit sa respiration
-    const al = allureMontee(monteeA(hangar, 'coque').bouclier ? 1 : 0)
+    const al = allureMontee(aUnBouclierAuRepos() ? 1 : 0)
     const haut = cy - sy
     if (haut < 60) {
       const k = Math.max(0.4, 1 - haut / 60)
@@ -12564,6 +12570,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
     peindreFormes(p, formesDuVaisseau(al, flam, t), cx, sy, E, { rampes: rampesDuJoueur() })
     dessinerLaNueeAuRepos(p, cx, sy, E)
+    if (aUnBouclierAuRepos()) dessinerLeBouclier(p, cx, sy, gA.anneau * E, t, 1, [])
     // (UNE SOUCOUPE, à l'accueil : ses jets du dessous la portent, plus forts quand elle s'arrache — Keko, 15/11)
     if (gA.omni !== undefined) dessinerLesJetsOmni(p, monteeA(hangar, 'coque').cran, cx, sy, -Math.PI / 2, E, flam, 0, 0, E * 0.6)
     if (!sansVerriere(monteeA(hangar, 'coque').cran)) p.glow(cx, sy - gA.verriere * E, 9, VERRIERE[2], 0.25)
