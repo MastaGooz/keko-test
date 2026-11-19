@@ -3797,7 +3797,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     'arme-epines': 'Une grande épine d’os, qui transperce tout sur son passage.',
     // (… PLUS COURTES — Keko, 19/11 : « elles dépassent trois lignes, on ne voit pas la suite »)
     'arme-oeufs': 'Lâche des œufs qui libèrent des vers agressifs.',
-    'arme-eclats': 'Projette des éclats de glace dans toutes les directions autour du vaisseau.',
+    'arme-eclats': 'Projette des éclats de glace dans toutes les directions, qui gèlent les ennemis.',
     // (… LES NOMS DU FRIMAS ET DU PULSAR — Keko, 19/11 : le Blizzard ; l'Orbe de plasma, le Missile ionique, la Décharge arcanique)
     'arme-tornade': 'Un blizzard qui poursuit les ennemis, les gèle et les lacère.',
     // (… LE PULSAR REDIT — Keko, 19/11)

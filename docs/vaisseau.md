@@ -6247,3 +6247,5 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
 - LE PULSAR REDIT (Keko, 19/11) : « Projette un orbe de plasma qui décharge sur tous les ennemis proches. » ; « Tire une
   volée de missiles qui fondent sur les ennemis à portée. » ; « Verrouille un ennemi proche et décharge un faisceau
   d'énergie sur lui. »
+- LES ÉCLATS DE GLACE REDITS (Keko, 19/11 : « préciser que ça gèle ») : « Projette des éclats de glace dans toutes les
+  directions, qui gèlent les ennemis. »
