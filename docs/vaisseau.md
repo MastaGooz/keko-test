@@ -6150,3 +6150,5 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   BRAISE, des œufs ambrés, un cerveau rouge feu sous une membrane d'ambre. Ce qu'il porte (sur ses flancs, sur sa nuque)
   et ce qu'il lance (l'œuf pondu, ses fissures et son éclosion, le parasite en vol, en bond et accroché ; ses crocs
   avaient déjà sa chair) les lisent (`cerveauDuVer`, `membraneDuVer`, `coqueDOeuf`, `lueurDOeuf`). Vu à la capture.
+- LES ŒUFS ET LES PARASITES DITS PLUS COURT (Keko, 19/11 : « ils dépassent trois lignes et on ne voit pas la suite ») :
+  « Lâche des œufs qui libèrent des vers agressifs. » ; « Lance des parasites qui sautent d'ennemi en ennemi. »

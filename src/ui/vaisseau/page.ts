@@ -3809,7 +3809,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // (… LE VER — Keko, 19/11 : l'épine « transperce tout sur son passage » ; les œufs « éclosent après un certain temps,
     // libérant des vers » ; les parasites sans leurs cerveaux à crocs, qui « prennent une nouvelle cible »)
     'arme-epines': 'Une grande épine d’os, qui transperce tout sur son passage.',
-    'arme-oeufs': 'Dépose des œufs qui éclosent après un certain temps, libérant des vers qui attaquent les ennemis.',
+    // (… PLUS COURTES — Keko, 19/11 : « elles dépassent trois lignes, on ne voit pas la suite »)
+    'arme-oeufs': 'Lâche des œufs qui libèrent des vers agressifs.',
     'arme-eclats': 'De gros éclats de glace tout autour, le premier droit sur la cible : ils gèlent ce qu’ils touchent.',
     'arme-tornade': 'Une tornade de givre qui poursuit les ennemis, les ralentit et les lacère.',
     'arme-plasma': 'Une lente sphère de plasma, qui lance de petits traits sur tout ce qui passe près d’elle.',
@@ -3820,7 +3821,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     'arme-rejetons': 'Des rejetons, qui se déplacent vers les ennemis et les transpercent de leurs aiguilles.',
     'arme-crachat': 'Crache une flaque d’acide corrosive sur les ennemis proches.',
     'arme-mines': 'Sème des mines autour, qui explosent en un nuage de gaz corrosif quand un ennemi approche.',
-    'arme-parasites': 'Lance des parasites sur les ennemis proches, qui prennent une nouvelle cible une fois la première dévorée.',
+    'arme-parasites': 'Lance des parasites qui sautent d’ennemi en ennemi.',
     'arme-faisceau': 'Un rayon continu, qui chauffe de plus en plus sur la même cible.',
     'arme-cristaux': 'Des cristaux posés par trois, reliés de faisceaux qui brûlent ce qui les traverse.',
     'arme-rail': 'Un trait d’énergie instantané, qui traverse toute une ligne d’ennemis.',
