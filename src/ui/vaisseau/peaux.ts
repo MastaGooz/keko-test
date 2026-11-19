@@ -41,7 +41,6 @@ const goutte = (x: number, y: number, r: number, mat: Matiere): Forme => ({ pts:
 // les rampes qui reviennent
 const AMBRE = R('#2a1404', '#6a3608', '#c87214', '#ffb840', '#ffe49a', '#ffffff')
 const ROUGE = R('#26080f', '#561220', '#93202e', '#d0443a', '#ff8456', '#ffcf9a')
-const GLACE = R('#151a3d', '#212f6b', '#2c58aa', '#3a8bd8', '#7ed4f8', '#e6fbff')
 const PLASMA = R('#2a0c5a', '#4a1a8c', '#8a3ce0', '#4a7cf0', '#7cc0ff', '#f0f8ff')
 const BILE = R('#1a2a06', '#3a5a0c', '#6a9a14', '#a8d42a', '#e0f870', '#ffffe0')
 const VENIN = R('#1a3006', '#2e5a08', '#4e8e10', '#7cc81c', '#b8f040', '#f0ffb0')
@@ -188,9 +187,22 @@ const PEAUX: Record<string, Peau[]> = {
       }),
     },
   ],
-  // LE FRIMAS : une carapace de givre, des croissants bleu de crevasse, la glace
+  // LE FRIMAS : une carapace blanche, des croissants d'ardoise, la glace — son origine est l'ancien Blizzard (Keko, 19/11 :
+  // « passer le skin numéro 3 en skin de base et créer un nouveau skin pour remplacer le numéro 3 »)
   frimas: [
-    origine('nacre', GLACE),
+    {
+      // (une carapace blanche, des croissants d'ardoise — ses couleurs de série, voir `RAMPES` —, une glace presque
+      // blanche ; du givre semé sur le dos)
+      id: 'origine',
+      nom: 'Origine',
+      principale: 'nacre',
+      rampes: { glace: R('#0a2a40', '#14507a', '#2a90c8', '#6ad0f4', '#c8f4ff', '#ffffff'), decor: T(195, 0.6, 1.18) },
+      accent: T(195, 0.6, 1.18),
+      habit: () => ({
+        ailes: COTES.map((sg) => goutte(6.93, sg * 3.47, 0.85, 'decor')),
+        coque: ([[2.6, -2], [2.2, 2.1], [-1.4, -2.7], [-0.9, 2.7], [5, -1.2], [-3.2, 0.2]] as [number, number][]).map(([x, y]) => goutte(x, y, 0.32, 'decor')),
+      }),
+    },
     {
       // une carapace vert d'eau, des croissants magenta, une glace d'aurore verte ; deux traînées d'aurore sur le dos, le bout des cornes rose
       id: 'aurore',
@@ -204,15 +216,16 @@ const PEAUX: Record<string, Peau[]> = {
       }),
     },
     {
-      // une carapace blanche, des croissants d'ardoise, une glace presque blanche ; du givre semé sur le dos
-      id: 'blizzard',
-      nom: 'Blizzard',
+      // UN GLACIER (Keko, 19/11 : le nouveau troisième) : une carapace bleu d'iceberg, des croissants de neige, une glace
+      // turquoise ; une arête de neige du nez au dos, des glaçons au bout des croissants
+      id: 'glacier',
+      nom: 'Glacier',
       principale: 'nacre',
-      rampes: { nacre: T(205, 0.1, 1.22), indigo: T(215, 0.25, 0.72), glace: R('#0a2a40', '#14507a', '#2a90c8', '#6ad0f4', '#c8f4ff', '#ffffff'), decor: T(195, 0.6, 1.18) },
-      accent: T(195, 0.6, 1.18),
+      rampes: { nacre: T(198, 0.62, 1.0), indigo: T(205, 0.1, 1.28), glace: R('#062a3a', '#0a5a78', '#1aa0c8', '#5ad8f4', '#c0f8ff', '#ffffff'), decor: T(200, 0.08, 1.32) },
+      accent: T(185, 0.7, 1.2),
       habit: () => ({
         ailes: COTES.map((sg) => goutte(6.93, sg * 3.47, 0.85, 'decor')),
-        coque: ([[2.6, -2], [2.2, 2.1], [-1.4, -2.7], [-0.9, 2.7], [5, -1.2], [-3.2, 0.2]] as [number, number][]).map(([x, y]) => goutte(x, y, 0.32, 'decor')),
+        coque: [plat(barre(4.6, 0, -3.8, 0, 0.32), 'decor'), ...COTES.map((s) => goutte(-1.2, s * 2.5, 0.42, 'decor'))],
       }),
     },
   ],

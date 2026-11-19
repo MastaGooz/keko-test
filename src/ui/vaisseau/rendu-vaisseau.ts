@@ -74,10 +74,10 @@ const RAMPES: Record<Matiere, number[]> = {
   kaki: ['#121306', '#262810', '#3f421e', '#5e6232', '#888d52', '#c6c98e'].map(hex),
   graphite: ['#0d0d12', '#1b1b22', '#2d2d36', '#45454f', '#686874', '#a2a2ae'].map(hex),
   // (… LA GLACE, PLUS LE VIOLET — Keko, 19/11 : « la couleur de base du Frimas trop proche de celle du Pulsar ; une
-  // identité vraiment liée à la glace » : la carapace, du givre presque blanc teinté de cyan ; ses chevrons, ses croissants
-  // et le corps de ses armes, le bleu-vert profond d'une crevasse de glacier — les noms des matières restent)
-  nacre: ['#162a36', '#2a4a5a', '#4a7486', '#7eaab8', '#bfe2ea', '#f4feff'].map(hex),
-  indigo: ['#04161e', '#082a38', '#0e4458', '#16627c', '#2a8aa6', '#6cc4d8'].map(hex),
+  // identité vraiment liée à la glace » ; puis « passer le skin numéro 3 en skin de base » : ce sont les couleurs du
+  // Blizzard — une carapace blanche, des croissants d'ardoise ; les noms des matières restent)
+  nacre: ['#24272c', '#40464f', '#626d78', '#929da5', '#d3d8db', '#f0f3f4'].map(hex),
+  indigo: ['#12141e', '#202535', '#303b50', '#455773', '#5f7d9e', '#84a9c7'].map(hex),
   // LE PULSAR (Keko, 16/11 : « des tons un peu violets ») : une carapace d'obsidienne, des ailes mauves, et LE PLASMA —
   // du violet au bleu, puis au blanc (les teintes du « Plasma explosion » de pixelfx)
   obsidienne: ['#0b0816', '#171128', '#261c40', '#3a2c5c', '#58457f', '#8a74b0'].map(hex),

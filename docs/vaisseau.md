@@ -6362,3 +6362,9 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   (violet) le BLEU-VERT PROFOND d'une crevasse de glacier — ses chevrons, ses croissants et le corps de ses armes, qui
   restent contrastés sur la carapace. Seul le Frimas portait ces deux matières ; leurs noms restent. Ses deux autres
   apparences (Aurore, Blizzard) ont leurs rampes à elles, inchangées.
+- LE BLIZZARD DEVIENT L'ORIGINE DU FRIMAS, UN GLACIER LE REMPLACE (Keko, 19/11 : « ton nouveau skin de base ressemble
+  trop au skin numéro 3 ; passer le skin numéro 3 en skin de base, et créer un nouveau skin pour remplacer le numéro 3 ») :
+  l'origine prend ses couleurs (une carapace blanche, des croissants d'ardoise — écrites dans `RAMPES`, puisque le
+  Frimas seul les porte —, sa glace presque blanche, son accent) et son givre semé sur le dos. LE GLACIER, nouveau
+  troisième : une carapace bleu d'iceberg, des croissants de neige, une glace turquoise, une arête de neige du nez au
+  dos. Un joueur qui avait choisi le Blizzard retombe sur l'origine — les mêmes couleurs.
