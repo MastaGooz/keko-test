@@ -6493,3 +6493,6 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   les draine. » ; les Vrilles d'ombre, « Saisit et blesse les ennemis, qui subissent de gros dégâts s'ils s'éloignent. »
 - L'HYPERCUBE REDIT (Keko, 19/11 : « ne dis pas à pas égaux ») : « Un hypercube lancé en cloche, qui rebondit trois fois en
   grossissant : chaque rebond frappe autour de lui, plus large. »
+- LE DÉ DU DESTIN REDIT, LA COUPE DEVIENT LA SUPERPOSITION (Keko, 19/11) : le dé dit « Lâche un dé sur un ennemi, plus le
+  chiffre est haut, plus les dégâts sont importants. » (trois lignes, vu à la capture) ; l'arme `coupe` s'appelle
+  « Superposition » et dit « Inflige des dégâts dans une zone, puis explose en son centre. »

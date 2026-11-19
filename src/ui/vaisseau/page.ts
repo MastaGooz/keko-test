@@ -3867,8 +3867,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     'arme-balises': 'Des glyphes posés par trois, reliés de rayons qui frappent ce qui les franchit.',
     // (… SANS « À PAS ÉGAUX » — Keko, 19/11)
     'arme-hypercube': 'Un hypercube lancé en cloche, qui rebondit trois fois en grossissant : chaque rebond frappe autour de lui, plus large.',
-    'arme-coupe': 'Un cube traverse le plan en biais : on n’en voit que la tranche, un triangle qui devient hexagone, qui frappe tout ce qu’il couvre.',
-    'arme-de': 'Un dé à quatre dimensions qui roule au-dessus d’un ennemi, puis s’abat sur sa zone : plus son chiffre est haut, plus il frappe fort.',
+    // (LA SUPERPOSITION, d'abord la coupe — Keko, 19/11)
+    'arme-coupe': 'Inflige des dégâts dans une zone, puis explose en son centre.',
+    // (… REDIT — Keko, 19/11)
+    'arme-de': 'Lâche un dé sur un ennemi, plus le chiffre est haut, plus les dégâts sont importants.',
   }
   /**
    * L'APERÇU D'UNE ARME (Keko, 17/11 : « on voit le vaisseau et un ennemi avec le projectile en animation, pour voir ce
