@@ -6165,3 +6165,11 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   plus évocateur, comme les Tyranides » ; « renommer les humains par un nom de faction humaine, du style l'Empire ») :
   choisis par Keko parmi mes propositions — LE DÉVOREUR, LES XÉNOÏDES, L'EMPIRE (`RACES`, `nom` du modèle ; les
   identifiants `mante`, `essaim`, `humains` restent).
+- LES XÉNOÏDES DIFFÉRENCIÉS (Keko, 19/11 : « le Kraken le plus lent et le moins maniable, vraiment bas, mais les points de
+  vie les plus élevés, et donc la régénération la plus élevée ; la Vouivre une vitesse très faible mais une grande
+  maniabilité, des points de vie moyens, voire moyen plus ; le Ver les points de vie les plus bas des Xénoïdes, une
+  maniabilité relativement importante, une vitesse moyenne ») : par-dessus leurs pièces (`REGLAGES_DU_VORTEX`) —
+  LE KRAKEN 104,5 → 72 de vitesse (juste au-dessus de l'Ingénieur, que Keko veut le plus lent de la flotte), 5,1 → 4,6
+  d'agilité (la plus basse de la flotte, sous la Salamandre), 9 → 11 de vie (la plus haute) ; LA VOUIVRE 110 → 78, 7 → 8,2,
+  8 de vie ; LE DÉVOREUR 110 → 95, 8,7 → 7,4, 7 → 6 de vie. La régénération reste une part de la vie (2 % par seconde) :
+  le Kraken, le plus de vie, régénère le plus de points. Vu sur les fiches.

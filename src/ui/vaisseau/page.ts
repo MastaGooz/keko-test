@@ -1199,7 +1199,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   // Salamandre 31 → 62 % de jauge (88 → 103,5), l'Ingénieur 23 → 46 % (5,5 → 7 d'agilité))
   // (… PUIS LA SALAMANDRE UN PEU MOINS VITE — Keko, 18/11 : « réduis un petit peu la vitesse de la salamandre » : 103,5 → 97)
   // (… ET LE CHASSEUR AUSSI — Keko, 18/11 : « réduis un petit peu la vitesse du chasseur » : 110 → 104)
-  const REGLAGES_DU_VORTEX: Record<string, { vitesseMax?: number; poussee?: number; rotation?: number; blindage?: number }> = { chasseur: { vitesseMax: 104 / 126, rotation: 1.45, blindage: 0.5 }, salamandre: { vitesseMax: 97 / 88, blindage: 7 / 9 }, ingenieur: { vitesseMax: 68 / 94, rotation: 1.746, blindage: 6 / 9 } }
+  // (LES XÉNOÏDES — Keko, 19/11 : « le Kraken le plus lent et le moins maniable, vraiment bas, mais les points de vie les plus
+  // élevés, et donc la régénération la plus élevée ; la Vouivre une vitesse très faible mais une grande maniabilité, des
+  // points de vie moyens, voire moyen plus ; le Ver les points de vie les plus bas des Xénoïdes, une maniabilité
+  // relativement importante, une vitesse moyenne » : LE KRAKEN 104,5 → 72 de vitesse — juste au-dessus de l'Ingénieur,
+  // le plus lent de la flotte (Keko, 18/11) —, 5,1 → 4,6 d'agilité, la plus basse de la flotte, 9 → 11 de vie ; LA VOUIVRE
+  // 110 → 78, 7 → 8,2, 8 de vie ; LE DÉVOREUR 110 → 95, 8,7 → 7,4, 7 → 6 de vie. La régénération est une part de la vie
+  // (2 % par seconde, `vieSelonLaRace`) : le Kraken, le plus de vie, régénère le plus)
+  const REGLAGES_DU_VORTEX: Record<string, { vitesseMax?: number; poussee?: number; rotation?: number; blindage?: number }> = { chasseur: { vitesseMax: 104 / 126, rotation: 1.45, blindage: 0.5 }, salamandre: { vitesseMax: 97 / 88, blindage: 7 / 9 }, ingenieur: { vitesseMax: 68 / 94, rotation: 1.746, blindage: 6 / 9 }, kraken: { vitesseMax: 72 / 104.5, rotation: 4.6 / 5.12, blindage: 11 / 9 }, vouivre: { vitesseMax: 78 / 110, rotation: 8.2 / 7 }, mante: { vitesseMax: 95 / 110, rotation: 7.4 / 8.69, blindage: 6 / 7 } }
   /**
    * L'AGILITÉ D'UN VAISSEAU AU VORTEX (Keko, 18/11 : « la maniabilité, ça change quoi ? les vaisseaux se tournent tout
    * seuls » ; choisi : qu'elle dise comment il vire — « un vaisseau lourd sera peu maniable, un léger tournera sec ») : sa
