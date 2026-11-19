@@ -1248,6 +1248,21 @@ const RECETTES = {
     },
   },
   /**
+   * LE DÉCOLLAGE D'UN VECTRAN — la Sentinelle, le Frimas, le Pulsar (Keko, 19/11 : « un son de propulsion différent pour
+   * les éthérés, comme si leur système de propulsion était d'une technologie différente ») : pas de souffle de tuyère —
+   * UN BOURDON CRISTALLIN qui monte d'une octave en quinte (deux notes rondes, à peine battues), UN SIFFLEMENT D'IONS en
+   * bande étroite qui s'élève avec lui, et des scintillements de verre semés autour
+   */
+  decolleEthere: {
+    duree: 2.4, niveau: 0.65, salle: [0.8, 0.3],
+    faire: (m, h) => {
+      note(m, 0, 0.6, -0.2, { f: 110, glisse: { vers: 220, en: 1.1, droit: true }, a: 0.4, d: 1.1, partiels: [[1, 1, 1], [2, 0.5, 0.9], [3, 0.3, 0.8], [4, 0.2, 0.7]], battement: 6 })
+      note(m, 0.05, 0.45, 0.2, { f: 165, glisse: { vers: 330, en: 1.1, droit: true }, a: 0.45, d: 1.1, partiels: [[1, 1, 1], [2, 0.4, 0.9], [3, 0.2, 0.7]], battement: 7 })
+      souffle(m, h, 0, 0.3, 0, { f: 900, glisse: { vers: 3600, en: 1.1, droit: true }, q: 9, bande: true, a: 0.5, d: 0.8, large: true })
+      for (let k = 0; k < 10; k++) note(m, 0.3 + k * 0.12 + 0.05 * h.next(), 0.12, (h.next() - 0.5) * 0.8, { f: 1800 + 1600 * h.next(), d: 0.18, partiels: VERRE })
+    },
+  },
+  /**
    * le vaisseau se matérialise (Keko : « le son pour le spawn du vaisseau ») : pendant la spirale, un souffle et une
    * note qui montent d'une octave en s'enflant ; à l'éclosion, une quinte de clochettes (la, ré) sur un appui rond, une
    * étincelle de verre au-dessus — la même famille que l'extraction, en plus court : on arrive comme on repart

@@ -6368,3 +6368,14 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   Frimas seul les porte —, sa glace presque blanche, son accent) et son givre semé sur le dos. LE GLACIER, nouveau
   troisième : une carapace bleu d'iceberg, des croissants de neige, une glace turquoise, une arête de neige du nez au
   dos. Un joueur qui avait choisi le Blizzard retombe sur l'origine — les mêmes couleurs.
+- LES VECTRANS ONT LEUR PROPULSION (Keko, 19/11 : « un son de propulsion différent aux éthérés comparé à ceux des
+  humains ; comme si leur système de propulsion était d'une technologie différente ») : un quatrième genre, `ethere`
+  (la Sentinelle, le Frimas, le Pulsar ; ils soufflaient comme les humains). EN VOL (`voixDesEtheres`) : pas de tuyère,
+  UN BOURDON CRISTALLIN — deux triangles en quinte (110 et 165 Hz), doublés à sept cents (ils chatoient), une harmonique
+  aiguë en vibrato — et UN SIFFLEMENT D'IONS en bande étroite vers 2 400 Hz qui pulse à 11 Hz ; avec la poussée, tout
+  monte d'une quarte et le passe-bas s'ouvre. Ses niveaux sont CALCULÉS contre le souffle (même valeur efficace au même
+  réglage), pas écoutés. AU DÉCOLLAGE (`decolleEthere`) : le bourdon qui monte d'une octave en quinte, le sifflement qui
+  s'élève, des scintillements de verre. Leur mort garde le son commun.
+- « CLIQUER » À LA SOURIS (Keko, 19/11 : « sur PC, remplacer le mot toucher de l'écran d'accueil et du démarrage par
+  cliquer ») : « Cliquer pour allumer », « Cliquer pour commencer » quand le pointeur est fin (`VERBE_DU_GESTE`) ; au
+  doigt, « Toucher ». Vu à la capture, sans émulation tactile.

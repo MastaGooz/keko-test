@@ -508,6 +508,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** Sur PC (un pointeur fin), en vol : le jeu couvre toute la page (voir `cadrer`). `&couvre=0` rend les marges. */
   const PC = typeof matchMedia === 'function' && matchMedia('(pointer: fine)').matches && parametres.get('couvre') !== '0'
   const doitCouvrir = (): boolean => PC && enJeu && !ecranVisible()
+  /** LE VERBE DU GESTE (Keko, 19/11 : « sur PC, remplacer le mot toucher de l'écran d'accueil et du démarrage par cliquer ») : à la souris, « Cliquer ». */
+  const VERBE_DU_GESTE = typeof matchMedia === 'function' && matchMedia('(pointer: fine)').matches ? 'Cliquer' : 'Toucher'
   let couvreApplique = false
   /** De combien le tampon de l'interface dépasse la vue de référence (sur PC : elle est dessinée plus fin) ; et ce qu'un de ses pixels vaut à l'écran, au plus. */
   let echelleUI = 1
@@ -10200,9 +10202,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    */
   const genreDePropulsion = (): GenreDePropulsion => {
     const c = monteeA(hangar, 'coque').cran
-    return c === 10 || c === 11 || c === 14 ? 'bete' : plieLEspace(c) && c !== 9 ? 'neant' : 'souffle'
+    // (… ET LES VECTRANS — la Sentinelle, le Frimas, le Pulsar — UN BOURDON CRISTALLIN : Keko, 19/11, « une technologie
+    // différente »)
+    return c === 10 || c === 11 || c === 14 ? 'bete' : c === 6 || c === 8 || c === 9 ? 'ethere' : plieLEspace(c) ? 'neant' : 'souffle'
   }
-  const sonDuDecollage = (): Son => ({ bete: 'decolleBete', neant: 'decolleNeant', souffle: 'decolle' } as const)[genreDePropulsion()]
+  const sonDuDecollage = (): Son => ({ bete: 'decolleBete', neant: 'decolleNeant', ethere: 'decolleEthere', souffle: 'decolle' } as const)[genreDePropulsion()]
   /**
    * LA MORT D'UN VAISSEAU À SON IMAGE (Keko, 16/11 : « quand un vaisseau meurt, il explose — on a gardé ça parce qu'au
    * début on n'avait que le chasseur ; il faudrait des explosions qui matchent le vaisseau et son système d'énergie :
@@ -10231,7 +10235,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const f = FEUX_DE_MORT[genre]
     return N.createFx(EXPLOSION as Module, { x, y, palette: f.palette, feu: f.feu, debris: coque === 6 ? '#464b68' : f.debris, eclats: f.eclats ?? null, size: 0.45, seed: 5 })
   }
-  const sonDeLaMort = (): Son => ({ bete: 'perduBete', neant: 'perduNeant', souffle: 'perdu' } as const)[genreDePropulsion()]
+  const sonDeLaMort = (): Son => ({ bete: 'perduBete', neant: 'perduNeant', ethere: 'perdu', souffle: 'perdu' } as const)[genreDePropulsion()]
   /**
    * LA POUSSÉE D'UN VAISSEAU SANS TUYÈRE, À L'ARRÊT DU MONDE (l'accueil, le décollage du hangar) : le vaisseau est fixe
    * à l'écran, sa poussée défile sous lui en boucle — les ONDES du Néant, les BULLES du Kraken et de la Vouivre —, la même
@@ -12542,7 +12546,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     p.arc(cx, cy, 9, 2, -Math.PI / 2 + 0.7, Math.PI * 1.5 - 0.7, c)
     p.rect(cx - 1, cy - 12, 2, 9, c)
     p.glow(cx, cy, 22, TUBE[4], 0.18 + 0.14 * k)
-    const texte = 'Toucher pour allumer'
+    const texte = `${VERBE_DU_GESTE} pour allumer`
     const f: Police = largeurDe(texte, GRAS) <= W - 16 ? GRAS : TEXTE
     ecrire(p, texte, cx, cy + 22, c, { police: f, align: 'center' })
     // la veilleuse
@@ -12745,7 +12749,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
 
     // LA DEMANDE : « Toucher pour commencer », qui bat, entre deux chevrons qui se rapprochent
     if (accueilQuitteA === null && ta > HEURES_DU_TITRE.pret) {
-      const texte = 'Toucher pour commencer'
+      const texte = `${VERBE_DU_GESTE} pour commencer`
       const f: Police = largeurDe(texte, GRAS) <= largeT - 30 ? GRAS : TEXTE
       const yp = H - Math.max(paysage ? 24 : 30, Math.round(H * 0.1))
       const k = 0.5 + 0.5 * Math.sin(t * 3.4)

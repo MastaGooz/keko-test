@@ -226,14 +226,14 @@ export function jouer(son: Son, ou?: { dx: number; dy: number }, dans = 0): void
  * filtré bas, qui s'ouvre et monte avec la poussée), LA FOREUSE, un bourdon (voir `voixDeForage`). Elles naissent au premier réglage après le réveil du contexte ; le volume
  * glisse (`setTargetAtTime`) pour ne jamais claquer. Et LA CHARGE de l'extraction (voir `voixDeCharge`), et LE LANCE-FLAMMES (voir `voixDeFlamme`).
  */
-type Voix = { gain: GainNode; filtre?: BiquadFilterNode }
+type Voix = { gain: GainNode; filtre?: BiquadFilterNode; notes?: OscillatorNode[] }
 /**
  * LA VOIX DU PROPULSEUR, SELON LE VAISSEAU (Keko, 16/11 : « au Léviathan et à la Vouivre, un son plus biologique et gazeux
  * en déplacement ; le Néant, un son plus science-fiction, vibrant, très grave, un peu dimensionnel ») : le SOUFFLE de
  * toujours ; la BÊTE, un gargouillis de gaz ; le NÉANT, un bourdon grave qui bat. Une voix par genre, née au besoin ;
  * celles des autres genres se taisent.
  */
-export type GenreDePropulsion = 'souffle' | 'bete' | 'neant'
+export type GenreDePropulsion = 'souffle' | 'bete' | 'neant' | 'ethere'
 const propulsions = new Map<GenreDePropulsion, Voix>()
 let propulsion: Voix | null = null
 let forage: Voix | null = null
@@ -392,6 +392,71 @@ function voixDuNeant(ctx: AudioContext): Voix {
   return { gain, filtre }
 }
 
+/**
+ * LES VECTRANS (Keko, 19/11 : « un son de propulsion différent pour les éthérés ; comme si leur système de propulsion était
+ * d'une technologie différente » — ils soufflaient comme les humains) : pas de tuyère, UN BOURDON CRISTALLIN — deux
+ * triangles en quinte (110 et 165 Hz), chacun doublé à sept cents d'écart (ils chatoient), dans un passe-bas qui s'ouvre
+ * avec la poussée ; une harmonique aiguë qui ondule (un vibrato de 5,5 Hz) ; et UN SIFFLEMENT D'IONS, du bruit dans une
+ * bande étroite vers 2 400 Hz, qui pulse à 11 Hz. Avec la poussée, tout monte d'une quarte : il « charge ».
+ * SES NIVEAUX, CALCULÉS CONTRE LE SOUFFLE : un bruit blanc passé sous 900 Hz garde environ 0,12 de valeur efficace ; les
+ * cinq notes, à ces niveaux, environ autant (des triangles : 0,58 de leur crête), et le sifflement (une bande de 270 Hz
+ * de large) le quart — au même réglage de volume, le Vectran sonne aussi fort qu'un humain.
+ */
+const BASE_ETHERE = 110
+function voixDesEtheres(ctx: AudioContext): Voix {
+  const filtre = ctx.createBiquadFilter()
+  filtre.type = 'lowpass'
+  filtre.frequency.value = 900
+  filtre.Q.value = 2
+  const gain = ctx.createGain()
+  gain.gain.value = 0
+  const notes: OscillatorNode[] = []
+  for (const [rapport, cents, niv, type] of [[1, 0, 0.09, 'triangle'], [1, 7, 0.09, 'triangle'], [1.5, 0, 0.06, 'triangle'], [1.5, -7, 0.06, 'triangle'], [4, 0, 0.02, 'sine']] as [number, number, number, OscillatorType][]) {
+    const o = ctx.createOscillator()
+    o.type = type
+    o.frequency.value = BASE_ETHERE * rapport
+    o.detune.value = cents
+    ;(o as OscillatorNode & { rapport?: number }).rapport = rapport
+    const g = ctx.createGain()
+    g.gain.value = niv
+    if (rapport === 4) {
+      const vibrato = ctx.createOscillator()
+      vibrato.frequency.value = 5.5
+      const ampVibrato = ctx.createGain()
+      ampVibrato.gain.value = 18
+      vibrato.connect(ampVibrato).connect(o.detune)
+      vibrato.start()
+    }
+    o.connect(g).connect(filtre)
+    o.start()
+    notes.push(o)
+  }
+  // (le sifflement d'ions, qui pulse)
+  const b = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate)
+  const d = b.getChannelData(0)
+  for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1
+  const bruit = ctx.createBufferSource()
+  bruit.buffer = b
+  bruit.loop = true
+  const bande = ctx.createBiquadFilter()
+  bande.type = 'bandpass'
+  bande.frequency.value = 2400
+  bande.Q.value = 9
+  const pulse = ctx.createGain()
+  pulse.gain.value = 0.45
+  const lfo = ctx.createOscillator()
+  lfo.frequency.value = 11
+  const ampLfo = ctx.createGain()
+  ampLfo.gain.value = 0.25
+  lfo.connect(ampLfo).connect(pulse.gain)
+  bruit.connect(bande).connect(pulse).connect(gain)
+  filtre.connect(gain)
+  gain.connect(ctx.destination)
+  bruit.start()
+  lfo.start()
+  return { gain, filtre, notes }
+}
+
 function voixDePropulsion(ctx: AudioContext): Voix {
   // une seconde de bruit blanc, en boucle
   const b = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate)
@@ -508,7 +573,7 @@ export function regler(poussee: number, creuse: boolean, compte: number, monte: 
     if (ctx.state !== 'running') return
     // (le genre du vaisseau : sa voix, née au besoin ; les autres se taisent — `&sons=arcade` garde le souffle)
     const g = ARCADE ? 'souffle' : genre
-    if (!propulsions.has(g) && poussee > 0.02) propulsions.set(g, g === 'bete' ? voixDeBete(ctx) : g === 'neant' ? voixDuNeant(ctx) : voixDePropulsion(ctx))
+    if (!propulsions.has(g) && poussee > 0.02) propulsions.set(g, g === 'bete' ? voixDeBete(ctx) : g === 'neant' ? voixDuNeant(ctx) : g === 'ethere' ? voixDesEtheres(ctx) : voixDePropulsion(ctx))
     for (const [autre, vx] of propulsions) if (autre !== g) vx.gain.gain.setTargetAtTime(0, ctx.currentTime, 0.05)
     propulsion = propulsions.get(g) ?? null
     if (forage === null && creuse) forage = voixDeForage(ctx)
@@ -532,6 +597,11 @@ export function regler(poussee: number, creuse: boolean, compte: number, monte: 
         // (le bourdon, grave : 0,22 d'abord — Keko, 16/11 : « réduis le volume du son que fait la propulsion du Néant en vol »)
         propulsion.gain.gain.setTargetAtTime(ZZFX.volume * 0.1 * poussee, t, 0.08)
         propulsion.filtre!.frequency.setTargetAtTime(200 + 260 * poussee, t, 0.12)
+      } else if (g === 'ethere') {
+        // (le bourdon cristallin : il monte d'une quarte avec la poussée, son passe-bas s'ouvre ; discret comme le souffle)
+        propulsion.gain.gain.setTargetAtTime(ZZFX.volume * 0.09 * poussee, t, 0.06)
+        propulsion.filtre!.frequency.setTargetAtTime(700 + 1300 * poussee, t, 0.1)
+        for (const o of propulsion.notes ?? []) o.frequency.setTargetAtTime(BASE_ETHERE * ((o as OscillatorNode & { rapport?: number }).rapport ?? 1) * 2 ** ((5 * poussee) / 12), t, 0.12)
       } else {
         propulsion.gain.gain.setTargetAtTime(ZZFX.volume * 0.1 * poussee, t, 0.05) // (0,55 puis 0,35 puis 0,15 : trop fort — Keko : « un son quasi permanent, il doit être discret »)
         propulsion.filtre!.frequency.setTargetAtTime(250 + 650 * poussee, t, 0.08)
