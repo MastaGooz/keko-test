@@ -3865,7 +3865,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     'arme-drain': 'Crée un lien infini avec les ennemis proches et les draine.',
     'arme-vrilles': 'Saisit et blesse les ennemis, qui subissent de gros dégâts s’ils s’éloignent.',
     'arme-balises': 'Des glyphes posés par trois, reliés de rayons qui frappent ce qui les franchit.',
-    'arme-hypercube': 'Un hypercube lancé en cloche, qui rebondit trois fois à pas égaux en grossissant : chaque rebond frappe autour de lui, plus large.',
+    // (… SANS « À PAS ÉGAUX » — Keko, 19/11)
+    'arme-hypercube': 'Un hypercube lancé en cloche, qui rebondit trois fois en grossissant : chaque rebond frappe autour de lui, plus large.',
     'arme-coupe': 'Un cube traverse le plan en biais : on n’en voit que la tranche, un triangle qui devient hexagone, qui frappe tout ce qu’il couvre.',
     'arme-de': 'Un dé à quatre dimensions qui roule au-dessus d’un ennemi, puis s’abat sur sa zone : plus son chiffre est haut, plus il frappe fort.',
   }

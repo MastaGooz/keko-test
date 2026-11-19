@@ -6491,3 +6491,5 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   « Intrication » ; les identifiants (`puits`, `drain`) et les descriptions restent.
 - L'INTRICATION ET LES VRILLES REDITES (Keko, 19/11) : l'Intrication dit « Crée un lien infini avec les ennemis proches et
   les draine. » ; les Vrilles d'ombre, « Saisit et blesse les ennemis, qui subissent de gros dégâts s'ils s'éloignent. »
+- L'HYPERCUBE REDIT (Keko, 19/11 : « ne dis pas à pas égaux ») : « Un hypercube lancé en cloche, qui rebondit trois fois en
+  grossissant : chaque rebond frappe autour de lui, plus large. »
