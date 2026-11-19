@@ -1532,6 +1532,31 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   verifier('trois insectes à portée : elle pique le plus proche de sa racine', proche.pv[1] === 6 && proche.pv[0] === 0 && proche.pv[2] === 0)
   const verrou = fouetter([[40, 0], [25, 10], [-10, 45]], 3, 0.2)
   verifier('un insecte verrouillé : elle va sur lui', verrou.pv[2] === 6 && verrou.pv[0] === 0 && verrou.pv[1] === 0)
+  // (… TOUR À TOUR, SES SIX TENTACULES DU CORPS — Keko, 19/11 : une seule part à la fois, de la racine du côté de la cible)
+  const RACINES: [number, number][] = [[-0.2, -4.8], [-0.2, 4.8], [-3.2, -4.5], [-3.2, 4.5], [-5.4, -2.2], [-5.4, 2.2]]
+  const corps = { ...tentacule, cadence: 0.42, tentacule: { ancres: RACINES, aller: 0.2, tenue: 0.08, retour: 0.24, virage: 0.35, alterne: true } }
+  const cfgCorps = { ...cfg, armes: [corps] }
+  const tourATour = (places: [number, number][], duree: number) => {
+    const w = nouveauMonde(cfgCorps, 3)
+    places.forEach(([x, y], k) => w.ennemis.push(insecte(k + 1, x, y)))
+    const ev: Evenement[] = []
+    let auPlus = 0
+    const parties = new Set<number>()
+    for (let i = 0; i < 60 * duree; i++) {
+      places.forEach(([x, y], k) => (w.ennemis[k].corps = { ...w.ennemis[k].corps, x, y, vx: 0, vy: 0 }))
+      w.vaisseau = { ...w.vaisseau, x: 0, y: 0, vx: 0, vy: 0, cap: 0 }
+      ev.push(...avancerLeMonde(cfgCorps, w, 1 / 60, { x: 0, y: 0 }).evenements)
+      const sorties = w.tentacules.filter((tn) => tn.fait !== 'repos')
+      auPlus = Math.max(auPlus, sorties.length)
+      for (const tn of sorties) parties.add(tn.ancre)
+    }
+    return { w, ev, auPlus, parties, pv: w.ennemis.map((e) => 1000 - e.pv) }
+  }
+  const gauche = tourATour([[30, -20]], 4)
+  const nGauche = gauche.ev.filter((e) => e.type === 'piqure').length
+  verifier(`ses six tentacules : un insecte à gauche devant, seules celles de gauche partent (${[...gauche.parties].join(', ')}), jamais plus de deux dehors (${gauche.auPlus}) ; ${nGauche} piqûres en 4 s — 14 points par seconde`, [...gauche.parties].every((k) => RACINES[k][1] < 0) && gauche.auPlus <= 2 && nGauche >= 8 && nGauche <= 10 && gauche.pv[0] === 6 * nGauche)
+  const loin = tourATour([[80, 0]], 1)
+  verifier('un insecte à plus de 55 du vaisseau : aucune ne part', loin.ev.every((e) => e.type !== 'tentacule') && loin.pv[0] === 0)
 }
 
 // LE NUAGE D'INSECTES DU KRAKEN (Keko, 16/11) : il reste autour du vaisseau ; vers les insectes à portée, il étend des

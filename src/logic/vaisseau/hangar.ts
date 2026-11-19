@@ -279,7 +279,11 @@ export const PIECES: Piece[] = [
   // de 5 : 15 points par seconde, comme les trois d'avant)
   // (… PUIS UN TOUT PETIT PEU MOINS RAPIDE — Keko, 17/11 : une piqûre toutes les 0,42 s au lieu de 0,35 — l'aller et le
   // retour en 0,14 s, plantée 0,07, repos 0,07 — : 14 points par seconde)
-  { id: 'arme-tentacules', sorte: 'arme', cran: 1, nom: 'Tentacule', dit: 'Une tentacule à aiguille, à la proue : elle prend un insecte à moins de 55, fouette vers lui en se courbant et le pique — 6 points —, se rétracte aussitôt et recommence, un peu plus de deux fois par seconde. Le verrouillé d’abord.', note: 'Il faut aller au contact.', prix: 30, poids: 6, arme: { id: 'tentacule', cadence: 0.07, degats: 6, portee: 55, vitesse: 0, vie: 0, dispersion: 0, guide: false, tentacule: { ancres: [], aller: 0.14, tenue: 0.07, retour: 0.14, virage: 0.35 } } },
+  // (… PUIS SES PROPRES TENTACULES, PROJETÉES VERS L'AVANT, TOUR À TOUR — Keko, 19/11 : « il a déjà des tentacules
+  // naturellement ; qu'il utilise ses tentacules arrière et les projette vers l'avant, un peu comme font les rejetons » :
+  // les six du corps, une à la fois, toutes les 0,42 s — la même cadence, les mêmes 6 points : 14 par seconde ; chacune
+  // part en 0,2 s, reste plantée 0,08, revient en 0,24)
+  { id: 'arme-tentacules', sorte: 'arme', cran: 1, nom: 'Tentacule', dit: 'Ses six tentacules, armées de crochets d’os : tour à tour, celle du côté de l’insecte le plus proche, à moins de 55, se projette vers l’avant et le transperce — 6 points —, puis revient ; une toutes les 0,42 s. Le verrouillé d’abord.', note: 'Il faut aller au contact.', prix: 30, poids: 6, arme: { id: 'tentacule', cadence: 0.42, degats: 6, portee: 55, vitesse: 0, vie: 0, dispersion: 0, guide: false, tentacule: { ancres: [], aller: 0.2, tenue: 0.08, retour: 0.24, virage: 0.35, alterne: true } } },
   // L'ESSAIM DU KRAKEN (Keko, 16/11 : « un essaim d'insectes, tout petits mais en nuage, qui flotte autour du vaisseau ») :
   // un nuage qui suit le vaisseau sur un ressort, se penche vers la nuée, mord ce qui est dedans. *Chiffres de moi.*
   // (… PUIS IL RESTE AUTOUR DU VAISSEAU ET S'ÉTIRE EN BRAS VERS LES INSECTES — Keko, 16/11)

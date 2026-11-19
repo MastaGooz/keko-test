@@ -6055,3 +6055,28 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
 - LES REJETONS, SANS LE VAISSEAU (Keko, 19/11 : « ne dis pas « il pond », on ne veut pas faire référence au vaisseau dans
   la description de l'arme ; et ne dis pas « nage », dis « déplace » ») : « Des rejetons, qui se déplacent vers les
   ennemis et les transpercent de leurs aiguilles. »
+- LES ARMES DU KRAKEN SE VOIENT SUR LUI, ET LA TENTACULE REFAITE (Keko, 19/11) :
+  - LA TENTACULE, SES PROPRES TENTACULES (« il a déjà des tentacules naturellement ; qu'il utilise ses tentacules arrière
+    et qu'il les projette vers l'avant, un peu comme font les rejetons ») : les ancres de l'arme sont les six racines du
+    corps (`RACINES_DU_KRAKEN`) et une seule part à la fois (`Arme.tentacule.alterne`) : toutes les 0,42 s, celle au repos
+    dont la racine est la plus proche de la cible — prise à 55 du VAISSEAU, le verrouillé d'abord, puis le plus proche que
+    les autres ne visent pas. Elle part en 0,2 s, reste plantée 0,08, revient en 0,24 ; 6 points : 14 par seconde, comme
+    avant. Le corps ne dessine plus une tentacule sortie (`Allure.kraken.sorties`) ; la page la dessine (`dessinerUneTentaculeProjetee`)
+    de sa racine, en arc le long de son flanc, son bout glissant de sa place au repos (`cordesDuKraken`, lu par le corps et
+    par la page) jusqu'à l'insecte. Vérifié (`jeu.verif.ts`) : un insecte à gauche devant, seules celles de gauche partent,
+    jamais plus de deux dehors, 9 piqûres en 4 s ; à plus de 55, aucune. La tentacule de la gueule reste écrite (sans
+    `alterne`), plus montée.
+  - LES CROCHETS D'OS (« on va rajouter des crochets en os au bout de ces tentacules quand l'arme tentacule est
+    équipée ») : une griffe recourbée et une épine au bout de chacune (`formesDuCrochet`), au corps comme projetée.
+  - LE REJETON DU DOS (« un rejeton fixé sur son dos, qui partirait lorsqu'un rejeton est créé ; on le verrait aussi à
+    l'accueil et au hangar ») : sa cloche, son chapeau, ses yeux, cinq tentacules couchées sur l'abdomen
+    (`formesDuRejetonDuDos`) ; il part quand un rejeton naît, et repousse (rien 0,4 s, puis il grandit en 1,4 s). *Mesuré
+    à la capture* : rose sur l'abdomen rose, il s'y fondait — cerné de suie, il s'en détache.
+  - LA NUÉE AU HANGAR ET À L'ACCUEIL (« quelques insectes qui volent autour du Kraken comme durant le vol ») : vingt
+    moucherons sur leurs orbites (`dessinerLaNueeAuRepos`). EN VOL, CLAIRSEMÉE AU REPOS, DENSE DANS SES BRAS (« diminue
+    beaucoup le nombre d'insectes lorsqu'il n'y a pas de cible ; les bras projetés beaucoup plus denses ») : trente au
+    repos (quatre-vingt-dix avant) ; à mesure que les bras s'allongent, jusqu'à cent trente, dont les quatre cinquièmes
+    dans les bras.
+  - LES REJETONS UN PEU PLUS PETITS (« diminuer un tout petit peu la taille des rejetons en jeu ») : tout aux quatre
+    cinquièmes (`TAILLE_DU_REJETON`).
+  - La description de la Tentacule : « Des tentacules à crochets d'os, qui se projettent et transpercent les ennemis. »

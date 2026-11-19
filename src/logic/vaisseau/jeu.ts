@@ -606,7 +606,21 @@ export type Arme = {
    * PIQUE (`degats`), reste plantée `tenue` secondes, puis SE RÉTRACTE en `retour` ; elle repart `cadence` secondes
    * après. Sa cible morte ou trop loin avant la piqûre, elle se rétracte. L'état est `Monde.tentacules`.
    */
-  tentacule?: { ancres: [number, number][]; aller: number; tenue: number; retour: number; virage: number }
+  tentacule?: {
+    ancres: [number, number][]
+    aller: number
+    tenue: number
+    retour: number
+    virage: number
+    /**
+     * TOUR À TOUR (Keko, 19/11 : « il a déjà des tentacules naturellement ; qu'il utilise ses tentacules arrière et les
+     * projette vers l'avant, un peu comme les rejetons ») : les ancres sont les racines de ses tentacules, et une seule
+     * part à la fois, toutes les `cadence` secondes — celle au repos dont la racine est la plus proche de la cible, prise
+     * à `portee` du VAISSEAU (le verrouillé d'abord, puis le plus proche que les autres ne visent pas). Sans lui, chaque
+     * tentacule choisit seule, depuis son ancre, et repart `cadence` après son retour.
+     */
+    alterne?: boolean
+  }
   /**
    * UN ESSAIM D'INSECTES EN NUAGE (la deuxième arme du Kraken, Keko, 16/11 : « un essaim d'insectes, tout petits mais en
    * nuage, qui flotte autour du vaisseau ») : un nuage de `rayon` qui SUIT le vaisseau sur un ressort (`raideur`,
@@ -2386,6 +2400,47 @@ function menerLesTentacules(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void 
     // (une par ancre, nées au repos)
     for (let k = 0; k < te.ancres.length; k++) if (!m.tentacules.some((x) => x.arme === i && x.ancre === k)) m.tentacules.push({ arme: i, ancre: k, fait: 'repos', depuis: -1e9, cible: null, tx: 0, ty: 0, u: 0, virage: 0 })
   })
+  // (TOUR À TOUR : une seule part, de la racine la plus proche de sa cible — voir `Arme.tentacule.alterne`)
+  c.armes.forEach((a, i) => {
+    const te = a.tentacule
+    if (te?.alterne !== true || m.phase !== 'vol' || m.t < (m.armesA[i] ?? 0)) return
+    const libres = m.tentacules.filter((x) => x.arme === i && x.fait === 'repos')
+    if (libres.length === 0) return
+    const aPortee = (e: Ennemi): boolean => Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= a.portee + c.ennemi.rayon
+    const visees = new Set(m.tentacules.filter((x) => x.fait !== 'repos').map((x) => x.cible))
+    const ve = ennemiVerrouille(m)
+    let choix: Ennemi | undefined = ve !== null && aPortee(ve) ? ve : undefined
+    if (choix === undefined) {
+      let dc = Infinity
+      let dLibre = Infinity
+      let proche: Ennemi | undefined
+      let libre: Ennemi | undefined
+      for (const e of m.ennemis) {
+        if (!aPortee(e)) continue
+        const d = Math.hypot(e.corps.x - v.x, e.corps.y - v.y)
+        if (d < dc) (dc = d), (proche = e)
+        if (!visees.has(e.id) && d < dLibre) (dLibre = d), (libre = e)
+      }
+      choix = libre ?? proche
+    }
+    if (choix === undefined) return
+    const cible = choix
+    const distance = (x: Tentacule): number => {
+      const an = ancreDansLeMonde(v, te.ancres[x.ancre] ?? [0, 0])
+      return Math.hypot(cible.corps.x - an.x, cible.corps.y - an.y)
+    }
+    const tn = libres.reduce((b, x) => (distance(x) < distance(b) ? x : b))
+    const an = ancreDansLeMonde(v, te.ancres[tn.ancre] ?? [0, 0])
+    tn.fait = 'aller'
+    tn.depuis = m.t
+    tn.cible = cible.id
+    tn.tx = cible.corps.x
+    tn.ty = cible.corps.y
+    const h = tire(m.graine, m.prochainId++, 31)
+    tn.virage = (h < 0.5 ? -1 : 1) * te.virage * (0.6 + 0.8 * Math.abs(h - 0.5))
+    m.armesA[i] = m.t + a.cadence
+    ev.push({ type: 'tentacule', x: an.x, y: an.y })
+  })
   for (const tn of m.tentacules) {
     const a = c.armes[tn.arme]
     const te = a?.tentacule
@@ -2397,7 +2452,7 @@ function menerLesTentacules(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void 
     const aPortee = (e: Ennemi): boolean => Math.hypot(e.corps.x - an.x, e.corps.y - an.y) <= a.portee + c.ennemi.rayon
     if (tn.fait === 'repos') {
       tn.u = 0
-      if (m.phase !== 'vol' || age < a.cadence) continue
+      if (te.alterne === true || m.phase !== 'vol' || age < a.cadence) continue
       let choix: Ennemi | undefined
       const ve = ennemiVerrouille(m)
       if (ve !== null && aPortee(ve)) choix = ve
@@ -2428,7 +2483,7 @@ function menerLesTentacules(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void 
       ev.push({ type: 'tentacule', x: an.x, y: an.y })
     } else if (tn.fait === 'aller') {
       // (sa cible morte, ou partie trop loin : elle se rétracte d'où elle en est)
-      if (cible === undefined || Math.hypot(tn.tx - an.x, tn.ty - an.y) > (a.portee + c.ennemi.rayon) * 1.3) {
+      if (cible === undefined || Math.hypot(tn.tx - an.x, tn.ty - an.y) > (a.portee + c.ennemi.rayon) * 1.3 + (te.alterne === true ? 20 : 0)) {
         tn.fait = 'retour'
         tn.depuis = m.t - (1 - tn.u) * te.retour
         continue

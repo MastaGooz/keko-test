@@ -603,6 +603,13 @@ export type Allure = {
   vises?: number[]
   /** L'HABIT d'une apparence (voir `peaux.ts`) : ses détails sur les ailes et sur la coque ; présent, la marque du joueur part. */
   habit?: Habit
+  /**
+   * LE KRAKEN ET SES ARMES (Keko, 19/11 : « chaque arme se voit sur son vaisseau ») : `crochets`, la Tentacule montée — un
+   * crochet d'os au bout de chacune de ses tentacules ; `rejeton`, les Rejetons montés — la taille (0 à 1) du rejeton
+   * accroché à son dos, qui part quand un rejeton naît et repousse ; `sorties`, les tentacules projetées en ce moment
+   * (leurs rangs dans `RACINES_DU_KRAKEN`) : le corps ne les dessine pas, la page les dessine tendues vers leur cible.
+   */
+  kraken?: { crochets?: boolean; rejeton?: number; sorties?: number[] }
 }
 /**
  * LES DÉTAILS D'UNE APPARENCE (Keko, 17/11 : « on va enlever le petit marquage coloré des vaisseaux… on va le remplacer
@@ -691,6 +698,71 @@ export const ANCRES_DU_KRAKEN: [number, number][] = [[7.2, 0]]
 // position — ils étaient sur ses nageoires —, une bête n'en a pas)
 /** De combien l'abdomen du Kraken s'est rapproché de sa tête (Keko, 19/11). */
 const AVANCE_DE_L_ABDOMEN_DU_KRAKEN = 3.4
+/**
+ * LES RACINES DES SIX TENTACULES DU KRAKEN, sur son abdomen, en unités du vaisseau — la règle les reçoit d'ici quand la
+ * Tentacule est montée (`Arme.tentacule.ancres`, Keko, 19/11 : « qu'il utilise ses tentacules arrière »).
+ */
+export const RACINES_DU_KRAKEN: [number, number][] = ([[-3.6, -4.8], [-3.6, 4.8], [-6.6, -4.5], [-6.6, 4.5], [-8.8, -2.2], [-8.8, 2.2]] as [number, number][]).map(([x, y]): [number, number] => [x + AVANCE_DE_L_ABDOMEN_DU_KRAKEN, y])
+/**
+ * LES SIX TENTACULES DU KRAKEN AU REPOS, en unités du vaisseau, chacune de sa racine à son bout (huit points) : À L'ARRÊT
+ * elles s'écartent en étoile, chacune dans le prolongement de sa racine ; QUAND IL POUSSE (`flamme`), elles se rabattent
+ * derrière et traînent ; une houle les parcourt. Le corps les dessine ; la page en lit le bout, d'où part une tentacule
+ * projetée (voir `Allure.kraken`).
+ */
+export function cordesDuKraken(flamme: number, t: number, devie = 0): [number, number][][] {
+  const nage = Math.min(1, Math.max(0, flamme))
+  return RACINES_DU_KRAKEN.map(([x0, y0], k) => {
+    const repos = Math.atan2(y0, x0 + 1.2)
+    let ecart = Math.PI + y0 * 0.04 - repos
+    while (ecart > Math.PI) ecart -= 2 * Math.PI
+    while (ecart < -Math.PI) ecart += 2 * Math.PI
+    let an = repos + ecart * nage
+    let x = x0
+    let y = y0
+    const c: [number, number][] = [[x, y]]
+    for (let i = 0; i < 7; i++) {
+      an += Math.sin(t * 2.4 + k * 1.3 - i * 0.8) * 0.17 * (1.4 - 0.6 * nage) + devie * 0.03
+      x += Math.cos(an) * 1.8
+      y += Math.sin(an) * 1.8
+      c.push([x, y])
+    }
+    return c
+  })
+}
+/** UN CROCHET D'OS au bout d'une tentacule (en `x`, `y`, tournée vers `an`) : une griffe recourbée d'un côté (`sg`), une épine de l'autre. */
+export function formesDuCrochet(x: number, y: number, an: number, sg: number): Forme[] {
+  const ux = Math.cos(an)
+  const uy = Math.sin(an)
+  const p = (av: number, co: number): [number, number] => [x + ux * av - uy * co * sg, y + uy * av + ux * co * sg]
+  return [
+    { pts: [p(-0.4, -0.7), p(0.9, -0.5), p(1.9, 0.1), p(2, 1.3), p(1.5, 0.5), p(0.7, 0.2), p(-0.4, 0.7)], mat: 'os', relief: 'plat' },
+    { pts: [p(0.1, -0.5), p(0.6, -1.5), p(0.8, -0.4)], mat: 'os', relief: 'plat' },
+  ]
+}
+/**
+ * LE REJETON ACCROCHÉ AU DOS DU KRAKEN (Keko, 19/11 : « un rejeton fixé sur son dos, qui partirait lorsqu'un rejeton est
+ * créé ») : sa cloche de chair, son chapeau de chitine, ses yeux de bile, cinq petites tentacules couchées sur l'abdomen —
+ * le même que ceux qui chassent, en petit ; `k` sa taille (il repousse).
+ */
+function formesDuRejetonDuDos(k: number, t: number): Forme[] {
+  if (k <= 0.02) return []
+  const X = -2.4
+  const f: Forme[] = []
+  // (… CERNÉ DE SOMBRE — mesuré à la capture : rose sur l'abdomen rose, il s'y fondait ; une ombre de suie sous sa cloche et
+  // sous ses tentacules l'en détache, comme le cerne des rejetons qui chassent)
+  const bras = [0, 1, 2, 3, 4].map((j): [number, number, number, number] => {
+    const o = (j - 2) * 0.62
+    const houle = Math.sin(t * 3 + j * 1.4) * 0.35
+    return [X - 1.3 * k, o * k, X - 4.8 * k, (o * 2.1 + houle) * k]
+  })
+  for (const [x0, y0, x1, y1] of bras) f.push({ pts: barre(x0, y0, x1, y1, 1 * k), mat: 'suie', relief: 'plat' })
+  f.push({ pts: ovale(X, 0, 2.75 * k, 2.35 * k, 16), mat: 'suie', relief: 'plat' })
+  bras.forEach(([x0, y0, x1, y1], j) => f.push({ pts: barre(x0, y0, x1, y1, 0.55 * k), mat: j % 2 === 0 ? 'chair' : 'chitine', relief: 'plat' }))
+  f.push({ pts: ovale(X, 0, 2.3 * k, 1.9 * k, 14), mat: 'chair', relief: 'dome', dome: { x: X, y: 0, rx: 2.3 * k, ry: 1.9 * k } })
+  f.push({ pts: ovale(X + 1.3 * k, 0, 1.1 * k, 1.4 * k, 12), mat: 'chitine', relief: 'dome', dome: { x: X + 1.3 * k, y: 0, rx: 1.1 * k, ry: 1.4 * k } })
+  for (const sg of [-1, 1]) f.push({ pts: ovale(X + 1.9 * k, sg * 0.75 * k, 0.36 * k, 0.36 * k, 6), mat: 'bile', relief: 'dome', dome: { x: X + 1.9 * k, y: sg * 0.75 * k, rx: 0.36 * k, ry: 0.36 * k } })
+  return f
+}
 const GABARIT_DU_KRAKEN: Gabarit = { tuyeres: [{ x: -0.9 + AVANCE_DE_L_ABDOMEN_DU_KRAKEN, y: 0 }], armes: [{ x: 0, y: 0, s: 1 }], feux: null, verriere: 5.8, nez: 11.6, flanc: 6.4, anneau: 13, echelle: 1 }
 // LA VOUIVRE (Keko, 16/11) : un corps de serpent en écailles, deux sacs à venin sur des membranes, une gueule à mandibules
 // qui crache ; un jet de venin à la queue
@@ -1871,25 +1943,17 @@ export function formesDuVaisseau(a: Allure, flamme: number, t: number, vise = 0,
   // les flancs du manteau ; À L'ARRÊT ils s'écartent en étoile autour de lui, chacun dans le prolongement de sa racine ;
   // QUAND IL POUSSE (`flamme`), ils se rabattent derrière et traînent ; une houle les parcourt de la racine au bout)
   if (a.coque === 10) {
-    const nage = Math.min(1, Math.max(0, flamme))
-    // (… DE L'ABDOMEN, ENTRE SES CORNES — Keko, 19/11 ; il s'est rapproché de la tête, elles avec lui)
-    const RACINES = ([[-3.6, -4.8], [-3.6, 4.8], [-6.6, -4.5], [-6.6, 4.5], [-8.8, -2.2], [-8.8, 2.2]] as [number, number][]).map(([x, y]): [number, number] => [x + AVANCE_DE_L_ABDOMEN_DU_KRAKEN, y])
-    RACINES.forEach(([x0, y0], k) => {
-      const repos = Math.atan2(y0, x0 + 1.2)
-      let ecart = Math.PI + y0 * 0.04 - repos
-      while (ecart > Math.PI) ecart -= 2 * Math.PI
-      while (ecart < -Math.PI) ecart += 2 * Math.PI
-      let an = repos + ecart * nage
-      let x = x0
-      let y = y0
-      const n = 7
-      for (let i = 0; i < n; i++) {
-        an += Math.sin(t * 2.4 + k * 1.3 - i * 0.8) * 0.17 * (1.4 - 0.6 * nage) + devie * 0.03
-        const nx = x + Math.cos(an) * 1.8
-        const ny = y + Math.sin(an) * 1.8
-        f.unshift({ pts: barre(x, y, nx, ny, 1.7 * (1 - i / (n + 1.5))), mat: i % 2 === 0 ? 'chair' : 'chitine', relief: 'plat' })
-        x = nx
-        y = ny
+    const sorties = new Set(a.kraken?.sorties ?? [])
+    cordesDuKraken(flamme, t, devie).forEach((c, k) => {
+      if (sorties.has(k)) return
+      const n = c.length - 1
+      for (let i = 0; i < n; i++) f.unshift({ pts: barre(c[i][0], c[i][1], c[i + 1][0], c[i + 1][1], 1.7 * (1 - i / (n + 1.5))), mat: i % 2 === 0 ? 'chair' : 'chitine', relief: 'plat' })
+      // (LES CROCHETS D'OS, la Tentacule montée — Keko, 19/11 : « on va rajouter des crochets en os au bout de ces
+      // tentacules quand l'arme tentacule est équipée »)
+      if (a.kraken?.crochets === true) {
+        const [x0, y0] = c[n - 1]
+        const [x1, y1] = c[n]
+        f.splice(1, 0, ...formesDuCrochet(x1, y1, Math.atan2(y1 - y0, x1 - x0), k % 2 === 0 ? 1 : -1))
       }
     })
   }
@@ -1902,6 +1966,7 @@ export function formesDuVaisseau(a: Allure, flamme: number, t: number, vise = 0,
   const tout = [...feux, ...reste, ...sansMarque(a.coque === 14 ? formesDuVer(t, flamme, devie, a.habit?.motif, a.chemin) : formesDeLaCoque(a.coque, t)), ...(a.habit?.coque ?? [])]
   if (g.surLePont) tout.push(...armes)
   tout.push(...surLeDos)
+  if (a.coque === 10 && a.kraken?.rejeton !== undefined) tout.push(...formesDuRejetonDuDos(a.kraken.rejeton, t))
   if (g.outils !== undefined && a.outils !== undefined) {
     // CHAQUE OUTIL À SA PLACE : la foreuse qui creuse suit sa cible, les autres pointent vers l'avant
     a.outils.forEach((o, k) => {
