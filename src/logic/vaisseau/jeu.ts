@@ -463,8 +463,12 @@ export type Arme = {
    * de froid part du vaisseau : tout insecte à moins de `rayon` prend `degats` (ceux de l'arme) et GÈLE (`gel`) ; elle
    * laisse sous lui UNE PLAQUE DE VERGLAS (`plaque` : une plaque de givre, `Monde.givres`, bien plus grande que celles de
    * la traînée) qui ralentit et ronge ce qui y marche.
+   * (… UNE ONDE QUI S'OUVRE — Keko, 19/11 : « le cercle autour de la nova touche visuellement les ennemis, mais ils ne
+   * subissent pas de dégâts » : elle frappait tout d'un coup au départ, et son front, à l'écran, s'ouvrait ensuite. Elle
+   * s'ouvre maintenant en `ouverture` secondes, du cœur à `rayon`, comme à l'écran, et frappe chaque insecte UNE FOIS,
+   * quand son front l'atteint — y compris celui qui y entre en chemin. L'état est `Monde.novas`.)
    */
-  nova?: { rayon: number; gel: { duree: number; ralenti: number }; plaque: { rayon: number; duree: number; dps: number; ralenti: number } }
+  nova?: { rayon: number; ouverture?: number; gel: { duree: number; ralenti: number }; plaque: { rayon: number; duree: number; dps: number; ralenti: number } }
   // (D'ABORD DES MINI-VERS QUI COPIENT SES MOUVEMENTS — Keko, 17/11 : « il pose des œufs sur son passage, qui éclosent une
   // ou deux secondes plus tard, et un mini-ver de poison en sort, qui copie les mouvements du ver » ; tout insecte près de
   // lui était empoisonné)
@@ -976,6 +980,8 @@ export type Monde = {
   givres: Givre[]
   /** LES TORNADES DE GIVRE (voir `Arme.tornade`). */
   tornades: Tornade[]
+  /** LES ONDES DE NOVA qui s'ouvrent (voir `Arme.nova`) : leur arme, leur cœur, leur naissance, les insectes déjà frappés. */
+  novas: { arme: number; x: number; y: number; nee: number; frappes: number[] }[]
   /** LES SPHÈRES DE PLASMA (voir `Arme.sphere`). */
   spheres: Sphere[]
   /** LES PUITS DE PLASMA (voir `Arme.puits`). */
@@ -1188,7 +1194,7 @@ export function nouveauVaisseau(): Vaisseau {
 }
 
 export function nouveauMonde(c: ConfigVaisseau = VAISSEAU, graine = 1): Monde {
-  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, plaques: Array.from({ length: c.plaques }, () => true), intouchableJusque: -1, corruption: 0, toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, scies: [], balises: [], givres: [], tornades: [], spheres: [], puits: [], meteores: [], tentacules: [], nuees: [], rejetons: [], flaquesAcides: [], mines: [], fleaux: [], parasites: [], vrilles: [], liens: [], oeufs: [], brochettes: [], miniVers: [], hypercubes: [], des: [], coupes: [], rayonVu: null }
+  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, plaques: Array.from({ length: c.plaques }, () => true), intouchableJusque: -1, corruption: 0, toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, scies: [], balises: [], givres: [], tornades: [], novas: [], spheres: [], puits: [], meteores: [], tentacules: [], nuees: [], rejetons: [], flaquesAcides: [], mines: [], fleaux: [], parasites: [], vrilles: [], liens: [], oeufs: [], brochettes: [], miniVers: [], hypercubes: [], des: [], coupes: [], rayonVu: null }
 }
 
 /** Un hachage entier déterministe (celui de pixelfx), et un réel dans [0, 1) qui en sort. */
@@ -2028,18 +2034,37 @@ function lancerLesNovas(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
     if (nv === undefined || m.phase !== 'vol' || m.t < (m.armesA[i] ?? 0)) return
     // (… MÊME SANS PERSONNE AUTOUR — Keko, 19/11 : « lancer la nova de givre même quand il n'y a pas d'ennemis » : elle
     // part à chaque cadence, et sa plaque de verglas attend)
-    const dans = m.ennemis.filter((e) => Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= nv.rayon + c.ennemi.rayon)
     m.armesA[i] = m.t + a.cadence
     ev.push({ type: 'nova', x: v.x, y: v.y, rayon: nv.rayon })
     m.givres.push({ id: m.prochainId++, arme: i, x: v.x, y: v.y, nee: m.t, rayon: nv.plaque.rayon, duree: nv.plaque.duree, dps: nv.plaque.dps, ralenti: nv.plaque.ralenti, verglas: true })
-    for (const e of dans) {
+    m.novas.push({ arme: i, x: v.x, y: v.y, nee: m.t, frappes: [] })
+  })
+  // (l'onde s'ouvre — vite d'abord, puis elle se pose, la même courbe qu'à l'écran — et frappe ce que son front atteint)
+  for (let k = m.novas.length - 1; k >= 0; k--) {
+    const o = m.novas[k]
+    const a = c.armes[o.arme]
+    const nv = a?.nova
+    const ouverture = nv?.ouverture ?? 0.35
+    if (nv === undefined || m.t - o.nee > ouverture + 1e-9) {
+      m.novas.splice(k, 1)
+      if (nv === undefined) continue
+    }
+    const front = frontDeLaNova(nv.rayon, m.t - o.nee, ouverture)
+    for (const e of m.ennemis) {
+      if (o.frappes.includes(e.id) || e.pv <= 0) continue
+      if (Math.hypot(e.corps.x - o.x, e.corps.y - o.y) > front + c.ennemi.rayon) continue
+      o.frappes.push(e.id)
       const critique = c.passifs.critique > 0 && tire(m.graine, m.prochainId++, 12) < c.passifs.critique
       e.pv -= a.degats * (critique ? c.passifs.critiqueFacteur : 1)
       geler(m, e, nv.gel.duree, nv.gel.ralenti, ev)
       ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })
       if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
     }
-  })
+  }
+}
+/** Le front d'une onde de nova de `rayon`, `age` secondes après son départ, ouverte en `ouverture` : vite, puis posé. */
+export function frontDeLaNova(rayon: number, age: number, ouverture = 0.35): number {
+  return rayon * (1 - Math.pow(1 - Math.min(1, Math.max(0, age) / ouverture), 3))
 }
 
 /** GELER un insecte (le givre, un éclat de glace) : `duree` secondes, à `ralenti` de sa vitesse — le gel le plus fort l'emporte. */
@@ -4106,7 +4131,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   // (le lance-flammes ne crache qu'en vol, à ce pas : abattu, il se tait — Keko, 15/11 : « quand je meurs, le souffle
   // du lance-flammes reste en place pendant le compte du retour »)
   m.crache = false
-  if (m.phase !== 'vol') (m.drones = []), (m.balayage = null), (m.canal = null), (m.scies = []), (m.tornades = []), (m.spheres = []), (m.puits = []), (m.meteores = []), (m.tentacules = []), (m.nuees = []), (m.rejetons = []), (m.flaquesAcides = []), (m.mines = []), (m.fleaux = []), (m.parasites = []), (m.vrilles = []), (m.liens = []), (m.oeufs = []), (m.brochettes = []), (m.miniVers = []), (m.hypercubes = []), (m.des = []), (m.coupes = [])
+  if (m.phase !== 'vol') (m.drones = []), (m.balayage = null), (m.canal = null), (m.scies = []), (m.tornades = []), (m.novas = []), (m.spheres = []), (m.puits = []), (m.meteores = []), (m.tentacules = []), (m.nuees = []), (m.rejetons = []), (m.flaquesAcides = []), (m.mines = []), (m.fleaux = []), (m.parasites = []), (m.vrilles = []), (m.liens = []), (m.oeufs = []), (m.brochettes = []), (m.miniVers = []), (m.hypercubes = []), (m.des = []), (m.coupes = [])
   // (le portail tombé, la partie est finie : plus rien n'avance)
   if (m.invasion.finie) return { chocs: [], evenements: ev }
   if (m.verrou !== null && ennemiVerrouille(m) === null) m.verrou = null

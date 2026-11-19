@@ -12,7 +12,7 @@
  */
 import './vaisseau.css'
 import * as noyau from 'pixelfx'
-import { ancreDansLeMonde, zoneDuDe, coupeDUnCube, formeDeLaCoupe, liesAuDrain, encaisser, type Ennemi, type Evenement, type Monde, impactDuRayon, asteroidesVisibles, avancerLeMonde, finDuTrio, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur, xpDuNiveau, ennemiLePlusProche, ennemiVerrouille, verrouiller, angleDuBalayage } from '../../logic/vaisseau/jeu.ts'
+import { frontDeLaNova, ancreDansLeMonde, zoneDuDe, coupeDUnCube, formeDeLaCoupe, liesAuDrain, encaisser, type Ennemi, type Evenement, type Monde, impactDuRayon, asteroidesVisibles, avancerLeMonde, finDuTrio, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur, xpDuNiveau, ennemiLePlusProche, ennemiVerrouille, verrouiller, angleDuBalayage } from '../../logic/vaisseau/jeu.ts'
 import { ETALONS as ETALONS_DU_BANC, acheter, ajouterLesPiecesDEssai, capacite, poidsTotal, POIDS_SERIE, configDuHangar, demonter, demonterA, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, montantCourt, monteeA, monter, monterA, peutAcheter, peutMonter, perdreLesMontees, estDeBase, exemplaires, libres, pieceDe, piecesDe, placeLourde, possede, aimantMonte, radarMonte, type Jauge, type Piece, type Sorte } from '../../logic/vaisseau/hangar.ts'
 import { drawWord, spell } from 'pixelfx/fx/ui/_lib'
 import { firePuff, hotFirst, smokePuff } from 'pixelfx/fx/fire/_lib'
@@ -7927,7 +7927,24 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       if (fin <= 0) continue
       const k = Math.min(1, fin / 0.7)
       const nait = Math.min(1, age / 0.3)
-      p.disc(g.x, g.y, g.rayon, GLACE[4], (d) => 0.12 * (1 - d * d) * k * nait)
+      // (… ET UN VENT DE GLACE — Keko, 19/11 : « un petit effet à faible opacité, comme un vent de glace qui bougerait, avec
+      // une texture un peu plus travaillée, comme pour le poison » : des rafales de givre qui tournent lentement autour du
+      // cœur et ondulent — les veines du poison, enroulées en spirale —, leur fil clair, leur traîne pâle, et entre elles
+      // la brume froide ; tout en transparence, plus léger au bord)
+      const rot = m.t * 0.9
+      p.disc(g.x, g.y, g.rayon * 1.08, (d, ang) => {
+        const x = g.x + Math.cos(ang) * d * g.rayon
+        const y = g.y + Math.sin(ang) * d * g.rayon
+        const rafale = Math.abs(Math.sin(ang * 3 - rot + d * 6.5 + Math.sin(x * 0.21 + m.t * 1.3) * 0.9) + 0.6 * Math.sin(y * 0.17 - x * 0.09 - m.t * 0.8))
+        // (des bleus de glace : le blanc, en transparence sur le noir, sortait gris — vu à la capture)
+        return rafale < 0.14 ? GLACE[6] : rafale < 0.4 ? GLACE[5] : GLACE[3]
+      }, (d, ang) => {
+        const x = g.x + Math.cos(ang) * d * g.rayon
+        const y = g.y + Math.sin(ang) * d * g.rayon
+        const rafale = Math.abs(Math.sin(ang * 3 - rot + d * 6.5 + Math.sin(x * 0.21 + m.t * 1.3) * 0.9) + 0.6 * Math.sin(y * 0.17 - x * 0.09 - m.t * 0.8))
+        const bord = Math.max(0, 1 - Math.pow(d, 4))
+        return (rafale < 0.14 ? 0.34 : rafale < 0.4 ? 0.2 : 0.1 * (1 - d)) * bord * k * nait
+      })
       const eclats: object[] = []
       for (let j = 0; j < 18; j++) {
         const a = alea(g.id, j, 51) * Math.PI * 2
@@ -8004,10 +8021,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     p.place(W / 2 - camera.x, centreY() - camera.y)
     for (const nv of novas) {
       const age = t - nv.t0
-      const front = nv.r * (1 - Math.pow(1 - Math.min(1, age / 0.35), 3))
+      // (le front de la règle, au pixel près — Keko, 19/11 : « que la nova soit aussi grosse que le cercle d'éclats autour » :
+      // ce qui est dessiné s'arrête où elle frappe)
+      const front = frontDeLaNova(nv.r, age)
       // (les cristaux : ils jaillissent quand le front les atteint, tiennent, puis fondent)
       for (let j = 0; j < 26; j++) {
-        const q = 0.3 + 0.65 * alea(nv.id, j, 1)
+        const q = 0.3 + 0.58 * alea(nv.id, j, 1)
         const d = q * nv.r
         if (front < d) continue
         const ne = age - 0.35 * (1 - Math.cbrt(1 - Math.min(1, d / nv.r)))
@@ -8034,8 +8053,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           const lg = (3.5 + 4 * alea(nv.id, j, 42)) * (1 - u * 0.5)
           const ux = Math.cos(a)
           const uy = Math.sin(a)
-          const bx = nv.x + ux * (front - lg)
-          const by = nv.y + uy * (front - lg)
+          // (la pointe sur le front, jamais au-delà)
+          const bx = nv.x + ux * (front - lg * 1.5)
+          const by = nv.y + uy * (front - lg * 1.5)
           p.poly([[bx - uy * 2, by + ux * 2], [bx + ux * lg * 1.5, by + uy * lg * 1.5], [bx + uy * 2, by - ux * 2]], u < 0.25 ? GLACE[6] : GLACE[5], 1 - u * 0.8)
           p.line(bx, by, bx + ux * lg * 1.3, by + uy * lg * 1.3, N.WHITE, (1 - u) * 0.8)
         }
@@ -8046,7 +8066,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       if (age < 0.5)
         for (let j = 0; j < 12; j++) {
           const a = alea(nv.id, j, 21) * Math.PI * 2
-          const d = nv.r * 1.1 * Math.min(1, age / 0.5) * (0.5 + 0.5 * alea(nv.id, j, 22))
+          const d = front * (0.5 + 0.5 * alea(nv.id, j, 22))
           p.px(Math.round(nv.x + Math.cos(a) * d), Math.round(nv.y + Math.sin(a) * d), j % 3 === 0 ? N.WHITE : GLACE[6])
         }
     }

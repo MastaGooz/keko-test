@@ -6415,3 +6415,17 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   pics et la couronne de dents de givre restent.
   (Keko note aussi un CONFLIT DE FONCTION entre la nova et les éclats — tous deux frappent une zone autour du vaisseau à
   intervalles réguliers ; les éclats seront retravaillés ensuite.)
+- LA NOVA FRAPPE OÙ ELLE SE VOIT, UN VENT DE GLACE SUR SON VERGLAS (Keko, 19/11 : « que la nova soit aussi grosse que le
+  cercle d'éclats autour : il touche visuellement les ennemis mais ils ne subissent pas de dégâts ; agrandis-la pour
+  qu'elle matche sa pleine distance visuelle ; et un petit effet à faible opacité, comme un vent de glace qui bougerait,
+  avec une texture plus travaillée, comme pour le poison ») :
+  - DEUX DÉCALAGES, mesurés : les dégâts tombaient tous AU DÉPART, quand l'onde, à l'écran, s'ouvrait ensuite en 0,35 s (un
+    insecte qu'elle traversait en chemin n'était pas touché) ; et la couronne de dents dépassait son rayon de quelques
+    pixels. LA RÈGLE EST UNE ONDE (`Monde.novas`, `frontDeLaNova`, la même courbe que le dessin) : elle s'ouvre en
+    `ouverture` (0,35 s) jusqu'à SA PORTÉE, 56 (50 avant : l'étendue de la couronne), et frappe chaque insecte une fois quand
+    son front l'atteint ; LE DESSIN S'ARRÊTE SUR CE FRONT (la pointe des dents dessus, les éclats qui filent en deçà, les
+    pics un peu plus près du cœur). Vérifié : au bord de la portée, une fois ; celui qui entre en chemin, une fois ; au-delà,
+    rien.
+  - LE VENT DE GLACE : des rafales qui tournent lentement autour du cœur et ondulent — les veines du poison enroulées en
+    spirale —, leur fil clair, leur traîne, la brume entre elles, en transparence et plus légères au bord ; en bleus de
+    glace (le blanc, transparent sur le noir, sortait gris à la capture).
