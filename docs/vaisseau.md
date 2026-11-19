@@ -6152,3 +6152,12 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   avaient déjà sa chair) les lisent (`cerveauDuVer`, `membraneDuVer`, `coqueDOeuf`, `lueurDOeuf`). Vu à la capture.
 - LES ŒUFS ET LES PARASITES DITS PLUS COURT (Keko, 19/11 : « ils dépassent trois lignes et on ne voit pas la suite ») :
   « Lâche des œufs qui libèrent des vers agressifs. » ; « Lance des parasites qui sautent d'ennemi en ennemi. »
+- UN SEUL SON PAR TIR, AUSSI POUR L'ÉPINE, LA CHAÎNE ET LA NOVA (Keko, 19/11 : « quand je tire l'épine d'os directement
+  quand elle est disponible, le son se produit deux fois ; on a déjà eu ce problème avec d'autres vaisseaux ») : le son
+  d'une arme est annoncé en avance de la latence (`annoncerLesSons`) ; l'événement de son tir le rejouait. Comme la scie,
+  le rayon, le puits, le météore, l'hypercube, le dé et la coupe, l'épine, la chaîne d'éclairs et la nova ne le rejouent
+  plus s'il a sonné dans les 0,4 s. (Le fléau n'est pas annoncé : il n'a pas d'heure de tir.)
+- LA PROPULSION DU VER UN PEU MOINS IMPORTANTE (Keko, 19/11) : en vol, moins de bulles (une chance sur 0,3 au lieu de 0,45),
+  plus petites (×0,7), plus serrées, plus brèves ; au hangar et à l'accueil, onze bulles au lieu de seize, plus petites.
+- LA MORSURE DES MINI-VERS PLUS BASSE (Keko, 19/11 : « un petit peu trop fort ») : un son à elle (`morsureVer`), le
+  bourdonnement de la nuée à moitié de son niveau ; la nuée garde le sien.

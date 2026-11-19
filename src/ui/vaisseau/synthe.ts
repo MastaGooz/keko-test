@@ -757,6 +757,17 @@ const RECETTES = {
       souffle(m, h, 0, 0.3, 0, { f: 3000, q: 1.5, bande: true, a: 0.01, d: 0.12 })
     },
   },
+  /**
+   * LES MINI-VERS MORDENT : le même bourdonnement que la nuée, plus bas (Keko, 19/11 : « le son d'attaque des mini-vers
+   * qui sortent des œufs est un petit peu trop fort »), à moitié de son niveau
+   */
+  morsureVer: {
+    duree: 0.4, niveau: 0.06, salle: [0.2, 0.08], variantes: 4,
+    faire: (m, h) => {
+      for (let k = 0; k < 3; k++) note(m, 0.02 * k, 0.4, (h.next() - 0.5) * 0.8, { f: 200 + 90 * h.next(), a: 0.02, d: 0.22, battement: 34 + 10 * k, partiels: [[1, 1, 1], [2, 0.6, 1], [3, 0.4, 1], [5, 0.2, 1]] })
+      souffle(m, h, 0, 0.3, 0, { f: 3000, q: 1.5, bande: true, a: 0.01, d: 0.12 })
+    },
+  },
   /** LA VOUIVRE CRACHE : un raclement de gorge bref, puis le jet — un souffle mouillé qui s'élargit, des éclaboussures */
   // (… PUIS UN SON ROND DE LIQUIDE — Keko, 16/11 : « un son un peu claquant, presque comme un coup de taser ; plutôt un
   // bruit plus rond de liquide » : plus de bourdon battu ni de claquements aigus — trois BULLES qui crèvent, des notes

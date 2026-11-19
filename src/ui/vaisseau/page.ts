@@ -10176,6 +10176,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       return
     }
     const [cb, cl] = couleursDesBulles(coque)
+    // (le Ver, un peu moins — Keko, 19/11)
+    const moins = coque === 14 ? 0.7 : 1
     // (LA VOUIVRE : le gaz de ses deux pustules propulsives, sur ses flancs — le vaisseau a le nez en haut, son flanc
     // droit à droite ; `ty` est sa poupe, on en retrouve son centre)
     const tus = gabaritDe(coque).tuyeres
@@ -10192,12 +10194,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       }
       return
     }
-    for (let k = 0; k < 16; k++) {
-      const u = boucle(t * (1.6 + us * 2) + k / 16, 1)
+    const nb = coque === 14 ? 11 : 16
+    for (let k = 0; k < nb; k++) {
+      const u = boucle(t * (1.6 + us * 2) + k / nb, 1)
       const x = cx + Math.sin(k * 7.3 + u * 4) * (1.5 + u * 6)
       // (courte : elle crève juste derrière — longue, on la prenait pour une attaque)
       const y = ty + 3 + u * (16 + us * 40)
-      const r = (0.6 + 0.9 * ((k * 0.618) % 1)) * (1 + 0.6 * u) * (E / 2)
+      const r = (0.6 + 0.9 * ((k * 0.618) % 1)) * (1 + 0.6 * u) * (E / 2) * moins
       const c = k % 3 === 0 ? cl : cb
       if (u > 0.9) for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) p.dot(x + dx * (r + 1.5), y + dy * (r + 1.5), c, 0.8)
       else if (r >= 1.6) {
@@ -12935,8 +12938,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           break
         case 'chaine':
           // (la chaîne d'éclairs : maillon après maillon, de quelques centièmes)
+          // (… son son une seule fois : annoncé en avance, il a déjà sonné — comme l'épine, Keko, 19/11)
           for (let k = 0; k < ev.points.length - 1; k++) arcsElectriques.push({ x0: ev.points[k].x, y0: ev.points[k].y, x1: ev.points[k + 1].x, y1: ev.points[k + 1].y, de: k === 0 ? { sorte: 'vaisseau' } : { sorte: 'ennemi', id: ev.ids[k - 1] }, vers: { sorte: 'ennemi', id: ev.ids[k] }, t0: t + k * 0.035, vie: 0.34, g: R.range(0, 1e4), fort: true })
-          jouer('chaine')
+          if (t - (armeAnnonceeA.get('chaine') ?? -10) < 0.4) armeAnnonceeA.delete('chaine')
+          else jouer('chaine')
           secousse = Math.max(secousse, 0.2)
           break
         case 'balayage':
@@ -13330,8 +13335,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           break
         case 'epines':
           epinePartieA = t
-          // (l'épine part de sa tête : elle fend l'air)
-          jouer('epine', { dx: ev.x - v.x, dy: ev.y - v.y })
+          // (l'épine part de sa tête : elle fend l'air — SAUF SI ELLE A DÉJÀ SONNÉ, annoncée en avance de la latence ; Keko,
+          // 19/11 : « si je la tire directement quand elle est disponible, le son se produit deux fois »)
+          if (t - (armeAnnonceeA.get('epine') ?? -10) < 0.4) armeAnnonceeA.delete('epine')
+          else jouer('epine', { dx: ev.x - v.x, dy: ev.y - v.y })
           break
         case 'transperce':
           // (un insecte est transpercé : le « tchk » charnu, un seul à la fois, une giclée d'ichor)
@@ -13450,7 +13457,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           // (un mini-ver mord : le claquement de mâchoires, un seul à la fois ; une giclée d'ichor)
           if (t - morsureSonneA > 0.12) {
             morsureSonneA = t
-            jouer('morsure', { dx: ev.x - v.x, dy: ev.y - v.y })
+            // (… PLUS BAS que la nuée — Keko, 19/11)
+            jouer('morsureVer', { dx: ev.x - v.x, dy: ev.y - v.y })
           }
           for (let i = 0; i < 3; i++) {
             const a = R.range(0, Math.PI * 2)
@@ -13625,8 +13633,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           }
           break
         case 'nova':
-          // (une nova de givre part : son claquement froid, la secousse, le froid tout autour)
-          jouer('nova')
+          // (une nova de givre part : son claquement froid — une seule fois, comme l'épine —, la secousse, le froid tout autour)
+          if (t - (armeAnnonceeA.get('nova') ?? -10) < 0.4) armeAnnonceeA.delete('nova')
+          else jouer('nova')
           novas.push({ x: ev.x, y: ev.y, r: ev.rayon, t0: t, id: Math.round(t * 1000) })
           secousse = Math.max(secousse, 0.3)
           break
@@ -14008,9 +14017,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
                 bulles.push({ x: bx, y: by, vx: -Math.cos(v.cap) * vit - Math.sin(v.cap) * dehors * 14 + R.range(-4, 4), vy: -Math.sin(v.cap) * vit + Math.cos(v.cap) * dehors * 14 + R.range(-4, 4), t0: t, vie: R.range(0.25, 0.4), r: R.range(0.8, 1.4), c: cb, gaz: true })
               }
             } else if (organique(coque)) {
-              if (R.next() < 0.45) {
-                const cote = R.range(-1, 1)
-                bulles.push({ x: bx - Math.sin(v.cap) * cote * 2.5, y: by + Math.cos(v.cap) * cote * 2.5, vx: -Math.cos(v.cap) * vitesse * 0.13 - Math.sin(v.cap) * cote * 11 + R.range(-4, 4), vy: -Math.sin(v.cap) * vitesse * 0.13 + Math.cos(v.cap) * cote * 11 + R.range(-4, 4), t0: t, vie: R.range(0.18, 0.35), r: R.next() < 0.35 ? R.range(1.6, 2.6) : R.range(0.5, 1.2), c: couleursDesBulles(coque)[R.next() < 0.6 ? 0 : 1] })
+              // (LE VER, UN PEU MOINS — Keko, 19/11 : « l'effet de propulsion du ver un petit peu moins important » : moins
+              // de bulles, plus petites)
+              const ver = coque === 14
+              if (R.next() < (ver ? 0.3 : 0.45)) {
+                const cote = R.range(-1, 1) * (ver ? 0.7 : 1)
+                bulles.push({ x: bx - Math.sin(v.cap) * cote * 2.5, y: by + Math.cos(v.cap) * cote * 2.5, vx: -Math.cos(v.cap) * vitesse * 0.13 - Math.sin(v.cap) * cote * 11 + R.range(-4, 4), vy: -Math.sin(v.cap) * vitesse * 0.13 + Math.cos(v.cap) * cote * 11 + R.range(-4, 4), t0: t, vie: R.range(0.18, 0.35) * (ver ? 0.8 : 1), r: (R.next() < 0.35 ? R.range(1.6, 2.6) : R.range(0.5, 1.2)) * (ver ? 0.7 : 1), c: couleursDesBulles(coque)[R.next() < 0.6 ? 0 : 1] })
               }
             }
             else braises.ajouter('braise', bx + R.range(-1, 1), by + R.range(-1, 1), v.vx * 0.3 - Math.cos(v.cap) * vitesse + R.range(-8, 8), v.vy * 0.3 - Math.sin(v.cap) * vitesse + R.range(-8, 8), R.range(0.25, 0.5), cran >= 3 ? BRAISES_D_ION : 0, 1, 2)
