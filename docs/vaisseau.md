@@ -6391,3 +6391,15 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   LES ÉCLATS DE GLACE : seize au lieu de huit, toujours à angles égaux, le premier sur la cible ; ils ne partent, eux,
   qu'avec un insecte à portée (rien demandé là-dessus). Vérifié (`npm run verif`) ; le test « personne à portée : pas de
   tornade » dit maintenant l'inverse.
+- LA NOVA DE GIVRE PLUS GLACIAIRE ET PLUS GRANDE, UNE TRAÎNÉE AUX ÉCLATS (Keko, 19/11 : « une légère traînée derrière les
+  éclats de givre, pas très longue ; j'aime pas trop les traits blancs qu'on laisse sur la nova, elle fait plus une bulle
+  qu'une véritable nova ; une structure un peu plus glaciaire ; j'adore les petits pics ; augmenter sa taille ») :
+  - LE VERGLAS n'est plus un disque lisse au bord clair fêlé de lignes blanches : des PLAQUES DE GLACE À FACETTES (chaque
+    pixel prend la facette du germe le plus proche, douze germes, chacune son ton), leurs joints bleu sombre, LE BORD
+    DENTELÉ de vingt-deux pointes inégales (seize égales faisaient une fleur, vu à la capture) ;
+  - L'ONDE n'est plus un anneau lisse et sa lueur : UNE COURONNE DE TRENTE-DEUX DENTS DE GIVRE qui s'ouvre, pointées vers
+    le dehors, un fil blanc au cœur de chacune (à un pixel et demi de large, elles se lisaient en pointillé) ; LES PICS
+    restent, 26 au lieu de 16 ;
+  - LA TAILLE : la nova frappe à 50 (38 avant), sa plaque de verglas fait 30 (22) ;
+  - LES ÉCLATS ont un sillage de givre qui s'effile et pâlit sur quatorze pixels, deux flocons qui s'en détachent, jamais
+    plus long que le chemin fait.

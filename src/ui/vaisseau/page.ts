@@ -7910,31 +7910,42 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const q = (m.t * 0.8 + alea(g.id, 1, 1)) % 1
       if (r > 3 && alea(g.id, 1, 4) < 0.4) p.dot(g.x + (alea(g.id, 1, 2) - 0.5) * r, g.y + (alea(g.id, 1, 3) - 0.5) * r - q * 5, q < 0.5 ? MIASME[7] : MIASME[6], 0.8 * (1 - q))
     }
-    // LE VERGLAS DE LA NOVA (Keko, 17/11) : une grande plaque de glace lisse, plus claire au bord, fêlée de lignes blanches
-    // qui partent du milieu, son bord givré, des reflets qui passent
+    // LE VERGLAS DE LA NOVA (Keko, 17/11) — PUIS UNE PLAQUE GLACIAIRE (Keko, 19/11 : « j'aime pas trop les traits blancs qu'on
+    // laisse ; elle fait plus une bulle qu'une véritable nova ; une structure un peu plus glaciaire ») : plus de disque lisse
+    // au bord clair ni de fêlures blanches — des PLAQUES DE GLACE à facettes (chaque pixel prend la facette du germe le plus
+    // proche, chacune son ton), leurs joints d'un bleu sombre, LE BORD DENTELÉ en pointes de givre ; des reflets qui passent
     for (const g of m.givres) {
       if (g.verglas !== true) continue
       const age = m.t - g.nee
       const k = Math.min(1, age / 0.3) * Math.min(1, (g.duree - age) / 0.8)
       if (k <= 0) continue
       const r = g.rayon * (0.4 + 0.6 * (1 - Math.pow(1 - Math.min(1, age / 0.35), 3)))
-      p.disc(g.x, g.y, r, (d) => (d > 0.85 ? GLACE[5] : d > 0.55 ? GLACE[4] : GLACE[3]), (d) => (0.22 + 0.2 * d * d) * k)
-      for (let j = 0; j < 7; j++) {
-        let a = alea(g.id, j, 11) * Math.PI * 2
-        let x = g.x + Math.cos(a) * r * 0.15
-        let y = g.y + Math.sin(a) * r * 0.15
-        for (let s = 0; s < 4; s++) {
-          a += (alea(g.id, j * 4 + s, 12) - 0.5) * 0.8
-          const l = r * (0.18 + 0.1 * alea(g.id, j * 4 + s, 13))
-          p.line(x, y, x + Math.cos(a) * l, y + Math.sin(a) * l, GLACE[6], 0.5 * k)
-          x += Math.cos(a) * l
-          y += Math.sin(a) * l
+      const germes: [number, number, number][] = [[0, 0, 5]]
+      for (let n = 0; n < 11; n++) {
+        const a = alea(g.id, n, 31) * Math.PI * 2
+        const d = (0.35 + 0.55 * alea(g.id, n, 32)) * r
+        germes.push([Math.cos(a) * d, Math.sin(a) * d, 4 + Math.floor(alea(g.id, n, 33) * 3)])
+      }
+      p.disc(g.x, g.y, r * 1.15, (d, ang) => {
+        const x = Math.cos(ang) * d * r * 1.15
+        const y = Math.sin(ang) * d * r * 1.15
+        let d1 = Infinity
+        let d2 = Infinity
+        let ton = 4
+        for (const [gx, gy, tn] of germes) {
+          const e = Math.hypot(x - gx, y - gy)
+          if (e < d1) (d2 = d1), (d1 = e), (ton = tn)
+          else if (e < d2) d2 = e
         }
-      }
-      for (let j = 0; j < 28; j++) {
-        const a = (j / 28) * Math.PI * 2 + alea(g.id, j, 14) * 0.2
-        if (alea(g.id, j, 15) < 0.5) p.px(Math.round(g.x + Math.cos(a) * r), Math.round(g.y + Math.sin(a) * r), N.WHITE)
-      }
+        return d2 - d1 < 0.9 ? GLACE[2] : GLACE[ton]
+      }, (d, ang) => {
+        // (le bord dentelé : vingt-deux pointes de longueurs et d'écarts inégaux — mesuré à la capture : seize pointes
+        // égales faisaient une fleur)
+        const b = (ang / (Math.PI * 2) + 1) * 22 + 0.4 * Math.sin(ang * 3 + g.id)
+        const f = b - Math.floor(b)
+        const pointe = 0.84 + 0.26 * (1 - Math.abs(f - 0.5) * 2) * (0.15 + 0.85 * alea(g.id, Math.floor(b) % 22, 34))
+        return d * 1.15 > pointe ? 0 : (0.36 + 0.14 * d) * k
+      })
       for (let j = 0; j < 3; j++) {
         const sc = 0.5 + 0.5 * Math.sin(m.t * (2.5 + j) + alea(g.id, j, 16) * 6)
         if (sc > 0.8) N.sparkle(p, g.x + (alea(g.id, j, 17) - 0.5) * r * 1.2, g.y + (alea(g.id, j, 18) - 0.5) * r * 1.2, 2, N.WHITE, GLACE[5], 0.7 * k)
@@ -7980,7 +7991,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const age = t - nv.t0
       const front = nv.r * (1 - Math.pow(1 - Math.min(1, age / 0.35), 3))
       // (les cristaux : ils jaillissent quand le front les atteint, tiennent, puis fondent)
-      for (let j = 0; j < 16; j++) {
+      for (let j = 0; j < 26; j++) {
         const q = 0.3 + 0.65 * alea(nv.id, j, 1)
         const d = q * nv.r
         if (front < d) continue
@@ -7998,11 +8009,22 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         p.poly([[bx - uy * w, by + ux * w], [bx + ux * h, by + uy * h], [bx + uy * w, by - ux * w], [bx - ux * h * 0.3, by - uy * h * 0.3]], GLACE[5])
         p.line(bx, by, bx + ux * h, by + uy * h, ne < 0.05 ? N.WHITE : GLACE[6])
       }
-      // (le front : un anneau qui s'ouvre, blanc puis bleu, de plus en plus fin)
+      // (le front : plus un anneau lisse et sa lueur, qui faisaient une bulle — Keko, 19/11 — mais UNE COURONNE DE DENTS
+      // DE GIVRE qui s'ouvre, pointées vers le dehors, de longueurs inégales, qui pâlissent)
       const u = Math.min(1, age / 0.5)
       if (u < 1) {
-        p.ring(nv.x, nv.y, front, Math.max(1, 3.5 * (1 - u)), u < 0.3 ? N.WHITE : GLACE[6], 1 - u)
-        p.glow(nv.x, nv.y, front, GLACE[4], 0.35 * (1 - u))
+        // (mesuré à la capture : à un pixel et demi de large, elles se lisaient comme un pointillé)
+        for (let j = 0; j < 32; j++) {
+          const a = (j / 32) * Math.PI * 2 + alea(nv.id, j, 41) * 0.12
+          const lg = (3.5 + 4 * alea(nv.id, j, 42)) * (1 - u * 0.5)
+          const ux = Math.cos(a)
+          const uy = Math.sin(a)
+          const bx = nv.x + ux * (front - lg)
+          const by = nv.y + uy * (front - lg)
+          p.poly([[bx - uy * 2, by + ux * 2], [bx + ux * lg * 1.5, by + uy * lg * 1.5], [bx + uy * 2, by - ux * 2]], u < 0.25 ? GLACE[6] : GLACE[5], 1 - u * 0.8)
+          p.line(bx, by, bx + ux * lg * 1.3, by + uy * lg * 1.3, N.WHITE, (1 - u) * 0.8)
+        }
+        p.glow(nv.x, nv.y, front * 0.6, GLACE[4], 0.15 * (1 - u))
       }
       // (le flocon qui éclate au cœur, et les éclats qui filent)
       if (age < 0.25) snowflake(p, Math.round(nv.x), Math.round(nv.y), 2 + 5 * (age / 0.25), age * 8, FLOCON, GLACE, { a: 1 - age / 0.25, hot: 1 })
@@ -10996,7 +11018,25 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         const nx = -uy
         const ny = ux
         const pt = (a: number, b: number): number[] => [o.x + ux * a + nx * b, o.y + uy * a + ny * b]
-        for (let j = 1; j <= 3; j++) p.dot(o.x - ux * (9 + j * 2), o.y - uy * (9 + j * 2), GLACE[5], 0.5 - j * 0.13)
+        // (… UNE PETITE TRAÎNÉE — Keko, 19/11 : « une légère traînée derrière les éclats de givre, juste esthétique, pas
+        // très longue » : un sillage de givre qui s'effile et pâlit sur quatorze pixels, deux flocons qui s'en détachent —
+        // jamais plus long que le chemin fait : au départ, il ne sort pas de la coque)
+        const fait = ((CONF.armes.find((a) => a.id === 'eclats')?.vie ?? 0.45) - o.vie) * l
+        const long = Math.min(14, Math.max(0, fait - 9))
+        for (let s2 = 0; s2 < long; s2++) {
+          const u = s2 / 14
+          const px = o.x - ux * (9 + s2)
+          const py = o.y - uy * (9 + s2)
+          p.dot(px, py, u < 0.35 ? GLACE[6] : GLACE[5], 0.6 * (1 - u))
+          if (u < 0.5) {
+            p.dot(px + nx * 0.8, py + ny * 0.8, GLACE[4], 0.3 * (1 - u * 2))
+            p.dot(px - nx * 0.8, py - ny * 0.8, GLACE[4], 0.3 * (1 - u * 2))
+          }
+        }
+        for (let j = 0; j < 2; j++) {
+          const d = 11 + ((t * 30 + o.id * 7 + j * 6) % 12)
+          if (d < 9 + long) p.dot(o.x - ux * d + nx * (j === 0 ? 1.6 : -1.6), o.y - uy * d + ny * (j === 0 ? 1.6 : -1.6), N.WHITE, 0.6 * (1 - (d - 11) / 12))
+        }
         p.glow(o.x - ux * 3, o.y - uy * 3, 9, GLACE[4], 0.45)
         p.poly([pt(1, 0), pt(-3, 3), pt(-10, 0), pt(-3, -3)], GLACE[1])
         p.poly([pt(0, 0), pt(-3, 2), pt(-9, 0)], GLACE[4])
