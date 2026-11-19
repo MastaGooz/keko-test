@@ -170,20 +170,51 @@ const CHAIR = H('#0e0609', '#1a0b12', '#2a1220', '#3e1a2e', '#5a2440', '#7a3452'
 const CHITINE = H('#0a0608', '#1c1218', '#2e2028', '#46323a', '#6a5058')
 const OS = H('#4a3e2c', '#a8987a', '#d6ccb0', '#fffaf0')
 const BILE = H('#1a2a06', '#3a5a0c', '#6a9a14', '#a8d42a', '#e0f870')
+/**
+ * LES CELLULES DE L'ANTRE, CALCULÉES UNE FOIS (mesuré : redessinées à chaque image, soixante-dix disques et leurs reflets,
+ * le hangar des Xénoïdes tombait à 70 images par seconde, l'Empire à 108) : chaque pixel prend la couleur de la dernière
+ * cellule qui le couvre — son cerne, son dedans, son reflet en haut à gauche —, rangé en bandes d'une même couleur.
+ */
+const solsDesXenoides = new Map<string, number[]>()
+function bandesDuSolDesXenoides(W: number, y0: number, y1: number): number[] {
+  const cle = `${W}:${y0}:${y1}`
+  const deja = solsDesXenoides.get(cle)
+  if (deja !== undefined) return deja
+  const hautScene = y1 - y0
+  const cellules = Array.from({ length: 70 }, (_, i) => ({ x: hasard(i, 1, 11) * (W + 20) - 10, y: y0 + hasard(i, 2, 11) * (hautScene + 20) - 10, r: 6 + hasard(i, 3, 11) * 9, chitine: hasard(i, 4, 11) < 0.35 }))
+  const couleur = (x: number, y: number): number => {
+    for (let i = cellules.length - 1; i >= 0; i--) {
+      const c = cellules[i]
+      const d = Math.hypot(x + 0.5 - c.x, y + 0.5 - c.y)
+      if (d > c.r) continue
+      if (d > c.r - 1.5) return c.chitine ? CHITINE[1] : CHAIR[2]
+      const a = Math.atan2(y + 0.5 - c.y, x + 0.5 - c.x)
+      if (Math.abs(d - (c.r - 2)) < 0.6 && a < -Math.PI * 0.5 && a > -Math.PI * 0.95) return c.chitine ? CHITINE[3] : CHAIR[4]
+      return c.chitine ? CHITINE[2] : CHAIR[3]
+    }
+    return CHAIR[1]
+  }
+  const bandes: number[] = []
+  for (let y = y0; y < y1; y++) {
+    let x0 = 0
+    let c0 = couleur(0, y)
+    for (let x = 1; x <= W; x++) {
+      const c = x < W ? couleur(x, y) : -1
+      if (c !== c0) {
+        bandes.push(x0, y, x - x0, c0)
+        x0 = x
+        c0 = c
+      }
+    }
+  }
+  solsDesXenoides.set(cle, bandes)
+  return bandes
+}
 function solDesXenoides(p: Peintre, s: Scene): void {
   const { W, y0, y1, cx, cy, t } = s
   const hautScene = y1 - y0
-  p.rect(0, y0, W, hautScene, CHAIR[1])
-  // les cellules : des plaques de chair et de chitine serrées, chacune cernée, un reflet en haut à gauche
-  for (let i = 0; i < 70; i++) {
-    const x = hasard(i, 1, 11) * (W + 20) - 10
-    const y = y0 + hasard(i, 2, 11) * (hautScene + 20) - 10
-    const r = 6 + hasard(i, 3, 11) * 9
-    const chitine = hasard(i, 4, 11) < 0.35
-    p.circle(x, y, r, chitine ? CHITINE[1] : CHAIR[2])
-    p.circle(x, y, r - 1.5, chitine ? CHITINE[2] : CHAIR[3])
-    p.arc(x, y, r - 2, 1, Math.PI * 1.05, Math.PI * 1.5, chitine ? CHITINE[3] : CHAIR[4], 0.8)
-  }
+  const b = bandesDuSolDesXenoides(W, Math.round(y0), Math.round(y1))
+  for (let i = 0; i < b.length; i += 4) p.rect(b[i], b[i + 1], b[i + 2], 1, b[i + 3])
   // les veines : des traits sombres qui serpentent, où passe un battement
   for (let v = 0; v < 5; v++) {
     const yv = y0 + ((v + 0.5) / 5) * hautScene
@@ -311,22 +342,67 @@ function pylone(p: Peintre, x: number, y: number, t: number): void {
   }
   cristal(p, x, y - 9, 1, t)
 }
+/**
+ * LE SOL FIXE DES VECTRANS, CALCULÉ UNE FOIS (Keko, 19/11 : « un énorme drop de FPS dans le hangar des éthérés ») : ses
+ * plaques courbes et ses arches d'or étaient soixante arcs larges tracés à chaque image — chacun parcourt tout son carré,
+ * des millions de pixels par image. On le calcule une fois par taille de scène, pixel par pixel, rangé en BANDES d'une
+ * même couleur ; chaque image ne fait que les recopier. Ce qui bouge (les impulsions, les cristaux) reste dessiné à part.
+ */
+const solsDesVectrans = new Map<string, number[]>()
+function bandesDuSolDesVectrans(W: number, y0: number, y1: number, cx: number, cy: number): number[] {
+  const cle = `${W}:${y0}:${y1}:${cx}:${cy}`
+  const deja = solsDesVectrans.get(cle)
+  if (deja !== undefined) return deja
+  const hautScene = y1 - y0
+  const ay = (y0 + y1) / 2
+  const RA = hautScene * 0.55
+  const couleur = (x: number, y: number): number => {
+    // les arches d'or, sur les flancs
+    for (const sg of [-1, 1]) {
+      const ax = sg < 0 ? -4 : W + 4
+      const d = Math.hypot(x - ax, y - ay)
+      const a = Math.atan2(y - ay, x - ax)
+      const dedans = sg < 0 ? Math.abs(a) < Math.PI * 0.42 : Math.abs(Math.abs(a) - Math.PI) < Math.PI * 0.42
+      if (dedans && d <= RA + 0.5 && d > RA - 4.5) return d > RA - 1.5 ? DORE[4] : DORE[2]
+      const dedans2 = sg < 0 ? Math.abs(a) < Math.PI * 0.35 : Math.abs(Math.abs(a) - Math.PI) < Math.PI * 0.35
+      if (dedans2 && Math.abs(d - (RA - 5)) < 0.5) return PSI[2]
+    }
+    // les plaques de pierre courbes, des anneaux coupés en secteurs, chacun son liseré d'or
+    const d = Math.hypot(x - cx, y - cy)
+    if (d < 66) return PIERRE[1]
+    const anneau = Math.floor((d - 66) / 22)
+    const r0 = 66 + anneau * 22
+    const n = 8 + Math.min(anneau, 3) * 4
+    const a = (((Math.atan2(y - cy, x - cx) - anneau * 0.3) % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2)
+    const pasA = (Math.PI * 2) / n
+    const k = Math.floor(a / pasA)
+    const dansLeSecteur = a - k * pasA
+    if (dansLeSecteur < 0.02 || dansLeSecteur > pasA - 0.02) return PIERRE[1]
+    if (d - r0 < 1) return DORE[1]
+    if (d - r0 < 2 && dansLeSecteur > 0.08 && dansLeSecteur < pasA - 0.08) return DORE[2]
+    return k % 2 === 0 ? PIERRE[2] : PIERRE[3]
+  }
+  const bandes: number[] = []
+  for (let y = y0; y < y1; y++) {
+    let x0 = 0
+    let c0 = couleur(0, y)
+    for (let x = 1; x <= W; x++) {
+      const c = x < W ? couleur(x, y) : -1
+      if (c !== c0) {
+        bandes.push(x0, y, x - x0, c0)
+        x0 = x
+        c0 = c
+      }
+    }
+  }
+  solsDesVectrans.set(cle, bandes)
+  return bandes
+}
 function solDesVectrans(p: Peintre, s: Scene): void {
   const { W, y0, y1, cx, cy, t } = s
   const hautScene = y1 - y0
-  p.rect(0, y0, W, hautScene, PIERRE[1])
-  // des plaques de pierre COURBES autour de l'aire : des anneaux coupés en secteurs, chacun son liseré d'or
-  for (let anneau = 0; anneau < 4; anneau++) {
-    const r0 = 66 + anneau * 22
-    const n = 8 + anneau * 4
-    for (let k = 0; k < n; k++) {
-      const a0 = (k / n) * Math.PI * 2 + anneau * 0.3
-      const a1 = ((k + 1) / n) * Math.PI * 2 + anneau * 0.3
-      p.arc(cx, cy, r0 + 10, 20, a0 + 0.02, a1 - 0.02, k % 2 === 0 ? PIERRE[2] : PIERRE[3])
-      p.arc(cx, cy, r0, 1, a0 + 0.03, a1 - 0.03, DORE[1], 0.9)
-      p.arc(cx, cy, r0 + 1, 1, a0 + 0.08, a1 - 0.08, DORE[2], 0.6)
-    }
-  }
+  const b = bandesDuSolDesVectrans(W, Math.round(y0), Math.round(y1), Math.round(cx), Math.round(cy))
+  for (let i = 0; i < b.length; i += 4) p.rect(b[i], b[i + 1], b[i + 2], 1, b[i + 3])
   // des CANAUX D'ÉNERGIE : quatre traits bleus qui partent de l'aire en diagonale, une impulsion qui y court vers le dehors
   for (let k = 0; k < 4; k++) {
     const a = Math.PI / 4 + (k * Math.PI) / 2
@@ -336,16 +412,7 @@ function solDesVectrans(p: Peintre, s: Scene): void {
     const d = 66 + u * 74
     p.glowLine(cx + ux * d, cy + uy * d, cx + ux * (d + 8), cy + uy * (d + 8), 2, PSI[3], 0.6 * (1 - u))
   }
-  // LES ARCHES D'OR, sur les flancs : de grands croissants dorés, un filet bleu qui luit dedans
-  for (const sg of [-1, 1]) {
-    const ax = sg < 0 ? -4 : W + 4
-    const ay = (y0 + y1) / 2
-    const [b0, b1] = sg < 0 ? [-Math.PI * 0.42, Math.PI * 0.42] : [Math.PI * 0.58, Math.PI * 1.42]
-    const [c0, c1] = sg < 0 ? [-Math.PI * 0.35, Math.PI * 0.35] : [Math.PI * 0.65, Math.PI * 1.35]
-    p.arc(ax, ay, hautScene * 0.55, 5, b0, b1, DORE[2])
-    p.arc(ax, ay, hautScene * 0.55 - 1, 2, b0, b1, DORE[4])
-    p.arc(ax, ay, hautScene * 0.55 - 5, 1, c0, c1, PSI[3], 0.5 + 0.3 * Math.sin(t * 2))
-  }
+  // (les arches d'or des flancs sont dans le sol calculé : `bandesDuSolDesVectrans`)
   // LES PYLÔNES, aux quatre coins, leur cristal qui flotte
   for (const [x, y] of [[14, y0 + 30], [W - 14, y0 + 30], [14, y1 - 14], [W - 14, y1 - 14]] as [number, number][]) pylone(p, x, y, t)
   // un filet d'or au pied de l'aire
@@ -365,12 +432,13 @@ function aireDesVectrans(p: Peintre, cx: number, cy: number, R0: number, t: numb
   // vers le cœur
   p.circle(cx, cy, R0 + 4, PIERRE[0])
   p.circle(cx, cy, R0 + 3, DORE[1])
-  for (let k = 0; k < 4; k++) {
-    const a0 = (k * Math.PI) / 2 + 0.18
-    const a1 = ((k + 1) * Math.PI) / 2 - 0.18
-    p.arc(cx, cy, R0 + 1, 4, a0, a1, DORE[3])
-    p.arc(cx, cy, R0 + 2, 1, a0, a1, DORE[4])
+  // (un anneau peint selon l'angle, pas quatre arcs — voir `bandesDuSolDesVectrans`)
+  const segment = (ang: number): boolean => {
+    const a = ((ang % (Math.PI / 2)) + Math.PI / 2) % (Math.PI / 2)
+    return a > 0.18 && a < Math.PI / 2 - 0.18
   }
+  p.ring(cx, cy, R0 + 1, 4, (_v: number, ang: number) => (segment(ang) ? DORE[3] : DORE[1]))
+  p.ring(cx, cy, R0 + 2, 1, (_v: number, ang: number) => (segment(ang) ? DORE[4] : DORE[1]))
   p.circle(cx, cy, R0 - 3, PIERRE[2])
   const bat = 0.5 + 0.5 * Math.sin(t * 2.2)
   p.ring(cx, cy, R0 - 6, 2, PSI[2], 0.7 + 0.3 * bat)

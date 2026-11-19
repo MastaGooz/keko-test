@@ -6296,3 +6296,10 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   que quand le coup passe au blindage — plaques, corruption, coque ; tout bu par le bouclier, rien. Vérifié
   (`jeu.verif.ts`) : trois coups dans le même instant sur le bouclier, tous pris, sans invincibilité ; celui qui le perce
   l'ouvre.
+- LE HANGAR DES VECTRANS RAMAIT (Keko, 19/11 : « un énorme drop de FPS quand je suis dans le hangar des éthérés ») : son sol
+  courbe était soixante arcs larges (et les deux grandes arches) tracés à chaque image — un arc parcourt tout son carré
+  englobant, des millions de pixels par image. *Mesuré* (Chrome sans tête, images par seconde, hangar seul) : 2,4 (!) ;
+  l'Empire, 108. LE SOL FIXE EST CALCULÉ UNE FOIS par taille de scène (`bandesDuSolDesVectrans`), rangé en bandes d'une
+  même couleur que chaque image recopie ; l'anneau d'or de l'aire est un anneau peint selon l'angle, plus quatre arcs : 92.
+  LE HANGAR DES XÉNOÏDES, pareil pour ses soixante-dix cellules (`bandesDuSolDesXenoides`) : de 68 à 99 avec la Vouivre,
+  de 63 à 91 avec le Kraken. Dessins inchangés (vus à la capture).
