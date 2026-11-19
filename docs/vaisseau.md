@@ -6496,3 +6496,8 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
 - LE DÉ DU DESTIN REDIT, LA COUPE DEVIENT LA SUPERPOSITION (Keko, 19/11) : le dé dit « Lâche un dé sur un ennemi, plus le
   chiffre est haut, plus les dégâts sont importants. » (trois lignes, vu à la capture) ; l'arme `coupe` s'appelle
   « Superposition » et dit « Inflige des dégâts dans une zone, puis explose en son centre. »
+- LE PRISME RECENTRÉ DANS LA GRILLE, L'HYPERCUBE REDIT (Keko, 19/11 : « décale un petit peu le prisme en haut à droite, on
+  n'est pas centré vers le cœur du vaisseau » ; « lance un cube qui rebondit 3 fois et grossit à chaque rebond ») : son
+  portrait est décalé de 8 % de la case vers le haut et la droite (ses arches et ses éclats tiraient la boîte vers
+  l'arrière) — son cristal au milieu, vu à la capture ; l'hypercube dit « Lance un cube qui rebondit trois fois et grossit
+  à chaque rebond. »

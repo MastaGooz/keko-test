@@ -3866,7 +3866,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     'arme-vrilles': 'Saisit et blesse les ennemis, qui subissent de gros dégâts s’ils s’éloignent.',
     'arme-balises': 'Des glyphes posés par trois, reliés de rayons qui frappent ce qui les franchit.',
     // (… SANS « À PAS ÉGAUX » — Keko, 19/11)
-    'arme-hypercube': 'Un hypercube lancé en cloche, qui rebondit trois fois en grossissant : chaque rebond frappe autour de lui, plus large.',
+    'arme-hypercube': 'Lance un cube qui rebondit trois fois et grossit à chaque rebond.',
     // (LA SUPERPOSITION, d'abord la coupe — Keko, 19/11)
     'arme-coupe': 'Inflige des dégâts dans une zone, puis explose en son centre.',
     // (… REDIT — Keko, 19/11)
@@ -4338,8 +4338,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const mx = x1 - x0 <= LONGUEUR_DU_PORTRAIT ? (x0 + x1) / 2 : x1 - LONGUEUR_DU_PORTRAIT / 2
     const my = (y0 + y1) / 2
     const capP = -Math.PI / 2 + 0.62
-    const ox = x + w / 2 - (mx * Math.cos(capP) - my * Math.sin(capP)) * echelle
-    const oy = y + h * 0.54 - (mx * Math.sin(capP) + my * Math.cos(capP)) * echelle * 0.66
+    // (LE PRISME, UN PEU EN HAUT À DROITE — Keko, 19/11 : « j'ai l'impression qu'on n'est pas centré vers le cœur du
+    // vaisseau, il est un peu trop en bas à gauche » : ses arches et ses éclats tirent la boîte vers l'arrière ; on centre
+    // son cristal)
+    const recale = mo.id === 'prisme' ? { x: w * 0.08, y: -h * 0.08 } : { x: 0, y: 0 }
+    const ox = x + w / 2 + recale.x - (mx * Math.cos(capP) - my * Math.sin(capP)) * echelle
+    const oy = y + h * 0.54 + recale.y - (mx * Math.sin(capP) + my * Math.cos(capP)) * echelle * 0.66
     const flotte_ = Math.round(Math.sin(t * 1.6 + n * 0.9))
     // (le cadre rogne : rien ne déborde de la case)
     const rogne = { rect: (rx: number, ry: number, rw: number, rh: number, c: number, a?: number): void => {
