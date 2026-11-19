@@ -6463,3 +6463,7 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     balaie de 200 à 2 000 Hz), sept pulsations graves qui s'accélèrent, puis le relâchement. MESURÉ hors navigateur
     (`synthetiser`) : sa valeur efficace, 0,107 au niveau 0,7, ramenée à celle des autres décollages (0,09) au niveau 0,6.
   Pas écouté : à juger à l'oreille.
+- LE PRISME AVANT LE NÉANT, LE TESSERACT REDIT (Keko, 19/11 : « inverser la position du prisme et du néant dans le grid de
+  sélection des vaisseaux ; pour le tesseract, plutôt un cube en 4 dimensions qui joue avec la géométrie de
+  l'espace-temps ») : la colonne des Yhg'tharr est Prisme, Néant, Tesseract (l'ordre de `FLOTTE`) ; le Tesseract dit « Un
+  cube en quatre dimensions, qui joue avec la géométrie de l'espace-temps. » Vu à la capture.

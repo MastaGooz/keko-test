@@ -214,20 +214,6 @@ export const MODELES: ModeleDeVaisseau[] = [
     horsRecherche: true,
   },
   {
-    // LE NÉANT (Keko, 16/11) : le vaisseau du vide — un cœur qui bat entre deux anneaux qui l'orbitent ; l'espace-temps et
-    // les dimensions. SA PREMIÈRE ARME, LE PUITS, gardé de côté « pour un futur vaisseau » ; puis LE DRAIN D'ÂME et LES
-    // VRILLES D'OMBRE (Keko, 17/11 : les effets Soul Drain et Shadow Tendrils de pixelfx).
-    id: 'neant',
-    nom: 'Néant',
-    classe: 'chasseur',
-    race: 'innommes',
-    dit: 'Un cœur de néant qui bat entre deux anneaux : il plie l’espace et dévore la lumière.',
-    pieces: ['coque-13', 'propulseur-n3', 'arme-puits', 'arme-drain', 'arme-vrilles'],
-    serie: { possedees: ['coque-13', 'propulseur-n3', 'arme-puits', 'arme-drain', 'arme-vrilles'], montees: { coque: 'coque-13', propulseur: 'propulseur-n3' }, outils: [], armes: ['arme-puits'] },
-    chaine: [],
-    horsRecherche: true,
-  },
-  {
     // LE PRISME (Keko, 16/11) : le vaisseau de cristal — un cristal qui tourne à sa proue, un rayon d'énergie pure
     id: 'prisme',
     nom: 'Prisme',
@@ -258,6 +244,20 @@ export const MODELES: ModeleDeVaisseau[] = [
     horsRecherche: true,
   },
   {
+    // LE NÉANT (Keko, 16/11) : le vaisseau du vide — un cœur qui bat entre deux anneaux qui l'orbitent ; l'espace-temps et
+    // les dimensions. SA PREMIÈRE ARME, LE PUITS, gardé de côté « pour un futur vaisseau » ; puis LE DRAIN D'ÂME et LES
+    // VRILLES D'OMBRE (Keko, 17/11 : les effets Soul Drain et Shadow Tendrils de pixelfx).
+    id: 'neant',
+    nom: 'Néant',
+    classe: 'chasseur',
+    race: 'innommes',
+    dit: 'Un cœur de néant qui bat entre deux anneaux : il plie l’espace et dévore la lumière.',
+    pieces: ['coque-13', 'propulseur-n3', 'arme-puits', 'arme-drain', 'arme-vrilles'],
+    serie: { possedees: ['coque-13', 'propulseur-n3', 'arme-puits', 'arme-drain', 'arme-vrilles'], montees: { coque: 'coque-13', propulseur: 'propulseur-n3' }, outils: [], armes: ['arme-puits'] },
+    chaine: [],
+    horsRecherche: true,
+  },
+  {
     // LE TESSERACT (Keko, 17/11 : les Innommés, « il leur manque également un autre vaisseau ») : un hypercube — un cube
     // dans un cube, qui tourne dans une quatrième dimension et se retourne sur lui-même — et, au milieu, un œil. SON ARME :
     // les balises gardées de côté, des glyphes posés que relient des rayons (de moi, à rejuger)
@@ -271,7 +271,7 @@ export const MODELES: ModeleDeVaisseau[] = [
     nom: 'Tesseract',
     classe: 'chasseur',
     race: 'innommes',
-    dit: 'Un cube dans un cube, qui se retourne autour d’un cœur de lumière et plie la géométrie.',
+    dit: 'Un cube en quatre dimensions, qui joue avec la géométrie de l’espace-temps.',
     pieces: ['coque-15', 'propulseur-t3', 'arme-hypercube', 'arme-de', 'arme-coupe'],
     serie: { possedees: ['coque-15', 'propulseur-t3', 'arme-hypercube', 'arme-de', 'arme-coupe'], montees: { coque: 'coque-15', propulseur: 'propulseur-t3' }, outils: [], armes: ['arme-hypercube'] },
     chaine: [],
