@@ -3766,7 +3766,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     'arme-meteore': 'Une météore d’arcane tombe du ciel sur un insecte, sans jamais le manquer.',
     'arme-tentacules': 'Un énorme tentacule à aiguille, qui transperce un ennemi.',
     'arme-nuee': 'Une nuée de minuscules insectes, qui se jette sur les ennemis proches pour les dévorer.',
-    'arme-rejetons': 'Il pond des rejetons, qui nagent vers les ennemis et les transpercent de leurs aiguilles.',
+    'arme-rejetons': 'Des rejetons, qui se déplacent vers les ennemis et les transpercent de leurs aiguilles.',
     'arme-crachat': 'Un crachat d’acide devant lui, qui ronge les insectes et les rend fragiles.',
     'arme-mines': 'Des pustules d’acide semées autour de lui, qui éclatent en gaz au passage d’un insecte.',
     'arme-parasites': 'Un petit cerveau à crocs s’accroche à un insecte et le dévore, puis bondit sur un autre à sa mort.',

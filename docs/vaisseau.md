@@ -6052,3 +6052,6 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   bas à gauche. *Mesuré* (nez à queue, flamme comprise) : du Tesseract (18,5) au Ver (30,3) et au Kraken (29,7, ses
   tentacules rabattues) ; le corps du Kraken seul fait 17,7 de long, à peine plus que le Chasseur — c'est sa taille en
   vol aussi.
+- LES REJETONS, SANS LE VAISSEAU (Keko, 19/11 : « ne dis pas « il pond », on ne veut pas faire référence au vaisseau dans
+  la description de l'arme ; et ne dis pas « nage », dis « déplace » ») : « Des rejetons, qui se déplacent vers les
+  ennemis et les transpercent de leurs aiguilles. »
