@@ -10266,7 +10266,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    */
   /**
    * LES TEINTES DES MINES, celles de l'apparence de la Vouivre (Keko, 19/11 : « pense aussi à changer la couleur des mines
-   * en fonction du skin ») : son venin, sa lie, et le miasme de leur gaz, tiré des deux.
+   * en fonction du skin ») : son venin, sa lie. (Le miasme, tiré des deux, n'est plus lu : l'explosion reste verte.)
    */
   function teintesDesMines(): { venin: number[]; lie: number[]; miasme: number[] } {
     const ru = rampesDuJoueur()
@@ -10345,7 +10345,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const v1 = 1 - u
       // (LE NUAGE DE POISON DE PIXELFX — Keko, 17/11 : un miasme éclairé du dedans, vert-jaune au cœur, qui vire au violet
       // vers ses bords ; ses bords s'enroulent en volutes ; des grains qui scintillent dérivent avec lui)
-      const M = teintesDesMines().miasme
+      // (L'EXPLOSION RESTE VERTE, DE LA COULEUR DE L'ACIDE — Keko, 19/11 : « la couleur des mines suit l'apparence, mais
+      // l'animation d'explosion doit rester verte » : le miasme du dépôt, quelle que soit l'apparence)
+      const M = MIASME
       if (u < 0.15) p.glow(g.x, g.y, g.rayon * 0.8, M[6], 0.6 * (1 - u / 0.15))
       p.glow(g.x, g.y, g.rayon * 0.7, M[5], 0.25 * v1)
       // (des bouffées qui s'ouvrent jusqu'au rayon et roulent)
@@ -10718,9 +10720,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         }
         // IL EST RONGÉ (l'acide de la Vouivre) : une tache verte sur lui, qui fume — trois volutes qui montent et pâlissent
         if (e.acide !== undefined && e.acide.jusque > m.t) {
-          // (… AUX TEINTES DU VENIN DE L'APPARENCE — Keko, 19/11 : « tu changes la couleur des mines en fonction du skin,
-          // mais l'explosion reste une explosion verte de poison » : ce qu'elle laisse sur les ennemis, leur tache et sa vapeur)
-          const ve = teintesDesMines().venin
+          // (VERT, COMME L'EXPLOSION — Keko, 19/11 : l'acide reste de sa couleur, quelle que soit l'apparence)
+          const ve = [...VENIN.slice(0, 4), ECLABOUSSURE[6], ECLABOUSSURE[7]]
           p.glow(sx, sy, 7, ve[3], 0.3 + 0.1 * Math.sin(t * 9 + e.id))
           p.circle(sx, sy, 3.5, ve[2], 0.35)
           // (… ET IL GRÉSILLE, comme l'éclaboussure de pixelfx — Keko, 17/11 : une vapeur pâle qui monte en ondulant, et de
@@ -13249,7 +13250,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           jouer('gaz', { dx: ev.x - v.x, dy: ev.y - v.y })
           for (let i = 0; i < 12; i++) {
             const a = R.range(0, Math.PI * 2)
-            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(25, 70), Math.sin(a) * R.range(25, 70), R.range(0.2, 0.4), [teintesDesMines().venin[4], teintesDesMines().venin[3], teintesDesMines().lie[3]][Math.floor(R.next() * 3)], 1, 1.5)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(25, 70), Math.sin(a) * R.range(25, 70), R.range(0.2, 0.4), [VENIN[4], VENIN[3], LIE[3]][Math.floor(R.next() * 3)], 1, 1.5)
           }
           secousse = Math.max(secousse, 0.18)
           break

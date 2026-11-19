@@ -6124,3 +6124,6 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
 - L'EXPLOSION DES MINES AUX COULEURS DE L'APPARENCE (Keko, 19/11 : « l'explosion reste une explosion verte de poison ») :
   le nuage suivait déjà, pas ce qu'il laisse sur les ennemis — leur tache d'acide, sa lueur, sa vapeur et les étoiles qui
   y pètent, dessinées en vert fixe (`ECLABOUSSURE`) : elles prennent le venin de l'apparence (`teintesDesMines`).
+- … PUIS L'EXPLOSION DES MINES RESTE VERTE (Keko, 19/11 : « je veux que la couleur des mines suive l'apparence, mais
+  l'animation d'explosion de la mine doit rester verte, de la couleur de l'acide ») : la mine posée, en vol, sa lueur
+  suivent l'apparence ; le nuage de l'explosion (`MIASME`), ses éclats et l'acide laissé sur les ennemis restent verts.
