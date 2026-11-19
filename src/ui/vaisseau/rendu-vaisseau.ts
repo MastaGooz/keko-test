@@ -34,7 +34,7 @@ export type Forme = {
   /** Pour une flamme : la base (x de la tuyère) et la pointe, pour son dégradé. */
   feu?: { base: number; pointe: number }
   /** Pour le cœur du Néant : son centre, son rayon (battement compris), l'instant et son battement (0 à 1). */
-  coeur?: { x: number; y: number; r: number; t: number; pouls: number }
+  coeur?: { x: number; y: number; r: number; t: number; pouls: number; /** Sa forme, selon l'arme (voir `Allure.noyau`). */ forme?: string }
   /** Pour une lueur : le ton de la rampe (0 sombre à 5 clair). */
   ton?: number
 }
@@ -161,11 +161,46 @@ function paletteDuCoeur(r: number[]): number[] {
   }
   return coeursGardes.get(r)!
 }
-function pixelDuCoeur(c: { x: number; y: number; r: number; t: number; pouls: number }, lx: number, ly: number, COEUR: number[]): number {
+function pixelDuCoeur(c: { x: number; y: number; r: number; t: number; pouls: number; forme?: string }, lx: number, ly: number, COEUR: number[]): number {
   const dx = lx - c.x
   const dy = ly - c.y
   const d = Math.hypot(dx, dy) / c.r
   const a = Math.atan2(dy, dx)
+  // L'INTRICATION — UN LIEN INFINI (Keko, 19/11) : un huit couché qui tourne lentement — sa boucle de lumière, deux
+  // horizons noirs dans ses lobes, une lueur sombre autour
+  if (c.forme === 'drain') {
+    if (d > 0.93) return COEUR[1]
+    const ro = c.t * 0.5
+    const u = (dx * Math.cos(ro) + dy * Math.sin(ro)) / c.r
+    const v = (-dx * Math.sin(ro) + dy * Math.cos(ro)) / c.r
+    const A = 0.82
+    const q = u * u + v * v
+    const f = q * q - A * A * (u * u - v * v)
+    // (la distance à la courbe : la valeur divisée par sa pente — mesuré à la capture : un seuil sur la valeur seule
+    // remplissait tout le milieu)
+    const gu = 4 * u * q - 2 * A * A * u
+    const gv = 4 * v * q + 2 * A * A * v
+    const e = Math.abs(f) / Math.max(0.35, Math.hypot(gu, gv))
+    if (e < 0.075) {
+      const face = 0.5 + 0.5 * Math.cos(Math.atan2(v, u) * 2 - c.t * 3)
+      return face > 0.6 || c.pouls > 0.6 ? COEUR[7] : COEUR[5]
+    }
+    if (e < 0.13) return COEUR[3]
+    if (f < 0) return HORIZON
+    return d < 0.7 ? COEUR[2] : COEUR[1]
+  }
+  // LES VRILLES — UN CŒUR D'OMBRE QUI LES LANCE (Keko, 19/11) : un noyau noir d'où sortent cinq vrilles torsadées, qui
+  // tournent ; leur bord luit
+  if (c.forme === 'vrille') {
+    if (d < 0.32) return HORIZON
+    if (d < 0.38) return c.pouls > 0.6 ? COEUR[6] : COEUR[4]
+    if (d > 0.95) return COEUR[1]
+    const vr = Math.cos(5 * a + 5 * d - c.t * 2.2)
+    const largeur = 0.55 + 0.4 * (1 - d)
+    if (vr > 1 - largeur) return vr > 1 - largeur * 0.35 ? COEUR[0] : HORIZON
+    if (vr > 1 - largeur - 0.18) return d < 0.6 ? COEUR[6] : COEUR[4]
+    return d < 0.6 ? COEUR[2] : COEUR[1]
+  }
   if (d < 0.4) return HORIZON
   if (d < 0.52) {
     const face = 0.5 + 0.5 * Math.cos(a - c.t * 1.6)
@@ -600,6 +635,12 @@ export function peindreFormes(p: Peintre, formes: Forme[], cx: number, cy: numbe
 
 /** Ce que porte le vaisseau : les crans et les pièces montées. */
 export type Allure = {
+  /**
+   * LE NOYAU SELON L'ARME (Keko, 19/11 : « un rendu différent en fonction des armes pour le prisme, le void et le
+   * tesseract : la forme du cristal au milieu du prisme, du noyau central du void, du noyau de lumière du tesseract ») :
+   * l'identifiant de l'arme montée — le cristal du Prisme, le cœur du Néant, le cœur du Tesseract en prennent la forme.
+   */
+  noyau?: string
   /** LE VER : où sont ses anneaux, en unités du vaisseau — le chemin que sa tête a pris (voir `formesDuVer`). */
   chemin?: [number, number][]
   propulseur: number
@@ -1307,7 +1348,7 @@ function pustule(x: number, y: number, r: number, t: number, phase: number): For
     { pts: ovale(x, y, rr, rr, 12), mat: 'venin', relief: 'dome', dome: { x, y, rx: rr, ry: rr } },
   ]
 }
-export function formesDeLaCoque(cran: number, t = 0, motif?: MotifDuVer): Forme[] {
+export function formesDeLaCoque(cran: number, t = 0, motif?: MotifDuVer, noyau?: string): Forme[] {
   if (cran === 13) {
     // LE NÉANT : LE CŒUR et SES DEUX ANNEAUX (ceux de l'« Energy core ») — chaque anneau est un cercle incliné (l'un de
     // 1,15 rad, l'autre de −0,9) qui tourne autour de l'axe de la vue, l'un en 2,4 s, l'autre deux fois plus vite et dans
@@ -1343,7 +1384,7 @@ export function formesDeLaCoque(cran: number, t = 0, motif?: MotifDuVer): Forme[
     })
     // (… PLUS D'ÉPERON — Keko, 19/11 : « enlève le petit triangle, le cône posé sur le noyau du néant ; on dirait un chapeau
     // d'anniversaire, c'est moche » : ses coups partent toujours de là où était sa pointe — voir sa place d'arme)
-    return [...derriere, { pts: ovale(0, 0, r, r, 28), mat: 'neant', relief: 'coeur', coeur: { x: 0, y: 0, r, t, pouls } }, ...devant]
+    return [...derriere, { pts: ovale(0, 0, r, r, 28), mat: 'neant', relief: 'coeur', coeur: { x: 0, y: 0, r, t, pouls, forme: noyau } }, ...devant]
   }
   if (cran === 15) {
     // LE TESSERACT : LES SEIZE SOMMETS D'UN HYPERCUBE, tournés dans deux plans qui touchent la quatrième dimension (x-w et
@@ -1371,6 +1412,40 @@ export function formesDeLaCoque(cran: number, t = 0, motif?: MotifDuVer): Forme[
     // (le cœur : il bat doucement, ses rayons tournent)
     const bat = 0.5 + 0.5 * Math.sin(t * 3)
     const coeur: Forme[] = []
+    // (… SA FORME SELON L'ARME — Keko, 19/11 : l'HYPERCUBE, le cœur rond de toujours ; le DÉ, un dé de lumière qui tourne,
+    // ses points ; la SUPERPOSITION, un triangle et un hexagone posés l'un sur l'autre, qui tournent en sens contraires)
+    if (noyau === 'de') {
+      const a = t * 0.9
+      const c = 2.3 + 0.15 * bat
+      const coin = (k: number): [number, number] => [Math.cos(a + Math.PI / 4 + (k * Math.PI) / 2) * c * Math.SQRT2, Math.sin(a + Math.PI / 4 + (k * Math.PI) / 2) * c * Math.SQRT2]
+      coeur.push({ pts: [0, 1, 2, 3].map(coin), mat: 'spectre', relief: 'lueur', ton: 3 })
+      coeur.push({ pts: [0, 1, 2, 3].map((k): [number, number] => [coin(k)[0] * 0.8, coin(k)[1] * 0.8]), mat: 'lumiere', relief: 'lueur', ton: 4 })
+      const ux = Math.cos(a)
+      const uy = Math.sin(a)
+      const face = Math.floor(t * 0.6) % 3
+      const points: [number, number][] = face === 0 ? [[0, 0]] : face === 1 ? [[-1, -1], [1, 1], [0, 0]] : [[-1, -1], [1, -1], [-1, 1], [1, 1], [0, 0]]
+      for (const [px, py] of points) {
+        const x = (px * ux - py * uy) * c * 0.48
+        const y = (px * uy + py * ux) * c * 0.48
+        coeur.push({ pts: ovale(x, y, 0.42, 0.42, 8), mat: 'spectre', relief: 'lueur', ton: 1 })
+      }
+      return [...derriere, ...coeur, ...devant]
+    }
+    if (noyau === 'coupe') {
+      const r = 2.6 + 0.2 * bat
+      const poly = (n: number, rr: number, a0: number): [number, number][] => Array.from({ length: n }, (_, k) => [Math.cos(a0 + (k * 2 * Math.PI) / n) * rr, Math.sin(a0 + (k * 2 * Math.PI) / n) * rr])
+      const hexa = poly(6, r, t * 0.6)
+      const tri = poly(3, r * 1.05, -t * 0.9)
+      coeur.push({ pts: hexa, mat: 'spectre', relief: 'lueur', ton: 2 })
+      coeur.push({ pts: tri, mat: 'lumiere', relief: 'lueur', ton: 3 })
+      for (const pl of [hexa, tri])
+        pl.forEach(([x0, y0], k) => {
+          const [x1, y1] = pl[(k + 1) % pl.length]
+          coeur.push({ pts: barre(x0, y0, x1, y1, 0.3), mat: pl === tri ? 'lumiere' : 'spectre', relief: 'lueur', ton: pl === tri ? 5 : 4 })
+        })
+      coeur.push({ pts: ovale(0, 0, 0.7, 0.7, 10), mat: 'lumiere', relief: 'lueur', ton: 5 })
+      return [...derriere, ...coeur, ...devant]
+    }
     for (let k = 0; k < 4; k++) {
       const a = t * 0.8 + (k * Math.PI) / 2
       const L = 3.1 + 0.4 * bat
@@ -1439,17 +1514,20 @@ export function formesDeLaCoque(cran: number, t = 0, motif?: MotifDuVer): Forme[
     // la lumière qu'elle prend (sombre de profil, pâle face à la lumière), un pan sur deux d'énergie ; UN CERNE sombre
     // autour de la silhouette ; DES ARÊTES pâles où deux faces se rencontrent ; UN ÉCLAT en étoile sur la face qui renvoie la
     // lumière ; et DES POUSSIÈRES DE GIVRE qui tournent autour de lui, devant et derrière.
+    // (… SA FORME SELON L'ARME — Keko, 19/11 : le RAYON, le prisme à six pans de toujours ; les CRISTAUX, un diamant à
+    // quatre pans, ses deux pointes égales ; la DÉSINTÉGRATION, une aiguille à trois pans, longue et fine)
+    const forme = noyau === 'cristal' ? { n: 4, R: 2.3, corps: 0.15, avant: 1.9, arriere: 1.9 } : noyau === 'rail' ? { n: 3, R: 1.5, corps: 0.9, avant: 3.6, arriere: 2.2 } : { n: 6, R: 2, corps: 0.45, avant: 2.2, arriere: 1.7 }
     const cristal: Forme[] = []
     const th = t * 1.7
-    const R = 2
-    const anneau = (x: number): [number, number, number][] => Array.from({ length: 6 }, (_, k) => [x, Math.cos(th + (k * Math.PI) / 3) * R, Math.sin(th + (k * Math.PI) / 3) * R])
-    const avant = anneau(cx + R * 0.45)
-    const arriere = anneau(cx - R * 0.45)
-    const A: [number, number, number] = [cx + R * 2.2, 0, 0]
-    const Z: [number, number, number] = [cx - R * 1.7, 0, 0]
+    const R = forme.R
+    const anneau = (x: number): [number, number, number][] => Array.from({ length: forme.n }, (_, k) => [x, Math.cos(th + (k * 2 * Math.PI) / forme.n) * R, Math.sin(th + (k * 2 * Math.PI) / forme.n) * R])
+    const avant = anneau(cx + R * forme.corps)
+    const arriere = anneau(cx - R * forme.corps)
+    const A: [number, number, number] = [cx + R * forme.avant, 0, 0]
+    const Z: [number, number, number] = [cx - R * forme.arriere, 0, 0]
     const faces: { f: [number, number, number][]; mat: Matiere }[] = []
-    for (let k = 0; k < 6; k++) {
-      const j = (k + 1) % 6
+    for (let k = 0; k < forme.n; k++) {
+      const j = (k + 1) % forme.n
       const mat: Matiere = k % 2 === 0 ? 'quartz' : 'energie'
       faces.push({ f: [A, avant[k], avant[j]], mat }, { f: [avant[k], arriere[k], arriere[j], avant[j]], mat }, { f: [arriere[k], Z, arriere[j]], mat })
     }
@@ -2396,7 +2474,7 @@ function formesDuVaisseauNu(a: Allure, flamme: number, t: number, vise = 0, devi
   const feux = f.filter((x) => x.relief === 'emis')
   const reste = f.filter((x) => x.relief !== 'emis')
   // (LE VER ONDULE : sa coque se refait de sa poussée et de son virage)
-  const coque = [...sansMarque(a.coque === 14 ? formesDuVer(t, flamme, devie, a.habit?.motif, a.chemin, a.ver) : formesDeLaCoque(a.coque, t)), ...(a.habit?.coque ?? []), ...(a.coque === 6 && a.sentinelle !== undefined ? formesDeLaSentinelleArmee(a.sentinelle, t) : []), ...(a.coque === 8 && a.frimas !== undefined ? formesDuFrimasArme(a.frimas, t) : []), ...(a.coque === 9 && a.pulsar !== undefined ? formesDuPulsarArme(a.pulsar, t) : [])]
+  const coque = [...sansMarque(a.coque === 14 ? formesDuVer(t, flamme, devie, a.habit?.motif, a.chemin, a.ver) : formesDeLaCoque(a.coque, t, undefined, a.noyau)), ...(a.habit?.coque ?? []), ...(a.coque === 6 && a.sentinelle !== undefined ? formesDeLaSentinelleArmee(a.sentinelle, t) : []), ...(a.coque === 8 && a.frimas !== undefined ? formesDuFrimasArme(a.frimas, t) : []), ...(a.coque === 9 && a.pulsar !== undefined ? formesDuPulsarArme(a.pulsar, t) : [])]
   const tout = [...feux, ...reste, ...(a.coque === 6 ? tourner(coque, t * TOUR_DE_LA_SENTINELLE) : coque)]
   if (g.surLePont) tout.push(...armes)
   tout.push(...surLeDos)

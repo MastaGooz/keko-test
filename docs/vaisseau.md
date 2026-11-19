@@ -6504,3 +6504,17 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
 - PLUS D'OMBRE AU HANGAR DES YHG'THARR (Keko, 19/11 : « leur ombre est vraiment bizarre sur la plateforme, ovale et pas
   vraiment sous le vaisseau ; je sais même pas si on a envie de dessiner une ombre à cet endroit ; on peut essayer de
   l'enlever ») : au bord du vide, rien n'en porte ; les autres hangars gardent la leur. Vu à la capture.
+- LE NOYAU SELON L'ARME : LE PRISME, LE NÉANT, LE TESSERACT (Keko, 19/11 : « un rendu différent en fonction des armes :
+  pour le prisme, la forme du cristal au milieu ; pour le void, la forme du noyau central qui ressemble à un trou noir ;
+  pour le tesseract, la forme du noyau de lumière ») : `Allure.noyau` (l'identifiant de l'arme montée) entre dans
+  `formesDeLaCoque` :
+  - LE PRISME : le Rayon, le prisme à six pans de toujours ; les Cristaux, un DIAMANT à quatre pans, ses deux pointes
+    égales ; la Désintégration, une AIGUILLE à trois pans, longue et fine (le même cristal 3D, ses pans et ses longueurs) ;
+  - LE NÉANT (`pixelDuCoeur`, `coeur.forme`) : la Singularité, le trou noir à spirale de toujours ; l'Intrication, UN HUIT
+    COUCHÉ — le lien infini — qui tourne, sa boucle de lumière (tracée à sa distance vraie : un seuil sur la seule valeur
+    remplissait le milieu, vu à la capture), deux horizons noirs dans ses lobes ; les Vrilles, UN CŒUR D'OMBRE d'où
+    sortent cinq vrilles torsadées qui tournent, leur bord qui luit ;
+  - LE TESSERACT : l'Hypercube, le cœur rond à quatre rayons de toujours ; le Dé, UN DÉ DE LUMIÈRE qui tourne, ses points
+    (un, trois, cinq, qui changent) ; la Superposition, UN TRIANGLE ET UN HEXAGONE posés l'un sur l'autre, qui tournent en
+    sens contraires, un point de lumière au milieu.
+  Au hangar, à l'accueil, en vol ; vus à la capture.
