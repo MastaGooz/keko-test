@@ -6244,3 +6244,6 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   spires de cuivre autour du dôme, trois antennes à boule de cuivre, un arc qui saute de l'une à l'autre. *Mesuré à la
   capture* : d'acier clair sur la perle du disque, la cage et les antennes ne se voyaient pas — en graphite, plus grandes.
   Elles tournent avec le disque.
+- LE PULSAR REDIT (Keko, 19/11) : « Projette un orbe de plasma qui décharge sur tous les ennemis proches. » ; « Tire une
+  volée de missiles qui fondent sur les ennemis à portée. » ; « Verrouille un ennemi proche et décharge un faisceau
+  d'énergie sur lui. »

@@ -3800,9 +3800,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     'arme-eclats': 'Projette des éclats de glace dans toutes les directions autour du vaisseau.',
     // (… LES NOMS DU FRIMAS ET DU PULSAR — Keko, 19/11 : le Blizzard ; l'Orbe de plasma, le Missile ionique, la Décharge arcanique)
     'arme-tornade': 'Un blizzard qui poursuit les ennemis, les gèle et les lacère.',
-    'arme-plasma': 'Un lent orbe de plasma, qui lance de petits traits sur tout ce qui passe près de lui.',
-    'arme-essaim': 'Une gerbe de petits missiles ioniques, qui zigzaguent puis fondent sur les ennemis.',
-    'arme-meteore': 'Une décharge arcanique tombe du ciel sur un ennemi, sans jamais le manquer.',
+    // (… LE PULSAR REDIT — Keko, 19/11)
+    'arme-plasma': 'Projette un orbe de plasma qui décharge sur tous les ennemis proches.',
+    'arme-essaim': 'Tire une volée de missiles qui fondent sur les ennemis à portée.',
+    'arme-meteore': 'Verrouille un ennemi proche et décharge un faisceau d’énergie sur lui.',
     'arme-tentacules': 'Des tentacules à crochets d’os, qui se projettent et transpercent les ennemis.',
     'arme-nuee': 'Une nuée de minuscules insectes, qui se jette sur les ennemis proches pour les dévorer.',
     'arme-rejetons': 'Des rejetons, qui se déplacent vers les ennemis et les transpercent de leurs aiguilles.',
