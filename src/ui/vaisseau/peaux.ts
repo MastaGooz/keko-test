@@ -187,20 +187,20 @@ const PEAUX: Record<string, Peau[]> = {
       }),
     },
   ],
-  // LE FRIMAS : une carapace blanche, des croissants d'ardoise, la glace — son origine est l'ancien Blizzard (Keko, 19/11 :
-  // « passer le skin numéro 3 en skin de base et créer un nouveau skin pour remplacer le numéro 3 »)
+  // LE FRIMAS : une carapace bleu d'iceberg, des croissants de neige, une glace turquoise — son origine est le Glacier
+  // (Keko, 19/11 : le Blizzard d'abord, puis « mettre le skin 3 en skin 1 et proposer un autre skin 3 »)
   frimas: [
     {
-      // (une carapace blanche, des croissants d'ardoise — ses couleurs de série, voir `RAMPES` —, une glace presque
-      // blanche ; du givre semé sur le dos)
+      // (une carapace bleu d'iceberg, des croissants de neige — ses couleurs de série, voir `RAMPES` —, une glace
+      // turquoise ; une arête de neige du nez au dos)
       id: 'origine',
       nom: 'Origine',
       principale: 'nacre',
-      rampes: { glace: R('#0a2a40', '#14507a', '#2a90c8', '#6ad0f4', '#c8f4ff', '#ffffff'), decor: T(195, 0.6, 1.18) },
-      accent: T(195, 0.6, 1.18),
+      rampes: { glace: R('#062a3a', '#0a5a78', '#1aa0c8', '#5ad8f4', '#c0f8ff', '#ffffff'), decor: T(200, 0.08, 1.32) },
+      accent: T(185, 0.7, 1.2),
       habit: () => ({
         ailes: COTES.map((sg) => goutte(6.93, sg * 3.47, 0.85, 'decor')),
-        coque: ([[2.6, -2], [2.2, 2.1], [-1.4, -2.7], [-0.9, 2.7], [5, -1.2], [-3.2, 0.2]] as [number, number][]).map(([x, y]) => goutte(x, y, 0.32, 'decor')),
+        coque: [plat(barre(4.6, 0, -3.8, 0, 0.32), 'decor'), ...COTES.map((s) => goutte(-1.2, s * 2.5, 0.42, 'decor'))],
       }),
     },
     {
@@ -216,16 +216,16 @@ const PEAUX: Record<string, Peau[]> = {
       }),
     },
     {
-      // UN GLACIER (Keko, 19/11 : le nouveau troisième) : une carapace bleu d'iceberg, des croissants de neige, une glace
-      // turquoise ; une arête de neige du nez au dos, des glaçons au bout des croissants
-      id: 'glacier',
-      nom: 'Glacier',
-      principale: 'nacre',
-      rampes: { nacre: T(198, 0.62, 1.0), indigo: T(205, 0.1, 1.28), glace: R('#062a3a', '#0a5a78', '#1aa0c8', '#5ad8f4', '#c0f8ff', '#ffffff'), decor: T(200, 0.08, 1.32) },
-      accent: T(185, 0.7, 1.2),
+      // LA GLACE NOIRE (Keko, 19/11 : « un autre skin 3 qui diffère un peu plus ») : une carapace bleu-noir, comme une glace
+      // sombre ; des croissants et une glace d'un cyan qui luit de l'intérieur ; des fissures cyan sur le dos
+      id: 'glace-noire',
+      nom: 'Glace noire',
+      principale: 'indigo',
+      rampes: { nacre: T(218, 0.35, 0.5), indigo: T(188, 0.85, 1.15), glace: R('#022838', '#04607a', '#08b0d8', '#40f0ff', '#c0ffff', '#ffffff'), decor: T(186, 0.9, 1.25) },
+      accent: T(186, 0.9, 1.25),
       habit: () => ({
         ailes: COTES.map((sg) => goutte(6.93, sg * 3.47, 0.85, 'decor')),
-        coque: [plat(barre(4.6, 0, -3.8, 0, 0.32), 'decor'), ...COTES.map((s) => goutte(-1.2, s * 2.5, 0.42, 'decor'))],
+        coque: COTES.flatMap((s) => [plat(barre(3.8, s * 0.7, 1.8, s * 1.9, 0.2), 'decor'), plat(barre(1.8, s * 1.9, -0.6, s * 1.1, 0.2), 'decor'), plat(barre(-0.6, s * 1.1, -3.2, s * 2.4, 0.2), 'decor')]),
       }),
     },
   ],

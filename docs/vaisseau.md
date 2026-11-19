@@ -6379,3 +6379,8 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
 - « CLIQUER » À LA SOURIS (Keko, 19/11 : « sur PC, remplacer le mot toucher de l'écran d'accueil et du démarrage par
   cliquer ») : « Cliquer pour allumer », « Cliquer pour commencer » quand le pointeur est fin (`VERBE_DU_GESTE`) ; au
   doigt, « Toucher ». Vu à la capture, sans émulation tactile.
+- LE GLACIER DEVIENT L'ORIGINE DU FRIMAS, UNE GLACE NOIRE EST LE TROISIÈME (Keko, 19/11 : « mettre le skin 3 en skin 1
+  et me proposer un autre skin 3 qui diffère un peu plus ») : l'origine prend les couleurs du Glacier (carapace bleu
+  d'iceberg, croissants de neige — dans `RAMPES` —, glace turquoise, arête de neige) ; le Blizzard s'en va. LA GLACE
+  NOIRE, proposée : une carapace bleu-noir, des croissants et une glace d'un cyan qui luit de l'intérieur, des fissures
+  cyan sur le dos. Un joueur qui avait choisi le Glacier retombe sur l'origine — les mêmes couleurs.
