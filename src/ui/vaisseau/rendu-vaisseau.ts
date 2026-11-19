@@ -73,8 +73,11 @@ const RAMPES: Record<Matiere, number[]> = {
   sarcelle: ['#061a20', '#0b3438', '#135a5a', '#1f8882', '#46beb2', '#a6f0e0'].map(hex),
   kaki: ['#121306', '#262810', '#3f421e', '#5e6232', '#888d52', '#c6c98e'].map(hex),
   graphite: ['#0d0d12', '#1b1b22', '#2d2d36', '#45454f', '#686874', '#a2a2ae'].map(hex),
-  nacre: ['#1a1430', '#2f2852', '#4e477a', '#7c75a8', '#b4aed6', '#efecfc'].map(hex),
-  indigo: ['#0c0822', '#1a1244', '#2b1f6a', '#403092', '#6852bc', '#ac96ea'].map(hex),
+  // (… LA GLACE, PLUS LE VIOLET — Keko, 19/11 : « la couleur de base du Frimas trop proche de celle du Pulsar ; une
+  // identité vraiment liée à la glace » : la carapace, du givre presque blanc teinté de cyan ; ses chevrons, ses croissants
+  // et le corps de ses armes, le bleu-vert profond d'une crevasse de glacier — les noms des matières restent)
+  nacre: ['#162a36', '#2a4a5a', '#4a7486', '#7eaab8', '#bfe2ea', '#f4feff'].map(hex),
+  indigo: ['#04161e', '#082a38', '#0e4458', '#16627c', '#2a8aa6', '#6cc4d8'].map(hex),
   // LE PULSAR (Keko, 16/11 : « des tons un peu violets ») : une carapace d'obsidienne, des ailes mauves, et LE PLASMA —
   // du violet au bleu, puis au blanc (les teintes du « Plasma explosion » de pixelfx)
   obsidienne: ['#0b0816', '#171128', '#261c40', '#3a2c5c', '#58457f', '#8a74b0'].map(hex),

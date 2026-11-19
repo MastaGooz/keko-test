@@ -6357,3 +6357,8 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   désormais calculé une fois), les Xénoïdes 76.
 - LA CÔTE D'OS DU HANGAR DES XÉNOÏDES RETIRÉE (Keko, 19/11 : « une petite structure beige bizarre à droite ; je sais pas
   trop ce que c'est, mais c'est moche ») : les deux arcs beiges à droite de l'aire ; le crâne, à gauche, reste.
+- LE FRIMAS, VRAIMENT DE GLACE (Keko, 19/11 : « la couleur de base du Frimas trop proche de celle du Pulsar ; une
+  identité vraiment liée à la glace ») : sa nacre (lavande) devient du GIVRE presque blanc teinté de cyan, son indigo
+  (violet) le BLEU-VERT PROFOND d'une crevasse de glacier — ses chevrons, ses croissants et le corps de ses armes, qui
+  restent contrastés sur la carapace. Seul le Frimas portait ces deux matières ; leurs noms restent. Ses deux autres
+  apparences (Aurore, Blizzard) ont leurs rampes à elles, inchangées.

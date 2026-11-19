@@ -188,7 +188,7 @@ const PEAUX: Record<string, Peau[]> = {
       }),
     },
   ],
-  // LE FRIMAS : une carapace de nacre, des croissants d'indigo, la glace
+  // LE FRIMAS : une carapace de givre, des croissants bleu de crevasse, la glace
   frimas: [
     origine('nacre', GLACE),
     {
