@@ -12,7 +12,7 @@
  */
 import './vaisseau.css'
 import * as noyau from 'pixelfx'
-import { ancreDansLeMonde, zoneDuDe, coupeDUnCube, formeDeLaCoupe, boucheDansLeMonde, liesAuDrain, encaisser, type Ennemi, type Evenement, type Monde, impactDuRayon, asteroidesVisibles, avancerLeMonde, finDuTrio, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur, xpDuNiveau, ennemiLePlusProche, ennemiVerrouille, verrouiller, angleDuBalayage } from '../../logic/vaisseau/jeu.ts'
+import { ancreDansLeMonde, zoneDuDe, coupeDUnCube, formeDeLaCoupe, liesAuDrain, encaisser, type Ennemi, type Evenement, type Monde, impactDuRayon, asteroidesVisibles, avancerLeMonde, finDuTrio, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur, xpDuNiveau, ennemiLePlusProche, ennemiVerrouille, verrouiller, angleDuBalayage } from '../../logic/vaisseau/jeu.ts'
 import { ETALONS as ETALONS_DU_BANC, acheter, ajouterLesPiecesDEssai, capacite, poidsTotal, POIDS_SERIE, configDuHangar, demonter, demonterA, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, montantCourt, monteeA, monter, monterA, peutAcheter, peutMonter, perdreLesMontees, estDeBase, exemplaires, libres, pieceDe, piecesDe, placeLourde, possede, aimantMonte, radarMonte, type Jauge, type Piece, type Sorte } from '../../logic/vaisseau/hangar.ts'
 import { drawWord, spell } from 'pixelfx/fx/ui/_lib'
 import { firePuff, hotFirst, smokePuff } from 'pixelfx/fx/fire/_lib'
@@ -8376,7 +8376,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * ÉTOILE QUI MONTE de la proue vers le ciel, dans la diagonale même par où la météore redescend sur sa cible.
    */
   const lancersDeMeteore: { x0: number; y0: number; t0: number; id: number }[] = []
-  const DUREE_DU_LANCER = 0.4
+  const DUREE_DU_LANCER = 0.55
   /** Où est la météore à la part `u` de sa chute (0 : au ciel, 1 : au sol), et sa hauteur (1 à 0) : elle tombe, elle accélère. */
   const meteoreEnLAir = (x: number, y: number, u: number): { x: number; y: number; h: number } => {
     const h = 1 - u * u
@@ -8445,45 +8445,24 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const L0 = Math.hypot(CIEL_DE_LA_METEORE.x, CIEL_DE_LA_METEORE.y)
     const dx = CIEL_DE_LA_METEORE.x / L0
     const dy = CIEL_DE_LA_METEORE.y / L0
-    // (LE LANCER : il suit le vaisseau — la proue d'aujourd'hui, pas celle du départ —, sauf l'étoile qui monte, partie de là où elle était)
-    const armeM = CONF.armes.find((a) => a.meteore !== undefined)
+    // (LE LANCER : il suit le vaisseau)
+    // (… PUIS LE VAISSEAU QUI BRILLE D'ÉNERGIE, ET RIEN NE PART DE LUI — Keko, 19/11 : « je ne voudrais pas qu'on voie la
+    // météore décoller du vaisseau ; un simple effet magique sur le vaisseau, comme s'il brillait d'énergie, suffit ; et
+    // on fait juste atterrir la météore sur la cible » : plus d'étoile qui monte de la proue, ni d'éclair, ni de cercle de
+    // runes — un halo d'arcane qui monte et retombe autour de lui, et des étincelles qui scintillent sur sa coque)
     for (const l of lancersDeMeteore) {
       const age = t - l.t0
       const k = age / DUREE_DU_LANCER
-      const b = armeM === undefined ? { x: l.x0, y: l.y0 } : boucheDansLeMonde(v, armeM)
-      // (le cercle de runes qui s'ouvre autour du vaisseau, en tournant, et pâlit)
-      const e = 1 - Math.pow(1 - k, 3)
-      const rr = 11 + 9 * e
-      p.ring(v.x, v.y, rr, 1, k < 0.3 ? ARCANE[6] : ARCANE[5], 0.8 * (1 - k))
-      for (let j = 0; j < 6; j++) {
-        const a = age * 4 + (j * Math.PI) / 3 + l.id
-        const gx = Math.round(v.x + Math.cos(a) * rr)
-        const gy = Math.round(v.y + Math.sin(a) * rr)
-        for (const [ax, ay] of [[0, -1], [-1, 0], [1, 0], [0, 1]]) p.dot(gx + ax, gy + ay, ARCANE[5], 1 - k)
-        p.dot(gx, gy, N.WHITE, 1 - k)
-      }
-      // (l'éclair et l'étoile à la proue, qui s'éteignent vite)
-      if (age < 0.18) {
-        const f = 1 - age / 0.18
-        p.glow(b.x, b.y, 14, ARCANE[5], 0.9 * f)
-        if (f > 0.5) p.circle(b.x, b.y, 3 * f + 0.5, N.WHITE)
-        scintillement(p, b.x, b.y, 2 + 6 * f, ARCANE[6], ARCANE[5], 0.5)
-      }
-      // (L'ÉTOILE QUI MONTE : elle file de la proue vers le ciel, vite, sa traîne derrière elle, et s'y perd)
-      if (age < 0.3) {
-        const vit = 420
-        const d = vit * age
-        const hx = l.x0 + dx * d
-        const hy = l.y0 + dy * d
-        const L = Math.min(d, 30)
-        for (let s = 0; s <= L; s += 1) {
-          const f = s / Math.max(1, L)
-          p.dot(hx - dx * s, hy - dy * s, f < 0.15 ? N.WHITE : f < 0.45 ? ARCANE[6] : f < 0.75 ? ARCANE[5] : ARCANE[4], Math.min(1, 1.2 - f))
-          if (f < 0.4) p.dot(hx - dx * s + 1, hy - dy * s, ARCANE[5], 0.8 - f)
-        }
-        const f = 1 - age / 0.3
-        scintillement(p, hx, hy, 2 + 3 * f, ARCANE[6], ARCANE[5], 0.5 * f)
-        p.circle(hx, hy, 1, N.WHITE)
+      const bat = Math.sin(Math.PI * Math.min(1, k * 1.2))
+      const E = echelleVue()
+      p.glow(v.x, v.y, 18 * E, ARCANE[5], 0.55 * bat)
+      p.glow(v.x, v.y, 9 * E, ARCANE[6], 0.45 * bat)
+      for (let j = 0; j < 7; j++) {
+        const ph = (k * 2.2 + alea(l.id, j, 61)) % 1
+        if (ph > 0.6) continue
+        const a = alea(l.id, j, 62) * Math.PI * 2
+        const r = (2 + 7 * alea(l.id, j, 63)) * E
+        scintillement(p, v.x + Math.cos(a) * r, v.y + Math.sin(a) * r, (1 + 2.5 * Math.sin((Math.PI * ph) / 0.6)) * (1 - k * 0.5), ARCANE[6], ARCANE[5], 0.3 * (1 - k))
       }
     }
     for (const mt of m.meteores) {

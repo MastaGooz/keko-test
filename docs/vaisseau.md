@@ -6249,3 +6249,8 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   d'énergie sur lui. »
 - LES ÉCLATS DE GLACE REDITS (Keko, 19/11 : « préciser que ça gèle ») : « Projette des éclats de glace dans toutes les
   directions, qui gèlent les ennemis. »
+- LA DÉCHARGE ARCANIQUE NE DÉCOLLE PLUS DU VAISSEAU (Keko, 19/11 : « je ne voudrais pas qu'on voie la météore décoller du
+  vaisseau ; un simple effet magique sur le vaisseau, comme s'il brillait d'énergie, suffit ; ensuite, on fait juste
+  atterrir la météore sur la cible ») : plus d'étoile qui monte de la proue, ni d'éclair, ni de cercle de runes au lancer —
+  le vaisseau BRILLE D'ÉNERGIE 0,55 s (un halo d'arcane qui monte et retombe, des étincelles qui scintillent sur sa coque) ;
+  la météore, elle, tombe du ciel sur sa cible comme avant. Vu à la capture.
