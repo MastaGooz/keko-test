@@ -6183,3 +6183,5 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   vraiment technologie avancée ; pour les Innommés, un nom eldritch qui sonne presque imprononçable ») : choisis par Keko
   parmi mes propositions — la Convergence, essayée pour les Éthérés, écartée : « je veux vraiment un nom de race, un peu
   comme les Xénoïdes ». Le nom sous le médaillon perd aussi « La » et « Le » (`lignesDuNomDeRace`).
+- … PUIS LES YHG'THARR (Keko, 19/11 : « Xl'qoth commence par un X alors qu'on a déjà un X pour les Xénoïdes ») : choisi par
+  Keko parmi mes propositions, sans X.
