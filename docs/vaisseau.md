@@ -6209,3 +6209,19 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
 - LES VECTRANS REDITS (Keko, 19/11) : la Sentinelle, « Une soucoupe surchargée, qui libère la puissance de la foudre sur ses
   ennemis. » (« inutile de dire qu'elle n'a pas d'avant ni d'arrière ») ; le Frimas, « Un vaisseau redoutable, qui congèle
   ses ennemis. » ; le Pulsar, « Une technologie avancée, qui contrôle l'énergie pure. »
+- LE HANGAR DE CHAQUE RACE (Keko, 19/11 : « modifier le skin du hangar, la partie avec le vaisseau, pour l'enrichir un peu
+  autour de la zone du vaisseau ; et surtout un reskin total de la zone pour chaque race — actuellement c'est humain ») :
+  un module à lui, `hangars.ts` — le sol (`dessinerLeSolDuHangar`), les lumières (`dessinerLesLampesDuHangar`), l'aire
+  (`dessinerLAireDuHangar`), selon la race du vaisseau piloté (`raceDuHangar` ; le Nova Drifter garde l'Empire) :
+  L'EMPIRE, l'acier d'avant, plus garni — une conduite et sa vanne le long du mur, une console qui clignote, des caisses
+  sanglées et un baril, des grilles d'aération qui rougeoient de part et d'autre de l'aire, des équerres peintes au sol ;
+  LES XÉNOÏDES, un antre — des cellules de chair et de chitine, des veines où passe un battement, des vrilles qui pendent,
+  deux cosses de lumière verte à la place des lampes, des grappes d'œufs aux coins, une côte, un crâne, des dents d'os au
+  pied, des spores ; l'aire, un sphincter de chair cerclé de dents d'os, ses feux des pustules de bile ; LES VECTRANS, une
+  baie claire — des dalles polies aux joints de lumière où courent des impulsions, deux piliers de lumière, deux écrans
+  holographiques, une bande de lumière au pied, des émetteurs au plafond ; l'aire, un anneau d'argent, un anneau d'énergie
+  aux traits qui tournent, une couronne à rebours, ses feux des losanges ; LES YHG'THARR, le bord du vide — des lueurs
+  lointaines, des dalles d'obsidienne qui flottent, des tentacules qui ondulent depuis les coins du bas, des yeux qui
+  s'ouvrent dans le noir, des braises violettes, pas de lampes ; l'aire, un cercle de pierre noire aux runes qui luisent et
+  tournent (*mesuré à la capture* : à un pixel et demi elles ne se lisaient pas — agrandies), un tourbillon de vide au
+  milieu, ses feux des yeux.

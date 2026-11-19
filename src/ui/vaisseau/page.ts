@@ -24,6 +24,7 @@ import { RACINES_DU_KRAKEN, contourDuCrochet, cordesDuKraken } from './rendu-vai
 import { boucheMontee, gabaritDe, placeDOutil, queueDe, tuyeresOmni, formesDuSocleDeTourelle, formesDeLaTeteDeTourelle, formesDeLaCapsule, formesDuCristalPose, formesDeLaScie, formesDeLaBalise, formesDuBecDeBalise, canonDeLaForeuse, formesDeLAimant, formesDuChassis, formesDeLaForeuse, formesDeLArme, formesDuPropulseur, formesDuRadar, formesDuVaisseau, formesDuVer, CRISTAL_DU_PRISME, sommetsDUnHypercube, ARETES_DE_L_HYPERCUBE, rampeDeLaMatiere, LIVREES, COULEURS_DE_JOUEUR, ovale, peindreDansUneCase, peindreFormes, rampesDeLaLivree, tonsDeLaLivree, tonsDeLaMatiere, ANCRES_DU_KRAKEN, type Habit } from './rendu-vaisseau.ts'
 import { peauDe, peauxDe, rampesDeLaPeau, tonsDeLaPeau, type Peau } from './peaux.ts'
 import { boiteDe } from './rendu-vaisseau.ts'
+import { dessinerLAireDuHangar, dessinerLeSolDuHangar, dessinerLesLampesDuHangar } from './hangars.ts'
 import { dessinerLeBouclier } from './bouclier.ts'
 import { sauvegardeDe, chargerArme, sauverArme, chargerConnues, chargerHangar, chargerLivree, chargerReglages, sauverConnues, sauverHangar, sauverLivree, sauverReglages } from './hangar.ts'
 import { estTerminee, etapesFaites, modeleDe, noter, ongletOuvert, quetesNeuves, quetesSansTutoriel, reclamer, tutorielFini, TUTORIEL, type Activite, type Compteur, type Modele, type Quete } from '../../logic/vaisseau/quetes.ts'
@@ -2715,27 +2716,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const cx = W / 2
     const cy = y0 + Math.round(hautScene / 2) // (l'aire est au milieu de la scène : elle en prend toute la hauteur)
     if (vue === 'hangar') {
-      // le sol : des plaques d'acier, chacune son biseau (le haut et la gauche clairs, le bas et la droite sombres) et ses rivets
-      p.rect(0, y0, W, hautScene, N.hex('#141a2b'))
-      for (let gx = -18; gx < W; gx += 24) {
-        for (let gy = y0 - 20; gy < y1; gy += 24) {
-          p.rect(gx, gy, 24, 1, N.hex('#1f2840'))
-          p.rect(gx, gy, 1, 24, N.hex('#1b2338'))
-          p.rect(gx, gy + 23, 24, 1, N.hex('#0b0f1a'))
-          p.rect(gx + 23, gy, 1, 24, N.hex('#0d111c'))
-          for (const [rx, ry] of [[3, 3], [20, 3], [3, 20], [20, 20]]) {
-            p.rect(gx + rx, gy + ry, 1, 1, N.hex('#2c3654'))
-            p.rect(gx + rx + 1, gy + ry + 1, 1, 1, N.hex('#0b0f1a'))
-          }
-        }
-      }
-      // les bandes de sécurité au pied de l'aire : des chevrons jaunes et noirs, usés
-      const yb = y1 - 4
-      for (let x = 0; x < W; x++) {
-        const jaune = Math.floor((x + (yb % 2)) / 4) % 2 === 0
-        if (grainA(x, 7) < 0.15) continue
-        p.rect(x, yb, 1, 2, jaune ? N.hex('#8a6a14') : N.hex('#15131a'))
-      }
+      // LE SOL DU HANGAR, CELUI DE LA RACE (Keko, 19/11 : « un reskin total de la zone pour chaque race » — voir `hangars.ts`)
+      dessinerLeSolDuHangar(p, raceDuHangar(), { W, y0, y1, cx, cy, yLampes: y0 + (HAUT_BARRE - Y_SCENE), t })
     } else if (vue === 'labo') {
       const PLAN = N.hex('#0a1626')
       p.rect(0, y0, W, hautScene, PLAN)
@@ -2817,20 +2799,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
     // LES LAMPES : un boîtier, son halo, et son cône de lumière qui tombe vers le milieu
     // (AU HANGAR SEULEMENT — Keko, 12/11 : « enlever les spotlights des autres onglets »)
-    for (const lx of vue === 'hangar' ? [10, W - 11] : []) {
-      // (elles pendent au bout d'une tige, sous la languette des crédits qui passe devant le coin de la scène)
-      const yl = y0 + (HAUT_BARRE - Y_SCENE)
-      p.rect(lx - 1, y0, 2, yl - y0, COQUE[1])
-      p.glowLine(lx, yl + 3, lx + (cx - lx) * 0.55, cy + 10, 12, CHAUD, 0.07)
-      p.glow(lx, yl + 5, 30, CHAUD, 0.35)
-      p.rect(lx - 4, yl, 8, 3, COQUE[1])
-      p.rect(lx - 4, yl, 8, 1, COQUE[2])
-      p.rect(lx - 3, yl + 3, 6, 1, N.hex('#fff2c8'))
-    }
+    // (elles pendent au bout d'une tige, sous la languette des crédits qui passe devant le coin de la scène ; CELLES DE LA
+    // RACE — voir `hangars.ts`)
+    if (vue === 'hangar') dessinerLesLampesDuHangar(p, raceDuHangar(), { W, y0, y1, cx, cy, yLampes: y0 + (HAUT_BARRE - Y_SCENE), t })
     if (vue === 'hangar') {
-      // la flaque de lumière sur l'aire, et les poussières qui flottent dans les cônes
-      p.glow(cx, cy + 4, 64, CHAUD, 0.1)
-      for (let i = 0; i < 16; i++) {
+      // la flaque de lumière sur l'aire, et les poussières qui flottent dans les cônes (l'Empire ; les autres races ont les
+      // leurs, avec leur sol)
+      if (raceDuHangar() === 'humains') p.glow(cx, cy + 4, 64, CHAUD, 0.1)
+      for (let i = 0; i < (raceDuHangar() === 'humains' ? 16 : 0); i++) {
         const u = (tire(i, 5, 31) + t * (0.03 + 0.03 * tire(i, 6, 31))) % 1
         const px = Math.round(cx + Math.sin(i * 2.1 + t * 0.4) * (14 + 40 * tire(i, 7, 31)))
         const py = Math.round(y1 - 8 - u * (hautScene - 12))
@@ -2877,6 +2853,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * dans l'écran d'accueil et dans le hangar ») : sa coque en porte un, ou — au vortex — sa race (les Vectrans, voir
    * `vieSelonLaRace`) : la coque n'en disait rien, la bulle ne paraissait qu'en vol.
    */
+  /** La race du hangar : celle du vaisseau piloté, au vortex ; l'Empire, au Nova Drifter. */
+  const raceDuHangar = (): Race => (VORTEX ? modeleDeVaisseau(flotte.actif).race : 'humains')
   const aUnBouclierAuRepos = (): boolean => (VORTEX ? modeleDeVaisseau(flotte.actif).race === 'etheres' : false) || (monteeA(hangar, 'coque').bouclier ?? 0) > 0
   function dessinerLeHangarEnScene(p: Peintre, cx: number, cy: number, y0: number, y1: number): void {
     // (le gabarit de la coque montée : un cuirassé est montré plus petit, ses repères sont ailleurs)
@@ -2916,24 +2894,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // autant de place ; ce serait peut-être plus esthétique » : 74 → 56, mesuré sur les plus larges — le Kraken et ses
     // tentacules, le Néant et ses anneaux, le Prisme, le Ver, le Tesseract)
     const R0 = 56
-    p.circle(cx, cy, R0 + 4, N.hex('#07090f'))
-    p.circle(cx, cy, R0 + 3, N.hex('#262c3c'))
-    p.arc(cx, cy, R0 + 3, 1, Math.PI * 0.9, Math.PI * 1.6, N.hex('#3e4760'))
-    p.circle(cx, cy, R0, N.hex('#272a33'))
-    p.ring(cx, cy, R0 - 1, 3, (_v: number, ang: number) => (Math.floor((ang / Math.PI) * 8 + 16) % 2 === 0 ? N.hex('#c08a14') : N.hex('#15131a')))
-    p.ring(cx, cy, R0 - 4, 1, N.hex('#1a1c24'))
-    p.ring(cx, cy, R0 - 10, 1, N.hex('#363a48'))
-    p.line(cx - R0 + 12, cy, cx + R0 - 12, cy, N.hex('#363a48'))
-    p.line(cx, cy - R0 + 12, cx, cy + R0 - 12, N.hex('#363a48'))
-    for (let i = 0; i < 8; i++) {
-      const a = (i / 8) * Math.PI * 2
-      const allume = decollageA !== null || (Math.floor(t * 4) + i) % 8 < 3
-      const fx = Math.round(cx + Math.cos(a) * (R0 + 7))
-      const fy = Math.round(cy + Math.sin(a) * (R0 + 7))
-      p.rect(fx - 1, fy - 1, 3, 3, N.hex('#0b0a10'))
-      p.rect(fx, fy, 1, 1, allume ? N.hex('#fff2a8') : N.hex('#5a3a08'))
-      if (allume) p.glow(fx, fy, 6, PEPITE[2], 0.55)
-    }
+    // (… CELLE DE LA RACE — Keko, 19/11, voir `hangars.ts`)
+    dessinerLAireDuHangar(p, raceDuHangar(), cx, cy, R0, t, decollageA !== null)
     // l'onde d'une pièce équipée
     const ue = (t - equipeA) / 0.5
     if (ue < 1) {
