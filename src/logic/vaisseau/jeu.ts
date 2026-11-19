@@ -1790,7 +1790,6 @@ function heurterLesVaisseaux(c: ConfigVaisseau, m: Monde, ev: Evenement[]): bool
 export function encaisser(c: ConfigVaisseau, m: Monde, x: number, y: number, degats: number, ev: Evenement[]): void {
   // (encore intouchable depuis le dernier coup : celui-ci ne compte pas)
   if (m.t < m.intouchableJusque) return
-  m.intouchableJusque = m.t + c.invulnerabilite
   m.toucheA = m.t
   let reste = degats
   if (c.bouclier.points > 0 && m.bouclier > 0) {
@@ -1798,8 +1797,13 @@ export function encaisser(c: ConfigVaisseau, m: Monde, x: number, y: number, deg
     m.bouclier -= pris
     reste -= pris
     ev.push({ type: 'bouclier', x, y })
+    // (LE BOUCLIER N'A PAS DE RÉPIT — Keko, 19/11 : « il ne faut pas que le bouclier bénéficie du clignotement et de
+    // l'invincibilité après avoir été touché ; touché plusieurs fois d'affilée, il encaisse tous les dégâts ; l'invincibilité
+    // ne concerne que le blindage » : tout bu par lui, le coup n'ouvre aucune invincibilité)
     if (reste <= 1e-9) return
   }
+  // (le coup passe au blindage — plaques, corruption, coque : l'invincibilité s'ouvre, il clignote)
+  m.intouchableJusque = m.t + c.invulnerabilite
   // LES PLAQUES (voir la configuration) : la première encore debout prend le coup tout entier
   const k = m.plaques.indexOf(true)
   if (k >= 0) {

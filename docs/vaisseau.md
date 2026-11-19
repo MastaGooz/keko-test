@@ -6283,3 +6283,16 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   bouclier moyen (8 → 6) ; LE PULSAR — une vitesse moyenne / médiocre (110 → 86, ≈ 40 %), une maniabilité moyenne (7,
   ≈ 45 %), le plus faible blindage de tous les vaisseaux (2), le plus gros bouclier (8 → 9, les trois quarts). Le réglage
   au vortex pose maintenant aussi le bouclier (`REGLAGES_DU_VORTEX.bouclier`, `blindageAuVortex`). Vu sur les fiches.
+- LE HANGAR DES VECTRANS, À LA PROTOSS (Keko, 19/11 : « il fait trop interface virtuelle et pas assez technologie
+  extraterrestre ; un truc qui se rapproche un petit peu du style Protoss, dans StarCraft 2 ») : plus de dalles à joints de
+  lumière, de piliers ni d'écrans — de la PIERRE SOMBRE en plaques courbes autour de l'aire, cerclées d'OR ; quatre
+  CANAUX D'ÉNERGIE bleue en diagonale, où court une impulsion ; de grandes ARCHES D'OR sur les flancs, un filet bleu qui
+  y luit ; aux quatre coins, des PYLÔNES d'or qui portent chacun un CRISTAL bleu qui flotte (et qui donnent la lumière) ;
+  l'aire, un ANNEAU D'OR segmenté en quatre, un anneau d'énergie qui bat, des rais d'or vers le cœur, ses feux des
+  gemmes serties d'or.
+- LE BOUCLIER N'A PAS DE RÉPIT (Keko, 19/11 : « il ne faut pas que le bouclier bénéficie du clignotement et de
+  l'invincibilité après avoir été touché ; touché plusieurs fois d'affilée, il encaisse tous les dégâts ; la petite
+  période d'invincibilité ne concerne que le blindage ») : `encaisser` n'ouvre l'invincibilité (et donc le clignotement)
+  que quand le coup passe au blindage — plaques, corruption, coque ; tout bu par le bouclier, rien. Vérifié
+  (`jeu.verif.ts`) : trois coups dans le même instant sur le bouclier, tous pris, sans invincibilité ; celui qui le perce
+  l'ouvre.

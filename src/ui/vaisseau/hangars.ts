@@ -8,8 +8,9 @@
  * - LES XÉNOÏDES : un antre — un sol de cellules de chair et de chitine parcouru de veines qui battent, des vrilles qui
  *   pendent du haut avec leurs cosses de lumière verte (à la place des lampes), des grappes d'œufs, des os ; l'aire est un
  *   sphincter de chair cerclé de dents d'os, ses feux des pustules de bile.
- * - LES VECTRANS : une baie claire — des dalles polies aux joints de lumière où passent des impulsions, des piliers de
- *   lumière, des écrans holographiques ; l'aire est un anneau d'énergie aux traits qui tournent, ses feux des losanges.
+ * - LES VECTRANS : une technologie d'ailleurs, dans l'esprit Protoss — de la pierre sombre en plaques courbes cerclées
+ *   d'or, des canaux d'énergie bleue, des pylônes d'or et leurs cristaux qui flottent, des arches d'or ; l'aire est un
+ *   anneau d'or segmenté, un anneau d'énergie, ses feux des gemmes serties.
  * - LES YHG'THARR : un lieu au bord du vide — des dalles d'obsidienne qui flottent, des tentacules qui ondulent depuis les
  *   bords, des yeux qui s'ouvrent dans le noir, des braises violettes ; l'aire est un cercle de pierre aux runes qui
  *   tournent autour d'un tourbillon de vide, ses feux des yeux.
@@ -283,100 +284,118 @@ function lampesDesXenoides(p: Peintre, s: Scene): void {
 }
 
 // ----------------------------------------------------------------------------------------------------------- LES VECTRANS
-const NUIT = H('#060c18', '#0a1220', '#0f1a2c', '#16243a', '#1e3250', '#2a4a6e')
-const CYAN = H('#0a3a50', '#167090', '#2ab0d8', '#7ae0ff', '#d0f8ff')
+// (… PUIS UNE TECHNOLOGIE D'AILLEURS, PAS UNE INTERFACE — Keko, 19/11 : « il fait trop interface virtuelle et pas assez
+// technologie extraterrestre ; un truc qui se rapproche un petit peu du style Protoss, dans StarCraft 2 » : de la pierre
+// sombre en plaques courbes cerclées d'OR, des canaux d'ÉNERGIE BLEUE qui pulsent, des pylônes d'or qui portent chacun un
+// CRISTAL qui flotte, des arches d'or sur les flancs ; l'aire, un anneau d'or segmenté, un anneau d'énergie, des gemmes)
+const PIERRE = H('#07070f', '#0c0c1a', '#121226', '#1a1a34', '#242446', '#30305a')
+const DORE = H('#2a1e08', '#5a4214', '#8e6a22', '#c09a3a', '#e8c868', '#fff0b8')
+const PSI = H('#0a2a50', '#1458a0', '#2a8ae0', '#5ac0ff', '#a8e6ff', '#eafaff')
+/** Un cristal qui flotte : un losange bleu facetté, son reflet, sa lueur ; `k` sa taille. */
+function cristal(p: Peintre, x: number, y: number, k: number, t: number): void {
+  const yy = y + Math.sin(t * 1.6 + x * 0.3) * 1.2
+  p.glow(x, yy, 10 * k, PSI[3], 0.3 + 0.08 * Math.sin(t * 2.3 + x))
+  p.poly([[x, yy - 5 * k], [x + 3 * k, yy], [x, yy + 5 * k], [x - 3 * k, yy]], PSI[1])
+  p.poly([[x, yy - 5 * k], [x + 3 * k, yy], [x, yy]], PSI[3])
+  p.poly([[x, yy - 5 * k], [x - 3 * k, yy], [x, yy]], PSI[4])
+  p.line(x, yy - 4 * k, x, yy + 4 * k, PSI[5], 0.7)
+}
+/** Un pylône d'or : un socle courbe, deux bras qui s'écartent, et son cristal qui flotte au-dessus. */
+function pylone(p: Peintre, x: number, y: number, t: number): void {
+  p.poly([[x - 6, y + 4], [x + 6, y + 4], [x + 4, y], [x - 4, y]], DORE[1])
+  p.poly([[x - 5, y + 3], [x + 5, y + 3], [x + 3.5, y + 0.5], [x - 3.5, y + 0.5]], DORE[3])
+  for (const sg of [-1, 1]) {
+    p.line(x + sg * 3, y, x + sg * 5, y - 6, DORE[2])
+    p.line(x + sg * 3.5, y, x + sg * 5.5, y - 6, DORE[4])
+    p.px(Math.round(x + sg * 5.5), Math.round(y - 7), DORE[5])
+  }
+  cristal(p, x, y - 9, 1, t)
+}
 function solDesVectrans(p: Peintre, s: Scene): void {
   const { W, y0, y1, cx, cy, t } = s
   const hautScene = y1 - y0
-  p.rect(0, y0, W, hautScene, NUIT[1])
-  // des dalles polies, grandes, un reflet clair sur leur haut ; leurs joints de lumière, où passent des impulsions
-  const pas = 36
-  for (let gx = -12; gx < W; gx += pas)
-    for (let gy = y0 - 6; gy < y1; gy += pas) {
-      p.rect(gx + 1, gy + 1, pas - 2, pas - 2, NUIT[2])
-      p.rect(gx + 2, gy + 2, pas - 4, 3, NUIT[3], 0.6)
+  p.rect(0, y0, W, hautScene, PIERRE[1])
+  // des plaques de pierre COURBES autour de l'aire : des anneaux coupés en secteurs, chacun son liseré d'or
+  for (let anneau = 0; anneau < 4; anneau++) {
+    const r0 = 66 + anneau * 22
+    const n = 8 + anneau * 4
+    for (let k = 0; k < n; k++) {
+      const a0 = (k / n) * Math.PI * 2 + anneau * 0.3
+      const a1 = ((k + 1) / n) * Math.PI * 2 + anneau * 0.3
+      p.arc(cx, cy, r0 + 10, 20, a0 + 0.02, a1 - 0.02, k % 2 === 0 ? PIERRE[2] : PIERRE[3])
+      p.arc(cx, cy, r0, 1, a0 + 0.03, a1 - 0.03, DORE[1], 0.9)
+      p.arc(cx, cy, r0 + 1, 1, a0 + 0.08, a1 - 0.08, DORE[2], 0.6)
     }
-  for (let gx = -12; gx < W; gx += pas) p.rect(gx, y0, 1, hautScene, CYAN[0])
-  for (let gy = y0 - 6; gy < y1; gy += pas) p.rect(0, gy, W, 1, CYAN[0])
+  }
+  // des CANAUX D'ÉNERGIE : quatre traits bleus qui partent de l'aire en diagonale, une impulsion qui y court vers le dehors
   for (let k = 0; k < 4; k++) {
-    const horiz = k % 2 === 0
-    const u = (t * 0.25 + k * 0.37) % 1
-    if (horiz) {
-      const gy = y0 - 6 + pas * (1 + k)
-      if (gy < y1) p.glowLine(u * W - 10, gy, u * W + 10, gy, 2, CYAN[3], 0.5)
-    } else {
-      const gx = -12 + pas * (2 + k)
-      if (gx < W) p.glowLine(gx, y0 + u * hautScene - 10, gx, y0 + u * hautScene + 10, 2, CYAN[3], 0.5)
-    }
+    const a = Math.PI / 4 + (k * Math.PI) / 2
+    const [ux, uy] = [Math.cos(a), Math.sin(a)]
+    p.line(cx + ux * 66, cy + uy * 66, cx + ux * 140, cy + uy * 140, PSI[0])
+    const u = (t * 0.6 + k * 0.25) % 1
+    const d = 66 + u * 74
+    p.glowLine(cx + ux * d, cy + uy * d, cx + ux * (d + 8), cy + uy * (d + 8), 2, PSI[3], 0.6 * (1 - u))
   }
-  // DES PILIERS DE LUMIÈRE, de part et d'autre : une colonne blanche, sa lueur
-  for (const xp of [5, W - 6]) {
-    p.rect(xp - 2, y0, 4, hautScene, NUIT[4])
-    p.rect(xp - 1, y0, 2, hautScene, CYAN[2])
-    p.rect(xp, y0, 1, hautScene, CYAN[4])
-    p.glowLine(xp, y0, xp, y0 + hautScene, 5, CYAN[3], 0.12)
+  // LES ARCHES D'OR, sur les flancs : de grands croissants dorés, un filet bleu qui luit dedans
+  for (const sg of [-1, 1]) {
+    const ax = sg < 0 ? -4 : W + 4
+    const ay = (y0 + y1) / 2
+    const [b0, b1] = sg < 0 ? [-Math.PI * 0.42, Math.PI * 0.42] : [Math.PI * 0.58, Math.PI * 1.42]
+    const [c0, c1] = sg < 0 ? [-Math.PI * 0.35, Math.PI * 0.35] : [Math.PI * 0.65, Math.PI * 1.35]
+    p.arc(ax, ay, hautScene * 0.55, 5, b0, b1, DORE[2])
+    p.arc(ax, ay, hautScene * 0.55 - 1, 2, b0, b1, DORE[4])
+    p.arc(ax, ay, hautScene * 0.55 - 5, 1, c0, c1, PSI[3], 0.5 + 0.3 * Math.sin(t * 2))
   }
-  // DES ÉCRANS HOLOGRAPHIQUES, en haut : un cadre translucide, des lignes de balayage, des barres qui montent et descendent
-  for (const [xe, ye] of [[12, y0 + 20], [W - 34, y0 + 20]] as [number, number][]) {
-    p.rect(xe, ye, 22, 14, CYAN[1], 0.25)
-    p.rect(xe, ye, 22, 1, CYAN[3], 0.8)
-    p.rect(xe, ye + 13, 22, 1, CYAN[2], 0.5)
-    for (let k = 0; k < 5; k++) {
-      const h = Math.round(3 + 7 * (0.5 + 0.5 * Math.sin(t * 2 + k * 1.3 + xe)))
-      p.rect(xe + 2 + k * 4, ye + 12 - h, 2, h, CYAN[3], 0.7)
-    }
-    if (Math.floor(t * 8 + xe) % 9 === 0) p.rect(xe, ye + Math.floor((t * 30) % 14), 22, 1, CYAN[4], 0.5)
-  }
-  // la bande de lumière au pied de l'aire, et son trait qui court
-  p.rect(0, y1 - 4, W, 2, CYAN[1])
-  const xr = (t * 60) % (W + 30) - 15
-  p.glowLine(xr - 12, y1 - 3, xr + 12, y1 - 3, 2, CYAN[4], 0.6)
-  // des grains de lumière qui montent
+  // LES PYLÔNES, aux quatre coins, leur cristal qui flotte
+  for (const [x, y] of [[14, y0 + 30], [W - 14, y0 + 30], [14, y1 - 14], [W - 14, y1 - 14]] as [number, number][]) pylone(p, x, y, t)
+  // un filet d'or au pied de l'aire
+  p.rect(0, y1 - 4, W, 1, DORE[2])
+  p.rect(0, y1 - 3, W, 1, DORE[1])
+  // des étincelles psioniques qui montent
   for (let i = 0; i < 16; i++) {
     const u = (hasard(i, 5, 31) + t * (0.04 + 0.04 * hasard(i, 6, 31))) % 1
     const px2 = Math.round(cx + Math.sin(i * 2.1) * (14 + 50 * hasard(i, 7, 31)))
     const py2 = Math.round(y1 - 8 - u * (hautScene - 12))
-    p.rect(px2, py2, 1, 1, i % 3 === 0 ? CYAN[4] : CYAN[2], 0.7 * (1 - u))
+    p.rect(px2, py2, 1, 1, i % 3 === 0 ? PSI[5] : PSI[3], 0.7 * (1 - u))
   }
-  p.glow(cx, cy + 4, 64, CYAN[3], 0.06)
+  p.glow(cx, cy + 4, 64, PSI[3], 0.06)
 }
 function aireDesVectrans(p: Peintre, cx: number, cy: number, R0: number, t: number, decolle: boolean): void {
-  // un anneau d'argent poli ; un ANNEAU D'ÉNERGIE dont les traits tournent ; le disque nuit, ses cercles fins, une
-  // seconde couronne de traits qui tourne à rebours
-  p.circle(cx, cy, R0 + 4, NUIT[0])
-  p.circle(cx, cy, R0 + 3, hex('#8aa0b8'))
-  p.arc(cx, cy, R0 + 3, 1, Math.PI * 0.9, Math.PI * 1.6, hex('#e0f0ff'))
-  p.circle(cx, cy, R0, NUIT[2])
-  const tour = t * 0.6
-  p.ring(cx, cy, R0 - 1, 3, (_v: number, ang: number) => (Math.floor(((ang - tour) / Math.PI) * 12 + 48) % 2 === 0 ? CYAN[3] : CYAN[0]))
-  p.ring(cx, cy, R0 - 6, 1, CYAN[1])
-  p.ring(cx, cy, R0 - 18, 1, (_v: number, ang: number) => (Math.floor(((ang + tour * 1.5) / Math.PI) * 6 + 24) % 3 === 0 ? CYAN[2] : NUIT[3]))
-  p.ring(cx, cy, 14, 1, CYAN[1])
-  for (let k = 0; k < 6; k++) {
-    const a = (k * Math.PI) / 3 + Math.PI / 6
-    p.line(cx + Math.cos(a) * 15, cy + Math.sin(a) * 15, cx + Math.cos(a) * (R0 - 19), cy + Math.sin(a) * (R0 - 19), NUIT[4])
+  // UN ANNEAU D'OR SEGMENTÉ, quatre encoches ; dedans, la pierre sombre, UN ANNEAU D'ÉNERGIE qui bat, des rais d'or fins
+  // vers le cœur
+  p.circle(cx, cy, R0 + 4, PIERRE[0])
+  p.circle(cx, cy, R0 + 3, DORE[1])
+  for (let k = 0; k < 4; k++) {
+    const a0 = (k * Math.PI) / 2 + 0.18
+    const a1 = ((k + 1) * Math.PI) / 2 - 0.18
+    p.arc(cx, cy, R0 + 1, 4, a0, a1, DORE[3])
+    p.arc(cx, cy, R0 + 2, 1, a0, a1, DORE[4])
   }
-  p.glow(cx, cy, R0, CYAN[2], 0.05)
-  // ses huit feux : des losanges de lumière
+  p.circle(cx, cy, R0 - 3, PIERRE[2])
+  const bat = 0.5 + 0.5 * Math.sin(t * 2.2)
+  p.ring(cx, cy, R0 - 6, 2, PSI[2], 0.7 + 0.3 * bat)
+  p.ring(cx, cy, R0 - 6, 1, PSI[4], 0.5 * bat)
+  for (let k = 0; k < 8; k++) {
+    const a = (k * Math.PI) / 4 + Math.PI / 8
+    p.line(cx + Math.cos(a) * 12, cy + Math.sin(a) * 12, cx + Math.cos(a) * (R0 - 10), cy + Math.sin(a) * (R0 - 10), DORE[1])
+  }
+  p.ring(cx, cy, 12, 2, DORE[2])
+  p.glow(cx, cy, R0 * 0.8, PSI[2], 0.06 + 0.03 * bat)
+  // ses huit feux : des gemmes bleues serties d'or
   for (let i = 0; i < 8; i++) {
     const a = (i / 8) * Math.PI * 2
     const allume = decolle || (Math.floor(t * 4) + i) % 8 < 3
     const fx = Math.round(cx + Math.cos(a) * (R0 + 7))
     const fy = Math.round(cy + Math.sin(a) * (R0 + 7))
-    p.poly([[fx, fy - 2], [fx + 2, fy], [fx, fy + 2], [fx - 2, fy]], allume ? CYAN[4] : CYAN[0])
-    if (allume) p.glow(fx, fy, 6, CYAN[3], 0.55)
+    p.circle(fx, fy, 2.5, DORE[2])
+    p.poly([[fx, fy - 2], [fx + 1.5, fy], [fx, fy + 2], [fx - 1.5, fy]], allume ? PSI[4] : PSI[1])
+    if (allume) p.glow(fx, fy, 6, PSI[3], 0.55)
   }
 }
 function lampesDesVectrans(p: Peintre, s: Scene): void {
-  const { W, y0, cx, cy, yLampes: yl } = s
-  // des émetteurs au plafond : une fente de lumière froide, son cône
-  for (const lx of [14, W - 15]) {
-    p.rect(lx - 5, yl, 10, 2, NUIT[4])
-    p.rect(lx - 4, yl + 2, 8, 1, CYAN[4])
-    p.glowLine(lx, yl + 3, lx + (cx - lx) * 0.55, cy + 10, 12, CYAN[3], 0.06)
-    p.glow(lx, yl + 3, 24, CYAN[3], 0.28)
-    p.rect(lx, y0, 1, yl - y0, NUIT[4])
-  }
+  // (la lumière vient des cristaux des deux pylônes du haut : leur cône bleu vers l'aire)
+  const { W, y0, cx, cy } = s
+  for (const lx of [14, W - 14]) p.glowLine(lx, y0 + 21, lx + (cx - lx) * 0.55, cy + 10, 12, PSI[3], 0.06)
 }
 
 // --------------------------------------------------------------------------------------------------------- LES YHG'THARR

@@ -2465,6 +2465,22 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   verifier('passée, le coup suivant compte (la plaque suivante le prend)', mi.coque === 6 && !mi.plaques[1] && mi.plaques[2])
 }
 
+// LE BOUCLIER N'A PAS DE RÉPIT (Keko, 19/11 : « touché plusieurs fois d'affilée, il encaisse tous les dégâts ; l'invincibilité
+// ne concerne que le blindage »)
+{
+  const c: ConfigVaisseau = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, coque: 6, bouclier: { points: 5, delai: 3, regain: 2.5 } }
+  const mb = nouveauMonde(c)
+  const ev: Evenement[] = []
+  encaisser(c, mb, 0, 0, 1, ev)
+  encaisser(c, mb, 0, 0, 1, ev)
+  encaisser(c, mb, 0, 0, 1, ev)
+  verifier('trois coups dans le même instant sur le bouclier : il les prend tous (5 → 2), sans invincibilité ni clignotement', Math.abs(mb.bouclier - 2) < 1e-9 && mb.coque === 6 && mb.intouchableJusque < mb.t)
+  encaisser(c, mb, 0, 0, 3, ev)
+  verifier('le coup qui le perce passe à la coque (2 de bouclier, 1 de coque) — et ouvre l’invincibilité', mb.bouclier === 0 && mb.coque === 5 && mb.intouchableJusque > mb.t)
+  encaisser(c, mb, 0, 0, 1, ev)
+  verifier('pendant elle, la coque ne prend rien', mb.coque === 5)
+}
+
 // LA CORRUPTION (les Innommés, Keko, 17/11) : le coup corrompt, la corruption ronge, l'insecte abattu la purge
 {
   const c: ConfigVaisseau = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, coque: 5, corruption: { ronge: 0.5, purge: 0.5 } }
