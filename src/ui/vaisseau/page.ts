@@ -2922,7 +2922,19 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           p.line(x, y, x, y + dy * L, c)
           p.rect(x, y, 1, 1, N.WHITE)
         }
-      } else zone(sx0 - 2, sy0 - 2, sx1 - sx0 + 4, sy1 - sy0 + 4, () => ouvrirLEmplacement(o, o === 'arme' ? i : o === 'outil' ? 0 : -1))
+      } else if (!VORTEX) zone(sx0 - 2, sy0 - 2, sx1 - sx0 + 4, sy1 - sy0 + 4, () => ouvrirLEmplacement(o, o === 'arme' ? i : o === 'outil' ? 0 : -1))
+    }
+    // (AU VORTEX, UNE TAPE SUR LE VAISSEAU OUVRE LE CHOIX DES VAISSEAUX — Keko, 19/11 : « quand on clique sur le vaisseau,
+    // ça ouvre encore les différentes parties, les armes, la coque, avec les anciennes statistiques comme la soute ; je ne
+    // veux pas qu'on ouvre le détail des pièces ; à la limite, ouvre le choix des vaisseaux » : une zone sur toute sa
+    // coque, à la place de celles des emplacements)
+    if (VORTEX && etape === 'vaisseau' && decollageA === null) {
+      const [x0, yy0, x1, yy1] = zonesDe('coque')[0]
+      const sx0 = Math.round(cx + yy0 * kG * ECH)
+      const sx1 = Math.round(cx + yy1 * kG * ECH)
+      const sy0 = Math.round(sy - x1 * kG * ECH)
+      const sy1 = Math.round(sy - x0 * kG * ECH)
+      zone(sx0 - 2, sy0 - 2, sx1 - sx0 + 4, sy1 - sy0 + 4, ouvrirLesVaisseaux)
     }
   }
 
@@ -3583,7 +3595,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // (EN ACIER CLAIR, le mot sombre — Keko, 14/11 : jaune, il « renvoie trop au bouton décollage en dessous » ; « un
       // petit peu plus visible que le bouton équipement, mais pas jaune »)
       const bxc = W - 7 - bw
-      boutonBase(p, bxc, y + 2, bw, 16, true, () => ((vaisseauxOuverts = true), (vaisseauxA = t), (vaisseauChoisi = flotte.actif), (surligneVaisseau = -1), (defilVaisseaux = Math.max(0, rangeesDesVaisseaux().findIndex((r) => 'mo' in r && r.mo.id === flotte.actif) - 2))), (dx, dy) => ecrire(p, 'Changer', bxc + bw / 2 + dx, y + 2 + dy + 4, N.hex('#10182a'), { align: 'center', police: GRAS }), 'ouvre', { matiere: 'clair' })
+      boutonBase(p, bxc, y + 2, bw, 16, true, ouvrirLesVaisseaux, (dx, dy) => ecrire(p, 'Changer', bxc + bw / 2 + dx, y + 2 + dy + 4, N.hex('#10182a'), { align: 'center', police: GRAS }), 'ouvre', { matiere: 'clair' })
     }
     return y + h + 3
   }
@@ -3592,6 +3604,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * sa mission en cours ; celui qu'on pilote est cerclé d'or (« Piloté »), une tape sur un autre le prend et referme.
    */
   let vaisseauxOuverts = false
+  /** Ouvre le choix des vaisseaux, sur celui qu'on pilote (le bouton « Changer » ; au vortex, une tape sur le vaisseau). */
+  const ouvrirLesVaisseaux = (): void => {
+    vaisseauxOuverts = true
+    vaisseauxA = t
+    vaisseauChoisi = flotte.actif
+    surligneVaisseau = -1
+    defilVaisseaux = Math.max(0, rangeesDesVaisseaux().findIndex((r) => 'mo' in r && r.mo.id === flotte.actif) - 2)
+  }
   let vaisseauxA = -10
   /** Le vaisseau choisi dans la liste du panneau (jeu du vortex), et où son surlignage en est. */
   let vaisseauChoisi = ''

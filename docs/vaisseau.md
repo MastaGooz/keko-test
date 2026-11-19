@@ -5959,3 +5959,9 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   (`peaux.ts`) : deux joints en long et deux en travers qui la découpent en panneaux, un rivet à chaque croisement et aux
   coins, une grille d'aération à la poupe. Vu à la capture, avec le fléau (la plaque à nu) et les tourelles (le
   lance-tourelles par-dessus).
+- UNE TAPE SUR LE VAISSEAU OUVRE LE CHOIX DES VAISSEAUX (Keko, 19/11 : « quand on clique sur le vaisseau, dans le hangar,
+  ça ouvre encore les différentes parties comme les armes, la coque, avec les anciennes statistiques comme la soute ; je ne
+  veux pas qu'on ouvre le détail des pièces ; à la limite, quand on clique sur le vaisseau, ouvre le choix des
+  vaisseaux ») : au vortex, les zones des emplacements de la scène (propulseur, outils, armes, coque — un reste de
+  `?vaisseau`) ne réagissent plus ; une seule zone, sur toute la coque, ouvre le choix des vaisseaux
+  (`ouvrirLesVaisseaux`, partagé avec le bouton « Changer »). `?vaisseau` garde ses emplacements. Vu à la capture.
