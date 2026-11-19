@@ -3856,7 +3856,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     'arme-crachat': 'Crache une flaque d’acide corrosive sur les ennemis proches.',
     'arme-mines': 'Sème des mines autour, qui explosent en un nuage de gaz toxique quand un ennemi approche.',
     'arme-parasites': 'Lance des parasites qui sautent d’ennemi en ennemi.',
-    'arme-faisceau': 'Un rayon continu, qui chauffe de plus en plus sur la même cible.',
+    // (… SES DÉGÂTS SONT CONTINUS — Keko, 19/11 : « ne dis pas un rayon qui chauffe de plus en plus »)
+    'arme-faisceau': 'Un rayon de lumière qui se concentre sur un ennemi.',
     'arme-cristaux': 'Des cristaux posés par trois, reliés de faisceaux qui brûlent ce qui les traverse.',
     'arme-rail': 'Un trait d’énergie instantané, qui traverse toute une ligne d’ennemis.',
     'arme-puits': 'Une singularité qui aspire les ennemis vers son cœur, puis éclate.',

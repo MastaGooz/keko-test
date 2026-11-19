@@ -6484,3 +6484,5 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   apparence — l'or blanc de l'origine, le rouge du Rubis, le vert de l'Émeraude — pour son rayon, sa désintégration, ses
   cristaux posés (peints aussi à son apparence), leurs liens, leurs éclats, l'irradiation, les étincelles. L'arme `rail`
   s'appelle « Désintégration » (son identifiant reste). Vu dans l'aperçu, origine et Rubis.
+- LE FAISCEAU DU PRISME REDIT (Keko, 19/11 : « ne dis pas un rayon qui chauffe de plus en plus, ses dégâts sont continus ;
+  dis plutôt un rayon de lumière qui se concentre sur un ennemi ») : « Un rayon de lumière qui se concentre sur un ennemi. »
