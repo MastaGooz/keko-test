@@ -1242,7 +1242,18 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   // le plus lent de la flotte (Keko, 18/11) —, 5,1 → 4,6 d'agilité, la plus basse de la flotte, 9 → 11 de vie ; LA VOUIVRE
   // 110 → 78, 7 → 8,2, 8 de vie ; LE DÉVOREUR 110 → 95, 8,7 → 7,4, 7 → 6 de vie. La régénération est une part de la vie
   // (2 % par seconde, `vieSelonLaRace`) : le Kraken, le plus de vie, régénère le plus)
-  const REGLAGES_DU_VORTEX: Record<string, { vitesseMax?: number; poussee?: number; rotation?: number; blindage?: number }> = { chasseur: { vitesseMax: 104 / 126, rotation: 1.45, blindage: 0.5 }, salamandre: { vitesseMax: 97 / 88, blindage: 7 / 9 }, ingenieur: { vitesseMax: 68 / 94, rotation: 1.746, blindage: 6 / 9 }, kraken: { vitesseMax: 72 / 104.5, rotation: 4.6 / 5.12, blindage: 11 / 9 }, vouivre: { vitesseMax: 78 / 110, rotation: 8.2 / 7 }, mante: { vitesseMax: 95 / 110, rotation: 7.4 / 8.69, blindage: 6 / 7 } }
+  // (LES VECTRANS — Keko, 19/11 : « la Sentinelle, la vitesse la moins élevée des trois, quasiment au minimum, une
+  // maniabilité un petit peu au-dessus de 50 % de la barre, le plus de blindage des trois mais le plus faible bouclier,
+  // disons 20 % de la barre ; le Frimas, le plus rapide des trois, une maniabilité correcte, un blindage moyen et un
+  // bouclier moyen ; le Pulsar, le plus faible blindage de tous les vaisseaux mais le plus gros bouclier, une vitesse
+  // moyenne / médiocre, une maniabilité moyenne » : LA SENTINELLE 104,5 → 72 de vitesse (≈ 20 % de la jauge), 6,2 → 7,4
+  // d'agilité (≈ 53 %), 3 → 5 de blindage, 8 → 3 de bouclier (≈ 25 %) ; LE FRIMAS 110 (75 %), 7,3 → 7,5 (≈ 55 %), 3 → 4,
+  // 8 → 6 ; LE PULSAR 110 → 86 (≈ 40 %), 7 (≈ 45 %), 2 de blindage (le plus bas de la flotte), 8 → 9 de bouclier (75 %).
+  // `bouclier` : ses points, posés tels quels)
+  const REGLAGES_DU_VORTEX: Record<string, { vitesseMax?: number; poussee?: number; rotation?: number; blindage?: number; bouclier?: number }> = {
+    sentinelle: { vitesseMax: 72 / 104.5, rotation: 7.36 / 6.24, blindage: 5 / 3, bouclier: 3 },
+    frimas: { rotation: 7.5 / 7.32, blindage: 4 / 3, bouclier: 6 },
+    pulsar: { vitesseMax: 86 / 110, bouclier: 9 }, chasseur: { vitesseMax: 104 / 126, rotation: 1.45, blindage: 0.5 }, salamandre: { vitesseMax: 97 / 88, blindage: 7 / 9 }, ingenieur: { vitesseMax: 68 / 94, rotation: 1.746, blindage: 6 / 9 }, kraken: { vitesseMax: 72 / 104.5, rotation: 4.6 / 5.12, blindage: 11 / 9 }, vouivre: { vitesseMax: 78 / 110, rotation: 8.2 / 7 }, mante: { vitesseMax: 95 / 110, rotation: 7.4 / 8.69, blindage: 6 / 7 } }
   /**
    * L'AGILITÉ D'UN VAISSEAU AU VORTEX (Keko, 18/11 : « la maniabilité, ça change quoi ? les vaisseaux se tournent tout
    * seuls » ; choisi : qu'elle dise comment il vire — « un vaisseau lourd sera peu maniable, un léger tournera sec ») : sa
@@ -1251,9 +1262,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    */
   const agiliteDe = (cf: ConfigVaisseau): number => (cf.rotation * POIDS_SERIE) / Math.max(1, cf.masse)
   /** Le blindage d'un vaisseau au vortex, une fois la vie de sa race posée : réglé par `REGLAGES_DU_VORTEX`. */
-  const blindageAuVortex = <V extends { coque: number }>(v: V, id: string): V => {
-    const f = VORTEX ? REGLAGES_DU_VORTEX[id]?.blindage : undefined
-    return f === undefined ? v : { ...v, coque: Math.max(1, Math.round(v.coque * f)) }
+  const blindageAuVortex = <V extends { coque: number; bouclier: { points: number } }>(v: V, id: string): V => {
+    const r = VORTEX ? REGLAGES_DU_VORTEX[id] : undefined
+    if (r === undefined) return v
+    const coque = r.blindage === undefined ? v.coque : Math.max(1, Math.round(v.coque * r.blindage))
+    const bouclier = r.bouclier === undefined ? v.bouclier : { ...v.bouclier, points: r.bouclier }
+    return { ...v, coque, bouclier }
   }
   const regleAuVortex = (cf: ConfigVaisseau, id: string): ConfigVaisseau => {
     const r = VORTEX ? REGLAGES_DU_VORTEX[id] : undefined

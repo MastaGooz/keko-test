@@ -6276,3 +6276,10 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   losange de lumière bleu-violet barré d'un trait, qui tourne en s'ouvrant un peu et s'éteint, toutes les 0,25 s ou tous
   les 8 de trajet, un peu de côté — la famille des sillages sans tuyère (`plieLEspace`, avec le Prisme, le Néant et le
   Tesseract ; `sansTuyere` au décollage et à l'accueil) ; son son reste le souffle. Ses jets de manœuvre partent avec.
+- LES VECTRANS DIFFÉRENCIÉS (Keko, 19/11) : LA SENTINELLE — la vitesse la moins élevée des trois, « quasiment au minimum »
+  (104,5 → 72, ≈ 20 % de la jauge), une maniabilité « un petit peu au-dessus de 50 % » (6,2 → 7,4 d'agilité, ≈ 53 %), le
+  plus de blindage des trois (3 → 5), le plus faible bouclier (8 → 3, un quart de la barre ; « disons 20 % ») ; LE FRIMAS
+  — le plus rapide des trois (110, 75 %), une maniabilité correcte (7,3 → 7,5, ≈ 55 %), un blindage moyen (3 → 4), un
+  bouclier moyen (8 → 6) ; LE PULSAR — une vitesse moyenne / médiocre (110 → 86, ≈ 40 %), une maniabilité moyenne (7,
+  ≈ 45 %), le plus faible blindage de tous les vaisseaux (2), le plus gros bouclier (8 → 9, les trois quarts). Le réglage
+  au vortex pose maintenant aussi le bouclier (`REGLAGES_DU_VORTEX.bouclier`, `blindageAuVortex`). Vu sur les fiches.
