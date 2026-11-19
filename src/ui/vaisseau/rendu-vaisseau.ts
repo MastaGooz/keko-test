@@ -868,23 +868,61 @@ export function battementDuNeant(t: number): number {
 }
 /** Le centre du cristal qui tourne au milieu du Prisme, en unités du vaisseau : le rayon part de sa pointe, 4,4 devant. */
 export const CRISTAL_DU_PRISME = { x: 1.2, y: 0 }
-export const gabaritDe = (coque: number): Gabarit => (coque === 15 ? GABARIT_DU_TESSERACT : coque === 14 ? GABARIT_DE_LA_MANTE : coque === 13 ? GABARIT_DU_NEANT : coque === 12 ? GABARIT_DU_PRISME : coque === 11 ? GABARIT_DE_LA_VOUIVRE : coque === 10 ? GABARIT_DU_KRAKEN : coque === 4 ? GABARIT_DU_CUIRASSE : coque === 5 ? GABARIT_DE_LA_SALAMANDRE : coque === 6 ? GABARIT_DE_LA_SENTINELLE : coque === 7 ? GABARIT_DE_L_INGENIEUR : coque === 8 ? GABARIT_DU_FRIMAS : coque === 9 ? GABARIT_DU_PULSAR : GABARIT_DE_SERIE)
-/** La queue d'une coque : l'abscisse du fond de ses tuyères (pour un propulseur de série). */
-export const queueDe = (coque: number): number => (gabaritDe(coque).tuyeres[0]?.pustule === true ? -7.8 : -8.4 + (gabaritDe(coque).tuyeres[0]?.x ?? 0))
+const gabaritNu = (coque: number): Gabarit => (coque === 15 ? GABARIT_DU_TESSERACT : coque === 14 ? GABARIT_DE_LA_MANTE : coque === 13 ? GABARIT_DU_NEANT : coque === 12 ? GABARIT_DU_PRISME : coque === 11 ? GABARIT_DE_LA_VOUIVRE : coque === 10 ? GABARIT_DU_KRAKEN : coque === 4 ? GABARIT_DU_CUIRASSE : coque === 5 ? GABARIT_DE_LA_SALAMANDRE : coque === 6 ? GABARIT_DE_LA_SENTINELLE : coque === 7 ? GABARIT_DE_L_INGENIEUR : coque === 8 ? GABARIT_DU_FRIMAS : coque === 9 ? GABARIT_DU_PULSAR : GABARIT_DE_SERIE)
+/**
+ * LA TAILLE D'UN VAISSEAU (Keko, 19/11 : « augmenter la taille du pulsar, du prisme et du tesseract, surtout du prisme ») :
+ * ses formes et ses repères sont dessinés à cette taille PARTOUT — en vol, au hangar, à l'accueil, dans la grille, dans
+ * l'aperçu des armes —, parce qu'ils sortent d'ici à cette taille (`formesDuVaisseau`, `formesDuChassis`, `gabaritDe`,
+ * `queueDe`, `placeDOutil`, `placeDArme`, `boucheMontee`, `tuyeresOmni`) ; dedans, tout se calcule à la taille d'origine
+ * (`gabaritNu`). La règle ne change pas : son rayon de choc non plus. Chiffres de moi.
+ */
+export const tailleDe = (coque: number): number => (coque === 12 ? 1.4 : coque === 9 || coque === 15 ? 1.2 : 1)
+/** Des formes agrandies de `k` autour de l'origine du vaisseau. */
+function agrandir(f: Forme[], k: number): Forme[] {
+  if (k === 1) return f
+  return f.map((x) => ({
+    ...x,
+    pts: x.pts.map(([a, b]): [number, number] => [a * k, b * k]),
+    ...(x.dome === undefined ? {} : { dome: { x: x.dome.x * k, y: x.dome.y * k, rx: x.dome.rx * k, ry: x.dome.ry * k } }),
+    ...(x.feu === undefined ? {} : { feu: { base: x.feu.base * k, pointe: x.feu.pointe * k } }),
+    ...(x.coeur === undefined ? {} : { coeur: { ...x.coeur, x: x.coeur.x * k, y: x.coeur.y * k, r: x.coeur.r * k } }),
+  }))
+}
+/** Le gabarit d'une coque, à sa taille (voir `tailleDe`). */
+export const gabaritDe = (coque: number): Gabarit => {
+  const g = gabaritNu(coque)
+  const k = tailleDe(coque)
+  if (k === 1) return g
+  return {
+    ...g,
+    tuyeres: g.tuyeres.map((tu) => ({ ...tu, x: tu.x * k, y: tu.y * k, ...(tu.large === undefined ? {} : { large: tu.large * k }) })),
+    armes: g.armes.map((a) => ({ ...a, x: a.x * k, y: a.y * k })),
+    feux: g.feux === null ? null : { x: g.feux.x * k, y: g.feux.y * k },
+    verriere: g.verriere * k,
+    nez: g.nez * k,
+    flanc: g.flanc * k,
+    anneau: g.anneau * k,
+    ...(g.outils === undefined ? {} : { outils: g.outils.map((o) => ({ x: o.x * k, y: o.y * k })) }),
+    ...(g.omni === undefined ? {} : { omni: { ...g.omni, rayon: g.omni.rayon * k } }),
+  }
+}
+/** La queue d'une coque : l'abscisse du fond de ses tuyères (pour un propulseur de série), à sa taille. */
+export const queueDe = (coque: number): number => tailleDe(coque) * (gabaritNu(coque).tuyeres[0]?.pustule === true ? -7.8 : -8.4 + (gabaritNu(coque).tuyeres[0]?.x ?? 0))
 /** Où l'outil de la place `k` est dessiné, en décalage du milieu du toit (nul pour une coque sans places à elle). */
 export const placeDOutil = (coque: number, k: number): { x: number; y: number } => {
-  const places = gabaritDe(coque).outils
+  const places = gabaritNu(coque).outils
   if (places === undefined) return { x: 0, y: 0 }
   const pl = places[Math.max(0, Math.min(places.length - 1, k))]
-  return { x: pl.x + 2.2, y: pl.y }
+  return { x: (pl.x + 2.2) * tailleDe(coque), y: pl.y * tailleDe(coque) }
 }
 /** LES TUYÈRES D'UNE SOUCOUPE (`Gabarit.omni`) : pour chacune, le bout (repère du vaisseau) et la direction où elle souffle. */
 export function tuyeresOmni(coque: number): { x: number; y: number; ux: number; uy: number }[] {
-  const o = gabaritDe(coque).omni
+  const o = gabaritNu(coque).omni
   if (o === undefined) return []
+  const t = tailleDe(coque)
   return Array.from({ length: o.n }, (_, k) => {
     const a = o.depart + (k * 2 * Math.PI) / o.n
-    return { x: Math.cos(a) * (o.rayon + 0.9), y: Math.sin(a) * (o.rayon + 0.9), ux: Math.cos(a), uy: Math.sin(a) }
+    return { x: Math.cos(a) * (o.rayon + 0.9) * t, y: Math.sin(a) * (o.rayon + 0.9) * t, ux: Math.cos(a), uy: Math.sin(a) }
   })
 }
 /** Une petite tuyère de soucoupe — une buse de manœuvre, comme celles du nez du chasseur —, tournée vers l'extérieur. */
@@ -1303,12 +1341,9 @@ export function formesDeLaCoque(cran: number, t = 0, motif?: MotifDuVer): Forme[
         ;(z < 0 ? derriere : devant).push({ pts: barre(xa, ya, xb, yb, 1.5), mat: 'rayonnement', relief: 'lueur', ton })
       }
     })
-    const eperon: Forme[] = [
-      { pts: [[5, -2.1], [11.2, 0], [5, 2.1]], mat: 'obsidienne', relief: 'plat' },
-      { pts: [[6.8, -1.56], [8.3, -1.01], [8.3, 1.01], [6.8, 1.56]], mat: 'marque', relief: 'plat' },
-      { pts: [[8.8, -0.6], [10.8, 0], [8.8, 0.6]], mat: 'rayonnement', relief: 'lueur', ton: pouls > 0.4 ? 5 : 4 },
-    ]
-    return [...derriere, ...eperon, { pts: ovale(0, 0, r, r, 28), mat: 'neant', relief: 'coeur', coeur: { x: 0, y: 0, r, t, pouls } }, ...devant]
+    // (… PLUS D'ÉPERON — Keko, 19/11 : « enlève le petit triangle, le cône posé sur le noyau du néant ; on dirait un chapeau
+    // d'anniversaire, c'est moche » : ses coups partent toujours de là où était sa pointe — voir sa place d'arme)
+    return [...derriere, { pts: ovale(0, 0, r, r, 28), mat: 'neant', relief: 'coeur', coeur: { x: 0, y: 0, r, t, pouls } }, ...devant]
   }
   if (cran === 15) {
     // LE TESSERACT : LES SEIZE SOMMETS D'UN HYPERCUBE, tournés dans deux plans qui touchent la quatrième dimension (x-w et
@@ -1913,8 +1948,8 @@ export function formesDesAiles(coque = 1, t = 0): Forme[] {
  * du châssis »). Sur le vaisseau, les deux restent séparées : les armes et la tuyère passent entre l'aile et la coque.
  */
 export function formesDuChassis(cran: number, habit?: Habit): Forme[] {
-  if (habit === undefined) return [...formesDesAiles(cran), ...formesDeLaCoque(cran)]
-  return [...formesDesAiles(cran), ...habit.ailes, ...formesDeLaCoque(cran, 0, habit.motif), ...habit.coque].filter((x) => x.mat !== 'marque')
+  if (habit === undefined) return agrandir([...formesDesAiles(cran), ...formesDeLaCoque(cran)], tailleDe(cran))
+  return agrandir([...formesDesAiles(cran), ...habit.ailes, ...formesDeLaCoque(cran, 0, habit.motif), ...habit.coque].filter((x) => x.mat !== 'marque'), tailleDe(cran))
 }
 /** LA TUYÈRE d'un cran de propulseur, et sa flamme (longue de 0 à 1). */
 /**
@@ -2003,16 +2038,25 @@ export function boucheDeLArme(id: string, s: number): { x: number; y: number } {
   return id === 'canon' ? { x: 2, y: s * 6.2 } : id === 'rafale' || id === 'mitraille' ? { x: 0.6, y: s * 6.2 } : { x: -0.6, y: s * 6.3 }
 }
 /** La place d'arme `k` d'une coque (au-delà de ses places : la dernière), et la bouche d'une arme qui y est montée. */
-export const placeDArme = (coque: number, k: number): { x: number; y: number; s: number } => {
-  const places = gabaritDe(coque).armes
+const placeDArmeNue = (coque: number, k: number): { x: number; y: number; s: number } => {
+  const places = gabaritNu(coque).armes
   return places[Math.max(0, Math.min(places.length - 1, k))]
 }
+/** La place d'arme `k` d'une coque, à sa taille. */
+export const placeDArme = (coque: number, k: number): { x: number; y: number; s: number } => {
+  const pl = placeDArmeNue(coque, k)
+  return { ...pl, x: pl.x * tailleDe(coque), y: pl.y * tailleDe(coque) }
+}
 export function boucheMontee(coque: number, id: string, k: number): { x: number; y: number } {
+  const t = tailleDe(coque)
   // (une arme du dos est sur la coque elle-même, pas à une place d'aile)
-  if (SUR_LE_DOS.has(id)) return boucheDeLArme(id, 1)
-  const pl = placeDArme(coque, k)
+  if (SUR_LE_DOS.has(id)) {
+    const b = boucheDeLArme(id, 1)
+    return { x: b.x * t, y: b.y * t }
+  }
+  const pl = placeDArmeNue(coque, k)
   const b = boucheDeLArme(id, pl.s)
-  return { x: b.x + pl.x, y: b.y + pl.y }
+  return { x: (b.x + pl.x) * t, y: (b.y + pl.y) * t }
 }
 /** Les armes montées SUR la coque, par-dessus elle, en ses coordonnées : le mortier du napalm, le lance-tourelles, le lance-scie de la proue. */
 const SUR_LE_DOS = new Set(['napalm', 'tourelle', 'scie'])
@@ -2283,7 +2327,10 @@ const OEUFS_DU_VER: Record<number, [number, number, number][]> = {
 
 /** TOUT LE VAISSEAU, dans l'ordre où les pièces se recouvrent (les ailes dessous, le foreur sur le toit, tourné de `vise`). */
 export function formesDuVaisseau(a: Allure, flamme: number, t: number, vise = 0, devie = 0): Forme[] {
-  const g = gabaritDe(a.coque)
+  return agrandir(formesDuVaisseauNu(a, flamme, t, vise, devie), tailleDe(a.coque))
+}
+function formesDuVaisseauNu(a: Allure, flamme: number, t: number, vise = 0, devie = 0): Forme[] {
+  const g = gabaritNu(a.coque)
   // (avec un habit, la marque du joueur part : l'apparence a ses détails à elle)
   const sansMarque = (l: Forme[]): Forme[] => (a.habit === undefined ? l : l.filter((x) => x.mat !== 'marque'))
   const f: Forme[] = [...sansMarque(formesDesAiles(a.coque, t)), ...(a.habit?.ailes ?? [])]
@@ -2293,7 +2340,7 @@ export function formesDuVaisseau(a: Allure, flamme: number, t: number, vise = 0,
   a.armes.forEach((id, i) => {
     if (id === '') return
     if (SUR_LE_DOS.has(id)) return surLeDos.push(...formesDeLArme(id, 1))
-    const pl = placeDArme(a.coque, i)
+    const pl = placeDArmeNue(a.coque, i)
     armes.push(...decaler(formesDeLArme(id, pl.s), pl.x, pl.y))
   })
   // (sous les ailes pour un chasseur ; sur le pont, par-dessus tout, pour un cuirassé)

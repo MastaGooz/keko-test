@@ -21,7 +21,7 @@ import { Panes, snowflake } from 'pixelfx/fx/ice/_lib'
 import { textWidth } from 'pixelfx'
 import { HAUT_ACCENTS } from './police.ts'
 import { RACINES_DU_KRAKEN, contourDuCrochet, cordesDuKraken } from './rendu-vaisseau.ts'
-import { boucheMontee, gabaritDe, placeDOutil, queueDe, tuyeresOmni, formesDuSocleDeTourelle, formesDeLaTeteDeTourelle, formesDeLaCapsule, formesDuCristalPose, formesDeLaScie, formesDeLaBalise, formesDuBecDeBalise, canonDeLaForeuse, formesDeLAimant, formesDuChassis, formesDeLaForeuse, formesDeLArme, formesDuPropulseur, formesDuRadar, formesDuVaisseau, formesDuVer, CRISTAL_DU_PRISME, sommetsDUnHypercube, ARETES_DE_L_HYPERCUBE, rampeDeLaMatiere, LIVREES, COULEURS_DE_JOUEUR, ovale, peindreDansUneCase, peindreFormes, rampesDeLaLivree, tonsDeLaLivree, tonsDeLaMatiere, ANCRES_DU_KRAKEN, type Habit } from './rendu-vaisseau.ts'
+import { boucheMontee, gabaritDe, tailleDe, placeDOutil, queueDe, tuyeresOmni, formesDuSocleDeTourelle, formesDeLaTeteDeTourelle, formesDeLaCapsule, formesDuCristalPose, formesDeLaScie, formesDeLaBalise, formesDuBecDeBalise, canonDeLaForeuse, formesDeLAimant, formesDuChassis, formesDeLaForeuse, formesDeLArme, formesDuPropulseur, formesDuRadar, formesDuVaisseau, formesDuVer, CRISTAL_DU_PRISME, sommetsDUnHypercube, ARETES_DE_L_HYPERCUBE, rampeDeLaMatiere, LIVREES, COULEURS_DE_JOUEUR, ovale, peindreDansUneCase, peindreFormes, rampesDeLaLivree, tonsDeLaLivree, tonsDeLaMatiere, ANCRES_DU_KRAKEN, type Habit } from './rendu-vaisseau.ts'
 import { peauDe, peauxDe, rampesDeLaPeau, tonsDeLaPeau, type Peau } from './peaux.ts'
 import { boiteDe } from './rendu-vaisseau.ts'
 import { dessinerLAireDuHangar, dessinerLeSolDuHangar, dessinerLesLampesDuHangar } from './hangars.ts'
@@ -7311,10 +7311,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // cristal ; un halo plus large autour de lui)
     if (allure.coque === 12 && !rival) {
       const en = rampesDuJoueur()?.energie ?? [0, 0, 0, ...tonsDeLaMatiere('energie')]
-      const [kx, ky] = ici(CRISTAL_DU_PRISME.x, 0)
+      const [kx, ky] = ici(CRISTAL_DU_PRISME.x * tailleDe(12), 0)
       const bat = 0.5 + 0.5 * Math.sin(t * 2.2)
-      p.glow(kx, ky, (18 + 3 * bat) * E, en[3], 0.25 + 0.08 * bat)
-      p.glow(kx, ky, (8 + 2 * bat) * E, en[4], 0.5 + 0.15 * bat)
+      p.glow(kx, ky, (18 + 3 * bat) * E * tailleDe(12), en[3], 0.25 + 0.08 * bat)
+      p.glow(kx, ky, (8 + 2 * bat) * E * tailleDe(12), en[4], 0.5 + 0.15 * bat)
     }
     // (LE CŒUR DE LUMIÈRE DU TESSERACT RAYONNE — Keko, 18/11 : « le vaisseau de lumière » : une lueur qui bat avec lui, de
     // la couleur de son cœur, et un halo plus large, de celle de ses arêtes)
@@ -7323,8 +7323,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const lu = ru?.lumiere ?? [0, 0, 0, ...tonsDeLaMatiere('lumiere')]
       const sp = ru?.spectre ?? [0, 0, 0, ...tonsDeLaMatiere('spectre')]
       const bat = 0.5 + 0.5 * Math.sin(t * 3)
-      p.glow(sx, sy, (16 + 3 * bat) * E, sp[4], 0.3 + 0.1 * bat)
-      p.glow(sx, sy, (7 + 2 * bat) * E, lu[4], 0.55 + 0.2 * bat)
+      p.glow(sx, sy, (16 + 3 * bat) * E * tailleDe(15), sp[4], 0.3 + 0.1 * bat)
+      p.glow(sx, sy, (7 + 2 * bat) * E * tailleDe(15), lu[4], 0.55 + 0.2 * bat)
     }
     const [vx, vy] = ici(g.verriere, 0)
     if (!sansVerriere(allure.coque)) p.glow(vx, vy, 4 * E, rival ? VERRIERE_ENNEMIE[1] : VERRIERE[2], 0.3)

@@ -6467,3 +6467,13 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   sélection des vaisseaux ; pour le tesseract, plutôt un cube en 4 dimensions qui joue avec la géométrie de
   l'espace-temps ») : la colonne des Yhg'tharr est Prisme, Néant, Tesseract (l'ordre de `FLOTTE`) ; le Tesseract dit « Un
   cube en quatre dimensions, qui joue avec la géométrie de l'espace-temps. » Vu à la capture.
+- LE PULSAR, LE PRISME ET LE TESSERACT PLUS GRANDS ; LE NÉANT SANS SON CÔNE (Keko, 19/11 : « augmenter la taille du pulsar,
+  du prisme et du tesseract, surtout du prisme » ; « enlève le petit triangle, le cône posé sur le noyau du néant, on
+  dirait un chapeau d'anniversaire ») :
+  - `tailleDe` (rendu) : 1,4 pour le Prisme, 1,2 pour le Pulsar et le Tesseract. Leurs formes et leurs repères SORTENT du
+    rendu à cette taille (`formesDuVaisseau`, `formesDuChassis`, `gabaritDe`, `queueDe`, `placeDOutil`, `placeDArme`,
+    `boucheMontee`, `tuyeresOmni`) : en vol, au hangar, à l'accueil, dans la grille et dans l'aperçu, et tout ce qui s'y
+    accroche suit (le bouclier, les bouches, la traînée, les lueurs du cristal et du cœur) ; dedans, tout se calcule à la
+    taille d'origine (`gabaritNu`). La règle ne change pas. Chiffres de moi. Vus à la capture.
+  - L'ÉPERON DU NÉANT est retiré (le triangle d'obsidienne, sa pointe allumée, la bande de marque) ; ses coups partent
+    toujours de sa place d'arme. Les détails de ses apparences peints sur l'éperon (Supernova, Abîme) partent avec lui.

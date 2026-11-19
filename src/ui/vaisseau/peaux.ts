@@ -404,25 +404,23 @@ const PEAUX: Record<string, Peau[]> = {
   neant: [
     origine('rayonnement', RAYONNEMENT),
     {
-      // un trou noir qui avale une étoile : un disque d'accrétion orange, des anneaux de braise, deux bandes d'or sur l'éperon
+      // un trou noir qui avale une étoile : un disque d'accrétion orange, des anneaux de braise (ses deux bandes d'or sur
+      // l'éperon sont parties avec lui — Keko, 19/11)
       id: 'supernova',
       nom: 'Supernova',
       principale: 'rayonnement',
       rampes: { rayonnement: R('#1a0a04', '#3a1606', '#6a2a0a', '#a04a10', '#e0801c', '#ffc060'), neant: R('#1a0804', '#3d1406', '#70300a', '#b05a12', '#f09a2a', '#ffd070'), obsidienne: T(20, 0.3, 0.6), decor: T(40, 0.9, 1.1) },
       accent: T(40, 0.9, 1.1),
-      habit: () => ({
-        ailes: [],
-        coque: [plat([[6.4, -1.65], [6.9, -1.48], [6.9, 1.48], [6.4, 1.65]], 'decor'), plat([[7.5, -1.27], [8, -1.1], [8, 1.1], [7.5, 1.27]], 'decor')],
-      }),
+      habit: NU,
     },
     {
-      // un abîme froid : un disque bleu, des anneaux d'outremer, une arête cyan le long de l'éperon
+      // un abîme froid : un disque bleu, des anneaux d'outremer (son arête cyan le long de l'éperon est partie avec lui)
       id: 'abime',
       nom: 'Abîme',
       principale: 'rayonnement',
       rampes: { rayonnement: R('#040a1a', '#0a1a3a', '#10306a', '#1a50a0', '#3a8ae0', '#90d0ff'), neant: R('#040a1a', '#0a1a3d', '#10306a', '#1a50b0', '#3a90f5', '#86d0ff'), obsidienne: T(225, 0.3, 0.55), decor: T(205, 0.8, 1.1) },
       accent: T(205, 0.8, 1.1),
-      habit: () => ({ ailes: [], coque: [plat(barre(5.4, 0, 8.6, 0, 0.35), 'decor')] }),
+      habit: NU,
     },
   ],
 }
