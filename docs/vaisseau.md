@@ -6449,3 +6449,7 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     tintement, à peine) et `echarde` (un « tsiou » de verre bref) ; l'annonce en avance ne les touche pas.
   Cadence, dégâts, vitesse, apparition et intervalle sont de moi, à rejuger. Vérifié (`npm run verif`) : cinq au plus sans
   insecte ; rien à 160 ; à 110, les cinq partent en 0,3 s, touchent et gèlent ; vu dans l'aperçu du hangar.
+- LE SON DE LA CONDENSATION, UN SOUFFLE DOUX (Keko, 19/11 : « change ce son aigu par quelque chose qui renvoie plus un son
+  doux comme un vent, comme un bruit de condensation de l'air ») : `condense` n'a plus de tintement de verre ni de bande
+  aiguë (2 400 → 5 200 Hz) : un souffle grave et feutré (passe-bas 420 → 900 Hz, large) qui s'enfle et se retire, et une
+  bouffée en bande large vers 700 → 1 100 Hz. Pas écouté : à juger à l'oreille.

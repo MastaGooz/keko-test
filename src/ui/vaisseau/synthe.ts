@@ -1024,14 +1024,16 @@ const RECETTES = {
     },
   },
   /**
-   * UNE ÉCHARDE DE GIVRE SE CONDENSE (le Frimas, Keko, 19/11 : « comme si l'humidité de l'air se condensait ») : un souffle
-   * qui se resserre en montant, puis un tintement de verre, à peine
+   * UNE ÉCHARDE DE GIVRE SE CONDENSE (le Frimas, Keko, 19/11 : « comme si l'humidité de l'air se condensait ») — PUIS UN
+   * SOUFFLE DOUX (Keko, 19/11 : « change ce son aigu par quelque chose qui renvoie plus un son doux comme un vent, un bruit
+   * de condensation de l'air ») : plus de tintement de verre ni de bande aiguë — un souffle grave et feutré qui
+   * s'enfle et se retire, comme une bouffée d'air qui se resserre, un peu plus large qu'une oreille
    */
   condense: {
-    duree: 0.5, niveau: 0.05, salle: [0.5, 0.2], variantes: 3,
+    duree: 0.7, niveau: 0.06, salle: [0.5, 0.2], variantes: 3,
     faire: (m, h) => {
-      souffle(m, h, 0, 0.6, (h.next() - 0.5) * 0.6, { f: 2400, glisse: { vers: 5200, en: 0.3, droit: true }, q: 3, bande: true, a: 0.2, d: 0.12 })
-      note(m, 0.3, 0.5, (h.next() - 0.5) * 0.6, { f: 3000 + 1500 * h.next(), a: 0.001, d: 0.2, partiels: VERRE })
+      souffle(m, h, 0, 0.8, (h.next() - 0.5) * 0.4, { f: 420, glisse: { vers: 900, en: 0.25 }, q: 0.7, a: 0.18, d: 0.32, large: true })
+      souffle(m, h, 0.05, 0.4, (h.next() - 0.5) * 0.4, { f: 700, glisse: { vers: 1100, en: 0.2 }, q: 0.9, bande: true, a: 0.15, d: 0.25 })
     },
   },
   /** UNE ÉCHARDE DE GIVRE PART : un « tsiou » de verre qui file, bref — elles partent l'une après l'autre, très vite */
