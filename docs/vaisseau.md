@@ -6333,3 +6333,25 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   - L'EMPIRE (« ça manque d'ordinateurs ») : DEUX BAIES DE SERVEURS (tiroirs, deux colonnes de voyants qui clignotent
     chacun à son rythme) et UN TERMINAL cathodique où défilent des lignes vertes, son clavier devant.
   *Mesuré* : Empire 106, Xénoïdes 75, Yhg'tharr 91 images par seconde.
+- LES HANGARS AU NIVEAU DE L'ANTRE (Keko, 19/11 : « prendre le hangar xénoïde et avoir le même niveau de texture et de
+  travail pour les humains, les éthérés et les innommés ») : comme les cellules de l'antre, CHAQUE SURFACE EST CALCULÉE
+  PIXEL PAR PIXEL, UNE FOIS, sous la même lampe (en haut à gauche, `eclairage` : un diffus et un reflet), tramée en Bayer
+  4 × 4 (`tonTrame`) ; un seul cache pour tous les décors fixes (`enBandes`, `peindreBandes`), les aires comprises.
+  - L'EMPIRE : des plaques d'ACIER BROSSÉ ou de TÔLE LARMÉE (des losanges en relief, alternés), leurs joints, leurs
+    biseaux, leurs RIVETS bombés, de la ROUILLE aux joints, des nappes de CRASSE, des RAYURES ; la flaque de lumière des
+    lampes ; les taches d'huile au bord luisant ; les TUYAUX EN CYLINDRES (acier et cuivre, leurs brides et bagues) ; les
+    caissons modelés (serveurs aux tiroirs en relief, terminal et console aux écrans bombés, générateur et son carter
+    boulonné) ; les caisses en planches de bois veiné, leur croix et leur sangle ; le baril cerclé ; LES OMBRES PORTÉES
+    de tout ce qui est posé ; le manomètre bombé, la vanne au reflet. L'aire : un collier boulonné modelé, l'anneau de
+    danger écaillé, une plaque d'acier tourné en cercles fins, ses rainures à lèvre éclairée.
+  - LES VECTRANS : chaque dalle de pierre est TAILLÉE (son biseau éclairé), VEINÉE comme un marbre, une sur trois
+    GRAVÉE d'un glyphe ; un joint sur quatre où l'énergie AFFLEURE ; les canaux CREUSÉS ; l'or des arches, des joncs, de
+    l'aire, de ses rais et des chatons des gemmes MODELÉ (ses arêtes accrochent la lumière, des éclats) ; un éclat qui
+    court dans le filet des arches ; les pylônes au socle dégradé, leur ombre.
+  - LES YHG'THARR : la brume du vide en cinq tons, ses grandes traînées, ses ÉTOILES (les plus vives en croix) ; les
+    dalles d'obsidienne TAILLÉES EN SIX FACETTES autour d'une pointe, chaque facette éclairée selon sa pente, leurs arêtes
+    vives du côté de la lampe ; les TENTACULES en anneaux de chair modelés, luisants, et leurs VENTOUSES ; les yeux à
+    l'iris qui luit vers son cœur, dans une paupière ; le cercle de l'aire en PIERRE RUGUEUSE BOMBÉE, FENDUE — le vide
+    luit dans certaines fentes —, l'abîme noircissant vers son cœur, les yeux de l'aire dans leurs orbites.
+  *Mesuré* : l'Empire 144 images par seconde, les Vectrans 121, les Yhg'tharr 127 (tout ce qui ne bouge pas est
+  désormais calculé une fois), les Xénoïdes 76.

@@ -39,6 +39,62 @@ const hasard = (a: number, b: number, c = 0): number => {
   return ((h ^ (h >>> 16)) >>> 0) / 4294967296
 }
 
+/** La trame de Bayer 4 × 4 : un dégradé en pixels, sans flou. */
+const BAYER4 = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5]
+/** Le décalage de trame du pixel (x, y), de −0,47 à +0,47. */
+const trame = (x: number, y: number): number => BAYER4[(Math.floor(x) & 3) + 4 * (Math.floor(y) & 3)] / 16 - 0.47
+/** Le ton d'une rampe pour une clarté `l` (0 l'ombre, 1 le plus clair), tramé au pixel (x, y). */
+const tonTrame = (rampe: number[], l: number, x: number, y: number): number =>
+  rampe[Math.max(0, Math.min(rampe.length - 1, Math.floor(l * rampe.length + trame(x, y) * 1.1)))]
+/** Un bruit lissé, de 0 à 1, à la maille `pas`, graine `g`. */
+function bruit(x: number, y: number, pas: number, g: number): number {
+  const lisse = (u: number): number => u * u * (3 - 2 * u)
+  const gx = Math.floor(x / pas)
+  const gy = Math.floor(y / pas)
+  const fx = lisse(x / pas - gx)
+  const fy = lisse(y / pas - gy)
+  const v = (i: number, j: number): number => hasard(gx + i, gy + j, g)
+  return (v(0, 0) * (1 - fx) + v(1, 0) * fx) * (1 - fy) + (v(0, 1) * (1 - fx) + v(1, 1) * fx) * fy
+}
+/**
+ * La clarté d'une surface de normale (nx, ny, nz) sous la lampe d'en haut à gauche — celle des cellules de l'antre — : son
+ * diffus, et son reflet (d'autant plus serré que `dur` est grand).
+ */
+function eclairage(nx: number, ny: number, nz: number, dur = 22): [number, number] {
+  const diffus = Math.max(0, -0.5 * nx - 0.6 * ny + 0.62 * nz)
+  const reflet = Math.pow(Math.max(0, (-0.5 * nx - 0.6 * ny + 1.62 * nz) / 1.8), dur)
+  return [diffus, reflet]
+}
+/** Ce qui n'est pas peint (un pixel laissé à ce qui est dessous). */
+const RIEN = -1
+/**
+ * UN DÉCOR FIXE, CALCULÉ UNE FOIS (la leçon du hangar des Vectrans, qui tombait à 2,4 images par seconde) : chaque pixel
+ * de son rectangle par `couleur` (`RIEN` : rien), rangé en bandes d'une même couleur, que chaque image recopie.
+ */
+const DECORS = new Map<string, number[]>()
+function enBandes(cle: string, x0: number, y0: number, x1: number, y1: number, couleur: (x: number, y: number) => number): number[] {
+  const deja = DECORS.get(cle)
+  if (deja !== undefined) return deja
+  const bandes: number[] = []
+  for (let y = y0; y < y1; y++) {
+    let xa = x0
+    let c0 = couleur(x0, y)
+    for (let x = x0 + 1; x <= x1; x++) {
+      const c = x < x1 ? couleur(x, y) : -2
+      if (c !== c0) {
+        if (c0 !== RIEN) bandes.push(xa, y, x - xa, c0)
+        xa = x
+        c0 = c
+      }
+    }
+  }
+  DECORS.set(cle, bandes)
+  return bandes
+}
+function peindreBandes(p: Peintre, b: number[]): void {
+  for (let i = 0; i < b.length; i += 4) p.rect(b[i], b[i + 1], b[i + 2], 1, b[i + 3])
+}
+
 /** La scène : son rectangle, le centre de l'aire, la hauteur où pendent les lampes, l'instant. */
 export type Scene = { W: number; y0: number; y1: number; cx: number; cy: number; yLampes: number; t: number }
 
@@ -53,215 +109,386 @@ export const LUMIERE_DU_HANGAR: Record<Race, number> = {
 // ------------------------------------------------------------------------------------------------------------- L'EMPIRE
 const ACIER = H('#0b0f1a', '#141a2b', '#1b2338', '#1f2840', '#2c3654', '#3e4760', '#5a6684')
 const OR = H('#3a2a06', '#8a6a14', '#c08a14', '#ffcf50')
-function solDeLEmpire(p: Peintre, s: Scene): void {
-  const { W, y0, y1, cx, cy, t } = s
-  const hautScene = y1 - y0
-  // le sol : des plaques d'acier, chacune son biseau et ses rivets
-  p.rect(0, y0, W, hautScene, ACIER[1])
-  for (let gx = -18; gx < W; gx += 24)
-    for (let gy = y0 - 20; gy < y1; gy += 24) {
-      p.rect(gx, gy, 24, 1, ACIER[3])
-      p.rect(gx, gy, 1, 24, ACIER[2])
-      p.rect(gx, gy + 23, 24, 1, ACIER[0])
-      p.rect(gx + 23, gy, 1, 24, hex('#0d111c'))
-      for (const [rx, ry] of [[3, 3], [20, 3], [3, 20], [20, 20]]) {
-        p.rect(gx + rx, gy + ry, 1, 1, ACIER[4])
-        p.rect(gx + rx + 1, gy + ry + 1, 1, 1, ACIER[0])
-      }
-    }
-  // (… PLUS GARNI, PLUS MACHINE — Keko, 19/11 : « celui des humains très bof ; quelques machines, des tuyaux un petit peu
-  // plus intéressants ; là, il fait un peu vide et bâclé »)
-  // des taches d'huile sur les plaques
-  for (let i = 0; i < 5; i++) {
-    const x = hasard(i, 1, 71) * W
-    const y = y0 + hasard(i, 2, 71) * hautScene
-    if (Math.hypot(x - cx, y - cy) < 66) continue
-    p.circle(x, y, 3 + hasard(i, 3, 71) * 4, hex('#0c1018'), 0.6)
-    p.circle(x - 1, y - 1, 1.2, hex('#2a3448'), 0.5)
+// (… AU NIVEAU DE L'ANTRE — Keko, 19/11 : « prendre le hangar xénoïde et avoir le même niveau de texture et de travail pour
+// les humains, les éthérés et les innommés » : chaque surface est calculée pixel par pixel, une fois, éclairée d'en haut à
+// gauche et tramée — l'acier brossé, la tôle larmée, les rivets bombés, la rouille aux joints, la crasse, les rayures, les
+// tuyaux en cylindres, le bois des caisses, les ombres portées)
+const ACIER_T = H('#070a12', '#0c111d', '#121828', '#182034', '#1f2840', '#28324e', '#343f5e', '#46527a', '#5e6a8e', '#8a96b4')
+const CUIVRE_T = H('#1a0a04', '#3a1a0a', '#6a3414', '#9a5422', '#c47a38', '#e8a86a', '#ffd8a8')
+const BOIS_T = H('#140c06', '#2a1a0c', '#3e2812', '#58391a', '#745024', '#906830', '#b08a48')
+const ROUGE_T = H('#1a0604', '#3a0e08', '#5a1810', '#7a2418', '#a03422', '#c84a34', '#e87a5a')
+const ROUILLE_T = H('#1e0f08', '#34190c', '#4e2812', '#6e3c1a', '#8e5426')
+const PEINTURE_T = H('#4a3408', '#7a5a10', '#a8801a', '#d0a428', '#f0c850')
+const ECRAN_T = H('#020805', '#04100a', '#06180e', '#0a2416')
+type Boite = { x: number; y: number; w: number; h: number }
+const dans = (b: Boite, x: number, y: number): boolean => x >= b.x && x < b.x + b.w && y >= b.y && y < b.y + b.h
+/** Où sont les machines de l'Empire dans une scène : le décor calculé et ce qui bouge les lisent. */
+function placesDeLEmpire(W: number, y0: number, y1: number, cx: number, cy: number) {
+  const yT = y0 + 2
+  const yG = cy - 6
+  const yB = y0 + 34
+  return {
+    yT,
+    yG,
+    generateur: { x: W - 24, y: yG, w: 21, h: 30 },
+    baies: [{ x: 12, y: yT + 14, w: 13, h: 24 }, { x: W - 20, y: yB, w: 13, h: Math.max(10, Math.min(22, yG - yB - 3)) }],
+    terminal: { x: 12, y: cy + 18, w: 17, h: 13 },
+    clavier: { x: 13, y: cy + 31, w: 15, h: 3 },
+    console: { x: W - 34, y: y0 + 20, w: 16, h: 11 },
+    caisses: [{ x: W - 20, y: y1 - 22, w: 14, h: 11 }, { x: W - 18, y: y1 - 32, w: 11, h: 10 }, { x: 12, y: y1 - 20, w: 12, h: 10 }],
+    baril: { x: 12, y: y1 - 34, w: 9, h: 12 },
+    taches: Array.from({ length: 5 }, (_, i) => ({ x: hasard(i, 1, 71) * W, y: y0 + hasard(i, 2, 71) * (y1 - y0), r: 3 + hasard(i, 3, 71) * 4 })).filter((o) => Math.hypot(o.x - cx, o.y - cy) >= 66),
   }
-  // des équerres peintes au sol, aux quatre coins de la zone d'appontage, usées
+}
+/** Un cylindre couché (u de −1 en haut à +1 en bas) ou debout (u de −1 à gauche à +1 à droite) : sa clarté. */
+function tube(u: number, debout: boolean, plus = 0): number {
+  const v = Math.max(-1, Math.min(1, u))
+  const nz = Math.sqrt(Math.max(0, 1 - v * v))
+  const [d, s] = debout ? eclairage(v, 0, nz, 30) : eclairage(0, v, nz, 30)
+  return 0.08 + 0.72 * d + 0.7 * s + plus
+}
+/** Un caisson d'acier : son cerne, son biseau clair en haut à gauche, sombre en bas à droite, sa face qui s'assombrit vers le bas. */
+function caisson(b: Boite, x: number, y: number, rampe: number[], l0: number): number {
+  const i = x - b.x
+  const j = y - b.y
+  if (i === 0 || j === 0 || i === b.w - 1 || j === b.h - 1) return rampe[0]
+  if (i === 1 || j === 1) return tonTrame(rampe, l0 + 0.3, x, y)
+  if (i === b.w - 2 || j === b.h - 2) return tonTrame(rampe, l0 - 0.16, x, y)
+  return tonTrame(rampe, l0 + 0.16 * (1 - j / b.h) - 0.06 * (i / b.w) + 0.08 * (bruit(x / 7, y, 1, 79) - 0.5), x, y)
+}
+/** Une caisse de bois : ses planches, leur grain, sa croix de renfort, sa sangle d'acier rivetée. */
+function caisse(b: Boite, x: number, y: number): number {
+  const i = x - b.x
+  const j = y - b.y
+  if (i === 0 || j === 0 || i === b.w - 1 || j === b.h - 1) return BOIS_T[0]
+  const im = Math.floor(b.w / 2) - 1
+  if (i === im || i === im + 1) return j === 2 || j === b.h - 3 ? ACIER_T[9] : i === im ? ACIER_T[6] : ACIER_T[3]
+  // (la croix : les deux diagonales, une arête claire au-dessus, une ombre dessous)
+  for (const [ax, ay, bx, by] of [[1, 1, b.w - 2, b.h - 2], [b.w - 2, 1, 1, b.h - 2]]) {
+    const L = Math.hypot(bx - ax, by - ay)
+    const s = ((bx - ax) * (j - ay) - (by - ay) * (i - ax)) / L
+    if (Math.abs(s) < 0.75) return tonTrame(BOIS_T, 0.72 - 0.25 * s, x, y)
+    if (s > 0.75 && s < 1.6) return BOIS_T[1]
+  }
+  const planche = Math.floor((j - 1) / 3)
+  if ((j - 1) % 3 === 2) return BOIS_T[1]
+  const l = 0.42 + 0.22 * (bruit(x / 4, y * 2.2 + planche * 7, 1, 80) - 0.5) + 0.12 * (1 - j / b.h) + 0.06 * (hasard(planche, b.x, 82) - 0.5)
+  return tonTrame(BOIS_T, l, x, y)
+}
+/** Un pixel du décor fixe de l'Empire : ses machines d'abord (la plus haute la première), puis son sol. */
+function pixelDeLEmpire(x: number, y: number, W: number, y0: number, y1: number, cx: number, cy: number, P: ReturnType<typeof placesDeLEmpire>): number {
+  const { yT, yG } = P
+  // LE BARIL : un cylindre rouge, ses deux cerclages, son couvercle
+  if (dans(P.baril, x, y)) {
+    const i = x - P.baril.x
+    const j = y - P.baril.y
+    if (i === 0 || i === P.baril.w - 1 || j === 0 || j === P.baril.h - 1) return ROUGE_T[0]
+    const plus = j === 3 || j === 8 ? -0.28 : j === 2 || j === 7 ? 0.12 : j === 1 ? 0.18 : 0
+    return tonTrame(ROUGE_T, tube(((i + 0.5) / P.baril.w) * 2 - 1, true, plus), x, y)
+  }
+  for (const c of P.caisses) if (dans(c, x, y)) return caisse(c, x, y)
+  // LE GÉNÉRATEUR : un caisson, le carter de son ventilateur, ses boulons, sa bande de danger
+  const G = P.generateur
+  if (dans(G, x, y)) {
+    const i = x - G.x
+    const j = y - G.y
+    const [fx, fy] = [G.x + 10, G.y + 11]
+    const d = Math.hypot(x - fx, y - fy)
+    if (d <= 7.2) {
+      if (d > 6) return tonTrame(ACIER_T, 0.42 + 0.32 * ((-0.6 * (x - fx) - 0.7 * (y - fy)) / d), x, y)
+      if (d > 5.2) return ACIER_T[0]
+      return tonTrame(ACIER_T, 0.06 + 0.12 * (d / 6), x, y)
+    }
+    if (j >= 25 && j <= 27 && i >= 1 && i <= 19) return Math.floor((i + j) / 2) % 2 === 0 ? tonTrame(PEINTURE_T, j === 25 ? 0.85 : 0.55, x, y) : ACIER_T[1]
+    for (const [bx, by] of [[2, 2], [18, 2], [2, 22], [18, 22]]) {
+      if (i === bx && j === by) return ACIER_T[9]
+      if (i === bx + 1 && j === by + 1) return ACIER_T[1]
+    }
+    if (j === 20 && (i === 3 || i === 4 || i === 7 || i === 8 || i === 11 || i === 12)) return ACIER_T[0]
+    if (j === 21 && (i === 3 || i === 4 || i === 7 || i === 8 || i === 11 || i === 12)) return ACIER_T[0]
+    return caisson(G, x, y, ACIER_T, 0.44)
+  }
+  // LA CONSOLE et LE TERMINAL : un caisson, un écran éteint (ses lignes s'y allument à chaque image), un clavier
+  const ecran = (b: Boite, x: number, y: number): number => {
+    const u = (x - b.x - b.w / 2) / (b.w / 2)
+    const v = (y - b.y - b.h / 2) / (b.h / 2)
+    return tonTrame(ECRAN_T, 0.75 - 0.5 * Math.hypot(u, v) - ((y & 1) === 0 ? 0.12 : 0), x, y)
+  }
+  const K = P.console
+  if (dans(K, x, y)) {
+    const i = x - K.x
+    const j = y - K.y
+    if (i >= 2 && i <= 9 && j >= 2 && j <= 6) return ecran({ x: K.x + 2, y: K.y + 2, w: 8, h: 5 }, x, y)
+    if (i >= 12 && i <= 13 && (j === 2 || j === 4 || j === 6)) return ACIER_T[0]
+    return caisson(K, x, y, ACIER_T, 0.4)
+  }
+  if (dans(P.clavier, x, y)) {
+    const i = x - P.clavier.x
+    const j = y - P.clavier.y
+    if (j === 1 && i >= 1 && i <= 12 && i % 2 === 1) return ACIER_T[7]
+    return caisson(P.clavier, x, y, ACIER_T, 0.3)
+  }
+  const T = P.terminal
+  if (dans(T, x, y)) {
+    const i = x - T.x
+    const j = y - T.y
+    if (i >= 2 && i <= 14 && j >= 2 && j <= 9) return ecran({ x: T.x + 2, y: T.y + 2, w: 13, h: 8 }, x, y)
+    return caisson(T, x, y, ACIER_T, 0.42)
+  }
+  // LES BAIES DE SERVEURS : une armoire, ses tiroirs en relief, leurs poignées, les logements des voyants
+  for (const B of P.baies)
+    if (dans(B, x, y)) {
+      const i = x - B.x
+      const j = y - B.y
+      if (i >= 2 && i <= B.w - 3 && j >= 3 && j < B.h - 2) {
+        const r = (j - 3) % 3
+        if (r === 2) return ACIER_T[1]
+        if (i === B.w - 5 || i === B.w - 3) return r === 0 ? ACIER_T[0] : ACIER_T[4]
+        if (r === 1 && i >= 3 && i <= 6) return ACIER_T[8]
+        return tonTrame(ACIER_T, r === 0 ? 0.56 : 0.38, x, y)
+      }
+      return caisson(B, x, y, ACIER_T, 0.3)
+    }
+  // LES CONDUITES : la descente de cuivre à droite, celle d'acier à gauche et ses colliers, les deux tuyaux du plafond
+  if (x >= W - 8 && x <= W - 3 && y >= yT + 9 && y <= yT + 11) return tonTrame(CUIVRE_T, tube(((x - (W - 8) + 0.5) / 6) * 2 - 1, true, y === yT + 9 ? 0.15 : 0), x, y)
+  if (x >= W - 7 && x <= W - 4 && y >= yT + 10 && y < yG) return tonTrame(CUIVRE_T, tube(((x - (W - 7) + 0.5) / 4) * 2 - 1, true), x, y)
+  if (x >= 2 && x <= 8 && y >= yT + 3 && y <= yT + 5) return tonTrame(ACIER_T, tube(((x - 2 + 0.5) / 7) * 2 - 1, true, y === yT + 3 ? 0.15 : 0), x, y)
+  if (x >= 2 && x <= 8 && y >= yT + 22 && (y - yT - 22) % 22 < 2) return tonTrame(ACIER_T, tube(((x - 2 + 0.5) / 7) * 2 - 1, true, (y - yT - 22) % 22 === 0 ? 0.12 : -0.12), x, y)
+  if (x >= 3 && x <= 7 && y >= yT + 4) return tonTrame(ACIER_T, tube(((x - 3 + 0.5) / 5) * 2 - 1, true), x, y)
+  if (y >= yT + 7 && y <= yT + 11) {
+    const bague = (((x - 4) % 9) + 9) % 9 < 2
+    return tonTrame(CUIVRE_T, tube(((y - yT - 7 + 0.5) / 5) * 2 - 1, false, bague ? -0.25 : 0), x, y)
+  }
+  const bride = x >= 8 && (x - 8) % 26 < 3
+  if (bride && y >= yT - 1 && y <= yT + 6) {
+    const i = (x - 8) % 26
+    if (i === 1 && (y === yT + 1 || y === yT + 4)) return ACIER_T[9]
+    return tonTrame(ACIER_T, tube(((y - yT + 1 + 0.5) / 8) * 2 - 1, false, i === 0 ? 0.14 : i === 2 ? -0.18 : 0), x, y)
+  }
+  if (y >= yT && y <= yT + 5) return tonTrame(ACIER_T, tube(((y - yT + 0.5) / 6) * 2 - 1, false), x, y)
+  // LE SOL — et les OMBRES PORTÉES de ce qui est posé dessus (la lampe est en haut à gauche : elles tombent en bas à droite)
+  let ombre = 0
+  for (const b of [P.baril, ...P.caisses, P.generateur, P.console, P.clavier, P.terminal, ...P.baies]) if (dans({ x: b.x + 2, y: b.y + 2, w: b.w, h: b.h }, x, y)) ombre = 0.2
+  if (y === yT + 12 || y === yT + 13) ombre = Math.max(ombre, 0.16)
+  if ((x === 8 || x === 9) && y > yT + 5) ombre = Math.max(ombre, 0.16)
+  return solDeLEmpireEn(x, y, y0, y1, cx, cy, P, ombre)
+}
+/** Le sol de l'Empire : des plaques d'acier brossé ou larmé, leurs joints et biseaux, leurs rivets, la rouille et la crasse. */
+function solDeLEmpireEn(x: number, y: number, y0: number, y1: number, cx: number, cy: number, P: ReturnType<typeof placesDeLEmpire>, ombre: number): number {
+  // les bandes de sécurité au pied de l'aire : des chevrons jaunes et noirs, usés
+  if (y === y1 - 4 || y === y1 - 3) {
+    if (hasard(x, 7) >= 0.15) return Math.floor((x + y - (y1 - 4)) / 4) % 2 === 0 ? tonTrame(PEINTURE_T, y === y1 - 4 ? 0.78 : 0.5, x, y) : ACIER_T[1]
+  }
+  // les taches d'huile : une flaque sombre, son bord luisant du côté de la lampe
+  for (const o of P.taches) {
+    const dx = x + 0.5 - o.x
+    const dy = y + 0.5 - o.y
+    const d = Math.hypot(dx, dy)
+    if (d < o.r) return d > o.r - 1.3 && dx + dy < 0 ? tonTrame(ACIER_T, 0.4, x, y) : tonTrame(ACIER_T, 0.06 + 0.1 * (d / o.r) - ombre, x, y)
+  }
+  // les équerres peintes aux quatre coins de la zone d'appontage, écaillées
   for (const [sx, sy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
     const ex = cx + sx * 74
     const ey = cy + sy * 62
-    for (let k = 0; k < 9; k++) {
-      if (hasard(k, sx * 3 + sy, 5) < 0.2) continue
-      p.rect(ex - sx * k, ey, 1, 2, OR[1], 0.7)
-      p.rect(ex, ey - sy * k, 2, 1, OR[1], 0.7)
+    let k = -1
+    if (y === ey || y === ey + 1) k = sx * (ex - x)
+    if (k < 0 && (x === ex || x === ex + 1)) k = sy * (ey - y)
+    if (k >= 0 && k <= 8 && hasard(k, sx * 3 + sy, 5) >= 0.2 && hasard(x, y, 78) >= 0.15) return tonTrame(PEINTURE_T, 0.5 + 0.2 * (y === ey ? 1 : 0) - ombre, x, y)
+  }
+  const gx0 = x + 18
+  const gy0 = y - (y0 - 20)
+  const ix = Math.floor(gx0 / 24)
+  const iy = Math.floor(gy0 / 24)
+  const gx = gx0 - ix * 24
+  const gy = gy0 - iy * 24
+  if (gx === 23 || gy === 23) return ACIER_T[0]
+  // (la lumière des deux lampes, en flaque sur l'aire et alentour ; les bords plus sombres)
+  let l = 0.26 + 0.24 * Math.max(0, 1 - Math.hypot(x - cx, (y - cy) * 1.15) / 150) + 0.06 * (hasard(ix, iy, 73) - 0.5) - ombre
+  if (gx === 0 || gy === 0) return tonTrame(ACIER_T, l + 0.24, x, y)
+  if (gx === 22 || gy === 22) return tonTrame(ACIER_T, l - 0.14, x, y)
+  // (les rivets, des dômes : leur reflet en haut à gauche, leur ombre en bas à droite)
+  for (const [rx, ry] of [[3, 3], [20, 3], [3, 20], [20, 20]]) {
+    const dx = gx - rx
+    const dy = gy - ry
+    if (Math.abs(dx) + Math.abs(dy) <= 1) return dx + dy < 0 ? ACIER_T[8] : dx + dy > 0 ? ACIER_T[3] : ACIER_T[6]
+    if ((dx === 1 && dy === 1) || (dx === 2 && dy === 0) || (dx === 0 && dy === 2)) l -= 0.16
+  }
+  // (la rouille, aux joints)
+  if ((gx <= 1 || gy <= 1 || gx >= 21 || gy >= 21) && bruit(x, y, 5, 77) > 0.74) return tonTrame(ROUILLE_T, 0.25 + 1.4 * (bruit(x, y, 2, 76) - 0.4) - ombre, x, y)
+  if (hasard(ix, iy, 74) < 0.3) {
+    // LA TÔLE LARMÉE : des losanges en relief, alternés, chacun son arête claire et son ombre
+    const plot = (a: number, b: number): boolean => {
+      const u = ((a + 1) % 6) - 2.5
+      const v = ((b + 1) % 6) - 2.5
+      const sens = (Math.floor((a + 1) / 6) + Math.floor((b + 1) / 6)) % 2
+      const [p1, p2] = sens ? [u + v, u - v] : [u - v, u + v]
+      return Math.abs(p1) < 1.1 && Math.abs(p2) < 3.6
+    }
+    if (plot(gx, gy)) l += plot(gx - 1, gy - 1) ? 0.14 : 0.32
+    else if (plot(gx - 1, gy - 1)) l -= 0.14
+  } else {
+    // L'ACIER BROSSÉ : des stries fines, couchées ; deux rayures claires par plaque, au hasard
+    l += 0.12 * (bruit(x / 9, y, 1, 75 + ix) - 0.5)
+    for (let r = 0; r < 2; r++) {
+      if (hasard(ix * 7 + r, iy, 87) < 0.5) continue
+      const ax = 2 + hasard(ix, iy * 3 + r, 88) * 19
+      const ay = 2 + hasard(ix, iy * 3 + r, 89) * 19
+      const bx = 2 + hasard(ix, iy * 3 + r, 90) * 19
+      const by = 2 + hasard(ix, iy * 3 + r, 91) * 19
+      const L2 = (bx - ax) ** 2 + (by - ay) ** 2 || 1
+      const u = Math.max(0, Math.min(1, ((gx - ax) * (bx - ax) + (gy - ay) * (by - ay)) / L2))
+      if (Math.hypot(gx - ax - u * (bx - ax), gy - ay - u * (by - ay)) < 0.55) l += 0.16
     }
   }
-  // LE RÉSEAU DE TUYAUX AU PLAFOND : un gros tuyau d'acier tout du long, ses brides boulonnées ; dessous, un tuyau de cuivre
-  // gainé de bandes ; ils descendent le long des deux murs
-  const tuyau = (x0: number, ya: number, x1: number, e: number, clair: number, moyen: number, sombre: number): void => {
-    p.rect(x0, ya, x1 - x0, e, sombre)
-    p.rect(x0, ya, x1 - x0, e - 1, moyen)
-    p.rect(x0, ya, x1 - x0, 1, clair)
-  }
-  const colonne = (xa: number, ya: number, yb: number, e: number, clair: number, moyen: number, sombre: number): void => {
-    p.rect(xa, ya, e, yb - ya, sombre)
-    p.rect(xa, ya, e - 1, yb - ya, moyen)
-    p.rect(xa, ya, 1, yb - ya, clair)
-  }
-  const yT = y0 + 2
-  tuyau(0, yT, W, 5, ACIER[6], ACIER[4], ACIER[0])
-  for (let x = 8; x < W; x += 26) {
-    p.rect(x, yT - 1, 3, 7, ACIER[2])
-    p.rect(x, yT - 1, 3, 1, ACIER[5])
-    p.px(x + 1, yT + 1, ACIER[6])
-  }
-  const CUIVRE = [hex('#2a1408'), hex('#7a3e1a'), hex('#b8682e'), hex('#e8a060')]
-  tuyau(0, yT + 7, W, 4, CUIVRE[3], CUIVRE[2], CUIVRE[0])
-  for (let x = 4; x < W; x += 9) p.rect(x, yT + 7, 2, 4, CUIVRE[1])
-  // (les descentes : l'acier à gauche, le cuivre à droite jusqu'au générateur ; un coude à chaque angle)
-  colonne(3, yT + 4, y1, 5, ACIER[6], ACIER[4], ACIER[0])
-  p.rect(2, yT + 3, 7, 3, ACIER[2])
-  for (let y = yT + 22; y < y1; y += 22) p.rect(2, y, 7, 2, ACIER[2])
-  const xG = W - 24
-  const yG = Math.round(cy - 6)
-  colonne(W - 7, yT + 10, yG, 4, CUIVRE[3], CUIVRE[2], CUIVRE[0])
-  p.rect(W - 8, yT + 9, 6, 3, CUIVRE[1])
-  // LE MANOMÈTRE, sur la descente de gauche : un cadran blanc, son aiguille qui hésite
-  const ym = Math.round(cy - 30)
-  p.circle(11, ym, 5, ACIER[0])
-  p.circle(11, ym, 4, hex('#d8dce4'))
-  p.ring(11, ym, 4, 1, ACIER[5])
-  const aig = -Math.PI * 0.75 + (0.9 + 0.25 * Math.sin(t * 1.3) + 0.06 * Math.sin(t * 9)) * Math.PI * 0.6
-  p.line(11, ym, 11 + Math.cos(aig) * 3, ym + Math.sin(aig) * 3, hex('#a82a1a'))
-  p.rect(6, ym, 2, 1, ACIER[2])
-  // LA VANNE, qui tourne lentement
-  const yv = Math.round(cy + 6)
-  const av = t * 0.6
-  p.circle(6, yv, 5, ACIER[0])
-  p.ring(6, yv, 4, 1, hex('#a83a2a'))
-  for (let k = 0; k < 3; k++) {
-    const a = av + (k * Math.PI) / 3
-    p.line(6 - Math.cos(a) * 4, yv - Math.sin(a) * 4, 6 + Math.cos(a) * 4, yv + Math.sin(a) * 4, hex('#c84a34'))
-  }
-  p.circle(6, yv, 1, hex('#5a1a10'))
-  // L'ÉVENT, au coude du haut à gauche : des bouffées de vapeur qui s'en échappent
-  for (let k = 0; k < 4; k++) {
-    const u = (t * 0.8 + k / 4) % 1
-    const x = 12 + u * 10 + Math.sin(u * 6 + k) * 2
-    const y = yT + 12 + u * 6
-    p.circle(x, y, 1.5 + u * 3, hex('#c8d0dc'), 0.35 * (1 - u))
-  }
-  // LE GÉNÉRATEUR, à droite : un caisson, son ventilateur qui tourne derrière sa grille, des voyants, une bande de danger
-  p.rect(xG, yG, 21, 30, ACIER[0])
-  p.rect(xG + 1, yG + 1, 19, 28, ACIER[3])
-  p.rect(xG + 1, yG + 1, 19, 1, ACIER[5])
-  for (let k = 0; k < 5; k++) p.rect(xG + 1 + k * 4, yG + 25, 2, 3, k % 2 === 0 ? OR[2] : hex('#15131a'))
-  const [fx, fy] = [xG + 10, yG + 11]
-  p.circle(fx, fy, 7, ACIER[0])
-  p.circle(fx, fy, 6, hex('#141a26'))
-  const af = t * 9
-  for (let k = 0; k < 4; k++) {
-    const a = af + (k * Math.PI) / 2
-    p.poly([[fx, fy], [fx + Math.cos(a) * 5.5, fy + Math.sin(a) * 5.5], [fx + Math.cos(a + 0.6) * 5, fy + Math.sin(a + 0.6) * 5]], ACIER[4])
-  }
-  p.circle(fx, fy, 1.5, ACIER[6])
-  for (const dy of [-4, -2, 0, 2, 4]) p.rect(fx - 6, fy + dy, 13, 1, ACIER[2], 0.5)
-  for (let k = 0; k < 3; k++) p.rect(xG + 3 + k * 4, yG + 20, 2, 2, Math.floor(t * 2 + k * 0.7) % 3 === k ? hex('#3ad07a') : hex('#14301e'))
-  p.glow(fx, fy, 12, hex('#ff9a40'), 0.05 + 0.03 * Math.sin(t * 5))
-  // (son câble, qui serpente au sol jusqu'au bord de l'aire)
-  let [px, py] = [xG + 2, yG + 30]
-  for (let k = 1; k <= 10; k++) {
-    const u = k / 10
-    const x = xG + 2 + (cx + 46 - xG - 2) * u + Math.sin(u * Math.PI * 2) * 4
-    const y = yG + 30 + (cy + 40 - yG - 30) * u
-    p.line(px, py + 1, x, y + 1, ACIER[0])
-    p.line(px, py, x, y, hex('#2a2e36'))
-    px = x
-    py = y
-  }
-  // UNE CONSOLE, en haut à droite : un pupitre, son écran vert, des voyants qui clignotent
-  const xk = W - 34
-  const yk = y0 + 20
-  p.rect(xk, yk, 16, 11, ACIER[0])
-  p.rect(xk + 1, yk + 1, 14, 9, ACIER[3])
-  p.rect(xk + 2, yk + 2, 8, 5, hex('#0e2a1a'))
-  for (let k = 0; k < 3; k++) p.rect(xk + 3, yk + 3 + k * 1, 1 + Math.floor((Math.sin(t * 3 + k * 2) * 0.5 + 0.5) * 5), 1, hex('#3ad07a'))
-  for (let k = 0; k < 3; k++) p.rect(xk + 12, yk + 2 + k * 2, 2, 1, Math.floor(t * 3 + k) % 3 === 0 ? hex('#ff5a3a') : hex('#4a1a14'))
-  // (… DES ORDINATEURS — Keko, 19/11 : « pour les plateformes de l'Empire, ça manque d'ordinateurs »)
-  // DEUX BAIES DE SERVEURS : une armoire sombre, ses tiroirs, deux colonnes de voyants qui clignotent chacun à son rythme
-  const baie = (x: number, y: number, w: number, h: number, graine: number): void => {
-    p.rect(x, y, w, h, ACIER[0])
-    p.rect(x + 1, y + 1, w - 2, h - 2, hex('#1a2032'))
-    p.rect(x + 1, y + 1, w - 2, 1, ACIER[4])
-    for (let ty = y + 3; ty < y + h - 2; ty += 3) {
-      p.rect(x + 2, ty, w - 4, 2, hex('#242c42'))
-      for (let k = 0; k < 2; k++) {
-        const on = hasard(Math.floor(t * (2 + k) + ty * 0.3), graine + k, 81) < 0.55
-        p.px(x + w - 4 + k * 2 - 1, ty, on ? (k === 0 ? hex('#3ad07a') : hex('#ffb040')) : hex('#14201a'))
-      }
-      p.rect(x + 3, ty + 1, 4, 1, ACIER[2])
-    }
-  }
-  baie(12, yT + 14, 13, 24, 1)
-  baie(W - 20, Math.round(y0 + 34), 13, Math.max(10, Math.min(22, Math.round(cy - 6) - Math.round(y0 + 34) - 3)), 2)
-  // UN TERMINAL, à gauche, en bas : un écran cathodique où défilent des lignes vertes, son clavier devant
-  const xt = 12
-  const ytm = Math.round(cy + 18)
-  p.rect(xt, ytm, 17, 13, ACIER[0])
-  p.rect(xt + 1, ytm + 1, 15, 11, ACIER[3])
-  p.rect(xt + 2, ytm + 2, 13, 8, hex('#06140c'))
+  // (la crasse, en nappes)
+  const g = bruit(x, y, 13, 76)
+  if (g > 0.6) l -= (g - 0.6) * 0.8
+  return tonTrame(ACIER_T, l, x, y)
+}
+function solDeLEmpire(p: Peintre, s: Scene): void {
+  const { t } = s
+  const W = Math.round(s.W)
+  const y0 = Math.round(s.y0)
+  const y1 = Math.round(s.y1)
+  const cx = Math.round(s.cx)
+  const cy = Math.round(s.cy)
+  const P = placesDeLEmpire(W, y0, y1, cx, cy)
+  peindreBandes(p, enBandes(`empire:${W}:${y0}:${y1}:${cx}:${cy}`, 0, y0, W, y1, (x, y) => pixelDeLEmpire(x, y, W, y0, y1, cx, cy, P)))
+  // CE QUI BOUGE, par-dessus le décor calculé
+  // (les voyants des baies, chacun à son rythme)
+  P.baies.forEach((B, n) => {
+    for (let ty = B.y + 3; ty < B.y + B.h - 2; ty += 3)
+      for (let k = 0; k < 2; k++)
+        if (hasard(Math.floor(t * (2 + k) + ty * 0.3), n + 1 + k, 81) < 0.55) p.px(B.x + B.w - 5 + k * 2, ty, k === 0 ? hex('#3ad07a') : hex('#ffb040'))
+  })
+  // (les lignes du terminal qui défilent, son curseur, sa lueur)
+  const T = P.terminal
   const defile = Math.floor(t * 4)
   for (let k = 0; k < 4; k++) {
     const lg = 3 + Math.floor(hasard(defile + k, 3, 82) * 9)
-    p.rect(xt + 3, ytm + 3 + k * 2, lg, 1, k === 3 && Math.floor(t * 3) % 2 === 0 ? hex('#a0ffb8') : hex('#3ad07a'))
+    p.rect(T.x + 3, T.y + 3 + k * 2, lg, 1, k === 3 && Math.floor(t * 3) % 2 === 0 ? hex('#a0ffb8') : hex('#3ad07a'))
   }
-  p.glow(xt + 8, ytm + 6, 9, hex('#3ad07a'), 0.08)
-  p.rect(xt + 1, ytm + 13, 15, 3, ACIER[0])
-  for (let k = 0; k < 6; k++) p.rect(xt + 2 + k * 2, ytm + 14, 1, 1, ACIER[5])
-  // LES CAISSES, en bas à droite : deux caisses sanglées l'une sur l'autre ; en bas à gauche, un baril et une caisse
-  const caisse = (x: number, y: number, w: number, h: number): void => {
-    p.rect(x, y, w, h, hex('#1a1408'))
-    p.rect(x + 1, y + 1, w - 2, h - 2, hex('#5a4a2a'))
-    p.rect(x + 1, y + 1, w - 2, 1, hex('#7a6a40'))
-    p.line(x + 1, y + 1, x + w - 2, y + h - 2, hex('#3a2e18'))
-    p.line(x + w - 2, y + 1, x + 1, y + h - 2, hex('#3a2e18'))
-    p.rect(x + Math.floor(w / 2) - 1, y, 2, h, hex('#2a3448'))
+  p.glow(T.x + 8, T.y + 6, 9, hex('#3ad07a'), 0.08)
+  // (la console : ses courbes, ses voyants)
+  const K = P.console
+  for (let k = 0; k < 3; k++) p.rect(K.x + 3, K.y + 3 + k, 1 + Math.floor((Math.sin(t * 3 + k * 2) * 0.5 + 0.5) * 5), 1, hex('#3ad07a'))
+  for (let k = 0; k < 3; k++) if (Math.floor(t * 3 + k) % 3 === 0) p.rect(K.x + 12, K.y + 2 + k * 2, 2, 1, hex('#ff5a3a'))
+  p.glow(K.x + 6, K.y + 4, 7, hex('#3ad07a'), 0.06)
+  // (le générateur : le ventilateur qui tourne derrière sa grille, ses voyants, sa chaleur)
+  const G = P.generateur
+  const [fx, fy] = [G.x + 10, G.y + 11]
+  for (let k = 0; k < 4; k++) {
+    const a = t * 9 + (k * Math.PI) / 2
+    p.poly([[fx, fy], [fx + Math.cos(a) * 5.5, fy + Math.sin(a) * 5.5], [fx + Math.cos(a + 0.6) * 5, fy + Math.sin(a + 0.6) * 5]], ACIER_T[5])
+    p.line(fx, fy, fx + Math.cos(a) * 5.5, fy + Math.sin(a) * 5.5, ACIER_T[7])
   }
-  caisse(W - 20, y1 - 22, 14, 11)
-  caisse(W - 18, y1 - 32, 11, 10)
-  caisse(12, y1 - 20, 12, 10)
-  const xb = 16
-  const yb = y1 - 34
-  p.rect(xb - 4, yb, 9, 12, hex('#0a0806'))
-  p.rect(xb - 3, yb + 1, 7, 10, hex('#7a2418'))
-  p.rect(xb - 3, yb + 1, 2, 10, hex('#a83a2a'))
-  for (const dy of [3, 8]) p.rect(xb - 3, yb + dy, 7, 1, hex('#3a120c'))
+  p.circle(fx, fy, 1.5, ACIER_T[8])
+  for (const dy of [-4, -2, 0, 2, 4]) p.rect(fx - 5, fy + dy, 11, 1, ACIER_T[3], 0.55)
+  for (let k = 0; k < 3; k++) if (Math.floor(t * 2 + k * 0.7) % 3 === k) p.rect(G.x + 3 + k * 4, G.y + 20, 2, 2, hex('#3ad07a'))
+  p.glow(fx, fy, 12, hex('#ff9a40'), 0.05 + 0.03 * Math.sin(t * 5))
+  // (son câble, qui serpente au sol jusqu'au bord de l'aire : son ombre, sa gaine, son reflet)
+  let [px, py] = [G.x + 2, G.y + 30]
+  for (let k = 1; k <= 10; k++) {
+    const u = k / 10
+    const x = G.x + 2 + (cx + 46 - G.x - 2) * u + Math.sin(u * Math.PI * 2) * 4
+    const y = G.y + 30 + (cy + 40 - G.y - 30) * u
+    p.line(px + 1, py + 1, x + 1, y + 1, ACIER_T[0], 0.7)
+    p.line(px, py, x, y, ACIER_T[2])
+    p.line(px, py - 0.6, x, y - 0.6, ACIER_T[5], 0.5)
+    px = x
+    py = y
+  }
+  // LE MANOMÈTRE, sur la descente de gauche : un cadran bombé, son aiguille qui hésite
+  const ym = P.yG - 24
+  p.circle(11, ym, 5, ACIER_T[0])
+  p.circle(11, ym, 4, (d: number, a: number) => tonTrame(H('#6a7284', '#9aa2b4', '#c8ced8', '#eef0f6'), 0.85 - 0.45 * d * Math.cos(a + Math.PI * 0.75), 11 + Math.cos(a) * d * 4, ym + Math.sin(a) * d * 4))
+  p.ring(11, ym, 4.6, 1, (_v: number, a: number) => (Math.cos(a + Math.PI * 0.75) > 0 ? ACIER_T[8] : ACIER_T[3]))
+  const aig = -Math.PI * 0.75 + (0.9 + 0.25 * Math.sin(t * 1.3) + 0.06 * Math.sin(t * 9)) * Math.PI * 0.6
+  p.line(11, ym, 11 + Math.cos(aig) * 3, ym + Math.sin(aig) * 3, hex('#a82a1a'))
+  p.px(11, ym, ACIER_T[1])
+  // LA VANNE, qui tourne lentement : un volant rouge, son reflet
+  const yv = P.yG + 12
+  p.circle(6, yv, 5, ACIER_T[0])
+  p.ring(6, yv, 4.5, 1.5, (_v: number, a: number) => tonTrame(ROUGE_T, 0.5 + 0.35 * Math.cos(a + Math.PI * 0.75), 6 + Math.cos(a) * 4, yv + Math.sin(a) * 4))
+  for (let k = 0; k < 3; k++) {
+    const a = t * 0.6 + (k * Math.PI) / 3
+    p.line(6 - Math.cos(a) * 3.5, yv - Math.sin(a) * 3.5, 6 + Math.cos(a) * 3.5, yv + Math.sin(a) * 3.5, ROUGE_T[4])
+  }
+  p.circle(6, yv, 1.2, ROUGE_T[1])
+  p.px(5, yv - 1, ROUGE_T[6])
+  // L'ÉVENT, au coude du haut à gauche : des bouffées de vapeur qui s'en échappent
+  for (let k = 0; k < 4; k++) {
+    const u = (t * 0.8 + k / 4) % 1
+    p.circle(12 + u * 10 + Math.sin(u * 6 + k) * 2, P.yT + 12 + u * 6, 1.5 + u * 3, hex('#c8d0dc'), 0.35 * (1 - u))
+  }
   // LES GRILLES D'AÉRATION, au sol, de part et d'autre du bas de l'aire : elles rougeoient doucement
   for (const sg of [-1, 1]) {
-    const gx = Math.round(cx + sg * 48) - 5
-    const gy = Math.round(cy + 56)
+    const gx = cx + sg * 48 - 5
+    const gy = cy + 56
     if (gy + 8 > y1 - 5) continue
-    p.rect(gx, gy, 10, 8, ACIER[0])
     const rouge = 0.5 + 0.5 * Math.sin(t * 1.7 + sg)
-    for (let k = 0; k < 4; k++) p.rect(gx + 1, gy + 1 + k * 2, 8, 1, rouge > 0.6 && k % 2 === 0 ? hex('#7a3010') : ACIER[3])
+    p.rect(gx, gy, 10, 8, ACIER_T[0])
+    for (let k = 0; k < 4; k++) {
+      p.rect(gx + 1, gy + 1 + k * 2, 8, 1, rouge > 0.6 && k % 2 === 0 ? hex('#7a3010') : ACIER_T[1])
+      p.rect(gx + 1, gy + 2 + k * 2, 8, 1, ACIER_T[5])
+    }
     p.glow(gx + 5, gy + 4, 8, hex('#ff7a30'), 0.06 + 0.06 * rouge)
   }
-  // les bandes de sécurité au pied de l'aire : des chevrons jaunes et noirs, usés
-  const ybd = y1 - 4
-  for (let x = 0; x < W; x++) {
-    if (hasard(x, 7) < 0.15) continue
-    p.rect(x, ybd, 1, 2, Math.floor((x + (ybd % 2)) / 4) % 2 === 0 ? OR[1] : hex('#15131a'))
+}
+/** Un pixel de l'aire de l'Empire : son collier boulonné, son anneau de danger, sa plaque d'acier tournée, ses rainures. */
+function pixelDeLAireDeLEmpire(x: number, y: number, X: number, Y: number, R: number): number {
+  for (let i = 0; i < 8; i++) {
+    const a = (i / 8) * Math.PI * 2
+    const fx = Math.round(X + Math.cos(a) * (R + 7))
+    const fy = Math.round(Y + Math.sin(a) * (R + 7))
+    if (Math.abs(x - fx) <= 1 && Math.abs(y - fy) <= 1) return x === fx - 1 && y === fy - 1 ? ACIER_T[4] : ACIER_T[0]
   }
+  const dx = x - X
+  const dy = y - Y
+  const d = Math.hypot(dx, dy)
+  if (d > R + 4) return RIEN
+  if (d > R + 3) return ACIER_T[0]
+  const lum = d > 0 ? (-0.6 * dx - 0.7 * dy) / d : 0
+  if (d > R) {
+    for (let k = 0; k < 24; k++) {
+      const a = (k / 24) * Math.PI * 2
+      const e = Math.hypot(x - (X + Math.cos(a) * (R + 1.5)), y - (Y + Math.sin(a) * (R + 1.5)))
+      if (e < 0.8) return ACIER_T[9]
+    }
+    const u = (d - (R + 1.5)) / 1.5
+    const nz = Math.sqrt(Math.max(0, 1 - u * u))
+    const [di, sp] = eclairage((u * dx) / d, (u * dy) / d, nz, 20)
+    return tonTrame(ACIER_T, 0.1 + 0.62 * di + 0.6 * sp, x, y)
+  }
+  if (d > R - 1) return ACIER_T[1]
+  if (d > R - 4) {
+    const a = Math.atan2(dy, dx)
+    if (hasard(x, y, 88) < 0.1) return ACIER_T[3]
+    const haut = d > R - 2 ? 0.16 : 0
+    return Math.floor((a / Math.PI) * 8 + 16) % 2 === 0 ? tonTrame(PEINTURE_T, 0.5 + 0.25 * lum + haut, x, y) : tonTrame(ACIER_T, 0.12 + 0.1 * lum + haut, x, y)
+  }
+  if (d > R - 5) return ACIER_T[1]
+  // (la plaque : de l'acier tourné, en cercles fins ; plus claire du côté de la lampe ; ses rainures en croix et en anneau,
+  // chacune son lèvre éclairée dessous)
+  let l = 0.3 + 0.1 * (1 - d / R) + 0.12 * ((-0.6 * dx - 0.7 * dy) / R) + 0.16 * (bruit(d * 1.3, 0, 1, 89) - 0.5) + 0.06 * (bruit(x, y, 9, 90) - 0.5)
+  if (d < R - 12) {
+    if (Math.abs(dy) < 0.5 || Math.abs(dx) < 0.5) return ACIER_T[1]
+    if (dy === 1 || dx === 1) l += 0.16
+  }
+  if (Math.abs(d - (R - 10)) < 0.5) return ACIER_T[1]
+  if (d - (R - 10) >= 0.5 && d - (R - 10) < 1.5) l += 0.15
+  return tonTrame(ACIER_T, l, x, y)
 }
 function aireDeLEmpire(p: Peintre, cx: number, cy: number, R0: number, t: number, decolle: boolean): void {
-  p.circle(cx, cy, R0 + 4, hex('#07090f'))
-  p.circle(cx, cy, R0 + 3, hex('#262c3c'))
-  p.arc(cx, cy, R0 + 3, 1, Math.PI * 0.9, Math.PI * 1.6, ACIER[5])
-  p.circle(cx, cy, R0, hex('#272a33'))
-  p.ring(cx, cy, R0 - 1, 3, (_v: number, ang: number) => (Math.floor((ang / Math.PI) * 8 + 16) % 2 === 0 ? OR[2] : hex('#15131a')))
-  p.ring(cx, cy, R0 - 4, 1, hex('#1a1c24'))
-  p.ring(cx, cy, R0 - 10, 1, hex('#363a48'))
-  p.line(cx - R0 + 12, cy, cx + R0 - 12, cy, hex('#363a48'))
-  p.line(cx, cy - R0 + 12, cx, cy + R0 - 12, hex('#363a48'))
+  const X = Math.round(cx)
+  const Y = Math.round(cy)
+  const R = Math.round(R0)
+  peindreBandes(p, enBandes(`aire-empire:${X}:${Y}:${R}`, X - R - 10, Y - R - 10, X + R + 11, Y + R + 11, (x, y) => pixelDeLAireDeLEmpire(x, y, X, Y, R)))
   for (let i = 0; i < 8; i++) {
     const a = (i / 8) * Math.PI * 2
     const allume = decolle || (Math.floor(t * 4) + i) % 8 < 3
-    const fx = Math.round(cx + Math.cos(a) * (R0 + 7))
-    const fy = Math.round(cy + Math.sin(a) * (R0 + 7))
-    p.rect(fx - 1, fy - 1, 3, 3, hex('#0b0a10'))
+    const fx = Math.round(X + Math.cos(a) * (R + 7))
+    const fy = Math.round(Y + Math.sin(a) * (R + 7))
     p.rect(fx, fy, 1, 1, allume ? hex('#fff2a8') : hex('#5a3a08'))
     if (allume) p.glow(fx, fy, 6, OR[3], 0.55)
   }
@@ -301,8 +528,6 @@ const CHITINE_LUISANTE = H('#8a7484', '#d8c8d4', '#fbf4f8')
 /** Les tons du modelé d'une cellule, de l'ombre au clair. */
 const TONS_DE_CHAIR = H('#1e0b14', '#2e1220', '#42192e', '#5a2440', '#743050', '#904062', '#a85476')
 const TONS_DE_CHITINE = H('#100a0e', '#1c1218', '#2a1e26', '#3a2c34', '#4c3c44', '#605058', '#76666e')
-/** La trame de Bayer 4 × 4 : un dégradé en pixels, sans flou. */
-const BAYER4 = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5]
 function bandesDuSolDesXenoides(W: number, y0: number, y1: number): number[] {
   const cle = `${W}:${y0}:${y1}`
   const deja = solsDesXenoides.get(cle)
@@ -515,9 +740,12 @@ function lampesDesXenoides(p: Peintre, s: Scene): void {
 // technologie extraterrestre ; un truc qui se rapproche un petit peu du style Protoss, dans StarCraft 2 » : de la pierre
 // sombre en plaques courbes cerclées d'OR, des canaux d'ÉNERGIE BLEUE qui pulsent, des pylônes d'or qui portent chacun un
 // CRISTAL qui flotte, des arches d'or sur les flancs ; l'aire, un anneau d'or segmenté, un anneau d'énergie, des gemmes)
-const PIERRE = H('#07070f', '#0c0c1a', '#121226', '#1a1a34', '#242446', '#30305a')
-const DORE = H('#2a1e08', '#5a4214', '#8e6a22', '#c09a3a', '#e8c868', '#fff0b8')
+// (… AU NIVEAU DE L'ANTRE — Keko, 19/11 : chaque plaque de pierre est une dalle taillée, son biseau éclairé d'en haut à
+// gauche, VEINÉE comme un marbre, quelques-unes gravées d'un glyphe ; l'or est MODELÉ, ses arêtes accrochent la lumière ;
+// des joints où l'énergie affleure)
 const PSI = H('#0a2a50', '#1458a0', '#2a8ae0', '#5ac0ff', '#a8e6ff', '#eafaff')
+const PIERRE_T = H('#05050b', '#0a0a16', '#0f0f20', '#15152c', '#1c1c3a', '#25254a', '#30305c', '#3e3e72', '#525290')
+const DORE_T = H('#2a1e08', '#4a3610', '#6e5218', '#9a7426', '#c09a3a', '#e2c060', '#f8e098', '#fffbe0')
 /** Un cristal qui flotte : un losange bleu facetté, son reflet, sa lueur ; `k` sa taille. */
 function cristal(p: Peintre, x: number, y: number, k: number, t: number): void {
   const yy = y + Math.sin(t * 1.6 + x * 0.3) * 1.2
@@ -527,93 +755,131 @@ function cristal(p: Peintre, x: number, y: number, k: number, t: number): void {
   p.poly([[x, yy - 5 * k], [x - 3 * k, yy], [x, yy]], PSI[4])
   p.line(x, yy - 4 * k, x, yy + 4 * k, PSI[5], 0.7)
 }
-/** Un pylône d'or : un socle courbe, deux bras qui s'écartent, et son cristal qui flotte au-dessus. */
+/** Un pylône d'or : un socle courbe modelé, son ombre, deux bras qui s'écartent, et son cristal qui flotte au-dessus. */
 function pylone(p: Peintre, x: number, y: number, t: number): void {
-  p.poly([[x - 6, y + 4], [x + 6, y + 4], [x + 4, y], [x - 4, y]], DORE[1])
-  p.poly([[x - 5, y + 3], [x + 5, y + 3], [x + 3.5, y + 0.5], [x - 3.5, y + 0.5]], DORE[3])
+  p.rect(x - 6, y + 4, 13, 2, PIERRE_T[0], 0.7)
+  p.poly([[x - 6, y + 4], [x + 6, y + 4], [x + 4, y], [x - 4, y]], DORE_T[1])
+  p.poly([[x - 5, y + 3], [x + 5, y + 3], [x + 3.5, y + 0.5], [x - 3.5, y + 0.5]], (px: number, py: number) => tonTrame(DORE_T, 0.85 - 0.12 * (py - y) - 0.05 * (px - x), px, py))
   for (const sg of [-1, 1]) {
-    p.line(x + sg * 3, y, x + sg * 5, y - 6, DORE[2])
-    p.line(x + sg * 3.5, y, x + sg * 5.5, y - 6, DORE[4])
-    p.px(Math.round(x + sg * 5.5), Math.round(y - 7), DORE[5])
+    p.line(x + sg * 3, y, x + sg * 5, y - 6, DORE_T[2])
+    p.line(x + sg * 3.5, y, x + sg * 5.5, y - 6, sg < 0 ? DORE_T[6] : DORE_T[4])
+    p.px(Math.round(x + sg * 5.5), Math.round(y - 7), DORE_T[7])
   }
   cristal(p, x, y - 9, 1, t)
 }
-/**
- * LE SOL FIXE DES VECTRANS, CALCULÉ UNE FOIS (Keko, 19/11 : « un énorme drop de FPS dans le hangar des éthérés ») : ses
- * plaques courbes et ses arches d'or étaient soixante arcs larges tracés à chaque image — chacun parcourt tout son carré,
- * des millions de pixels par image. On le calcule une fois par taille de scène, pixel par pixel, rangé en BANDES d'une
- * même couleur ; chaque image ne fait que les recopier. Ce qui bouge (les impulsions, les cristaux) reste dessiné à part.
- */
-const solsDesVectrans = new Map<string, number[]>()
-function bandesDuSolDesVectrans(W: number, y0: number, y1: number, cx: number, cy: number): number[] {
-  const cle = `${W}:${y0}:${y1}:${cx}:${cy}`
-  const deja = solsDesVectrans.get(cle)
-  if (deja !== undefined) return deja
-  const hautScene = y1 - y0
+/** L'or modelé d'un jonc, de coupe `u` (−1 à +1) le long de la direction (rx, ry) : sa clarté. */
+function jonc(u: number, rx: number, ry: number): number {
+  const v = Math.max(-1, Math.min(1, u))
+  const nz = Math.sqrt(Math.max(0, 1 - v * v))
+  const [d, s] = eclairage(v * rx, v * ry, nz, 18)
+  return 0.1 + 0.66 * d + 0.6 * s
+}
+/** Le marbre de la pierre des Vectrans : sa clarté propre — ses nappes, ses veines claires, son grain. */
+function marbre(x: number, y: number): number {
+  const m = bruit(x, y, 18, 92) + 0.5 * bruit(x, y, 7, 93)
+  const veine = Math.abs(Math.sin(x * 0.07 + y * 0.045 + m * 5)) < 0.06
+  return 0.08 * (m - 0.75) + (veine ? 0.16 : 0) + 0.05 * (hasard(x, y, 85) - 0.5)
+}
+/** Un pixel du sol fixe des Vectrans : ses arches d'or, ses canaux, ses dalles courbes, leurs joints et leurs joncs. */
+function pixelDesVectrans(x: number, y: number, W: number, y0: number, y1: number, cx: number, cy: number): number {
   const ay = (y0 + y1) / 2
-  const RA = hautScene * 0.55
-  const couleur = (x: number, y: number): number => {
-    // les arches d'or, sur les flancs
-    for (const sg of [-1, 1]) {
-      const ax = sg < 0 ? -4 : W + 4
-      const d = Math.hypot(x - ax, y - ay)
-      const a = Math.atan2(y - ay, x - ax)
-      const dedans = sg < 0 ? Math.abs(a) < Math.PI * 0.42 : Math.abs(Math.abs(a) - Math.PI) < Math.PI * 0.42
-      if (dedans && d <= RA + 0.5 && d > RA - 4.5) return d > RA - 1.5 ? DORE[4] : DORE[2]
-      const dedans2 = sg < 0 ? Math.abs(a) < Math.PI * 0.35 : Math.abs(Math.abs(a) - Math.PI) < Math.PI * 0.35
-      if (dedans2 && Math.abs(d - (RA - 5)) < 0.5) return PSI[2]
+  const RA = (y1 - y0) * 0.55
+  // les arches d'or, sur les flancs : un jonc modelé, entaillé, un filet d'énergie dedans
+  for (const sg of [-1, 1]) {
+    const ax = sg < 0 ? -4 : W + 4
+    const d = Math.hypot(x - ax, y - ay)
+    const a = Math.atan2(y - ay, x - ax)
+    const dedans = sg < 0 ? Math.abs(a) < Math.PI * 0.42 : Math.abs(Math.abs(a) - Math.PI) < Math.PI * 0.42
+    if (dedans && d <= RA + 0.5 && d > RA - 4.5) {
+      if (Math.abs(((((a * 22) % 1) + 1) % 1) - 0.5) > 0.47) return DORE_T[1]
+      return tonTrame(DORE_T, jonc((d - (RA - 2)) / 2.5, (x - ax) / d, (y - ay) / d), x, y)
     }
-    // les plaques de pierre courbes, des anneaux coupés en secteurs, chacun son liseré d'or
-    const d = Math.hypot(x - cx, y - cy)
-    if (d < 66) return PIERRE[1]
-    const anneau = Math.floor((d - 66) / 22)
+    const dedans2 = sg < 0 ? Math.abs(a) < Math.PI * 0.35 : Math.abs(Math.abs(a) - Math.PI) < Math.PI * 0.35
+    if (dedans2 && Math.abs(d - (RA - 5)) < 0.5) return PSI[3]
+    if (dedans2 && Math.abs(d - (RA - 5)) < 1.5) return PSI[0]
+  }
+  const dx = x - cx
+  const dy = y - cy
+  const d = Math.hypot(dx, dy)
+  // les canaux d'énergie : quatre sillons creusés en diagonale, l'énergie au fond (l'impulsion y court à chaque image)
+  for (let k = 0; k < 4; k++) {
+    const a = Math.PI / 4 + (k * Math.PI) / 2
+    const le = dx * Math.cos(a) + dy * Math.sin(a)
+    const tr = dx * Math.sin(a) - dy * Math.cos(a)
+    if (le >= 66 && le <= 140 && Math.abs(tr) < 1.6) return Math.abs(tr) < 0.6 ? PSI[1] : PIERRE_T[0]
+  }
+  if (d < 66) return PIERRE_T[1]
+  // les dalles courbes : des anneaux coupés en secteurs
+  const secteur = (sx: number, sy: number) => {
+    const sd = Math.hypot(sx - cx, sy - cy)
+    const anneau = Math.floor((sd - 66) / 22)
     const r0 = 66 + anneau * 22
     const n = 8 + Math.min(anneau, 3) * 4
-    const a = (((Math.atan2(y - cy, x - cx) - anneau * 0.3) % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2)
+    const a = (((Math.atan2(sy - cy, sx - cx) - anneau * 0.3) % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2)
     const pasA = (Math.PI * 2) / n
     const k = Math.floor(a / pasA)
-    const dansLeSecteur = a - k * pasA
-    if (dansLeSecteur < 0.02 || dansLeSecteur > pasA - 0.02) return PIERRE[1]
-    if (d - r0 < 1) return DORE[1]
-    if (d - r0 < 2 && dansLeSecteur > 0.08 && dansLeSecteur < pasA - 0.08) return DORE[2]
-    return k % 2 === 0 ? PIERRE[2] : PIERRE[3]
+    const da = a - k * pasA
+    return { d: sd, anneau, r0, k, pasA, da, e1: sd - r0 - 2, e2: r0 + 22 - sd, e3: da * sd, e4: (pasA - da) * sd }
   }
-  const bandes: number[] = []
-  for (let y = y0; y < y1; y++) {
-    let x0 = 0
-    let c0 = couleur(0, y)
-    for (let x = 1; x <= W; x++) {
-      const c = x < W ? couleur(x, y) : -1
-      if (c !== c0) {
-        bandes.push(x0, y, x - x0, c0)
-        x0 = x
-        c0 = c
-      }
-    }
+  const hauteur = (sx: number, sy: number): number => {
+    const s = secteur(sx, sy)
+    if (s.d < 66) return 0
+    const e = Math.min(s.e1, s.e2, s.e3 - 1, s.e4 - 1)
+    return e < 0 ? 0 : Math.min(1, e / 3)
   }
-  solsDesVectrans.set(cle, bandes)
-  return bandes
+  const S = secteur(x, y)
+  // (les joints : un creux sombre — et, un joint sur quatre, l'énergie qui affleure)
+  if (S.e3 < 1 || S.e4 < 1) return (S.k + S.anneau) % 4 === 0 ? (Math.min(S.e3, S.e4) < 0.5 ? PSI[2] : PSI[1]) : PIERRE_T[0]
+  // (le jonc d'or au bord intérieur de chaque dalle : sa rangée du dedans regarde l'aire, celle du dehors la dalle)
+  if (S.d - S.r0 < 2) {
+    const lum = (-0.6 * dx - 0.7 * dy) / d
+    const l = 0.5 + 0.35 * (S.d - S.r0 < 1 ? -lum : lum)
+    if (l > 0.8 && hasard(x, y, 91) < 0.5) return DORE_T[7]
+    return tonTrame(DORE_T, l, x, y)
+  }
+  // (la dalle : son biseau, son marbre, la lumière de l'aire qui la touche)
+  const pente = hauteur(x + 1, y + 1) - hauteur(x - 1, y - 1)
+  let l = 0.4 + 0.1 * (hasard(S.k, S.anneau, 86) - 0.5) + 0.2 * Math.max(0, 1 - (S.d - 66) / 110) + 0.55 * pente + marbre(x, y)
+  // (un glyphe gravé, une dalle sur trois : un arc creusé, sa lèvre éclairée)
+  if ((S.k + S.anneau) % 3 === 0 && S.da > S.pasA * 0.28 && S.da < S.pasA * 0.72) {
+    const rm = S.r0 + 12
+    if (Math.abs(S.d - rm) < 0.6) l -= 0.3
+    else if (S.d - rm >= 0.6 && S.d - rm < 1.6) l += 0.14
+    else if (Math.abs(S.da - S.pasA * 0.5) * S.d < 0.6 && Math.abs(S.d - rm) < 4) l -= 0.26
+  }
+  return tonTrame(PIERRE_T, l, x, y)
 }
 function solDesVectrans(p: Peintre, s: Scene): void {
-  const { W, y0, y1, cx, cy, t } = s
+  const { t } = s
+  const W = Math.round(s.W)
+  const y0 = Math.round(s.y0)
+  const y1 = Math.round(s.y1)
+  const cx = Math.round(s.cx)
+  const cy = Math.round(s.cy)
   const hautScene = y1 - y0
-  const b = bandesDuSolDesVectrans(W, Math.round(y0), Math.round(y1), Math.round(cx), Math.round(cy))
-  for (let i = 0; i < b.length; i += 4) p.rect(b[i], b[i + 1], b[i + 2], 1, b[i + 3])
-  // des CANAUX D'ÉNERGIE : quatre traits bleus qui partent de l'aire en diagonale, une impulsion qui y court vers le dehors
+  peindreBandes(p, enBandes(`vectrans:${W}:${y0}:${y1}:${cx}:${cy}`, 0, y0, W, y1, (x, y) => pixelDesVectrans(x, y, W, y0, y1, cx, cy)))
+  // L'IMPULSION qui court dans chaque canal, vers le dehors
   for (let k = 0; k < 4; k++) {
     const a = Math.PI / 4 + (k * Math.PI) / 2
     const [ux, uy] = [Math.cos(a), Math.sin(a)]
-    p.line(cx + ux * 66, cy + uy * 66, cx + ux * 140, cy + uy * 140, PSI[0])
     const u = (t * 0.6 + k * 0.25) % 1
     const d = 66 + u * 74
     p.glowLine(cx + ux * d, cy + uy * d, cx + ux * (d + 8), cy + uy * (d + 8), 2, PSI[3], 0.6 * (1 - u))
   }
-  // (les arches d'or des flancs sont dans le sol calculé : `bandesDuSolDesVectrans`)
+  // LE FILET DES ARCHES qui bat
+  for (const sg of [-1, 1]) {
+    const ax = sg < 0 ? -4 : W + 4
+    const [c0, c1] = sg < 0 ? [-Math.PI * 0.35, Math.PI * 0.35] : [Math.PI * 0.65, Math.PI * 1.35]
+    const u = (t * 0.4 + (sg < 0 ? 0 : 0.5)) % 1
+    const a = c0 + (c1 - c0) * u
+    const R = hautScene * 0.55 - 5
+    p.glow(ax + Math.cos(a) * R, (y0 + y1) / 2 + Math.sin(a) * R, 6, PSI[4], 0.5)
+  }
   // LES PYLÔNES, aux quatre coins, leur cristal qui flotte
   for (const [x, y] of [[14, y0 + 30], [W - 14, y0 + 30], [14, y1 - 14], [W - 14, y1 - 14]] as [number, number][]) pylone(p, x, y, t)
-  // un filet d'or au pied de l'aire
-  p.rect(0, y1 - 4, W, 1, DORE[2])
-  p.rect(0, y1 - 3, W, 1, DORE[1])
+  // un jonc d'or au pied de l'aire
+  p.rect(0, y1 - 4, W, 1, DORE_T[5])
+  p.rect(0, y1 - 3, W, 1, DORE_T[2])
   // des étincelles psioniques qui montent
   for (let i = 0; i < 16; i++) {
     const u = (hasard(i, 5, 31) + t * (0.04 + 0.04 * hasard(i, 6, 31))) % 1
@@ -623,36 +889,65 @@ function solDesVectrans(p: Peintre, s: Scene): void {
   }
   p.glow(cx, cy + 4, 64, PSI[3], 0.06)
 }
-function aireDesVectrans(p: Peintre, cx: number, cy: number, R0: number, t: number, decolle: boolean): void {
-  // UN ANNEAU D'OR SEGMENTÉ, quatre encoches ; dedans, la pierre sombre, UN ANNEAU D'ÉNERGIE qui bat, des rais d'or fins
-  // vers le cœur
-  p.circle(cx, cy, R0 + 4, PIERRE[0])
-  p.circle(cx, cy, R0 + 3, DORE[1])
-  // (un anneau peint selon l'angle, pas quatre arcs — voir `bandesDuSolDesVectrans`)
-  const segment = (ang: number): boolean => {
-    const a = ((ang % (Math.PI / 2)) + Math.PI / 2) % (Math.PI / 2)
-    return a > 0.18 && a < Math.PI / 2 - 0.18
+/** Un pixel de l'aire des Vectrans : l'anneau d'or segmenté, modelé ; la pierre veinée, ses rais d'or ; les chatons des gemmes. */
+function pixelDeLAireDesVectrans(x: number, y: number, X: number, Y: number, R: number): number {
+  for (let i = 0; i < 8; i++) {
+    const a = (i / 8) * Math.PI * 2
+    const fx = Math.round(X + Math.cos(a) * (R + 7))
+    const fy = Math.round(Y + Math.sin(a) * (R + 7))
+    const e = Math.hypot(x - fx, y - fy)
+    if (e <= 2.6) {
+      const u = (x - fx) / 2.6
+      const v = (y - fy) / 2.6
+      const [di, sp] = eclairage(u, v, Math.sqrt(Math.max(0, 1 - u * u - v * v)), 16)
+      return tonTrame(DORE_T, 0.1 + 0.66 * di + 0.6 * sp, x, y)
+    }
   }
-  p.ring(cx, cy, R0 + 1, 4, (_v: number, ang: number) => (segment(ang) ? DORE[3] : DORE[1]))
-  p.ring(cx, cy, R0 + 2, 1, (_v: number, ang: number) => (segment(ang) ? DORE[4] : DORE[1]))
-  p.circle(cx, cy, R0 - 3, PIERRE[2])
-  const bat = 0.5 + 0.5 * Math.sin(t * 2.2)
-  p.ring(cx, cy, R0 - 6, 2, PSI[2], 0.7 + 0.3 * bat)
-  p.ring(cx, cy, R0 - 6, 1, PSI[4], 0.5 * bat)
+  const dx = x - X
+  const dy = y - Y
+  const d = Math.hypot(dx, dy)
+  if (d > R + 4) return RIEN
+  if (d > R + 3) return PIERRE_T[0]
+  const lum = d > 0 ? (-0.6 * dx - 0.7 * dy) / d : 0
+  if (d > R - 3) {
+    const a = ((Math.atan2(dy, dx) % (Math.PI / 2)) + Math.PI / 2) % (Math.PI / 2)
+    if (a > 0.18 && a < Math.PI / 2 - 0.18) return tonTrame(DORE_T, jonc((d - R) / 3, dx / d, dy / d), x, y)
+    return tonTrame(DORE_T, 0.14 + 0.1 * lum, x, y)
+  }
+  if (d > R - 4) return PIERRE_T[0]
+  if (d > R - 8) return tonTrame(PIERRE_T, 0.14 - 0.08 * lum, x, y)
+  // (les rais d'or vers le cœur, et le moyeu)
   for (let k = 0; k < 8; k++) {
     const a = (k * Math.PI) / 4 + Math.PI / 8
-    p.line(cx + Math.cos(a) * 12, cy + Math.sin(a) * 12, cx + Math.cos(a) * (R0 - 10), cy + Math.sin(a) * (R0 - 10), DORE[1])
+    const le = dx * Math.cos(a) + dy * Math.sin(a)
+    const tr = dx * Math.sin(a) - dy * Math.cos(a)
+    if (le >= 12 && le <= R - 10 && Math.abs(tr) < 1.2) return tonTrame(DORE_T, Math.abs(tr) < 0.5 ? 0.78 : 0.45 + 0.3 * Math.sign(tr) * (-0.6 * Math.sin(a) + 0.7 * Math.cos(a)), x, y)
   }
-  p.ring(cx, cy, 12, 2, DORE[2])
-  p.glow(cx, cy, R0 * 0.8, PSI[2], 0.06 + 0.03 * bat)
-  // ses huit feux : des gemmes bleues serties d'or
+  if (d >= 10 && d <= 13) return tonTrame(DORE_T, jonc((d - 11.5) / 1.5, dx / d, dy / d), x, y)
+  // (la pierre : veinée, plus claire du côté de la lampe, un biseau au bord)
+  let l = 0.36 + 0.12 * ((-0.6 * dx - 0.7 * dy) / R) + marbre(x, y)
+  if (d > R - 11) l += 0.16 * lum
+  if (d < 10) l -= 0.12
+  return tonTrame(PIERRE_T, l, x, y)
+}
+function aireDesVectrans(p: Peintre, cx: number, cy: number, R0: number, t: number, decolle: boolean): void {
+  const X = Math.round(cx)
+  const Y = Math.round(cy)
+  const R = Math.round(R0)
+  peindreBandes(p, enBandes(`aire-vectrans:${X}:${Y}:${R}`, X - R - 10, Y - R - 10, X + R + 11, Y + R + 11, (x, y) => pixelDeLAireDesVectrans(x, y, X, Y, R)))
+  // UN ANNEAU D'ÉNERGIE qui bat, dans son sillon
+  const bat = 0.5 + 0.5 * Math.sin(t * 2.2)
+  p.ring(X, Y, R - 5, 2, PSI[2], 0.7 + 0.3 * bat)
+  p.ring(X, Y, R - 5, 1, PSI[4], 0.5 * bat)
+  p.glow(X, Y, R * 0.8, PSI[2], 0.06 + 0.03 * bat)
+  // ses huit feux : des gemmes bleues dans leurs chatons d'or
   for (let i = 0; i < 8; i++) {
     const a = (i / 8) * Math.PI * 2
     const allume = decolle || (Math.floor(t * 4) + i) % 8 < 3
-    const fx = Math.round(cx + Math.cos(a) * (R0 + 7))
-    const fy = Math.round(cy + Math.sin(a) * (R0 + 7))
-    p.circle(fx, fy, 2.5, DORE[2])
+    const fx = Math.round(X + Math.cos(a) * (R + 7))
+    const fy = Math.round(Y + Math.sin(a) * (R + 7))
     p.poly([[fx, fy - 2], [fx + 1.5, fy], [fx, fy + 2], [fx - 1.5, fy]], allume ? PSI[4] : PSI[1])
+    p.px(fx - 1, fy - 1, allume ? PSI[5] : PSI[2])
     if (allume) p.glow(fx, fy, 6, PSI[3], 0.55)
   }
 }
@@ -663,83 +958,93 @@ function lampesDesVectrans(p: Peintre, s: Scene): void {
 }
 
 // --------------------------------------------------------------------------------------------------------- LES YHG'THARR
+// (… AU NIVEAU DE L'ANTRE — Keko, 19/11 : la brume du vide en cinq tons, ses traînées, ses étoiles en croix ; les dalles
+// d'obsidienne TAILLÉES EN FACETTES, chacune éclairée selon sa pente, leurs arêtes vives ; les tentacules en anneaux de
+// chair modelés, luisants, leurs ventouses ; le cercle de l'aire en pierre rugueuse, fendue, que le vide fait luire)
 const VIDE = H('#030206', '#07040c', '#0e0818', '#160c26', '#22123a', '#3a1e5c', '#6a3aa0', '#b070ff', '#e8c8ff')
-/**
- * LA BRUME DU VIDE, CALCULÉE UNE FOIS (Keko, 19/11 : « rajouter un peu de texture, ou des petits éléments de
- * particules ») : des volutes de brume violette, d'un bruit lissé tramé en trois tons, rangées en bandes.
- */
-const brumesDuVide = new Map<string, number[]>()
-function bandesDeLaBrume(W: number, y0: number, y1: number): number[] {
-  const cle = `${W}:${y0}:${y1}`
-  const deja = brumesDuVide.get(cle)
-  if (deja !== undefined) return deja
-  const lisse = (u: number): number => u * u * (3 - 2 * u)
-  const bruit = (x: number, y: number, pas: number, g: number): number => {
-    const gx = Math.floor(x / pas)
-    const gy = Math.floor(y / pas)
-    const fx = lisse(x / pas - gx)
-    const fy = lisse(y / pas - gy)
-    const v = (i: number, j: number): number => hasard(gx + i, gy + j, g)
-    return (v(0, 0) * (1 - fx) + v(1, 0) * fx) * (1 - fy) + (v(0, 1) * (1 - fx) + v(1, 1) * fx) * fy
-  }
-  const BAYER = [0, 0.5, 0.75, 0.25]
-  const couleur = (x: number, y: number): number => {
-    const n = 0.6 * bruit(x, y, 26, 91) + 0.4 * bruit(x, y, 11, 92)
-    const seuil = BAYER[(x % 2) + 2 * (y % 2)] * 0.12
-    // (… PLUS SOMBRE, POUR QUE CE QUI FLOTTE RESSORTE — Keko, 19/11 : « ça manque un peu de contraste, tout est un peu
-    // sombre, les éléments ressortent un petit peu mal »)
-    return n + seuil > 0.74 ? VIDE[2] : n + seuil > 0.62 ? VIDE[1] : VIDE[0]
-  }
-  const bandes: number[] = []
-  for (let y = y0; y < y1; y++) {
-    let x0 = 0
-    let c0 = couleur(0, y)
-    for (let x = 1; x <= W; x++) {
-      const c = x < W ? couleur(x, y) : -1
-      if (c !== c0) {
-        bandes.push(x0, y, x - x0, c0)
-        x0 = x
-        c0 = c
-      }
-    }
-  }
-  brumesDuVide.set(cle, bandes)
-  return bandes
+const BRUME_T = H('#020104', '#05030a', '#090512', '#0e081c', '#140b26', '#1b0f32')
+const OBSIDIENNE = H('#05030a', '#0c0716', '#140b24', '#1e1034', '#2a1748', '#3a2060', '#4e2c7c', '#6a3ca0', '#9a64d0', '#d8b8ff')
+const CHAIR_DU_VIDE = H('#07030c', '#100820', '#1a0e30', '#261444', '#341c5a', '#442470', '#583088', '#7244a6', '#9a6acc', '#c8a4f0')
+const PIERRE_DU_VIDE = H('#08050e', '#100a1c', '#18102a', '#22163a', '#2c1c4a', '#38245c', '#462c70', '#583888', '#7048a8')
+const ABIME_T = H('#010003', '#040209', '#080412', '#0e071c', '#150a28')
+const OEIL_T = H('#3a1060', '#6a2aa0', '#9a50d8', '#c890ff', '#f0d8ff')
+/** Un pixel de la brume du vide : ses volutes, ses grandes traînées, ses étoiles (les plus vives en croix). */
+function pixelDeLaBrume(x: number, y: number): number {
+  const etoile = (a: number, b: number): boolean => hasard(a, b, 95) < 0.0016
+  if (etoile(x, y)) return hasard(x, y, 96) < 0.3 ? VIDE[8] : VIDE[6]
+  for (const [a, b] of [[x - 1, y], [x + 1, y], [x, y - 1], [x, y + 1]]) if (etoile(a, b) && hasard(a, b, 96) < 0.3) return VIDE[5]
+  const n = 0.6 * bruit(x, y, 26, 91) + 0.4 * bruit(x, y, 11, 92)
+  const trainee = bruit(x * 0.5 + y * 0.8, y * 0.3, 30, 94)
+  return tonTrame(BRUME_T, Math.max(0, n - 0.45) * 1.6 + 0.16 * (trainee - 0.5) + 0.1, x, y)
+}
+/** Une sphère de chair du vide, de rayon `w` en (x, y) : modelée, luisante. */
+function anneauDeChair(p: Peintre, x: number, y: number, w: number): void {
+  p.circle(x, y, w, (d: number, a: number) => {
+    const u = Math.cos(a) * d
+    const v = Math.sin(a) * d
+    const [di, sp] = eclairage(u, v, Math.sqrt(Math.max(0, 1 - d * d)), 16)
+    return tonTrame(CHAIR_DU_VIDE, 0.08 + 0.7 * di + 0.55 * sp, x + u * w, y + v * w)
+  })
 }
 function solDesYhgtharr(p: Peintre, s: Scene): void {
-  const { W, y0, y1, cx, cy, t } = s
+  const { t } = s
+  const W = Math.round(s.W)
+  const y0 = Math.round(s.y0)
+  const y1 = Math.round(s.y1)
+  const cx = Math.round(s.cx)
+  const cy = Math.round(s.cy)
   const hautScene = y1 - y0
-  const bb = bandesDeLaBrume(W, Math.round(y0), Math.round(y1))
-  for (let i = 0; i < bb.length; i += 4) p.rect(bb[i], bb[i + 1], bb[i + 2], 1, bb[i + 3])
-  // le vide, piqué de lueurs lointaines
+  peindreBandes(p, enBandes(`brume:${W}:${y0}:${y1}`, 0, y0, W, y1, pixelDeLaBrume))
+  // le vide, piqué de lueurs lointaines qui clignent
   for (let i = 0; i < 40; i++) {
     const x = Math.floor(hasard(i, 1, 41) * W)
     const y = y0 + Math.floor(hasard(i, 2, 41) * hautScene)
     if (Math.sin(t * (0.6 + hasard(i, 3, 41)) + i) > 0.3) p.px(x, y, i % 4 === 0 ? VIDE[6] : VIDE[4])
   }
-  // DES DALLES D'OBSIDIENNE QUI FLOTTENT : des éclats de pierre, cernés d'un fil violet, qui montent et descendent à peine
+  // DES DALLES D'OBSIDIENNE QUI FLOTTENT, taillées en six facettes autour d'une pointe : chaque facette éclairée selon sa
+  // pente, la pointe luisante, les arêtes vives du côté de la lampe ; une fissure qui luit
   for (let i = 0; i < 16; i++) {
     const x = hasard(i, 4, 43) * W
     const y = y0 + hasard(i, 5, 43) * hautScene
     if (Math.hypot(x - cx, y - cy) < 70) continue
     const r = 5 + hasard(i, 6, 43) * 8
     const flotte = Math.sin(t * 0.8 + i) * 1.5
+    const yc = y + flotte
+    const angles: number[] = []
     const pts: number[][] = []
     for (let k = 0; k < 6; k++) {
       const a = (k / 6) * Math.PI * 2 + hasard(i, k, 44)
       const rr = r * (0.6 + 0.5 * hasard(i, k, 45))
-      pts.push([x + Math.cos(a) * rr, y + flotte + Math.sin(a) * rr * 0.7])
+      angles.push(a)
+      pts.push([x + Math.cos(a) * rr, yc + Math.sin(a) * rr * 0.7])
     }
     p.poly(pts.map(([a, b]) => [a + 1, b + 2]), VIDE[0])
-    // (… PLUS CLAIRES : la pierre au ton du dessus, son arête éclairée vive)
-    p.poly(pts, VIDE[5])
-    for (let k = 0; k < 6; k++) p.line(pts[k][0], pts[k][1], pts[(k + 1) % 6][0], pts[(k + 1) % 6][1], k < 3 ? VIDE[6] : VIDE[3])
-    // (… UNE FISSURE QUI LUIT dans la pierre, qui bat lentement)
+    p.poly(pts, (px: number, py: number) => {
+      const dx = px - x
+      const dy = (py - yc) / 0.7
+      const rel = (((Math.atan2(dy, dx) - angles[0]) % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2)
+      let k = 0
+      while (k < 5 && angles[k + 1] - angles[0] <= rel) k++
+      const a0 = angles[k] - angles[0]
+      const a1 = k < 5 ? angles[k + 1] - angles[0] : Math.PI * 2
+      const m = angles[0] + (a0 + a1) / 2
+      const [di, sp] = eclairage(Math.cos(m) * 0.7, Math.sin(m) * 0.7, 0.71, 10)
+      const rp = Math.hypot(dx, dy)
+      if (Math.min(rel - a0, a1 - rel) * rp < 0.6) return tonTrame(OBSIDIENNE, 0.3 + 0.5 * di, px, py)
+      return tonTrame(OBSIDIENNE, 0.1 + 0.6 * di + 0.5 * sp + 0.15 * Math.max(0, 1 - rp / r) * di, px, py)
+    })
+    for (let k = 0; k < 6; k++) {
+      const [ax, ay] = pts[k]
+      const [bx, by] = pts[(k + 1) % 6]
+      const m = Math.atan2((ay + by) / 2 - yc, (ax + bx) / 2 - x)
+      p.line(ax, ay, bx, by, -0.6 * Math.cos(m) - 0.7 * Math.sin(m) > 0 ? OBSIDIENNE[8] : OBSIDIENNE[2])
+    }
     const lu = 0.4 + 0.6 * Math.max(0, Math.sin(t * 1.2 + i * 1.7))
-    p.line(pts[0][0] * 0.6 + x * 0.4, pts[0][1] * 0.6 + y * 0.4 + flotte * 0.4, x, y + flotte, VIDE[6], 0.5 * lu)
-    p.line(x, y + flotte, pts[3][0] * 0.5 + x * 0.5, pts[3][1] * 0.5 + (y + flotte) * 0.5, VIDE[7], 0.4 * lu)
+    p.line(pts[0][0] * 0.6 + x * 0.4, pts[0][1] * 0.6 + yc * 0.4, x, yc, VIDE[7], 0.5 * lu)
+    p.line(x, yc, pts[3][0] * 0.5 + x * 0.5, pts[3][1] * 0.5 + yc * 0.5, VIDE[8], 0.4 * lu)
   }
-  // DES TENTACULES qui montent des coins du bas et ondulent : épais à la base, effilés, d'une ombre violette
+  // DES TENTACULES qui montent des coins du bas et ondulent : des anneaux de chair modelés, luisants, des ventouses du côté
+  // de l'aire
   for (const [x0, sg, lg] of [[4, 1, 70], [W - 4, -1, 64], [22, 1, 40], [W - 20, -1, 44]] as [number, number, number][]) {
     let px = x0
     let py = y1 + 2
@@ -749,10 +1054,11 @@ function solDesYhgtharr(p: Peintre, s: Scene): void {
       const y = y1 + 2 - u * lg
       const w = 4.5 * (1 - u) + 0.6
       p.circle(x, y, w + 0.8, VIDE[0])
-      // (… PLUS CLAIRS, un dos éclairé)
-      p.circle(x, y, w, VIDE[5])
-      p.circle(x - 0.5, y - 0.5, Math.max(0.5, w * 0.45), VIDE[6])
-      if (j % 3 === 0) p.px(Math.round(x + sg * w * 0.5), Math.round(y), VIDE[6])
+      anneauDeChair(p, x, y, w)
+      if (j % 2 === 0 && w > 1.6) {
+        p.circle(x + sg * w * 0.55, y, 1.2, CHAIR_DU_VIDE[8])
+        p.px(Math.round(x + sg * w * 0.55), Math.round(y), CHAIR_DU_VIDE[1])
+      }
       px = x
       py = y
     }
@@ -762,15 +1068,17 @@ function solDesYhgtharr(p: Peintre, s: Scene): void {
       p.circle(px + Math.sin(u * 5 + k) * 2, py - u * 14, 0.8 + u * 1.6, VIDE[5], 0.5 * (1 - u))
     }
   }
-  // DES YEUX QUI S'OUVRENT DANS LE NOIR, sur les côtés : une fente violette, qui cligne
+  // DES YEUX QUI S'OUVRENT DANS LE NOIR, sur les côtés : une paupière, un iris qui luit vers son cœur, une fente, un reflet
   for (let i = 0; i < 4; i++) {
     const x = i < 2 ? 14 + i * 9 : W - 14 - (i - 2) * 9
     const y = y0 + 30 + i * 21
     const ouvert = Math.max(0, Math.sin(t * 0.7 + i * 2.1))
     if (ouvert < 0.15) continue
     const h = Math.round(1 + 2 * ouvert)
-    p.poly([[x - 4, y], [x, y - h], [x + 4, y], [x, y + h]], VIDE[6])
+    p.poly([[x - 5, y], [x, y - h - 1], [x + 5, y], [x, y + h + 1]], PIERRE_DU_VIDE[1])
+    p.poly([[x - 4, y], [x, y - h], [x + 4, y], [x, y + h]], (px: number, py: number) => tonTrame(OEIL_T, 1 - Math.hypot(px - x, (py - y) * 1.6) / 4.5, px, py))
     p.rect(x, y - h + 1, 1, 2 * h - 1, VIDE[0])
+    p.px(x - 2, y - 1, VIDE[8])
     p.glow(x, y, 6, VIDE[7], 0.25 * ouvert)
   }
   // DES PARTICULES QUI TOURNENT AUTOUR DE L'AIRE, lentement, chacune sa petite traîne
@@ -810,28 +1118,48 @@ function solDesYhgtharr(p: Peintre, s: Scene): void {
   }
   p.glow(cx, cy + 4, 64, VIDE[7], 0.06)
 }
+/** Un pixel de l'aire des Yhg'tharr : le cercle de pierre rugueuse, bombé, fendu (des fentes où le vide luit) ; l'abîme. */
+function pixelDeLAireDesYhgtharr(x: number, y: number, X: number, Y: number, R: number): number {
+  for (let i = 0; i < 8; i++) {
+    const a = (i / 8) * Math.PI * 2
+    const fx = Math.round(X + Math.cos(a) * (R + 7))
+    const fy = Math.round(Y + Math.sin(a) * (R + 7))
+    const e = Math.abs(x - fx) / 4.6 + Math.abs(y - fy) / 2.8
+    if (e <= 1) return e > 0.7 ? tonTrame(PIERRE_DU_VIDE, y < fy ? 0.6 : 0.25, x, y) : PIERRE_DU_VIDE[0]
+  }
+  const dx = x - X
+  const dy = y - Y
+  const d = Math.hypot(dx, dy)
+  if (d > R + 4) return RIEN
+  if (d > R + 3) return VIDE[0]
+  if (d > R - 7) {
+    const fente = Math.abs(bruit(x, y, 9, 98) - 0.5)
+    if (fente < 0.022) return bruit(x, y, 30, 99) > 0.55 ? (fente < 0.01 ? VIDE[7] : VIDE[6]) : PIERRE_DU_VIDE[0]
+    const u = Math.max(-1, Math.min(1, (d - (R - 2)) / 5))
+    const [di, sp] = eclairage((u * dx) / d, (u * dy) / d, Math.sqrt(Math.max(0, 1 - u * u)), 8)
+    return tonTrame(PIERRE_DU_VIDE, 0.1 + 0.62 * di + 0.3 * sp + 0.24 * (bruit(x, y, 3, 97) - 0.5), x, y)
+  }
+  // (l'abîme : de plus en plus noir vers le cœur, un remous figé dedans)
+  const a = Math.atan2(dy, dx)
+  return tonTrame(ABIME_T, 0.9 * Math.pow(d / (R - 7), 1.5) + 0.12 * Math.sin(a * 3 + d * 0.25), x, y)
+}
 function aireDesYhgtharr(p: Peintre, cx: number, cy: number, R0: number, t: number, decolle: boolean): void {
-  // un CERCLE DE PIERRE NOIRE, gravé de RUNES qui luisent et tournent ; dedans, LE VIDE qui tourbillonne
-  // (… PLUS CONTRASTÉ : la pierre plus claire, ses bords vifs, le vide du dedans plus noir)
-  p.circle(cx, cy, R0 + 4, VIDE[0])
-  p.circle(cx, cy, R0 + 3, VIDE[5])
-  p.arc(cx, cy, R0 + 3, 1, Math.PI * 0.9, Math.PI * 1.6, VIDE[7])
-  p.circle(cx, cy, R0, VIDE[1])
-  p.ring(cx, cy, R0 - 1, 6, VIDE[5])
-  p.ring(cx, cy, R0 - 7, 1, VIDE[6])
-  p.ring(cx, cy, R0, 1, VIDE[5])
+  const X = Math.round(cx)
+  const Y = Math.round(cy)
+  const R = Math.round(R0)
+  peindreBandes(p, enBandes(`aire-yhgtharr:${X}:${Y}:${R}`, X - R - 10, Y - R - 10, X + R + 11, Y + R + 11, (x, y) => pixelDeLAireDesYhgtharr(x, y, X, Y, R)))
+  // DES RUNES qui luisent et tournent, chacune gravée dans un creux sombre
   const tour = t * 0.2
   for (let k = 0; k < 12; k++) {
     const a = tour + (k / 12) * Math.PI * 2
     const [ux, uy] = [Math.cos(a), Math.sin(a)]
     const [nx, ny] = [-uy, ux]
-    const rx = cx + ux * (R0 - 4)
-    const ry = cy + uy * (R0 - 4)
+    const rx = X + ux * (R - 3)
+    const ry = Y + uy * (R - 3)
     const forme = k % 3
-    // (… PLUS GRANDES — mesuré à la capture : à un pixel et demi, on ne les lisait pas)
     const c = Math.sin(t * 2 + k) > 0.2 ? VIDE[8] : VIDE[7]
-    // (… GRAVÉES DANS UN CREUX SOMBRE : sur la pierre éclaircie, la rune claire ne ressortait plus)
-    p.circle(rx, ry, 3.6, VIDE[1])
+    p.circle(rx, ry, 3.6, PIERRE_DU_VIDE[0])
+    p.arc(rx, ry, 3.6, 1, Math.PI * 0.1, Math.PI * 0.9, PIERRE_DU_VIDE[6])
     if (forme === 0) {
       p.line(rx - nx * 2.5, ry - ny * 2.5, rx + nx * 2.5, ry + ny * 2.5, c)
       p.line(rx + nx * 2.5, ry + ny * 2.5, rx + nx * 1 + ux * 2, ry + ny * 1 + uy * 2, c)
@@ -844,24 +1172,26 @@ function aireDesYhgtharr(p: Peintre, cx: number, cy: number, R0: number, t: numb
   }
   // le tourbillon : des bras violets qui s'enroulent vers un cœur noir
   for (let b = 0; b < 3; b++)
-    for (let r = 6; r < R0 - 8; r += 1.5) {
+    for (let r = 6; r < R - 9; r += 1.5) {
       const a = -t * 0.8 + b * ((Math.PI * 2) / 3) + r * 0.09
-      const u = r / (R0 - 8)
-      p.px(Math.round(cx + Math.cos(a) * r), Math.round(cy + Math.sin(a) * r), u < 0.4 ? VIDE[6] : u < 0.75 ? VIDE[5] : VIDE[4])
+      const u = r / (R - 9)
+      p.px(Math.round(X + Math.cos(a) * r), Math.round(Y + Math.sin(a) * r), u < 0.4 ? VIDE[6] : u < 0.75 ? VIDE[5] : VIDE[4])
     }
-  p.circle(cx, cy, 6, VIDE[0])
-  p.ring(cx, cy, 6, 1, VIDE[5])
-  // ses huit feux : des yeux, qui s'ouvrent l'un après l'autre
+  p.circle(X, Y, 6, VIDE[0])
+  p.ring(X, Y, 6, 1, VIDE[5])
+  // ses huit feux : des yeux, dans leurs orbites de pierre, qui s'ouvrent l'un après l'autre
   for (let i = 0; i < 8; i++) {
     const a = (i / 8) * Math.PI * 2
     const allume = decolle || (Math.floor(t * 4) + i) % 8 < 3
-    const fx = Math.round(cx + Math.cos(a) * (R0 + 7))
-    const fy = Math.round(cy + Math.sin(a) * (R0 + 7))
-    p.poly([[fx - 3, fy], [fx, fy - (allume ? 2 : 1)], [fx + 3, fy], [fx, fy + (allume ? 2 : 1)]], allume ? VIDE[7] : VIDE[4])
-    if (allume) {
-      p.rect(fx, fy - 1, 1, 3, VIDE[0])
-      p.glow(fx, fy, 6, VIDE[7], 0.5)
+    const fx = Math.round(X + Math.cos(a) * (R + 7))
+    const fy = Math.round(Y + Math.sin(a) * (R + 7))
+    if (!allume) {
+      p.line(fx - 3, fy, fx + 3, fy, PIERRE_DU_VIDE[3])
+      continue
     }
+    p.poly([[fx - 3, fy], [fx, fy - 2], [fx + 3, fy], [fx, fy + 2]], (px: number, py: number) => tonTrame(OEIL_T, 1 - Math.hypot(px - fx, (py - fy) * 1.6) / 3.4, px, py))
+    p.rect(fx, fy - 1, 1, 3, VIDE[0])
+    p.glow(fx, fy, 6, VIDE[7], 0.5)
   }
 }
 
