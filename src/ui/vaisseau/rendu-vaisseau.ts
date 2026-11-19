@@ -690,7 +690,7 @@ export const ANCRES_DU_KRAKEN: [number, number][] = [[7.2, 0]]
 // (… EN DEUX CORPS, ÉPINEUX — Keko, 19/11 : la queue au bout de l'abdomen, le nez au bout des mandibules ; plus de feux de
 // position — ils étaient sur ses nageoires —, une bête n'en a pas)
 /** De combien l'abdomen du Kraken s'est rapproché de sa tête (Keko, 19/11). */
-const AVANCE_DE_L_ABDOMEN_DU_KRAKEN = 2
+const AVANCE_DE_L_ABDOMEN_DU_KRAKEN = 3.4
 const GABARIT_DU_KRAKEN: Gabarit = { tuyeres: [{ x: -0.9 + AVANCE_DE_L_ABDOMEN_DU_KRAKEN, y: 0 }], armes: [{ x: 0, y: 0, s: 1 }], feux: null, verriere: 5.8, nez: 11.6, flanc: 6.4, anneau: 13, echelle: 1 }
 // LA VOUIVRE (Keko, 16/11) : un corps de serpent en écailles, deux sacs à venin sur des membranes, une gueule à mandibules
 // qui crache ; un jet de venin à la queue
@@ -1182,7 +1182,6 @@ export function formesDeLaCoque(cran: number, t = 0, motif?: MotifDuVer): Forme[
     for (const x of [-1.8, -3.3, -4.8, -6.3, -7.8]) abdomen.push({ pts: [[x + 0.7, 0], [x - 0.3, -1.35], [x - 1.1, -1.15], [x - 0.5, 0], [x - 1.1, 1.15], [x - 0.3, 1.35]], mat: 'graphite', relief: 'plat' })
     // (… PUIS SANS SES CORNES — Keko, 19/11 : « enlève les petits pics beiges de l'abdomen ; avec les tentacules, ça fait un
     // peu trop » : ses trois paires de cornes d'os, celle de la pointe et les deux épines de la taille sont parties)
-    f.push(...decaler(abdomen, AVANCE, 0))
     // LA TAILLE : un étranglement de chitine, une petite épine de chaque côté
     f.push({ pts: [[1.2, -1.9], [0.4, -2.2], [0.4, 2.2], [1.2, 1.9]], mat: 'chitine', relief: 'cyl' })
     // LE THORAX : sa carapace, un bouclier cuirassé, deux paires d'yeux de bile
@@ -1191,6 +1190,10 @@ export function formesDeLaCoque(cran: number, t = 0, motif?: MotifDuVer): Forme[
     for (const x of [2.4, 4.4]) f.push({ pts: [[x + 0.3, -3.2], [x - 0.4, -1.6], [x - 0.6, 0], [x - 0.4, 1.6], [x + 0.3, 3.2], [x - 0.2, 3.3], [x - 1, 1.6], [x - 1.2, 0], [x - 1, -1.6], [x - 0.2, -3.3]], mat: 'chair', relief: 'plat' })
     for (const x of [1.8, 3.8]) f.push({ pts: [[x + 1, 0], [x - 0.5, -0.5], [x - 0.2, 0], [x - 0.5, 0.5]], mat: 'os', relief: 'plat' })
     for (const sg of [-1, 1]) for (const [x, y, r] of [[5.9, sg * 2.2, 0.5], [4.8, sg * 2.8, 0.38]] as [number, number, number][]) f.push({ pts: ovale(x, y, r, r, 10), mat: 'bile', relief: 'dome', dome: { x, y, rx: r, ry: r } })
+    // (… L'ABDOMEN PAR-DESSUS LE BAS DE LA TÊTE — Keko, 19/11 : « remonte encore l'abdomen pour qu'il aille jusqu'à cacher
+    // la partie basse de la tête ; l'impression que l'abdomen est au-dessus, un peu plus gros, et le couvre un peu ; on
+    // réduit aussi la hauteur du vaisseau » : il avance de 3,4 et se peint après le thorax, dont il couvre l'arrière)
+    f.push(...decaler(abdomen, AVANCE, 0))
     // LA GUEULE : un trou sombre bordé de crocs, la tentacule à aiguille y prend racine
     for (const [x, y] of ANCRES_DU_KRAKEN) {
       f.push({ pts: ovale(x + 0.5, y, 1.1, 1.4, 12), mat: 'suie', relief: 'plat' })

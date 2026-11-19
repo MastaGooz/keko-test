@@ -6001,3 +6001,8 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   beiges qu'il y a sur l'abdomen ; avec les tentacules, ça fait un peu trop ») : l'abdomen avance de 2 (1,2 avant), la
   taille n'est plus qu'un étranglement de 0,8 ; ses trois paires de cornes d'os, celle de la pointe et les deux épines de
   la taille sont retirées. Restent l'échine, les côtes, les sacs, et les six tentacules. Vu à la capture.
+- L'ABDOMEN DU KRAKEN PAR-DESSUS SA TÊTE (Keko, 19/11 : « remonte encore l'abdomen pour qu'il aille jusqu'à cacher la partie
+  basse de la tête, pour donner l'impression que l'abdomen est au-dessus de la tête, un peu plus gros, et le couvre un
+  petit peu ; on réduit aussi la hauteur du vaisseau ») : il avance de 3,4 (2 avant) et SE PEINT APRÈS LE THORAX, dont il
+  couvre l'arrière — plus large que lui (±5,3 contre ±3,5), il se lit posé dessus. Le Kraken est plus court d'autant ;
+  ses tentacules et sa queue suivent. Vu à la capture.
