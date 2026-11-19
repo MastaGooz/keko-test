@@ -226,10 +226,10 @@ const PEAUX: Record<string, Peau[]> = {
       principale: 'mauve',
       rampes: { obsidienne: T(228, 0.45, 0.62), mauve: T(32, 0.85, 1), plasma: R('#3a0a04', '#8a2a06', '#e06a10', '#ffb030', '#ffe890', '#ffffff'), decor: T(44, 0.9, 1.12) },
       accent: T(44, 0.9, 1.12),
-      // (… SUR LE SCEAU — Keko, 19/11 : ses nageoires sont parties ; l'or au bout des six branches de son étoile)
+      // (… SUR LE SCEAU — Keko, 19/11 : ses nageoires sont parties ; l'or au bout des quatre grandes pointes de son étoile)
       habit: () => ({
         ailes: [],
-        coque: [plat(barre(1.4, 0, 4.4, 0, 0.4), 'decor'), ...[0, 1, 2, 3, 4, 5].map((k) => goutte(Math.cos((k * Math.PI) / 3) * 6, Math.sin((k * Math.PI) / 3) * 6, 0.45, 'decor'))],
+        coque: [plat(barre(1.4, 0, 4.4, 0, 0.4), 'decor'), ...[0, 1, 2, 3].map((k) => goutte(Math.cos((k * Math.PI) / 2) * 6.1, Math.sin((k * Math.PI) / 2) * 6.1, 0.45, 'decor'))],
       }),
     },
     {
@@ -242,7 +242,7 @@ const PEAUX: Record<string, Peau[]> = {
       habit: () => ({
         // (… SUR LE SCEAU — Keko, 19/11 : des étoiles roses semées entre les branches)
         ailes: [],
-        coque: [0, 1, 2, 3, 4, 5].map((k) => goutte(Math.cos(Math.PI / 6 + (k * Math.PI) / 3) * 4.3, Math.sin(Math.PI / 6 + (k * Math.PI) / 3) * 4.3, 0.3, 'decor')),
+        coque: [0, 1, 2, 3, 4, 5, 6, 7].map((k) => goutte(Math.cos(Math.PI / 8 + (k * Math.PI) / 4) * 4.6, Math.sin(Math.PI / 8 + (k * Math.PI) / 4) * 4.6, 0.28, 'decor')),
       }),
     },
   ],

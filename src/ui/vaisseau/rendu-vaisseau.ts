@@ -1388,27 +1388,35 @@ export function formesDeLaCoque(cran: number, t = 0, motif?: MotifDuVer): Forme[
     // derrière ; une rune luit au bout de chaque branche ; au nez, les DEUX CORNES en croissant, entre lesquelles l'orbe se
     // forme ; autour de lui, LE CERCLE DE RUNES qui tourne — voir `formesDesAiles`)
     const f: Forme[] = []
-    const etoile = (a0: number, r: number): [number, number][] => [0, 1, 2].map((k): [number, number] => [Math.cos(a0 + (k * 2 * Math.PI) / 3) * r, Math.sin(a0 + (k * 2 * Math.PI) / 3) * r])
+    // (… UNE ÉTOILE À QUATRE GRANDES POINTES, PAS SIX — Keko, 19/11 : « ça fait un peu penser à une étoile de David ; je
+    // voudrais quelque chose de politiquement neutre » : une étincelle d'arcane, quatre grandes pointes — devant, derrière,
+    // les flancs — et quatre petites entre elles, cernée d'un fin cercle mauve ; une rune au bout des grandes)
+    const etoile: [number, number][] = []
+    for (let k = 0; k < 16; k++) {
+      const a = (k * Math.PI) / 8
+      // (… LARGES À LA BASE — mesuré à la capture : fines, les quatre grandes pointes faisaient une croix ; une rose des vents)
+      const r = k % 4 === 0 ? 6.6 : k % 4 === 2 ? 4.4 : 2.7
+      etoile.push([Math.cos(a) * r, Math.sin(a) * r])
+    }
     for (const sg of [-1, 1]) {
       f.push({ pts: [[3.4, sg * 2.4], [6.2, sg * 3.1], [8.6, sg * 2.5], [9.9, sg * 1], [8.7, sg * 1.5], [6.4, sg * 2], [4, sg * 1.5]], mat: 'mauve', relief: 'plat', penche: sg })
       f.push({ pts: ovale(9.6, sg * 1.05, 0.5, 0.5, 8), mat: 'plasma', relief: 'dome', dome: { x: 9.6, y: sg * 1.05, rx: 0.5, ry: 0.5 } })
     }
-    f.push({ pts: etoile(0, 6.4), mat: 'obsidienne', relief: 'plat' })
-    f.push({ pts: etoile(Math.PI / 3, 6.4), mat: 'obsidienne', relief: 'plat' })
-    // (le fin hexagone mauve qui joint les creux de l'étoile)
-    for (let k = 0; k < 6; k++) {
-      const a0 = Math.PI / 6 + (k * Math.PI) / 3
-      const a1 = a0 + Math.PI / 3
-      f.push({ pts: barre(Math.cos(a0) * 3.7, Math.sin(a0) * 3.7, Math.cos(a1) * 3.7, Math.sin(a1) * 3.7, 0.28), mat: 'mauve', relief: 'plat' })
+    f.push({ pts: etoile, mat: 'obsidienne', relief: 'plat' })
+    // (le fin cercle mauve, à mi-pointes)
+    for (let k = 0; k < 16; k++) {
+      const a0 = (k * Math.PI) / 8 + 0.08
+      const a1 = ((k + 1) * Math.PI) / 8 - 0.08
+      f.push({ pts: barre(Math.cos(a0) * 3.3, Math.sin(a0) * 3.3, Math.cos(a1) * 3.3, Math.sin(a1) * 3.3, 0.26), mat: 'mauve', relief: 'plat' })
     }
-    // (une rune au bout de chaque branche : un trait et sa barre, qui luisent)
-    for (let k = 0; k < 6; k++) {
-      const a = (k * Math.PI) / 3
+    // (une rune au bout de chaque grande pointe : un trait et sa barre, qui luisent)
+    for (let k = 0; k < 4; k++) {
+      const a = (k * Math.PI) / 2
       const [ux, uy] = [Math.cos(a), Math.sin(a)]
-      f.push({ pts: barre(ux * 4.3, uy * 4.3, ux * 5.5, uy * 5.5, 0.22), mat: 'plasma', relief: 'lueur', ton: 4 })
+      f.push({ pts: barre(ux * 4.3, uy * 4.3, ux * 5.6, uy * 5.6, 0.22), mat: 'plasma', relief: 'lueur', ton: 4 })
       f.push({ pts: barre(ux * 4.9 - uy * 0.45, uy * 4.9 + ux * 0.45, ux * 4.9 + uy * 0.45, uy * 4.9 - ux * 0.45, 0.2), mat: 'plasma', relief: 'lueur', ton: 4 })
     }
-    f.push({ pts: [[2.6, 0], [0, -2.6], [-2.6, 0], [0, 2.6]], mat: 'mauve', relief: 'plat' })
+    f.push({ pts: [[1.9, 1.9], [1.9, -1.9], [-1.9, -1.9], [-1.9, 1.9]], mat: 'mauve', relief: 'plat' })
     f.push({ pts: ovale(0, 0, 2.3, 2.3, 18), mat: 'metal', relief: 'dome', dome: { x: 0, y: 0, rx: 2.3, ry: 2.3 } })
     f.push({ pts: ovale(0, 0, 1.75, 1.75, 16), mat: 'plasma', relief: 'dome', dome: { x: 0, y: 0, rx: 1.75, ry: 1.75 } })
     return f
@@ -1625,12 +1633,13 @@ export function formesDesAiles(coque = 1, t = 0): Forme[] {
     // runes de plasma qui luisent, qui TOURNE lentement autour de lui ; une marque à la rune de tête)
     const rot = t * 0.35
     const R0 = 7.6
-    for (let k = 0; k < 6; k++) {
-      const base = rot + (k * Math.PI) / 3
-      // (l'arc entre deux runes, en trois segments)
-      for (let j = 0; j < 3; j++) {
-        const a0 = base + 0.16 + (j * (Math.PI / 3 - 0.32)) / 3
-        const a1 = base + 0.16 + ((j + 1) * (Math.PI / 3 - 0.32)) / 3
+    // (… QUATRE RUNES, PAS SIX — Keko, 19/11 : rien qui rappelle l'étoile à six branches)
+    for (let k = 0; k < 4; k++) {
+      const base = rot + Math.PI / 4 + (k * Math.PI) / 2
+      // (l'arc entre deux runes, en cinq segments)
+      for (let j = 0; j < 5; j++) {
+        const a0 = base + 0.16 + (j * (Math.PI / 2 - 0.32)) / 5
+        const a1 = base + 0.16 + ((j + 1) * (Math.PI / 2 - 0.32)) / 5
         f.push({ pts: barre(Math.cos(a0) * R0, Math.sin(a0) * R0, Math.cos(a1) * R0, Math.sin(a1) * R0, 0.36), mat: 'mauve', relief: 'plat' })
       }
       // (la rune : un losange de plasma barré d'un trait, dans la coupure)

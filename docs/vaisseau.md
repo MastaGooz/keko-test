@@ -6201,3 +6201,8 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   blanc ne revient qu'aux coups et sous le balayage) ; LE BALAYAGE toutes les 2,6 s (4 avant), plus large, deux fois plus
   vif sur les joints et le verre ; LA BULLE AU HANGAR ET À L'ACCUEIL (`aUnBouclierAuRepos` : au vortex, le bouclier vient
   de la race, la coque n'en disait rien).
+- … PUIS UNE ÉTOILE À QUATRE GRANDES POINTES (Keko, 19/11 : « ça fait un peu penser à une étoile de David ; je voudrais
+  quelque chose de politiquement neutre ») : une étincelle d'arcane, une rose des vents — quatre grandes pointes
+  (devant, derrière, les flancs) et quatre petites entre elles, larges à la base (*mesuré à la capture* : fines, elles
+  faisaient une croix) ; un fin cercle mauve à la place de l'hexagone ; une rune au bout des quatre grandes ; le cercle
+  de runes en porte quatre, sur les diagonales. Ses apparences suivent (l'or au bout des grandes pointes, huit étoiles).
