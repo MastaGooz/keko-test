@@ -6453,3 +6453,13 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   doux comme un vent, comme un bruit de condensation de l'air ») : `condense` n'a plus de tintement de verre ni de bande
   aiguë (2 400 → 5 200 Hz) : un souffle grave et feutré (passe-bas 420 → 900 Hz, large) qui s'enfle et se retire, et une
   bouffée en bande large vers 700 → 1 100 Hz. Pas écouté : à juger à l'oreille.
+- LES VECTRANS, UNE ONDE D'ÉNERGIE (Keko, 19/11 : « le bruit de décollage des éthérés au hangar est un peu bizarre, des
+  petits sons aigus, un peu de glace, c'est pas très joli ; plutôt quelque chose qui renvoie à une onde un peu
+  énergétique ; pareil pour le son en vol ») : plus de bourdon cristallin, de sifflement d'ions ni de verre.
+  - EN VOL (`voixDesEtheres`) : un bourdon grave et rond (un sinus à 82 Hz, sa quinte, une dent de scie à l'octave pour les
+    petits haut-parleurs) dans un passe-bas résonant qui ONDULE (0,7 Hz), qui BAT PAR PULSATIONS — de 3 par seconde à
+    l'arrêt à 7 à pleine poussée — et monte d'une quarte en s'ouvrant avec la poussée. Niveaux calculés contre le souffle.
+  - AU DÉCOLLAGE (`decolleEthere`) : une énergie qui se charge (un grave rond qui monte d'une octave, un souffle résonant qui
+    balaie de 200 à 2 000 Hz), sept pulsations graves qui s'accélèrent, puis le relâchement. MESURÉ hors navigateur
+    (`synthetiser`) : sa valeur efficace, 0,107 au niveau 0,7, ramenée à celle des autres décollages (0,09) au niveau 0,6.
+  Pas écouté : à juger à l'oreille.

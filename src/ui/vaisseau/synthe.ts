@@ -1271,17 +1271,26 @@ const RECETTES = {
   },
   /**
    * LE DÉCOLLAGE D'UN VECTRAN — la Sentinelle, le Frimas, le Pulsar (Keko, 19/11 : « un son de propulsion différent pour
-   * les éthérés, comme si leur système de propulsion était d'une technologie différente ») : pas de souffle de tuyère —
-   * UN BOURDON CRISTALLIN qui monte d'une octave en quinte (deux notes rondes, à peine battues), UN SIFFLEMENT D'IONS en
-   * bande étroite qui s'élève avec lui, et des scintillements de verre semés autour
+   * les éthérés, d'une technologie différente ») — PUIS UNE ONDE D'ÉNERGIE (Keko, 19/11 : « des petits sons aigus, un peu
+   * de glace, c'est pas très joli ; plutôt quelque chose qui renvoie à une onde un peu énergétique ») : plus de bourdon
+   * cristallin ni de scintillements de verre — UNE ÉNERGIE QUI SE CHARGE (un grave rond qui monte d'une octave, un souffle
+   * résonant qui balaie vers le haut), DES PULSATIONS qui s'accélèrent (des « woum » graves qui montent chacun), puis LE
+   * RELÂCHEMENT (le souffle qui retombe, large)
    */
   decolleEthere: {
-    duree: 2.4, niveau: 0.65, salle: [0.8, 0.3],
+    // (0,6 : mesuré, sa valeur efficace rejoint celle des autres décollages, 0,09)
+    duree: 2.4, niveau: 0.6, salle: [0.8, 0.3],
     faire: (m, h) => {
-      note(m, 0, 0.6, -0.2, { f: 110, glisse: { vers: 220, en: 1.1, droit: true }, a: 0.4, d: 1.1, partiels: [[1, 1, 1], [2, 0.5, 0.9], [3, 0.3, 0.8], [4, 0.2, 0.7]], battement: 6 })
-      note(m, 0.05, 0.45, 0.2, { f: 165, glisse: { vers: 330, en: 1.1, droit: true }, a: 0.45, d: 1.1, partiels: [[1, 1, 1], [2, 0.4, 0.9], [3, 0.2, 0.7]], battement: 7 })
-      souffle(m, h, 0, 0.3, 0, { f: 900, glisse: { vers: 3600, en: 1.1, droit: true }, q: 9, bande: true, a: 0.5, d: 0.8, large: true })
-      for (let k = 0; k < 10; k++) note(m, 0.3 + k * 0.12 + 0.05 * h.next(), 0.12, (h.next() - 0.5) * 0.8, { f: 1800 + 1600 * h.next(), d: 0.18, partiels: VERRE })
+      note(m, 0, 0.7, 0, { f: 55, glisse: { vers: 110, en: 1.2, droit: true }, a: 0.5, d: 1.1, partiels: [[1, 1, 1], [2, 0.5, 0.9], [3, 0.25, 0.8]], battement: 4, sature: 1.3 })
+      souffle(m, h, 0, 0.45, 0, { f: 200, glisse: { vers: 2000, en: 1.2, droit: true }, q: 6, bande: true, a: 0.6, d: 0.6, large: true })
+      let t0 = 0.12
+      for (let k = 0; k < 7; k++) {
+        const f = 80 + 14 * k
+        note(m, t0, 0.5 * (0.6 + 0.4 * (k / 6)), 0, { f, glisse: { vers: f * 1.6, en: 0.08 }, a: 0.01, d: 0.13, partiels: CORPS, sature: 1.4 })
+        t0 += 0.2 - 0.022 * k
+      }
+      souffle(m, h, 1.1, 0.45, 0, { f: 1800, glisse: { vers: 260, en: 0.6 }, q: 2.5, bande: true, a: 0.04, d: 0.8, large: true })
+      note(m, 1.1, 0.45, 0, { f: 110, glisse: { vers: 82, en: 0.6 }, a: 0.02, d: 0.9, partiels: CORPS, battement: 6 })
     },
   },
   /**
