@@ -625,9 +625,8 @@ function solDesXenoides(p: Peintre, s: Scene): void {
     p.circle(x + remue, y + r * 0.2, r * 0.35, hex('#56682a'), 0.8)
   }
   for (const [x, y, r] of [[12, y1 - 14, 5], [22, y1 - 10, 4], [8, y1 - 24, 4], [18, y1 - 22, 3], [W - 12, y1 - 13, 5], [W - 23, y1 - 9, 4], [W - 15, y1 - 24, 3.5]] as [number, number, number][]) oeuf(x, y, r, x)
-  // DES OS : une côte et un crâne de bête, sur le côté
-  p.arc(W - 14, cy - 20, 9, 2, Math.PI * 0.6, Math.PI * 1.4, OS[1])
-  p.arc(W - 14, cy - 12, 8, 2, Math.PI * 0.6, Math.PI * 1.4, OS[1])
+  // UN CRÂNE DE BÊTE, sur le côté (la côte, à droite, est retirée — Keko, 19/11 : « une petite structure beige bizarre à
+  // droite, c'est moche »)
   p.circle(10, cy + 24, 4, OS[0])
   p.circle(10, cy + 23, 3, OS[2])
   p.rect(8, cy + 23, 1, 1, CHITINE[0])

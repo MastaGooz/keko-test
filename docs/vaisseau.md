@@ -6355,3 +6355,5 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     luit dans certaines fentes —, l'abîme noircissant vers son cœur, les yeux de l'aire dans leurs orbites.
   *Mesuré* : l'Empire 144 images par seconde, les Vectrans 121, les Yhg'tharr 127 (tout ce qui ne bouge pas est
   désormais calculé une fois), les Xénoïdes 76.
+- LA CÔTE D'OS DU HANGAR DES XÉNOÏDES RETIRÉE (Keko, 19/11 : « une petite structure beige bizarre à droite ; je sais pas
+  trop ce que c'est, mais c'est moche ») : les deux arcs beiges à droite de l'aire ; le crâne, à gauche, reste.
