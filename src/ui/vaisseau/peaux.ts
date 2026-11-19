@@ -332,7 +332,8 @@ const PEAUX: Record<string, Peau[]> = {
       id: 'abysses',
       nom: 'Abysses',
       principale: 'ver',
-      rampes: { ver: T(250, 0.4, 0.55), anneau: T(250, 0.3, 0.32), chair: T(200, 0.4, 0.7), bile: ENERGIE, decor: ENERGIE },
+      // (ses parasites et ses œufs à son image — Keko, 19/11 : un cerveau violet sous une membrane d'énergie, des œufs bleu pâle)
+      rampes: { ver: T(250, 0.4, 0.55), anneau: T(250, 0.3, 0.32), chair: T(200, 0.4, 0.7), bile: ENERGIE, decor: ENERGIE, cerveau: T(285, 0.45, 0.95), voile: ENERGIE, oeuf: T(205, 0.35, 1.15) },
       accent: ENERGIE,
       habit: () => ({ ailes: [], coque: [], motif: 'lueurs' }),
     },
@@ -341,7 +342,8 @@ const PEAUX: Record<string, Peau[]> = {
       id: 'braise',
       nom: 'Braise',
       principale: 'ver',
-      rampes: { ver: T(6, 0.62, 0.85), anneau: T(0, 0.2, 0.28), chair: T(14, 0.6, 0.9), bile: AMBRE, decor: AMBRE },
+      // (ses parasites et ses œufs à son image : un cerveau rouge feu sous une membrane d'ambre, des œufs ambrés)
+      rampes: { ver: T(6, 0.62, 0.85), anneau: T(0, 0.2, 0.28), chair: T(14, 0.6, 0.9), bile: AMBRE, decor: AMBRE, cerveau: T(14, 0.65, 1), voile: AMBRE, oeuf: T(35, 0.45, 1.15) },
       accent: AMBRE,
       habit: () => ({ ailes: [], coque: [], motif: 'taches' }),
     },

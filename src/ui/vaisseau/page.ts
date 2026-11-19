@@ -9013,11 +9013,17 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * fort, et chaque oscillation OUVRE DES FISSURES où luit le poison — un éclair blanc à leur ouverture, la coque qui
    * s'éclaire autour ; il frissonne juste avant d'éclater (l'éclatement, ses coquilles et sa gerbe : `coquilles`).
    */
-  const COQUE_D_OEUF = ['#10160a', '#2c3814', '#56682a', '#8ea050', '#c4d488', '#eef6c8'].map((c) => N.hex(c))
+  const COQUE_D_OEUF_DE_SERIE = ['#10160a', '#2c3814', '#56682a', '#8ea050', '#c4d488', '#eef6c8'].map((c) => N.hex(c))
+  // (… À L'IMAGE DU VER — Keko, 19/11 : la coque `oeuf` de son apparence, et ce qui luit dedans)
+  const coqueDOeuf = (): number[] => rampesDuJoueur()?.oeuf ?? COQUE_D_OEUF_DE_SERIE
+  const lueurDOeuf = (): number[] => {
+    const o = rampesDuJoueur()?.oeuf
+    return o === undefined ? GOUDRON : [...GOUDRON.slice(0, 5), o[3], o[4], o[5]]
+  }
   const OSCILLATIONS: [number, number][] = [[0.25, 0.18], [0.5, 0.28], [0.72, 0.4]]
   function dessinerUnOeuf(p: Peintre, o: (typeof m.oeufs)[number], u: number, age: number): void {
-    const C = COQUE_D_OEUF
-    const G = GOUDRON
+    const C = coqueDOeuf()
+    const G = lueurDOeuf()
     // (le stade : combien de fissures sont ouvertes)
     const stade = OSCILLATIONS.filter(([u0]) => u >= u0).length
     // (il oscille autour de sa base, chaque fois plus fort ; il frissonne à la fin)
@@ -9102,7 +9108,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     for (let i = eclosions.length - 1; i >= 0; i--) if (t - eclosions[i].t0 > 0.5) eclosions.splice(i, 1)
     if (coquilles.length === 0 && eclosions.length === 0) return
     p.place(W / 2 - camera.x, centreY() - camera.y)
-    const G = GOUDRON
+    const G = lueurDOeuf()
     for (const e of eclosions) {
       const q = (t - e.t0) / 0.5
       if (q < 0.15) p.circle(e.x, e.y, 3 + 4 * q, N.WHITE, 1 - q / 0.15)
@@ -9128,7 +9134,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         const an = c.a + k * 0.35
         const x = c.x + Math.cos(an) * c.r
         const y = c.y + Math.sin(an) * c.r
-        p.px(Math.round(x), Math.round(y), k === 0 ? COQUE_D_OEUF[5] : COQUE_D_OEUF[4])
+        p.px(Math.round(x), Math.round(y), k === 0 ? coqueDOeuf()[5] : coqueDOeuf()[4])
         if (age < 0.25 && (k === -2 || k === 2)) p.px(Math.round(x), Math.round(y), G[7])
       }
       if (f < 0.3 && Math.floor(age * 20) % 2 === 0) continue
@@ -10447,8 +10453,18 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * ACCROCHÉ, il est posé sur le dos de son hôte, les crocs plantés dedans, et il enfle à chaque gorgée — l'hôte luit mauve.
    * (Mauves et cyan : roses, on les perdait sur les insectes, roses eux aussi.)
    */
-  const CERVEAU = ['#1c0a2e', '#5a3a8e', '#a084dc', '#d4c4fa', '#ffffff'].map((c) => N.hex(c))
-  const MEMBRANE = ['#0a3a40', '#2aa8a8', '#7af0e0'].map((c) => N.hex(c))
+  // (… AUX TEINTES DE L'APPARENCE DU VER — Keko, 19/11 : « que le skin des œufs et des parasites soit le même que le skin du
+  // corps » : son cerveau et sa membrane, `cerveau` et `membrane` de l'apparence ; d'origine, le mauve et le turquoise)
+  const cerveauDuVer = (): number[] => {
+    const r = rampesDuJoueur()?.cerveau
+    return r === undefined ? CERVEAU_DE_SERIE : [r[0], r[2], r[3], r[4], r[5]]
+  }
+  const membraneDuVer = (): number[] => {
+    const r = rampesDuJoueur()?.voile
+    return r === undefined ? MEMBRANE_DE_SERIE : [r[1], r[3], r[4]]
+  }
+  const CERVEAU_DE_SERIE = ['#1c0a2e', '#5a3a8e', '#a084dc', '#d4c4fa', '#ffffff'].map((c) => N.hex(c))
+  const MEMBRANE_DE_SERIE = ['#0a3a40', '#2aa8a8', '#7af0e0'].map((c) => N.hex(c))
   /**
    * Un cerveau à crocs en (x, y), les crocs vers (ux, uy) ; `gros` sa taille ; `mord` : 0 crocs ouverts, 1 refermés ;
    * `chair` les tons de ses crocs (sombre, moyen, clair).
@@ -10459,8 +10475,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const nx = -uy
     const ny = ux
     // (la membrane : un dôme translucide, plus grand que le cerveau, cerné de cyan)
-    p.disc(x, y, 3.6 * gros, MEMBRANE[1], (d) => 0.12 + 0.3 * d * d)
-    p.ring(x, y, 3.6 * gros, 0.6, MEMBRANE[2], 0.55)
+    p.disc(x, y, 3.6 * gros, membraneDuVer()[1], (d) => 0.12 + 0.3 * d * d)
+    p.ring(x, y, 3.6 * gros, 0.6, membraneDuVer()[2], 0.55)
     // (les crocs : quatre, devant, qui se referment quand il mord)
     for (const k of [-1.5, -0.5, 0.5, 1.5]) {
       const bx = x + ux * 1.9 * gros + nx * k * 0.85 * gros
@@ -10475,16 +10491,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
     // (le cerveau : cerné de sombre ; DEUX LOBES CLAIRS de part et d'autre du sillon sombre, un pli sur chacun, un reflet —
     // mesuré : tout en plis, à cette taille, il ne se lisait que comme une boule sombre)
-    p.circle(x, y, 2.6 * gros + 0.7, CERVEAU[0])
-    p.circle(x, y, 2.6 * gros, CERVEAU[2])
-    for (const s of [-1, 1]) p.circle(x + nx * s * 1.05 * gros - ux * 0.2 * gros, y + ny * s * 1.05 * gros - uy * 0.2 * gros, 1.35 * gros, CERVEAU[3])
-    p.line(x - ux * 2.4 * gros, y - uy * 2.4 * gros, x + ux * 2.1 * gros, y + uy * 2.1 * gros, CERVEAU[1])
+    p.circle(x, y, 2.6 * gros + 0.7, cerveauDuVer()[0])
+    p.circle(x, y, 2.6 * gros, cerveauDuVer()[2])
+    for (const s of [-1, 1]) p.circle(x + nx * s * 1.05 * gros - ux * 0.2 * gros, y + ny * s * 1.05 * gros - uy * 0.2 * gros, 1.35 * gros, cerveauDuVer()[3])
+    p.line(x - ux * 2.4 * gros, y - uy * 2.4 * gros, x + ux * 2.1 * gros, y + uy * 2.1 * gros, cerveauDuVer()[1])
     for (const s of [-1, 1]) {
-      p.px(Math.round(x + nx * s * 1.2 * gros + ux * 0.6 * gros), Math.round(y + ny * s * 1.2 * gros + uy * 0.6 * gros), CERVEAU[2])
-      p.px(Math.round(x + nx * s * 1.4 * gros - ux * 0.9 * gros), Math.round(y + ny * s * 1.4 * gros - uy * 0.9 * gros), CERVEAU[4])
+      p.px(Math.round(x + nx * s * 1.2 * gros + ux * 0.6 * gros), Math.round(y + ny * s * 1.2 * gros + uy * 0.6 * gros), cerveauDuVer()[2])
+      p.px(Math.round(x + nx * s * 1.4 * gros - ux * 0.9 * gros), Math.round(y + ny * s * 1.4 * gros - uy * 0.9 * gros), cerveauDuVer()[4])
     }
     // (le reflet sur la membrane)
-    p.px(Math.round(x - ux * 2.4 * gros - nx * 1.8 * gros), Math.round(y - uy * 2.4 * gros - ny * 1.8 * gros), MEMBRANE[2])
+    p.px(Math.round(x - ux * 2.4 * gros - nx * 1.8 * gros), Math.round(y - uy * 2.4 * gros - ny * 1.8 * gros), membraneDuVer()[2])
   }
   function dessinerLesParasites(p: Peintre): void {
     if (m.parasites.length === 0 || m.phase !== 'vol') return
@@ -10500,7 +10516,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         // (ACCROCHÉ : sur le dos de l'hôte, les crocs plantés dedans ; il enfle à chaque gorgée, l'hôte luit mauve)
         const ph = (t * 2.6 + pa.id * 0.31) % 1
         const gorgee = pouls(ph)
-        p.glow(hx, hy, 6, CERVEAU[3], 0.2 + 0.25 * gorgee)
+        p.glow(hx, hy, 6, cerveauDuVer()[3], 0.2 + 0.25 * gorgee)
         dessinerUnCerveau(p, hx, hy - 3.2, 0, 1, 1 + 0.15 * gorgee, 0.6 + 0.4 * gorgee, chair)
         continue
       }
@@ -10524,7 +10540,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           const q = u - j * 0.05
           if (q <= 0) break
           const [ax, ay, ah] = ou(q)
-          p.dot(ax, ay - ah, j % 2 === 0 ? CERVEAU[3] : MEMBRANE[2], 0.8 * (1 - j / 6))
+          p.dot(ax, ay - ah, j % 2 === 0 ? cerveauDuVer()[3] : membraneDuVer()[2], 0.8 * (1 - j / 6))
         }
         const gros = 1 + 0.35 * Math.sin(Math.PI * u)
         const rot = u * Math.PI * 2 + Math.atan2(ty - b.y0, tx - b.x0) - Math.PI
@@ -10542,7 +10558,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           const onde = Math.sin(t * 18 - k * 1.2 + s) * 0.6
           const x1 = x - ux * 1.5 - uy * onde
           const y1 = y - uy * 1.5 + ux * onde
-          p.line(x, y, x1, y1, k === 1 ? MEMBRANE[2] : MEMBRANE[1], 0.8 - k * 0.2)
+          p.line(x, y, x1, y1, k === 1 ? membraneDuVer()[2] : membraneDuVer()[1], 0.8 - k * 0.2)
           x = x1
           y = y1
         }
@@ -13236,7 +13252,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           toucheEnnemiA.set(ev.id, t)
           for (let i = 0; i < 5; i++) {
             const a = R.range(0, Math.PI * 2)
-            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(15, 40), Math.sin(a) * R.range(15, 40), R.range(0.15, 0.3), R.next() < 0.5 ? CERVEAU[3] : MEMBRANE[2], 1, 1.5)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(15, 40), Math.sin(a) * R.range(15, 40), R.range(0.15, 0.3), R.next() < 0.5 ? cerveauDuVer()[3] : membraneDuVer()[2], 1, 1.5)
           }
           break
         case 'parasiteSaute':
@@ -13244,14 +13260,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           jouer('ponte', { dx: ev.x - v.x, dy: ev.y - v.y })
           for (let i = 0; i < 9; i++) {
             const a = R.range(0, Math.PI * 2)
-            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(20, 60), Math.sin(a) * R.range(20, 60), R.range(0.2, 0.4), [CERVEAU[3], MEMBRANE[2], LIE[3]][Math.floor(R.next() * 3)], 1, 1.5)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(20, 60), Math.sin(a) * R.range(20, 60), R.range(0.2, 0.4), [cerveauDuVer()[3], membraneDuVer()[2], LIE[3]][Math.floor(R.next() * 3)], 1, 1.5)
           }
           break
         case 'parasiteMort':
           // (il meurt, sans hôte : il se dessèche — trois miettes)
           for (let i = 0; i < 3; i++) {
             const a = R.range(0, Math.PI * 2)
-            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(5, 15), Math.sin(a) * R.range(5, 15), R.range(0.2, 0.35), CERVEAU[1], 1, 1)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(5, 15), Math.sin(a) * R.range(5, 15), R.range(0.2, 0.35), cerveauDuVer()[1], 1, 1)
           }
           break
         case 'mineLancee':
@@ -13416,7 +13432,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           }
           for (let i = 0; i < 8; i++) {
             const a = R.range(0, Math.PI * 2)
-            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(15, 45), Math.sin(a) * R.range(15, 45), R.range(0.15, 0.35), i % 2 === 0 ? GOUDRON[6] : COQUE_D_OEUF[4], 1, 1.5)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(15, 45), Math.sin(a) * R.range(15, 45), R.range(0.15, 0.35), i % 2 === 0 ? lueurDOeuf()[6] : coqueDOeuf()[4], 1, 1.5)
           }
           break
         }

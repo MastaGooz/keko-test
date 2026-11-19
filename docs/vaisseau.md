@@ -6143,3 +6143,10 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   et repousse (0,2 s, puis 0,9 s). Avec l'épine — et les parasites —, il tourne déjà la tête vers l'ennemi le plus proche
   (`regardVoulu` : ni l'une ni l'autre ne sont parmi les armes qui laissent le nez au manche) ; vu en partie. L'aperçu des
   armes, lui, ne tourne pas le vaisseau.
+- LES ŒUFS ET LES PARASITES À L'IMAGE DU VER (Keko, 19/11 : « que le skin des œufs et des parasites soit le même que le skin
+  du corps ; peut-être pas exactement, mais qu'on puisse faire le lien de manière cohérente ») : trois matières à eux —
+  `oeuf` (la coque), `cerveau`, `voile` (la membrane du parasite) —, celles d'origine gardant le vert pâle, le mauve et le
+  turquoise ; ses apparences les teintent : ABYSSES, des œufs bleu pâle, un cerveau violet sous une membrane d'énergie ;
+  BRAISE, des œufs ambrés, un cerveau rouge feu sous une membrane d'ambre. Ce qu'il porte (sur ses flancs, sur sa nuque)
+  et ce qu'il lance (l'œuf pondu, ses fissures et son éclosion, le parasite en vol, en bond et accroché ; ses crocs
+  avaient déjà sa chair) les lisent (`cerveauDuVer`, `membraneDuVer`, `coqueDOeuf`, `lueurDOeuf`). Vu à la capture.

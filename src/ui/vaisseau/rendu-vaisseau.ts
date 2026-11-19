@@ -20,7 +20,7 @@ type Peintre = { rect(x: number, y: number, w: number, h: number, c: number, a?:
 const hex = (noyau as unknown as { hex(h: string): number }).hex
 const mix = (noyau as unknown as { mix(a: number, b: number, t: number): number }).mix
 
-export type Matiere = 'coque' | 'blinde' | 'aile' | 'verre' | 'metal' | 'acier' | 'rouge' | 'or' | 'feu' | 'ion' | 'laser' | 'emeraude' | 'carmin' | 'grenat' | 'ambre' | 'violet' | 'glace' | 'marque' | 'suie' | 'cuivre' | 'perle' | 'sarcelle' | 'kaki' | 'graphite' | 'nacre' | 'indigo' | 'obsidienne' | 'mauve' | 'plasma' | 'chitine' | 'chair' | 'bile' | 'os' | 'ecaille' | 'venin' | 'lie' | 'quartz' | 'facette' | 'energie' | 'neant' | 'rayonnement' | 'decor' | 'decor2' | 'mante' | 'elytre' | 'membrane' | 'spectre' | 'lumiere' | 'ver' | 'anneau'
+export type Matiere = 'coque' | 'blinde' | 'aile' | 'verre' | 'metal' | 'acier' | 'rouge' | 'or' | 'feu' | 'ion' | 'laser' | 'emeraude' | 'carmin' | 'grenat' | 'ambre' | 'violet' | 'glace' | 'marque' | 'suie' | 'cuivre' | 'perle' | 'sarcelle' | 'kaki' | 'graphite' | 'nacre' | 'indigo' | 'obsidienne' | 'mauve' | 'plasma' | 'chitine' | 'chair' | 'bile' | 'os' | 'ecaille' | 'venin' | 'lie' | 'quartz' | 'facette' | 'energie' | 'neant' | 'rayonnement' | 'decor' | 'decor2' | 'mante' | 'elytre' | 'membrane' | 'spectre' | 'lumiere' | 'ver' | 'anneau' | 'cerveau' | 'voile' | 'oeuf'
 /** `coeur` : LE CŒUR DU NÉANT, peint pixel par pixel (voir `Forme.coeur`) ; `lueur` : une lumière d'un seul ton (`Forme.ton`), sans ombre ni contour. */
 export type Relief = 'cyl' | 'plat' | 'dome' | 'emis' | 'coeur' | 'lueur'
 export type Forme = {
@@ -85,6 +85,12 @@ const RAMPES: Record<Matiere, number[]> = {
   chitine: ['#120a14', '#24131f', '#3a1f2c', '#56303a', '#7c4a4c', '#b07a6c'].map(hex),
   chair: ['#2a0a18', '#5a1430', '#8e2a48', '#c04a62', '#e8808a', '#ffc4c0'].map(hex),
   bile: ['#1a2a06', '#3a5a0c', '#6a9a14', '#a8d42a', '#e0f870', '#ffffe0'].map(hex),
+  // (LE CERVEAU ET LA MEMBRANE DES PARASITES DU VER, LA COQUE DE SES ŒUFS — Keko, 19/11 : « que le skin des œufs et des
+  // parasites soit le même que le skin du corps, qu'on puisse faire le lien » : des matières à eux, que ses apparences
+  // teintent — celles-ci sont celles d'origine, le mauve, le turquoise (`voile`, sa membrane), le vert pâle)
+  cerveau: ['#1c0a2e', '#3a2460', '#5a3a8e', '#a084dc', '#d4c4fa', '#ffffff'].map(hex),
+  voile: ['#04181c', '#0a3a40', '#167070', '#2aa8a8', '#7af0e0', '#d0fff8'].map(hex),
+  oeuf: ['#10160a', '#2c3814', '#56682a', '#8ea050', '#c4d488', '#eef6c8'].map(hex),
   os: ['#2a2218', '#4a3e2c', '#76664a', '#a8987a', '#d6ccb0', '#fffaf0'].map(hex),
   // LA VOUIVRE (Keko, 16/11 : « organique, la corrosion et le toxique ») : des écailles vert sombre, un venin vert acide qui
   // luit (ses sacs, sa gueule, son jet), une lie violette pour ses membranes — le vert et le violet du poison
@@ -1954,8 +1960,8 @@ export function formesDuVer(t: number, flamme: number, devie: number, motif?: Mo
         const ox = p.x - uy * s * p.r * 0.72 - ux * recul
         const oy = p.y + ux * s * p.r * 0.72 - uy * recul
         f.push({ pts: ovale(ox, oy, r * 1.15, r, 10), mat: 'anneau', relief: 'plat' })
-        f.push({ pts: ovale(ox, oy, r * 0.95, r * 0.82, 10), mat: 'nacre', relief: 'dome', dome: { x: ox, y: oy, rx: r * 0.95, ry: r * 0.82 } })
-        if (r > 0.6) f.push({ pts: ovale(ox + 0.1, oy + 0.1, r * 0.35, r * 0.3, 8), mat: 'bile', relief: 'lueur', ton: 2 })
+        f.push({ pts: ovale(ox, oy, r * 0.95, r * 0.82, 10), mat: 'oeuf', relief: 'dome', dome: { x: ox, y: oy, rx: r * 0.95, ry: r * 0.82 } })
+        if (r > 0.6) f.push({ pts: ovale(ox + 0.15, oy + 0.15, r * 0.35, r * 0.3, 8), mat: 'anneau', relief: 'plat' })
       }
     }
   }
@@ -2017,11 +2023,11 @@ export function formesDuVer(t: number, flamme: number, devie: number, motif?: Mo
     const k = armes.parasite * 1.3
     const px = h.x - ux * (h.r + 1.2)
     const py = h.y - uy * (h.r + 1.2)
-    f.push({ pts: ovale(px, py, 1.55 * k, 1.55 * k, 12), mat: 'anneau', relief: 'plat' })
-    f.push({ pts: ovale(px, py, 1.3 * k, 1.2 * k, 12), mat: 'chair', relief: 'dome', dome: { x: px, y: py, rx: 1.3 * k, ry: 1.2 * k } })
-    f.push({ pts: barre(px - ux * 1.1 * k, py - uy * 1.1 * k, px + ux * 1.1 * k, py + uy * 1.1 * k, 0.2 * k), mat: 'lie', relief: 'plat' })
-    for (const s of [-1, 1]) f.push({ pts: barre(px + nx * s * 0.5 * k - ux * 0.7 * k, py + ny * s * 0.5 * k - uy * 0.7 * k, px + nx * s * 0.6 * k + ux * 0.5 * k, py + ny * s * 0.6 * k + uy * 0.5 * k, 0.16 * k), mat: 'lie', relief: 'plat' })
-    for (const s of [-1, 1]) f.push({ pts: [[px + ux * 1 * k + nx * s * 0.35 * k, py + uy * 1 * k + ny * s * 0.35 * k], [px + ux * 2 * k + nx * s * 0.6 * k, py + uy * 2 * k + ny * s * 0.6 * k], [px + ux * 1.1 * k + nx * s * 0.75 * k, py + uy * 1.1 * k + ny * s * 0.75 * k]], mat: 'os', relief: 'plat' })
+    // (… COMME CEUX QU'IL LANCE — Keko, 19/11 : le cerveau et la membrane de son apparence, les crocs de sa chair)
+    f.push({ pts: ovale(px, py, 1.7 * k, 1.7 * k, 12), mat: 'voile', relief: 'plat' })
+    for (const s of [-1, 1]) f.push({ pts: [[px + ux * 1 * k + nx * s * 0.35 * k, py + uy * 1 * k + ny * s * 0.35 * k], [px + ux * 2.1 * k + nx * s * 0.6 * k, py + uy * 2.1 * k + ny * s * 0.6 * k], [px + ux * 1.1 * k + nx * s * 0.75 * k, py + uy * 1.1 * k + ny * s * 0.75 * k]], mat: 'ver', relief: 'plat' })
+    f.push({ pts: ovale(px, py, 1.3 * k, 1.2 * k, 12), mat: 'cerveau', relief: 'dome', dome: { x: px, y: py, rx: 1.3 * k, ry: 1.2 * k } })
+    f.push({ pts: barre(px - ux * 1.1 * k, py - uy * 1.1 * k, px + ux * 1.1 * k, py + uy * 1.1 * k, 0.2 * k), mat: 'anneau', relief: 'plat' })
   }
   return f
 }
