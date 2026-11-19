@@ -334,7 +334,9 @@ export const PIECES: Piece[] = [
   // LA SENTINELLE, LE VAISSEAU DE L'ÉLECTRICITÉ (Keko, 15/11) : la CHAÎNE D'ÉCLAIRS, qui rebondit d'ennemi en ennemi ;
   // L'AURA, qui brûle sans cesse tout autour du vaisseau rond. *Chiffres de moi, à rejuger.*
   { id: 'arme-chaine', sorte: 'arme', cran: 2, nom: 'Chaîne d’éclairs', dit: 'Toutes les 1,5 s, un éclair sur une cible à 90 : 9 points, puis il rebondit quatre fois d’ennemi en ennemi (à 45 au plus), perdant un cinquième à chaque bond.', note: 'Contre les nuées serrées.', prix: 30, poids: 6, arme: { id: 'chaine', cadence: 1.5, degats: 9, portee: 90, vitesse: 0, vie: 0, dispersion: 0, guide: false, chaine: { rebonds: 4, saut: 45, attenuation: 0.8 } } },
-  { id: 'arme-aura', sorte: 'arme', cran: 3, nom: 'Aura électrique', dit: 'Un champ électrique autour du vaisseau : tout ennemi à moins de 32 perd 4 points par seconde, sans cesse.', note: 'Au milieu de la nuée.', prix: 30, poids: 6, arme: { id: 'aura', cadence: 0.1, degats: 0, portee: 32, vitesse: 0, vie: 0, dispersion: 0, guide: false, aura: { rayon: 32, dps: 4 } } },
+  // (… PUIS LA TEMPÊTE, UN PEU PLUS LARGE — Keko, 19/11 : « renommer l'aura électrique tempête ; augmenter un petit peu
+  // la surface de l'aura » : 32 → 38, deux cinquièmes de surface en plus)
+  { id: 'arme-aura', sorte: 'arme', cran: 3, nom: 'Tempête', dit: 'Un champ électrique autour du vaisseau : tout ennemi à moins de 38 perd 4 points par seconde, sans cesse.', note: 'Au milieu de la nuée.', prix: 30, poids: 6, arme: { id: 'aura', cadence: 0.1, degats: 0, portee: 38, vitesse: 0, vie: 0, dispersion: 0, guide: false, aura: { rayon: 38, dps: 4 } } },
   { id: 'arme-missiles', sorte: 'arme', cran: 3, nom: 'Missiles', dit: 'Une arme LOURDE : un missile guidé toutes les 2,8 s, 14 points, porte à 190.', note: 'Arme lourde. Guidé : le missile tourne vers le rival.', prix: 68, cout: { or: 18, cristal: 10 }, lourde: true, poids: 8, arme: { id: 'missiles', cadence: 2.8, degats: 14, portee: 190, vitesse: 95, vie: 3, dispersion: 0.3, guide: true} },
 ]
 

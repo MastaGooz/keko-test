@@ -6225,3 +6225,9 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   s'ouvrent dans le noir, des braises violettes, pas de lampes ; l'aire, un cercle de pierre noire aux runes qui luisent et
   tournent (*mesuré à la capture* : à un pixel et demi elles ne se lisaient pas — agrandies), un tourbillon de vide au
   milieu, ses feux des yeux.
+- LA SENTINELLE (Keko, 19/11) : L'AURA ÉLECTRIQUE DEVIENT LA TEMPÊTE, un peu plus large (« augmenter un petit peu la
+  surface de l'aura » : rayon 32 → 38, deux cinquièmes de surface en plus) ; la chaîne d'éclairs garde son nom. LES DRONES
+  AUX COULEURS DE SON APPARENCE (« trop proches de la couleur des pépites ; que la couleur des drones change en fonction du
+  skin du vaisseau et de sa couleur ») : ils étaient à la sarcelle d'origine, le vert d'eau des pépites d'expérience ; leur
+  corps prend la perle de son disque, leur traînée et leur lueur sa verrière, leur œil son accent — d'origine, de l'argent
+  et du bleu ; Ambre, du bronze. Vu à la capture.

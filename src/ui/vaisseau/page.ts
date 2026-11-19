@@ -3772,7 +3772,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     'arme-napalm': 'Une boule de gel lancée en cloche, qui laisse une flaque de feu.',
     'arme-drones': 'Trois drones en orbite fondent sur les ennemis proches et les frappent d’arcs électriques.',
     'arme-chaine': 'Un éclair qui rebondit d’ennemi en ennemi.',
-    'arme-aura': 'Un champ électrique, qui grille les ennemis qui s’approchent.',
+    'arme-aura': 'Une tempête électrique, qui grille les ennemis qui s’approchent.',
     // (… AUTOUR DE LUI — Keko, 18/11 : « ne dis pas qu'il pose des tourelles sur son passage, c'est faux ; qu'il déploie des
     // tourelles autour de lui, qui tirent toutes seules ; et pas "des petites tourelles" » ; le fléau, « au bout d'une chaîne »)
     'arme-tourelles': 'Déploie des tourelles autour de lui, qui tirent toutes seules.',
@@ -10944,17 +10944,24 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // petite traînée derrière eux (le long de leur vitesse) ; un corps à la couleur du joueur, un œil cyan, une lueur
     if (m.phase === 'vol' && t - arriveA >= ARRIVE_A) {
       // (les drones à la sarcelle de la Sentinelle, leur œil à la marque du joueur — Keko, 16/11)
-      const [sombre, moyen, clair] = tonsDeLaMatiere('sarcelle')
+      // (… PUIS AUX COULEURS DE SON APPARENCE, PLUS À LA SARCELLE — Keko, 19/11 : « trop proches de la couleur des pépites ;
+      // que la couleur des drones change en fonction du skin du vaisseau et de sa couleur » : le corps de la perle de son
+      // disque, la traînée et la lueur de sa verrière, l'œil à son accent — d'origine, de l'argent et du bleu, loin du
+      // vert d'eau des pépites)
+      const ru = rampesDuJoueur()
+      const perle = ru?.perle ?? [0, 0, ...tonsDeLaMatiere('perle')]
+      const verre = ru?.verre ?? [0, 0, ...tonsDeLaMatiere('verre')]
+      const [sombre, moyen, clair] = [perle[2], perle[3], perle[4]]
       const oeil = VORTEX_ ? peauCourante().accent[4] : N.WHITE
       for (const d of m.drones) {
-        for (let k = 4; k >= 1; k--) p.circle(d.x - d.vx * k * 0.014, d.y - d.vy * k * 0.014, 1.8 * (1 - k / 5), moyen, 0.45 * (1 - k / 5))
+        for (let k = 4; k >= 1; k--) p.circle(d.x - d.vx * k * 0.014, d.y - d.vy * k * 0.014, 1.8 * (1 - k / 5), verre[3], 0.45 * (1 - k / 5))
         // (un peu plus gros qu'un point : sur le portail, on les perdait)
         p.circle(d.x, d.y, 3.3, MATIERES.encre.contour)
         p.circle(d.x, d.y, 2.6, moyen)
         p.rect(Math.round(d.x) - 2, Math.round(d.y) - 1, 2, 1, clair)
         p.rect(Math.round(d.x) - 1, Math.round(d.y) + 1, 3, 1, sombre)
         p.rect(Math.round(d.x) - 1, Math.round(d.y), 3, 1, oeil)
-        p.glow(d.x, d.y, 6, VERRIERE[2], d.cible === null ? 0.35 : 0.55)
+        p.glow(d.x, d.y, 6, verre[4], d.cible === null ? 0.35 : 0.55)
       }
     }
     // LE RAYON THERMIQUE, À LA MANIÈRE DE « LASER GRID » DU DÉPÔT (Keko, 15/11 : « tu peux utiliser laser grid pour
