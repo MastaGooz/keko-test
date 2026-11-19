@@ -12238,7 +12238,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const E = 3 * gA.echelle
     const cx = cxV
     const sy = Math.round(H * hV + Math.sin(t * 1.4) * 2.5 - Math.pow(Math.max(0, us - 0.15) / 0.85, 2.2) * (H * hV + 70))
-    const flam = accueilQuitteA === null ? 0.55 + 0.12 * Math.sin(t * 11) : 1
+    // (UNE BÊTE NE FRÉMIT PAS COMME UNE FLAMME — Keko, 19/11 : « à l'accueil, les tentacules du Kraken ont un mouvement très
+    // bizarre, raide, pas flottant ; dans le hangar, tout va bien » : sa poussée règle l'ouverture de ses tentacules, et
+    // le frémissement de la flamme, onze fois par seconde, les ouvrait et les refermait par saccades — puis sautait à 1
+    // au départ. Un vaisseau organique garde une poussée stable, qui glisse jusqu'à 1 en partant)
+    const flam = organique(monteeA(hangar, 'coque').cran) ? 0.55 + 0.45 * us : accueilQuitteA === null ? 0.55 + 0.12 * Math.sin(t * 11) : 1
     const al = allureMontee(0)
     const chaud = al.propulseur >= 3 ? ION : FEU
     const ty = sy + (0.2 - queueDe(monteeA(hangar, 'coque').cran)) * E

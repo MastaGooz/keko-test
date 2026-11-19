@@ -6006,3 +6006,10 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   petit peu ; on réduit aussi la hauteur du vaisseau ») : il avance de 3,4 (2 avant) et SE PEINT APRÈS LE THORAX, dont il
   couvre l'arrière — plus large que lui (±5,3 contre ±3,5), il se lit posé dessus. Le Kraken est plus court d'autant ;
   ses tentacules et sa queue suivent. Vu à la capture.
+- LES TENTACULES DU KRAKEN FLOTTENT AUSSI À L'ACCUEIL (Keko, 19/11 : « dans l'écran d'accueil, ses tentacules ont un
+  mouvement très bizarre, raide, pas flottant ; dans le hangar, tout va bien ») : sa poussée règle l'ouverture de ses
+  tentacules (`formesDuVaisseau`), et l'accueil lui passait le frémissement de la flamme d'un réacteur — 0,55 ± 0,12,
+  onze fois par seconde — puis 1 d'un coup au départ : elles s'ouvraient et se refermaient par saccades. En vol, la
+  poussée est lissée, d'où des tentacules souples. Un vaisseau ORGANIQUE (le Kraken, la Vouivre, le Ver) reçoit à
+  l'accueil une poussée stable (0,55), qui glisse jusqu'à 1 pendant le départ ; les réacteurs gardent leur frémissement.
+  Vu à la capture : huit images à 0,1 s, la même ouverture, une houle douce.
