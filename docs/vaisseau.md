@@ -5997,3 +5997,7 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   l'espace fin au milieu ») : ses cornes, sa carapace, ses sacs, ses côtes et son échine avancent de 1,2
   (`AVANCE_DE_L_ABDOMEN_DU_KRAKEN`), la taille raccourcit d'autant (de 2,8 à 1,6 de long), les racines des tentacules et
   la queue (sa tuyère, d'où partent ses bulles) suivent. Vu à la capture.
+- LE KRAKEN PLUS RAMASSÉ, SANS SES CORNES (Keko, 19/11 : « rapproche encore la tête et l'abdomen, et enlève les petits pics
+  beiges qu'il y a sur l'abdomen ; avec les tentacules, ça fait un peu trop ») : l'abdomen avance de 2 (1,2 avant), la
+  taille n'est plus qu'un étranglement de 0,8 ; ses trois paires de cornes d'os, celle de la pointe et les deux épines de
+  la taille sont retirées. Restent l'échine, les côtes, les sacs, et les six tentacules. Vu à la capture.
