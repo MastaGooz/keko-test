@@ -4196,11 +4196,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const coque = pieceDe(mo.serie.montees.coque)?.cran ?? 1
     const pe = peauDuModele(mo.id)
     const al: Allure = { propulseur: pieceDe(mo.serie.montees.propulseur)?.cran ?? 1, coque, foreuse: 0, radar: false, aimant: false, armes: [], bouclier: 0, habit: pe.habit(coque) }
-    const formes = formesDuVaisseau(al, 0.5 + 0.15 * Math.sin(t * 7 + n), t)
+    // (LE KRAKEN EN NAGE, ses tentacules rabattues derrière lui — à demi déployées, elles agrandissaient son cadre et le
+    // réduisaient à rien dans sa case)
+    const nageDuPortrait = al.coque === 10 ? 1 : undefined
+    const formes = formesDuVaisseau(al, nageDuPortrait ?? 0.5 + 0.15 * Math.sin(t * 7 + n), t)
     // (LE CADRE EST CELUI D'UNE POSE FIXE, gardé par modèle — Keko, 17/11 : « le Frimas, le Pulsar et tous les vaisseaux
     // humains ont un genre de tremblement bizarre » : la boîte prise sur les formes de l'image changeait avec la flamme, qui
     // frémit à chaque image, et l'échelle du portrait avec elle — la même leçon que `Options.cadre`)
-    if (!cadresDesPortraits.has(mo.id)) cadresDesPortraits.set(mo.id, boiteDe(formesDuVaisseau(al, 0.65, 0)))
+    if (!cadresDesPortraits.has(mo.id)) cadresDesPortraits.set(mo.id, boiteDe(formesDuVaisseau(al, nageDuPortrait ?? 0.65, 0)))
     const [x0, y0, x1, y1] = cadresDesPortraits.get(mo.id)!
     const echelle = (Math.min(w, h) * 1.35) / Math.max(1, x1 - x0, y1 - y0)
     const flotte_ = Math.round(Math.sin(t * 1.6 + n * 0.9))

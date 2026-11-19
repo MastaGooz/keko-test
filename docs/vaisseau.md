@@ -5981,3 +5981,15 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   s'écartent en étoile, chacune dans le prolongement de sa racine ; QUAND IL POUSSE, elles se rabattent derrière et
   traînent ; une houle les parcourt. Ses apparences perdent leurs glandes de nageoire. Vu à la capture : au hangar, une
   pieuvre ; au décollage, une méduse qui file.
+- LE KRAKEN EN DEUX CORPS, ÉPINEUX (Keko, 19/11 : « je trouve sa forme trop ovale, ronde ; voici une architecture de corps
+  pour t'inspirer » — une image : une bête des ruches vue de dessus, un gros abdomen aux sacs violets barrés de côtes
+  sombres et hérissé de grandes cornes, une taille étroite, un thorax cuirassé, une gueule dentée, des mandibules en
+  faux) : sa coque refaite sur ce plan — L'ABDOMEN à l'arrière (sa carapace, deux sacs de chair allongés aux pustules de
+  bile, recoupés en lobes par trois côtes de chitine, l'échine cuirassée, trois paires de CORNES d'os recourbées vers
+  l'arrière et une à la pointe), UNE TAILLE étroite et ses deux épines, LE THORAX (deux sillons de chair, deux épines sur
+  l'échine, deux paires d'yeux), LA GUEULE sombre bordée de crocs (la tentacule à aiguille y prend racine), TROIS PAIRES
+  DE MANDIBULES en faux recourbées vers l'avant. Ses six grandes tentacules partent maintenant de l'abdomen, entre ses
+  cornes. Son gabarit : le nez au bout des mandibules (11,6), la queue au bout de l'abdomen, plus de feux de position.
+  Dans la grille, son portrait le montre en nage, les tentacules rabattues (à demi déployées, elles le réduisaient à
+  rien dans sa case). *Mesuré à la capture* : deux sacs ronds côte à côte se lisaient mal, et un bouclier gris d'une
+  pièce faisait un œuf sur le thorax — les côtes et les sillons les ont remplacés.

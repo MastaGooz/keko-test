@@ -687,7 +687,9 @@ const GABARIT_DU_PULSAR: Gabarit = { tuyeres: [{ x: 1.6, y: 0 }], armes: [{ x: 0
 // (UNE SEULE, À LA PROUE — Keko, 16/11 : « plutôt que trois tentacules qui attaquent à cette vitesse, un seul, beaucoup
 // plus rapide »)
 export const ANCRES_DU_KRAKEN: [number, number][] = [[7.2, 0]]
-const GABARIT_DU_KRAKEN: Gabarit = { tuyeres: [{ x: 1, y: 0 }], armes: [{ x: 0, y: 0, s: 1 }], feux: { x: -4.4, y: 7.6 }, verriere: 5.8, nez: 8.2, flanc: 6.4, anneau: 12.5, echelle: 1 }
+// (… EN DEUX CORPS, ÉPINEUX — Keko, 19/11 : la queue au bout de l'abdomen, le nez au bout des mandibules ; plus de feux de
+// position — ils étaient sur ses nageoires —, une bête n'en a pas)
+const GABARIT_DU_KRAKEN: Gabarit = { tuyeres: [{ x: -0.9, y: 0 }], armes: [{ x: 0, y: 0, s: 1 }], feux: null, verriere: 5.8, nez: 11.6, flanc: 6.4, anneau: 13, echelle: 1 }
 // LA VOUIVRE (Keko, 16/11) : un corps de serpent en écailles, deux sacs à venin sur des membranes, une gueule à mandibules
 // qui crache ; un jet de venin à la queue
 const GABARIT_DE_LA_VOUIVRE: Gabarit = { tuyeres: [{ x: 0.6, y: 0 }], armes: [{ x: 0, y: 0, s: 1 }], feux: { x: -6.6, y: 6.4 }, verriere: 8.7, nez: 9.8, flanc: 6.6, anneau: 13, echelle: 1 }
@@ -1145,23 +1147,56 @@ export function formesDeLaCoque(cran: number, t = 0, motif?: MotifDuVer): Forme[
   }  if (cran === 10) {
     // LE KRAKEN, UN MANTEAU DE CHITINE : un corps renflé, bosselé, la tête en avant ; trois plaques de carapace sur le
     // dos, séparées par des sillons de chair ; une grappe d'YEUX de bile à l'avant ; et LES TROIS RACINES des tentacules
-    // (des bourrelets de chair, à leurs ancres)
-    const f: Forme[] = [{ pts: [[8.2, 0], [7.4, -2.2], [5.2, -3.9], [2, -4.9], [-1.6, -4.7], [-4.6, -4.1], [-7, -2.8], [-8.2, -1], [-8.2, 1], [-7, 2.8], [-4.6, 4.1], [-1.6, 4.7], [2, 4.9], [5.2, 3.9], [7.4, 2.2]], mat: 'chitine', relief: 'cyl' }]
-    // (les sillons de chair, en arc, entre les plaques)
-    for (const x of [2.6, -0.9, -4.3]) f.push({ pts: [[x + 0.4, -4.1], [x - 0.5, -2], [x - 0.8, 0], [x - 0.5, 2], [x + 0.4, 4.1], [x - 0.2, 4.2], [x - 1.2, 2], [x - 1.5, 0], [x - 1.2, -2], [x - 0.2, -4.2]], mat: 'chair', relief: 'plat' })
-    // (une crête d'épines d'os sur l'échine)
-    for (const x of [0.9, -2.6, -6]) f.push({ pts: [[x + 0.9, 0], [x - 0.6, -0.55], [x - 0.3, 0], [x - 0.6, 0.55]], mat: 'os', relief: 'plat' })
-    // UNE TÊTE, UN VISAGE (Keko, 19/11 : « il fait trop scarabée ; une tête avec un visage — au moins une structure devant,
-    // peut-être avec des mandibules ») : un front de chitine bombé sur l'avant du manteau, deux paires d'yeux de bile de
-    // part et d'autre, la bouche de chair au milieu — la tentacule à aiguille en sort —, et deux MANDIBULES d'os, en
-    // pinces recourbées, qui avancent de chaque côté de la bouche
-    f.push({ pts: [[8.6, 0], [8.1, -2], [6.6, -3.3], [4.8, -3.4], [3.8, -2.2], [3.6, 0], [3.8, 2.2], [4.8, 3.4], [6.6, 3.3], [8.1, 2]], mat: 'chitine', relief: 'dome', dome: { x: 6.1, y: 0, rx: 2.6, ry: 3.4 } })
-    for (const sg of [-1, 1]) f.push({ pts: [[7.2, sg * 1.5], [8.9, sg * 2.5], [10.7, sg * 2], [11.4, sg * 0.9], [10.6, sg * 0.5], [10.4, sg * 1.3], [9, sg * 1.5], [7.9, sg * 0.9]], mat: 'os', relief: 'plat', penche: sg })
-    for (const [x, y] of ANCRES_DU_KRAKEN) {
-      f.push({ pts: ovale(x + 0.6, y, 1.3, 1.1, 12), mat: 'chair', relief: 'dome', dome: { x: x + 0.6, y, rx: 1.3, ry: 1.1 } })
-      f.push({ pts: ovale(x + 1, y, 0.6, 0.5, 8), mat: 'suie', relief: 'plat' })
+    // (… PUIS UNE TÊTE À MANDIBULES — Keko, 19/11)
+    // (… PUIS UNE BÊTE EN DEUX CORPS, ÉPINEUSE — Keko, 19/11 : « je trouve sa forme trop ovale, ronde ; voici une
+    // architecture de corps pour t'inspirer » — une bête des ruches, vue de dessus : UN ABDOMEN large à l'arrière, deux
+    // sacs de chair renflés de part et d'autre d'une échine cuirassée, hérissé de GRANDES CORNES d'os recourbées vers
+    // l'arrière ; UNE TAILLE étroite ; UN THORAX cuirassé, ses yeux, et devant, LA GUEULE dentée, d'où sort la tentacule
+    // à aiguille ; TROIS PAIRES DE MANDIBULES en faux, recourbées vers l'avant. Ses grandes tentacules partent de
+    // l'abdomen — voir `formesDuVaisseau`)
+    // (une corne : une pointe d'os, large à sa base, qui se recourbe de `courbe` vers l'arrière)
+    const corne = (x0: number, y0: number, x1: number, y1: number, w: number, courbe: number): Forme => {
+      const [mx, my] = [(x0 + x1) / 2 - courbe, (y0 + y1) / 2]
+      const l = Math.hypot(x1 - x0, y1 - y0) || 1
+      const [nx, ny] = [-(y1 - y0) / l, (x1 - x0) / l]
+      return { pts: [[x0 + nx * w, y0 + ny * w], [mx + nx * w * 0.45, my + ny * w * 0.45], [x1, y1], [mx - nx * w * 0.45, my - ny * w * 0.45], [x0 - nx * w, y0 - ny * w]], mat: 'os', relief: 'plat' }
     }
-    for (const sg of [-1, 1]) for (const [x, y, r] of [[6.1, sg * 1.9, 0.7], [5, sg * 2.6, 0.45]] as [number, number, number][]) f.push({ pts: ovale(x, y, r, r, 10), mat: 'bile', relief: 'dome', dome: { x, y, rx: r, ry: r } })
+    // (une mandibule en faux : quatre maillons qui s'amincissent, de chitine, la pointe d'os)
+    const faux = (pts: [number, number][], w: number): Forme[] => pts.slice(1).map(([x, y], k) => ({ pts: barre(pts[k][0], pts[k][1], x, y, w * (1 - k / (pts.length + 0.5))), mat: k === pts.length - 2 ? 'os' : 'chitine', relief: 'plat' }))
+    const f: Forme[] = []
+    // (les cornes de l'abdomen, sous lui : trois par flanc, et deux à la pointe)
+    for (const sg of [-1, 1]) {
+      f.push(corne(-2.8, sg * 4.2, -5.4, sg * 8.8, 0.9, 1.2), corne(-5.4, sg * 4.8, -8.8, sg * 7.6, 0.85, 1), corne(-7.8, sg * 3, -11.4, sg * 4.4, 0.75, 0.6), corne(-9, sg * 0.9, -12.4, sg * 1.4, 0.6, 0.2))
+      // (les mandibules : trois paires de faux recourbées vers l'avant, sous la tête)
+      f.push(...faux([[6.4, sg * 2.2], [8.6, sg * 3.9], [10.6, sg * 3.7], [11.6, sg * 2.4]], 1))
+      f.push(...faux([[5, sg * 2.9], [6.6, sg * 5.1], [8.6, sg * 5.6], [9.8, sg * 4.6]], 0.85))
+      f.push(...faux([[3.4, sg * 3.2], [4.2, sg * 5.4], [5.8, sg * 6.4], [7.2, sg * 6.2]], 0.7))
+    }
+    // L'ABDOMEN : sa carapace, ses deux sacs de chair, l'échine cuirassée qui le partage, les pustules de bile des sacs
+    f.push({ pts: [[-1.2, -2.2], [-2.6, -4.3], [-4.4, -5.3], [-6.6, -5], [-8.4, -3.4], [-9.4, -1.2], [-9.4, 1.2], [-8.4, 3.4], [-6.6, 5], [-4.4, 5.3], [-2.6, 4.3], [-1.2, 2.2]], mat: 'chitine', relief: 'cyl' })
+    // (… DES SACS ALLONGÉS, BARRÉS DE CÔTES — mesuré à la capture : deux dômes ronds côte à côte, ça ne se lisait pas
+    // comme une bête ; comme sur l'image de Keko, des côtes de chitine les recoupent en lobes)
+    for (const sg of [-1, 1]) {
+      f.push({ pts: ovale(-5.2, sg * 3.1, 3.4, 1.55, 18), mat: 'chair', relief: 'dome', dome: { x: -5.2, y: sg * 3.1, rx: 3.4, ry: 1.55 } })
+      for (const [x, y, r] of [[-4.1, sg * 3.4, 0.35], [-5.9, sg * 2.8, 0.3], [-7.2, sg * 3.1, 0.28]] as [number, number, number][]) f.push({ pts: ovale(x, y, r, r, 8), mat: 'bile', relief: 'dome', dome: { x, y, rx: r, ry: r } })
+    }
+    for (const x of [-3.2, -5, -6.8]) f.push({ pts: [[x + 0.4, -5], [x + 0.9, -2.4], [x + 1, 0], [x + 0.9, 2.4], [x + 0.4, 5], [x - 0.35, 4.9], [x + 0.15, 2.4], [x + 0.25, 0], [x + 0.15, -2.4], [x - 0.35, -4.9]], mat: 'chitine', relief: 'plat' })
+    for (const x of [-1.8, -3.3, -4.8, -6.3, -7.8]) f.push({ pts: [[x + 0.7, 0], [x - 0.3, -1.35], [x - 1.1, -1.15], [x - 0.5, 0], [x - 1.1, 1.15], [x - 0.3, 1.35]], mat: 'graphite', relief: 'plat' })
+    // LA TAILLE : un étranglement de chitine, une petite épine de chaque côté
+    f.push({ pts: [[1.2, -1.9], [-1.6, -2.2], [-1.6, 2.2], [1.2, 1.9]], mat: 'chitine', relief: 'cyl' })
+    for (const sg of [-1, 1]) f.push(corne(-0.2, sg * 2, -1.4, sg * 4.4, 0.5, 0.5))
+    // LE THORAX : sa carapace, un bouclier cuirassé, deux paires d'yeux de bile
+    f.push({ pts: [[7.6, -1.5], [6.4, -2.9], [3.8, -3.5], [1, -2.7], [0.6, 0], [1, 2.7], [3.8, 3.5], [6.4, 2.9], [7.6, 1.5]], mat: 'chitine', relief: 'cyl' })
+    // (… DEUX SILLONS DE CHAIR et deux épines sur l'échine — un bouclier gris, d'une pièce, y faisait un œuf)
+    for (const x of [2.4, 4.4]) f.push({ pts: [[x + 0.3, -3.2], [x - 0.4, -1.6], [x - 0.6, 0], [x - 0.4, 1.6], [x + 0.3, 3.2], [x - 0.2, 3.3], [x - 1, 1.6], [x - 1.2, 0], [x - 1, -1.6], [x - 0.2, -3.3]], mat: 'chair', relief: 'plat' })
+    for (const x of [1.8, 3.8]) f.push({ pts: [[x + 1, 0], [x - 0.5, -0.5], [x - 0.2, 0], [x - 0.5, 0.5]], mat: 'os', relief: 'plat' })
+    for (const sg of [-1, 1]) for (const [x, y, r] of [[5.9, sg * 2.2, 0.5], [4.8, sg * 2.8, 0.38]] as [number, number, number][]) f.push({ pts: ovale(x, y, r, r, 10), mat: 'bile', relief: 'dome', dome: { x, y, rx: r, ry: r } })
+    // LA GUEULE : un trou sombre bordé de crocs, la tentacule à aiguille y prend racine
+    for (const [x, y] of ANCRES_DU_KRAKEN) {
+      f.push({ pts: ovale(x + 0.5, y, 1.1, 1.4, 12), mat: 'suie', relief: 'plat' })
+      f.push({ pts: ovale(x + 0.3, y, 0.6, 0.6, 8), mat: 'chair', relief: 'dome', dome: { x: x + 0.3, y, rx: 0.6, ry: 0.6 } })
+      for (const sg of [-1, 1]) for (const dy of [0.5, 1.1]) f.push({ pts: [[x + 1.5, sg * dy], [x + 0.9, sg * (dy + 0.3)], [x + 0.9, sg * (dy - 0.3)]], mat: 'os', relief: 'plat' })
+    }
     return f
   }
   if (cran === 9) {
@@ -1775,7 +1810,8 @@ export function formesDuVaisseau(a: Allure, flamme: number, t: number, vise = 0,
   // QUAND IL POUSSE (`flamme`), ils se rabattent derrière et traînent ; une houle les parcourt de la racine au bout)
   if (a.coque === 10) {
     const nage = Math.min(1, Math.max(0, flamme))
-    const RACINES: [number, number][] = [[-2.2, -4.5], [-2.2, 4.5], [-5.4, -3.4], [-5.4, 3.4], [-7.6, -1.3], [-7.6, 1.3]]
+    // (… DE L'ABDOMEN, ENTRE SES CORNES — Keko, 19/11)
+    const RACINES: [number, number][] = [[-3.6, -4.8], [-3.6, 4.8], [-6.6, -4.5], [-6.6, 4.5], [-8.8, -2.2], [-8.8, 2.2]]
     RACINES.forEach(([x0, y0], k) => {
       const repos = Math.atan2(y0, x0 + 1.2)
       let ecart = Math.PI + y0 * 0.04 - repos
