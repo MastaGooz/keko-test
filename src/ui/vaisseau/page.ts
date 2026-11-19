@@ -17,7 +17,7 @@ import { ETALONS as ETALONS_DU_BANC, acheter, ajouterLesPiecesDEssai, capacite, 
 import { drawWord, spell } from 'pixelfx/fx/ui/_lib'
 import { firePuff, hotFirst, smokePuff } from 'pixelfx/fx/fire/_lib'
 import { VOLT, bowed, crackle, stroke, zigzag } from 'pixelfx/fx/lightning/_lib'
-import { snowflake } from 'pixelfx/fx/ice/_lib'
+import { Panes, snowflake } from 'pixelfx/fx/ice/_lib'
 import { textWidth } from 'pixelfx'
 import { HAUT_ACCENTS } from './police.ts'
 import { RACINES_DU_KRAKEN, contourDuCrochet, cordesDuKraken } from './rendu-vaisseau.ts'
@@ -7862,6 +7862,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   }
   /** LA GLACE DU FRIMAS : la rampe des effets de glace du dépôt, du plus sombre au blanc. */
   const GLACE = ['#151a3d', '#212f6b', '#2c58aa', '#3a8bd8', '#62c8f4', '#a6ecff', '#dcfbff', '#ffffff'].map((c) => N.hex(c))
+  /** Le peintre des éclats de verre du dépôt (`Panes`) : on lui donne, à chaque image, les éclats du verglas où ils sont. */
+  const brisDeGlace = new Panes() as { list: object[]; draw(p: Peintre, C: number[]): void }
   /** (un flocon sans branches : petit, il se dessine en étoile) */
   const FLOCON = { branches: [] as [number, number][], plate: false, fork: false }
   /**
@@ -7910,45 +7912,58 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const q = (m.t * 0.8 + alea(g.id, 1, 1)) % 1
       if (r > 3 && alea(g.id, 1, 4) < 0.4) p.dot(g.x + (alea(g.id, 1, 2) - 0.5) * r, g.y + (alea(g.id, 1, 3) - 0.5) * r - q * 5, q < 0.5 ? MIASME[7] : MIASME[6], 0.8 * (1 - q))
     }
-    // LE VERGLAS DE LA NOVA (Keko, 17/11) — PUIS UNE PLAQUE GLACIAIRE (Keko, 19/11 : « j'aime pas trop les traits blancs qu'on
-    // laisse ; elle fait plus une bulle qu'une véritable nova ; une structure un peu plus glaciaire ») : plus de disque lisse
-    // au bord clair ni de fêlures blanches — des PLAQUES DE GLACE à facettes (chaque pixel prend la facette du germe le plus
-    // proche, chacune son ton), leurs joints d'un bleu sombre, LE BORD DENTELÉ en pointes de givre ; des reflets qui passent
+    // LE VERGLAS DE LA NOVA (Keko, 17/11), une plaque à facettes ensuite — PUIS UN CHAMP DE BRIS DE GLACE (Keko, 19/11 : « le
+    // visuel ne me va pas du tout, c'est des textures plates, ça fait pas penser à une zone de glace dans l'espace ; un
+    // aspect bris de glace qui reste en place ; regarde dans les effets de la catégorie givre de pixelfx ») : LES ÉCLATS DE
+    // L'« ICE SHATTER » ET DU « FREEZE » DU DÉPÔT (`Panes`, dessinés par lui : du VERRE — une face translucide qui s'éclaire à
+    // mesure qu'elle se tourne vers la lumière et FLASHE quand elle lui fait face, des arêtes vives du côté de la lampe et
+    // froides de l'autre, un point blanc au sommet, une lueur froide). Projetés du cœur à la naissance, freinés par le vide,
+    // ils RESTENT EN PLACE à tourner et culbuter lentement ; entre eux, une brume froide à peine, de la poussière de glace qui
+    // scintille ; à la fin, ils rapetissent et s'éteignent.
     for (const g of m.givres) {
       if (g.verglas !== true) continue
       const age = m.t - g.nee
-      const k = Math.min(1, age / 0.3) * Math.min(1, (g.duree - age) / 0.8)
-      if (k <= 0) continue
-      const r = g.rayon * (0.4 + 0.6 * (1 - Math.pow(1 - Math.min(1, age / 0.35), 3)))
-      const germes: [number, number, number][] = [[0, 0, 5]]
-      for (let n = 0; n < 11; n++) {
-        const a = alea(g.id, n, 31) * Math.PI * 2
-        const d = (0.35 + 0.55 * alea(g.id, n, 32)) * r
-        germes.push([Math.cos(a) * d, Math.sin(a) * d, 4 + Math.floor(alea(g.id, n, 33) * 3)])
-      }
-      p.disc(g.x, g.y, r * 1.15, (d, ang) => {
-        const x = Math.cos(ang) * d * r * 1.15
-        const y = Math.sin(ang) * d * r * 1.15
-        let d1 = Infinity
-        let d2 = Infinity
-        let ton = 4
-        for (const [gx, gy, tn] of germes) {
-          const e = Math.hypot(x - gx, y - gy)
-          if (e < d1) (d2 = d1), (d1 = e), (ton = tn)
-          else if (e < d2) d2 = e
+      const fin = g.duree - age
+      if (fin <= 0) continue
+      const k = Math.min(1, fin / 0.7)
+      const nait = Math.min(1, age / 0.3)
+      p.disc(g.x, g.y, g.rayon, GLACE[4], (d) => 0.12 * (1 - d * d) * k * nait)
+      const eclats: object[] = []
+      for (let j = 0; j < 18; j++) {
+        const a = alea(g.id, j, 51) * Math.PI * 2
+        const d = Math.sqrt(0.04 + 0.96 * alea(g.id, j, 52)) * g.rayon * 0.92 * (1 - Math.exp(-age * 7))
+        const taille = (2 + 3.6 * alea(g.id, j, 53)) * (0.45 + 0.55 * k)
+        const coins = 3 + Math.floor(alea(g.id, j, 54) * 3)
+        const pts: number[][] = []
+        for (let c = 0; c < coins; c++) {
+          const ac = (c / coins) * Math.PI * 2 + (alea(g.id, j * 7 + c, 55) - 0.5) * 0.9
+          const rr = taille * (0.55 + 0.6 * alea(g.id, j * 7 + c, 56))
+          pts.push([Math.cos(ac) * rr, Math.sin(ac) * rr])
         }
-        return d2 - d1 < 0.9 ? GLACE[2] : GLACE[ton]
-      }, (d, ang) => {
-        // (le bord dentelé : vingt-deux pointes de longueurs et d'écarts inégaux — mesuré à la capture : seize pointes
-        // égales faisaient une fleur)
-        const b = (ang / (Math.PI * 2) + 1) * 22 + 0.4 * Math.sin(ang * 3 + g.id)
-        const f = b - Math.floor(b)
-        const pointe = 0.84 + 0.26 * (1 - Math.abs(f - 0.5) * 2) * (0.15 + 0.85 * alea(g.id, Math.floor(b) % 22, 34))
-        return d * 1.15 > pointe ? 0 : (0.36 + 0.14 * d) * k
-      })
-      for (let j = 0; j < 3; j++) {
-        const sc = 0.5 + 0.5 * Math.sin(m.t * (2.5 + j) + alea(g.id, j, 16) * 6)
-        if (sc > 0.8) N.sparkle(p, g.x + (alea(g.id, j, 17) - 0.5) * r * 1.2, g.y + (alea(g.id, j, 18) - 0.5) * r * 1.2, 2, N.WHITE, GLACE[5], 0.7 * k)
+        // (ils tournent vite en partant, puis lentement ; ils culbutent sans fin, chacun à son pas)
+        const sens = alea(g.id, j, 59) < 0.5 ? -1 : 1
+        eclats.push({
+          pts,
+          x: g.x + Math.cos(a) * d,
+          y: g.y + Math.sin(a) * d,
+          a: alea(g.id, j, 60) * Math.PI * 2 + (alea(g.id, j, 57) - 0.5) * 1.2 * age + 4 * sens * (1 - Math.exp(-age * 4)),
+          f: alea(g.id, j, 61) * Math.PI * 2 + sens * (0.7 + 1.5 * alea(g.id, j, 58)) * age,
+          lit: 0.4 + 0.6 * alea(g.id, j, 62),
+          life: 0.35 * k * nait,
+          rest: false,
+        })
+      }
+      brisDeGlace.list = eclats
+      brisDeGlace.draw(p, GLACE)
+      // (la poussière de glace, qui scintille entre les éclats)
+      for (let j = 0; j < 16; j++) {
+        const a = alea(g.id, j, 63) * Math.PI * 2
+        const d = Math.sqrt(alea(g.id, j, 64)) * g.rayon * (1 - Math.exp(-age * 5))
+        const sc = 0.5 + 0.5 * Math.sin(m.t * (2 + 3 * alea(g.id, j, 65)) + alea(g.id, j, 66) * 6)
+        const x = g.x + Math.cos(a) * d
+        const y = g.y + Math.sin(a) * d
+        if (sc > 0.93) N.sparkle(p, x, y, 2, N.WHITE, GLACE[5], 0.8 * k)
+        else p.dot(x, y, sc > 0.5 ? GLACE[6] : GLACE[5], (0.3 + 0.5 * sc) * k * nait)
       }
     }
     for (const g of m.givres) {

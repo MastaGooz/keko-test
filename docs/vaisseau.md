@@ -6403,3 +6403,15 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   - LA TAILLE : la nova frappe à 50 (38 avant), sa plaque de verglas fait 30 (22) ;
   - LES ÉCLATS ont un sillage de givre qui s'effile et pâlit sur quatorze pixels, deux flocons qui s'en détachent, jamais
     plus long que le chemin fait.
+- LE VERGLAS DE LA NOVA DEVIENT UN CHAMP DE BRIS DE GLACE (Keko, 19/11 : « le visuel ne me va pas du tout, c'est des
+  textures plates, ça fait pas penser à une zone de glace dans l'espace ; laisser les petits pics, et faire un aspect bris
+  de glace qui reste en place ; regarde dans les effets de la catégorie givre de pixelfx ») : la plaque à facettes s'en va.
+  Pris à l'« Ice shatter » et au « Freeze » du dépôt : SES ÉCLATS DE VERRE (`Panes` de `pixelfx/fx/ice/_lib`, dessinés par
+  lui — une face translucide qui s'éclaire en se tournant vers la lumière et FLASHE quand elle lui fait face, des arêtes
+  vives du côté de la lampe, froides de l'autre, un point blanc au sommet, une lueur froide), LA POUSSIÈRE DE GLACE ET SES
+  SCINTILLEMENTS. Dix-huit éclats de trois à cinq coins, projetés du cœur à la naissance, freinés par le vide, qui RESTENT
+  EN PLACE à tourner et culbuter lentement, chacun à son pas ; une brume froide à peine ; ils rapetissent et s'éteignent à
+  la fin. Tout est une fonction de l'âge du verglas et de son identifiant : rien n'est gardé d'une image à l'autre. Les
+  pics et la couronne de dents de givre restent.
+  (Keko note aussi un CONFLIT DE FONCTION entre la nova et les éclats — tous deux frappent une zone autour du vaisseau à
+  intervalles réguliers ; les éclats seront retravaillés ensuite.)
