@@ -199,6 +199,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   // (DANS LE JEU DU VORTEX, LA COULEUR EST CELLE DU JOUEUR, pas du vaisseau — Keko, 15/11 : « chaque joueur aura une
   // couleur pour bien s'identifier » ; rouge, bleu, vert ou jaune, rouge au départ)
   const VORTEX_ = parametres.has('vortex')
+  /**
+   * LES VAISSEAUX PLUS GROS EN VOL (Keko, 19/11 : « les vaisseaux sont un petit peu petits en jeu ; les dessiner un tout
+   * petit peu plus gros durant la partie — pas au hangar ni à l'accueil ») : dans le vortex, le vaisseau du joueur est
+   * peint à cette échelle, et tout ce qui s'accroche à lui la suit — les bouches de ses armes et les ancres de ses
+   * tentacules (`configDuVol`), sa lueur, ses feux, son bouclier, ses jets, ses bulles et ses braises, le départ de ses
+   * rayons, les anneaux du Ver. L'aperçu des armes, au hangar, reste à 1. La règle ne change pas : son rayon de choc
+   * non plus.
+   */
+  const ECHELLE_EN_VOL = VORTEX_ ? 1.25 : 1
   // (… PUIS SEULEMENT SA MARQUE — Keko, 16/11 ; … PUIS PLUS DE COULEUR DU JOUEUR DU TOUT : TROIS APPARENCES PAR VAISSEAU —
   // Keko, 17/11 : « on va enlever le petit marquage coloré… on va le remplacer par un vrai changement de carrosserie » :
   // dans le vortex, la « livrée » est l'apparence du vaisseau piloté, gardée vaisseau par vaisseau ; voir `peaux.ts`. Le
@@ -895,7 +904,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * petit monde à part avec la même configuration que le vrai vol) : les pièces montées, le labo, l'arme du vortex et sa
    * place sur le vaisseau, l'espace du vortex, la vie de la race. `graine` : celle de l'espace.
    */
-  function configDuVol(arme: string, graine: number): ConfigVaisseau {
+  function configDuVol(arme: string, graine: number, echelle = ECHELLE_EN_VOL): ConfigVaisseau {
       let conf = configDuLabo(regleAuVortex(configDuHangar(BASE, hangar), flotte.actif), labo) // (les passifs et les mécaniques du labo par-dessus les pièces montées)
       // UN AUTRE ESPACE À CHAQUE VOL (Keko : « randomiser à chaque vol pour l'instant, histoire de tester ») : une graine
       // tirée ici — le hasard est du côté de la page — entre dans le champ d'astéroïdes, dans le monde (le rival) et dans
@@ -950,6 +959,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // l'Essaim, pas de bouclier, une coque qui se régénère
       if (VORTEX) conf = { ...conf, ...blindageAuVortex(vieSelonLaRace(modeleDeVaisseau(flotte.actif).race, { coque: conf.coque, bouclier: conf.bouclier, regeneration: conf.regeneration, plaques: conf.plaques, corruption: conf.corruption }, modeleDeVaisseau(flotte.actif).plaques), flotte.actif) }
       if (bouclierDEssai > 0) conf = { ...conf, bouclier: { ...conf.bouclier, points: bouclierDEssai } }
+      // (LES BOUCHES ET LES ANCRES SUIVENT LE VAISSEAU PLUS GROS — voir `ECHELLE_EN_VOL`)
+      if (echelle !== 1)
+        conf = {
+          ...conf,
+          armes: conf.armes.map((a) => ({
+            ...a,
+            ...(a.bouche === undefined ? {} : { bouche: { x: a.bouche.x * echelle, y: a.bouche.y * echelle } }),
+            ...(a.tentacule === undefined ? {} : { tentacule: { ...a.tentacule, ancres: a.tentacule.ancres.map(([x, y]): [number, number] => [x * echelle, y * echelle]) } }),
+          })),
+        }
     return conf
   }
   /**
@@ -3766,7 +3785,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const APERCU_LOIN = 200
   function apercuDe(arme: string): { arme: string; conf: ConfigVaisseau; monde: Monde; t: number; nes: number } {
     if (apercu === null || apercu.arme !== arme || apercu.monde.phase !== 'vol') {
-      const base = configDuVol(arme, 1)
+      const base = configDuVol(arme, 1, 1)
       // (des insectes deux fois plus lents qu'en vol : l'arme a le temps de se montrer avant qu'ils n'arrivent)
       const conf: ConfigVaisseau = { ...base, invasion: { ...base.invasion, premiere: 1e9 }, ennemi: { ...base.ennemi, vitesseMax: base.ennemi.vitesseMax * 0.5, poussee: base.ennemi.poussee * 0.5 } }
       const monde = nouveauMonde(conf, 1)
@@ -7161,28 +7180,31 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * position qui clignotent au bout des ailes, l'anneau du bouclier. Le rival est le châssis de série dans SES matières.
    */
   const MATIERES_DU_RIVAL = { coque: 'carmin', aile: 'grenat', verre: 'ambre', rouge: 'or', laser: 'violet' } as const
+  /** L'échelle à laquelle le vaisseau est peint en ce moment : celle du vol, 1 dans l'aperçu du hangar. */
+  const echelleVue = (): number => (enApercu ? 1 : ECHELLE_EN_VOL)
   function dessinerUnVaisseau(p: Peintre, corps: Vaisseau, flam: number, vise: number, allure: Allure, blanchi: boolean, rival: boolean, devie = 0): void {
+    const E = echelleVue()
     // (au pixel entier : entre deux pixels, la silhouette changerait à chaque image)
     const sx = Math.round(corps.x - camera.x + W / 2)
     const sy = Math.round(corps.y - camera.y + centreY())
     const ca = Math.cos(corps.cap)
     const sa = Math.sin(corps.cap)
-    const ici = (x: number, y: number): [number, number] => [sx + x * ca - y * sa, sy + x * sa + y * ca]
+    const ici = (x: number, y: number): [number, number] => [sx + (x * ca - y * sa) * E, sy + (x * sa + y * ca) * E]
     const cp = allure.propulseur
     const g = gabaritDe(allure.coque)
     if (flam > 0.02 && g.omni === undefined && !organique(allure.coque)) {
       const [fx, fy] = ici(queueDe(allure.coque) - 0.5 * (cp - 1) - (1 + 3 * flam), 0)
-      p.glow(fx, fy, 5 + 7 * flam + 2 * (cp - 1), rival ? FEU[4] : cp >= 3 ? ION[4] : FEU[5], 0.4 + 0.45 * flam + 0.08 * Math.sin(t * 9))
+      p.glow(fx, fy, (5 + 7 * flam + 2 * (cp - 1)) * E, rival ? FEU[4] : cp >= 3 ? ION[4] : FEU[5], 0.4 + 0.45 * flam + 0.08 * Math.sin(t * 9))
     }
-    peindreFormes(p, formesDuVaisseau(allure, flam, t, vise, devie), sx, sy, 1, { cap: corps.cap, lumiere: LUMIERE_DU_VOL, blanc: blanchi ? 1 : 0, matieres: rival ? MATIERES_DU_RIVAL : undefined, rampes: rival ? undefined : rampesDuJoueur(), reflet: rival ? REFLET_DU_RIVAL : REFLET_DU_VOL })
+    peindreFormes(p, formesDuVaisseau(allure, flam, t, vise, devie), sx, sy, E, { cap: corps.cap, lumiere: LUMIERE_DU_VOL, blanc: blanchi ? 1 : 0, matieres: rival ? MATIERES_DU_RIVAL : undefined, rampes: rival ? undefined : rampesDuJoueur(), reflet: rival ? REFLET_DU_RIVAL : REFLET_DU_VOL })
     // (LE CRISTAL DU PRISME RAYONNE — Keko, 18/11 : « le vaisseau de lumière » : une lueur d'or blanc qui respire, sur son
     // cristal ; un halo plus large autour de lui)
     if (allure.coque === 12 && !rival) {
       const en = rampesDuJoueur()?.energie ?? [0, 0, 0, ...tonsDeLaMatiere('energie')]
       const [kx, ky] = ici(CRISTAL_DU_PRISME.x, 0)
       const bat = 0.5 + 0.5 * Math.sin(t * 2.2)
-      p.glow(kx, ky, 18 + 3 * bat, en[3], 0.25 + 0.08 * bat)
-      p.glow(kx, ky, 8 + 2 * bat, en[4], 0.5 + 0.15 * bat)
+      p.glow(kx, ky, (18 + 3 * bat) * E, en[3], 0.25 + 0.08 * bat)
+      p.glow(kx, ky, (8 + 2 * bat) * E, en[4], 0.5 + 0.15 * bat)
     }
     // (LE CŒUR DE LUMIÈRE DU TESSERACT RAYONNE — Keko, 18/11 : « le vaisseau de lumière » : une lueur qui bat avec lui, de
     // la couleur de son cœur, et un halo plus large, de celle de ses arêtes)
@@ -7191,11 +7213,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const lu = ru?.lumiere ?? [0, 0, 0, ...tonsDeLaMatiere('lumiere')]
       const sp = ru?.spectre ?? [0, 0, 0, ...tonsDeLaMatiere('spectre')]
       const bat = 0.5 + 0.5 * Math.sin(t * 3)
-      p.glow(sx, sy, 16 + 3 * bat, sp[4], 0.3 + 0.1 * bat)
-      p.glow(sx, sy, 7 + 2 * bat, lu[4], 0.55 + 0.2 * bat)
+      p.glow(sx, sy, (16 + 3 * bat) * E, sp[4], 0.3 + 0.1 * bat)
+      p.glow(sx, sy, (7 + 2 * bat) * E, lu[4], 0.55 + 0.2 * bat)
     }
     const [vx, vy] = ici(g.verriere, 0)
-    if (!sansVerriere(allure.coque)) p.glow(vx, vy, 4, rival ? VERRIERE_ENNEMIE[1] : VERRIERE[2], 0.3)
+    if (!sansVerriere(allure.coque)) p.glow(vx, vy, 4 * E, rival ? VERRIERE_ENNEMIE[1] : VERRIERE[2], 0.3)
     // les feux de position, au bout des ailes : rouge à bâbord, vert à tribord ; le rival, deux feux d'ambre
     const feux = g.feux
     if (feux !== null && !blanchi && Math.floor(t * 1.5 + (rival ? 0.5 : 0)) % 2 === 0)
@@ -7209,7 +7231,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // `bouclier.ts` ; celui du joueur prend ses coups (l'onde, les plaques qui blanchissent) et se fêle quand il se vide
     while (coupsAuBouclier.length > 0 && t - coupsAuBouclier[0].t0 > 1.2) coupsAuBouclier.shift()
     const coups = rival ? [] : coupsAuBouclier.map((c) => ({ angle: Math.atan2(c.y - corps.y, c.x - corps.x), age: t - c.t0, brise: c.brise }))
-    if (allure.bouclier > 0 || coups.some((c) => c.brise && c.age < 0.8)) dessinerLeBouclier(p, sx, sy, g.anneau, t, allure.bouclier, coups)
+    if (allure.bouclier > 0 || coups.some((c) => c.brise && c.age < 0.8)) dessinerLeBouclier(p, sx, sy, g.anneau * E, t, allure.bouclier, coups)
   }
 
   /**
@@ -7232,7 +7254,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     let long = 0
     for (let i = 1; i < tr.length; i++) {
       long += Math.hypot(tr[i][0] - tr[i - 1][0], tr[i][1] - tr[i - 1][1])
-      if (long > 35) {
+      if (long > 35 * echelleVue()) {
         tr.length = i + 1
         break
       }
@@ -7254,16 +7276,17 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const l = Math.hypot(qx - px, qy - py) || 1
       return [qx + ((qx - px) / l) * reste, qy + ((qy - py) / l) * reste]
     }
+    const E = echelleVue()
     {
-      const [qx, qy] = auDos(9 * ECART_DES_ANNEAUX + 2)
-      const [ax, ay] = auDos(9 * ECART_DES_ANNEAUX)
+      const [qx, qy] = auDos((9 * ECART_DES_ANNEAUX + 2) * E)
+      const [ax, ay] = auDos(9 * ECART_DES_ANNEAUX * E)
       queueDuVer = { x: qx, y: qy, cap: Math.atan2(ay - qy, ax - qx) }
     }
     const anneaux: [number, number][] = []
     for (let k = 1; k <= 9; k++) {
-      const [wx, wy] = auDos(k * ECART_DES_ANNEAUX)
-      const dx = wx - v.x
-      const dy = wy - v.y
+      const [wx, wy] = auDos(k * ECART_DES_ANNEAUX * E)
+      const dx = (wx - v.x) / E
+      const dy = (wy - v.y) / E
       anneaux.push([dx * ca + dy * sa, -dx * sa + dy * ca])
     }
     return anneaux
@@ -7351,8 +7374,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const jet = (x: number, y: number, dx: number, dy: number, force: number): void => {
         if (force < 0.12 || plieLEspace(al.coque)) return
         const L = (2 + 4 * force) * (0.8 + 0.2 * Math.sin(t * 55 + x * 3 + y))
-        const x0 = sx + x * ca - y * sa
-        const y0 = sy + x * sa + y * ca
+        const x0 = sx + (x * ca - y * sa) * echelleVue()
+        const y0 = sy + (x * sa + y * ca) * echelleVue()
         const ux = dx * ca - dy * sa
         const uy = dx * sa + dy * ca
         if (bete) {
@@ -7378,7 +7401,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const gj = gabaritDe(al.coque)
       // UNE SOUCOUPE : de petits jets froids à ses tuyères, celles qui font face à l'opposé de la direction ; pas de jets
       // de manœuvre au nez ni aux flancs (elle ne tourne pas)
-      if (gj.omni !== undefined) dessinerLesJetsOmni(p, al.coque, sx, sy, v.cap, 1, pousseeVue.avant - pousseeVue.retro, pousseeVue.cote)
+      if (gj.omni !== undefined) dessinerLesJetsOmni(p, al.coque, sx, sy, v.cap, echelleVue(), pousseeVue.avant - pousseeVue.retro, pousseeVue.cote)
       else {
       for (const cote of [-1, 1]) jet(gj.nez, cote * 2.2, 1, cote * 0.25, pousseeVue.retro)
       // (on glisse vers tribord — `cote` positif : c'est le flanc bâbord qui souffle, vers bâbord)
@@ -10827,8 +10850,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const canon = canonDeLaForeuse(cran)
     const vise = Math.atan2(f.y - depuis.y, f.x - depuis.x)
     // (`place` : où la foreuse est montée sur cette coque, en décalage du milieu du toit)
-    const x0 = depuis.x + Math.cos(depuis.cap) * (canon.pivot + place.x) - Math.sin(depuis.cap) * place.y + Math.cos(vise) * canon.bouche
-    const y0 = depuis.y + Math.sin(depuis.cap) * (canon.pivot + place.x) + Math.cos(depuis.cap) * place.y + Math.sin(vise) * canon.bouche
+    const E = echelleVue()
+    const x0 = depuis.x + (Math.cos(depuis.cap) * (canon.pivot + place.x) - Math.sin(depuis.cap) * place.y + Math.cos(vise) * canon.bouche) * E
+    const y0 = depuis.y + (Math.sin(depuis.cap) * (canon.pivot + place.x) + Math.cos(depuis.cap) * place.y + Math.sin(vise) * canon.bouche) * E
     const px = -Math.sin(vise)
     const py = Math.cos(vise)
     const vacille = 0.75 + 0.25 * Math.sin(t * 70)
@@ -13676,8 +13700,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
             const tuyeres = gabaritDe(coque).tuyeres
             const tuy = tuyeres[Math.floor(R.next() * tuyeres.length)]
             // (une tuyère large — l'Ingénieur — sème ses braises sur toute sa largeur)
-            const deCote = tuy.y + (tuy.large === undefined ? 0 : R.range(-1, 1) * 1.6 * tuy.large)
-            const recul = -queueDe(coque) + 0.5 * (cran - 1) + Math.min(1.5, flamme * 0.15)
+            const deCote = (tuy.y + (tuy.large === undefined ? 0 : R.range(-1, 1) * 1.6 * tuy.large)) * echelleVue()
+            const recul = (-queueDe(coque) + 0.5 * (cran - 1) + Math.min(1.5, flamme * 0.15)) * echelleVue()
             // (LE VER : au bout de SA QUEUE, là où le chemin l'a mise — Keko, 17/11 : « la propulsion ne colle pas à l'endroit
             // exact de sa queue, surtout quand il tourne »)
             const auVer = coque === 14 && queueDuVer !== null

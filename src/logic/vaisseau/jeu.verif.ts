@@ -1596,7 +1596,9 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
     return { w, ev, plus, pv: w.ennemis.map((e) => 100000 - e.pv) }
   }
   const rien = elever([[0, 300]], 2)
-  verifier('personne à portée : aucun rejeton', rien.ev.every((e) => e.type !== 'rejeton') && rien.w.rejetons.length === 0)
+  // (… MÊME SANS INSECTE, il en naît — Keko, 19/11 —, qui se tiennent derrière le vaisseau)
+  const derriere = rien.w.rejetons.length > 0 && rien.w.rejetons.every((r) => r.x < 0)
+  verifier(`personne à portée : des rejetons naissent quand même (${rien.w.rejetons.length}), et se tiennent derrière le vaisseau`, rien.ev.some((e) => e.type === 'rejeton') && derriere)
   const un = elever([[60, 0]], 2)
   verifier(`un insecte à 60 : un rejeton naît, nage jusqu’à lui et le fouette (${un.pv[0]} en 2 s, par 4)`, un.ev.filter((e) => e.type === 'rejeton').length === 1 && un.pv[0] >= 8 && un.pv[0] % 4 === 0 && un.ev.some((e) => e.type === 'coupDeRejeton'))
   const long = elever([[60, 0]], 16)

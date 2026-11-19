@@ -6013,3 +6013,13 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   poussée est lissée, d'où des tentacules souples. Un vaisseau ORGANIQUE (le Kraken, la Vouivre, le Ver) reçoit à
   l'accueil une poussée stable (0,55), qui glisse jusqu'à 1 pendant le départ ; les réacteurs gardent leur frémissement.
   Vu à la capture : huit images à 0,1 s, la même ouverture, une houle douce.
+- LES REJETONS DU KRAKEN NAISSENT MÊME SANS INSECTE (Keko, 19/11 : « que le Kraken invoque des rejetons même en l'absence
+  d'ennemis ») : `menerLesRejetons` ne demande plus d'insecte à portée ; sans proie, un rejeton se tient à sa place
+  derrière le vaisseau. Vérifié (`jeu.verif.ts`) : personne à portée, ils naissent et se tiennent derrière lui.
+- LES VAISSEAUX PLUS GROS EN VOL (Keko, 19/11 : « les vaisseaux sont un petit peu petits en jeu ; les dessiner un tout petit
+  peu plus gros durant la partie — on ne touche pas à leur taille au hangar et dans l'écran d'accueil ») : dans le
+  vortex, le vaisseau du joueur est peint à 1,25 (`ECHELLE_EN_VOL`), et tout ce qui s'accroche à lui suit : les bouches
+  de ses armes et les ancres de ses tentacules (`configDuVol` — les tirs partent de la bouche dessinée), la lueur de sa
+  tuyère, sa verrière, ses feux, sa bulle de bouclier, ses jets de manœuvre, ses bulles et ses braises, le départ de ses
+  rayons, les anneaux du Ver (le chemin est lu à l'échelle). L'aperçu des armes au hangar reste à 1. LA RÈGLE NE CHANGE
+  PAS : son rayon de choc est le même, c'est le dessin qui grossit. Vu à la capture, avant et après, Chasseur, Kraken, Ver.

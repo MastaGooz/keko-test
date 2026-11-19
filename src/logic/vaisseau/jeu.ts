@@ -2759,7 +2759,8 @@ function menerLesRejetons(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement
     const rj = a.rejeton
     if (rj === undefined || m.phase !== 'vol' || m.t < (m.armesA[i] ?? 0)) return
     if (m.rejetons.filter((r) => r.arme === i).length >= rj.max) return
-    if (!m.ennemis.some((e) => Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= a.portee + c.ennemi.rayon)) return
+    // (MÊME SANS INSECTE — Keko, 19/11 : « que le Kraken invoque des rejetons même en l'absence d'ennemis » : sans proie, un
+    // rejeton se tient à sa place derrière le vaisseau, prêt)
     m.armesA[i] = m.t + a.cadence
     // (pondu derrière le vaisseau, lancé vers l'arrière)
     const x = v.x - Math.cos(v.cap) * 8
