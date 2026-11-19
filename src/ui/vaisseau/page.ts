@@ -1072,7 +1072,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
 
   // ---------------------------------------------------------------- le hangar, en pixels
   /** L'allure du vaisseau : les crans des pièces montées et ses armes PLACE PAR PLACE ('' : une place libre — la place 1 est l'aile gauche, la 2 la droite), lus par le dessin (le rival est de série, sans arme) ; `bouclier` : la part du bouclier qui reste, pour son anneau. */
-  type Allure = { /** Le ver : ses anneaux sur le chemin de sa tête (voir `cheminDuVer`). */ chemin?: [number, number][]; propulseur: number; coque: number; /** Le cran de la foreuse montée, 0 sans foreuse. */ foreuse: number; radar: boolean; aimant: boolean; armes: string[]; bouclier: number; outils?: ({ famille: string; cran: number } | null)[]; foreusePlace?: number; vises?: number[]; habit?: Habit; /** Le Kraken et ses armes (voir `Allure.kraken` du rendu). */ kraken?: { crochets?: boolean; rejeton?: number; sorties?: number[] } }
+  type Allure = { /** Le ver : ses anneaux sur le chemin de sa tête (voir `cheminDuVer`). */ chemin?: [number, number][]; propulseur: number; coque: number; /** Le cran de la foreuse montée, 0 sans foreuse. */ foreuse: number; radar: boolean; aimant: boolean; armes: string[]; bouclier: number; outils?: ({ famille: string; cran: number } | null)[]; foreusePlace?: number; vises?: number[]; habit?: Habit; /** Le Kraken et ses armes (voir `Allure.kraken` du rendu). */ kraken?: { crochets?: boolean; rejeton?: number; sorties?: number[] }; /** La Vouivre et ses armes (voir `Allure.vouivre` du rendu). */ vouivre?: { tete?: boolean; mine?: number; reserve?: boolean } }
   /**
    * L'ARME DU JEU DU VORTEX (Keko, 15/11 : « Arme et le nom de l'arme, avec un bouton pour changer ») : le canon, un par
    * aile — LA MÊME SUR LES DEUX AILES, et c'est elle que le vaisseau porte au hangar comme en vol, et qui tire.
@@ -1114,13 +1114,26 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const placeDeLaForeuse = (): number => Math.max(0, hangar.outils.indexOf(foreuseMontee(hangar)?.id ?? ''))
   // (LE LANCE-TOURELLES ET LE LANCE-SCIE DE L'INGÉNIEUR SE DESSINENT — Keko, 18/11 : leurs armes ne sont plus dans la liste
   // de celles qu'on ne voit pas sur le vaisseau)
-  const allureMontee = (bouclier: number): Allure => ({ propulseur: monteeA(hangar, 'propulseur').cran, coque: monteeA(hangar, 'coque').cran, foreuse: parametres.has('vortex') ? (((pieceDe(armeDuVortex())?.arme?.canalise !== undefined && pieceDe(armeDuVortex())?.arme?.id !== 'faisceau') || pieceDe(armeDuVortex())?.arme?.balayage?.trace !== undefined) ? 3 : 0) : (foreuseMontee(hangar)?.cran ?? 0), radar: radarMonte(hangar) > 0, aimant: aimantMonte(hangar) > 1, armes: parametres.has('vortex') ? (pieceDe(armeDuVortex())?.arme?.balayage?.trace !== undefined || pieceDe(armeDuVortex())?.arme?.orbite !== undefined || pieceDe(armeDuVortex())?.arme?.canalise !== undefined || pieceDe(armeDuVortex())?.arme?.chaine !== undefined || pieceDe(armeDuVortex())?.arme?.aura !== undefined || pieceDe(armeDuVortex())?.arme?.balise !== undefined || pieceDe(armeDuVortex())?.arme?.givre !== undefined || pieceDe(armeDuVortex())?.arme?.nova !== undefined || pieceDe(armeDuVortex())?.arme?.salve !== undefined || pieceDe(armeDuVortex())?.arme?.tornade !== undefined || pieceDe(armeDuVortex())?.arme?.plasma !== undefined || pieceDe(armeDuVortex())?.arme?.essaim !== undefined || pieceDe(armeDuVortex())?.arme?.sphere !== undefined || pieceDe(armeDuVortex())?.arme?.puits !== undefined || pieceDe(armeDuVortex())?.arme?.meteore !== undefined || pieceDe(armeDuVortex())?.arme?.rail !== undefined || pieceDe(armeDuVortex())?.arme?.tentacule !== undefined || pieceDe(armeDuVortex())?.arme?.nuee !== undefined || pieceDe(armeDuVortex())?.arme?.rejeton !== undefined || pieceDe(armeDuVortex())?.arme?.crachat !== undefined || pieceDe(armeDuVortex())?.arme?.mine !== undefined || pieceDe(armeDuVortex())?.arme?.fleau !== undefined || pieceDe(armeDuVortex())?.arme?.parasite !== undefined || pieceDe(armeDuVortex())?.arme?.drain !== undefined || pieceDe(armeDuVortex())?.arme?.vrille !== undefined || pieceDe(armeDuVortex())?.arme?.ponte !== undefined || pieceDe(armeDuVortex())?.arme?.epines !== undefined ? [] : pieceDe(armeDuVortex())?.arme?.flamme !== undefined || pieceDe(armeDuVortex())?.arme?.napalm !== undefined || pieceDe(armeDuVortex())?.arme?.balayage !== undefined ? [0] : [0, 1]).map(() => pieceDe(armeDuVortex())?.arme?.id ?? '') : Array.from({ length: capacite(hangar, 'arme') }, (_, k) => pieceDe(hangar.armes[k] ?? '')?.arme?.id ?? ''), bouclier, outils: outilsParPlace(), foreusePlace: placeDeLaForeuse(), habit: habitDuJoueur(monteeA(hangar, 'coque').cran), kraken: krakenDeLAllure() })
+  const allureMontee = (bouclier: number): Allure => ({ propulseur: monteeA(hangar, 'propulseur').cran, coque: monteeA(hangar, 'coque').cran, foreuse: parametres.has('vortex') ? (((pieceDe(armeDuVortex())?.arme?.canalise !== undefined && pieceDe(armeDuVortex())?.arme?.id !== 'faisceau') || pieceDe(armeDuVortex())?.arme?.balayage?.trace !== undefined) ? 3 : 0) : (foreuseMontee(hangar)?.cran ?? 0), radar: radarMonte(hangar) > 0, aimant: aimantMonte(hangar) > 1, armes: parametres.has('vortex') ? (pieceDe(armeDuVortex())?.arme?.balayage?.trace !== undefined || pieceDe(armeDuVortex())?.arme?.orbite !== undefined || pieceDe(armeDuVortex())?.arme?.canalise !== undefined || pieceDe(armeDuVortex())?.arme?.chaine !== undefined || pieceDe(armeDuVortex())?.arme?.aura !== undefined || pieceDe(armeDuVortex())?.arme?.balise !== undefined || pieceDe(armeDuVortex())?.arme?.givre !== undefined || pieceDe(armeDuVortex())?.arme?.nova !== undefined || pieceDe(armeDuVortex())?.arme?.salve !== undefined || pieceDe(armeDuVortex())?.arme?.tornade !== undefined || pieceDe(armeDuVortex())?.arme?.plasma !== undefined || pieceDe(armeDuVortex())?.arme?.essaim !== undefined || pieceDe(armeDuVortex())?.arme?.sphere !== undefined || pieceDe(armeDuVortex())?.arme?.puits !== undefined || pieceDe(armeDuVortex())?.arme?.meteore !== undefined || pieceDe(armeDuVortex())?.arme?.rail !== undefined || pieceDe(armeDuVortex())?.arme?.tentacule !== undefined || pieceDe(armeDuVortex())?.arme?.nuee !== undefined || pieceDe(armeDuVortex())?.arme?.rejeton !== undefined || pieceDe(armeDuVortex())?.arme?.crachat !== undefined || pieceDe(armeDuVortex())?.arme?.mine !== undefined || pieceDe(armeDuVortex())?.arme?.fleau !== undefined || pieceDe(armeDuVortex())?.arme?.parasite !== undefined || pieceDe(armeDuVortex())?.arme?.drain !== undefined || pieceDe(armeDuVortex())?.arme?.vrille !== undefined || pieceDe(armeDuVortex())?.arme?.ponte !== undefined || pieceDe(armeDuVortex())?.arme?.epines !== undefined ? [] : pieceDe(armeDuVortex())?.arme?.flamme !== undefined || pieceDe(armeDuVortex())?.arme?.napalm !== undefined || pieceDe(armeDuVortex())?.arme?.balayage !== undefined ? [0] : [0, 1]).map(() => pieceDe(armeDuVortex())?.arme?.id ?? '') : Array.from({ length: capacite(hangar, 'arme') }, (_, k) => pieceDe(hangar.armes[k] ?? '')?.arme?.id ?? ''), bouclier, outils: outilsParPlace(), foreusePlace: placeDeLaForeuse(), habit: habitDuJoueur(monteeA(hangar, 'coque').cran), kraken: krakenDeLAllure(), vouivre: vouivreDeLAllure() })
   /**
    * CE QUE LES ARMES DU KRAKEN CHANGENT À SON CORPS (voir `Allure.kraken`) : les crochets de la Tentacule, le rejeton
    * accroché au dos — parti quand un rejeton naît (`rejetonPartiA`), il repousse : rien pendant 0,4 s, puis il grandit en
    * 1,4 s.
    */
   let rejetonPartiA = -1e9
+  /**
+   * CE QUE LES ARMES DE LA VOUIVRE CHANGENT À SON CORPS (voir `Allure.vouivre`) : la tête du Crachat, la poche de la
+   * Traînée, la mine du dos — partie quand une mine est lancée (`minePartieA`), elle repousse comme le rejeton du Kraken.
+   */
+  let minePartieA = -1e9
+  function vouivreDeLAllure(): Allure['vouivre'] {
+    if (!parametres.has('vortex')) return undefined
+    const a = pieceDe(armeDuVortex())?.arme
+    if (a?.crachat !== undefined) return { tete: true }
+    if (a?.givre?.poison === true) return { reserve: true }
+    if (a?.mine !== undefined) return { mine: Math.max(0, Math.min(1, (t - minePartieA - 0.3) / 1.2)) }
+    return undefined
+  }
   function krakenDeLAllure(): Allure['kraken'] {
     if (!parametres.has('vortex')) return undefined
     const a = pieceDe(armeDuVortex())?.arme
@@ -3745,8 +3758,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     zone(0, 0, W, H, () => {}, null)
   }
   /** LES ARMES, DITES SANS CHIFFRES (Keko, 17/11 : « juste le nom de l'arme et une petite description ») : ce qu'elle fait, à voir. */
+  // (… JAMAIS LE VAISSEAU, JAMAIS LES INSECTES — Keko, 19/11 : « dans les descriptions, on ne renvoie jamais au vaisseau,
+  // on ne dit pas « il fait quelque chose », c'est valable pour tous les vaisseaux ; et on ne renvoie jamais aux insectes,
+  // car plus tard il y aura peut-être autre chose que des insectes » : le verbe sans sujet — « Crache… », « Laisse
+  // derrière lui… », « Sème… » —, et « les ennemis »)
   const DESCRIPTIONS_DES_ARMES: Record<string, string> = {
-    'arme-canon': 'Des obus lourds, tirés d’une aile puis de l’autre, droit devant.',
+    'arme-canon': 'Des obus lourds, tirés droit devant.',
     // (… SUR SON PRINCIPE — Keko, 18/11 : « ne dis pas qu'il touche à chaque fois, ni qu'il tire d'une aile puis de
     // l'autre ; une généralité, un overview de l'arme : qu'est-ce que ça fait ? »)
     'arme-laser': 'Des traits laser lourds et rapides, qui fondent sur l’ennemi.',
@@ -3765,38 +3782,38 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     'arme-napalm': 'Une boule de gel lancée en cloche, qui laisse une flaque de feu.',
     'arme-drones': 'Trois drones en orbite fondent sur les ennemis proches et les frappent d’arcs électriques.',
     'arme-chaine': 'Un éclair qui rebondit d’ennemi en ennemi.',
-    'arme-aura': 'Un champ électrique autour du vaisseau, qui grille ce qui s’approche.',
+    'arme-aura': 'Un champ électrique, qui grille les ennemis qui s’approchent.',
     // (… AUTOUR DE LUI — Keko, 18/11 : « ne dis pas qu'il pose des tourelles sur son passage, c'est faux ; qu'il déploie des
     // tourelles autour de lui, qui tirent toutes seules ; et pas "des petites tourelles" » ; le fléau, « au bout d'une chaîne »)
-    'arme-tourelles': 'Il déploie des tourelles autour de lui, qui tirent toutes seules.',
+    'arme-tourelles': 'Déploie des tourelles autour de lui, qui tirent toutes seules.',
     'arme-scie': 'Une scie circulaire lancée vers l’ennemi, qui coupe tout à l’aller et au retour.',
-    'arme-fleau': 'Une masse à pics qui tourne sans cesse autour de lui, au bout d’une chaîne.',
-    'arme-givre': 'Une traînée de givre derrière lui, qui ralentit et gèle les insectes.',
-    'arme-nova': 'Une onde de froid tout autour de lui, qui gèle et laisse le sol en verglas.',
-    'arme-poison': 'Il sème derrière lui une traînée de poison où les insectes se rongent.',
-    'arme-epines': 'Une grande épine d’os, qui transperce tous les insectes sur sa course.',
-    'arme-oeufs': 'Il pond des œufs, qui éclosent d’eux-mêmes : trois petits vers en sortent et mordent les insectes.',
+    'arme-fleau': 'Une masse à pics qui tourne sans cesse autour, au bout d’une chaîne.',
+    'arme-givre': 'Laisse derrière lui une traînée de givre, qui ralentit et gèle les ennemis.',
+    'arme-nova': 'Une onde de froid tout autour, qui gèle et laisse le sol en verglas.',
+    'arme-poison': 'Laisse derrière lui une traînée d’acide corrosive, qui ronge les ennemis qui passent dessus.',
+    'arme-epines': 'Une grande épine d’os, qui transperce tous les ennemis sur sa course.',
+    'arme-oeufs': 'Des œufs, qui éclosent d’eux-mêmes : trois petits vers en sortent et mordent les ennemis.',
     'arme-eclats': 'De gros éclats de glace tout autour, le premier droit sur la cible : ils gèlent ce qu’ils touchent.',
-    'arme-tornade': 'Une tornade de givre qui poursuit les insectes, les ralentit et les lacère.',
+    'arme-tornade': 'Une tornade de givre qui poursuit les ennemis, les ralentit et les lacère.',
     'arme-plasma': 'Une lente sphère de plasma, qui lance de petits traits sur tout ce qui passe près d’elle.',
-    'arme-essaim': 'Une gerbe de petits missiles de plasma, qui zigzaguent puis fondent sur les insectes.',
-    'arme-meteore': 'Une météore d’arcane tombe du ciel sur un insecte, sans jamais le manquer.',
+    'arme-essaim': 'Une gerbe de petits missiles de plasma, qui zigzaguent puis fondent sur les ennemis.',
+    'arme-meteore': 'Une météore d’arcane tombe du ciel sur un ennemi, sans jamais le manquer.',
     'arme-tentacules': 'Des tentacules à crochets d’os, qui se projettent et transpercent les ennemis.',
     'arme-nuee': 'Une nuée de minuscules insectes, qui se jette sur les ennemis proches pour les dévorer.',
     'arme-rejetons': 'Des rejetons, qui se déplacent vers les ennemis et les transpercent de leurs aiguilles.',
-    'arme-crachat': 'Un crachat d’acide devant lui, qui ronge les insectes et les rend fragiles.',
-    'arme-mines': 'Des pustules d’acide semées autour de lui, qui éclatent en gaz au passage d’un insecte.',
-    'arme-parasites': 'Un petit cerveau à crocs s’accroche à un insecte et le dévore, puis bondit sur un autre à sa mort.',
-    'arme-faisceau': 'Un rayon continu depuis son cristal, qui chauffe de plus en plus sur la même cible.',
+    'arme-crachat': 'Crache une flaque d’acide corrosive sur les ennemis proches.',
+    'arme-mines': 'Sème des mines autour, qui explosent en un nuage de gaz corrosif quand un ennemi approche.',
+    'arme-parasites': 'Un petit cerveau à crocs s’accroche à un ennemi et le dévore, puis bondit sur un autre.',
+    'arme-faisceau': 'Un rayon continu, qui chauffe de plus en plus sur la même cible.',
     'arme-cristaux': 'Des cristaux posés par trois, reliés de faisceaux qui brûlent ce qui les traverse.',
-    'arme-rail': 'Un trait d’énergie instantané, qui traverse toute une ligne d’insectes.',
-    'arme-puits': 'Une singularité qui aspire les insectes vers son cœur, puis éclate.',
-    'arme-drain': 'Il accroche les âmes qui l’approchent et les draine, à toute distance ; leur vie purge sa corruption.',
-    'arme-vrilles': 'Des tentacules d’ombre sortent du sol autour de lui et fouettent.',
+    'arme-rail': 'Un trait d’énergie instantané, qui traverse toute une ligne d’ennemis.',
+    'arme-puits': 'Une singularité qui aspire les ennemis vers son cœur, puis éclate.',
+    'arme-drain': 'Accroche les âmes des ennemis proches et les draine à toute distance : leur vie purge la corruption.',
+    'arme-vrilles': 'Des tentacules d’ombre sortent du sol tout autour et fouettent les ennemis.',
     'arme-balises': 'Des glyphes posés par trois, reliés de rayons qui frappent ce qui les franchit.',
     'arme-hypercube': 'Un hypercube lancé en cloche, qui rebondit trois fois à pas égaux en grossissant : chaque rebond frappe autour de lui, plus large.',
     'arme-coupe': 'Un cube traverse le plan en biais : on n’en voit que la tranche, un triangle qui devient hexagone, qui frappe tout ce qu’il couvre.',
-    'arme-de': 'Un dé à quatre dimensions qui roule au-dessus d’un insecte, puis s’abat sur sa zone : plus son chiffre est haut, plus il frappe fort.',
+    'arme-de': 'Un dé à quatre dimensions qui roule au-dessus d’un ennemi, puis s’abat sur sa zone : plus son chiffre est haut, plus il frappe fort.',
   }
   /**
    * L'APERÇU D'UNE ARME (Keko, 17/11 : « on voit le vaisseau et un ennemi avec le projectile en animation, pour voir ce
@@ -10031,7 +10048,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const r = rampesDuJoueur()?.[m]
     return r !== undefined ? [r[2], r[3], r[4]] : tonsDeLaMatiere(m)
   }
-  const couleursDesBulles = (coque: number): [number, number] => (coque === 13 ? [VIDE[3], VIDE[5]] : coque === 11 ? [VENIN[3], VENIN[5]] : [BILE[1], BILE[2]])
+  // (… AUX TEINTES DE L'APPARENCE — Keko, 19/11 : le venin de la Vouivre, la bile du Kraken)
+  const couleursDesBulles = (coque: number): [number, number] => {
+    const ru = rampesDuJoueur()
+    if (coque === 13) return [VIDE[3], VIDE[5]]
+    if (coque === 11) return ru?.venin !== undefined ? [ru.venin[3], ru.venin[5]] : [VENIN[3], VENIN[5]]
+    return ru?.bile !== undefined ? [ru.bile[3], ru.bile[4]] : [BILE[1], BILE[2]]
+  }
   /**
    * LE NÉANT POUSSE PAR ONDES (Keko, 16/11 : « la propulsion aussi, essaie de trouver un autre effet, peut-être des ondes ou un
    * truc original ») : il ne lâche rien — il PLISSE L'ESPACE derrière lui. En poussée, des fronts d'onde en arc, ouverts
@@ -10133,6 +10156,22 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       return
     }
     const [cb, cl] = couleursDesBulles(coque)
+    // (LA VOUIVRE : le gaz de ses deux pustules propulsives, sur ses flancs — le vaisseau a le nez en haut, son flanc
+    // droit à droite ; `ty` est sa poupe, on en retrouve son centre)
+    const tus = gabaritDe(coque).tuyeres
+    if (tus[0]?.pustule === true) {
+      const sy = ty - (0.2 - queueDe(coque)) * E
+      for (const tu of tus) {
+        const dehors = Math.sign(tu.y)
+        for (let k = 0; k < 7; k++) {
+          const u = boucle(t * (1.4 + us * 2) + k / 7 + (dehors > 0 ? 0.5 : 0), 1)
+          const x = cx + tu.y * E + dehors * u * (4 + 3 * us) * (E / 2)
+          const y = sy - tu.x * E + u * (8 + 22 * us) * (E / 2)
+          dessinerUneBouffee(p, x, y, (1 + 0.5 * ((k * 0.618) % 1)) * (E / 2), u, cb, cl)
+        }
+      }
+      return
+    }
     for (let k = 0; k < 16; k++) {
       const u = boucle(t * (1.6 + us * 2) + k / 16, 1)
       const x = cx + Math.sin(k * 7.3 + u * 4) * (1.5 + u * 6)
@@ -10154,7 +10193,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     for (const o of ondes) dessinerUneOnde(p, o.x, o.y, o.cap, (t - o.t0) / DUREE_DE_L_ONDE, o.k, 1, o.coque)
     p.place(0, 0)
   }
-  const bulles: { x: number; y: number; vx: number; vy: number; t0: number; vie: number; r: number; c: number }[] = []
+  const bulles: { x: number; y: number; vx: number; vy: number; t0: number; vie: number; r: number; c: number; /** une bouffée de gaz (la Vouivre), pas une bulle */ gaz?: boolean }[] = []
+  /**
+   * UNE BOUFFÉE DE GAZ (les pustules propulsives de la Vouivre, Keko, 19/11 : « deux pustules latérales qui cracheraient du
+   * gaz ») : un nuage rond, clair au cœur, qui gonfle de `r` à deux fois et demie et s'efface ; `u` son âge (0 à 1).
+   */
+  function dessinerUneBouffee(p: Peintre, x: number, y: number, r: number, u: number, c: number, cl: number): void {
+    const rr = r * (1 + 1.5 * Math.sqrt(u))
+    const a = 0.55 * (1 - u)
+    p.disc(x, y, rr, (d) => (d < 0.45 ? cl : c), (d) => (1 - d * d) * a)
+  }
   function dessinerLesBulles(p: Peintre): void {
     for (let i = bulles.length - 1; i >= 0; i--) if (t - bulles[i].t0 > bulles[i].vie) bulles.splice(i, 1)
     if (bulles.length === 0) return
@@ -10164,6 +10212,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const u = age / b.vie
       // (elles ralentissent vite : une bulle n'a pas d'élan)
       const frein = (1 - Math.exp(-age * 3)) / 3
+      if (b.gaz === true) {
+        dessinerUneBouffee(p, b.x + b.vx * frein, b.y + b.vy * frein, b.r, u, b.c, couleursDesBulles(11)[1])
+        continue
+      }
       const x = b.x + b.vx * frein + Math.sin(age * 6 + b.r * 9) * 0.8
       const y = b.y + b.vy * frein
       const r = b.r * (1 + 0.4 * u)
@@ -10192,7 +10244,19 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * tailles tirés de l'id —, cernées de lie sombre puis claire, une bulle de venin, un reflet ; chacune bat (``pouls``) à
    * sa phase, `vite` battements par seconde ; `k` : l'échelle.
    */
+  /**
+   * LES TEINTES DES MINES, celles de l'apparence de la Vouivre (Keko, 19/11 : « pense aussi à changer la couleur des mines
+   * en fonction du skin ») : son venin, sa lie, et le miasme de leur gaz, tiré des deux.
+   */
+  function teintesDesMines(): { venin: number[]; lie: number[]; miasme: number[] } {
+    const ru = rampesDuJoueur()
+    const venin = ru?.venin ?? VENIN
+    const lie = ru?.lie !== undefined ? ru.lie.slice(1, 5) : LIE
+    const miasme = ru?.venin === undefined ? MIASME : [MIASME[0], MIASME[1], lie[1], lie[3], venin[2], venin[3], venin[4], venin[5]]
+    return { venin, lie, miasme }
+  }
   function dessinerUnAmas(p: Peintre, x: number, y: number, id: number, age: number, vite: number, n: number, k: number): void {
+    const { venin: VENIN, lie: LIE } = teintesDesMines()
     const cloques: [number, number, number, number][] = [[0, 0, 2.4, 0]]
     for (let j = 1; j < n; j++) {
       const a = alea(id, j, 61) * Math.PI * 2 + j * 2.1
@@ -10229,6 +10293,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // cernée de lie, son reflet, et qui bat à son rythme — plus vite les deux dernières secondes)
       const reste = mi.vol + mi.duree - age
       const vite = reste < 2 ? 3.2 : 1.6
+      const { venin: VENIN } = teintesDesMines()
       p.glow(mn.x, mn.y, 10, VENIN[3], 0.25 + 0.1 * Math.sin(t * 4 + mn.id))
       dessinerUnAmas(p, mn.x, mn.y, mn.id, age, vite, 6, 1)
       // (un filet de gaz qui s'en échappe)
@@ -10252,7 +10317,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const h = Math.sin(Math.PI * u) * 16
       const x = mn.x0 + (mn.x - mn.x0) * u
       const y = mn.y0 + (mn.y - mn.y0) * u - h
-      p.glow(x, y, 6, VENIN[3], 0.35)
+      p.glow(x, y, 6, teintesDesMines().venin[3], 0.35)
       dessinerUnAmas(p, x, y, mn.id, m.t - mn.lancee, 4, 3, 0.8)
     }
     for (const g of gaz) {
@@ -10260,7 +10325,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const v1 = 1 - u
       // (LE NUAGE DE POISON DE PIXELFX — Keko, 17/11 : un miasme éclairé du dedans, vert-jaune au cœur, qui vire au violet
       // vers ses bords ; ses bords s'enroulent en volutes ; des grains qui scintillent dérivent avec lui)
-      const M = MIASME
+      const M = teintesDesMines().miasme
       if (u < 0.15) p.glow(g.x, g.y, g.rayon * 0.8, M[6], 0.6 * (1 - u / 0.15))
       p.glow(g.x, g.y, g.rayon * 0.7, M[5], 0.25 * v1)
       // (des bouffées qui s'ouvrent jusqu'au rayon et roulent)
@@ -13150,7 +13215,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           }
           break
         case 'mineLancee':
-          // (une pustule part de son dos : un « blop » — sauf s'il a sonné en avance)
+          // (une pustule part de son dos : un « blop » — sauf s'il a sonné en avance ; celle du dos est partie — Keko, 19/11)
+          minePartieA = t
           if (t - (armeAnnonceeA.get(ev.arme) ?? -10) < 0.4) armeAnnonceeA.delete(ev.arme)
           else jouer(ev.arme as Son)
           break
@@ -13160,7 +13226,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           jouer('gaz', { dx: ev.x - v.x, dy: ev.y - v.y })
           for (let i = 0; i < 12; i++) {
             const a = R.range(0, Math.PI * 2)
-            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(25, 70), Math.sin(a) * R.range(25, 70), R.range(0.2, 0.4), [VENIN[4], VENIN[3], LIE[3]][Math.floor(R.next() * 3)], 1, 1.5)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(25, 70), Math.sin(a) * R.range(25, 70), R.range(0.2, 0.4), [teintesDesMines().venin[4], teintesDesMines().venin[3], teintesDesMines().lie[3]][Math.floor(R.next() * 3)], 1, 1.5)
           }
           secousse = Math.max(secousse, 0.18)
           break
@@ -13853,7 +13919,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
             const tuy = tuyeres[Math.floor(R.next() * tuyeres.length)]
             // (une tuyère large — l'Ingénieur — sème ses braises sur toute sa largeur)
             const deCote = (tuy.y + (tuy.large === undefined ? 0 : R.range(-1, 1) * 1.6 * tuy.large)) * echelleVue()
-            const recul = (-queueDe(coque) + 0.5 * (cran - 1) + Math.min(1.5, flamme * 0.15)) * echelleVue()
+            // (une pustule propulsive — la Vouivre : son orifice est sur la coque, à son x)
+            const recul = (tuy.pustule === true ? -tuy.x : -queueDe(coque) + 0.5 * (cran - 1) + Math.min(1.5, flamme * 0.15)) * echelleVue()
             // (LE VER : au bout de SA QUEUE, là où le chemin l'a mise — Keko, 17/11 : « la propulsion ne colle pas à l'endroit
             // exact de sa queue, surtout quand il tourne »)
             const auVer = coque === 14 && queueDuVer !== null
@@ -13873,6 +13940,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
                 ondeEn = { x: bx, y: by }
                 const cote = coque === 12 ? R.range(-2.5, 2.5) : 0
                 ondes.push({ x: bx - Math.sin(v.cap) * cote, y: by + Math.cos(v.cap) * cote, cap: v.cap, t0: t, k: 0.6 + 0.4 * pousseeVue.avant, coque })
+              }
+            } else if (tuy.pustule === true) {
+              // (LE GAZ DES PUSTULES : une bouffée vers l'arrière et le dehors, qui gonfle et s'efface derrière la bête)
+              if (R.next() < 0.6) {
+                const dehors = Math.sign(tuy.y)
+                const vit = vitesse * 0.35
+                const [cb] = couleursDesBulles(coque)
+                bulles.push({ x: bx, y: by, vx: -Math.cos(v.cap) * vit - Math.sin(v.cap) * dehors * 14 + R.range(-4, 4), vy: -Math.sin(v.cap) * vit + Math.cos(v.cap) * dehors * 14 + R.range(-4, 4), t0: t, vie: R.range(0.3, 0.5), r: R.range(1.2, 2.2), c: cb, gaz: true })
               }
             } else if (organique(coque)) {
               if (R.next() < 0.45) {

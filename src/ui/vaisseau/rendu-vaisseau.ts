@@ -610,6 +610,13 @@ export type Allure = {
    * (leurs rangs dans `RACINES_DU_KRAKEN`) : le corps ne les dessine pas, la page les dessine tendues vers leur cible.
    */
   kraken?: { crochets?: boolean; rejeton?: number; sorties?: number[] }
+  /**
+   * LA VOUIVRE ET SES ARMES (Keko, 19/11 : « il faut que chaque arme se voie sur le vaisseau ») : `tete`, le Crachat acide
+   * monté — une tête au bout d'un cou, d'où l'acide est craché ; `mine`, les Mines toxiques montées — la taille (0 à 1) de
+   * la mine posée sur son dos, qui part quand une mine est lancée et repousse ; `reserve`, la Traînée corrosive montée —
+   * une poche d'acide à l'arrière, entre ses deux pustules propulsives.
+   */
+  vouivre?: { tete?: boolean; mine?: number; reserve?: boolean }
 }
 /**
  * LES DÉTAILS D'UNE APPARENCE (Keko, 17/11 : « on va enlever le petit marquage coloré des vaisseaux… on va le remplacer
@@ -630,7 +637,7 @@ export type Habit = { ailes: Forme[]; coque: Forme[]; /** (le ver : son motif, p
  */
 export type Gabarit = {
   /** Ses tuyères ; `large` : la tuyère élargie d'autant (l'Ingénieur, une seule sur toute sa poupe). */
-  tuyeres: { x: number; y: number; large?: number }[]
+  tuyeres: { x: number; y: number; large?: number; /** une PUSTULE qui crache du gaz (la Vouivre) : (x, y) est son orifice, sur la coque */ pustule?: boolean }[]
   armes: { x: number; y: number; s: number }[]
   /** Les feux de position (rouge à bâbord, vert à tribord) ; null : il n'en a pas. */
   feux: { x: number; y: number } | null
@@ -782,7 +789,9 @@ function formesDuRejetonDuDos(k: number, t: number): Forme[] {
 const GABARIT_DU_KRAKEN: Gabarit = { tuyeres: [{ x: -0.9 + AVANCE_DE_L_ABDOMEN_DU_KRAKEN, y: 0 }], armes: [{ x: 0, y: 0, s: 1 }], feux: null, verriere: 5.8, nez: 11.6, flanc: 6.4, anneau: 13, echelle: 1 }
 // LA VOUIVRE (Keko, 16/11) : un corps de serpent en écailles, deux sacs à venin sur des membranes, une gueule à mandibules
 // qui crache ; un jet de venin à la queue
-const GABARIT_DE_LA_VOUIVRE: Gabarit = { tuyeres: [{ x: 0.6, y: 0 }], armes: [{ x: 0, y: 0, s: 1 }], feux: { x: -6.6, y: 6.4 }, verriere: 8.7, nez: 9.8, flanc: 6.6, anneau: 13, echelle: 1 }
+// (… SA PROPULSION, DEUX PUSTULES SUR SES FLANCS QUI CRACHENT DU GAZ — Keko, 19/11 : « que sa propulsion ne se fasse pas à
+// l'arrière, mais sur deux pustules latérales qui cracheraient du gaz » : leurs orifices, voir `PUSTULES_DE_LA_VOUIVRE`)
+const GABARIT_DE_LA_VOUIVRE: Gabarit = { tuyeres: [{ x: -4.1, y: -6.6, pustule: true }, { x: -4.1, y: 6.6, pustule: true }], armes: [{ x: 0, y: 0, s: 1 }], feux: null, verriere: 8.7, nez: 9.8, flanc: 6.6, anneau: 13, echelle: 1 }
 // LE PRISME (Keko, 16/11) : un corps de cristal à facettes, des éclats en ailes, un cœur d'énergie ; À SA PROUE, UN CRISTAL
 // QUI FLOTTE ET TOURNE (le rayon en part — voir `boucheDeLArme`)
 // (… PUIS PLUS DU TOUT UN VAISSEAU — Keko, 17/11 : il rejoint le Néant chez les Innommés, « quelque chose qui ne ressemble
@@ -821,7 +830,7 @@ export function battementDuNeant(t: number): number {
 export const CRISTAL_DU_PRISME = { x: 1.2, y: 0 }
 export const gabaritDe = (coque: number): Gabarit => (coque === 15 ? GABARIT_DU_TESSERACT : coque === 14 ? GABARIT_DE_LA_MANTE : coque === 13 ? GABARIT_DU_NEANT : coque === 12 ? GABARIT_DU_PRISME : coque === 11 ? GABARIT_DE_LA_VOUIVRE : coque === 10 ? GABARIT_DU_KRAKEN : coque === 4 ? GABARIT_DU_CUIRASSE : coque === 5 ? GABARIT_DE_LA_SALAMANDRE : coque === 6 ? GABARIT_DE_LA_SENTINELLE : coque === 7 ? GABARIT_DE_L_INGENIEUR : coque === 8 ? GABARIT_DU_FRIMAS : coque === 9 ? GABARIT_DU_PULSAR : GABARIT_DE_SERIE)
 /** La queue d'une coque : l'abscisse du fond de ses tuyères (pour un propulseur de série). */
-export const queueDe = (coque: number): number => -8.4 + (gabaritDe(coque).tuyeres[0]?.x ?? 0)
+export const queueDe = (coque: number): number => (gabaritDe(coque).tuyeres[0]?.pustule === true ? -7.8 : -8.4 + (gabaritDe(coque).tuyeres[0]?.x ?? 0))
 /** Où l'outil de la place `k` est dessiné, en décalage du milieu du toit (nul pour une coque sans places à elle). */
 export const placeDOutil = (coque: number, k: number): { x: number; y: number } => {
   const places = gabaritDe(coque).outils
@@ -985,13 +994,72 @@ function masse(cx: number, cy: number, rx: number, ry: number, graine: number, t
     return [cx + Math.cos(a) * rx * r, cy + Math.sin(a) * ry * r]
   })
 }
+/** Les pustules du corps de la Vouivre : (x, y, rayon, phase) — de la tête d'épingle à la grosse bosse (Keko, 19/11). */
+const PUSTULES_DU_CORPS: [number, number, number, number][] = [
+  // (… UNE VINGTAINE, PAS TRENTE — mesuré à la capture : trente couvraient tout, la peau ne se voyait plus et la mine du
+  // dos s'y perdait : trois grosses, six moyennes, une douzaine de petites)
+  [1.8, -1.6, 1.6, 0], [-3.6, 1.6, 1.3, 0.37], [5.4, 1.3, 1.1, 0.71],
+  [-1, 3, 0.8, 0.15], [3.8, -2.9, 0.75, 0.52], [-6.2, -2.4, 0.85, 0.88], [6.8, -1.4, 0.55, 0.63], [-7.8, 0.6, 0.5, 0.79], [3.4, 2.9, 0.5, 0.07],
+  [-0.4, -3.5, 0.35, 0.23], [2.6, 0.6, 0.3, 0.41], [4.6, 3.7, 0.3, 0.58], [-4.4, -3.4, 0.35, 0.44], [7.8, 1.6, 0.28, 0.9], [-0.2, 4.2, 0.28, 0.27],
+  [1.2, -4.1, 0.25, 0.73], [-6.8, 2.9, 0.28, 0.05], [-8.4, -1.6, 0.25, 0.19], [2.2, 3.9, 0.22, 0.6], [0.4, 1.6, 0.25, 0.12], [-5, -0.6, 0.22, 0.35],
+]
+/**
+ * LES DEUX PUSTULES PROPULSIVES DE LA VOUIVRE (Keko, 19/11 : « deux pustules latérales qui cracheraient du gaz ») : (x, y)
+ * leur centre, sur ses flancs ; leur orifice, à l'arrière et vers le dehors, est la tuyère du gabarit.
+ */
+const PUSTULES_DE_LA_VOUIVRE: [number, number][] = [[-2.6, -6], [-2.6, 6]]
+/** CE QUE LES ARMES DE LA VOUIVRE CHANGENT À SON CORPS (voir `Allure.vouivre`), par-dessus sa coque. */
+function formesDeLaVouivreArmee(v: NonNullable<Allure['vouivre']>, t: number): Forme[] {
+  const f: Forme[] = []
+  // (LA RÉSERVE D'ACIDE, entre ses deux pustules : une poche de lie translucide, l'acide qui clapote dedans, un bec qui goutte)
+  if (v.reserve === true) {
+    const gonfle = t === 0 ? 1 : 1 + 0.06 * Math.sin(t * 2.4)
+    f.push({ pts: barre(-9.6, 0, -11.4, 0, 0.9), mat: 'lie', relief: 'cyl' })
+    f.push({ pts: ovale(-11.6, 0, 0.55, 0.55, 8), mat: 'venin', relief: 'dome', dome: { x: -11.6, y: 0, rx: 0.55, ry: 0.55 } })
+    f.push({ pts: masse(-8.2, 0, 2.5 * gonfle, 2.9 * gonfle, 3.3, t, 20, 0.08), mat: 'lie', relief: 'dome', dome: { x: -8.2, y: 0, rx: 2.5, ry: 2.9 } })
+    f.push({ pts: masse(-8.3, 0, 1.9 * gonfle, 2.3 * gonfle, 5.1, t, 18, 0.1), mat: 'venin', relief: 'dome', dome: { x: -8.3, y: 0, rx: 1.9, ry: 2.3 } })
+    const clapote = t === 0 ? 0 : Math.sin(t * 3.1) * 0.35
+    for (const dx of [-0.6, 0.5]) f.push({ pts: barre(-8.3 + dx + clapote, -1.6, -8.3 + dx - clapote, 1.6, 0.18), mat: 'lie', relief: 'plat' })
+  }
+  // (LA MINE SUR SON DOS : un amas de quatre cloques, qui part quand une mine est lancée, et repousse)
+  if (v.mine !== undefined && v.mine > 0.02) {
+    const k = v.mine
+    const cloques: [number, number, number][] = [[-1.4, 0, 1.4], [-0.2, -1.3, 0.85], [-0.3, 1.3, 0.9], [-2.8, 0.7, 0.7]]
+    // (… CERNÉE DE SUIE — mesuré à la capture : sur le dos bubonique, une mine faite des mêmes pustules s'y perdait)
+    f.push({ pts: ovale(-1.4, 0, 3 * k, 2.9 * k, 16), mat: 'suie', relief: 'plat' })
+    for (const [x, y, r] of cloques) f.push({ pts: ovale(-1.4 + (x + 1.4) * k, y * k, (r + 0.45) * k, (r + 0.45) * k, 12), mat: 'lie', relief: 'dome', dome: { x: -1.4 + (x + 1.4) * k, y: y * k, rx: (r + 0.45) * k, ry: (r + 0.45) * k } })
+    for (const [x, y, r] of cloques) {
+      const cx = -1.4 + (x + 1.4) * k
+      const rr = r * k * (t === 0 ? 1 : 1 + 0.12 * Math.sin(t * 5 + x * 3))
+      f.push({ pts: ovale(cx, y * k, rr, rr, 12), mat: 'venin', relief: 'dome', dome: { x: cx, y: y * k, rx: rr, ry: rr } })
+    }
+  }
+  // (LA TÊTE DU CRACHAT : un cou d'écailles, une tête bosselée, au bout LA GUEULE RONDE de lamproie, cerclée de dents
+  // d'os, le venin au fond — d'où l'acide est craché)
+  if (v.tete === true) {
+    f.push({ pts: barre(7.2, 0.4, 10.4, 0.3, 2.5), mat: 'ecaille', relief: 'cyl' })
+    f.push({ pts: masse(11, 0.3, 2.7, 2.5, 6.7, t, 20, 0.1), mat: 'ecaille', relief: 'dome', dome: { x: 11, y: 0.3, rx: 2.7, ry: 2.5 } })
+    for (const [x, y, r, ph] of [[10, -1.7, 0.5, 0.2], [10.6, 2, 0.35, 0.6], [8.4, 1.4, 0.3, 0.9]] as [number, number, number, number][]) f.push(...pustule(x, y, r, t, ph))
+    const [mx, my] = [13, 0.3]
+    f.push({ pts: ovale(mx, my, 1.7, 1.6, 14), mat: 'lie', relief: 'dome', dome: { x: mx, y: my, rx: 1.7, ry: 1.6 } })
+    f.push({ pts: ovale(mx + 0.1, my, 1, 0.95, 12), mat: 'venin', relief: 'dome', dome: { x: mx + 0.1, y: my, rx: 1, ry: 0.95 } })
+    for (let k = 0; k < 7; k++) {
+      const a = (k * 2 * Math.PI) / 7 + 0.3
+      const ux = Math.cos(a)
+      const uy = Math.sin(a)
+      f.push({ pts: [[mx + 0.1 + ux * 1.6 - uy * 0.28, my + uy * 1.55 + ux * 0.28], [mx + 0.1 + ux * 0.75, my + uy * 0.72], [mx + 0.1 + ux * 1.6 + uy * 0.28, my + uy * 1.55 - ux * 0.28]], mat: 'os', relief: 'plat' })
+    }
+  }
+  return f
+}
 function pustule(x: number, y: number, r: number, t: number, phase: number): Forme[] {
   const ph = (t * 1.6 + phase) % 1
   // (deux coups rapprochés, puis un repos : boum-boum… boum-boum)
   const pouls = t === 0 ? 0 : Math.exp(-(((ph - 0.08) / 0.05) ** 2)) + 0.7 * Math.exp(-(((ph - 0.25) / 0.05) ** 2))
   const rr = r * (1 + 0.28 * pouls)
   return [
-    { pts: ovale(x, y, r * 1.3 + 0.2, r * 1.3 + 0.2, 12), mat: 'lie', relief: 'dome', dome: { x, y, rx: r * 1.3 + 0.2, ry: r * 1.3 + 0.2 } },
+    // (le bourrelet de lie, plus mince — les petites pustules n'étaient que lui)
+    { pts: ovale(x, y, r * 1.22 + 0.12, r * 1.22 + 0.12, 12), mat: 'lie', relief: 'dome', dome: { x, y, rx: r * 1.22 + 0.12, ry: r * 1.22 + 0.12 } },
     { pts: ovale(x, y, rr, rr, 12), mat: 'venin', relief: 'dome', dome: { x, y, rx: rr, ry: rr } },
   ]
 }
@@ -1204,7 +1272,10 @@ export function formesDeLaCoque(cran: number, t = 0, motif?: MotifDuVer): Forme[
     // LA VOUIVRE, UNE BÊTE BUBONIQUE (… PUIS PLUS ORGANIQUE — Keko, 16/11 : « il a trop une forme de vaisseau, on veut un
     // truc plus organique ») : plus de flèche ni d'anneaux — UNE MASSE bosselée, de travers, qui respire (une bosse de plus
     // derrière, une tête renflée devant) ; des VEINES de lie qui serpentent ; des pustules de toutes tailles semées de
-    // travers, qui battent ; à l'avant, UNE GUEULE RONDE de lamproie, cerclée de dents d'os, le venin au fond
+    // travers, qui battent
+    // (… PUIS DES PUSTULES DE TAILLE TRÈS VARIABLE — Keko, 19/11 : « plus de pustules, de taille très variable » : trente,
+    // de la tête d'épingle à la grosse bosse ; LA GUEULE DE LAMPROIE est partie au bout d'une tête, avec le Crachat —
+    // voir `formesDeLaVouivreArmee` ; devant, la masse est close)
     const f: Forme[] = [
       { pts: masse(-5.4, -1.3, 3.8, 3.1, 4.1, t), mat: 'ecaille', relief: 'dome', dome: { x: -5.4, y: -1.3, rx: 3.8, ry: 3.1 } },
       { pts: masse(0, 0.2, 8.2, 4.9, 1.3, t), mat: 'ecaille', relief: 'dome', dome: { x: 0, y: 0.2, rx: 8.2, ry: 4.9 } },
@@ -1222,17 +1293,8 @@ export function formesDeLaCoque(cran: number, t = 0, motif?: MotifDuVer): Forme[
         py = y
       }
     }
-    // (les pustules, de travers)
-    for (const [x, y, r, ph] of [[2.6, -1.2, 1, 0], [-0.6, 1.4, 0.9, 0.37], [-3.6, -0.4, 0.8, 0.71], [-6.4, -2.2, 0.7, 0.15], [4.4, 2.2, 0.6, 0.52], [1.2, 3.1, 0.55, 0.88], [-2.2, -3.2, 0.7, 0.23], [-5.2, 2.6, 0.5, 0.63], [6.2, -1.9, 0.5, 0.41], [-7.8, 0.4, 0.55, 0.79], [0.6, -3.6, 0.45, 0.07], [-1.8, 3.6, 0.4, 0.95]] as [number, number, number, number][]) f.push(...pustule(x, y, r, t, ph))
-    // (la gueule ronde : un bourrelet de lie, sept dents d'os tournées vers le centre, le venin au fond)
-    f.push({ pts: ovale(8.6, 0.4, 1.9, 1.8, 14), mat: 'lie', relief: 'dome', dome: { x: 8.6, y: 0.4, rx: 1.9, ry: 1.8 } })
-    f.push({ pts: ovale(8.7, 0.4, 1.1, 1.05, 12), mat: 'venin', relief: 'dome', dome: { x: 8.7, y: 0.4, rx: 1.1, ry: 1.05 } })
-    for (let k = 0; k < 7; k++) {
-      const a = (k * 2 * Math.PI) / 7 + 0.3
-      const ux = Math.cos(a)
-      const uy = Math.sin(a)
-      f.push({ pts: [[8.7 + ux * 1.75 - uy * 0.3, 0.4 + uy * 1.7 + ux * 0.3], [8.7 + ux * 0.85, 0.4 + uy * 0.8], [8.7 + ux * 1.75 + uy * 0.3, 0.4 + uy * 1.7 - ux * 0.3]], mat: 'os', relief: 'plat' })
-    }
+    // (les pustules, de travers, de toutes tailles : trois grosses, des moyennes, une poussière de petites)
+    for (const [x, y, r, ph] of PUSTULES_DU_CORPS) f.push(...pustule(x, y, r, t, ph))
     return f
   }  if (cran === 10) {
     // LE KRAKEN, UN MANTEAU DE CHITINE : un corps renflé, bosselé, la tête en avant ; trois plaques de carapace sur le
@@ -1485,13 +1547,20 @@ export function formesDesAiles(coque = 1, t = 0): Forme[] {
     // (la vouivre : plus de membranes — TROIS SACS À VENIN qui pendent de travers, de tailles différentes, chacun sur un
     // bourrelet de lie, qui gonflent lentement et portent des pustules ; une glande au bout de deux d'entre eux, à la
     // marque du joueur)
-    for (const [x, y, rx, ry, g, ph] of [[-1.8, -5.5, 2.7, 1.9, 0.7, 0], [-5.6, 4.7, 2.3, 1.7, 2.3, 1.3], [2.8, 4.5, 1.6, 1.25, 3.7, 2.6]] as [number, number, number, number, number, number][]) {
-      const gonfle = t === 0 ? 1 : 1 + 0.1 * Math.sin(t * 2.6 + ph)
-      f.push({ pts: masse(x, y, rx + 0.7, ry + 0.6, g + 1, t), mat: 'lie', relief: 'dome', dome: { x, y, rx: rx + 0.7, ry: ry + 0.6 } })
-      f.push({ pts: masse(x, y + Math.sign(y) * 0.2, rx * gonfle, ry * gonfle, g, t, 18, 0.1), mat: 'venin', relief: 'dome', dome: { x, y, rx: rx * gonfle, ry: ry * gonfle } })
-      f.push(...pustule(x + rx * 0.35, y - Math.sign(y) * ry * 0.2, 0.45, t, ph * 0.3))
-    }
-    for (const [x, y] of [[-2.6, -7.5], [-6.6, 6.4]] as [number, number][]) f.push({ pts: ovale(x, y, 0.75, 0.75, 8), mat: 'marque', relief: 'dome', dome: { x, y, rx: 0.75, ry: 0.75 } })
+    // (… PUIS DEUX PUSTULES PROPULSIVES À LEUR PLACE — Keko, 19/11 : « que sa propulsion se fasse sur deux pustules latérales
+    // qui cracheraient du gaz » : une grosse pustule par flanc, sur un bourrelet de lie, qui gonfle, une petite pustule
+    // dessus ; à l'arrière et vers le dehors, L'ORIFICE sombre d'où sort le gaz, bordé de lie)
+    PUSTULES_DE_LA_VOUIVRE.forEach(([x, y], k) => {
+      const sg = Math.sign(y)
+      const gonfle = t === 0 ? 1 : 1 + 0.08 * Math.sin(t * 3.4 + k * 1.3)
+      f.push({ pts: masse(x, y, 3, 2.3, 1.7 + k, t), mat: 'lie', relief: 'dome', dome: { x, y, rx: 3, ry: 2.3 } })
+      f.push({ pts: masse(x, y + sg * 0.15, 2.4 * gonfle, 1.75 * gonfle, 2.9 + k, t, 18, 0.1), mat: 'venin', relief: 'dome', dome: { x, y, rx: 2.4 * gonfle, ry: 1.75 * gonfle } })
+      f.push(...pustule(x + 0.9, y - sg * 0.5, 0.5, t, k * 0.4))
+      const [ox, oy] = [x - 1.5, y + sg * 0.6]
+      f.push({ pts: ovale(ox, oy, 0.95, 0.85, 10), mat: 'lie', relief: 'dome', dome: { x: ox, y: oy, rx: 0.95, ry: 0.85 } })
+      f.push({ pts: ovale(ox - 0.15, oy + sg * 0.1, 0.5, 0.45, 8), mat: 'suie', relief: 'plat' })
+    })
+    for (const [x, y] of PUSTULES_DE_LA_VOUIVRE) f.push({ pts: ovale(x + 1.6, y + Math.sign(y) * 0.9, 0.6, 0.6, 8), mat: 'marque', relief: 'dome', dome: { x: x + 1.6, y: y + Math.sign(y) * 0.9, rx: 0.6, ry: 0.6 } })
     return f
   }  if (coque === 10) {
     // (le kraken : deux NAGEOIRES DE CHAIR, ourlées d'épines d'os ; une glande sur chacune, à la marque du joueur)
@@ -1673,7 +1742,8 @@ export function boucheDeLArme(id: string, s: number): { x: number; y: number } {
   if (id === 'plasma' || id === 'essaim' || id === 'puits' || id === 'meteore') return { x: 9.6, y: 0 }
   // (sur le Néant, la place d'arme est reculée de 2,2 : le puits part de la pointe de son éperon — voir son gabarit)
   // (la Vouivre crache de sa gueule, entre ses mandibules)
-  if (id === 'crachat') return { x: 9.6, y: 0.4 }
+  // (… AU BOUT DE SA TÊTE — Keko, 19/11 : « un genre de tête d'où l'acide serait craché », voir `formesDeLaVouivreArmee`)
+  if (id === 'crachat') return { x: 14.2, y: 0.3 }
   // (le Prisme tire de son cristal)
   // (son railgun aussi — passé du Pulsar au Prisme, Keko, 16/11)
   if (id === 'faisceau' || id === 'rail') return { x: CRISTAL_DU_PRISME.x + 4.4, y: 0 }
@@ -1940,11 +2010,13 @@ export function formesDuVaisseau(a: Allure, flamme: number, t: number, vise = 0,
   // (NI LE PRISME, NI LA MANTE, NI LE TESSERACT — Keko, 17/11 : un cristal qui flotte, une bête, une forme d'ailleurs)
   if (a.coque < 10) for (const tu of g.tuyeres) f.push(...decaler(formesDuPropulseur(a.propulseur, flamme, t, devie).map((x): Forme => (tu.large === undefined ? x : { ...x, pts: x.pts.map(([px, py]) => [px, py * tu.large!]) })).filter((x) => !organique || x.relief === 'emis').map((x): Forme => (x.relief === 'emis' && a.coque === 9 ? { ...x, mat: 'plasma' } : x.relief === 'emis' && a.coque === 10 ? { ...x, mat: 'bile' } : x.relief === 'emis' && a.coque === 11 ? { ...x, mat: 'venin' } : x)), tu.x, tu.y))
   // (LA VOUIVRE TRAÎNE TROIS VRILLES DÉCHIRÉES, de travers, qui ondulent lentement — Keko, 16/11 : plus organique)
-  if (a.coque === 11) for (const [y0, n] of [[-1.8, 4], [0.6, 5], [2.4, 3]] as [number, number][]) {
-    let x = -8.4
+  // (… PUIS SOUS SES DEUX PUSTULES PROPULSIVES — Keko, 19/11 : « réutiliser les petites tentacules qu'il a à l'arrière pour
+  // les placer sous les pustules » : deux sous l'une, une sous l'autre, qui pendent de leur bord arrière)
+  if (a.coque === 11) for (const [x0, y0, n] of [[-4.6, -5.4, 4], [-4.4, -6.8, 3], [-4.6, 6.1, 5]] as [number, number, number][]) {
+    let x = x0
     let y = y0
     for (let k = 0; k < n; k++) {
-      const an = Math.PI + y0 * 0.12 + Math.sin(t * 2.1 + y0 * 2.3 - k * 0.8) * 0.22 * (1 + k * 0.5) * (1 + 0.9 * flamme) + devie * 0.04 * k
+      const an = Math.PI + Math.sign(y0) * 0.25 + Math.sin(t * 2.1 + y0 * 2.3 - k * 0.8) * 0.22 * (1 + k * 0.5) * (1 + 0.9 * flamme) + devie * 0.04 * k
       const nx = x + Math.cos(an) * 1.4
       const ny = y + Math.sin(an) * 1.4
       f.unshift({ pts: barre(x, y, nx, ny, 1.1 * (1 - k / (n + 1))), mat: k % 2 === 0 ? 'lie' : 'ecaille', relief: 'plat' })
@@ -1983,6 +2055,7 @@ export function formesDuVaisseau(a: Allure, flamme: number, t: number, vise = 0,
   if (g.surLePont) tout.push(...armes)
   tout.push(...surLeDos)
   if (a.coque === 10 && a.kraken?.rejeton !== undefined) tout.push(...formesDuRejetonDuDos(a.kraken.rejeton, t))
+  if (a.coque === 11 && a.vouivre !== undefined) tout.push(...formesDeLaVouivreArmee(a.vouivre, t))
   if (g.outils !== undefined && a.outils !== undefined) {
     // CHAQUE OUTIL À SA PLACE : la foreuse qui creuse suit sa cible, les autres pointent vers l'avant
     a.outils.forEach((o, k) => {

@@ -284,7 +284,7 @@ const PEAUX: Record<string, Peau[]> = {
       rampes: { ecaille: T(22, 0.45, 0.8), lie: T(350, 0.55, 0.7), venin: R('#3a1004', '#7a2a06', '#c05a0a', '#f09a1a', '#ffd060', '#fff4c0'), os: T(48, 0.35, 0.95), decor: R('#3a1004', '#7a2a06', '#c05a0a', '#f09a1a', '#ffd060', '#fff4c0') },
       accent: R('#3a1004', '#7a2a06', '#c05a0a', '#f09a1a', '#ffd060', '#fff4c0'),
       habit: () => ({
-        ailes: ([[-2.6, -7.5], [-6.6, 6.4]] as [number, number][]).map(([x, y]) => goutte(x, y, 0.75, 'decor')),
+        ailes: ([[-1, -6.9], [-1, 6.9]] as [number, number][]).map(([x, y]) => goutte(x, y, 0.6, 'decor')),
         coque: [plat(barre(1, -3.6, -1.6, -2.2, 0.35), 'os'), plat(barre(-4, 3, -6.2, 1.6, 0.35), 'os')],
       }),
     },
@@ -295,7 +295,7 @@ const PEAUX: Record<string, Peau[]> = {
       principale: 'ecaille',
       rampes: { ecaille: T(265, 0.15, 1), lie: T(280, 0.35, 0.55), venin: R('#041a3a', '#0a3a7a', '#1470c8', '#3ab0ff', '#a0e4ff', '#ffffff'), os: T(260, 0.08, 1.15), decor: R('#041a3a', '#0a3a7a', '#1470c8', '#3ab0ff', '#a0e4ff', '#ffffff') },
       accent: R('#041a3a', '#0a3a7a', '#1470c8', '#3ab0ff', '#a0e4ff', '#ffffff'),
-      habit: () => ({ ailes: ([[-2.6, -7.5], [-6.6, 6.4]] as [number, number][]).map(([x, y]) => goutte(x, y, 0.75, 'decor')), coque: [] }),
+      habit: () => ({ ailes: ([[-1, -6.9], [-1, 6.9]] as [number, number][]).map(([x, y]) => goutte(x, y, 0.6, 'decor')), coque: [] }),
     },
   ],
   // LE PRISME : le quartz, les facettes, l'énergie

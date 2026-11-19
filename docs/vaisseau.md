@@ -6091,3 +6091,29 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   couleur ; on les voit changer sur le Kraken, mais quand on les lance, ils restent les mêmes ») : en vol, ils lisent la
   chair, la chitine et la bile de son apparence (`rampesDuJoueur`), comme le rejeton de son dos.
 - `&peau=ID` : l'apparence du vaisseau piloté, d'emblée (pour juger une apparence d'un lien).
+- LES DESCRIPTIONS DES ARMES, SANS LE VAISSEAU NI LES INSECTES (Keko, 19/11 : « on ne renvoie jamais au vaisseau, on ne dit
+  pas \u00ab il fait quelque chose \u00bb, c'est valable pour tous les vaisseaux ; et jamais aux insectes, car plus tard il y aura
+  peut-être autre chose que des insectes ») : le verbe sans sujet — « Crache… », « Laisse derrière lui… », « Sème… » —,
+  « les ennemis » ; plus d'aile, de cristal ni de « vaisseau ». Revues toutes (`DESCRIPTIONS_DES_ARMES`).
+- LES ARMES DE LA VOUIVRE RENOMMÉES (Keko, 19/11) : TRAÎNÉE CORROSIVE (« Laisse derrière lui une traînée d'acide
+  corrosive, qui ronge les ennemis qui passent dessus. »), CRACHAT ACIDE (« Crache une flaque d'acide corrosive sur les
+  ennemis proches. »), MINES TOXIQUES (« Sème des mines autour, qui explosent en un nuage de gaz corrosif quand un ennemi
+  approche. »).
+- LA VOUIVRE REPENSÉE (Keko, 19/11) :
+  - DES PUSTULES DE TAILLE TRÈS VARIABLE (« plus de pustules, de taille très variable ») : une vingtaine — trois grosses,
+    six moyennes, une douzaine de petites (`PUSTULES_DU_CORPS`), leur bourrelet de lie aminci. *Mesuré à la capture* :
+    trente couvraient tout, la peau ne se voyait plus.
+  - SA PROPULSION, DEUX PUSTULES SUR SES FLANCS QUI CRACHENT DU GAZ (« sa propulsion ne se fait pas à l'arrière, mais sur
+    deux pustules latérales qui cracheraient du gaz ») : ses trois sacs de venin remplacés par deux grosses pustules
+    (`PUSTULES_DE_LA_VOUIVRE`), chacune son orifice sombre à l'arrière et vers le dehors — les tuyères du gabarit
+    (`pustule: true`) ; en vol, au décollage et à l'accueil, des BOUFFÉES DE GAZ qui en sortent vers l'arrière et le
+    dehors, gonflent et s'effacent (`dessinerUneBouffee`). Ses petites vrilles pendent sous elles (« réutiliser les petites
+    tentacules de l'arrière pour les placer sous les pustules »). Plus de feux de position.
+  - CHAQUE ARME SE VOIT SUR ELLE (`Allure.vouivre`, `formesDeLaVouivreArmee`) : LE CRACHAT ACIDE, une TÊTE au bout d'un
+    cou, la gueule de lamproie au bout — l'acide en part (sa bouche, 14,2) ; sans lui, la masse est close devant. LES
+    MINES TOXIQUES, une MINE SUR SON DOS, cernée de suie, qui part quand une mine est lancée et repousse (rien 0,3 s, puis
+    1,2 s). LA TRAÎNÉE CORROSIVE, une POCHE D'ACIDE à l'arrière, entre ses deux pustules, l'acide qui clapote, un bec.
+  - LES MINES ET LE GAZ AUX COULEURS DE SON APPARENCE (« pense aussi à changer la couleur des mines en fonction du skin ») :
+    les mines, leur lueur, leurs éclats et le miasme de leur nuage (`teintesDesMines`) ; et les bouffées et bulles de
+    propulsion de la Vouivre et du Kraken (`couleursDesBulles`). Les glandes des apparences sont sur les nouvelles
+    pustules.
