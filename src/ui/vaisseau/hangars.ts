@@ -180,6 +180,37 @@ function solDeLEmpire(p: Peintre, s: Scene): void {
   p.rect(xk + 2, yk + 2, 8, 5, hex('#0e2a1a'))
   for (let k = 0; k < 3; k++) p.rect(xk + 3, yk + 3 + k * 1, 1 + Math.floor((Math.sin(t * 3 + k * 2) * 0.5 + 0.5) * 5), 1, hex('#3ad07a'))
   for (let k = 0; k < 3; k++) p.rect(xk + 12, yk + 2 + k * 2, 2, 1, Math.floor(t * 3 + k) % 3 === 0 ? hex('#ff5a3a') : hex('#4a1a14'))
+  // (… DES ORDINATEURS — Keko, 19/11 : « pour les plateformes de l'Empire, ça manque d'ordinateurs »)
+  // DEUX BAIES DE SERVEURS : une armoire sombre, ses tiroirs, deux colonnes de voyants qui clignotent chacun à son rythme
+  const baie = (x: number, y: number, w: number, h: number, graine: number): void => {
+    p.rect(x, y, w, h, ACIER[0])
+    p.rect(x + 1, y + 1, w - 2, h - 2, hex('#1a2032'))
+    p.rect(x + 1, y + 1, w - 2, 1, ACIER[4])
+    for (let ty = y + 3; ty < y + h - 2; ty += 3) {
+      p.rect(x + 2, ty, w - 4, 2, hex('#242c42'))
+      for (let k = 0; k < 2; k++) {
+        const on = hasard(Math.floor(t * (2 + k) + ty * 0.3), graine + k, 81) < 0.55
+        p.px(x + w - 4 + k * 2 - 1, ty, on ? (k === 0 ? hex('#3ad07a') : hex('#ffb040')) : hex('#14201a'))
+      }
+      p.rect(x + 3, ty + 1, 4, 1, ACIER[2])
+    }
+  }
+  baie(12, yT + 14, 13, 24, 1)
+  baie(W - 20, Math.round(y0 + 34), 13, Math.max(10, Math.min(22, Math.round(cy - 6) - Math.round(y0 + 34) - 3)), 2)
+  // UN TERMINAL, à gauche, en bas : un écran cathodique où défilent des lignes vertes, son clavier devant
+  const xt = 12
+  const ytm = Math.round(cy + 18)
+  p.rect(xt, ytm, 17, 13, ACIER[0])
+  p.rect(xt + 1, ytm + 1, 15, 11, ACIER[3])
+  p.rect(xt + 2, ytm + 2, 13, 8, hex('#06140c'))
+  const defile = Math.floor(t * 4)
+  for (let k = 0; k < 4; k++) {
+    const lg = 3 + Math.floor(hasard(defile + k, 3, 82) * 9)
+    p.rect(xt + 3, ytm + 3 + k * 2, lg, 1, k === 3 && Math.floor(t * 3) % 2 === 0 ? hex('#a0ffb8') : hex('#3ad07a'))
+  }
+  p.glow(xt + 8, ytm + 6, 9, hex('#3ad07a'), 0.08)
+  p.rect(xt + 1, ytm + 13, 15, 3, ACIER[0])
+  for (let k = 0; k < 6; k++) p.rect(xt + 2 + k * 2, ytm + 14, 1, 1, ACIER[5])
   // LES CAISSES, en bas à droite : deux caisses sanglées l'une sur l'autre ; en bas à gauche, un baril et une caisse
   const caisse = (x: number, y: number, w: number, h: number): void => {
     p.rect(x, y, w, h, hex('#1a1408'))
@@ -267,6 +298,11 @@ const cellulesDesXenoides = (W: number, y0: number, y1: number): { x: number; y:
 // en haut à gauche — une tache claire, son cœur presque blanc)
 const MUQUEUSE = H('#c86a88', '#f0b4c8', '#fff0f4')
 const CHITINE_LUISANTE = H('#8a7484', '#d8c8d4', '#fbf4f8')
+/** Les tons du modelé d'une cellule, de l'ombre au clair. */
+const TONS_DE_CHAIR = H('#1e0b14', '#2e1220', '#42192e', '#5a2440', '#743050', '#904062', '#a85476')
+const TONS_DE_CHITINE = H('#100a0e', '#1c1218', '#2a1e26', '#3a2c34', '#4c3c44', '#605058', '#76666e')
+/** La trame de Bayer 4 × 4 : un dégradé en pixels, sans flou. */
+const BAYER4 = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5]
 function bandesDuSolDesXenoides(W: number, y0: number, y1: number): number[] {
   const cle = `${W}:${y0}:${y1}`
   const deja = solsDesXenoides.get(cle)
@@ -279,20 +315,28 @@ function bandesDuSolDesXenoides(W: number, y0: number, y1: number): number[] {
       const dy = y + 0.5 - c.y
       const d = Math.hypot(dx, dy)
       if (d > c.r) continue
-      if (d > c.r - 1.5) return c.chitine ? CHITINE[1] : CHAIR[2]
-      // (le reflet : une tache claire en haut à gauche, son cœur presque blanc ; son halo)
-      const sx = dx + c.r * 0.38
-      const sy = dy + c.r * 0.42
-      const ds = Math.hypot(sx * 1.3, sy)
+      if (d > c.r - 1.2) return c.chitine ? CHITINE[0] : CHAIR[1]
+      // (… UN MODELÉ EN DÉGRADÉ — Keko, 19/11 : « plus de dégradés sur les muqueuses ; là, l'effet de lumière fait juste un
+      // point lumineux un peu bizarre ; un côté vraiment luisant » : la cellule est une bosse — sa normale, la lumière d'en
+      // haut à gauche, un diffus en sept tons tramés de l'ombre au clair, puis un REFLET SPÉCULAIRE large et doux, tramé lui
+      // aussi, du rose au presque blanc)
+      const u = dx / c.r
+      const v = dy / c.r
+      const nz = Math.sqrt(Math.max(0, 1 - u * u - v * v))
+      const diffus = Math.max(0, -0.5 * u - 0.6 * v + 0.62 * nz)
+      // (le reflet : la lumière renvoyée vers l'œil, le long de la normale)
+      const hz = 0.62 + 1
+      const hl = Math.hypot(-0.5, -0.6, hz)
+      const spec = Math.pow(Math.max(0, (-0.5 * u - 0.6 * v + hz * nz) / hl), 22)
+      const trame = BAYER4[(x & 3) + 4 * (y & 3)] / 16 - 0.47
+      const T = c.chitine ? TONS_DE_CHITINE : TONS_DE_CHAIR
       const L = c.chitine ? CHITINE_LUISANTE : MUQUEUSE
-      if (ds < c.r * 0.09 + 0.6) return L[2]
-      if (ds < c.r * 0.2) return L[1]
-      if (ds < c.r * 0.3) return L[0]
-      // (l'ombre, en bas à droite)
-      const lum = -(dx * 0.6 + dy * 0.8) / c.r
-      if (lum < -0.45) return c.chitine ? CHITINE[1] : CHAIR[2]
-      if (lum > 0.35) return c.chitine ? CHITINE[3] : CHAIR[4]
-      return c.chitine ? CHITINE[2] : CHAIR[3]
+      const sp = spec * 3.2 + trame * 0.5
+      if (sp > 2.2) return L[2]
+      if (sp > 1.3) return L[1]
+      if (sp > 0.7) return L[0]
+      const k = Math.max(0, Math.min(T.length - 1, Math.floor(diffus * T.length * 1.05 + trame * 1.1)))
+      return T[k]
     }
     return CHAIR[1]
   }
@@ -381,16 +425,36 @@ function aireDesXenoides(p: Peintre, cx: number, cy: number, R0: number, t: numb
   p.circle(cx, cy, R0 + 4, CHITINE[0])
   p.circle(cx, cy, R0 + 3, CHITINE[2])
   p.arc(cx, cy, R0 + 3, 1, Math.PI * 0.9, Math.PI * 1.6, CHITINE[4])
-  p.circle(cx, cy, R0, CHAIR[3])
+  // (… STRIÉE ET OMBRÉE — Keko, 19/11 : « des stries, des rainures sur l'espèce de muqueuse de la plateforme ; je trouve
+  // encore que c'est un peu flat » : la membrane est une cuvette — plus sombre vers son fond, claire sur son bord en haut
+  // à gauche —, creusée de RAINURES rayonnantes qui ondulent et de BOURRELETS en anneaux, chaque rainure son liseré
+  // mouillé ; tramée, sans flou)
+  const respire = t * 0.8
+  // (le peintre donne la distance au centre, de 0 à 1, et l'angle ; on en retrouve le pixel pour la trame)
+  p.circle(cx, cy, R0, (r: number, a: number) => {
+    const dx = Math.cos(a) * r * R0
+    const dy = Math.sin(a) * r * R0
+    const x = Math.round(cx + dx)
+    const y = Math.round(cy + dy)
+    const trame = BAYER4[(x & 3) + 4 * (y & 3)] / 16 - 0.47
+    // (la cuvette : claire au bord, sombre au fond ; plus claire du côté de la lumière)
+    let l = 0.25 + 0.55 * r + 0.25 * (-(dx * 0.6 + dy * 0.8) / R0)
+    // (les rainures : vingt-quatre plis qui ondulent en tournant un peu ; leur fond sombre, leur bord mouillé)
+    const pli = Math.sin(a * 24 + Math.sin(r * 9 + respire) * 0.8)
+    if (pli > 0.82) l -= 0.35
+    else if (pli > 0.62) l += 0.22
+    // (les bourrelets : trois anneaux)
+    const anneau = Math.sin(r * 22 - respire)
+    if (anneau > 0.86) l += 0.18
+    else if (anneau < -0.9) l -= 0.18
+    const k = Math.max(0, Math.min(TONS_DE_CHAIR.length - 1, Math.floor(l * TONS_DE_CHAIR.length + trame * 1.2)))
+    return TONS_DE_CHAIR[k]
+  })
   for (let k = 0; k < 28; k++) {
     const a = (k / 28) * Math.PI * 2
     const [ux, uy] = [Math.cos(a), Math.sin(a)]
     const [nx, ny] = [-uy, ux]
     p.poly([[cx + ux * R0 + nx * 2.2, cy + uy * R0 + ny * 2.2], [cx + ux * (R0 - 6), cy + uy * (R0 - 6)], [cx + ux * R0 - nx * 2.2, cy + uy * R0 - ny * 2.2]], k % 2 === 0 ? OS[2] : OS[1])
-  }
-  for (let k = 0; k < 16; k++) {
-    const a = (k / 16) * Math.PI * 2 + 0.1
-    p.line(cx + Math.cos(a) * 12, cy + Math.sin(a) * 12, cx + Math.cos(a + 0.12) * (R0 - 8), cy + Math.sin(a + 0.12) * (R0 - 8), CHAIR[2])
   }
   const souffle = 1 + 0.05 * Math.sin(t * 1.6)
   for (const [r, c] of [[16, CHAIR[2]], [11, CHAIR[4]], [6, CHAIR[1]]] as [number, number][]) p.ring(cx, cy, r * souffle, 2, c)
@@ -622,7 +686,9 @@ function bandesDeLaBrume(W: number, y0: number, y1: number): number[] {
   const couleur = (x: number, y: number): number => {
     const n = 0.6 * bruit(x, y, 26, 91) + 0.4 * bruit(x, y, 11, 92)
     const seuil = BAYER[(x % 2) + 2 * (y % 2)] * 0.12
-    return n + seuil > 0.72 ? VIDE[3] : n + seuil > 0.6 ? VIDE[2] : VIDE[1]
+    // (… PLUS SOMBRE, POUR QUE CE QUI FLOTTE RESSORTE — Keko, 19/11 : « ça manque un peu de contraste, tout est un peu
+    // sombre, les éléments ressortent un petit peu mal »)
+    return n + seuil > 0.74 ? VIDE[2] : n + seuil > 0.62 ? VIDE[1] : VIDE[0]
   }
   const bandes: number[] = []
   for (let y = y0; y < y1; y++) {
@@ -665,8 +731,9 @@ function solDesYhgtharr(p: Peintre, s: Scene): void {
       pts.push([x + Math.cos(a) * rr, y + flotte + Math.sin(a) * rr * 0.7])
     }
     p.poly(pts.map(([a, b]) => [a + 1, b + 2]), VIDE[0])
-    p.poly(pts, VIDE[3])
-    for (let k = 0; k < 6; k++) p.line(pts[k][0], pts[k][1], pts[(k + 1) % 6][0], pts[(k + 1) % 6][1], k < 3 ? VIDE[5] : VIDE[2])
+    // (… PLUS CLAIRES : la pierre au ton du dessus, son arête éclairée vive)
+    p.poly(pts, VIDE[5])
+    for (let k = 0; k < 6; k++) p.line(pts[k][0], pts[k][1], pts[(k + 1) % 6][0], pts[(k + 1) % 6][1], k < 3 ? VIDE[6] : VIDE[3])
     // (… UNE FISSURE QUI LUIT dans la pierre, qui bat lentement)
     const lu = 0.4 + 0.6 * Math.max(0, Math.sin(t * 1.2 + i * 1.7))
     p.line(pts[0][0] * 0.6 + x * 0.4, pts[0][1] * 0.6 + y * 0.4 + flotte * 0.4, x, y + flotte, VIDE[6], 0.5 * lu)
@@ -682,8 +749,9 @@ function solDesYhgtharr(p: Peintre, s: Scene): void {
       const y = y1 + 2 - u * lg
       const w = 4.5 * (1 - u) + 0.6
       p.circle(x, y, w + 0.8, VIDE[0])
-      p.circle(x, y, w, VIDE[3])
-      p.circle(x - 0.5, y - 0.5, Math.max(0.5, w * 0.4), VIDE[4])
+      // (… PLUS CLAIRS, un dos éclairé)
+      p.circle(x, y, w, VIDE[5])
+      p.circle(x - 0.5, y - 0.5, Math.max(0.5, w * 0.45), VIDE[6])
       if (j % 3 === 0) p.px(Math.round(x + sg * w * 0.5), Math.round(y), VIDE[6])
       px = x
       py = y
@@ -744,12 +812,14 @@ function solDesYhgtharr(p: Peintre, s: Scene): void {
 }
 function aireDesYhgtharr(p: Peintre, cx: number, cy: number, R0: number, t: number, decolle: boolean): void {
   // un CERCLE DE PIERRE NOIRE, gravé de RUNES qui luisent et tournent ; dedans, LE VIDE qui tourbillonne
+  // (… PLUS CONTRASTÉ : la pierre plus claire, ses bords vifs, le vide du dedans plus noir)
   p.circle(cx, cy, R0 + 4, VIDE[0])
-  p.circle(cx, cy, R0 + 3, VIDE[3])
-  p.arc(cx, cy, R0 + 3, 1, Math.PI * 0.9, Math.PI * 1.6, VIDE[5])
-  p.circle(cx, cy, R0, VIDE[2])
-  p.ring(cx, cy, R0 - 1, 6, VIDE[3])
-  p.ring(cx, cy, R0 - 8, 1, VIDE[5])
+  p.circle(cx, cy, R0 + 3, VIDE[5])
+  p.arc(cx, cy, R0 + 3, 1, Math.PI * 0.9, Math.PI * 1.6, VIDE[7])
+  p.circle(cx, cy, R0, VIDE[1])
+  p.ring(cx, cy, R0 - 1, 6, VIDE[5])
+  p.ring(cx, cy, R0 - 7, 1, VIDE[6])
+  p.ring(cx, cy, R0, 1, VIDE[5])
   const tour = t * 0.2
   for (let k = 0; k < 12; k++) {
     const a = tour + (k / 12) * Math.PI * 2
@@ -760,6 +830,8 @@ function aireDesYhgtharr(p: Peintre, cx: number, cy: number, R0: number, t: numb
     const forme = k % 3
     // (… PLUS GRANDES — mesuré à la capture : à un pixel et demi, on ne les lisait pas)
     const c = Math.sin(t * 2 + k) > 0.2 ? VIDE[8] : VIDE[7]
+    // (… GRAVÉES DANS UN CREUX SOMBRE : sur la pierre éclaircie, la rune claire ne ressortait plus)
+    p.circle(rx, ry, 3.6, VIDE[1])
     if (forme === 0) {
       p.line(rx - nx * 2.5, ry - ny * 2.5, rx + nx * 2.5, ry + ny * 2.5, c)
       p.line(rx + nx * 2.5, ry + ny * 2.5, rx + nx * 1 + ux * 2, ry + ny * 1 + uy * 2, c)

@@ -6320,3 +6320,16 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     PARTICULES qui tournent lentement autour de l'aire, chacune sa traîne ; DES ÉCLAIRS DE VIDE qui crépitent sur les
     bords, ici puis là ; DES FUMEROLLES au bout des tentacules.
   *Mesuré* : 107 images par seconde à l'Empire, 86 aux Xénoïdes, 95 aux Yhg'tharr (Chrome sans tête).
+- LES HANGARS, SECONDE PASSE (Keko, 19/11) :
+  - LES XÉNOÏDES (« plus de dégradés sur les muqueuses ; là, l'effet de lumière fait juste un point lumineux un peu
+    bizarre ; un côté vraiment luisant ») : chaque cellule est une BOSSE — sa normale, la lumière d'en haut à gauche —, un
+    diffus en sept tons TRAMÉS (Bayer 4 × 4) de l'ombre au clair, puis un REFLET SPÉCULAIRE large et doux, tramé aussi,
+    du rose au presque blanc (`TONS_DE_CHAIR`, `TONS_DE_CHITINE`, `BAYER4`, toujours dans le sol calculé une fois). L'AIRE
+    (« des stries, des rainures sur la muqueuse de la plateforme ; encore un peu flat ») : une cuvette ombrée, creusée de
+    vingt-quatre RAINURES rayonnantes qui ondulent et de BOURRELETS en anneaux qui respirent, tramée.
+  - LES YHG'THARR (« ça manque de contraste, tout est un peu sombre, les éléments ressortent mal ») : la brume du fond
+    descendue d'un ton ; les dalles, les tentacules et la pierre de l'aire montés de deux ; les runes GRAVÉES DANS UN
+    CREUX SOMBRE (sur la pierre éclaircie, la rune claire ne ressortait plus).
+  - L'EMPIRE (« ça manque d'ordinateurs ») : DEUX BAIES DE SERVEURS (tiroirs, deux colonnes de voyants qui clignotent
+    chacun à son rythme) et UN TERMINAL cathodique où défilent des lignes vertes, son clavier devant.
+  *Mesuré* : Empire 106, Xénoïdes 75, Yhg'tharr 91 images par seconde.
