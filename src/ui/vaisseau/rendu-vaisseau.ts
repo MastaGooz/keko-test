@@ -1231,9 +1231,20 @@ export function formesDeLaCoque(cran: number, t = 0, motif?: MotifDuVer): Forme[
     // carrée vitrée à la proue ; la SOUTE À TOURELLES sur le dos, trois modules carrés rangés ; des plaques boulonnées
     // (sa couleur à lui : un caisson kaki, des caissons latéraux de graphite ; les voyants des modules sont la marque)
     const f: Forme[] = [{ pts: [[7.4, -3.4], [6.4, -4.4], [-6.4, -4.4], [-7.4, -3.4], [-7.4, 3.4], [-6.4, 4.4], [6.4, 4.4], [7.4, 3.4]], mat: 'kaki', relief: 'cyl' }]
+    // (… PLUS DE DÉTAILS — Keko, 19/11 : « les trois vaisseaux humains manquent de détails comparés au Kraken ; ils ont l'air
+    // plus minimalistes, moins travaillés » : un PARE-CHOCS d'acier à la proue, deux PHARES d'ambre, le cadre de la cabine
+    // et son montant, une rangée de RIVETS le long de chaque bord, deux CHEMINÉES à la poupe)
+    f.push({ pts: [[8, -2.9], [7.4, -3.4], [7.4, 3.4], [8, 2.9]], mat: 'acier', relief: 'cyl' })
+    for (const sg of [-1, 1]) f.push({ pts: ovale(7.1, sg * 2.6, 0.5, 0.5, 8), mat: 'ambre', relief: 'dome', dome: { x: 7.1, y: sg * 2.6, rx: 0.5, ry: 0.5 } })
     f.push({ pts: [[6.6, -2], [4, -2], [4, 2], [6.6, 2]], mat: 'acier', relief: 'plat' })
     f.push({ pts: [[6.2, -1.5], [4.4, -1.5], [4.4, 1.5], [6.2, 1.5]], mat: 'verre', relief: 'plat' })
+    f.push({ pts: barre(5.3, -1.5, 5.3, 1.5, 0.16), mat: 'acier', relief: 'plat' })
+    for (const sg of [-1, 1]) for (const x of [3.2, 1, -1.2, -3.4, -5.6]) f.push({ pts: ovale(x, sg * 3.75, 0.24, 0.24, 6), mat: 'acier', relief: 'dome', dome: { x, y: sg * 3.75, rx: 0.24, ry: 0.24 } })
     f.push({ pts: [[2.6, -3], [-6, -3], [-6, 3], [2.6, 3]], mat: 'metal', relief: 'plat' })
+    for (const sg of [-1, 1]) {
+      f.push({ pts: ovale(-6.7, sg * 2, 0.75, 0.75, 10), mat: 'acier', relief: 'dome', dome: { x: -6.7, y: sg * 2, rx: 0.75, ry: 0.75 } })
+      f.push({ pts: ovale(-6.7, sg * 2, 0.42, 0.42, 8), mat: 'suie', relief: 'plat' })
+    }
     // (… LA SOUTE À TOURELLES QUITTE LA COQUE — Keko, 18/11 : « on doit toujours changer visuellement l'arme à chaque fois
     // qu'on change d'arme sur un vaisseau » : elle restait sur le dos avec la scie et le fléau ; c'est l'arme des tourelles
     // qui porte maintenant son lance-tourelles, voir `formesDeLArme`)
@@ -1267,9 +1278,22 @@ export function formesDeLaCoque(cran: number, t = 0, motif?: MotifDuVer): Forme[
     // réservoirs sont ses nacelles, de part et d'autre (voir `formesDesAiles`) ; la verrière en avant
     // (sa couleur à elle : de la suie, l'échine d'acier, des pylônes de cuivre, la verrière d'ambre)
     const f: Forme[] = [{ pts: [[6.5, 0], [5.8, -2.6], [3.5, -4.2], [-1, -4.7], [-6, -4.5], [-8.4, -3], [-8.9, 0], [-8.4, 3], [-6, 4.5], [-1, 4.7], [3.5, 4.2], [5.8, 2.6]], mat: 'suie', relief: 'cyl' }]
+    // (… PLUS DE DÉTAILS — Keko, 19/11 : les vaisseaux humains manquaient de détails comparés au Kraken : des GRILLES DE
+    // CHALEUR sur les flancs, une rangée de RIVETS le long du bord, une troisième membrure sur l'échine, ses rivets, le
+    // CADRE de la verrière et son montant, deux ÉCHAPPEMENTS à la poupe)
+    for (const sg of [-1, 1]) {
+      f.push({ pts: [[-3.9, sg * 1.9], [-7.1, sg * 1.9], [-7.1, sg * 3.9], [-3.9, sg * 3.9]], mat: 'acier', relief: 'plat', penche: sg })
+      for (const x of [-4.6, -5.5, -6.4]) f.push({ pts: barre(x, sg * 2.3, x, sg * 3.5, 0.34), mat: 'graphite', relief: 'plat' })
+      for (const [x, y] of [[3.6, 3.6], [1.4, 4.1], [-0.8, 4.2], [-3, 4.1], [-7.4, 3.2]] as [number, number][]) f.push({ pts: ovale(x, sg * y, 0.24, 0.24, 6), mat: 'metal', relief: 'dome', dome: { x, y: sg * y, rx: 0.24, ry: 0.24 } })
+      f.push({ pts: ovale(-8.3, sg * 1.9, 0.6, 0.6, 8), mat: 'metal', relief: 'dome', dome: { x: -8.3, y: sg * 1.9, rx: 0.6, ry: 0.6 } })
+      f.push({ pts: ovale(-8.3, sg * 1.9, 0.32, 0.32, 6), mat: 'suie', relief: 'plat' })
+    }
     f.push({ pts: [[0.5, -1], [-7, -1.3], [-7, 1.3], [0.5, 1]], mat: 'acier', relief: 'plat' })
-    for (const x of [-2.2, -4.6]) f.push({ pts: [[x + 0.4, -1.5], [x - 0.4, -1.5], [x - 0.4, 1.5], [x + 0.4, 1.5]], mat: 'metal', relief: 'plat' })
+    for (const x of [-2.2, -4.6, -6.6]) f.push({ pts: [[x + 0.4, -1.5], [x - 0.4, -1.5], [x - 0.4, 1.5], [x + 0.4, 1.5]], mat: 'metal', relief: 'plat' })
+    for (const x of [-1.1, -3.4, -5.6]) for (const y of [-0.75, 0.75]) f.push({ pts: ovale(x, y, 0.2, 0.2, 6), mat: 'metal', relief: 'dome', dome: { x, y, rx: 0.2, ry: 0.2 } })
+    f.push({ pts: ovale(2.3, 0, 2.6, 1.9, 18), mat: 'acier', relief: 'dome', dome: { x: 2.3, y: 0, rx: 2.6, ry: 1.9 } })
     f.push({ pts: ovale(2.4, 0, 2.3, 1.6, 18), mat: 'ambre', relief: 'dome', dome: { x: 2.4, y: 0, rx: 2.3, ry: 1.6 } })
+    f.push({ pts: barre(1.7, -1.5, 1.7, 1.5, 0.16), mat: 'acier', relief: 'plat' })
     return f
   }
   if (cran === 4) {
@@ -1306,7 +1330,22 @@ export function formesDeLaCoque(cran: number, t = 0, motif?: MotifDuVer): Forme[
     // les émetteurs du bouclier, deux pastilles vertes de part et d'autre
     for (const s of [-1, 1]) f.push({ pts: ovale(-3.4, s * 2.7, 0.9, 0.9, 10), mat: 'emeraude', relief: 'dome', dome: { x: -3.4, y: s * 2.7, rx: 0.9, ry: 0.9 } })
   }
+  // (… LE CHASSEUR PLUS DÉTAILLÉ — Keko, 19/11 : « les trois vaisseaux humains manquent de détails comparés au Kraken » : un
+  // CÔNE DE NEZ sombre, deux ENTRÉES D'AIR de part et d'autre de la verrière, deux JOINTS de panneaux en travers, une
+  // ARÊTE dorsale d'acier, des OUÏES à la poupe, le CADRE de la verrière et son montant)
+  if (cran === 1) {
+    f.push({ pts: [[9, 0], [7.7, -0.8], [7.3, 0], [7.7, 0.8]], mat: 'graphite', relief: 'plat' })
+    for (const sg of [-1, 1]) {
+      f.push({ pts: [[2.6, sg * 1.9], [-1.4, sg * 3.05], [-1.4, sg * 3.85], [1.9, sg * 2.75]], mat: 'suie', relief: 'plat' })
+      for (const x of [-5, -5.7, -6.4]) f.push({ pts: barre(x, sg * 1.6, x, sg * 3, 0.32), mat: 'graphite', relief: 'plat' })
+    }
+    for (const x of [-2.4, -4.3]) f.push({ pts: barre(x, -3.85, x, 3.85, 0.24), mat: 'graphite', relief: 'plat' })
+    f.push({ pts: [[0.8, 0], [-0.3, -0.75], [-6.8, -0.85], [-6.8, 0.85], [-0.3, 0.75]], mat: 'graphite', relief: 'plat' })
+    f.push({ pts: [[0.4, 0], [-0.4, -0.3], [-6.6, -0.32], [-6.6, 0.32], [-0.4, 0.3]], mat: 'acier', relief: 'cyl' })
+    f.push({ pts: ovale(3.3, 0, 2.85, 1.85, 18), mat: 'acier', relief: 'dome', dome: { x: 3.3, y: 0, rx: 2.85, ry: 1.85 } })
+  }
   f.push({ pts: ovale(3.4, 0, 2.5, 1.55, 18), mat: 'verre', relief: 'dome', dome: { x: 3.4, y: 0, rx: 2.5, ry: 1.55 } })
+  if (cran === 1) f.push({ pts: barre(2.7, -1.45, 2.7, 1.45, 0.15), mat: 'acier', relief: 'plat' })
   return f
 }
 /** LES AILES, deux plaques penchées, le bout rouge — le cuirassé, lui, a deux longs bords d'armement. */
@@ -1402,6 +1441,13 @@ export function formesDesAiles(coque = 1, t = 0): Forme[] {
         f.push({ pts: [[x, sg * 6.4], [x - 1.3, sg * 6.4], [x - 1.3, sg * 7.4], [x, sg * 7.4]], mat: 'acier', relief: 'plat' })
       }
       f.push({ pts: [[4.4, sg * 4], [3.4, sg * 4], [3.4, sg * 6.4], [4.4, sg * 6.4]], mat: 'acier', relief: 'plat' })
+      // (… UNE TRAPPE cerclée d'acier et sa poignée, TROIS OUÏES, des boulons aux coins — Keko, 19/11 : plus de détails)
+      f.push({ pts: [[1.8, sg * 4.5], [-1.8, sg * 4.5], [-1.8, sg * 6], [1.8, sg * 6]], mat: 'acier', relief: 'plat', penche: sg })
+      f.push({ pts: [[1.4, sg * 4.8], [-1.4, sg * 4.8], [-1.4, sg * 5.7], [1.4, sg * 5.7]], mat: 'graphite', relief: 'plat', penche: sg })
+      f.push({ pts: barre(0.5, sg * 5.25, -0.5, sg * 5.25, 0.2), mat: 'acier', relief: 'plat' })
+      for (const x of [-3, -3.9, -4.8]) f.push({ pts: barre(x, sg * 4.6, x, sg * 5.9, 0.3), mat: 'suie', relief: 'plat' })
+      f.push({ pts: ovale(-5.3, sg * 6.9, 0.45, 0.45, 8), mat: 'marque', relief: 'dome', dome: { x: -5.3, y: sg * 6.9, rx: 0.45, ry: 0.45 } })
+      for (const [x, y] of [[2.9, 4.4], [-5.6, 4.4]] as [number, number][]) f.push({ pts: ovale(x, sg * y, 0.22, 0.22, 6), mat: 'acier', relief: 'dome', dome: { x, y: sg * y, rx: 0.22, ry: 0.22 } })
     }
     return f
   }
@@ -1416,7 +1462,13 @@ export function formesDesAiles(coque = 1, t = 0): Forme[] {
     // rouge, une bague d'acier à l'arrière)
     for (const sg of [-1, 1]) {
       f.push({ pts: [[0.6, sg * 4.2], [-4.6, sg * 4.2], [-5.6, sg * 6.4], [-0.4, sg * 6.4]], mat: 'cuivre', relief: 'plat', penche: sg })
+      // (… UNE CONDUITE d'acier du réservoir au corps, sur le pylône — Keko, 19/11 : plus de détails)
+      f.push({ pts: barre(1.4, sg * 3.9, 1.4, sg * 6, 0.32), mat: 'acier', relief: 'plat' })
       f.push({ pts: ovale(-2, sg * 7.6, 5.4, 2.1, 22), mat: 'or', relief: 'dome', dome: { x: -2, y: sg * 7.6, rx: 5.4, ry: 2.1 } })
+      // (… DEUX CERCLAGES de cuivre, une VANNE et son volant sur le dessus)
+      for (const x of [-4.4, 0.9]) f.push({ pts: barre(x, sg * 5.65, x - 0.15, sg * 9.55, 0.62), mat: 'graphite', relief: 'plat' })
+      f.push({ pts: ovale(-1.8, sg * 7.1, 0.55, 0.55, 8), mat: 'acier', relief: 'dome', dome: { x: -1.8, y: sg * 7.1, rx: 0.55, ry: 0.55 } })
+      f.push({ pts: ovale(-1.8, sg * 7.1, 0.25, 0.25, 6), mat: 'metal', relief: 'plat' })
       f.push({ pts: [[-5.4, sg * 5.7], [-6.3, sg * 5.8], [-6.3, sg * 9.4], [-5.4, sg * 9.5]], mat: 'metal', relief: 'plat' })
       f.push({ pts: ovale(3.1, sg * 7.6, 1.2, 1.4, 12), mat: 'marque', relief: 'dome', dome: { x: 3.1, y: sg * 7.6, rx: 1.2, ry: 1.4 } })
     }
@@ -1436,6 +1488,13 @@ export function formesDesAiles(coque = 1, t = 0): Forme[] {
     f.push({ pts: [[1.2, s * 2.4], [-4.8, s * 8.2], [-8, s * 8.7], [-8, s * 7], [-6.2, s * 2.6]], mat: 'aile', relief: 'plat', penche: s })
     // le bord d'attaque, une bande d'acier qui accroche la lumière
     f.push({ pts: [[1.2, s * 2.4], [-4.8, s * 8.2], [-5.6, s * 8.05], [0.2, s * 2.5]], mat: 'acier', relief: 'plat', penche: s })
+    // (… UN VOLET au bord de fuite, une ligne de panneau, trois rivets le long du bord d'attaque — Keko, 19/11 : plus de détails)
+    if (coque === 1) {
+      f.push({ pts: [[-6.3, s * 3.1], [-7.6, s * 6.7], [-6.8, s * 6.9], [-5.5, s * 3.3]], mat: 'graphite', relief: 'plat', penche: s })
+      f.push({ pts: barre(-1.6, s * 4.1, -5.4, s * 4.3, 0.24), mat: 'graphite', relief: 'plat' })
+      f.push({ pts: [[-2.6, s * 5.1], [-3.4, s * 4.6], [-4.2, s * 5.1], [-3.4, s * 5.6]], mat: 'marque', relief: 'plat', penche: s })
+      for (const k of [0.3, 0.5, 0.7]) f.push({ pts: ovale(1.2 - 6 * k - 0.5, s * (2.4 + 5.8 * k + 0.1), 0.2, 0.2, 6), mat: 'metal', relief: 'dome', dome: { x: 1.2 - 6 * k - 0.5, y: s * (2.4 + 5.8 * k + 0.1), rx: 0.2, ry: 0.2 } })
+    }
     f.push({ pts: [[-6.6, s * 7.3], [-8, s * 7.5], [-8, s * 8.7], [-7.1, s * 8.5]], mat: 'marque', relief: 'plat', penche: s })
   }
   return f

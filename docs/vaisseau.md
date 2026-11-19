@@ -6023,3 +6023,14 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   tuyère, sa verrière, ses feux, sa bulle de bouclier, ses jets de manœuvre, ses bulles et ses braises, le départ de ses
   rayons, les anneaux du Ver (le chemin est lu à l'échelle). L'aperçu des armes au hangar reste à 1. LA RÈGLE NE CHANGE
   PAS : son rayon de choc est le même, c'est le dessin qui grossit. Vu à la capture, avant et après, Chasseur, Kraken, Ver.
+- LES TROIS VAISSEAUX HUMAINS PLUS DÉTAILLÉS (Keko, 19/11 : « maintenant qu'on a retravaillé le Kraken, les trois vaisseaux
+  humains manquent un peu de détails ; ils ont l'air plus minimalistes et moins travaillés ») : même silhouette, mêmes
+  couleurs, des pièces en plus — LE CHASSEUR (coque 1 : elle sert aussi au Nova Drifter) : un cône de nez sombre, deux
+  entrées d'air, deux joints de panneaux, une arête dorsale sombre coiffée d'acier, des ouïes à la poupe, le cadre de la
+  verrière et son montant ; sur les ailes, un volet au bord de fuite, une ligne de panneau, trois rivets, un insigne à
+  la marque. LA SALAMANDRE : deux sangles sombres et une vanne sur chaque réservoir, une conduite sur le pylône, des
+  grilles de chaleur dans un cadre d'acier, des rivets au bord et sur l'échine, une troisième membrure, le cadre de la
+  verrière, deux échappements. L'INGÉNIEUR : un pare-chocs, deux phares d'ambre, le montant de la cabine, des rivets le
+  long des bords, deux cheminées ; sur les caissons, une trappe à poignée, trois ouïes, des boulons, un voyant à la
+  marque. *Mesuré à la capture* : fins (0,13 à 0,36) et de teintes voisines, les premiers détails disparaissaient —
+  épaissis, et en contraste (des sangles sombres sur le laiton, une arête sombre sur le fuselage clair).
