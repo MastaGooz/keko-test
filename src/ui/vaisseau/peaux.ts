@@ -253,7 +253,8 @@ const PEAUX: Record<string, Peau[]> = {
       rampes: { chitine: T(222, 0.4, 0.58), chair: T(178, 0.5, 0.85), os: T(200, 0.15, 1.15), bile: R('#04202a', '#0a4a5a', '#109aaa', '#3ae0e8', '#a0fff8', '#ffffff'), decor: R('#04202a', '#0a4a5a', '#109aaa', '#3ae0e8', '#a0fff8', '#ffffff') },
       accent: R('#04202a', '#0a4a5a', '#109aaa', '#3ae0e8', '#a0fff8', '#ffffff'),
       habit: () => ({
-        ailes: COTES.map((sg) => goutte(-2.6, sg * 6.1, 0.85, 'decor')),
+        // (plus de glandes sur les nageoires : elles sont devenues des tentacules — Keko, 19/11)
+        ailes: [],
         coque: COTES.flatMap((s) => ([[4.2, 3.4], [0.8, 4.1], [-2.6, 4], [-6.4, 2.9]] as [number, number][]).map(([x, y]) => goutte(x, s * y, 0.32, 'decor'))),
       }),
     },
@@ -265,7 +266,7 @@ const PEAUX: Record<string, Peau[]> = {
       rampes: { chitine: T(12, 0.6, 0.95), chair: T(38, 0.75, 1.05), os: T(40, 0.1, 1.2), bile: R('#1a0a30', '#3a1a6a', '#6a30b0', '#a060e8', '#d8b0ff', '#ffffff'), decor: T(275, 0.6, 1.05) },
       accent: T(275, 0.6, 1.05),
       habit: () => ({
-        ailes: COTES.map((sg) => goutte(-2.6, sg * 6.1, 0.85, 'decor')),
+        ailes: [],
         coque: COTES.flatMap((s) => ([[3.6, 4.4], [0.2, 4.7], [-3.2, 4.4]] as [number, number][]).map(([x, y]) => plat([[x + 0.5, s * (y - 0.3)], [x, s * (y + 1)], [x - 0.5, s * (y - 0.3)]], 'os'))),
       }),
     },

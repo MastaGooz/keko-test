@@ -1151,10 +1151,17 @@ export function formesDeLaCoque(cran: number, t = 0, motif?: MotifDuVer): Forme[
     for (const x of [2.6, -0.9, -4.3]) f.push({ pts: [[x + 0.4, -4.1], [x - 0.5, -2], [x - 0.8, 0], [x - 0.5, 2], [x + 0.4, 4.1], [x - 0.2, 4.2], [x - 1.2, 2], [x - 1.5, 0], [x - 1.2, -2], [x - 0.2, -4.2]], mat: 'chair', relief: 'plat' })
     // (une crête d'épines d'os sur l'échine)
     for (const x of [0.9, -2.6, -6]) f.push({ pts: [[x + 0.9, 0], [x - 0.6, -0.55], [x - 0.3, 0], [x - 0.6, 0.55]], mat: 'os', relief: 'plat' })
-    // (la racine de la tentacule)
-    for (const [x, y] of ANCRES_DU_KRAKEN) f.push({ pts: ovale(x, y, 1.5, 1.5, 12), mat: 'chair', relief: 'dome', dome: { x, y, rx: 1.5, ry: 1.5 } })
-    // (les yeux : une grappe de bile)
-    for (const [x, y, r] of [[5.8, -1.3, 0.75], [6.3, 0.9, 0.6], [5.2, 0.1, 0.5], [4.6, -2.1, 0.45]] as [number, number, number][]) f.push({ pts: ovale(x, y, r, r, 10), mat: 'bile', relief: 'dome', dome: { x, y, rx: r, ry: r } })
+    // UNE TÊTE, UN VISAGE (Keko, 19/11 : « il fait trop scarabée ; une tête avec un visage — au moins une structure devant,
+    // peut-être avec des mandibules ») : un front de chitine bombé sur l'avant du manteau, deux paires d'yeux de bile de
+    // part et d'autre, la bouche de chair au milieu — la tentacule à aiguille en sort —, et deux MANDIBULES d'os, en
+    // pinces recourbées, qui avancent de chaque côté de la bouche
+    f.push({ pts: [[8.6, 0], [8.1, -2], [6.6, -3.3], [4.8, -3.4], [3.8, -2.2], [3.6, 0], [3.8, 2.2], [4.8, 3.4], [6.6, 3.3], [8.1, 2]], mat: 'chitine', relief: 'dome', dome: { x: 6.1, y: 0, rx: 2.6, ry: 3.4 } })
+    for (const sg of [-1, 1]) f.push({ pts: [[7.2, sg * 1.5], [8.9, sg * 2.5], [10.7, sg * 2], [11.4, sg * 0.9], [10.6, sg * 0.5], [10.4, sg * 1.3], [9, sg * 1.5], [7.9, sg * 0.9]], mat: 'os', relief: 'plat', penche: sg })
+    for (const [x, y] of ANCRES_DU_KRAKEN) {
+      f.push({ pts: ovale(x + 0.6, y, 1.3, 1.1, 12), mat: 'chair', relief: 'dome', dome: { x: x + 0.6, y, rx: 1.3, ry: 1.1 } })
+      f.push({ pts: ovale(x + 1, y, 0.6, 0.5, 8), mat: 'suie', relief: 'plat' })
+    }
+    for (const sg of [-1, 1]) for (const [x, y, r] of [[6.1, sg * 1.9, 0.7], [5, sg * 2.6, 0.45]] as [number, number, number][]) f.push({ pts: ovale(x, y, r, r, 10), mat: 'bile', relief: 'dome', dome: { x, y, rx: r, ry: r } })
     return f
   }
   if (cran === 9) {
@@ -1307,6 +1314,8 @@ export function formesDesAiles(coque = 1, t = 0): Forme[] {
   // (le prisme n'a plus d'ailes — Keko, 17/11 : ses éclats l'orbitent ; ni la mante — ses ailes battent, voir
   // `formesDuVaisseau` — ni le tesseract)
   if (coque === 12 || coque === 14 || coque === 15) return f
+  // (ni le kraken : ses nageoires sont devenues des tentacules — Keko, 19/11, voir `formesDuVaisseau`)
+  if (coque === 10) return f
   if (coque === 11) {
     // (la vouivre : plus de membranes — TROIS SACS À VENIN qui pendent de travers, de tailles différentes, chacun sur un
     // bourrelet de lie, qui gonflent lentement et portent des pustules ; une glande au bout de deux d'entre eux, à la
@@ -1759,17 +1768,32 @@ export function formesDuVaisseau(a: Allure, flamme: number, t: number, vise = 0,
     }
   }
   // (LE KRAKEN TRAÎNE QUATRE TENTACULES derrière lui, qui ondulent — sous la flamme et le manteau)
-  if (a.coque === 10) for (const y0 of [-2.7, -0.9, 0.9, 2.7]) {
-    let x = -6.6
-    let y = y0
-    for (let k = 0; k < 5; k++) {
-      const an = Math.PI + y0 * 0.09 + Math.sin(t * 3.2 + y0 * 1.7 - k * 0.9) * 0.18 * (1 + k * 0.5) * (1 + 0.9 * flamme) + devie * 0.04 * k
-      const nx = x + Math.cos(an) * 1.5
-      const ny = y + Math.sin(an) * 1.5
-      f.unshift({ pts: barre(x, y, nx, ny, 1.25 * (1 - k / 6)), mat: k % 2 === 0 ? 'chair' : 'chitine', relief: 'plat' })
-      x = nx
-      y = ny
-    }
+  // (… PUIS SIX GRANDES TENTACULES À LA PLACE DE SES NAGEOIRES — Keko, 19/11 : « plus tentaculaire, un peu comme les
+  // rejetons qu'il invoque, qui font penser à des pieuvres ou des méduses ; des tentacules plus gros et plus longs, et à
+  // l'arrêt, qu'ils se déploient comme les rejetons » : six bras de sept maillons, épais à la racine, sur l'arrière et
+  // les flancs du manteau ; À L'ARRÊT ils s'écartent en étoile autour de lui, chacun dans le prolongement de sa racine ;
+  // QUAND IL POUSSE (`flamme`), ils se rabattent derrière et traînent ; une houle les parcourt de la racine au bout)
+  if (a.coque === 10) {
+    const nage = Math.min(1, Math.max(0, flamme))
+    const RACINES: [number, number][] = [[-2.2, -4.5], [-2.2, 4.5], [-5.4, -3.4], [-5.4, 3.4], [-7.6, -1.3], [-7.6, 1.3]]
+    RACINES.forEach(([x0, y0], k) => {
+      const repos = Math.atan2(y0, x0 + 1.2)
+      let ecart = Math.PI + y0 * 0.04 - repos
+      while (ecart > Math.PI) ecart -= 2 * Math.PI
+      while (ecart < -Math.PI) ecart += 2 * Math.PI
+      let an = repos + ecart * nage
+      let x = x0
+      let y = y0
+      const n = 7
+      for (let i = 0; i < n; i++) {
+        an += Math.sin(t * 2.4 + k * 1.3 - i * 0.8) * 0.17 * (1.4 - 0.6 * nage) + devie * 0.03
+        const nx = x + Math.cos(an) * 1.8
+        const ny = y + Math.sin(an) * 1.8
+        f.unshift({ pts: barre(x, y, nx, ny, 1.7 * (1 - i / (n + 1.5))), mat: i % 2 === 0 ? 'chair' : 'chitine', relief: 'plat' })
+        x = nx
+        y = ny
+      }
+    })
   }
   // (une soucoupe : ses petites tuyères tout autour, sous l'anneau ; leurs jets sont dessinés par la page)
   if (g.omni !== undefined) for (let k = 0; k < g.omni.n; k++) f.unshift(...formesDeLaTuyereOmni(g.omni, k))

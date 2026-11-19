@@ -2815,7 +2815,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const bout = Math.round((-queueDe(coqueMontee) + 0.5 * (cranP - 1) + Math.min(1.5, (2.5 + 8 * flam) * 0.15)) * ECH)
       // (un vaisseau sans tuyère n'en a pas : sa poussée est celle de l'accueil et du vol — voir plus bas)
       if (g.omni === undefined && !organique(coqueMontee) && R.next() < 0.85) eclats.push({ x: cx + (R.next() - 0.5) * 5, y: sy + bout, vx: (R.next() - 0.5) * 30, vy: 40 + R.next() * 50, t0: t, vie: 0.3 + 0.3 * R.next(), c: (cranP >= 3 ? ION : FEU)[3 + Math.floor(R.next() * 4)] })
-      if (u < 0.5 && R.next() < 0.5) eclats.push({ x: cx + (R.next() - 0.5) * 30, y: cy + 14, vx: (R.next() - 0.5) * 70, vy: -5 - R.next() * 10, t0: t, vie: 0.7 + 0.4 * R.next(), c: N.hex('#4a4a58'), fumee: true })
+      // (PLUS DE FUMÉE AU DÉCOLLAGE — Keko, 19/11 : « l'espèce de poussière ou de fumée au décollage, elle est par-dessus le
+      // vaisseau, c'est vraiment pas joli » : ses bouffées grises étaient semées sur la couche de l'interface)
       if (u >= 1) {
         decollageA = null
         demarrer()

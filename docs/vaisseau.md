@@ -5969,3 +5969,15 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   on a déjà dit bête pour le kraken » ; « pour le ver, n'utilise pas l'adjectif immense ; un adjectif qui renvoie à son
   corps épineux ») : « Une abomination venimeuse et sournoise, qui ronge ses proies à petit feu. » ; « Un ver épineux,
   tout en anneaux, qui nage dans le vide en ondulant comme un serpent. » *Deux vaisseaux ne partagent pas leur mot-clé.*
+- PLUS DE FUMÉE AU DÉCOLLAGE ; LE KRAKEN REFAIT, UNE TÊTE ET DES TENTACULES (Keko, 19/11 : « enlève l'espèce de poussière
+  ou de fumée au décollage dans le hangar, elle est par-dessus le vaisseau » ; « le Kraken fait trop scarabée : une tête
+  avec un visage — au moins une structure devant, peut-être avec des mandibules —, et remplacer ses ailes latérales par des
+  tentacules, plus gros et plus longs, un peu comme les rejetons qu'il invoque, qui font penser à des pieuvres ou des
+  méduses ; à l'arrêt, que ces tentacules se déploient comme les rejetons ») : les bouffées grises du décollage (semées
+  sur la couche de l'interface, donc par-dessus tout) sont parties. LE KRAKEN : à l'avant, UNE TÊTE — un front de chitine
+  bombé, deux paires d'yeux de bile de part et d'autre, la bouche de chair au milieu (sa tentacule à aiguille en sort), deux
+  MANDIBULES d'os en pinces recourbées ; SES NAGEOIRES ET SES QUATRE PETITES TENTACULES CÈDENT LA PLACE À SIX GRANDES
+  TENTACULES de sept maillons (épaisses de 1,7 à la racine), sur l'arrière et les flancs du manteau : À L'ARRÊT elles
+  s'écartent en étoile, chacune dans le prolongement de sa racine ; QUAND IL POUSSE, elles se rabattent derrière et
+  traînent ; une houle les parcourt. Ses apparences perdent leurs glandes de nageoire. Vu à la capture : au hangar, une
+  pieuvre ; au décollage, une méduse qui file.
