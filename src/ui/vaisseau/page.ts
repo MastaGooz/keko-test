@@ -1948,7 +1948,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // (les balises : leur heure est celle de la pose, pas d'un tir — rien à annoncer)
       if (arme.balise !== undefined) return
       if (reste <= 0 || reste > avance || t - (armeAnnonceeA.get(arme.id) ?? -10) < 0.4) return
-      if (!m.ennemis.some((e) => Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= arme.portee)) return
+      // (la nova et le blizzard du Frimas partent même sans personne — Keko, 19/11 : leur coup s'annonce toujours)
+      if (arme.nova === undefined && arme.tornade === undefined && !m.ennemis.some((e) => Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= arme.portee)) return
       armeAnnonceeA.set(arme.id, t)
       jouer(arme.id as Son)
     })

@@ -1435,8 +1435,11 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   verifier('elle suit l’insecte qui bouge', pres < 10)
   const w3 = nouveauMonde(cfg, 3)
   w3.ennemis.push(insecte(1, 0, -300))
-  for (let i = 0; i < 60; i++) avancerLeMonde(cfg, w3, 1 / 60, { x: 0, y: 0 })
-  verifier('personne à portée : pas de tornade', w3.tornades.length === 0)
+  const cap3 = w3.vaisseau.cap
+  avancerLeMonde(cfg, w3, 1 / 60, { x: 0, y: 0 })
+  const depart = w3.tornades[0]
+  // (… PUIS ELLE PART QUAND MÊME — Keko, 19/11 : « même quand il n'y a pas d'ennemis » : droit devant le nez)
+  verifier('personne à portée : elle part quand même, droit devant le nez', w3.tornades.length === 1 && depart !== undefined && Math.abs(Math.atan2(depart.vy, depart.vx) - cap3) < 0.05)
 }
 
 // L'ORBE DE PLASMA DU PULSAR (Keko, 16/11) : elle file vers là où sera la cible, traverse ce qu'elle croise, et y éclate
@@ -2504,3 +2507,19 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
 
 // (TOUJOURS EN DERNIER : des blocs ajoutés après cette ligne échouaient sans faire échouer `npm run verif` — 17/11)
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)
+// LE FRIMAS SANS PERSONNE AUTOUR (Keko, 19/11 : « lancer les tempêtes de givre, la nova de givre, même quand il n'y a pas
+// d'ennemis ; et doubler le nombre d'éclats de glace ») : la nova et le blizzard partent à leur cadence dans le vide (le
+// blizzard droit devant le nez) ; ses éclats sont seize
+{
+  const nova = { ...pieceDe('arme-nova')!.arme!, place: 0 }
+  const tornade = { ...pieceDe('arme-tornade')!.arme!, place: 1 }
+  const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, armes: [nova, tornade], ennemi: { ...VAISSEAU.ennemi, apparait: 1e9 } }
+  const w = nouveauMonde(cfg, 5)
+  w.vaisseau.cap = Math.PI / 2
+  const ev: Evenement[] = []
+  for (let i = 0; i < 60 * 7; i++) ev.push(...avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements)
+  const novas = ev.filter((e) => e.type === 'nova').length
+  const tornades = ev.filter((e) => e.type === 'tornade').length
+  verifier(`sans insecte, la nova part à sa cadence (${novas} en 7 s) et le blizzard aussi (${tornades}), droit devant le nez`, w.ennemis.length === 0 && novas >= 2 && tornades >= 1 && w.tornades.every((tn) => Math.abs(Math.atan2(tn.vy, tn.vx) - Math.PI / 2) < 1e-6))
+  verifier('les éclats de glace sont seize', pieceDe('arme-eclats')!.arme!.salve?.nombre === 16)
+}

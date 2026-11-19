@@ -6384,3 +6384,10 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   d'iceberg, croissants de neige — dans `RAMPES` —, glace turquoise, arête de neige) ; le Blizzard s'en va. LA GLACE
   NOIRE, proposée : une carapace bleu-noir, des croissants et une glace d'un cyan qui luit de l'intérieur, des fissures
   cyan sur le dos. Un joueur qui avait choisi le Glacier retombe sur l'origine — les mêmes couleurs.
+- LE FRIMAS TIRE DANS LE VIDE, SES ÉCLATS DOUBLENT (Keko, 19/11 : « lancer les tempêtes de givre, la nova de givre, même
+  quand il n'y a pas d'ennemis ; et doubler le nombre d'éclats de glace ») : LA NOVA part à chaque cadence (3 s), qu'il
+  y ait quelqu'un autour ou non, et sa plaque de verglas attend ; LE BLIZZARD aussi (6 s) — vers l'insecte le plus proche
+  à portée, sinon DROIT DEVANT LE NEZ, et il chasse le premier qui paraît ; leur son s'annonce toujours (`annoncerLesSons`).
+  LES ÉCLATS DE GLACE : seize au lieu de huit, toujours à angles égaux, le premier sur la cible ; ils ne partent, eux,
+  qu'avec un insecte à portée (rien demandé là-dessus). Vérifié (`npm run verif`) ; le test « personne à portée : pas de
+  tornade » dit maintenant l'inverse.

@@ -2026,8 +2026,9 @@ function lancerLesNovas(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
   c.armes.forEach((a, i) => {
     const nv = a.nova
     if (nv === undefined || m.phase !== 'vol' || m.t < (m.armesA[i] ?? 0)) return
+    // (… MÊME SANS PERSONNE AUTOUR — Keko, 19/11 : « lancer la nova de givre même quand il n'y a pas d'ennemis » : elle
+    // part à chaque cadence, et sa plaque de verglas attend)
     const dans = m.ennemis.filter((e) => Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= nv.rayon + c.ennemi.rayon)
-    if (dans.length === 0) return
     m.armesA[i] = m.t + a.cadence
     ev.push({ type: 'nova', x: v.x, y: v.y, rayon: nv.rayon })
     m.givres.push({ id: m.prochainId++, arme: i, x: v.x, y: v.y, nee: m.t, rayon: nv.plaque.rayon, duree: nv.plaque.duree, dps: nv.plaque.dps, ralenti: nv.plaque.ralenti, verglas: true })
@@ -2061,9 +2062,10 @@ function menerLesTornades(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement
       const d = Math.hypot(e.corps.x - v.x, e.corps.y - v.y)
       if (d <= dc) (dc = d), (cible = e)
     }
-    if (cible === undefined) return
+    // (… MÊME SANS PERSONNE À PORTÉE — Keko, 19/11 : « lancer les tempêtes de givre même quand il n'y a pas d'ennemis » :
+    // elle part droit devant le nez, et chasse le premier insecte qui paraît)
     m.armesA[i] = m.t + a.cadence
-    const an = Math.atan2(cible.corps.y - v.y, cible.corps.x - v.x)
+    const an = cible === undefined ? v.cap : Math.atan2(cible.corps.y - v.y, cible.corps.x - v.x)
     m.tornades.push({ id: m.prochainId++, arme: i, x: v.x, y: v.y, vx: Math.cos(an) * to.vitesse, vy: Math.sin(an) * to.vitesse, nee: m.t })
     ev.push({ type: 'tornade', x: v.x, y: v.y, arme: a.id })
   })
