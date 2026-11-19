@@ -5965,3 +5965,7 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   vaisseaux ») : au vortex, les zones des emplacements de la scène (propulseur, outils, armes, coque — un reste de
   `?vaisseau`) ne réagissent plus ; une seule zone, sur toute la coque, ouvre le choix des vaisseaux
   (`ouvrirLesVaisseaux`, partagé avec le bouton « Changer »). `?vaisseau` garde ses emplacements. Vu à la capture.
+- LA VOUIVRE ET LE VER, DES MOTS À EUX (Keko, 19/11 : « pour la vouivre, ne dis pas une bête, dis plutôt une abomination ;
+  on a déjà dit bête pour le kraken » ; « pour le ver, n'utilise pas l'adjectif immense ; un adjectif qui renvoie à son
+  corps épineux ») : « Une abomination venimeuse et sournoise, qui ronge ses proies à petit feu. » ; « Un ver épineux,
+  tout en anneaux, qui nage dans le vide en ondulant comme un serpent. » *Deux vaisseaux ne partagent pas leur mot-clé.*
