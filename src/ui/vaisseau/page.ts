@@ -2912,7 +2912,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // (… DE CHACUNE DE SES TUYÈRES — Keko, 19/11 : « quand la Salamandre décolle du hangar, la traînée de particules est
       // toujours au milieu du vaisseau, au lieu d'une traînée à chacun des deux réacteurs » : une tuyère tirée au hasard,
       // sur toute sa largeur pour l'Ingénieur, comme les braises du vol)
-      if (g.omni === undefined && !organique(coqueMontee) && R.next() < 0.85) eclats.push({ x: cx + ecartDeTuyere(g.tuyeres) * ECH + (R.next() - 0.5) * 3, y: sy + bout, vx: (R.next() - 0.5) * (g.tuyeres.length > 1 ? 8 : 30), vy: 40 + R.next() * 50, t0: t, vie: 0.3 + 0.3 * R.next(), c: feuDeLaCoque(coqueMontee, cranP)[3 + Math.floor(R.next() * 4)] })
+      if (g.omni === undefined && !sansTuyere(coqueMontee) && R.next() < 0.85) eclats.push({ x: cx + ecartDeTuyere(g.tuyeres) * ECH + (R.next() - 0.5) * 3, y: sy + bout, vx: (R.next() - 0.5) * (g.tuyeres.length > 1 ? 8 : 30), vy: 40 + R.next() * 50, t0: t, vie: 0.3 + 0.3 * R.next(), c: feuDeLaCoque(coqueMontee, cranP)[3 + Math.floor(R.next() * 4)] })
       // (PLUS DE FUMÉE AU DÉCOLLAGE — Keko, 19/11 : « l'espèce de poussière ou de fumée au décollage, elle est par-dessus le
       // vaisseau, c'est vraiment pas joli » : ses bouffées grises étaient semées sur la couche de l'interface)
       if (u >= 1) {
@@ -2947,8 +2947,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // la tuyère au ralenti, puis le vaisseau
     const nozzle: [number, number] = [cx + jit, sy + (0.2 - queueDe(coqueMontee)) * ECH]
     // (UN VAISSEAU SANS TUYÈRE, au décollage : les ondes ou les bulles de l'accueil et du vol, sous lui)
-    if (organique(coqueMontee) && decollageA !== null) dessinerLaPousseeSansTuyere(p, coqueMontee, nozzle[0], nozzle[1], ECH, flam)
-    if (g.omni === undefined && !organique(coqueMontee))
+    if (sansTuyere(coqueMontee) && decollageA !== null) dessinerLaPousseeSansTuyere(p, coqueMontee, nozzle[0], nozzle[1], ECH, flam)
+    if (g.omni === undefined && !sansTuyere(coqueMontee))
       for (const tu of g.tuyeres) p.glow(nozzle[0] + tu.y * ECH, nozzle[1], (8 + 14 * flam) / Math.sqrt(g.tuyeres.length), lueurDeLaFlamme(coqueMontee, al.propulseur), 0.35 + 0.5 * flam + 0.08 * Math.sin(t * 9))
     const formes = formesDuVaisseau(al, flam, t)
     peindreFormes(p, formes, cx + jit, sy, ECH, { blanc: t - equipeA < 0.08 ? 1 : 0, rampes: rampesDuJoueur() })
@@ -10106,11 +10106,17 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   // (… ET LA MANTE, LE PRISME ET LE TESSERACT — Keko, 17/11 : une bête de l'Essaim, deux formes des Innommés)
   const organique = (coque: number): boolean => coque >= 10
   /** Les Innommés ne lâchent rien : ils plissent l'espace (le Néant ses ondes, le Prisme des éclats, le Tesseract des cadres). */
-  const plieLEspace = (coque: number): boolean => coque === 12 || coque === 13 || coque === 15
+  // (… ET LE PULSAR, DES RUNES — Keko, 19/11 : « un peu bizarre, il n'y a pas vraiment de sortie à l'arrière et pourtant
+  // une flamme en sort ; quelque chose qui matche plus la forme du vaisseau » : plus de flamme — la pointe arrière de son
+  // étoile s'allume, et il sème des runes d'arcane, voir `dessinerUneOnde`)
+  const plieLEspace = (coque: number): boolean => coque === 9 || coque === 12 || coque === 13 || coque === 15
+  /** Un vaisseau sans tuyère : les bêtes, et ceux qui sèment un sillage (le Pulsar, le Prisme, le Néant, le Tesseract). */
+  const sansTuyere = (coque: number): boolean => organique(coque) || plieLEspace(coque)
   /** Pas de verrière à faire luire : un cœur, un cristal, une bête, un œil. */
   const sansVerriere = (coque: number): boolean => coque >= 12
   /** Les tons du sillage d'un Innommé (sombre, moyen, clair), à l'apparence du joueur. */
   const tonsDuSillage = (coque: number): number[] => {
+    if (coque === 9) return [FEU_ARCANE[3], FEU_ARCANE[5], FEU_ARCANE[6]]
     const m = coque === 12 ? 'energie' : coque === 15 ? 'spectre' : 'rayonnement'
     const r = rampesDuJoueur()?.[m]
     return r !== undefined ? [r[2], r[3], r[4]] : tonsDeLaMatiere(m)
@@ -10142,6 +10148,19 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       if (u < 0.2) p.dot(x, y, N.WHITE, 0.8 * k)
       return
     }
+    if (coque === 9) {
+      // LE PULSAR SÈME DES RUNES (Keko, 19/11) : un petit losange de lumière bleu-violet, barré d'un trait, qui tourne sur
+      // lui-même en s'ouvrant un peu et s'éteint ; un cœur blanc à sa naissance
+      const r = (1.3 + 1.1 * u) * e
+      const a = cap + u * 4 + x * 0.2
+      const [ux, uy] = [Math.cos(a), Math.sin(a)]
+      const c = u < 0.35 ? clair : moyen
+      const pts: [number, number][] = [[x + ux * r, y + uy * r], [x - uy * r, y + ux * r], [x - ux * r, y - uy * r], [x + uy * r, y - ux * r]]
+      for (let j = 0; j < 4; j++) p.line(pts[j][0], pts[j][1], pts[(j + 1) % 4][0], pts[(j + 1) % 4][1], c, 0.85 * (1 - u) * k)
+      p.line(x - ux * r * 0.6, y - uy * r * 0.6, x + ux * r * 0.6, y + uy * r * 0.6, c, 0.7 * (1 - u) * k)
+      if (u < 0.25) p.dot(x, y, N.WHITE, 0.8 * k)
+      return
+    }
     if (coque === 15) {
       // LE TESSERACT LAISSE DES CADRES (Keko, 17/11) : un carré de lumière qui s'ouvre en tournant et s'éteint — l'empreinte
       // d'une face de son hypercube
@@ -10167,7 +10186,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    */
   const genreDePropulsion = (): GenreDePropulsion => {
     const c = monteeA(hangar, 'coque').cran
-    return c === 10 || c === 11 || c === 14 ? 'bete' : plieLEspace(c) ? 'neant' : 'souffle'
+    return c === 10 || c === 11 || c === 14 ? 'bete' : plieLEspace(c) && c !== 9 ? 'neant' : 'souffle'
   }
   const sonDuDecollage = (): Son => ({ bete: 'decolleBete', neant: 'decolleNeant', souffle: 'decolle' } as const)[genreDePropulsion()]
   /**
@@ -12578,7 +12597,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // (UNE BÊTE, à l'accueil aussi, lâche des bulles et pas de feu — Keko, 16/11 : « n'oublie pas l'effet de propulsion dans
     // l'écran d'accueil ») : une colonne de bulles qui s'écartent, enflent et crèvent en s'éloignant
     const coqueA = monteeA(hangar, 'coque').cran
-    if (organique(coqueA)) dessinerLaPousseeSansTuyere(p, coqueA, cx, ty, E, us)
+    if (sansTuyere(coqueA)) dessinerLaPousseeSansTuyere(p, coqueA, cx, ty, E, us)
     else if (gA.omni === undefined) {
       // (… UNE TRAÎNÉE PAR TUYÈRE — Keko, 19/11 : celle de la Salamandre partait du milieu, entre ses deux réacteurs ; la
       // tuyère large de l'Ingénieur souffle sur toute sa largeur)
@@ -14039,11 +14058,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
             if (plieLEspace(coque)) {
               // (le néant : une onde tous les 12 pixels parcourus — un sillage régulier à toute vitesse —, ou toutes les 0,35 s ;
               // le prisme, un éclat tous les 6, un peu de côté ; le tesseract, un cadre tous les 14)
-              const pas = coque === 12 ? 6 : coque === 15 ? 14 : 12
-              if (t - ondeA > (coque === 12 ? 0.2 : 0.35) || Math.hypot(bx - ondeEn.x, by - ondeEn.y) > pas) {
+              // (le pulsar, une rune tous les 8, un peu de côté)
+              const pas = coque === 12 ? 6 : coque === 15 ? 14 : coque === 9 ? 8 : 12
+              if (t - ondeA > (coque === 12 ? 0.2 : coque === 9 ? 0.25 : 0.35) || Math.hypot(bx - ondeEn.x, by - ondeEn.y) > pas) {
                 ondeA = t
                 ondeEn = { x: bx, y: by }
-                const cote = coque === 12 ? R.range(-2.5, 2.5) : 0
+                const cote = coque === 12 ? R.range(-2.5, 2.5) : coque === 9 ? R.range(-1.5, 1.5) : 0
                 ondes.push({ x: bx - Math.sin(v.cap) * cote, y: by + Math.cos(v.cap) * cote, cap: v.cap, t0: t, k: 0.6 + 0.4 * pousseeVue.avant, coque })
               }
             } else if (tuy.pustule === true) {

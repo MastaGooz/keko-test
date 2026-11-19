@@ -6270,3 +6270,9 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   voyaient pas — leurs corps sont d'indigo. LE PULSAR — l'Orbe de plasma, un ORBE qui palpite entre ses deux cornes, d'où
   il part ; le Missile ionique, deux NACELLES de trois missiles sur ses flancs ; la Décharge arcanique, un CADRE D'ARCANE
   — deux carrés qui tournent à rebours autour de son cœur, une étincelle à chaque coin.
+- LA PROPULSION DU PULSAR, DES RUNES (Keko, 19/11 : « un peu bizarre : il n'y a pas vraiment de sortie à l'arrière et
+  pourtant une flamme en sort ; quelque chose qui matche plus la forme du vaisseau ») : plus de flamme — LA POINTE ARRIÈRE
+  DE SON ÉTOILE S'ALLUME (un losange de feu d'arcane, une lueur qui grandit avec la poussée) et il SÈME DES RUNES : un petit
+  losange de lumière bleu-violet barré d'un trait, qui tourne en s'ouvrant un peu et s'éteint, toutes les 0,25 s ou tous
+  les 8 de trajet, un peu de côté — la famille des sillages sans tuyère (`plieLEspace`, avec le Prisme, le Néant et le
+  Tesseract ; `sansTuyere` au décollage et à l'accueil) ; son son reste le souffle. Ses jets de manœuvre partent avec.

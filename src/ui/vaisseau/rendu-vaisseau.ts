@@ -2302,7 +2302,8 @@ export function formesDuVaisseau(a: Allure, flamme: number, t: number, vise = 0,
   // (LE KRAKEN ET LA VOUIVRE N'ONT PLUS DE FLAMME — Keko, 16/11 : « l'aspect feu, c'est pas très cohérent » pour des bêtes :
   // ils poussent en lâchant des bulles, que la page sème ; leurs tentacules et leurs vrilles battent plus fort)
   // (NI LE PRISME, NI LA MANTE, NI LE TESSERACT — Keko, 17/11 : un cristal qui flotte, une bête, une forme d'ailleurs)
-  if (a.coque < 10) for (const tu of g.tuyeres) f.push(...decaler(formesDuPropulseur(a.propulseur, flamme, t, devie).map((x): Forme => (tu.large === undefined ? x : { ...x, pts: x.pts.map(([px, py]) => [px, py * tu.large!]) })).filter((x) => !organique || x.relief === 'emis').map((x): Forme => (x.relief === 'emis' && a.coque === 9 ? { ...x, mat: 'feuArcane' } : x.relief === 'emis' && a.coque === 8 ? { ...x, mat: 'feuDeGlace' } : x.relief === 'emis' && a.coque === 10 ? { ...x, mat: 'bile' } : x.relief === 'emis' && a.coque === 11 ? { ...x, mat: 'venin' } : x)), tu.x, tu.y))
+  // (… NI LE PULSAR — Keko, 19/11 : il sème des runes, la pointe arrière de son étoile s'allume — voir plus bas)
+  if (a.coque < 10 && a.coque !== 9) for (const tu of g.tuyeres) f.push(...decaler(formesDuPropulseur(a.propulseur, flamme, t, devie).map((x): Forme => (tu.large === undefined ? x : { ...x, pts: x.pts.map(([px, py]) => [px, py * tu.large!]) })).filter((x) => !organique || x.relief === 'emis').map((x): Forme => (x.relief === 'emis' && a.coque === 9 ? { ...x, mat: 'feuArcane' } : x.relief === 'emis' && a.coque === 8 ? { ...x, mat: 'feuDeGlace' } : x.relief === 'emis' && a.coque === 10 ? { ...x, mat: 'bile' } : x.relief === 'emis' && a.coque === 11 ? { ...x, mat: 'venin' } : x)), tu.x, tu.y))
   // (LA VOUIVRE TRAÎNE TROIS VRILLES DÉCHIRÉES, de travers, qui ondulent lentement — Keko, 16/11 : plus organique)
   // (… PUIS SOUS SES DEUX PUSTULES PROPULSIVES — Keko, 19/11 : « réutiliser les petites tentacules qu'il a à l'arrière pour
   // les placer sous les pustules » : deux sous l'une, une sous l'autre, qui pendent de leur bord arrière)
@@ -2350,6 +2351,12 @@ export function formesDuVaisseau(a: Allure, flamme: number, t: number, vise = 0,
   if (g.surLePont) tout.push(...armes)
   tout.push(...surLeDos)
   if (a.coque === 10 && a.kraken?.rejeton !== undefined) tout.push(...formesDuRejetonDuDos(a.kraken.rejeton, t))
+  // (LE PULSAR : la pointe arrière de son étoile s'allume quand il pousse — d'où partent ses runes)
+  if (a.coque === 9) {
+    const k = Math.min(1, Math.max(0, flamme))
+    tout.push({ pts: [[-4.6, 0], [-5.6, -0.7], [-6.9, 0], [-5.6, 0.7]], mat: 'feuArcane', relief: 'lueur', ton: k > 0.5 ? 5 : 4 })
+    if (k > 0.05) tout.push({ pts: ovale(-6.6, 0, 0.5 + 0.6 * k, 0.5 + 0.6 * k, 8), mat: 'feuArcane', relief: 'lueur', ton: 5 })
+  }
   if (a.coque === 11 && a.vouivre !== undefined) tout.push(...formesDeLaVouivreArmee(a.vouivre, t))
   if (g.outils !== undefined && a.outils !== undefined) {
     // CHAQUE OUTIL À SA PLACE : la foreuse qui creuse suit sa cible, les autres pointent vers l'avant
