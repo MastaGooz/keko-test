@@ -1,7 +1,7 @@
 /**
  * Vérifications du vaisseau, sans navigateur : le temps est injecté.
  */
-import { asteroideDeLaCase, coupeDUnCube, asteroidesAutour, avancer, avancerLeMonde, encaisser, purger, impactDuRayon, lancerLaBombe, larguer, porteeDeLaBombe, MINERAIS, nouveauMonde, nouveauVaisseau, solidite, voler, totalDe, stationDeLaCase, stationLaPlusProche, VAISSEAU, verrouiller, ennemiLePlusProche, type ConfigVaisseau, type Evenement, type Vaisseau, xpDuNiveau } from './jeu.ts'
+import { cadenceDeLaVague, asteroideDeLaCase, coupeDUnCube, asteroidesAutour, avancer, avancerLeMonde, encaisser, purger, impactDuRayon, lancerLaBombe, larguer, porteeDeLaBombe, MINERAIS, nouveauMonde, nouveauVaisseau, solidite, voler, totalDe, stationDeLaCase, stationLaPlusProche, VAISSEAU, verrouiller, ennemiLePlusProche, type ConfigVaisseau, type Evenement, type Vaisseau, xpDuNiveau } from './jeu.ts'
 import { acheter, configDuHangar, hangarNeuf, monter, pieceDe } from './hangar.ts'
 
 /** Les règles sont vérifiées SANS la zone calme de la base (le rival naît où que soit le joueur) et AVEC les extracteurs par case (éteints en jeu pour l'instant) ; la base et la station seule ont leurs propres vérifications, plus bas. */
@@ -2624,6 +2624,35 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
     if (e.some((x) => x.type === 'dephase')) esquives++
   }
   verifier(`une chance de 15 % : ${esquives} esquives sur 2 000 coups`, esquives > 250 && esquives < 350)
+}
+
+// LES VAGUES SE SERRENT (Keko, 20/11 : « augmente progressivement le nombre d'ennemis qui spawnent par vague ») : chaque
+// vague naît dans le temps de la première, ses insectes d'autant plus serrés qu'elle est grosse
+{
+  const cv = (n: number): number => cadenceDeLaVague(VAISSEAU, n)
+  verifier(`le pas des naissances : ${[1, 2, 5, 20, 40].map((n) => cv(n).toFixed(2)).join(' / ')} s aux vagues 1, 2, 5, 20, 40`, Math.abs(cv(1) - 2.2) < 1e-9 && Math.abs(cv(2) - 1.32) < 1e-9 && Math.abs(cv(5) - 6.6 / 11) < 1e-9 && cv(40) === VAISSEAU.invasion.cadenceMin)
+  // (dans le monde : la troisième vague, huit insectes, naît en 6,6 s)
+  const c: ConfigVaisseau = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, invasion: { ...VAISSEAU.invasion, active: true, premiere: 0 }, ennemi: { ...VAISSEAU.ennemi, vitesseMax: 0, poussee: 0 } }
+  const w = nouveauMonde(c, 5)
+  w.vaisseau = { ...w.vaisseau, x: 5000, y: 0 }
+  const nes: number[] = []
+  for (let i = 0; i < 60 * 60 && nes.length === 0; i++) {
+    for (const e of avancerLeMonde(c, w, 1 / 60, { x: 0, y: 0 }).evenements) if (e.type === 'vague' && e.numero === 3) nes.push(w.t)
+    // (les vagues d'avant : abattues aussitôt nées, pour que la suivante vienne)
+    for (const e of w.ennemis) e.pv = 0
+  }
+  const debut = nes[0]
+  let derniere = debut
+  let compte = 1
+  for (let i = 0; i < 60 * 12; i++) {
+    const n0 = w.ennemis.length
+    avancerLeMonde(c, w, 1 / 60, { x: 0, y: 0 })
+    if (w.ennemis.length > n0) {
+      compte += w.ennemis.length - n0
+      derniere = w.t
+    }
+  }
+  verifier(`la troisième vague : ${compte} insectes nés en ${(derniere - debut).toFixed(2)} s (8 en 6,6 s)`, compte === 8 && Math.abs(derniere - debut - 6.6) < 0.05)
 }
 
 // (TOUJOURS EN DERNIER : des blocs ajoutés après cette ligne échouaient sans faire échouer `npm run verif` — 17/11)

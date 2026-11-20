@@ -232,7 +232,7 @@ export const VAISSEAU = {
    * secondes. Au contact, il MORD (`morsure` points, toutes les
    * `cadenceMorsure` secondes). *Tous les chiffres sont de moi, à rejuger.*
    */
-  invasion: { active: false as boolean, portail: 32, naissance: 360, vague: 4, renfort: 2, cadence: 2.2, repos: 6, premiere: 3, aggro: 170, lache: 260, calme: 2.5, morsure: 1, cadenceMorsure: 0.9,
+  invasion: { active: false as boolean, portail: 32, naissance: 360, vague: 4, renfort: 2, cadence: 2.2, cadenceMin: 0.15, repos: 6, premiere: 3, aggro: 170, lache: 260, calme: 2.5, morsure: 1, cadenceMorsure: 0.9,
     /**
      * (Keko, 14/11, la suite.) LA MORT N'EST PAS LA FIN : abattu, le joueur revient AU PORTAIL après `penalite` secondes
      * (le monde continue sans lui). LES PÉPITES que les insectes lâchent NE VONT PAS EN SOUTE : chacune vaut un point
@@ -1556,6 +1556,19 @@ function faireNaitreUnInsecte(c: ConfigVaisseau, m: Monde, ev: Evenement[]): voi
 }
 
 /** LES VAGUES de l'invasion : une vague commence quand la précédente est finie (plus un insecte) et le repos passé ; ses insectes naissent un à un. */
+/**
+ * LE PAS DES NAISSANCES D'UNE VAGUE (Keko, 20/11 : « augmente progressivement le nombre d'ennemis qui spawnent par vague :
+ * on a toujours le même nombre, ça devient difficile de tester l'efficacité d'une arme ») : une vague comptait déjà
+ * `renfort` insectes de plus que la précédente, mais ils naissaient un par un toutes les `cadence` secondes — à l'écran,
+ * toujours le même filet, la vague ne faisait que durer plus longtemps. DÉSORMAIS UNE VAGUE NAÎT EN UN MÊME TEMPS, celui
+ * de la première : ses insectes arrivent d'autant plus serrés qu'elle est grosse (4 insectes en 6,6 s, puis 6, 8, 10…
+ * dans le même temps) ; jamais plus d'un tous les `cadenceMin`.
+ */
+export function cadenceDeLaVague(c: ConfigVaisseau, vague: number): number {
+  const nombre = c.invasion.vague + (Math.max(1, vague) - 1) * c.invasion.renfort
+  return Math.max(c.invasion.cadenceMin, (c.invasion.cadence * (c.invasion.vague - 1)) / Math.max(1, nombre - 1))
+}
+
 function menerLInvasion(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
   const inv = m.invasion
   if (m.t < inv.prochainA) return
@@ -1580,7 +1593,7 @@ function menerLInvasion(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
   }
   faireNaitreUnInsecte(c, m, ev)
   inv.aNaitre -= 1
-  inv.prochainA = m.t + (inv.aNaitre > 0 ? c.invasion.cadence : c.invasion.repos)
+  inv.prochainA = m.t + (inv.aNaitre > 0 ? cadenceDeLaVague(c, inv.vague) : c.invasion.repos)
 }
 
 /** Ce que fait UN INSECTE pendant `dt` : il marche vers le portail et le traverse ; ou il chasse le joueur qui l'a approché, le mord, et le lâche s'il est entraîné trop loin. */

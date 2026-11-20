@@ -1470,6 +1470,70 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     dessinerLesCoins(p, sx, sy, rs + 5 + ferme + respire, c)
     if (aPortee) p.glow(sx, sy, rs + 8, N.hex('#ff4a4a'), du < 0.18 ? 0.5 : 0.12)
   }
+  /**
+   * LES DÉGÂTS INFLIGÉS (Keko, 20/11 : « un petit système qui indique le nombre de dégâts qu'on inflige à un ennemi quand
+   * on le touche, sans flooder l'écran ») : ce que chaque insecte a perdu depuis l'image d'avant (toutes les sources : un
+   * obus, une zone, un poison — lu sur ses points de vie, pas sur un événement), et ce qui lui restait s'il est mort
+   * ailleurs qu'au portail. CONTRE LE FLOT : UN SEUL CHIFFRE PAR INSECTE, qui S'ADDITIONNE tant que les coups se suivent (à
+   * moins de 0,35 s, 0,8 s au plus) — une brûlure ou un drain donnent un chiffre qui monte, pas une pluie — ; rien sous un
+   * point ; DIX À LA FOIS au plus (le plus vieux part) ; petits, cernés d'encre, ils montent de huit pixels et partent
+   * après 0,6 s sans coup. Blancs ; dorés et bondissants sur un coup critique. `&degats=0` les cache.
+   */
+  const AVEC_DEGATS = parametres.get('degats') !== '0'
+  const pvVus = new Map<number, { pv: number; x: number; y: number }>()
+  const critiqueA = new Map<number, number>()
+  const chiffres: { id: number; x: number; y: number; total: number; nait: number; dernier: number; critique: boolean }[] = []
+  function suivreLesDegats(): void {
+    if (!AVEC_DEGATS || !VORTEX) return
+    const vus = new Set<number>()
+    const ajouter = (id: number, x: number, y: number, d: number): void => {
+      if (d <= 1e-6) return
+      const critique = t - (critiqueA.get(id) ?? -10) < 0.05
+      const ch = chiffres.find((c) => c.id === id && t - c.dernier < 0.35 && t - c.nait < 0.8)
+      if (ch !== undefined) {
+        ch.total += d
+        ch.dernier = t
+        ch.x = x
+        ch.y = y
+        if (critique) ch.critique = true
+      } else {
+        chiffres.push({ id, x, y, total: d, nait: t, dernier: t, critique })
+        // (dix à la fois au plus, en ne comptant que ceux qui se voient : le plus vieux part)
+        const visibles = chiffres.filter((c) => c.total >= 1)
+        if (visibles.length > 10) chiffres.splice(chiffres.indexOf(visibles[0]), 1)
+      }
+    }
+    for (const e of m.ennemis) {
+      vus.add(e.id)
+      const avant = pvVus.get(e.id)
+      if (avant !== undefined && e.pv < avant.pv) ajouter(e.id, e.corps.x, e.corps.y, avant.pv - Math.max(0, e.pv))
+      pvVus.set(e.id, { pv: Math.max(0, e.pv), x: e.corps.x, y: e.corps.y })
+    }
+    // (mort entre deux images : ce qui lui restait — sauf s'il a passé le portail)
+    for (const [id, a] of pvVus)
+      if (!vus.has(id)) {
+        if (a.pv > 0 && Math.hypot(a.x, a.y) > CONF.invasion.portail + 8) ajouter(id, a.x, a.y, a.pv)
+        pvVus.delete(id)
+      }
+    for (let i = chiffres.length - 1; i >= 0; i--) if (t - chiffres[i].dernier > 0.7) chiffres.splice(i, 1)
+  }
+  function dessinerLesDegats(p: Peintre): void {
+    suivreLesDegats()
+    const rs = CONF.ennemi.rayon / champApplique
+    for (const c of chiffres) {
+      if (c.total < 1) continue
+      const u = (t - c.dernier) / 0.7
+      const sx = (c.x - camera.x) / champApplique + W / 2
+      const sy = (c.y - camera.y) / champApplique + centreY() - rs - 6 - 8 * Math.min(1, (t - c.nait) / 0.7)
+      // (sous 3, une décimale — la mitrailleuse fait 1,5 — ; au-delà, un entier)
+      const n = c.total < 3 ? Math.round(c.total * 10) / 10 : Math.round(c.total)
+      const dit = String(n).replace('.', ',')
+      const bond = c.critique && t - c.nait < 0.15 ? -2 : 0
+      // (le texte se peint plein : il tient, puis part d'un coup)
+      if (u > 0.85) continue
+      ecrire(p, dit, sx, sy + bond, c.critique ? PEPITE[3] : N.WHITE, { align: 'center', police: c.critique ? GRAS : TEXTE, contour: MATIERES.encre.contour })
+    }
+  }
   function dessinerLeRetour(p: Peintre): void {
     if (m.phase !== 'perdu') return
     const reste = Math.max(0, m.invasion.retourA - m.t)
@@ -1554,6 +1618,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   function dessinerLInvasion(p: Peintre): void {
     const inv = m.invasion
     dessinerLeVerrou(p)
+    dessinerLesDegats(p)
     // (À NEUF PIXELS DES BORDS, les deux blocs rapprochés l'un de l'autre — Keko, 14/11 : « qu'ils s'éloignent des bords »)
     const MARGE = 9
     const x0 = paysage ? Math.max(MARGE, largeurDeBande() + MARGE) : MARGE
@@ -13322,6 +13387,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           // (un insecte, dans le jeu du vortex : un son organique — Keko, 15/11)
           jouer(VORTEX ? 'insecteTouche' : 'ennemiTouche', { dx: ev.x - v.x, dy: ev.y - v.y })
           toucheEnnemiA.set(ev.id, t)
+          if (ev.critique) critiqueA.set(ev.id, t)
           // (un coup critique : un éclair de plus, une petite secousse)
           if (ev.critique) {
             flashs.push({ x: ev.x, y: ev.y, t0: t, r: 6 })

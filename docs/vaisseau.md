@@ -6613,3 +6613,16 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     vague (le corps à corps, les traînées) à la tempête, au fléau, à la traînée corrosive, aux cristaux ; le frein à la
     nova (27 %), à la singularité (36 %), aux vrilles (27 %), au blizzard (13 %). La superposition reste faible contre un
     boss qui bouge (0,21) : sa zone est posée.
+- LES VAGUES SE SERRENT (Keko, 20/11 : « augmente progressivement le nombre d'ennemis qui spawnent par vague : on a
+  toujours le même nombre, ça devient difficile de tester l'efficacité d'une arme ») : MESURÉ dans la règle, une vague
+  comptait déjà 2 insectes de plus que la précédente (4, 6, 8…), mais ils naissaient un par un toutes les 2,2 s — à
+  l'écran le même filet, la vague durait seulement plus longtemps. Désormais chaque vague naît dans le temps de la
+  première, 6,6 s (`cadenceDeLaVague`) : un insecte toutes les 2,2 s à la vague 1, 1,32 à la 2, 0,6 à la 5, 0,16 à la 20,
+  jamais plus serré que 0,15 s (`invasion.cadenceMin`). Testé dans `jeu.verif.ts`.
+- LES DÉGÂTS INFLIGÉS S'AFFICHENT (Keko, 20/11 : « un petit système qui indique le nombre de dégâts qu'on inflige à un
+  ennemi quand on le touche, sans flooder l'écran ») : lus sur les points de vie de chaque insecte d'une image à l'autre
+  (toutes les sources, obus, zones, poisons ; ce qui restait à un insecte mort ailleurs qu'au portail) ; UN SEUL CHIFFRE
+  PAR INSECTE, qui s'additionne tant que les coups se suivent (à moins de 0,35 s, sur 0,8 s au plus — une brûlure fait un
+  chiffre qui monte, pas une pluie), rien sous un point, dix à la fois au plus ; petits, blancs, cernés d'encre, ils
+  montent de huit pixels au-dessus de l'insecte ; dorés et en gras sur un coup critique. Une décimale sous 3 (« 1,5 »).
+  `&degats=0` les cache. Vu à la capture.
