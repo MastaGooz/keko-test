@@ -20,7 +20,7 @@ export type Talent = {
 
 export const TALENTS: Talent[] = [
   { id: 'cadence', nom: 'Chargeurs rapides', dit: 'Les armes tirent 20 % plus souvent.', icone: 'cadence', appliquer: (c) => ({ ...c, armes: c.armes.map((a) => ({ ...a, cadence: a.cadence / 1.2 })) }) },
-  { id: 'degats', nom: 'Obus perforants', dit: 'Les armes font 25 % de dégâts en plus.', icone: 'critique', appliquer: (c) => ({ ...c, armes: c.armes.map((a) => ({ ...a, degats: a.degats * 1.25 })) }) },
+  { id: 'degats', nom: 'Obus perforants', dit: 'Les armes font 25 % de dégâts en plus.', icone: 'critique', appliquer: (c) => ({ ...c, armes: c.armes.map((a) => ({ ...a, degats: Math.round(a.degats * 1.25) })) }) }, // (un entier — Keko, 20/11 : « pas de chiffres à virgule »)
   { id: 'portee', nom: 'Longue vue', dit: 'Les armes portent 20 % plus loin.', icone: 'exploration', appliquer: (c) => ({ ...c, armes: c.armes.map((a) => ({ ...a, portee: a.portee * 1.2, vie: a.vie * 1.2 })) }) },
   { id: 'moteur', nom: 'Moteur poussé', dit: 'Le vaisseau va 10 % plus vite et accélère 15 % plus fort.', icone: 'vitesse', appliquer: (c) => ({ ...c, vitesseMax: c.vitesseMax * 1.1, poussee: c.poussee * 1.15 }) },
   { id: 'blindage', nom: 'Blindage renforcé', dit: 'Un point de blindage de plus.', icone: 'blindage', appliquer: (c) => ({ ...c, coque: c.coque + 1 }) },

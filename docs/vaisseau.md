@@ -6660,3 +6660,17 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     0,89 : ce qu'elle aspire ne s'empile plus en un point) — ses dégâts 11 → 12 (0,95).
   - LE CRITIQUE : un 5 × 7 à nous peint en gras (`CHIFFRES_DU_CRITIQUE`), 6 × 7 au lieu du 3 × 5 doublé (6 × 10) ; il
     frappe deux fois plus grand l'espace de deux images (trois fois avant). Vu à la capture.
+- LES NOMBRES DU VORTEX FOIS DIX, LA RÉGÉNÉRATION DES XÉNOÏDES TRENTE FOIS PLUS LENTE (Keko, 20/11) :
+  - L'ÉCHELLE (« je ne veux pas de chiffres à virgule ; le dégât minimum infligé doit être 1 ; soit augmenter les chiffres
+    du jeu pour que le minimum soit 1, soit multiplier les dégâts et les PV ennemis par un facteur qui résolve ce
+    problème ») : LE FACTEUR, `ECHELLE_DU_VORTEX` = 10 — les dégâts du catalogue ont une décimale au plus (1,5 ; 2,3 ;
+    5,5), fois dix ce sont des entiers. Au vortex, chaque arme passe par `degatsMultiplies` (tous ses champs de dégâts,
+    `CHAMPS_DE_DEGATS`, à toute profondeur, arrondis à l'entier), la collision contre les insectes aussi, et les insectes
+    ont 120 points de vie au lieu de 12 : rien ne change au jeu, seulement ses nombres (la mitrailleuse fait 15, le
+    laser 90, un critique 180). Le catalogue garde ses chiffres, ceux du Nova Drifter, qui ne bouge pas. Les chiffres
+    affichés sont toujours des entiers ; le talent « Obus perforants » arrondit à l'entier (`Math.round(× 1,25)`).
+    `npm run equilibrage` mesure à cette échelle (ses médianes de référence fois dix) : de 0,91 à 1,09. En passant, la
+    singularité : à 12 elle tuait un insecte d'un coup (120 contre 120 : 1,23 — à « 12 » le banc d'avant faisait
+    11,9999 par un arrondi de calcul) ; 11,5 (115) : 0,92 — l'échelle permet ce demi.
+  - LA RÉGÉNÉRATION (« beaucoup trop rapide ; vise de l'ordre de 1 % toutes les 15 secondes ») : 2 % de la vie pleine par
+    seconde → 1 % toutes les 15 s, en continu (`vieSelonLaRace`, 0,01 / 15 par seconde) — trente fois plus lent.

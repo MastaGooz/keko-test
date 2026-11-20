@@ -1563,6 +1563,23 @@ function faireNaitreUnInsecte(c: ConfigVaisseau, m: Monde, ev: Evenement[]): voi
  */
 const critiqueTire = (c: ConfigVaisseau, m: Monde): boolean => c.passifs.critique > 0 && tire(m.graine, m.prochainId++, 12) < c.passifs.critique
 
+/** Les champs de dégâts d'une arme (ceux qu'une échelle multiplie) — jamais une portée, un rayon, une durée ni une part. */
+export const CHAMPS_DE_DEGATS: ReadonlySet<string> = new Set(['degats', 'dps', 'dpsMin', 'dpsMax', 'dpsBrulure', 'budget', 'morsure', 'arrache', 'fin'])
+/**
+ * UNE ARME À UNE AUTRE ÉCHELLE (Keko, 20/11 : « je ne veux pas de chiffres à virgule ; le dégât minimum infligé doit être
+ * 1 — multiplie les dégâts et les PV ennemis par un facteur qui résolve ce problème ») : tous ses champs de dégâts, à
+ * toute profondeur, multipliés par `k` et arrondis à l'entier.
+ */
+export function degatsMultiplies<A>(a: A, k: number): A {
+  const fois = (o: unknown): unknown => {
+    if (o === null || typeof o !== 'object' || Array.isArray(o)) return o
+    const r: Record<string, unknown> = {}
+    for (const [cle, v] of Object.entries(o)) r[cle] = typeof v === 'number' && CHAMPS_DE_DEGATS.has(cle) ? Math.round(v * k) : fois(v)
+    return r
+  }
+  return fois(a) as A
+}
+
 /**
  * LES INSECTES NE S'EMPILENT PAS (Keko, 20/11 : « empêche les ennemis de se paquer au même endroit : si on tourne
  * autour, ils se regroupent en un seul point, ce n'est pas très beau ») : deux insectes plus proches que leurs deux

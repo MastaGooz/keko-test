@@ -67,7 +67,9 @@ export function vieSelonLaRace(race: Race, v: Vie, plaques = 3, dephasage = 0.1)
   if (race === 'humains') return { ...v, coque: v.coque + 2, bouclier: { ...v.bouclier, points: 0 }, plaques }
   if (race === 'innommes') return { ...v, bouclier: { ...v.bouclier, points: 0 }, dephasage: { ...v.dephasage, chance: dephasage } }
   if (race === 'etheres') return { ...v, coque: Math.max(1, v.coque - 3), bouclier: { points: v.bouclier.points + 5, delai: 3, regain: 2.5 }, regeneration: v.regeneration }
-  if (race === 'essaim') return { ...v, coque: v.coque + 2, bouclier: { ...v.bouclier, points: 0 }, regeneration: Math.max(v.regeneration, 0.02) }
+  // (… 1 % TOUTES LES 15 S — Keko, 20/11 : « la régénération des xénoïdes est beaucoup trop rapide ; vise de l'ordre de 1 %
+  // toutes les 15 secondes » : 2 % par seconde d'abord, trente fois plus)
+  if (race === 'essaim') return { ...v, coque: v.coque + 2, bouclier: { ...v.bouclier, points: 0 }, regeneration: Math.max(v.regeneration, 0.01 / 15) }
   return v
 }
 /** Les talents qu'une race ne se voit jamais proposer (seuls les Éthérés ont un bouclier à étendre et à recharger). */

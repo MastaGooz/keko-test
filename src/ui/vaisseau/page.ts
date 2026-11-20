@@ -12,7 +12,7 @@
  */
 import './vaisseau.css'
 import * as noyau from 'pixelfx'
-import { placeDeLEcharde, frontDeLaNova, ancreDansLeMonde, zoneDuDe, coupeDUnCube, formeDeLaCoupe, liesAuDrain, encaisser, type Ennemi, type Evenement, type Monde, impactDuRayon, asteroidesVisibles, avancerLeMonde, finDuTrio, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur, xpDuNiveau, ennemiLePlusProche, ennemiVerrouille, verrouiller, angleDuBalayage } from '../../logic/vaisseau/jeu.ts'
+import { degatsMultiplies, placeDeLEcharde, frontDeLaNova, ancreDansLeMonde, zoneDuDe, coupeDUnCube, formeDeLaCoupe, liesAuDrain, encaisser, type Ennemi, type Evenement, type Monde, impactDuRayon, asteroidesVisibles, avancerLeMonde, finDuTrio, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur, xpDuNiveau, ennemiLePlusProche, ennemiVerrouille, verrouiller, angleDuBalayage } from '../../logic/vaisseau/jeu.ts'
 import { ETALONS as ETALONS_DU_BANC, acheter, ajouterLesPiecesDEssai, capacite, poidsTotal, POIDS_SERIE, configDuHangar, demonter, demonterA, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, montantCourt, monteeA, monter, monterA, peutAcheter, peutMonter, perdreLesMontees, estDeBase, exemplaires, libres, pieceDe, piecesDe, placeLourde, possede, aimantMonte, radarMonte, type Jauge, type Piece, type Sorte } from '../../logic/vaisseau/hangar.ts'
 import { drawWord, spell } from 'pixelfx/fx/ui/_lib'
 import { firePuff, hotFirst, smokePuff } from 'pixelfx/fx/fire/_lib'
@@ -960,6 +960,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         else if (canon?.flamme !== undefined) conf = { ...conf, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0, bouche: boucheMontee(monteeA(hangar, 'coque').cran, canon.id, 0) }] }
         else if (canon !== undefined) conf = { ...conf, marcheArriere: 1, alternance: true, arcDeTir: tirA360 ? 0 : ARC_DU_VORTEX, armes: [0, 1].map((place) => ({ ...canon, cadence: canon.cadence * 2, place, bouche: boucheMontee(monteeA(hangar, 'coque').cran, canon.id, place) })) }
       }
+      // (L'ÉCHELLE DES DÉGÂTS DU VORTEX : les armes et la collision contre les insectes, fois `ECHELLE_DU_VORTEX` — voir
+      // `INSECTE`)
+      if (VORTEX) conf = { ...conf, armes: conf.armes.map((a) => degatsMultiplies(a, ECHELLE_DU_VORTEX)), collision: { ...conf.collision, degatsEnnemi: conf.collision.degatsEnnemi * ECHELLE_DU_VORTEX } }
       if (VORTEX) conf = { ...conf, champ: { ...conf.champ, densite: 0 }, station: { ...conf.station, portee: -1 }, invasion: { ...conf.invasion, active: true, viePortail: Math.max(1, Number(parametres.get('portail')) || conf.invasion.viePortail) /* (`&portail=N` : la vie du portail au départ, pour voir la fin d'un lien) */ }, ennemi: { ...conf.ennemi, ...INSECTE }, bouclier: { ...conf.bouclier, points: Math.max(conf.bouclier.points, BOUCLIER_DU_VORTEX) }, passifs: { ...conf.passifs, critique: conf.passifs.critique + CRITIQUE_DU_VORTEX } }
       // LE RIVAL EST UN CUIRASSÉ LOURDEMENT ARMÉ (Keko, 14/11, à l'essai : « pour voir si je peux arriver à le tuer avec mon
       // chasseur ») : gros, lent, qui vire mal, très solide, et qui tire trois fois plus souvent, de plus loin ; il ne
@@ -1302,8 +1305,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const CRITIQUE_DU_VORTEX = parametres.has('critique') ? Math.max(0, Math.min(1, Number(parametres.get('critique')) || 0)) : 0.01
   /** Le bouclier de base du jeu du vortex, en points (un chiffre de moi, à rejuger). */
   const BOUCLIER_DU_VORTEX = 3
-  /** L'INSECTE de l'invasion, en chiffres de rival (de moi, à rejuger) : deux obus de canon l'abattent ; il marche à 40, vire vite ; il lâche UNE PÉPITE (de l'expérience) et ne tire pas — il mord. */
-  const INSECTE = { pv: 12, poussee: 90, vitesseMax: 40, rotation: 6, rayon: 5, butinRendu: 1, armes: [] as never[] }
+  /**
+   * L'ÉCHELLE DES NOMBRES DU VORTEX (Keko, 20/11 : « je ne veux pas de chiffres à virgule ; le dégât minimum infligé doit
+   * être 1 ; multiplie les dégâts et les PV ennemis par un facteur qui résolve ce problème ») : les dégâts des armes du
+   * catalogue ont une décimale au plus (1,5 ; 2,3 ; 5,5) — fois dix, ce sont des entiers (15, 23, 55), arrondis
+   * (`degatsMultiplies`) ; les points de vie des insectes suivent (12 → 120) : RIEN NE CHANGE AU JEU, seulement ses
+   * nombres. Le catalogue garde ses chiffres, ceux du Nova Drifter.
+   */
+  const ECHELLE_DU_VORTEX = 10
+  /** L'INSECTE de l'invasion, en chiffres de rival (de moi, à rejuger) : deux obus de canon l'abattent ; il marche à 40, vire vite ; il lâche UNE PÉPITE (de l'expérience) et ne tire pas — il mord. Ses points de vie à l'échelle du vortex. */
+  const INSECTE = { pv: 12 * ECHELLE_DU_VORTEX, poussee: 90, vitesseMax: 40, rotation: 6, rayon: 5, butinRendu: 1, armes: [] as never[] }
   let vortexFx: Instance | null = null
   /** (« Tir face » est gardé, le bouton qui le comparait à un tir à 360° est retiré — Keko, 15/11 ; `&tir=360` l'essaie encore.) */
   const tirA360 = parametres.get('tir') === '360'
@@ -1577,9 +1588,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const age = t - c.nait
       const repos = t - c.dernier
       if (repos > 0.6) continue
-      // (sous 3, une décimale — la mitrailleuse fait 1,5 — ; au-delà, un entier)
-      const n = c.total < 3 ? Math.round(c.total * 10) / 10 : Math.round(c.total)
-      const dit = String(n).replace('.', ',')
+      // (TOUJOURS UN ENTIER — Keko, 20/11 : « pas de chiffres à virgule » ; voir `ECHELLE_DU_VORTEX`)
+      const dit = String(Math.max(1, Math.round(c.total)))
       // (son côté : chaque insecte le sien, tiré de son identité — les chiffres voisins ne s'empilent pas)
       const cote = ((c.id * 37) % 7) / 3 - 1
       const bx = (c.x - camera.x) / champApplique + W / 2

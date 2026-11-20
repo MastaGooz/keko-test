@@ -14,17 +14,16 @@
 // `npm run equilibrage` ; `-- --arme=arme-nova` une seule ; `-- --json` les mesures brutes ; `-- --facteurs=f.json`
 // multiplie les dégâts de chaque arme par son facteur avant de mesurer (pour chercher un réglage).
 import { readFileSync } from 'node:fs'
-import { VAISSEAU, avancerLeMonde, nouveauMonde, cargaisonVide, type ConfigVaisseau, type Ennemi, type Monde } from '../src/logic/vaisseau/jeu.ts'
+import { VAISSEAU, CHAMPS_DE_DEGATS, degatsMultiplies, avancerLeMonde, nouveauMonde, cargaisonVide, type ConfigVaisseau, type Ennemi, type Monde } from '../src/logic/vaisseau/jeu.ts'
 import { configDuHangar, pieceDe } from '../src/logic/vaisseau/hangar.ts'
 import { MODELES } from '../src/logic/vaisseau/flotte.ts'
 import { boucheMontee, RACINES_DU_KRAKEN, ANCRES_DU_KRAKEN } from '../src/ui/vaisseau/rendu-vaisseau.ts'
 
 const ARMES_PAR_VAISSEAU: Record<string, string[]> = { chasseur: ['arme-laser', 'arme-mitrailleuse', 'arme-minimissiles'], salamandre: ['arme-flammes', 'arme-rayon', 'arme-napalm'], sentinelle: ['arme-drones', 'arme-chaine', 'arme-aura'], ingenieur: ['arme-tourelles', 'arme-scie', 'arme-fleau'], frimas: ['arme-nova', 'arme-eclats', 'arme-tornade'], pulsar: ['arme-plasma', 'arme-essaim', 'arme-meteore'], kraken: ['arme-tentacules', 'arme-nuee', 'arme-rejetons'], vouivre: ['arme-crachat', 'arme-mines', 'arme-poison'], prisme: ['arme-faisceau', 'arme-cristaux', 'arme-rail'], neant: ['arme-puits', 'arme-drain', 'arme-vrilles'], mante: ['arme-parasites', 'arme-oeufs', 'arme-epines'], tesseract: ['arme-hypercube', 'arme-de', 'arme-coupe'] }
-const INSECTE = { pv: 12, poussee: 90, vitesseMax: 40, rotation: 6, rayon: 5, butinRendu: 1, armes: [] as never[] }
+const ECHELLE = 10 // (l'échelle du vortex : les dégâts et les points de vie fois dix — voir `ECHELLE_DU_VORTEX`)
+const INSECTE = { pv: 12 * ECHELLE, poussee: 90, vitesseMax: 40, rotation: 6, rayon: 5, butinRendu: 1, armes: [] as never[] }
 const ARC = (50 * Math.PI) / 180
-const ECHELLE = 1.25
-/** Les champs de dégâts d'une arme (ceux qu'un facteur multiplie) — jamais une portée, un rayon ou une durée. */
-export const CHAMPS_DE_DEGATS = new Set(['degats', 'dps', 'dpsMin', 'dpsMax', 'dpsBrulure', 'budget', 'morsure', 'arrache', 'fin'])
+const ECHELLE_EN_VOL = 1.25
 
 function multiplier(o: unknown, k: number): unknown {
   if (Array.isArray(o)) return o
@@ -38,7 +37,7 @@ function configDe(vaisseau: string, idArme: string, facteur = 1): ConfigVaisseau
   const mo = MODELES.find((m) => m.id === vaisseau)!
   const coque = pieceDe(mo.serie.montees.coque!)!.cran
   let conf = configDuHangar(VAISSEAU, mo.serie)
-  const canon = multiplier(pieceDe(idArme)!.arme!, facteur) as NonNullable<ReturnType<typeof pieceDe>>['arme'] & object
+  const canon = degatsMultiplies(multiplier(pieceDe(idArme)!.arme!, facteur), ECHELLE) as NonNullable<ReturnType<typeof pieceDe>>['arme'] & object
   const b = (place: number) => boucheMontee(coque, canon.id, place)
   const c = canon as Record<string, unknown>
   const a = (k: string): boolean => c[k] !== undefined
@@ -52,7 +51,7 @@ function configDe(vaisseau: string, idArme: string, facteur = 1): ConfigVaisseau
   else conf = { ...conf, marcheArriere: 1, alternance: true, arcDeTir: ARC, armes: [0, 1].map((place) => ({ ...canon, cadence: canon.cadence * 2, place, bouche: b(place) })) }
   conf = { ...conf, champ: { ...conf.champ, densite: 0 }, station: { ...conf.station, portee: -1 }, invasion: { ...conf.invasion, active: true, premiere: 1e9 }, ennemi: { ...conf.ennemi, ...INSECTE }, collision: { ...conf.collision, degatsEnnemi: 0 } }
   // (les chocs du vaisseau contre les insectes ne comptent pas : ce n'est pas l'arme — en rond, il les percutait)
-  conf = { ...conf, armes: conf.armes.map((x) => ({ ...x, ...(x.bouche === undefined ? {} : { bouche: { x: x.bouche.x * ECHELLE, y: x.bouche.y * ECHELLE } }), ...(x.tentacule === undefined ? {} : { tentacule: { ...x.tentacule, ancres: x.tentacule.ancres.map(([p, q]): [number, number] => [p * ECHELLE, q * ECHELLE]) } }) })) }
+  conf = { ...conf, armes: conf.armes.map((x) => ({ ...x, ...(x.bouche === undefined ? {} : { bouche: { x: x.bouche.x * ECHELLE_EN_VOL, y: x.bouche.y * ECHELLE_EN_VOL } }), ...(x.tentacule === undefined ? {} : { tentacule: { ...x.tentacule, ancres: x.tentacule.ancres.map(([p, q]): [number, number] => [p * ECHELLE_EN_VOL, q * ECHELLE_EN_VOL]) } }) })) }
   return conf
 }
 
@@ -182,7 +181,7 @@ function boss(c: ConfigVaisseau, enRond: boolean, duree = 20): number {
  * frein commun (5 %) : le gel, le ralenti, la saisie valent des dégâts. 1 : la puissance de la médiane. *Les poids et la
  * valeur du frein sont des choix, à rejuger.*
  */
-const MEDIANES = { monoMoy: 4.63, bossMax: 6.47, fouleMoy: 10.99, vagueMax: 1.19 }
+const MEDIANES = { monoMoy: 46.3, bossMax: 64.7, fouleMoy: 109.9, vagueMax: 1.19 } // (les dégâts à l'échelle du vortex, fois dix)
 const POIDS = { monoMoy: 0.25, bossMax: 0.25, fouleMoy: 0.15, vagueMax: 0.35 }
 const indice = (d: Record<keyof typeof POIDS, number> & { frein: number }): number => (Object.keys(POIDS) as (keyof typeof POIDS)[]).reduce((s, k) => s + (POIDS[k] * d[k]) / MEDIANES[k], 0) * (1 + Math.max(0, d.frein - 0.05))
 
