@@ -6644,3 +6644,8 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     prise une fois par l'aimant du joueur (`Pepite.aimanteeA`), elle ne le lâche plus — elle fonce droit sur lui, de plus
     en plus vite (400 par seconde de plus chaque seconde, `forage.accelerationAimantee`), toujours plus vite que lui ;
     la soute pleine ou le minerai refusé la relâchent. Testé : un vaisseau qui fuit à 200, la pépite à bord en 1 s.
+- LES CHIFFRES DISENT L'EXCÈS (Keko, 20/11 : « affiche l'overkill des dégâts : s'il reste 3 points de vie à un ennemi
+  et qu'il subit 9, affiche 9 et pas 3 ») : la règle retire l'insecte tué du monde, mais il garde ses points de vie passés
+  sous zéro ; la page garde l'insecte lui-même (plus seulement son identifiant) et lit tout ce qu'il a perdu. Passé le
+  portail, il n'a rien perdu : rien ne s'affiche (la distance au portail ne sert plus à le deviner). Vu à la capture : le
+  laser (9) sur un insecte à 3 points affiche 9.

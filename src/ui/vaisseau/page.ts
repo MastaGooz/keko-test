@@ -1475,14 +1475,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /**
    * LES DÉGÂTS INFLIGÉS (Keko, 20/11 : « un petit système qui indique le nombre de dégâts qu'on inflige à un ennemi quand
    * on le touche, sans flooder l'écran ») : ce que chaque insecte a perdu depuis l'image d'avant (toutes les sources : un
-   * obus, une zone, un poison — lu sur ses points de vie, pas sur un événement), et ce qui lui restait s'il est mort
-   * ailleurs qu'au portail. CONTRE LE FLOT : UN SEUL CHIFFRE PAR INSECTE, qui S'ADDITIONNE tant que les coups se suivent (à
+   * obus, une zone, un poison — lu sur ses points de vie, pas sur un événement), L'EXCÈS COMPRIS quand le coup le tue. CONTRE LE FLOT : UN SEUL CHIFFRE PAR INSECTE, qui S'ADDITIONNE tant que les coups se suivent (à
    * moins de 0,35 s, 0,8 s au plus) — une brûlure ou un drain donnent un chiffre qui monte, pas une pluie — ; rien sous un
    * point ; DIX À LA FOIS au plus (le plus vieux part) ; petits, cernés d'encre, ils montent et partent après 0,6 s sans
    * coup. `&degats=0` les cache. (Leur dessin : voir `dessinerLesDegats`.)
    */
   const AVEC_DEGATS = parametres.get('degats') !== '0'
-  const pvVus = new Map<number, { pv: number; x: number; y: number }>()
+  const pvVus = new Map<number, { e: Ennemi; pv: number }>()
   const critiqueA = new Map<number, number>()
   const chiffres: { id: number; x: number; y: number; total: number; nait: number; dernier: number; critique: boolean }[] = []
   function suivreLesDegats(): void {
@@ -1508,13 +1507,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     for (const e of m.ennemis) {
       vus.add(e.id)
       const avant = pvVus.get(e.id)
-      if (avant !== undefined && e.pv < avant.pv) ajouter(e.id, e.corps.x, e.corps.y, avant.pv - Math.max(0, e.pv))
-      pvVus.set(e.id, { pv: Math.max(0, e.pv), x: e.corps.x, y: e.corps.y })
+      if (avant !== undefined && e.pv < avant.pv) ajouter(e.id, e.corps.x, e.corps.y, avant.pv - e.pv)
+      pvVus.set(e.id, { e, pv: e.pv })
     }
-    // (mort entre deux images : ce qui lui restait — sauf s'il a passé le portail)
+    // (MORT ENTRE DEUX IMAGES : TOUT CE QU'IL A PRIS, L'EXCÈS COMPRIS — Keko, 20/11 : « affiche l'overkill : s'il reste 3
+    // points de vie à un ennemi et qu'il subit 9, affiche 9 et pas 3 » : la règle le retire du monde, mais l'insecte
+    // garde ses points de vie passés sous zéro ; on le garde, lui, et on lit ce qu'il a perdu. Passé le portail, il n'a
+    // rien perdu : rien ne s'affiche)
     for (const [id, a] of pvVus)
       if (!vus.has(id)) {
-        if (a.pv > 0 && Math.hypot(a.x, a.y) > CONF.invasion.portail + 8) ajouter(id, a.x, a.y, a.pv)
+        if (a.e.pv < a.pv) ajouter(id, a.e.corps.x, a.e.corps.y, a.pv - a.e.pv)
         pvVus.delete(id)
       }
     for (let i = chiffres.length - 1; i >= 0; i--) if (t - chiffres[i].dernier > 0.7) chiffres.splice(i, 1)
