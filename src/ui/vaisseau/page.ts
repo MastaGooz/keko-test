@@ -1875,7 +1875,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       if (b.trainee !== undefined) ligne('Traînée de feu', ent(b.trainee.dps)), ligne('Durée de la traînée', sec(b.trainee.duree))
     } else if (a.canalise !== undefined) {
       const c = a.canalise
-      ligne('Dégâts', ent(c.dpsMin)), ligne('Dégâts max', ent(c.dpsMax)), ligne('Montée en puissance', sec(c.montee)), portee()
+      ligne('Dégâts', ent(c.dps)), portee()
       if (c.dpsBrulure > 0) ligne('Brûlure', ent(c.dpsBrulure)), ligne('Durée de brûlure', sec(c.brulure))
     } else if (a.orbite !== undefined) {
       // (les drones : chacun tire à sa cadence ; ils partent sur un insecte à `laisse` du vaisseau)
@@ -1951,7 +1951,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       if (p.acide !== undefined) ligne('Acide', ent(p.acide.dps)), ligne('Dégâts subis', `+${pct(p.acide.bonus)}`)
     } else if (a.balise !== undefined) {
       const b = a.balise
-      ligne('Dégâts', ent(b.irradie?.dps ?? a.degats)), ligne(b.irradie !== undefined ? 'Cristaux' : 'Balises', ent(b.max)), ligne('Durée', sec(b.duree)), ligne('Délai de pose', sec(b.tous))
+      // (sans nombre maximum, c'est la durée — comptée du triangle fermé — qui borne ce qui reste posé)
+      ligne('Dégâts', ent(b.irradie?.dps ?? a.degats))
+      if (b.max !== undefined) ligne(b.irradie !== undefined ? 'Cristaux' : 'Balises', ent(b.max))
+      ligne('Durée', sec(b.duree)), ligne('Délai de pose', sec(b.tous))
     } else if (a.hypercube !== undefined) {
       const h = a.hypercube
       ligne('Dégâts', ent(a.degats)), cadence(a.cadence), portee(), zone(h.rayon), ligne('Rebonds', ent(h.rebonds)), ligne('Zone par rebond', `+${pct(h.croissance - 1)}`)

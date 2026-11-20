@@ -416,7 +416,10 @@ export type Arme = {
    * seconde montent de `dpsMin` à `dpsMax` en `montee` secondes sur la même cible ; ce qu'il touche brûle. L'état est
    * `Monde.canal`.
    */
-  canalise?: { dpsMin: number; dpsMax: number; montee: number; brulure: number; dpsBrulure: number }
+  // (… PUIS DES DÉGÂTS FIXES — Keko, 20/11 : « pour le rayon du Prisme, celui qui se concentre sur un ennemi, je ne veux pas
+  // de montée en puissance ; je veux que ses dégâts soient fixes » : `dps` par seconde, dès qu'il est sur sa cible ; plus
+  // de `dpsMin`, `dpsMax` ni `montee`, et sa chauffe, à l'image, est toujours pleine)
+  canalise?: { dps: number; brulure: number; dpsBrulure: number }
   /**
    * L'ÉLECTRICITÉ (la Sentinelle, Keko, 15/11 : « le vaisseau spécialisé dans l'électricité ») — `eclair` : un drone
    * ne tire plus d'obus, il frappe sa cible D'UN ARC ÉLECTRIQUE, à l'instant ; `chaine` : un éclair part du vaisseau sur
@@ -464,7 +467,11 @@ export type Arme = {
   // et lui inflige des dégâts » : `irradie` — au lieu d'un coup à chaque décharge, la ligne IRRADIE ce qui est dessus,
   // `dps` points par seconde TANT QU'IL Y EST, et rien après (Keko, 16/11 : pas de dégâts sur la durée) ; `devant` — posé à
   // cette distance devant le vaisseau, là où est le cristal de sa proue : « comme s'il était déposé depuis le cristal de devant »)
-  balise?: { tous: number; ecart: number; max: number; duree: number; garde: number; periode: number; irradie?: { dps: number }; devant?: number }
+  // (… ET LES CRISTAUX SANS NOMBRE MAXIMUM — Keko, 20/11 : « pas de nombre de cristaux maximum : c'est la durée de vie des
+  // cristaux qui détermine le nombre qui peuvent subsister en même temps, sachant qu'elle est comptée à partir du moment
+  // où le triangle est fermé » : `max` absent, rien ne saute ; un triangle s'éteint `duree` après la pose de sa
+  // troisième balise, et un triangle encore ouvert ne s'éteint pas — voir `finDuTrio`)
+  balise?: { tous: number; ecart: number; max?: number; duree: number; garde: number; periode: number; irradie?: { dps: number }; devant?: number }
   /**
    * UNE TRAÎNÉE DE GIVRE (le Frimas, Keko, 15/11 : « une attaque qui laisse une traînée de givre derrière le vaisseau,
    * qui ralentit et inflige des dégâts aux ennemis tant qu'ils restent dedans ») : en vol, il sème DERRIÈRE LUI (à
@@ -1599,7 +1606,7 @@ export function vieMultipliee(c: ConfigVaisseau, k: number): ConfigVaisseau {
 }
 
 /** Les champs de dégâts d'une arme (ceux qu'une échelle multiplie) — jamais une portée, un rayon, une durée ni une part. */
-export const CHAMPS_DE_DEGATS: ReadonlySet<string> = new Set(['degats', 'dps', 'dpsMin', 'dpsMax', 'dpsBrulure', 'budget', 'morsure', 'arrache', 'fin'])
+export const CHAMPS_DE_DEGATS: ReadonlySet<string> = new Set(['degats', 'dps', 'dpsBrulure', 'budget', 'morsure', 'arrache', 'fin'])
 /**
  * UNE ARME À UNE AUTRE ÉCHELLE (Keko, 20/11 : « je ne veux pas de chiffres à virgule ; le dégât minimum infligé doit être
  * 1 — multiplie les dégâts et les PV ennemis par un facteur qui résolve ce problème ») : tous ses champs de dégâts, à
@@ -3793,11 +3800,11 @@ function traquer(m: Monde, o: Obus, dt: number): void {
   o.vy += (Math.sin(voulu) * sp - o.vy) * k
 }
 
-/** L'instant où le triangle d'une balise s'éteint : `duree` après la pose de sa dernière balise (voir `Arme.balise`). */
+/** L'instant où le triangle d'une balise s'éteint : `duree` après qu'il est FERMÉ, à la pose de sa troisième balise ; encore ouvert, jamais (voir `Arme.balise`). */
 export function finDuTrio(m: Monde, b: Balise, duree: number): number {
-  let derniere = b.nee
-  for (const o of m.balises) if (o.trio === b.trio && o.nee > derniere) derniere = o.nee
-  return derniere + duree
+  const trio = m.balises.filter((o) => o.trio === b.trio)
+  const troisieme = trio.find((o) => o.rang === 2)
+  return troisieme === undefined ? Infinity : troisieme.nee + duree
 }
 
 /** LES BALISES (voir `Arme.balise`) : la pose sur le passage, l'extinction, les lignes qui s'éclairent quand on les franchit. */
@@ -3832,7 +3839,7 @@ function menerLesBalises(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[
     m.balises.push({ id, x: px, y: py, nee: m.t, arme: i, rang, trio: rang === 0 || derniere === undefined ? id : derniere.trio, liens })
     ev.push({ type: 'balisePosee', x: px, y: py, arme: a.id })
     // (trop de balises : le plus vieux triangle saute, entier)
-    if (miennes.length + 1 > ba.max) {
+    if (ba.max !== undefined && miennes.length + 1 > ba.max) {
       const vieux = miennes[0].trio
       for (const b of m.balises) if (b.trio === vieux) ev.push({ type: 'baliseFinie', x: b.x, y: b.y, arme: a.id })
       m.balises = m.balises.filter((b) => b.trio !== vieux)
@@ -3905,9 +3912,8 @@ function canaliserLeRayon(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement
     return
   }
   const depuis = m.canal !== null && m.canal.cible === cible.id ? m.canal.depuis : m.t
-  const chauffe = Math.min(1, (m.t - depuis) / ca.montee)
-  m.canal = { arme: i, cible: cible.id, depuis, x: cible.corps.x, y: cible.corps.y, chauffe }
-  cible.pv -= (ca.dpsMin + (ca.dpsMax - ca.dpsMin) * chauffe) * dt
+  m.canal = { arme: i, cible: cible.id, depuis, x: cible.corps.x, y: cible.corps.y, chauffe: 1 }
+  cible.pv -= ca.dps * dt
   cible.bruleA = m.t + ca.brulure
   cible.dpsBrulure = ca.dpsBrulure
   cible.dureeBrulure = ca.brulure

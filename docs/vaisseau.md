@@ -6777,3 +6777,16 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   tout insecte à 55 est mordu TOUT DE SUITE (il fallait attendre que son jet soit tendu, 0,3 s, hors du nuage de 14) ;
   les jets qui s'étendent ne sont plus qu'à l'image, et `nuee.rayon` n'est plus que la taille du nuage dessiné. Le
   panneau : « Dégâts partagés » et « Portée ». Testé : un insecte à 40 perd 28 en 2 s ; cinq à portée se partagent 14. Son indice (`npm run equilibrage`) passe de 0,97 à 1,00 : dans l'équilibre.
+- LE FAISCEAU DU PRISME, À DÉGÂTS FIXES (Keko, 20/11 : « pour le rayon du Prisme, celui qui se concentre sur un ennemi, je
+  ne veux pas de montée en puissance ; je veux que ses dégâts soient fixes ») : `canalise.dps` (plus de `dpsMin`,
+  `dpsMax`, `montee`), sa chauffe à l'image toujours pleine. 90 par seconde (9 au catalogue), mesuré au banc : 3→10
+  en 2 s faisait l'indice 1,0 ; 7 fixe, 0,78 ; 8, 0,87 ; 9, 0,98 ; 9,5, 1,03. Testé : la deuxième seconde coûte
+  autant que la première.
+- LES CRISTAUX SANS NOMBRE MAXIMUM (Keko, 20/11 : « c'est la durée de vie des cristaux qui détermine le nombre maximum
+  qui peuvent subsister en même temps, sachant qu'elle est comptée à partir du moment où le triangle est fermé ») :
+  `balise.max` est facultatif, les cristaux n'en ont plus (les balises de l'Ingénieur, rangées, gardent leurs six) ;
+  `finDuTrio` compte la vie depuis la pose de la TROISIÈME balise, et un triangle encore ouvert ne s'éteint pas. La
+  durée reste 35 s — à une pose toutes les 1,5 s, jusqu'à une vingtaine de cristaux —, alors leurs dégâts baissent pour
+  rester dans l'équilibre : sans maximum, 220 par seconde faisaient l'indice 1,75 ; 8 au catalogue (80 par seconde),
+  1,00 (1,02 avant). Testé : 8 cristaux à la fois en 12 s ; 35 s après sa fermeture, chaque triangle s'éteint, le
+  trio resté ouvert demeure.

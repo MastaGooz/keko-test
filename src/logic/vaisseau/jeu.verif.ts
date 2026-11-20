@@ -1121,7 +1121,7 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
 // LE RAYON CANALISÉ (Keko, 15/11) : il reste sur une cible et chauffe ; le verrouillé d'abord ; hors de portée, rien
 {
   const insecte = (id: number, x: number, y: number) => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv: 1000, fait: 'marche' as const, roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, calmeA: 1e9 })
-  const rayon = { id: 'rayon', cadence: 0.1, degats: 0, portee: 80, vitesse: 0, vie: 0, dispersion: 0, guide: false, canalise: { dpsMin: 5, dpsMax: 16, montee: 2, brulure: 1.5, dpsBrulure: 3 } }
+  const rayon = { id: 'rayon', cadence: 0.1, degats: 0, portee: 80, vitesse: 0, vie: 0, dispersion: 0, guide: false, canalise: { dps: 10, brulure: 1.5, dpsBrulure: 3 } }
   const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, armes: [rayon], ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, pv: 1000 } }
   const places: [number, number][] = [[0, -40], [50, 30], [0, -200]]
   const w = nouveauMonde(cfg, 3)
@@ -1136,10 +1136,11 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   const s1 = 1000 - w.ennemis[0].pv
   pas(60)
   const s2 = 1000 - w.ennemis[0].pv - s1
-  verifier('le rayon reste sur le plus proche et CHAUFFE : la deuxième seconde coûte plus que la première ; les autres, rien', s1 > 5 && s2 > s1 + 4 && w.ennemis[1].pv === 1000 && w.ennemis[2].pv === 1000 && w.canal?.cible === 1)
+  // (DES DÉGÂTS FIXES — Keko, 20/11 : plus de montée en puissance)
+  verifier(`le rayon reste sur le plus proche, à dégâts fixes : la deuxième seconde coûte autant que la première (${s1.toFixed(1)}, ${s2.toFixed(1)}) ; les autres, rien`, Math.abs(s1 - s2) < 0.5 && s1 > 9.5 && w.ennemis[1].pv === 1000 && w.ennemis[2].pv === 1000 && w.canal?.cible === 1)
   verrouiller(w, 2)
   pas(30)
-  verifier('verrouillé à portée, il passe sur lui, et sa chauffe repart de zéro', w.canal?.cible === 2 && (w.canal?.chauffe ?? 1) < 0.3 && w.ennemis[1].pv < 1000)
+  verifier('verrouillé à portée, il passe sur lui, à pleins dégâts tout de suite (5 en 0,5 s)', w.canal?.cible === 2 && Math.abs(1000 - w.ennemis[1].pv - 5) < 0.3)
   const w2 = nouveauMonde(cfg, 3)
   w2.ennemis.push(insecte(1, 0, -200))
   for (let i = 0; i < 60; i++) avancerLeMonde(cfg, w2, 1 / 60, { x: 0, y: 0 })
@@ -1270,6 +1271,23 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   const encore = w6.balises.length
   tenirJusqua(derniereNee + 35.1, { x: 0, y: 0 })
   verifier('un triangle s’éteint d’un bloc, à la fin de vie de sa dernière balise (la première, plus vieille, l’attend)', trio.length === 3 && encore === 3 && w6.balises.length === 0)
+  // (LES CRISTAUX, SANS NOMBRE MAXIMUM — Keko, 20/11 : leur durée seule borne combien il en reste, comptée du triangle fermé)
+  {
+    const cristal = { ...balise, id: 'cristal', balise: { tous: 1.5, ecart: 40, duree: 35, garde: 3, periode: 0.5, irradie: { dps: 8 } } }
+    const cfgC = { ...cfg, armes: [cristal] }
+    const wc = nouveauMonde(cfgC, 3)
+    let auPlusC = 0
+    for (let i = 0; i < 60 * 12; i++) {
+      avancerLeMonde(cfgC, wc, 1 / 60, { x: Math.cos(i / 90), y: Math.sin(i / 90) })
+      auPlusC = Math.max(auPlusC, wc.balises.length)
+    }
+    // (puis il ne pose plus : les triangles fermés s'éteignent 35 s après leur troisième cristal ; un trio resté ouvert demeure)
+    wc.armesA[0] = 1e9
+    const ouverts = wc.balises.filter((b) => !wc.balises.some((o) => o.trio === b.trio && o.rang === 2)).length
+    const fermeA = Math.max(...wc.balises.filter((b) => b.rang === 2).map((b) => b.nee))
+    while (wc.t < fermeA + 35.1) avancerLeMonde(cfgC, wc, 1 / 60, { x: 0, y: 0 })
+    verifier(`les cristaux, sans nombre maximum : ${auPlusC} posés à la fois en 12 s ; 35 s après sa fermeture, chaque triangle s’est éteint, et le trio resté ouvert (${ouverts}) demeure`, auPlusC > 6 && wc.balises.length === ouverts)
+  }
   const w7 = nouveauMonde(cfg, 3)
   const poses: number[] = []
   let apres7 = -1
