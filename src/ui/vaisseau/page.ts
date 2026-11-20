@@ -1777,6 +1777,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const B = PLAQUE_DE_REGLETTE
     boutonBase(p, x, y, B, B, true, () => {
       pauseOuverte = true
+      pauseSurLArme = false
       pauseA = t
       manche = null
       touches.clear()
@@ -1789,56 +1790,67 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   }
   /**
    * LES STATISTIQUES DU VAISSEAU EN PAUSE (Keko, 20/11 : « quand on met pause, en plus des boutons, rajoute un panneau des
-   * stats actuelles du vaisseau, en chiffres ») : celles DU VOL EN COURS — la configuration avec ses talents, la vie qui
-   * reste —, des entiers : le blindage (et le bouclier, le surblindage, le déphasage, la régénération, selon la race), la
-   * vitesse, la maniabilité (l'agilité, fois dix), puis l'arme : ses dégâts par coup (ou par seconde, si elle frappe en
-   * continu), sa cadence (coups par minute), sa portée, le critique. Seules les lignes qui ont un sens pour ce vaisseau.
+   * stats actuelles du vaisseau, en chiffres » ; puis « n'affiche pas les valeurs actuelles, uniquement les max — blindage,
+   * plaques — et pas les infos des armes, à part le critique, indépendant de l'arme : plutôt un bouton qui ouvre un sous-
+   * panneau avec les infos d'arme ») : celles DU VOL EN COURS (la configuration avec ses talents), en entiers — le blindage
+   * (ou la vie), et selon la race le bouclier, le surblindage, le déphasage, la régénération ; la vitesse ; la
+   * maniabilité (l'agilité, fois dix) ; le critique. Un bouton au nom de l'arme ouvre SON panneau à elle : ses dégâts par
+   * coup (ou par seconde, si elle frappe en continu), sa cadence (coups par minute), sa portée ; « Retour » revient.
    */
+  let pauseSurLArme = false
   function lignesDesStats(): { nom: string; valeur: string }[] {
     const l: { nom: string; valeur: string }[] = []
-    const plein = CONF.coque
-    l.push({ nom: vieVerte() ? 'Vie' : 'Blindage', valeur: `${Math.max(0, Math.ceil(m.coque - 1e-6))} / ${Math.round(plein)}` })
-    if (CONF.bouclier.points > 0) l.push({ nom: 'Bouclier', valeur: `${Math.floor(m.bouclier + 1e-6)} / ${Math.round(CONF.bouclier.points)}` })
-    if (m.plaques.length > 0) l.push({ nom: 'Surblindage', valeur: `${m.plaques.filter((x) => x).length} / ${m.plaques.length}` })
+    l.push({ nom: vieVerte() ? 'Vie' : 'Blindage', valeur: `${Math.round(CONF.coque)}` })
+    if (CONF.bouclier.points > 0) l.push({ nom: 'Bouclier', valeur: `${Math.round(CONF.bouclier.points)}` })
+    if (m.plaques.length > 0) l.push({ nom: 'Surblindage', valeur: `${m.plaques.length}` })
     if (CONF.dephasage.chance > 0) l.push({ nom: 'Déphasage', valeur: `${Math.round(CONF.dephasage.chance * 100)} %` })
     if (CONF.regeneration > 0) l.push({ nom: 'Régénération', valeur: `${Math.round(CONF.regeneration * 15 * 100)} % / 15 s` })
     l.push({ nom: 'Vitesse', valeur: `${Math.round(CONF.vitesseMax)}` })
     l.push({ nom: 'Maniabilité', valeur: `${Math.round(agiliteDe(CONF) * 10)}` })
-    const a = CONF.armes[0]
-    if (a !== undefined) {
-      // (SES DÉGÂTS : par coup ; une arme qui frappe en continu, par seconde — son premier champ de dégâts continus)
-      const continus = (o: unknown): number => {
-        if (o === null || typeof o !== 'object') return 0
-        for (const [cle, v] of Object.entries(o)) {
-          if (typeof v === 'number' && v > 0 && (cle === 'dps' || cle === 'dpsMax' || cle === 'budget')) return v
-          const r = continus(v)
-          if (r > 0) return r
-        }
-        return 0
-      }
-      const dps = continus(a)
-      l.push({ nom: 'Arme', valeur: pieceDe(armeDuVortex())?.nom ?? a.id })
-      // (plusieurs armes qui frappent chacune — les trois drones : « × 3 »)
-      const fois = !CONF.alternance && CONF.armes.length > 1 ? ` × ${CONF.armes.length}` : ''
-      l.push(a.degats > 0 ? { nom: 'Dégâts', valeur: `${Math.round(a.degats)}${a.de !== undefined ? ' × dé' : ''}${fois}` } : { nom: 'Dégâts', valeur: `${Math.round(dps)} / s${fois}` })
-      // (la cadence : celle du vaisseau — deux armes qui tirent à tour de rôle tirent ensemble à la cadence d'une)
-      const n = CONF.alternance ? CONF.armes.length : 1
-      if (a.degats > 0 && a.cadence > 0.1) l.push({ nom: 'Cadence', valeur: `${Math.round((60 * n) / a.cadence)} / min` })
-      if (a.portee > 0) l.push({ nom: 'Portée', valeur: `${Math.round(a.portee)}` })
-    }
     l.push({ nom: 'Critique', valeur: `${Math.round(CONF.passifs.critique * 100)} % (× ${CONF.passifs.critiqueFacteur})` })
     return l
   }
-  function dessinerLesStatsEnPause(p: Peintre, x: number, y: number, w: number, lignes: { nom: string; valeur: string }[], u0: number): void {
-    const h = 21 + lignes.length * 10
+  function lignesDeLArme(): { nom: string; valeur: string }[] {
+    const a = CONF.armes[0]
+    if (a === undefined) return []
+    const l: { nom: string; valeur: string }[] = []
+    // (SES DÉGÂTS : par coup ; une arme qui frappe en continu, par seconde — son premier champ de dégâts continus)
+    const continus = (o: unknown): number => {
+      if (o === null || typeof o !== 'object') return 0
+      for (const [cle, v] of Object.entries(o)) {
+        if (typeof v === 'number' && v > 0 && (cle === 'dps' || cle === 'dpsMax' || cle === 'budget')) return v
+        const r = continus(v)
+        if (r > 0) return r
+      }
+      return 0
+    }
+    // (plusieurs armes qui frappent chacune — les trois drones : « × 3 »)
+    const fois = !CONF.alternance && CONF.armes.length > 1 ? ` × ${CONF.armes.length}` : ''
+    // (le lance-flammes : ses dégâts sont par seconde)
+    l.push(a.flamme !== undefined ? { nom: 'Dégâts', valeur: `${Math.round(a.degats)} / s` } : a.degats > 0 ? { nom: 'Dégâts', valeur: `${Math.round(a.degats)}${a.de !== undefined ? ' × dé' : ''}${fois}` } : { nom: 'Dégâts', valeur: `${Math.round(continus(a))} / s${fois}` })
+    // (la cadence : celle du vaisseau — deux armes qui tirent à tour de rôle tirent ensemble à la cadence d'une)
+    const n = CONF.alternance ? CONF.armes.length : 1
+    if (a.degats > 0 && a.flamme === undefined && a.cadence > 0.1) l.push({ nom: 'Cadence', valeur: `${Math.round((60 * n) / a.cadence)} / min` })
+    if (a.portee > 0) l.push({ nom: 'Portée', valeur: `${Math.round(a.portee)}` })
+    return l
+  }
+  /** La hauteur du panneau des statistiques : son titre, ses lignes, son bouton. */
+  const hauteurDesStats = (n: number): number => 21 + n * 10 + 22
+  function dessinerLesStatsEnPause(p: Peintre, x: number, y: number, w: number, u0: number): void {
+    const lignes = pauseSurLArme ? lignesDeLArme() : lignesDesStats()
+    const h = hauteurDesStats(Math.max(lignesDesStats().length, lignesDeLArme().length))
     const dy = Math.round((1 - u0) * 8)
     plaque(p, x, y + dy, w, h, 'encre')
-    ecrire(p, modeleDeVaisseau(flotte.actif).nom, x + w / 2, y + dy + 5, PEPITE[3], { align: 'center', police: GRAS })
+    const titre = pauseSurLArme ? (pieceDe(armeDuVortex())?.nom ?? '') : modeleDeVaisseau(flotte.actif).nom
+    ecrire(p, titre, x + w / 2, y + dy + 5, PEPITE[3], { align: 'center', police: GRAS })
     lignes.forEach((li, k) => {
       const ly = y + dy + 18 + k * 10
       ecrire(p, li.nom, x + 7, ly, COQUE[4])
       ecrire(p, li.valeur, x + w - 7, ly, N.WHITE, { align: 'right' })
     })
+    // (le bouton : l'arme, au nom de l'arme ; dans son panneau, « Retour »)
+    const mot = pauseSurLArme ? 'Retour' : `Arme : ${pieceDe(armeDuVortex())?.nom ?? ''}`
+    bouton(p, x + 6, y + dy + h - 21, w - 12, 15, mot, true, () => (pauseSurLArme = !pauseSurLArme), pauseSurLArme ? 'retour' : 'clic', 'acier')
   }
   function dessinerLaPause(p: Peintre): void {
     if (pauseOuverte && (!enJeu || m.invasion.finie)) pauseOuverte = false
@@ -1848,15 +1860,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     zones = []
     // (LE PANNEAU DES STATISTIQUES — voir `dessinerLesStatsEnPause` : à droite des boutons en paysage, dessous debout)
     const couche = W > H
-    const stats = lignesDesStats()
-    const hp = 21 + stats.length * 10
+    // (la hauteur : celle du plus haut des deux panneaux, qu'elle ne saute pas d'un panneau à l'autre)
+    const hp = hauteurDesStats(Math.max(lignesDesStats().length, lignesDeLArme().length))
     const cy = couche ? Math.round(H / 2) : Math.round(H / 2) - Math.round(hp / 2) - 10
     const cx = couche ? Math.round(W * 0.3) : Math.round(W / 2)
     motEnRelief(p, 'Pause', cx, cy - 34 + Math.round((1 - u0) * 8), true, TITRE)
     const bw = largeurDe('Retour à la base', GRAS) + 30
     const bx = Math.round(cx - bw / 2)
     const lp = Math.min(couche ? Math.round(W * 0.42) : W - 24, 160)
-    dessinerLesStatsEnPause(p, couche ? W - 12 - lp : Math.round(W / 2 - lp / 2), couche ? Math.round(H / 2 - hp / 2) : cy + 42, lp, stats, u0)
+    dessinerLesStatsEnPause(p, couche ? W - 12 - lp : Math.round(W / 2 - lp / 2), couche ? Math.round(H / 2 - hp / 2) : cy + 42, lp, u0)
     bouton(p, bx, cy - 8, bw, 17, 'Reprendre', true, () => (pauseOuverte = false), 'retour')
     bouton(p, bx, cy + 14, bw, 17, 'Retour à la base', true, () => {
       pauseOuverte = false

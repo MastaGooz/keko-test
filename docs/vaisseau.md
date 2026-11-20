@@ -6682,3 +6682,10 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   dix) ; l'arme, ses dégâts par coup (« × dé » pour le dé, « / s » pour une arme qui frappe en continu, « × 3 » pour les
   trois drones), sa cadence en coups par minute (celle du vaisseau : deux ailes à tour de rôle comptent ensemble), sa
   portée ; le critique (« 1 % (× 2) »). Vu à la capture, en paysage et debout.
+- LES STATISTIQUES EN PAUSE, LES MAXIMUMS SEULS ET L'ARME À PART (Keko, 20/11 : « n'affiche pas les valeurs actuelles,
+  uniquement les max — blindage, plaques — et n'affiche pas les infos relatives aux armes, à part le critique, indépendant
+  de l'arme : plutôt un bouton pour ouvrir un sous-panneau avec les infos d'arme ») : le panneau du vaisseau dit le
+  blindage (ou la vie), le bouclier, le surblindage, le déphasage, la régénération, la vitesse, la maniabilité et le
+  critique ; en bas, un bouton « Arme : son nom » ouvre son panneau (ses dégâts — « / s » pour le lance-flammes et ce
+  qui frappe en continu —, sa cadence, sa portée), « Retour » revient. La plaque garde sa hauteur d'un panneau à l'autre ;
+  rouvrir la pause rouvre le panneau du vaisseau (`pauseSurLArme`). Vu à la capture.
