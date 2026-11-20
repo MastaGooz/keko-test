@@ -6715,3 +6715,21 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     50 ; un vaisseau a de 200 (le Chasseur, le Frimas, le Néant) à 450 (le Kraken) de blindage, plus son bouclier (150 à
     450 chez les Vectrans) ; le Pulsar a 100 de coque sous 450 de bouclier. Les armes font de 15 (la mitrailleuse) à 135
     par coup. Les ennemis plus forts (élites, boss) viendront au-dessus des vaisseaux, dans le même étalon.
+- LE PANNEAU DE L'ARME DIT CE QUI LA REND UNIQUE (Keko, 20/11 : « bien noter les statistiques des armes qui sont un peu
+  uniques — le nombre de vers qui sort des œufs, le nombre de projectiles des missiles magiques ; pour les zones d'effet,
+  comme la traînée de poison ou la nova de givre, on marque la zone plutôt qu'une portée ; que chaque caractéristique de
+  l'attaque soit bien nommée : dégâts, cadence, portée, zone, projectiles ») : `lignesDeLArme` a ses lignes PAR SORTE
+  D'ARME, lues dans l'arme du vol (talents compris), dans un seul vocabulaire :
+  - DÉGÂTS (par coup, ou par seconde pour ce qui frappe en continu), CADENCE (en attaques par seconde : la ligne
+    « Vitesse d'attaque » prend le mot de Keko), PORTÉE (jusqu'où elle va chercher), ZONE (le rayon de ce qu'elle couvre
+    — la traînée, la nova, l'aura, le drain, la flaque, l'explosion), PROJECTILES (les missiles ioniques 6, les éclats de
+    glace 5), les durées en secondes (« 4 s »), RALENTISSEMENT en pour cent (ce que le gel retire), l'ouverture d'un cône
+    en degrés ;
+  - ce qu'elle pose ou fait naître se compte à son nom : Drones, Tourelles, Œufs et « Vers par œuf », Rejetons, Mines,
+    Vrilles, Parasites, Cristaux, Bras de la nuée ; et ses mécaniques : Rebonds et « Perte par rebond » (la chaîne),
+    « Zone par rebond » (l'hypercube), « Dégâts par point », « Dé 1 à 6 », « Zone sur un 4 » et « Zone par point » (le
+    dé), « Coup final » (la superposition), « Cibles toutes » (ce qui traverse), Brûlure, Acide, « Dégâts subis +35 % »,
+    Poison, Gel, Verglas, Attraction, Allonge, Arrachement, « Dégâts partagés » (la nuée), « Dégâts max » et « Montée en
+    puissance » (le faisceau)…
+  Huit lignes au plus (les œufs, le crachat, le rayon thermique) ; la plaque prend la hauteur du plus long des deux
+  panneaux. Dix armes vues à la capture.

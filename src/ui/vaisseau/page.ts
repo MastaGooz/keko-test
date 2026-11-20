@@ -1805,8 +1805,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * plaques — et pas les infos des armes, à part le critique, indépendant de l'arme : plutôt un bouton qui ouvre un sous-
    * panneau avec les infos d'arme ») : celles DU VOL EN COURS (la configuration avec ses talents), en entiers — le blindage
    * (ou la vie), et selon la race le bouclier, le surblindage, le déphasage, la régénération ; la vitesse ; la
-   * maniabilité (l'agilité, fois dix) ; le critique. Un bouton au nom de l'arme ouvre SON panneau à elle : ses dégâts par
-   * coup (ou par seconde, si elle frappe en continu), sa cadence (coups par minute), sa portée ; « Retour » revient.
+   * maniabilité (l'agilité, fois dix) ; le critique. Un bouton au nom de l'arme ouvre SON panneau à elle (voir
+   * `lignesDeLArme`) ; « Retour » revient.
    */
   let pauseSurLArme = false
   function lignesDesStats(): { nom: string; valeur: string }[] {
@@ -1824,28 +1824,137 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     l.push({ nom: 'Dégâts critiques', valeur: `${Math.round(CONF.passifs.critiqueFacteur * 100)} %` })
     return l
   }
+  /**
+   * LES LIGNES DE L'ARME (Keko, 20/11 : « bien noter les statistiques des armes qui sont un peu uniques — le nombre de vers
+   * qui sort des œufs, le nombre de projectiles des missiles magiques — ; pour les effets de zone, plutôt que portée, on met
+   * le mot zone ; que chaque caractéristique de l'attaque soit bien nommée : dégâts, cadence, portée, zone, projectiles ») :
+   * CHAQUE SORTE D'ARME A LES SIENNES, lues dans l'arme du vol en cours (ses talents compris). Le vocabulaire est le même
+   * partout : DÉGÂTS (par coup ; par seconde pour ce qui frappe en continu, sans unité), CADENCE (attaques par seconde, sans
+   * unité), PORTÉE (jusqu'où elle va chercher), ZONE (le rayon de ce qu'elle couvre), PROJECTILES, les DURÉES en
+   * secondes, le RALENTISSEMENT et les parts en pour cent ; ce qu'elle pose ou fait naître se compte à son nom (Tourelles,
+   * Vers, Mines…).
+   */
   function lignesDeLArme(): { nom: string; valeur: string }[] {
     const a = CONF.armes[0]
     if (a === undefined) return []
     const l: { nom: string; valeur: string }[] = []
-    // (SES DÉGÂTS : par coup ; une arme qui frappe en continu, par seconde — son premier champ de dégâts continus)
-    const continus = (o: unknown): number => {
-      if (o === null || typeof o !== 'object') return 0
-      for (const [cle, v] of Object.entries(o)) {
-        if (typeof v === 'number' && v > 0 && (cle === 'dps' || cle === 'dpsMax' || cle === 'budget')) return v
-        const r = continus(v)
-        if (r > 0) return r
-      }
-      return 0
+    const ligne = (nom: string, valeur: string): void => void l.push({ nom, valeur })
+    const ent = (v: number): string => `${Math.round(v)}`
+    const dec = (v: number): string => String(Math.round(v * 10) / 10).replace('.', ',')
+    const sec = (v: number): string => `${dec(v)} s`
+    const pct = (v: number): string => `${Math.round(v * 100)} %`
+    // (la cadence : des attaques par seconde ; deux armes qui tirent à tour de rôle tirent ensemble à la cadence d'une)
+    const cadence = (s: number, n = 1): void => ligne('Cadence', dec(n / s))
+    const portee = (v = a.portee): void => ligne('Portée', ent(v))
+    const zone = (v: number): void => ligne('Zone', ent(v))
+    // (un ralenti est la part de vitesse qui reste : on montre ce qu'il retire)
+    const ralentit = (ralenti: number): void => ligne('Ralentissement', pct(1 - ralenti))
+    const ouverture = (demi: number): void => ligne('Ouverture', `${Math.round((2 * demi * 180) / Math.PI)} degrés`)
+    if (a.flamme !== undefined) {
+      ligne('Dégâts', ent(a.degats)), portee(), ouverture(a.flamme.cone)
+      if (a.flamme.dpsBrulure > 0) ligne('Brûlure', ent(a.flamme.dpsBrulure)), ligne('Durée de brûlure', sec(a.flamme.brulure))
+    } else if (a.napalm !== undefined) {
+      const f = a.napalm
+      ligne('Dégâts', ent(f.dps)), cadence(a.cadence), portee(), zone(f.rayon), ligne('Durée', sec(f.duree))
+      if (f.dpsBrulure > 0) ligne('Brûlure', ent(f.dpsBrulure)), ligne('Durée de brûlure', sec(f.brulure))
+    } else if (a.balayage !== undefined) {
+      const b = a.balayage
+      ligne('Dégâts', ent(b.degats)), cadence(b.tous), portee(b.longueur)
+      if (b.trace !== undefined) zone(b.trace.rayon)
+      if (b.dpsBrulure > 0) ligne('Brûlure', ent(b.dpsBrulure)), ligne('Durée de brûlure', sec(b.brulure))
+      if (b.trainee !== undefined) ligne('Traînée de feu', ent(b.trainee.dps)), ligne('Durée de la traînée', sec(b.trainee.duree))
+    } else if (a.canalise !== undefined) {
+      const c = a.canalise
+      ligne('Dégâts', ent(c.dpsMin)), ligne('Dégâts max', ent(c.dpsMax)), ligne('Montée en puissance', sec(c.montee)), portee()
+      if (c.dpsBrulure > 0) ligne('Brûlure', ent(c.dpsBrulure)), ligne('Durée de brûlure', sec(c.brulure))
+    } else if (a.orbite !== undefined) {
+      // (les drones : chacun tire à sa cadence ; ils partent sur un insecte à `laisse` du vaisseau)
+      ligne('Drones', ent(CONF.armes.length)), ligne('Dégâts', ent(a.degats)), cadence(a.cadence), portee(a.orbite.laisse ?? a.portee)
+    } else if (a.pose !== undefined) {
+      ligne('Tourelles', ent(a.pose.max)), ligne('Dégâts', ent(a.degats)), cadence(a.cadence), portee(), ligne('Durée', sec(a.pose.duree)), ligne('Délai de pose', sec(a.pose.tous))
+    } else if (a.scie !== undefined) {
+      // (elle traverse tout, et frappe chaque insecte à l'aller puis au retour)
+      ligne('Dégâts', ent(a.degats)), portee(), ligne('Cibles', 'toutes'), ligne('Passages', '2')
+    } else if (a.chaine !== undefined) {
+      const c = a.chaine
+      ligne('Dégâts', ent(a.degats)), cadence(a.cadence), portee(), ligne('Rebonds', ent(c.rebonds)), ligne('Portée des rebonds', ent(c.saut)), ligne('Perte par rebond', pct(1 - c.attenuation))
+    } else if (a.aura !== undefined) {
+      ligne('Dégâts', ent(a.aura.dps)), zone(a.aura.rayon)
+    } else if (a.drain !== undefined) {
+      ligne('Dégâts', ent(a.drain.dps)), zone(a.drain.rayon), ligne('Cibles', a.drain.cibles !== undefined ? ent(a.drain.cibles) : 'toutes')
+    } else if (a.fleau !== undefined) {
+      const f = a.fleau
+      ligne('Dégâts', ent(a.degats)), ligne('Dégâts de la chaîne', ent(f.chaine.degats)), portee(), ligne('Tours par seconde', dec(f.vitesse / (2 * Math.PI)))
+    } else if (a.givre !== undefined) {
+      const g = a.givre
+      ligne('Dégâts', ent(g.dps)), zone(g.rayon), ligne('Durée', sec(g.duree))
+      if (g.ralenti < 1) ralentit(g.ralenti)
+    } else if (a.nova !== undefined) {
+      const v = a.nova
+      ligne('Dégâts', ent(a.degats)), cadence(a.cadence), zone(v.rayon), ligne('Gel', sec(v.gel.duree)), ralentit(v.gel.ralenti), ligne('Verglas', ent(v.plaque.dps)), ligne('Durée du verglas', sec(v.plaque.duree))
+    } else if (a.condense !== undefined) {
+      ligne('Dégâts', ent(a.degats)), cadence(a.cadence), portee(), ligne('Projectiles', ent(a.condense.max))
+      if (a.gel !== undefined) ligne('Gel', sec(a.gel.duree)), ralentit(a.gel.ralenti)
+    } else if (a.tornade !== undefined) {
+      const to = a.tornade
+      ligne('Dégâts', ent(to.dps)), cadence(a.cadence), portee(), zone(to.rayon), ligne('Durée', sec(to.duree)), ralentit(to.ralenti)
+    } else if (a.ponte !== undefined) {
+      // (les dégâts et la cadence sont ceux d'un mini-ver qui mord ; il chasse à `vue` de lui)
+      const o = a.ponte
+      ligne('Dégâts', ent(o.morsure)), cadence(o.cadence), portee(o.vue), ligne('Vers par œuf', ent(o.nombre)), ligne('Œufs', ent(o.max)), ligne('Délai de ponte', sec(o.tous)), ligne('Éclosion', sec(o.eclosion)), ligne('Durée des vers', sec(o.duree))
+    } else if (a.epines !== undefined || a.rail !== undefined) {
+      ligne('Dégâts', ent(a.degats)), cadence(a.cadence), portee(), ligne('Cibles', 'toutes')
+    } else if (a.sphere !== undefined) {
+      // (la sphère tire sur tout ce qui est dans sa zone, `periode` après `periode`)
+      const s = a.sphere
+      ligne('Dégâts', ent(a.degats)), cadence(a.cadence), portee(), zone(s.rayon), ligne('Durée', sec(s.duree)), ligne('Tirs par seconde', dec(1 / s.periode))
+    } else if (a.puits !== undefined) {
+      const s = a.puits
+      ligne('Dégâts', ent(a.degats)), cadence(a.cadence), portee(), zone(s.eclat), ligne('Attraction', ent(s.rayon)), ligne('Durée', sec(s.duree))
+    } else if (a.vrille !== undefined) {
+      const v = a.vrille
+      ligne('Dégâts', ent(v.dps)), cadence(a.cadence), portee(), ligne('Vrilles', ent(v.max)), ligne('Durée', sec(v.duree)), ligne('Allonge', ent(v.allonge)), ligne('Arrachement', ent(v.arrache))
+    } else if (a.essaim !== undefined) {
+      ligne('Dégâts', ent(a.degats)), cadence(a.cadence), portee(), ligne('Projectiles', ent(a.essaim.nombre))
+    } else if (a.nuee !== undefined) {
+      // (son budget se partage entre les insectes qu'elle mord à la fois)
+      const n = a.nuee
+      ligne('Dégâts partagés', ent(n.budget)), portee(), zone(n.rayon), ligne('Bras', ent(n.bras))
+    } else if (a.rejeton !== undefined) {
+      // (les dégâts et la cadence sont ceux d'un rejeton qui fouette)
+      const r = a.rejeton
+      ligne('Dégâts', ent(a.degats)), cadence(r.periode), portee(), ligne('Rejetons', ent(r.max)), ligne('Durée', sec(r.duree)), ligne('Délai de ponte', sec(a.cadence))
+    } else if (a.crachat !== undefined) {
+      const c = a.crachat
+      ligne('Dégâts', ent(a.degats)), cadence(a.cadence), portee(), ouverture(c.cone), ligne('Acide', ent(c.acide.dps)), ligne('Durée de l’acide', sec(c.acide.duree)), ligne('Dégâts subis', `+${pct(c.acide.bonus)}`), ligne('Durée de la flaque', sec(c.duree))
+    } else if (a.mine !== undefined) {
+      const mi = a.mine
+      ligne('Dégâts', ent(a.degats)), cadence(a.cadence), ligne('Mines', ent(mi.max)), zone(mi.rayon), ligne('Durée', sec(mi.duree)), ligne('Poison', ent(mi.poison.dps)), ligne('Durée du poison', sec(mi.poison.duree))
+    } else if (a.parasite !== undefined) {
+      const p = a.parasite
+      ligne('Dégâts', ent(p.dps)), cadence(a.cadence), portee(), ligne('Parasites', ent(p.max)), ligne('Portée du saut', ent(p.saut))
+      if (p.acide !== undefined) ligne('Acide', ent(p.acide.dps)), ligne('Dégâts subis', `+${pct(p.acide.bonus)}`)
+    } else if (a.balise !== undefined) {
+      const b = a.balise
+      ligne('Dégâts', ent(b.irradie?.dps ?? a.degats)), ligne(b.irradie !== undefined ? 'Cristaux' : 'Balises', ent(b.max)), ligne('Durée', sec(b.duree)), ligne('Délai de pose', sec(b.tous))
+    } else if (a.hypercube !== undefined) {
+      const h = a.hypercube
+      ligne('Dégâts', ent(a.degats)), cadence(a.cadence), portee(), zone(h.rayon), ligne('Rebonds', ent(h.rebonds)), ligne('Zone par rebond', `+${pct(h.croissance - 1)}`)
+    } else if (a.de !== undefined) {
+      // (les dégâts et la zone d'un point du dé ; la zone dite est celle d'un 4)
+      ligne('Dégâts par point', ent(a.degats)), ligne('Dé', '1 à 6'), cadence(a.cadence), portee(), ligne('Zone sur un 4', ent(a.de.rayon)), ligne('Zone par point', ent(a.de.pas))
+    } else if (a.coupe !== undefined) {
+      const c = a.coupe
+      ligne('Dégâts', ent(a.degats)), cadence(a.cadence), portee(), zone(c.rayon), ligne('Durée', sec(c.duree)), ligne('Coups par seconde', dec(1 / c.periode)), ligne('Coup final', ent(c.fin))
+    } else {
+      // (UN OBUS — les canons, les missiles, la météore, la tentacule —, et ce qu'il emporte : son explosion, ses
+      // éclats, son gel)
+      ligne('Dégâts', ent(a.degats)), cadence(a.cadence, CONF.alternance ? CONF.armes.length : 1), portee()
+      if (a.salve !== undefined) ligne('Projectiles', ent(a.salve.nombre))
+      if (a.zone !== undefined) zone(a.zone.rayon), ligne('Dégâts de zone', ent(a.zone.degats))
+      if (a.plasma !== undefined) zone(a.plasma.rayon), ligne('Dégâts de zone', ent(a.plasma.degats))
+      if (a.chaine === undefined && a.gel !== undefined) ligne('Gel', sec(a.gel.duree)), ralentit(a.gel.ralenti)
     }
-    // (UN NOMBRE SEUL, SANS UNITÉ NI SIGNE — Keko, 20/11 : « éviter des lignes avec des slashes et trop d'informations » :
-    // le coup, ou ce qui frappe en continu, par seconde)
-    l.push({ nom: 'Dégâts', valeur: `${Math.round(a.flamme !== undefined || a.degats > 0 ? a.degats : continus(a))}` })
-    // (LA VITESSE D'ATTAQUE, EN ATTAQUES PAR SECONDE, sans unité — Keko, 20/11 ; une décimale au plus : celle du vaisseau,
-    // deux armes qui tirent à tour de rôle tirent ensemble à la cadence d'une)
-    const n = CONF.alternance ? CONF.armes.length : 1
-    if (a.degats > 0 && a.flamme === undefined && a.cadence > 0.1) l.push({ nom: 'Vitesse d’attaque', valeur: String(Math.round((10 * n) / a.cadence) / 10).replace('.', ',') })
-    if (a.portee > 0) l.push({ nom: 'Portée', valeur: `${Math.round(a.portee)}` })
     return l
   }
   /** La hauteur du panneau des statistiques : son titre, ses lignes, son bouton. */
