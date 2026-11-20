@@ -6579,3 +6579,37 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   enlève le contour de pic qui se produit lors de l'explosion pour tester ») : rayon, portée et plaque de verglas
   56 → 48 (−15 %) ; la couronne de 32 dents de givre sur le front ne se dessine plus (`DENTS_DU_FRONT`, à `false` pour
   l'essai) — les cristaux qui jaillissent du sol, le flocon, les bris de glace et le vent restent. Vu à la capture.
+- L'ÉQUILIBRAGE DES 36 ARMES DU VORTEX, MESURÉ (Keko, 20/11 : « passe en revue toutes les armes et calcule leur
+  équilibrage : les dégâts, la fréquence, le nombre de projectiles, ce qui frappe une cible unique en même temps, le
+  nombre de cibles, la distance, et les spécificités — le hasard du dé, les tourelles bien placées, les vers des œufs ;
+  qu'aucune ne soit meilleure qu'une autre, mais qu'elles aient toutes leur spécialisation ») :
+  - LE BANC (`scripts/equilibrage.ts`, `npm run equilibrage`) : chaque arme montée comme en vol (la configuration de
+    `configDuVol` recopiée), jouée par la règle, sur quatre mesures — PORTÉE (un insecte increvable qui défile en ligne
+    droite à 15, 35, 60, 90, 120 : les dégâts par seconde, leur moyenne), BOSS (un insecte increvable qui poursuit le
+    vaisseau, immobile ou tournant en rond — le meilleur), FOULE (douze insectes serrés qui défilent à 45 et 90), VAGUE
+    (de vrais insectes, 12 points, dix à la fois depuis 150, remplacés : combien il en abat par seconde, immobile ou en
+    rond) ; et LE FREIN (de combien les insectes avancent moins vite : gel, ralenti, saisie). Tout ce que Keko cite est
+    dedans par la règle elle-même : le dé tiré, les tourelles posées, les œufs qui éclosent, les points de vie (un coup
+    de 12 tue un insecte d'un coup, un de 11 non — les seuils comptent). Biais trouvés et retirés en route : des cibles
+    immobiles (une zone posée les frappait sans fin), des cibles qui tournaient en rond (ce qui vise en avance les
+    manquait), les chocs du vaisseau qui comptaient comme des dégâts.
+  - L'INDICE : chaque mesure rapportée à la médiane de la flotte d'avant, pesée — portée 0,25, boss 0,25 (la cible unique,
+    la moitié), foule 0,15, vague 0,35 —, majorée du frein au-delà de 5 %. *Les poids et la valeur du frein sont des
+    choix, à rejuger.* AVANT : de 0,61 (le Fléau) à 1,99 (les Rejetons). APRÈS : de 0,94 à 1,11.
+  - SEULS LES DÉGÂTS ONT BOUGÉ (portées, cadences, rayons, durées : l'identité de chaque arme est intacte), cherchés par
+    itération puis arrondis : le laser 6 → 9 ; la mitrailleuse 1,2 → 1,5 ; les missiles 5 → 8 (et leur souffle) ; le
+    lance-flammes 10 → 6 (brûlure 3 → 2) ; le rayon thermique 12 → 7 (brûlure 1,5, flaques 3, leur feu 2,5) ; les drones
+    2,5 → 3 ; la chaîne 9 → 8 ; la tempête 4 → 6,5 ; les tourelles 3 → 3,5 ; le fléau 8 → 16 (chaîne 3 → 6) ; la nova
+    8 → 4,5 (verglas 4 → 2,5) ; les éclats 6 → 5 ; le blizzard 8 → 11 ; l'orbe de plasma 3 → 2 ; la décharge 18 → 14 ;
+    la tentacule 6 → 5 ; la nuée 14 → 11 ; les rejetons 4 → 2 ; le crachat 3 → 2,5 (acide 2 → 1,5) ; les mines 6 → 11
+    (poison 3 → 5,5) ; la traînée corrosive 7 → 12 ; le faisceau 5–18 → 3–10 ; les cristaux 20 → 22 ; la désintégration
+    16 → 9 ; la singularité 22 → 11 ; l'intrication 4 → 5,5 ; les vrilles 8 → 6 (arrachement 12 → 9) ; les œufs 2 → 3 ;
+    l'épine 16 → 12 ; l'hypercube 8 → 13 ; le dé 4 → 2,3 par point (2,4 ferait tuer un 5 d'un coup : 1,16) ; la
+    superposition 3 → 2,5 (son point final 30 → 26). Inchangés : le napalm, la scie, le missile ionique, les parasites.
+    Les textes des pièces suivent.
+  - LES SPÉCIALITÉS QUI RESTENT (le banc les montre) : la portée et la cible unique au laser, à la mitrailleuse, à la
+    décharge, aux éclats, aux drones, aux tourelles ; le boss aux tentacules, à la nuée, aux rejetons, au faisceau, aux
+    œufs ; la foule au lance-flammes, au rayon, à l'orbe, à la désintégration, à la singularité, à la superposition ; la
+    vague (le corps à corps, les traînées) à la tempête, au fléau, à la traînée corrosive, aux cristaux ; le frein à la
+    nova (27 %), à la singularité (36 %), aux vrilles (27 %), au blizzard (13 %). La superposition reste faible contre un
+    boss qui bouge (0,21) : sa zone est posée.

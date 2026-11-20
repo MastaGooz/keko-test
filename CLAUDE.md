@@ -544,6 +544,7 @@ npm run verif        # vérifications des règles, sans navigateur
 npm run emoji        # (re)engendre public/data/emoji.json depuis Unicode + CLDR
 npm run emoji -- --peau   # le banc avec les variantes de peau -> emoji-peau.json
 npm run peintures    # (re)engendre public/data/paintings.json (la seconde collection)
+npm run equilibrage  # ?vortex : mesure la puissance des 36 armes par la règle (docs/vaisseau.md)
 ```
 
 Les deux pipelines tournent **hors du build** et profitent du cache de
