@@ -6626,3 +6626,21 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   chiffre qui monte, pas une pluie), rien sous un point, dix à la fois au plus ; petits, blancs, cernés d'encre, ils
   montent de huit pixels au-dessus de l'insecte ; dorés et en gras sur un coup critique. Une décimale sous 3 (« 1,5 »).
   `&degats=0` les cache. Vu à la capture.
+- 1 % DE COUPS CRITIQUES, DES CHIFFRES PLUS JUICY, DES PÉPITES QUI NE SE PERDENT PLUS (Keko, 20/11) :
+  - LE CRITIQUE (« donne 1 % de chance à chaque dégât d'être un coup critique ») : au vortex, 1 % de base
+    (`CRITIQUE_DU_VORTEX`, la recherche et les talents s'y ajoutent ; un critique fait deux fois les dégâts ;
+    `&critique=P` la pose pour voir). Chaque coup qui frappe d'un coup en tire un — huit n'en tiraient pas encore : la
+    chaîne d'éclairs, la chaîne du fléau, la morsure des mini-vers, l'arrachement des vrilles, le rayon thermique (deux
+    fois), le souffle des missiles, l'arc des drones (`critiqueTire`). Les dégâts continus (zones, poisons, rayons qui
+    chauffent) n'ont pas de coup à tirer.
+  - LES CHIFFRES (« trop gros, ils apparaissent de manière plate, pas très juicy ») : un 3 × 5 à nous
+    (`PETITS_CHIFFRES`), cerné d'encre, peint d'une rampe rangée par rangée. UN COUP : il jaillit (monte vite puis
+    ralentit, part un peu de son côté, propre à chaque insecte), blanc à l'instant puis crème, bondit de deux pixels à
+    chaque coup qui s'ajoute, fonce et s'efface en finissant. UN CRITIQUE (« une petite animation sympa, en changeant la
+    couleur ») : son chiffre à lui, qui FRAPPE — trois fois plus grand l'espace de deux images, puis deux fois —, tremble,
+    FLAMBE du jaune au rouge (sa rampe défile), lance une gerbe de huit étincelles sous une lueur orange, et monte plus
+    haut. Vus à la capture.
+  - L'AIMANT (« une pépite aimantée devrait toujours finir par être capturée ; si je m'éloigne trop vite, je la perds ») :
+    prise une fois par l'aimant du joueur (`Pepite.aimanteeA`), elle ne le lâche plus — elle fonce droit sur lui, de plus
+    en plus vite (400 par seconde de plus chaque seconde, `forage.accelerationAimantee`), toujours plus vite que lui ;
+    la soute pleine ou le minerai refusé la relâchent. Testé : un vaisseau qui fuit à 200, la pépite à bord en 1 s.

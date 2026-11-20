@@ -2655,5 +2655,24 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   verifier(`la troisième vague : ${compte} insectes nés en ${(derniere - debut).toFixed(2)} s (8 en 6,6 s)`, compte === 8 && Math.abs(derniere - debut - 6.6) < 0.05)
 }
 
+// UNE PÉPITE AIMANTÉE FINIT TOUJOURS À BORD (Keko, 20/11 : « j'aimante une pépite et si je m'éloigne trop vite, je la
+// perds ») : prise par l'aimant, puis le vaisseau qui fuit à 200 — elle le rattrape
+{
+  const c: ConfigVaisseau = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, premiere: 1e9 } }
+  const w = nouveauMonde(c, 4)
+  w.vaisseau = { ...w.vaisseau, x: 1000, y: 0, vx: 0, vy: 0 }
+  w.pepites.push({ id: 1, x: 1000 + c.forage.aimant - 2, y: 0, vx: 0, vy: 0, graine: 1, minerai: 'fer' })
+  avancerLeMonde(c, w, 1 / 60, { x: 0, y: 0 })
+  const prise = w.pepites[0]?.aimanteeA !== undefined
+  let aBord = -1
+  for (let i = 0; i < 60 * 6 && aBord < 0; i++) {
+    // (il fuit tout droit à 200, plus vite qu'aucun vaisseau)
+    w.vaisseau = { ...w.vaisseau, x: w.vaisseau.x - 200 / 60, vx: -200, vy: 0 }
+    avancerLeMonde(c, w, 1 / 60, { x: 0, y: 0 })
+    if (w.pepites.length === 0) aBord = w.t
+  }
+  verifier(`une pépite aimantée rattrape un vaisseau qui fuit à 200 (à bord en ${aBord.toFixed(2)} s)`, prise && aBord > 0 && aBord < 3 && w.invasion.xp === 1)
+}
+
 // (TOUJOURS EN DERNIER : des blocs ajoutés après cette ligne échouaient sans faire échouer `npm run verif` — 17/11)
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)

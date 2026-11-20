@@ -279,7 +279,7 @@ export const VAISSEAU = {
    * une roche a `durete × rayon²` points ; éclatée, elle laisse des pépites (tant par unité de rayon) qui viennent
    * au vaisseau le plus proche à portée d'aimant, et comptent une fois à bord.
    */
-  forage: { portee: 64, debit: 28, durete: 0.6, pepitesParRayon: 0.45, aimant: 44, vitessePepite: 160, ramassage: 5 },
+  forage: { portee: 64, debit: 28, durete: 0.6, pepitesParRayon: 0.45, aimant: 44, vitessePepite: 160, ramassage: 5, /** Une pépite aimantée par le joueur : de combien sa vitesse monte chaque seconde (voir « une pépite aimantée »). */ accelerationAimantee: 400 },
   /**
    * LA BOMBE, la première CAPACITÉ ACTIVE (Keko, 12/11 : « une action un peu puissante, soumise à un nombre de charges
    * par vol ») — une capacité d'ESSAI, pour juger le geste : tant de charges par vol ; lancée, elle file à tant d'unités
@@ -863,7 +863,7 @@ export const totalDe = (c: Cargaison): number => c.fer + c.or + c.cristal
 export type Asteroide = { id: number; x: number; y: number; rayon: number; graine: number; angle0: number; vitesseAngulaire: number; minerai: Minerai; richesse: number }
 /** Un laser posé sur sa roche : laquelle, le point d'impact, la part déjà creusée (0 à 1). *Il a visé le rival un temps ; la foreuse ne sert plus qu'aux roches (Keko).* */
 export type Forage = { sorte: 'roche'; cible: number; x: number; y: number; part: number }
-export type Pepite = { id: number; x: number; y: number; vx: number; vy: number; graine: number; minerai: Minerai }
+export type Pepite = { id: number; x: number; y: number; vx: number; vy: number; graine: number; minerai: Minerai; /** L'instant où l'aimant du JOUEUR l'a prise : elle ne le lâche plus (voir plus bas, « une pépite aimantée »). */ aimanteeA?: number }
 /** Un choc contre un astéroïde : où, et avec quelle vitesse normale (pour l'étincelle et la vibration). */
 export type Choc = { x: number; y: number; force: number; asteroide: number; /** Le vaisseau a TRAVERSÉ la roche, trop légère pour lui : la part de sa vitesse qu'il y a laissée (roche ÷ vaisseau). */ perce?: number }
 /** Un trait tiré par l'ennemi. */
@@ -1557,6 +1557,13 @@ function faireNaitreUnInsecte(c: ConfigVaisseau, m: Monde, ev: Evenement[]): voi
 
 /** LES VAGUES de l'invasion : une vague commence quand la précédente est finie (plus un insecte) et le repos passé ; ses insectes naissent un à un. */
 /**
+ * UN COUP EST-IL CRITIQUE ? (la chance des passifs ; au vortex, 1 % de base — Keko, 20/11 : « donne 1 % de chance à chaque
+ * dégât d'être un coup critique ») : CHAQUE COUP qui frappe d'un coup en tire un ; les dégâts continus (une zone, un
+ * poison, un rayon qui chauffe) n'ont pas de coup à tirer.
+ */
+const critiqueTire = (c: ConfigVaisseau, m: Monde): boolean => c.passifs.critique > 0 && tire(m.graine, m.prochainId++, 12) < c.passifs.critique
+
+/**
  * LE PAS DES NAISSANCES D'UNE VAGUE (Keko, 20/11 : « augmente progressivement le nombre d'ennemis qui spawnent par vague :
  * on a toujours le même nombre, ça devient difficile de tester l'efficacité d'une arme ») : une vague comptait déjà
  * `renfort` insectes de plus que la précédente, mais ils naissaient un par un toutes les `cadence` secondes — à l'écran,
@@ -1958,8 +1965,9 @@ function mener_L_Electricite(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenem
     }
     ev.push({ type: 'chaine', points: [{ x: v.x, y: v.y }, ...touches.map((e) => ({ x: e.corps.x, y: e.corps.y }))], ids: touches.map((e) => e.id) })
     touches.forEach((e, k) => {
-      e.pv -= a.degats * Math.pow(ch.attenuation, k)
-      ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique: false })
+      const critique = critiqueTire(c, m)
+      e.pv -= (a.degats * Math.pow(ch.attenuation, k)) * (critique ? c.passifs.critiqueFacteur : 1)
+      ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })
       if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
     })
   })
@@ -2897,9 +2905,10 @@ function menerLesFleaux(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]
       if (le < 0 || le > fl.longueur || Math.abs(ex * uy - ey * ux) > fl.chaine.epaisseur + c.ennemi.rayon) continue
       if (m.t - (f.frappesChaine[e.id] ?? -1e9) < fl.rebond) continue
       f.frappesChaine[e.id] = m.t
-      e.pv -= fl.chaine.degats
+      const critique = critiqueTire(c, m)
+      e.pv -= fl.chaine.degats * (critique ? c.passifs.critiqueFacteur : 1)
       ev.push({ type: 'chaineFrappe', x: e.corps.x, y: e.corps.y })
-      ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique: false })
+      ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })
       if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
     }
   })
@@ -3435,9 +3444,10 @@ function menerLesOeufs(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[])
     // (AU CONTACT, IL MORD, à sa cadence)
     if (proie !== undefined && dist(proie) <= c.ennemi.rayon + 3 && m.t >= w.mordA) {
       w.mordA = m.t + po.cadence
-      proie.pv -= po.morsure
+      const critique = critiqueTire(c, m)
+      proie.pv -= po.morsure * (critique ? c.passifs.critiqueFacteur : 1)
       ev.push({ type: 'morsureMiniVer', id: proie.id, x: proie.corps.x, y: proie.corps.y })
-      ev.push({ type: 'ennemiTouche', id: proie.id, x: proie.corps.x, y: proie.corps.y, critique: false })
+      ev.push({ type: 'ennemiTouche', id: proie.id, x: proie.corps.x, y: proie.corps.y, critique })
       if (proie.pv <= 0) abattreLEnnemi(c, m, proie, ev)
     }
     return true
@@ -3519,9 +3529,10 @@ function menerLesVrilles(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[
     let proie = r.cible === null ? undefined : m.ennemis.find((e) => e.id === r.cible)
     // (UN GRAND S'ARRACHE : sorti de son allonge, il prend un coup et elle le lâche)
     if (proie !== undefined && dist(proie) > allonge) {
-      proie.pv -= vr.arrache
+      const critique = critiqueTire(c, m)
+      proie.pv -= vr.arrache * (critique ? c.passifs.critiqueFacteur : 1)
       ev.push({ type: 'arrache', id: r.id, x: proie.corps.x, y: proie.corps.y })
-      ev.push({ type: 'ennemiTouche', id: proie.id, x: proie.corps.x, y: proie.corps.y, critique: false })
+      ev.push({ type: 'ennemiTouche', id: proie.id, x: proie.corps.x, y: proie.corps.y, critique })
       if (proie.pv <= 0) abattreLEnnemi(c, m, proie, ev)
       proie = undefined
       r.cible = null
@@ -3867,11 +3878,12 @@ function menerLeRayon(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
     for (const e of [...m.ennemis]) {
       if (b.touches.includes(e.id) || Math.hypot(e.corps.x - ix, e.corps.y - iy) > bl.trace.rayon + c.ennemi.rayon) continue
       b.touches.push(e.id)
-      e.pv -= bl.degats
+      const critique = critiqueTire(c, m)
+      e.pv -= bl.degats * (critique ? c.passifs.critiqueFacteur : 1)
       e.bruleA = m.t + bl.brulure
       e.dpsBrulure = bl.dpsBrulure
       e.dureeBrulure = bl.brulure
-      ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique: false })
+      ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })
       if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
     }
     const tr = bl.trainee
@@ -3908,11 +3920,12 @@ function menerLeRayon(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
     if (ecart < -marge) ecart += 2 * Math.PI
     if (ecart > ouverture + marge) continue
     b.touches.push(e.id)
-    e.pv -= bl.degats
+    const critique = critiqueTire(c, m)
+    e.pv -= bl.degats * (critique ? c.passifs.critiqueFacteur : 1)
     e.bruleA = m.t + bl.brulure
     e.dpsBrulure = bl.dpsBrulure
     e.dureeBrulure = bl.brulure
-    ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique: false })
+    ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })
     if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
   }
   // (LA TRAÎNÉE : tous les `pas` radians balayés, des flaques de feu le long du rayon)
@@ -3955,8 +3968,9 @@ function exploser(c: ConfigVaisseau, m: Monde, x: number, y: number, zone: { ray
   ev.push({ type: 'explosionDeZone', x, y, rayon: zone.rayon, ...(arme === undefined ? {} : { arme }) })
   for (const e of [...m.ennemis]) {
     if (e === touche || Math.hypot(e.corps.x - x, e.corps.y - y) > zone.rayon + c.ennemi.rayon) continue
-    e.pv -= zone.degats
-    ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique: false })
+    const critique = critiqueTire(c, m)
+    e.pv -= zone.degats * (critique ? c.passifs.critiqueFacteur : 1)
+    ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })
     if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
   }
 }
@@ -4123,9 +4137,10 @@ function menerLesDrones(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]
     m.armesA[i] = m.t + a.cadence
     // (UN DRONE ÉLECTRIQUE frappe d'un arc, à l'instant)
     if (a.eclair === true) {
-      cible.pv -= a.degats
+      const critique = critiqueTire(c, m)
+      cible.pv -= a.degats * (critique ? c.passifs.critiqueFacteur : 1)
       ev.push({ type: 'arc', x0: d.x, y0: d.y, x1: cible.corps.x, y1: cible.corps.y, drone: k, id: cible.id })
-      ev.push({ type: 'ennemiTouche', id: cible.id, x: cible.corps.x, y: cible.corps.y, critique: false })
+      ev.push({ type: 'ennemiTouche', id: cible.id, x: cible.corps.x, y: cible.corps.y, critique })
       if (cible.pv <= 0) abattreLEnnemi(c, m, cible, ev)
       return
     }
@@ -4630,10 +4645,47 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
       ev.push({ type: 'ramasse', x: p.x, y: p.y, par: plusProche.par, minerai: p.minerai })
       continue
     }
+    // UNE PÉPITE AIMANTÉE PAR LE JOUEUR FINIT TOUJOURS À BORD (Keko, 20/11 : « quand une pépite est aimantée, elle doit
+    // augmenter en vitesse : j'aimante une pépite et si je m'éloigne trop vite, je la perds ; une pépite aimantée devrait
+    // toujours finir par être capturée ») : prise une fois, elle ne le lâche plus, où qu'il aille — elle fonce droit sur
+    // lui, de plus en plus vite (`accelerationAimantee` par seconde, depuis `vitessePepite` au moins), et toujours plus
+    // vite que lui ; la soute pleine ou le minerai refusé la relâchent
+    const aimanteParLui = p.aimanteeA !== undefined && !(!c.invasion.active && (m.minerai >= c.capacite || m.refuses[p.minerai]))
+    if (aimanteParLui) {
+      const jx = v.x - p.x
+      const jy = v.y - p.y
+      const dj = Math.hypot(jx, jy) || 1
+      if (dj <= c.forage.ramassage + Math.hypot(v.vx, v.vy) * dt * 2) {
+        // (à bord : la même chose que plus haut, pour le joueur)
+        m.pepites.splice(i, 1)
+        if (c.invasion.active) {
+          m.invasion.xp += 1
+          if (m.invasion.xp >= xpDuNiveau(c, m.invasion.niveau)) {
+            m.invasion.xp -= xpDuNiveau(c, m.invasion.niveau)
+            m.invasion.niveau += 1
+            ev.push({ type: 'niveau', niveau: m.invasion.niveau })
+          }
+        } else {
+          m.minerai += 1
+          m.cargaison[p.minerai] += 1
+        }
+        ev.push({ type: 'ramasse', x: p.x, y: p.y, par: 'joueur', minerai: p.minerai })
+        continue
+      }
+      const vite = Math.max(c.forage.vitessePepite + c.forage.accelerationAimantee * (m.t - (p.aimanteeA ?? m.t)), Math.hypot(v.vx, v.vy) + 60)
+      const pasMax = Math.min(vite * dt, dj)
+      p.vx = (jx / dj) * vite
+      p.vy = (jy / dj) * vite
+      p.x += (jx / dj) * pasMax
+      p.y += (jy / dj) * pasMax
+      continue
+    }
+    if (p.aimanteeA !== undefined) delete p.aimanteeA
     const frein = Math.exp(-2.5 * dt)
     p.vx *= frein
     p.vy *= frein
     const aimant = c.forage.aimant * (plusProche.e === null ? c.foreuse.aimant : 1) // (l'aimant du joueur suit sa foreuse)
+    if (d <= aimant && !soutePleine && plusProche.e === null && c.forage.accelerationAimantee > 0) p.aimanteeA = m.t
     if (d <= aimant && !soutePleine) {
       const tirage = c.forage.vitessePepite * (1 - d / aimant) + 40
       p.vx += (dx / d) * tirage * dt * 6

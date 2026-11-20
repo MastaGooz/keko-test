@@ -960,7 +960,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         else if (canon?.flamme !== undefined) conf = { ...conf, marcheArriere: 1, alternance: false, armes: [{ ...canon, place: 0, bouche: boucheMontee(monteeA(hangar, 'coque').cran, canon.id, 0) }] }
         else if (canon !== undefined) conf = { ...conf, marcheArriere: 1, alternance: true, arcDeTir: tirA360 ? 0 : ARC_DU_VORTEX, armes: [0, 1].map((place) => ({ ...canon, cadence: canon.cadence * 2, place, bouche: boucheMontee(monteeA(hangar, 'coque').cran, canon.id, place) })) }
       }
-      if (VORTEX) conf = { ...conf, champ: { ...conf.champ, densite: 0 }, station: { ...conf.station, portee: -1 }, invasion: { ...conf.invasion, active: true, viePortail: Math.max(1, Number(parametres.get('portail')) || conf.invasion.viePortail) /* (`&portail=N` : la vie du portail au départ, pour voir la fin d'un lien) */ }, ennemi: { ...conf.ennemi, ...INSECTE }, bouclier: { ...conf.bouclier, points: Math.max(conf.bouclier.points, BOUCLIER_DU_VORTEX) } }
+      if (VORTEX) conf = { ...conf, champ: { ...conf.champ, densite: 0 }, station: { ...conf.station, portee: -1 }, invasion: { ...conf.invasion, active: true, viePortail: Math.max(1, Number(parametres.get('portail')) || conf.invasion.viePortail) /* (`&portail=N` : la vie du portail au départ, pour voir la fin d'un lien) */ }, ennemi: { ...conf.ennemi, ...INSECTE }, bouclier: { ...conf.bouclier, points: Math.max(conf.bouclier.points, BOUCLIER_DU_VORTEX) }, passifs: { ...conf.passifs, critique: conf.passifs.critique + CRITIQUE_DU_VORTEX } }
       // LE RIVAL EST UN CUIRASSÉ LOURDEMENT ARMÉ (Keko, 14/11, à l'essai : « pour voir si je peux arriver à le tuer avec mon
       // chasseur ») : gros, lent, qui vire mal, très solide, et qui tire trois fois plus souvent, de plus loin ; il ne
       // fuit plus. `&rival=serie` rend le petit rival d'avant. *Chiffres au jugé.*
@@ -1298,6 +1298,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const VIRAGE_MAX = 2.9
   /** L'agilité d'un vaisseau rapportée à celle de référence (9, à peu près le Chasseur) : de 0,55 (la Salamandre) à 1. */
   const manieDe = (cf: ConfigVaisseau): number => agiliteDe(cf) / 9
+  /** LA CHANCE DE COUP CRITIQUE DE BASE au vortex (Keko, 20/11 : « 1 % de chance à chaque dégât ») : les talents et la recherche s'y ajoutent ; un critique fait deux fois les dégâts. `&critique=P` la pose (de 0 à 1), pour voir les critiques. */
+  const CRITIQUE_DU_VORTEX = parametres.has('critique') ? Math.max(0, Math.min(1, Number(parametres.get('critique')) || 0)) : 0.01
   /** Le bouclier de base du jeu du vortex, en points (un chiffre de moi, à rejuger). */
   const BOUCLIER_DU_VORTEX = 3
   /** L'INSECTE de l'invasion, en chiffres de rival (de moi, à rejuger) : deux obus de canon l'abattent ; il marche à 40, vire vite ; il lâche UNE PÉPITE (de l'expérience) et ne tire pas — il mord. */
@@ -1476,8 +1478,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * obus, une zone, un poison — lu sur ses points de vie, pas sur un événement), et ce qui lui restait s'il est mort
    * ailleurs qu'au portail. CONTRE LE FLOT : UN SEUL CHIFFRE PAR INSECTE, qui S'ADDITIONNE tant que les coups se suivent (à
    * moins de 0,35 s, 0,8 s au plus) — une brûlure ou un drain donnent un chiffre qui monte, pas une pluie — ; rien sous un
-   * point ; DIX À LA FOIS au plus (le plus vieux part) ; petits, cernés d'encre, ils montent de huit pixels et partent
-   * après 0,6 s sans coup. Blancs ; dorés et bondissants sur un coup critique. `&degats=0` les cache.
+   * point ; DIX À LA FOIS au plus (le plus vieux part) ; petits, cernés d'encre, ils montent et partent après 0,6 s sans
+   * coup. `&degats=0` les cache. (Leur dessin : voir `dessinerLesDegats`.)
    */
   const AVEC_DEGATS = parametres.get('degats') !== '0'
   const pvVus = new Map<number, { pv: number; x: number; y: number }>()
@@ -1489,13 +1491,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const ajouter = (id: number, x: number, y: number, d: number): void => {
       if (d <= 1e-6) return
       const critique = t - (critiqueA.get(id) ?? -10) < 0.05
-      const ch = chiffres.find((c) => c.id === id && t - c.dernier < 0.35 && t - c.nait < 0.8)
+      // (UN CRITIQUE A TOUJOURS SON CHIFFRE À LUI, qui frappe : il ne se fond pas dans le compte des coups, ni eux en lui)
+      const ch = critique ? undefined : chiffres.find((c) => c.id === id && !c.critique && t - c.dernier < 0.35 && t - c.nait < 0.8)
       if (ch !== undefined) {
         ch.total += d
         ch.dernier = t
         ch.x = x
         ch.y = y
-        if (critique) ch.critique = true
       } else {
         chiffres.push({ id, x, y, total: d, nait: t, dernier: t, critique })
         // (dix à la fois au plus, en ne comptant que ceux qui se voient : le plus vieux part)
@@ -1517,21 +1519,86 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       }
     for (let i = chiffres.length - 1; i >= 0; i--) if (t - chiffres[i].dernier > 0.7) chiffres.splice(i, 1)
   }
+  /**
+   * LES PETITS CHIFFRES DES DÉGÂTS (Keko, 20/11 : « le chiffre est trop gros, il apparaît de manière plate, pas très
+   * juicy ») : un 3 × 5 à nous, cerné d'encre, peint rangée par rangée d'une rampe (clair en haut, plus chaud en bas) ;
+   * `e` l'agrandit d'un nombre entier de fois, `a` l'efface.
+   */
+  const PETITS_CHIFFRES: Record<string, string[]> = {
+    '0': ['###', '#.#', '#.#', '#.#', '###'], '1': ['.#.', '##.', '.#.', '.#.', '###'], '2': ['###', '..#', '###', '#..', '###'], '3': ['###', '..#', '.##', '..#', '###'], '4': ['#.#', '#.#', '###', '..#', '..#'],
+    '5': ['###', '#..', '###', '..#', '###'], '6': ['###', '#..', '###', '#.#', '###'], '7': ['###', '..#', '.#.', '.#.', '.#.'], '8': ['###', '#.#', '###', '#.#', '###'], '9': ['###', '#.#', '###', '..#', '###'], ',': ['.', '.', '.', '#', '#'],
+  }
+  const largeurDesPetitsChiffres = (s: string, e: number): number => [...s].reduce((w, ch) => w + ((PETITS_CHIFFRES[ch]?.[0].length ?? 3) + 1) * e, -e)
+  function petitsChiffres(p: Peintre, s: string, cx: number, cy: number, rampe: number[], e: number, a: number): void {
+    const x0 = Math.round(cx - largeurDesPetitsChiffres(s, e) / 2)
+    const y0 = Math.round(cy - (5 * e) / 2)
+    const encre = MATIERES.encre.contour
+    for (const passe of [0, 1]) {
+      let x = x0
+      for (const ch of s) {
+        const g = PETITS_CHIFFRES[ch]
+        if (g === undefined) continue
+        g.forEach((rang, r) =>
+          [...rang].forEach((px, k) => {
+            if (px !== '#') return
+            if (passe === 0) p.rect(x + k * e - 1, y0 + r * e - 1, e + 2, e + 2, encre, a)
+            else p.rect(x + k * e, y0 + r * e, e, e, rampe[Math.min(rampe.length - 1, r)], a)
+          }),
+        )
+        x += (g[0].length + 1) * e
+      }
+    }
+  }
+  /** La rampe d'un chiffre, de haut en bas : blanc puis crème ; elle s'assombrit en finissant. */
+  const RAMPE_DU_COUP = [N.WHITE, N.hex('#fff6d8'), N.hex('#ffe9b0'), N.hex('#ffd98a'), N.hex('#f2b866')]
+  const RAMPE_DU_CRITIQUE = [N.hex('#fff7a8'), N.hex('#ffe04a'), N.hex('#ffae22'), N.hex('#ff6a1a'), N.hex('#e8322a')]
+  const RAMPE_EN_FLAMMES = [N.WHITE, N.hex('#fff7a8'), N.hex('#ffe04a'), N.hex('#ffae22'), N.hex('#ff6a1a')]
   function dessinerLesDegats(p: Peintre): void {
     suivreLesDegats()
     const rs = CONF.ennemi.rayon / champApplique
     for (const c of chiffres) {
       if (c.total < 1) continue
-      const u = (t - c.dernier) / 0.7
-      const sx = (c.x - camera.x) / champApplique + W / 2
-      const sy = (c.y - camera.y) / champApplique + centreY() - rs - 6 - 8 * Math.min(1, (t - c.nait) / 0.7)
+      const age = t - c.nait
+      const repos = t - c.dernier
+      if (repos > 0.6) continue
       // (sous 3, une décimale — la mitrailleuse fait 1,5 — ; au-delà, un entier)
       const n = c.total < 3 ? Math.round(c.total * 10) / 10 : Math.round(c.total)
       const dit = String(n).replace('.', ',')
-      const bond = c.critique && t - c.nait < 0.15 ? -2 : 0
-      // (le texte se peint plein : il tient, puis part d'un coup)
-      if (u > 0.85) continue
-      ecrire(p, dit, sx, sy + bond, c.critique ? PEPITE[3] : N.WHITE, { align: 'center', police: c.critique ? GRAS : TEXTE, contour: MATIERES.encre.contour })
+      // (son côté : chaque insecte le sien, tiré de son identité — les chiffres voisins ne s'empilent pas)
+      const cote = ((c.id * 37) % 7) / 3 - 1
+      const bx = (c.x - camera.x) / champApplique + W / 2
+      const by = (c.y - camera.y) / champApplique + centreY() - rs - 5
+      // (il s'efface en finissant : les 0,2 dernières secondes)
+      const a = repos < 0.4 ? 1 : 1 - (repos - 0.4) / 0.2
+      if (!c.critique) {
+        // UN COUP : il JAILLIT — monte vite puis ralentit, part un peu de son côté —, BONDIT à chaque coup qui s'ajoute
+        // (deux pixels, 0,12 s), blanc au jaillissement ; il fonce en finissant
+        const monte = 9 * (1 - Math.exp(-age * 7))
+        const bond = repos < 0.12 ? -2 * Math.sin((repos / 0.12) * Math.PI) : 0
+        const x = bx + cote * 5 * (1 - Math.exp(-age * 5))
+        const y = by - monte + bond
+        const rampe = repos < 0.04 ? [N.WHITE, N.WHITE, N.WHITE, N.WHITE, N.WHITE] : repos > 0.4 ? RAMPE_DU_COUP.slice(2).concat([N.hex('#c98a4a'), N.hex('#a0603a')]) : RAMPE_DU_COUP
+        petitsChiffres(p, dit, x, y, rampe, 1, a)
+      } else {
+        // UN COUP CRITIQUE : il FRAPPE — trois fois plus grand l'espace de deux images, puis deux fois —, TREMBLE, FLAMBE
+        // du jaune au rouge (sa rampe défile), lance une gerbe d'étincelles, et monte plus haut
+        const e = age < 0.05 ? 3 : 2
+        const tremble = age < 0.25 ? Math.round(Math.sin(t * 95) * 1.5 * (1 - age / 0.25)) : 0
+        const monte = 14 * (1 - Math.exp(-age * 5))
+        const x = bx + cote * 4 * (1 - Math.exp(-age * 5)) + tremble
+        const y = by - 3 - monte + (repos < 0.12 ? -2 * Math.sin((repos / 0.12) * Math.PI) : 0)
+        const cran = Math.floor(t * 18) % 2
+        const rampe = age < 0.05 ? [N.WHITE, N.WHITE, N.WHITE, N.WHITE, N.WHITE] : cran === 0 ? RAMPE_EN_FLAMMES : RAMPE_DU_CRITIQUE
+        if (age < 0.3) p.glow(x, y, 12, N.hex('#ff8a1a'), 0.45 * (1 - age / 0.3))
+        // (la gerbe : huit étincelles qui partent du chiffre et s'éteignent)
+        if (age < 0.35)
+          for (let k = 0; k < 8; k++) {
+            const an = (k / 8) * Math.PI * 2 + c.id
+            const d = 6 + 26 * (age / 0.35) * (0.7 + 0.3 * ((k * 5) % 3) / 2)
+            p.rect(Math.round(x + Math.cos(an) * d), Math.round(y + Math.sin(an) * d * 0.7), 1, 1, k % 2 === 0 ? N.WHITE : N.hex('#ffe04a'), 1 - age / 0.35)
+          }
+        petitsChiffres(p, dit, x, y, rampe, e, a)
+      }
     }
   }
   function dessinerLeRetour(p: Peintre): void {
