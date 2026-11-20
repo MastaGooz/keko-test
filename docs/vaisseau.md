@@ -6649,3 +6649,14 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   sous zéro ; la page garde l'insecte lui-même (plus seulement son identifiant) et lit tout ce qu'il a perdu. Passé le
   portail, il n'a rien perdu : rien ne s'affiche (la distance au portail ne sert plus à le deviner). Vu à la capture : le
   laser (9) sur un insecte à 3 points affiche 9.
+- LES INSECTES NE S'EMPILENT PLUS, LE CRITIQUE UN PEU PLUS PETIT (Keko, 20/11 : « empêche les ennemis de se paquer au
+  même endroit : si on tourne autour, ils se regroupent en un seul point, ce n'est pas très beau » ; « diminue un tout
+  petit peu la taille des coups critiques ») :
+  - LA RÈGLE (`ecarterLesInsectes`) : deux insectes plus proches que leurs deux rayons et `invasion.ecart` (1) se
+    repoussent, chacun de la moitié de ce qui manque (un insecte que tient une vrille ne bouge pas, l'autre fait tout le
+    chemin) ; une grille de cases de cette distance, on ne compare que les voisins. Testé : douze insectes qui
+    poursuivent un vaisseau en rond, au plus près 10,6 pour des rayons de 10.
+  - L'ÉQUILIBRAGE REMESURÉ après coup (`npm run equilibrage`) : de 0,89 à 1,09 ; la singularité perdait le plus (0,99 →
+    0,89 : ce qu'elle aspire ne s'empile plus en un point) — ses dégâts 11 → 12 (0,95).
+  - LE CRITIQUE : un 5 × 7 à nous peint en gras (`CHIFFRES_DU_CRITIQUE`), 6 × 7 au lieu du 3 × 5 doublé (6 × 10) ; il
+    frappe deux fois plus grand l'espace de deux images (trois fois avant). Vu à la capture.

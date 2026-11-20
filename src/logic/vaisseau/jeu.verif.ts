@@ -2674,5 +2674,23 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   verifier(`une pépite aimantée rattrape un vaisseau qui fuit à 200 (à bord en ${aBord.toFixed(2)} s)`, prise && aBord > 0 && aBord < 3 && w.invasion.xp === 1)
 }
 
+// LES INSECTES NE S'EMPILENT PAS (Keko, 20/11) : douze insectes qui poursuivent un vaisseau tournant en rond, dix
+// secondes — jamais deux plus proches que leurs deux rayons (à un demi-pixel près)
+{
+  const c: ConfigVaisseau = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, invasion: { ...VAISSEAU.invasion, active: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, pv: 1e6, poussee: 90, vitesseMax: 40, rayon: 5, armes: [] } }
+  const w = nouveauMonde(c, 6)
+  for (let k = 0; k < 12; k++) w.ennemis.push({ id: 100 + k, corps: { ...nouveauVaisseau(), x: 400 + (k % 4) * 3, y: Math.floor(k / 4) * 3 }, pv: 1e6, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 } })
+  let pire = Infinity
+  for (let i = 0; i < 600; i++) {
+    const an = (i / 60) * 0.75
+    w.vaisseau = { ...w.vaisseau, x: 400 + Math.cos(an) * 60, y: Math.sin(an) * 60, vx: -Math.sin(an) * 45, vy: Math.cos(an) * 45 }
+    w.intouchableJusque = Infinity
+    avancerLeMonde(c, w, 1 / 60, { x: 0, y: 0 })
+    if (i > 30)
+      for (const a of w.ennemis) for (const b of w.ennemis) if (a.id < b.id) pire = Math.min(pire, Math.hypot(a.corps.x - b.corps.x, a.corps.y - b.corps.y))
+  }
+  verifier(`douze insectes qui poursuivent un vaisseau en rond ne s'empilent pas (au plus près : ${pire.toFixed(1)}, leurs rayons font 10)`, pire >= 9.5)
+}
+
 // (TOUJOURS EN DERNIER : des blocs ajoutés après cette ligne échouaient sans faire échouer `npm run verif` — 17/11)
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)

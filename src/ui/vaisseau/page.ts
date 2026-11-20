@@ -1530,24 +1530,38 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     '0': ['###', '#.#', '#.#', '#.#', '###'], '1': ['.#.', '##.', '.#.', '.#.', '###'], '2': ['###', '..#', '###', '#..', '###'], '3': ['###', '..#', '.##', '..#', '###'], '4': ['#.#', '#.#', '###', '..#', '..#'],
     '5': ['###', '#..', '###', '..#', '###'], '6': ['###', '#..', '###', '#.#', '###'], '7': ['###', '..#', '.#.', '.#.', '.#.'], '8': ['###', '#.#', '###', '#.#', '###'], '9': ['###', '#.#', '###', '..#', '###'], ',': ['.', '.', '.', '#', '#'],
   }
-  const largeurDesPetitsChiffres = (s: string, e: number): number => [...s].reduce((w, ch) => w + ((PETITS_CHIFFRES[ch]?.[0].length ?? 3) + 1) * e, -e)
-  function petitsChiffres(p: Peintre, s: string, cx: number, cy: number, rampe: number[], e: number, a: number): void {
-    const x0 = Math.round(cx - largeurDesPetitsChiffres(s, e) / 2)
-    const y0 = Math.round(cy - (5 * e) / 2)
+  /**
+   * LES CHIFFRES DU CRITIQUE (Keko, 20/11 : « diminue un tout petit peu la taille des coups critiques ») : un 5 × 7 à
+   * nous, peint en gras (chaque pixel doublé vers la droite) — 6 × 7 au lieu du 3 × 5 doublé (6 × 10) d'avant.
+   */
+  const CHIFFRES_DU_CRITIQUE: Record<string, string[]> = {
+    '0': ['.###.', '#...#', '#...#', '#...#', '#...#', '#...#', '.###.'], '1': ['..#..', '.##..', '..#..', '..#..', '..#..', '..#..', '.###.'], '2': ['.###.', '#...#', '....#', '...#.', '..#..', '.#...', '#####'],
+    '3': ['####.', '....#', '....#', '.###.', '....#', '....#', '####.'], '4': ['...#.', '..##.', '.#.#.', '#..#.', '#####', '...#.', '...#.'], '5': ['#####', '#....', '####.', '....#', '....#', '#...#', '.###.'],
+    '6': ['.###.', '#....', '#....', '####.', '#...#', '#...#', '.###.'], '7': ['#####', '....#', '...#.', '..#..', '.#...', '.#...', '.#...'], '8': ['.###.', '#...#', '#...#', '.###.', '#...#', '#...#', '.###.'],
+    '9': ['.###.', '#...#', '#...#', '.####', '....#', '....#', '.###.'], ',': ['.', '.', '.', '.', '.', '#', '#'],
+  }
+  const largeurDesPetitsChiffres = (s: string, e: number, table = PETITS_CHIFFRES, gras = false): number => [...s].reduce((w, ch) => w + ((table[ch]?.[0].length ?? 3) + (gras ? 2 : 1)) * e, -e)
+  function petitsChiffres(p: Peintre, s: string, cx: number, cy: number, rampe: number[], e: number, a: number, table = PETITS_CHIFFRES, gras = false): void {
+    const haut = table['0'].length
+    const x0 = Math.round(cx - largeurDesPetitsChiffres(s, e, table, gras) / 2)
+    const y0 = Math.round(cy - (haut * e) / 2)
     const encre = MATIERES.encre.contour
+    const large = gras ? 2 * e : e
     for (const passe of [0, 1]) {
       let x = x0
       for (const ch of s) {
-        const g = PETITS_CHIFFRES[ch]
+        const g = table[ch]
         if (g === undefined) continue
         g.forEach((rang, r) =>
           [...rang].forEach((px, k) => {
             if (px !== '#') return
-            if (passe === 0) p.rect(x + k * e - 1, y0 + r * e - 1, e + 2, e + 2, encre, a)
-            else p.rect(x + k * e, y0 + r * e, e, e, rampe[Math.min(rampe.length - 1, r)], a)
+            // (la rampe s'étire sur toute la hauteur du chiffre)
+            const ton = rampe[Math.round((r * (rampe.length - 1)) / Math.max(1, haut - 1))]
+            if (passe === 0) p.rect(x + k * e - 1, y0 + r * e - 1, large + 2, e + 2, encre, a)
+            else p.rect(x + k * e, y0 + r * e, large, e, ton, a)
           }),
         )
-        x += (g[0].length + 1) * e
+        x += (g[0].length + (gras ? 2 : 1)) * e
       }
     }
   }
@@ -1582,9 +1596,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         const rampe = repos < 0.04 ? [N.WHITE, N.WHITE, N.WHITE, N.WHITE, N.WHITE] : repos > 0.4 ? RAMPE_DU_COUP.slice(2).concat([N.hex('#c98a4a'), N.hex('#a0603a')]) : RAMPE_DU_COUP
         petitsChiffres(p, dit, x, y, rampe, 1, a)
       } else {
-        // UN COUP CRITIQUE : il FRAPPE — trois fois plus grand l'espace de deux images, puis deux fois —, TREMBLE, FLAMBE
-        // du jaune au rouge (sa rampe défile), lance une gerbe d'étincelles, et monte plus haut
-        const e = age < 0.05 ? 3 : 2
+        // UN COUP CRITIQUE : il FRAPPE — deux fois plus grand l'espace de deux images, puis à sa taille (ses chiffres en
+        // gras, voir `CHIFFRES_DU_CRITIQUE`) —, TREMBLE, FLAMBE du jaune au rouge (sa rampe défile), lance une gerbe
+        // d'étincelles, et monte plus haut
+        const e = age < 0.05 ? 2 : 1
         const tremble = age < 0.25 ? Math.round(Math.sin(t * 95) * 1.5 * (1 - age / 0.25)) : 0
         const monte = 14 * (1 - Math.exp(-age * 5))
         const x = bx + cote * 4 * (1 - Math.exp(-age * 5)) + tremble
@@ -1599,7 +1614,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
             const d = 6 + 26 * (age / 0.35) * (0.7 + 0.3 * ((k * 5) % 3) / 2)
             p.rect(Math.round(x + Math.cos(an) * d), Math.round(y + Math.sin(an) * d * 0.7), 1, 1, k % 2 === 0 ? N.WHITE : N.hex('#ffe04a'), 1 - age / 0.35)
           }
-        petitsChiffres(p, dit, x, y, rampe, e, a)
+        petitsChiffres(p, dit, x, y, rampe, e, a, CHIFFRES_DU_CRITIQUE, true)
       }
     }
   }

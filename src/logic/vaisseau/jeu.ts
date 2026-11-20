@@ -232,7 +232,7 @@ export const VAISSEAU = {
    * secondes. Au contact, il MORD (`morsure` points, toutes les
    * `cadenceMorsure` secondes). *Tous les chiffres sont de moi, à rejuger.*
    */
-  invasion: { active: false as boolean, portail: 32, naissance: 360, vague: 4, renfort: 2, cadence: 2.2, cadenceMin: 0.15, repos: 6, premiere: 3, aggro: 170, lache: 260, calme: 2.5, morsure: 1, cadenceMorsure: 0.9,
+  invasion: { active: false as boolean, portail: 32, naissance: 360, vague: 4, renfort: 2, cadence: 2.2, cadenceMin: 0.15, /** Ce qui sépare deux insectes au plus près, au-delà de leurs rayons (voir `ecarterLesInsectes`). */ ecart: 1, repos: 6, premiere: 3, aggro: 170, lache: 260, calme: 2.5, morsure: 1, cadenceMorsure: 0.9,
     /**
      * (Keko, 14/11, la suite.) LA MORT N'EST PAS LA FIN : abattu, le joueur revient AU PORTAIL après `penalite` secondes
      * (le monde continue sans lui). LES PÉPITES que les insectes lâchent NE VONT PAS EN SOUTE : chacune vaut un point
@@ -1562,6 +1562,53 @@ function faireNaitreUnInsecte(c: ConfigVaisseau, m: Monde, ev: Evenement[]): voi
  * poison, un rayon qui chauffe) n'ont pas de coup à tirer.
  */
 const critiqueTire = (c: ConfigVaisseau, m: Monde): boolean => c.passifs.critique > 0 && tire(m.graine, m.prochainId++, 12) < c.passifs.critique
+
+/**
+ * LES INSECTES NE S'EMPILENT PAS (Keko, 20/11 : « empêche les ennemis de se paquer au même endroit : si on tourne
+ * autour, ils se regroupent en un seul point, ce n'est pas très beau ») : deux insectes plus proches que leurs deux
+ * rayons et `ecart` se repoussent, chacun de la moitié de ce qui manque — un insecte saisi (une vrille le tient) ne
+ * bouge pas, l'autre fait tout le chemin. Une grille de cases de cette distance : on ne compare que les voisins.
+ */
+function ecarterLesInsectes(c: ConfigVaisseau, m: Monde): void {
+  const min = 2 * c.ennemi.rayon + c.invasion.ecart
+  const grille = new Map<number, Ennemi[]>()
+  const cle = (i: number, j: number): number => i * 100003 + j
+  for (const e of m.ennemis) {
+    const k = cle(Math.floor(e.corps.x / min), Math.floor(e.corps.y / min))
+    const l = grille.get(k)
+    if (l === undefined) grille.set(k, [e])
+    else l.push(e)
+  }
+  const tenu = (e: Ennemi): boolean => (e.tenuA ?? -1) > m.t && e.grand !== true
+  for (const e of m.ennemis) {
+    const i0 = Math.floor(e.corps.x / min)
+    const j0 = Math.floor(e.corps.y / min)
+    for (let di = -1; di <= 1; di++)
+      for (let dj = -1; dj <= 1; dj++)
+        for (const o of grille.get(cle(i0 + di, j0 + dj)) ?? []) {
+          if (o.id <= e.id) continue
+          let dx = o.corps.x - e.corps.x
+          let dy = o.corps.y - e.corps.y
+          let d = Math.hypot(dx, dy)
+          if (d >= min) continue
+          // (pile au même point : on les sépare selon leurs identités, toujours dans le même sens)
+          if (d < 1e-6) {
+            const a = ((e.id * 7 + o.id * 13) % 360) * (Math.PI / 180)
+            dx = Math.cos(a)
+            dy = Math.sin(a)
+            d = 1
+          }
+          const manque = min - d
+          const te = tenu(e)
+          const to = tenu(o)
+          if (te && to) continue
+          const pe = te ? 0 : to ? 1 : 0.5
+          const po = 1 - pe
+          e.corps = { ...e.corps, x: e.corps.x - (dx / d) * manque * pe, y: e.corps.y - (dy / d) * manque * pe }
+          o.corps = { ...o.corps, x: o.corps.x + (dx / d) * manque * po, y: o.corps.y + (dy / d) * manque * po }
+        }
+  }
+}
 
 /**
  * LE PAS DES NAISSANCES D'UNE VAGUE (Keko, 20/11 : « augmente progressivement le nombre d'ennemis qui spawnent par vague :
@@ -4193,6 +4240,7 @@ function avancerSansLeJoueur(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenem
   menerLInvasion(c, m, ev)
   for (const e of [...m.ennemis]) conduireLEnnemi(c, m, e, dt, ev)
   m.ennemis = m.ennemis.filter((e) => !e.parti)
+  ecarterLesInsectes(c, m)
   if (m.t < m.invasion.retourA) return
   m.vaisseau = nouveauVaisseau()
   m.coque = c.coque
@@ -4325,6 +4373,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   }
   // (les insectes passés par le portail ont quitté le monde)
   if (c.invasion.active) m.ennemis = m.ennemis.filter((e) => !e.parti)
+  if (c.invasion.active) ecarterLesInsectes(c, m)
   if (!heurterLesVaisseaux(c, m, ev)) return { chocs, evenements: ev }
 
   // le laser du joueur : la roche la plus proche à portée, au débit et à la portée de SA foreuse (le hangar) — LES ROCHES
