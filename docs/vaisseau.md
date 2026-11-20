@@ -6567,3 +6567,8 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
 - LA JAUGE DU DÉPHASAGE VA JUSQU'À 15 % (Keko, 20/11 : « change l'échelle de la barre de déphasage pour que le maximum
   ce soit 15 % ») : `DEPHASAGE_MAX` 0,15 — le Néant (8 %) un peu plus qu'à moitié, le Tesseract (6 %) à 40 %, le Prisme
   (4 %) à un peu plus du quart.
+- LE PRISME AU MILIEU DE L'AIRE (Keko, 20/11 : « le prisme ne tombe pas bien au milieu de la plateforme dans le hangar,
+  il a l'air un peu haut ») : MESURÉ à la capture, ses arches et son cristal portent vers l'avant de son origine — leur
+  milieu une vingtaine de pixels d'écran (dix du jeu) au-dessus du centre de l'aire, quand le cœur du Néant y est. Au
+  hangar, il est posé 4 unités plus bas (`recaleY`, décollage compris) : son cristal à 222, le cœur du Néant à 220,5.
+  (Un premier essai à 7 unités le mettait trop bas : l'écran agrandit les pixels du jeu deux fois.)

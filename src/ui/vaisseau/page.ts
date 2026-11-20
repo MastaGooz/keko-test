@@ -2937,14 +2937,18 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const g = gabaritDe(coqueMontee)
     const ECH = ECHELLE * g.echelle
     const kG = g.anneau / 11
-    let sy = cy - 2 + Math.round(Math.sin(t * 1.7) * 1.2)
+    // (LE PRISME, PLUS BAS — Keko, 20/11 : « il ne tombe pas bien au milieu de la plateforme, il a l'air un peu haut » :
+    // MESURÉ, ses arches et son cristal portent vers l'avant de son origine, leur milieu dix pixels du jeu au-dessus du
+    // centre de l'aire ; le Néant et le Tesseract sont centrés sur la leur)
+    const recaleY = coqueMontee === 12 ? Math.round(4 * ECH) : 0
+    let sy = cy - 2 + recaleY + Math.round(Math.sin(t * 1.7) * 1.2)
     let flam = 0
     let jit = 0
     if (decollageA !== null) {
       const u = Math.min(1, (t - decollageA) / 0.95)
       flam = Math.min(1, 0.2 + u * 4)
       jit = u < 0.35 ? Math.round((R.next() - 0.5) * 2) : 0
-      sy = cy - 2 - Math.round(Math.pow(Math.max(0, u - 0.28) / 0.72, 2.2) * (cy - y0 + 50))
+      sy = cy - 2 + recaleY - Math.round(Math.pow(Math.max(0, u - 0.28) / 0.72, 2.2) * (cy - y0 + 50 + recaleY))
       // (les éclats du décollage : au bout de la flamme, et à sa couleur — bleus pour un propulseur ionique)
       const cranP = monteeA(hangar, 'propulseur').cran
       const bout = Math.round((-queueDe(coqueMontee) + 0.5 * (cranP - 1) + Math.min(1.5, (2.5 + 8 * flam) * 0.15)) * ECH)
