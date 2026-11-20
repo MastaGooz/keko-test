@@ -696,7 +696,7 @@ export type Arme = {
   // secondes), CHAQUE INSECTE MORDU ajoute `pas` à sa croissance, jusqu'à `max` ; une morsure sans personne à mordre en
   // retire `perte`. Ses dégâts sont `budget` × (1 + croissance) ; la page en multiplie ses moucherons. *Les chiffres sont
   // de moi.*)
-  nuee?: { rayon: number; budget: number; deploiement: number; periode: number; festin?: { pas: number; max: number; perte: number } }
+  nuee?: { rayon: number; budget: number; deploiement: number; periode: number; festin?: { pas: number; max: number; perte: number; /** Sa croissance au départ (0 ; `&festin=P` l'essaie). */ depart?: number } }
   /**
    * DES REJETONS (la troisième arme du Kraken, Keko, 16/11 : « on spawn un mini vaisseau qui est autonome et attaque les
    * ennemis, un genre de truc avec des tentacules qui flottent derrière lui et s'en sert pour attaquer ») : à sa cadence,
@@ -3724,7 +3724,7 @@ function menerLesNuees(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[])
     if (nu === undefined) return
     let n = m.nuees.find((x) => x.arme === i)
     if (n === undefined) {
-      n = { arme: i, x: v.x, y: v.y, mordA: m.t, bras: [], croissance: 0 }
+      n = { arme: i, x: v.x, y: v.y, mordA: m.t, bras: [], croissance: nu.festin?.depart ?? 0 }
       m.nuees.push(n)
     }
     n.x = v.x

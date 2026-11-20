@@ -6816,3 +6816,9 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   « Croissance max +100 % ». *Le maximum et la perte sont de moi.* Testé : un insecte mordu 10 s, +26 % ; 4 s à vide,
   −10 % ; cinq insectes 40 s, le double. Au banc, son indice passe de 1,00 à 1,42 (la Tentacule, 1,00) : c'est le
   surcroît voulu pour le risque qu'elle fait prendre, le banc ne mesure pas ce risque.
+- LE NUAGE DE LA NUÉE GRANDIT AVEC SA CROISSANCE (Keko, 20/11 : « que visuellement la nuée autour du vaisseau augmente
+  en taille selon où elle en est de sa puissance maximum ; pas quatre fois sa taille, mais au maximum le nuage peut
+  occuper tout l'espace de sa portée ; que le joueur ait un retour sur où il en est, et qu'il le voie réduire quand il
+  n'attaque pas ») : son rayon dessiné va de 14 à vide jusqu'à sa portée, 55, au maximum, à proportion de la croissance ;
+  ses moucherons au repos suivent sa taille (30 à vide, 118 au plein), ceux de ses jets sa croissance. `&festin=P` la
+  fait partir nourrie à P de son maximum (elle maigrit ensuite sans rien à mordre). Vu à la capture, à vide et nourrie.

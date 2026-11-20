@@ -995,6 +995,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       if (VORTEX) conf = { ...conf, ...blindageAuVortex(vieSelonLaRace(modeleDeVaisseau(flotte.actif).race, { coque: conf.coque, bouclier: conf.bouclier, regeneration: conf.regeneration, plaques: conf.plaques, corruption: conf.corruption, dephasage: conf.dephasage }, modeleDeVaisseau(flotte.actif).plaques, modeleDeVaisseau(flotte.actif).dephasage), flotte.actif) }
       if (bouclierDEssai > 0) conf = { ...conf, bouclier: { ...conf.bouclier, points: bouclierDEssai } }
       if (dephasageDEssai !== null) conf = { ...conf, dephasage: { ...conf.dephasage, chance: dephasageDEssai } }
+      // (`&festin=P` : la nuée part nourrie à P de son maximum — pour voir son nuage grand sans mordre longtemps)
+      if (parametres.has('festin')) conf = { ...conf, armes: conf.armes.map((a) => (a.nuee?.festin === undefined ? a : { ...a, nuee: { ...a.nuee, festin: { ...a.nuee.festin, depart: a.nuee.festin.max * Math.max(0, Math.min(1, Number(parametres.get('festin')) || 0)) } } })) }
       // (LA VIE DU VAISSEAU, FOIS `ECHELLE_DE_LA_VIE` — en dernier : tous les points posés plus haut, `&bouclier=N` compris)
       if (VORTEX) conf = vieMultipliee(conf, ECHELLE_DE_LA_VIE)
       // (LES BOUCHES ET LES ANCRES SUIVENT LE VAISSEAU PLUS GROS — voir `ECHELLE_EN_VOL`)
@@ -10287,7 +10289,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     for (const n of m.nuees) {
       const nu = CONF.armes[n.arme]?.nuee
       if (nu === undefined) continue
-      const R = nu.rayon
+      // (LE NUAGE GRANDIT AVEC SA CROISSANCE — Keko, 20/11 : « que visuellement la nuée autour du vaisseau augmente en taille
+      // selon où elle en est de sa puissance maximum ; au maximum, le nuage peut occuper tout l'espace de sa portée ; que
+      // le joueur la voie réduire quand il n'attaque pas » : de son `rayon` à vide jusqu'à sa portée au maximum)
+      const fe = nu.festin
+      const plein = fe === undefined ? 0 : Math.min(1, n.croissance / fe.max)
+      const R = nu.rayon + (Math.max(nu.rayon, CONF.armes[n.arme]?.portee ?? nu.rayon) - nu.rayon) * plein
       const bras = n.bras
       p.disc(n.x, n.y, R, BILE[0], (d) => 0.16 * (1 - d * d))
       // (le voile le long des bras)
@@ -10300,8 +10307,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // pas de cible ; lorsqu'une cible approche, les bras projetés sont beaucoup plus denses » : trente au repos ; à mesure
       // que les bras s'allongent, jusqu'à cent trente, dont les quatre cinquièmes dans les bras)
       const tendu = bras.reduce((mx, b) => Math.max(mx, b.u), 0)
-      // (… ET ELLE GROSSIT EN SE NOURRISSANT — Keko, 20/11 : ses moucherons suivent sa croissance, jusqu'au double)
-      const combien = Math.round((MOUCHERONS_AU_REPOS + (MOUCHERONS - MOUCHERONS_AU_REPOS) * Math.min(1, tendu * 1.5)) * (1 + n.croissance))
+      // (… ET ELLE GROSSIT EN SE NOURRISSANT — Keko, 20/11 : ceux du nuage suivent sa taille, ceux des bras sa croissance,
+      // jusqu'au double)
+      const combien = Math.round((MOUCHERONS_AU_REPOS * R) / nu.rayon + (MOUCHERONS - MOUCHERONS_AU_REPOS) * Math.min(1, tendu * 1.5) * (1 + n.croissance))
       const dansLesBras = 0.8 * Math.min(1, tendu * 1.5)
       for (let j = 0; j < combien; j++) {
         let x: number
