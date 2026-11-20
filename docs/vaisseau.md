@@ -6795,3 +6795,14 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   à équilibrer le jeu sans détailler chaque statistique ») : la pause redevient « Pause », « Reprendre » et « Retour à
   la base », centrés. Le panneau et ses lignes restent écrits (`STATS_EN_PAUSE`) : `&stats` les montre. Vu à la
   capture, couché et debout.
+- QUATRE VAISSEAUX OUVERTS, LES HUIT AUTRES MASQUÉS (Keko, 20/11 : « masque tous les vaisseaux à part le Chasseur, le
+  Kraken, la Sentinelle et le Prisme ; pour les autres, n'affiche que leur silhouette en noir, sans les dessiner
+  réellement ; leur nom et leurs informations en points d'interrogation, comme si le vaisseau n'était pas encore
+  débloqué ; on va juste travailler sur les quatre vaisseaux débloqués dès le départ ») : `verrouille` (page) —
+  - LA GRILLE : leur portrait peint d'une seule encre noire sur le fond de leur race, sans le voile des vaisseaux qu'on
+    n'a pas (la silhouette s'y perdait) ; « ??? » pour nom ;
+  - LA FICHE : « ??? » en titre et pour ce qu'il est, ses jauges vides et sans repère (l'emblème de la race reste, la
+    grille est rangée par race) ; « Pas encore disponible » à la place de « Piloter » ;
+  - ILS NE SE PILOTENT PAS : un vaisseau verrouillé qu'on pilotait, ou demandé par `&vaisseau=`, cède la place au
+    Chasseur ; ils sortent des listes de la flotte (missions, pastilles, choix). `&tous` les ouvre tous.
+  Vu à la capture : la grille, la fiche d'un verrouillé, `&vaisseau=frimas` qui ouvre sur le Chasseur.

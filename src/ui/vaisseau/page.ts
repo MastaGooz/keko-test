@@ -190,6 +190,20 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   // (`&vaisseau=ID` : pilote ce vaisseau de la flotte d'emblée — avec `&direct`, on décolle avec lui)
   if (parametres.has('vaisseau')) flotte = choisirLeVaisseau(flotte, parametres.get('vaisseau') ?? '')
   /**
+   * QUATRE VAISSEAUX SEULEMENT AU VORTEX (Keko, 20/11 : « masque tous les vaisseaux à part le Chasseur, le Kraken, la
+   * Sentinelle et le Prisme ; pour les autres, n'affiche que leur silhouette en noir, sans les dessiner réellement ; leur
+   * nom et leurs informations en points d'interrogation, comme si le vaisseau n'était pas encore débloqué ; on va juste
+   * travailler sur les quatre vaisseaux débloqués dès le départ ») : les autres sont VERROUILLÉS — une silhouette noire
+   * dans la grille, « ??? » pour le nom, des jauges vides, « Pas encore disponible » ; ils ne se pilotent pas et
+   * n'ont pas de missions. Un vaisseau verrouillé qu'on pilotait (ou qu'on demande par `&vaisseau=`) cède la place au
+   * Chasseur. `&tous` les ouvre tous, pour les essayer.
+   */
+  const VAISSEAUX_DU_DEPART: ReadonlySet<string> = new Set(['chasseur', 'kraken', 'sentinelle', 'prisme'])
+  const verrouille = (id: string): boolean => parametres.has('vortex') && !parametres.has('tous') && !VAISSEAUX_DU_DEPART.has(id)
+  if (verrouille(flotte.actif)) flotte = choisirLeVaisseau(flotte, 'chasseur')
+  /** Les vaisseaux de la flotte qu'on peut voir : pas les verrouillés. */
+  const vaisseauxVisibles = (): ReturnType<typeof vaisseauxDe> => vaisseauxDe(flotte).filter((nav) => !verrouille(nav.id))
+  /**
    * LE HANGAR est celui DU VAISSEAU PILOTÉ (la flotte, 14/11 — `logic/vaisseau/flotte.ts`) : la page le travaille à
    * part, `sauver` le range dans la flotte. Les pièces qu'on voit sont celles DE SON MODÈLE ; celles qu'on peut
    * acheter, celles que SES missions ont ouvertes.
@@ -3150,7 +3164,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const ic = vv === 'plus' && horsBarre && !feuille ? vue : vv
       if (ic === 'plus') dessinerLIconePlus(p, RAIL / 2 - 1 + dx, cy + e.dy, actif)
       else dessinerLIconeDeVue(p, ic, RAIL / 2 - 1 + dx, cy + e.dy, actif)
-      if (nouveautes.has(vv) || (vv === 'quetes' && (quetes.actives.some(estTerminee) || (tutorielFini(quetes) && vaisseauxDe(flotte).some((nav) => missionDe(flotte, nav.id)?.finie === true))))) {
+      if (nouveautes.has(vv) || (vv === 'quetes' && (quetes.actives.some(estTerminee) || (tutorielFini(quetes) && vaisseauxVisibles().some((nav) => missionDe(flotte, nav.id)?.finie === true))))) {
         const bx = RAIL - 9
         const by = cy - 9
         p.rect(bx - 1, by - 1, 5, 5, MATIERES.encre.contour)
@@ -3249,7 +3263,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           ecrire(p, nm, xi + ls[i] / 2, yt - 21 + e.dy, actif ? N.WHITE : COQUE[5], { align: 'center', police: GRAS })
           // (sur LES DEUX onglets — Keko, 14/11 : « je ne la vois pas dans les contrats »)
           // (… ET SUR L'ONGLET OUVERT AUSSI — Keko, 14/11)
-          if ((i === 1 ? vaisseauxDe(flotte).some((nav) => missionDe(flotte, nav.id)?.finie === true) : quetes.actives.some(estTerminee))) {
+          if ((i === 1 ? vaisseauxVisibles().some((nav) => missionDe(flotte, nav.id)?.finie === true) : quetes.actives.some(estTerminee))) {
             p.rect(xi + ls[i] - 5, yt - 28, 5, 5, MATIERES.encre.contour)
             p.rect(xi + ls[i] - 4, yt - 27, 3, 3, Math.sin(t * 5) > 0 ? N.hex('#fff2a8') : PEPITE[2])
           }
@@ -3679,7 +3693,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       else dessinerLIconeDeVue(p, ic, cxs, yi, actif)
       if (nomme) ecrire(p, nom, Math.max(largeurDe(nom, GRAS) / 2 + 1, Math.min(W - largeurDe(nom, GRAS) / 2 - 1, cxs)), y0 + 22 + dy, actif ? PEPITE[3] : COQUE[4], { align: 'center', police: actif ? GRAS : TEXTE })
       // (une pastille : du nouveau dans l'onglet, ou une quête à réclamer)
-      if (nouveautes.has(vv) || (vv === 'quetes' && (quetes.actives.some(estTerminee) || (tutorielFini(quetes) && vaisseauxDe(flotte).some((nav) => missionDe(flotte, nav.id)?.finie === true))))) {
+      if (nouveautes.has(vv) || (vv === 'quetes' && (quetes.actives.some(estTerminee) || (tutorielFini(quetes) && vaisseauxVisibles().some((nav) => missionDe(flotte, nav.id)?.finie === true))))) {
         const bx = cxs + 7
         const by = y0 + 5 + dy
         p.rect(bx - 1, by - 1, 5, 5, MATIERES.encre.contour)
@@ -4087,7 +4101,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * flèches ; une tape passe au suivant — le hangar, la scène et les cases sont alors les siens.
    */
   function dessinerLeChoixDuVaisseau(p: Peintre, y: number): number {
-    const liste = vaisseauxDe(flotte)
+    const liste = vaisseauxVisibles()
     // (PLUS DE DESSIN : le vaisseau est juste au-dessus, dans la scène — Keko, 14/11 : « juste le nom et un bouton
     // changer » ; le nom est toujours là, le bouton dès qu'on a deux vaisseaux)
     // LE VAISSEAU PILOTÉ, EN TÊTE DU HANGAR, ET UN VRAI BOUTON « CHANGER » (Keko, 14/11 : « pas très mis en avant, et il
@@ -4762,9 +4776,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const ox = x + w / 2 + recale.x - (mx * Math.cos(capP) - my * Math.sin(capP)) * echelle
     const oy = y + h * 0.54 + recale.y - (mx * Math.sin(capP) + my * Math.cos(capP)) * echelle * 0.66
     const flotte_ = Math.round(Math.sin(t * 1.6 + n * 0.9))
-    // (le cadre rogne : rien ne déborde de la case)
+    // (le cadre rogne : rien ne déborde de la case ; un vaisseau verrouillé n'est qu'une silhouette noire — voir `verrouille`)
+    const ombre = verrouille(mo.id) ? N.hex('#05060a') : null
     const rogne = { rect: (rx: number, ry: number, rw: number, rh: number, c: number, a?: number): void => {
-      if (rx >= x && ry >= y && rx < x + w && ry < y + h) p.rect(rx, ry, rw, rh, c, a)
+      if (rx >= x && ry >= y && rx < x + w && ry < y + h) p.rect(rx, ry, rw, rh, ombre ?? c, ombre === null ? a : 1)
     }, glow: (): void => {} }
     peindreFormes(rogne, formes, ox, oy + flotte_, echelle, { cap: capP, aplatir: 0.66, rampes: rampesDeLaPeau(pe) })
   }
@@ -4804,7 +4819,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       ]
       return jauges.filter((j) => j.nom !== '')
     }
-    const jauges = jaugesDuModele(mo)
+    // (VERROUILLÉ : ses jauges vides, sans repère, son nom et ce qu'il est en points d'interrogation — voir `verrouille`)
+    const cache = verrouille(mo.id)
+    const jauges = jaugesDuModele(mo).map((j) => (cache ? { ...j, valeur: 0 } : j))
     // (le repère du vaisseau piloté, JAUGE PAR JAUGE, PAR SON NOM : deux races n'ont pas les mêmes lignes)
     const repereDe = (l: Jauge[] | null, j: Jauge): number | null => {
       const q = l?.find((x) => x.nom === j.nom)
@@ -4812,8 +4829,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
     // (UN REPÈRE BLANC À LA VALEUR DU VAISSEAU PILOTÉ, quand on en regarde un autre — Keko, 15/11 : « pour comparer celui
     // qui est équipé à celui qu'on est en train de regarder » ; comme les jauges des pièces)
-    const pilote = mo.id === flotte.actif ? null : jaugesDuModele(modeleDeVaisseau(flotte.actif))
-    const dit = avecDit ? replier(mo.dit, W - 22).slice(0, 3) : []
+    const pilote = mo.id === flotte.actif || cache ? null : jaugesDuModele(modeleDeVaisseau(flotte.actif))
+    const dit = avecDit ? (cache ? ['???'] : replier(mo.dit, W - 22).slice(0, 3)) : []
     // (sans le nom — au hangar, il est juste au-dessus —, les jauges montent et la fiche raccourcit)
     // (plus de « Classe légère / lourde » sous le nom — Keko, 15/11 : les jauges remontent sous lui)
     // LA FICHE EN DEUX ÉTAGES (Keko, 17/11 : « l'emplacement du symbole fait encore un côté portrait rectangulaire, c'est
@@ -4828,7 +4845,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const gx = avecNom ? Math.max(62, 8 + 2 + Math.max(...RACES.map((r) => largeurDe(lignesDuNomDeRace(r.id)[0]))) + 2 + 5) : 10
     plaque(p, 4, y, W - 8, hd, 'encre')
     if (avecNom) {
-      motEnRelief(p, mo.nom, W / 2, y + 5, aSoi)
+      motEnRelief(p, cache ? '???' : mo.nom, W / 2, y + 5, aSoi && !cache)
       p.rect(10, y + 16, W - 20, 1, MATIERES.encre.ombre)
       p.rect(gx - 5, y + yj - 1, 1, hh - yj - 3, MATIERES.encre.ombre)
       // (L'EMBLÈME DE SA RACE, À LA PLACE DE SON IMAGE — Keko, 17/11 : « on vire l'image du vaisseau, car elle est déjà
@@ -4896,7 +4913,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     let y = HAUT_BARRE + 4 + Math.round((1 - u0) * 10)
     const tous = modelesDuVortex()
     const choisi = tous.find((mo) => mo.id === vaisseauChoisi) ?? tous[0]
-    const a = aLeVaisseau(flotte, choisi.id)
+    const a = aLeVaisseau(flotte, choisi.id) && !verrouille(choisi.id)
     // LE BOUTON « PILOTER » (ou « Piloté », ou « Pas encore disponible ») — Keko, 17/11 : DEBOUT, ENTRE LA GRILLE ET LA FICHE
     // (« on remonte le grid un peu pour placer le bouton dessous ») ; COUCHÉ, SOUS LA FICHE, dans la colonne de droite (« on
     // a un espace vide ; ainsi le grid peut être un peu plus gros à gauche »). Il prend `HAUT_DU_PILOTER` de haut.
@@ -4946,7 +4963,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         const cx = xg + col * (cw + ESP)
         const cy = y + rang * (ch + ESP)
         const ici = mo.id === choisi.id
-        const aSoi = aLeVaisseau(flotte, mo.id)
+        const aSoi = aLeVaisseau(flotte, mo.id) && !verrouille(mo.id)
         const e = etatDuBouton(cx, cy, cw, ch)
         const age = t - choixVaisseauA
         const saute = ici && age < 0.3 ? -Math.round(2 * Math.sin((age / 0.3) * Math.PI)) : 0
@@ -4955,7 +4972,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         p.rect(cx, cy + dy, cw, ch, MATIERES.creux.corps)
         const hp = ch - 11
         peindreLePortrait(p, mo, cx + 1, cy + 1 + dy, cw - 2, hp, r * 3 + k)
-        if (!aSoi) p.rect(cx + 1, cy + 1 + dy, cw - 2, hp, N.hex('#0a0c14'), 0.6)
+        // (pas de voile sur un verrouillé : sa silhouette noire se lit sur le fond de sa race)
+        if (!aSoi && !verrouille(mo.id)) p.rect(cx + 1, cy + 1 + dy, cw - 2, hp, N.hex('#0a0c14'), 0.6)
         // (LE CADRE D'OR DU CHOISI N'ENTOURE QUE SON PORTRAIT — Keko, 17/11 : il passait sur les noms longs, « Salamandre »,
         // « Tesseract », et les noms gardent tous la même taille ; l'éclair du choix en or pâle)
         if (ici) {
@@ -4969,7 +4987,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         const pilote = mo.id === flotte.actif
         if (pilote) N.sparkle(p, cx + cw - 6, cy + 6 + dy, 3, PEPITE[2], PEPITE[2], 0.8)
         // (plus d'insigne de race dans la case — Keko, 17/11 : la fiche, dessous, porte l'emblème de la race)
-        noms.push(() => ecrire(p, mo.nom, cx + cw / 2, cy + hp + 3 + dy, pilote ? PEPITE[2] : ici ? N.hex('#f6ecd2') : aSoi ? COQUE[5] : COQUE[3], { align: 'center' }))
+        noms.push(() => ecrire(p, verrouille(mo.id) ? '???' : mo.nom, cx + cw / 2, cy + hp + 3 + dy, pilote ? PEPITE[2] : ici ? N.hex('#f6ecd2') : aSoi ? COQUE[5] : COQUE[3], { align: 'center' }))
         zone(cx - 1, cy - 1, cw + 2, ch + 2, () => {
           vaisseauChoisi = mo.id
           choixVaisseauA = t
@@ -5000,7 +5018,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (!vaisseauxOuverts) return
     if (VORTEX) return dessinerLesVaisseauxEnListe(p, voile, partie)
     const u0 = sortie((t - vaisseauxA) / 0.18)
-    const liste = vaisseauxDe(flotte)
+    const liste = vaisseauxVisibles()
     const hc = 40
     const hp = 22 + liste.length * (hc + 4) + 19 + 4
     const x = 6
@@ -6502,7 +6520,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   type CarteDeMission = { q: Quete; mo: (Modele & { piece?: Piece; navire?: string }) | undefined }
   const missionFinie = (q: Quete, mo: Modele | undefined): boolean => mo !== undefined && q.progres >= mo.cible
   const cartesDesVaisseaux = (): CarteDeMission[] =>
-    vaisseauxDe(flotte).flatMap((nav): CarteDeMission[] => {
+    vaisseauxVisibles().flatMap((nav): CarteDeMission[] => {
       const mi = missionDe(flotte, nav.id)
       if (mi === null) return []
       const dit = nav.id === flotte.actif ? mi.mission.dit : `${mi.mission.dit} Pilotez ce vaisseau pour avancer.`
