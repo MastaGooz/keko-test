@@ -2847,5 +2847,76 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   }
 }
 
+// SANS PORTAIL (Keko, 20/11 : « on est vraiment sur un Vampire Survivors-like ») : les insectes naissent hors de vue
+// AUTOUR DU VAISSEAU et foncent sur lui ; ils évitent les roches qui dérivent, et s'ils en heurtent une, tous deux en
+// souffrent ; les roches traversent le champ autour de lui
+{
+  const roche = (id: number, x: number, y: number): Ennemi => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv: 500, fait: 'marche', roche: null, forage: null, tirA: 0, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, grand: true, asteroide: { rayon: 10, graine: 1, angle0: 0, vitesseAngulaire: 0, pvMax: 500 } })
+  const base = { ...VAISSEAU, coque: 1e6, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 0.1 }, ennemi: { ...VAISSEAU.ennemi, pv: 120, butinRendu: 1, apparait: 1e9, poussee: 90, vitesseMax: 40, rotation: 6, rayon: 5 } }
+  // (ils naissent sur le cercle de naissance autour du vaisseau, loin du centre du monde, et le chassent aussitôt)
+  {
+    const w = nouveauMonde(base, 5)
+    w.vaisseau = { ...w.vaisseau, x: 2000, y: -1500 }
+    const nes: { d: number; fait: string }[] = []
+    for (let i = 0; i < 60 * 3; i++) {
+      for (const e of avancerLeMonde(base, w, 1 / 60, { x: 0, y: 0 }).evenements) if (e.type === 'ennemiApparait') {
+        const en = w.ennemis.find((x) => x.id === e.id)!
+        nes.push({ d: Math.hypot(e.x - w.vaisseau.x, e.y - w.vaisseau.y), fait: en.fait })
+      }
+      w.vaisseau = { ...w.vaisseau, x: 2000, y: -1500, vx: 0, vy: 0 }
+    }
+    const d0 = w.ennemis.length > 0 ? Math.min(...w.ennemis.map((e) => Math.hypot(e.corps.x - 2000, e.corps.y + 1500))) : 0
+    for (let i = 0; i < 60 * 4; i++) {
+      avancerLeMonde(base, w, 1 / 60, { x: 0, y: 0 })
+      w.vaisseau = { ...w.vaisseau, x: 2000, y: -1500, vx: 0, vy: 0 }
+    }
+    const d1 = Math.min(...w.ennemis.map((e) => Math.hypot(e.corps.x - 2000, e.corps.y + 1500)))
+    verifier(`sans portail, ${nes.length} insectes naissent à ${Math.round(nes[0]?.d ?? 0)} du vaisseau (hors de vue), en chasse, et foncent sur lui (le plus proche de ${Math.round(d0)} à ${Math.round(d1)})`, nes.length > 0 && nes.every((n) => Math.abs(n.d - VAISSEAU.invasion.naissance) < 1 && n.fait === 'aggro') && d1 < d0 - 100)
+  }
+  // (une roche entre l'insecte et le vaisseau : il la contourne, sans la toucher)
+  {
+    const cfg = { ...base, invasion: { ...base.invasion, premiere: 1e9 } }
+    const w = nouveauMonde(cfg, 5)
+    w.vaisseau = { ...w.vaisseau, x: 200, y: 0 }
+    const r = roche(1, 100, 0)
+    const ins: Ennemi = { id: 2, corps: { ...nouveauVaisseau(), x: 0, y: 0.5 }, pv: 120, fait: 'aggro', roche: null, forage: null, tirA: 0, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 } }
+    w.ennemis.push(r, ins)
+    let auPlusPres = Infinity
+    for (let i = 0; i < 60 * 8; i++) {
+      w.vaisseau = { ...w.vaisseau, x: 200, y: 0, vx: 0, vy: 0 }
+      r.corps = { ...r.corps, x: 100, y: 0, vx: 0, vy: 0 }
+      avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+      auPlusPres = Math.min(auPlusPres, Math.hypot(ins.corps.x - 100, ins.corps.y))
+    }
+    verifier(`une roche entre lui et le vaisseau : l’insecte la contourne (au plus près ${auPlusPres.toFixed(1)} de son centre, elle fait 10, lui 5), sans la heurter, et arrive au vaisseau`, auPlusPres > 15 && ins.heurteA === undefined && r.pv === 500 && Math.hypot(ins.corps.x - 200, ins.corps.y) < 20)
+  }
+  // (poussé dans une roche, il la heurte : tous deux perdent 60, une fois)
+  {
+    const cfg = { ...base, invasion: { ...base.invasion, premiere: 1e9 } }
+    const w = nouveauMonde(cfg, 5)
+    w.vaisseau = { ...w.vaisseau, x: 600, y: 600 }
+    const r = roche(1, 100, 0)
+    const ins: Ennemi = { id: 2, corps: { ...nouveauVaisseau(), x: 92, y: 0 }, pv: 120, fait: 'aggro', roche: null, forage: null, tirA: 0, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 } }
+    w.ennemis.push(r, ins)
+    for (let i = 0; i < 20; i++) {
+      w.vaisseau = { ...w.vaisseau, x: 600, y: 600, vx: 0, vy: 0 }
+      r.corps = { ...r.corps, x: 100, y: 0, vx: 0, vy: 0 }
+      avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+    }
+    verifier(`un insecte entré dans une roche la heurte : il en est sorti, et tous deux perdent ${VAISSEAU.derive.chocInsecte} (lui ${120 - ins.pv}, elle ${500 - r.pv}), une fois`, ins.pv === 120 - VAISSEAU.derive.chocInsecte && r.pv === 500 - VAISSEAU.derive.chocInsecte && Math.hypot(ins.corps.x - 100, ins.corps.y) >= 15 - 1e-6)
+  }
+  // (les roches traversent le champ autour du vaisseau)
+  {
+    const cfg = { ...base, invasion: { ...base.invasion, premiere: 1e9 }, derive: { ...VAISSEAU.derive, active: true, premier: 0.1, tousMin: 0.5, tousMax: 0.5, max: 3 } }
+    const w = nouveauMonde(cfg, 5)
+    w.vaisseau = { ...w.vaisseau, x: -3000, y: 2500 }
+    for (let i = 0; i < 60 * 2; i++) {
+      avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+      w.vaisseau = { ...w.vaisseau, x: -3000, y: 2500, vx: 0, vy: 0 }
+    }
+    verifier('sans portail, les roches naissent autour du vaisseau, où qu’il soit', w.ennemis.length === 3 && w.ennemis.every((e) => Math.hypot(e.corps.x + 3000, e.corps.y - 2500) < VAISSEAU.invasion.naissance + VAISSEAU.derive.marge + 1))
+  }
+}
+
 // (TOUJOURS EN DERNIER : des blocs ajoutés après cette ligne échouaient sans faire échouer `npm run verif` — 17/11)
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)

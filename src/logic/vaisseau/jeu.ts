@@ -261,6 +261,19 @@ export const VAISSEAU = {
      * la vague, jamais le même que le premier de la vague d'avant quand il y a le choix.
      */
     joueurs: 1,
+    /**
+     * SANS PORTAIL (le jeu du vortex — Keko, 20/11 : « on va supprimer le portail ; les ennemis apparaissent toujours hors
+     * du champ de vision du joueur, mais foncent sur le joueur pour l'attaquer ; on est vraiment sur un Vampire
+     * Survivors-like, avec de plus en plus d'ennemis au fur et à mesure que la partie avance ») : `sansPortail` — les
+     * insectes naissent sur le cercle de naissance AUTOUR DU VAISSEAU (dans les cadrans de la vague, autour de lui), le
+     * chassent tous dès leur naissance et ne le lâchent jamais ; personne ne traverse plus rien ; les roches qui
+     * dérivent traversent le champ autour de lui. LES INSECTES ÉVITENT LES ROCHES : ils s'en écartent à moins de
+     * `eviteRoche` de leur bord ; un insecte qui en heurte une quand même la heurte comme le vaisseau — tous deux
+     * perdent `derive.chocInsecte`, une fois par `heurteRoche` secondes.
+     */
+    sansPortail: false as boolean,
+    eviteRoche: 24,
+    heurteRoche: 0.6,
   },
   /** Le manche, en pixels CSS : son rayon (au bord, la pleine poussée), sa zone morte. */
   manche: { rayon: 56, mort: 0.12 },
@@ -326,7 +339,7 @@ export const VAISSEAU = {
    * verrouillée. Elle a `pvParRayon2` × rayon² points ; détruite, elle lâche `pepitesParPv` pépite par point de vie (un
    * insecte, une pour 120) ; elle heurte le vaisseau de `choc` unités de vie. *Les chiffres sont de moi, à rejuger.*
    */
-  derive: { active: false as boolean, premier: 12, tousMin: 8, tousMax: 16, max: 3, marge: 60, visee: 200, rayonMin: 6, rayonMax: 13, vitesseMin: 10, vitesseMax: 42, pvParRayon2: 5, pepitesParPv: 1 / 60, choc: 2 },
+  derive: { active: false as boolean, premier: 12, tousMin: 8, tousMax: 16, max: 3, marge: 60, visee: 200, rayonMin: 6, rayonMax: 13, vitesseMin: 10, vitesseMax: 42, pvParRayon2: 5, pepitesParPv: 1 / 60, choc: 2, chocInsecte: 60 },
   ennemi: { apparait: 10, revient: 5, distance: 320, pv: 36, poussee: 120, vitesseMax: 85, rotation: 5, rayon: 4, cherche: 260, rode: 450, voit: 130, accourt: 420, tient: 80, fuit: 10, lache: 260, cadence: 1.8, vitesseTir: 130, dispersion: 0.16, vieTir: 2, butinRendu: 3,
     /**
      * LE RIVAL PEUT PORTER DE VRAIES ARMES (Keko, 14/11 : « deux canons, le reste en mitraillette, et deux missiles dans
@@ -962,6 +975,8 @@ export type Ennemi = {
   tenuA?: number
   /** UN GRAND : un mini-boss, un boss (aucun encore) — une vrille le saisit sans l'immobiliser. */
   grand?: boolean
+  /** Son dernier choc contre une roche qui dérive (voir `sansPortail`). */
+  heurteA?: number
   /** UN ASTÉROÏDE QUI DÉRIVE (voir `derive`) : sa taille, son dessin (graine, angle, rotation), ses points au départ. */
   asteroide?: { rayon: number; graine: number; angle0: number; vitesseAngulaire: number; pvMax: number }
   butin: number
@@ -1607,12 +1622,13 @@ function menerLesDerives(c: ConfigVaisseau, m: Monde): void {
   if (m.ennemis.filter((e) => e.asteroide !== undefined).length >= D.max) return
   const a = tire(m.graine, id, 42) * Math.PI * 2
   const loin = c.invasion.naissance + D.marge
-  const x = Math.cos(a) * loin
-  const y = Math.sin(a) * loin
-  // (vers un point tiré près du portail : elle traverse le champ)
+  const o = centreDuChamp(c, m)
+  const x = o.x + Math.cos(a) * loin
+  const y = o.y + Math.sin(a) * loin
+  // (vers un point tiré près du centre du champ — le portail, ou le vaisseau : elle traverse le champ)
   const av = tire(m.graine, id, 43) * Math.PI * 2
   const dv = D.visee * Math.sqrt(tire(m.graine, id, 44))
-  const cap = Math.atan2(Math.sin(av) * dv - y, Math.cos(av) * dv - x)
+  const cap = Math.atan2(o.y + Math.sin(av) * dv - y, o.x + Math.cos(av) * dv - x)
   const vit = D.vitesseMin + (D.vitesseMax - D.vitesseMin) * tire(m.graine, id, 45)
   const rayon = D.rayonMin + (D.rayonMax - D.rayonMin) * tire(m.graine, id, 46)
   const pv = Math.round(D.pvParRayon2 * rayon * rayon)
@@ -1620,10 +1636,48 @@ function menerLesDerives(c: ConfigVaisseau, m: Monde): void {
 }
 
 /** Une roche dérive tout droit, sans rien voir ; repassée au-delà de son cercle de naissance, elle quitte le monde. */
-function deriver(c: ConfigVaisseau, e: Ennemi, dt: number): void {
+function deriver(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number): void {
   const b = e.corps
   e.corps = { ...b, x: b.x + b.vx * dt, y: b.y + b.vy * dt }
-  if (Math.hypot(e.corps.x, e.corps.y) > c.invasion.naissance + c.derive.marge + 1 && e.corps.x * b.vx + e.corps.y * b.vy > 0) e.parti = true
+  const o = centreDuChamp(c, m)
+  const dx = e.corps.x - o.x
+  const dy = e.corps.y - o.y
+  if (Math.hypot(dx, dy) > c.invasion.naissance + c.derive.marge + 1 && dx * b.vx + dy * b.vy > 0) e.parti = true
+}
+
+/** LE CENTRE DU CHAMP : le portail, au centre du monde ; sans portail, le vaisseau (voir `sansPortail`). */
+function centreDuChamp(c: ConfigVaisseau, m: Monde): Vecteur {
+  return c.invasion.sansPortail ? { x: m.vaisseau.x, y: m.vaisseau.y } : { x: 0, y: 0 }
+}
+
+/**
+ * LES INSECTES HEURTENT LES ROCHES (voir `sansPortail`) : un insecte entré dans une roche qui dérive en est sorti ;
+ * s'il n'en a pas heurté depuis `heurteRoche` secondes, tous deux perdent `derive.chocInsecte` — comme le vaisseau.
+ */
+function heurterLesRoches(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
+  const roches = m.ennemis.filter((e) => e.asteroide !== undefined)
+  if (roches.length === 0) return
+  for (const e of [...m.ennemis]) {
+    if (e.asteroide !== undefined || !m.ennemis.includes(e)) continue
+    for (const r of roches) {
+      if (!m.ennemis.includes(r)) continue
+      const dx = e.corps.x - r.corps.x
+      const dy = e.corps.y - r.corps.y
+      const d = Math.hypot(dx, dy) || 0.001
+      const min = r.asteroide!.rayon + c.ennemi.rayon
+      if (d >= min) continue
+      e.corps = { ...e.corps, x: r.corps.x + (dx / d) * min, y: r.corps.y + (dy / d) * min }
+      if (m.t - (e.heurteA ?? -100) < c.invasion.heurteRoche) continue
+      e.heurteA = m.t
+      for (const qui of [e, r]) {
+        qui.pv -= c.derive.chocInsecte
+        ev.push({ type: 'ennemiTouche', id: qui.id, x: (e.corps.x + r.corps.x) / 2, y: (e.corps.y + r.corps.y) / 2, critique: false })
+      }
+      if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
+      if (r.pv <= 0) abattreLEnnemi(c, m, r, ev)
+      break
+    }
+  }
 }
 
 /**
@@ -1648,9 +1702,11 @@ function faireNaitreUnInsecte(c: ConfigVaisseau, m: Monde, ev: Evenement[]): voi
   m.invasion.nes += 1
   const a = (q + 0.1 + 0.8 * tire(m.graine, m.prochainId, 3)) * (Math.PI / 2)
   m.graine = hache(m.graine, 7)
-  const x = Math.cos(a) * c.invasion.naissance
-  const y = Math.sin(a) * c.invasion.naissance
-  const e: Ennemi = { id: m.prochainId++, corps: { ...nouveauVaisseau(), x, y, cap: Math.atan2(-y, -x) }, pv: c.ennemi.pv, fait: 'marche', roche: null, forage: null, tirA: 0, butin: 0, cargaison: cargaisonVide() }
+  // (SANS PORTAIL : autour du vaisseau, hors de sa vue, et il le chasse dès sa naissance)
+  const o = centreDuChamp(c, m)
+  const x = o.x + Math.cos(a) * c.invasion.naissance
+  const y = o.y + Math.sin(a) * c.invasion.naissance
+  const e: Ennemi = { id: m.prochainId++, corps: { ...nouveauVaisseau(), x, y, cap: Math.atan2(o.y - y, o.x - x) }, pv: c.ennemi.pv, fait: c.invasion.sansPortail ? 'aggro' : 'marche', roche: null, forage: null, tirA: 0, butin: 0, cargaison: cargaisonVide() }
   m.ennemis.push(e)
   ev.push({ type: 'ennemiApparait', id: e.id, x, y })
 }
@@ -1827,7 +1883,7 @@ function conduireLInsecte(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number, ev
   const dj = Math.hypot(v.x - b.x, v.y - b.y) || 1
   const dp = Math.hypot(b.x, b.y) || 1
   // LE CONTOUR DU PORTAIL : qui le touche est téléporté, en chasse ou non — il quitte le monde (la page joue sa disparition)
-  if (dp <= I.portail) {
+  if (!I.sansPortail && dp <= I.portail) {
     e.parti = true
     m.invasion.passes += 1
     ev.push({ type: 'traverse', id: e.id, x: b.x, y: b.y })
@@ -1843,7 +1899,9 @@ function conduireLInsecte(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number, ev
   }
   // (CE QUE LE VAISSEAU A POSÉ L'ATTIRE SUR LUI — voir `aPorteeDUnePose`)
   const attire = m.phase === 'vol' && aPorteeDUnePose(c, m, e)
-  if (e.fait === 'aggro') {
+  // (SANS PORTAIL, il chasse toujours le vaisseau, même abattu : il va là où il est tombé)
+  if (I.sansPortail) e.fait = 'aggro'
+  else if (e.fait === 'aggro') {
     // (IL LÂCHE QUAND LE JOUEUR S'ÉLOIGNE TROP DE LUI — Keko, 16/11 : « qu'ils poursuivent le joueur beaucoup plus loin dans
     // l'espace ; que l'ennemi arrête de suivre le joueur quand le joueur s'éloigne trop de lui, mais tant qu'il est à une
     // certaine distance, il peut le poursuivre très loin » : plus de laisse autour du portail — il lâche à `lache` du
@@ -1857,11 +1915,39 @@ function conduireLInsecte(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number, ev
   let direction: Vecteur
   if (e.fait === 'aggro') {
     direction = { x: (v.x - b.x) / dj, y: (v.y - b.y) / dj }
-    if (dj <= c.rayon + c.ennemi.rayon + 2 && m.t >= (e.mordA ?? 0)) {
+    if (m.phase === 'vol' && dj <= c.rayon + c.ennemi.rayon + 2 && m.t >= (e.mordA ?? 0)) {
       e.mordA = m.t + I.cadenceMorsure
       encaisser(c, m, v.x, v.y, I.morsure, ev)
     }
   } else direction = { x: -b.x / dp, y: -b.y / dp }
+  // (IL ÉVITE LES ROCHES QUI DÉRIVENT : à moins de `eviteRoche` de leur bord, il s'en écarte d'autant plus qu'il en est près)
+  if (I.sansPortail) {
+    let ex = 0
+    let ey = 0
+    for (const r of m.ennemis) {
+      if (r.asteroide === undefined) continue
+      const dx = b.x - r.corps.x
+      const dy = b.y - r.corps.y
+      const d = Math.hypot(dx, dy) || 0.001
+      const marge = d - r.asteroide.rayon - c.ennemi.rayon
+      if (marge >= I.eviteRoche) continue
+      const k = 2.5 * (1 - Math.max(0, marge) / I.eviteRoche)
+      // (il s'en écarte ET LA CONTOURNE : une poussée de côté, du côté où il allait — pile en face, selon son identité ;
+      // sans elle, un insecte aligné sur la roche et le vaisseau butait dessus)
+      const nx = dx / d
+      const ny = dy / d
+      const vers = -ny * direction.x + nx * direction.y
+      const cote = Math.abs(vers) > 0.05 ? Math.sign(vers) : e.id % 2 === 0 ? 1 : -1
+      ex += (nx * 0.6 - ny * cote) * k
+      ey += (ny * 0.6 + nx * cote) * k
+    }
+    if (ex !== 0 || ey !== 0) {
+      const sx = direction.x + ex
+      const sy = direction.y + ey
+      const n = Math.hypot(sx, sy) || 1
+      direction = { x: sx / n, y: sy / n }
+    }
+  }
   // (GELÉ, il avance à une part de sa vitesse : son moteur et sa pointe baissent d'autant, et il est freiné tout de suite)
   const gele = (e.geleA ?? -1) > m.t
   const k = gele ? (e.ralenti ?? 1) : 1
@@ -1874,7 +1960,7 @@ function conduireLInsecte(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number, ev
 /** Ce que fait un ennemi pendant `dt` : il chasse le joueur s'il le voit, sinon il mine la roche la plus proche de lui. Rend ses chocs. */
 function conduireLEnnemi(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number, ev: Evenement[]): Choc[] {
   if (e.asteroide !== undefined) {
-    deriver(c, e, dt)
+    deriver(c, m, e, dt)
     return []
   }
   // (TENU PAR UNE VRILLE, un petit ne bouge plus, ne mord ni ne tire — voir `Arme.vrille`)
@@ -4435,6 +4521,7 @@ function avancerSansLeJoueur(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenem
   for (const e of [...m.ennemis]) conduireLEnnemi(c, m, e, dt, ev)
   m.ennemis = m.ennemis.filter((e) => !e.parti)
   ecarterLesInsectes(c, m)
+  if (c.invasion.sansPortail) heurterLesRoches(c, m, ev)
   if (m.t < m.invasion.retourA) return
   m.vaisseau = nouveauVaisseau()
   m.coque = c.coque
@@ -4569,6 +4656,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   // (les insectes passés par le portail ont quitté le monde)
   if (c.invasion.active) m.ennemis = m.ennemis.filter((e) => !e.parti)
   if (c.invasion.active) ecarterLesInsectes(c, m)
+  if (c.invasion.sansPortail) heurterLesRoches(c, m, ev)
   if (!heurterLesVaisseaux(c, m, ev)) return { chocs, evenements: ev }
 
   // le laser du joueur : la roche la plus proche à portée, au débit et à la portée de SA foreuse (le hangar) — LES ROCHES

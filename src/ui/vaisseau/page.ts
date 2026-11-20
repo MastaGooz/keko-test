@@ -977,7 +977,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // (L'ÉCHELLE DES DÉGÂTS DU VORTEX : les armes et la collision contre les insectes, fois `ECHELLE_DU_VORTEX` — voir
       // `INSECTE`)
       if (VORTEX) conf = { ...conf, armes: conf.armes.map((a) => degatsMultiplies(a, ECHELLE_DU_VORTEX)), collision: { ...conf.collision, degatsEnnemi: conf.collision.degatsEnnemi * ECHELLE_DU_VORTEX } }
-      if (VORTEX) conf = { ...conf, champ: { ...conf.champ, densite: 0 }, station: { ...conf.station, portee: -1 }, invasion: { ...conf.invasion, active: true, viePortail: Math.max(1, Number(parametres.get('portail')) || conf.invasion.viePortail) /* (`&portail=N` : la vie du portail au départ, pour voir la fin d'un lien) */ }, ennemi: { ...conf.ennemi, ...INSECTE }, bouclier: { ...conf.bouclier, points: Math.max(conf.bouclier.points, BOUCLIER_DU_VORTEX) }, passifs: { ...conf.passifs, critique: conf.passifs.critique + CRITIQUE_DU_VORTEX, critiqueFacteur: FACTEUR_CRITIQUE_DU_VORTEX } }
+      if (VORTEX) conf = { ...conf, champ: { ...conf.champ, densite: 0 }, station: { ...conf.station, portee: -1 }, invasion: { ...conf.invasion, active: true, sansPortail: true /* (PLUS DE PORTAIL — Keko, 20/11 : voir `sansPortail`) */, viePortail: Math.max(1, Number(parametres.get('portail')) || conf.invasion.viePortail) /* (`&portail=N` : la vie du portail au départ, pour voir la fin d'un lien) */ }, ennemi: { ...conf.ennemi, ...INSECTE }, bouclier: { ...conf.bouclier, points: Math.max(conf.bouclier.points, BOUCLIER_DU_VORTEX) }, passifs: { ...conf.passifs, critique: conf.passifs.critique + CRITIQUE_DU_VORTEX, critiqueFacteur: FACTEUR_CRITIQUE_DU_VORTEX } }
       // LE RIVAL EST UN CUIRASSÉ LOURDEMENT ARMÉ (Keko, 14/11, à l'essai : « pour voir si je peux arriver à le tuer avec mon
       // chasseur ») : gros, lent, qui vire mal, très solide, et qui tire trois fois plus souvent, de plus loin ; il ne
       // fuit plus. `&rival=serie` rend le petit rival d'avant. *Chiffres au jugé.*
@@ -1763,6 +1763,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const cx = enLigne ? 8 + 12 : enBande ? axe : x0 + 5
     const cy = enLigne ? 8 + 9 : enBande ? 10 * G : y + 4 // (sur PC, trois plus haut : MESURÉ, son centre était sous celui du pour cent — Keko, 15/11) // (un pixel plus bas : dans l'axe du pourcentage — Keko, 14/11)
     const touche = t - passeA < 0.5
+    // PLUS DE PORTAIL, PLUS DE POUR CENT (Keko, 20/11 : « supprime les pourcentages de vie du portail de l'interface, et
+    // agrandis vers le haut la barre d'XP ») : le niveau et sa barre prennent la place de l'icône et de sa vie
+    if (CONF.invasion.sansPortail) {
+      if (enBande) dessinerLExperienceDebout(p, enLigne ? cx : axe, enLigne ? 8 : 6, G)
+      else dessinerLExperience(p, x0, y, droite - x0)
+      dessinerLeRetour(p)
+      return
+    }
     p.circle(cx, cy, 5.6 * G, N.hex('#12081f'))
     p.circle(cx, cy, 4.6 * G, touche ? N.WHITE : N.hex('#a35cff'))
     p.circle(cx, cy, 3 * G, N.hex('#2a0f4d'))
@@ -14903,13 +14911,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     dessinerLesGerbes(p)
     p.place(0, 0)
     if (VORTEX) {
-      // LE VORTEX, au centre du monde, sous le vaisseau : il tourne sans fin
-      if (vortexFx === null) vortexFx = N.createFx(VORTEX_FX as Module, { x: 0, y: 0, seed: 4 })
-      vortexFx.update(dt)
-      vortexFx.options.x = -camera.x + W / 2
-      vortexFx.options.y = -camera.y + centreY()
-      vortexFx.draw(frame)
-      N.painterFor(frame)
+      // LE VORTEX, au centre du monde, sous le vaisseau : il tournait sans fin — PLUS DE PORTAIL (Keko, 20/11 : « on va
+      // supprimer le portail » ; voir `sansPortail`) : il ne se dessine plus que si la règle en a un
+      if (!CONF.invasion.sansPortail) {
+        if (vortexFx === null) vortexFx = N.createFx(VORTEX_FX as Module, { x: 0, y: 0, seed: 4 })
+        vortexFx.update(dt)
+        vortexFx.options.x = -camera.x + W / 2
+        vortexFx.options.y = -camera.y + centreY()
+        vortexFx.draw(frame)
+        N.painterFor(frame)
+      }
       dessinerLesTaches(p)
     } else dessinerLesStations(p, separe ? 'monde' : 'tout')
     dessinerLeGivre(p)

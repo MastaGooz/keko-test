@@ -6872,3 +6872,26 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   Testé : elles passent tout droit, trois au plus ; un insecte à portée, la roche n'est pas visée, verrouillée elle
   l'est, seule aussi ; 500 points rendent 8 pépites ; le choc coûte deux. Vu à la capture. *Tous les chiffres sont de
   moi, à rejuger.*
+- PLUS DE PORTAIL : UN VAMPIRE SURVIVORS-LIKE (Keko, 20/11 : « on va supprimer le portail, supprimer les pourcentages de
+  vie du portail de l'interface, agrandir vers le haut la barre d'XP et changer le système de jeu : les ennemis
+  apparaissent toujours hors du champ de vision du joueur, mais foncent sur le joueur pour l'attaquer ; on est vraiment
+  sur un Vampire Survivors-like, avec de plus en plus d'ennemis au fur et à mesure que la partie avance, plus les
+  astéroïdes ; quand un astéroïde est détruit, il drop ses pépites là où il est mort, comme les ennemis ; et les ennemis
+  doivent éviter les astéroïdes, car une collision ennemi-astéroïde fait des dégâts à l'astéroïde et à l'ennemi, comme
+  pour le joueur ») : `invasion.sansPortail`, allumé au vortex (la règle à portail reste écrite, et testée) —
+  - LES INSECTES naissent sur le cercle de naissance (360) AUTOUR DU VAISSEAU, dans les cadrans de la vague, en chasse
+    dès leur naissance, et ne le lâchent jamais ; abattu, ils vont là où il est tombé et ne mordent plus. Les vagues
+    grossissent comme avant (4, puis 6, 8…), la suivante quand la précédente est finie. Personne ne traverse plus rien,
+    le portail ne perd plus de vie, la partie ne finit plus par lui.
+  - LES ROCHES QUI DÉRIVENT traversent le champ autour du vaisseau (le centre du champ, `centreDuChamp`, est lui) ; elles
+    lâchaient déjà leurs pépites là où elles éclatent, comme les insectes, rien n'est donné directement.
+  - LES INSECTES ÉVITENT LES ROCHES : à moins de 24 de leur bord, ils s'en écartent ET LES CONTOURNENT (une poussée de
+    côté, du côté où ils allaient — sans elle, un insecte aligné sur la roche et le vaisseau butait dessus ; 14 de marge
+    ne suffisait pas, mesuré). Un insecte qui en heurte une quand même (une roche rapide) en est sorti, et TOUS DEUX
+    PERDENT 60 (`derive.chocInsecte`), une fois toutes les 0,6 s au plus.
+  - LA PAGE : le vortex ne se dessine plus ; l'icône et le pour cent du portail ont quitté l'interface : couché, le
+    niveau et la barre d'expérience montent tout en haut de la bande ; debout, la barre prend toute la ligne. Abattu, la
+    caméra glisse toujours vers le centre du monde, où il revient au bout de dix secondes, et le compte s'y affiche.
+  Testé : nés à 360 du vaisseau loin du centre, en chasse, ils foncent sur lui ; une roche entre eux, contournée à 19,8
+  de son centre sans la toucher ; poussé dedans, il la heurte, 60 chacun ; les roches naissent autour du vaisseau. Vu à
+  la capture, couché et debout.
