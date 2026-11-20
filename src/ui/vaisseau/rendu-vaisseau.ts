@@ -593,7 +593,8 @@ export function peindreFormes(p: Peintre, formes: Forme[], cx: number, cy: numbe
     const glisse = Math.sin(bande * 2.7 + cran * 1.9) > 0.8 ? (bande % 2 === 0 ? 1 : -1) : 0
     const u = c >>> 0
     const clarte = (0.3 * (u & 0xff) + 0.59 * ((u >> 8) & 0xff) + 0.11 * ((u >> 16) & 0xff)) / 255
-    const k = Math.max(0, Math.min(VIOLET_DEPHASE.length - 1, Math.round(clarte * 1.3 * (VIOLET_DEPHASE.length - 1))))
+    // (le plus clair s'arrête un ton sous le blanc : le Prisme, presque blanc, devenait un halo sans forme)
+    const k = Math.max(0, Math.min(VIOLET_DEPHASE.length - 2, Math.round(clarte * (VIOLET_DEPHASE.length - 2))))
     p.rect(x + glisse, y, 1, 1, VIOLET_DEPHASE[k], ph.alpha)
   }
   // 3. la peinture : les tons tramés, le spéculaire, le reflet sur les bords à l'ombre

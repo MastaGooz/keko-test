@@ -6546,3 +6546,8 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   - `&dephasage=P` pose la chance du vaisseau piloté (`&dephasage=1&coup=2` : chaque coup d'essai le déphase).
   - (En passant : les tests du Frimas étaient écrits APRÈS la ligne qui fait échouer `npm run verif` — ils passaient, mais
     un échec n'aurait rien fait échouer ; la ligne est revenue en dernier.)
+- LE PRISME DÉPHASÉ NE SE VOYAIT PAS (Keko, 20/11 : « quand je prends le prisme, le déphasage de test qui devrait se
+  lancer au premier coup ne fonctionne pas ») : la règle partait (la barre passait au violet), mais MESURÉ à la capture,
+  son vaisseau violet restait noyé sous la lueur d'or blanc de son cristal. Déphasé, les lueurs de lumière se taisent
+  (le cristal du Prisme, le cœur du Tesseract, la verrière), et le plus clair du violet s'arrête un ton sous le blanc
+  (le Prisme, presque blanc, n'était plus qu'un halo). Vu à la capture sur les trois vaisseaux.
