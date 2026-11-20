@@ -12,7 +12,7 @@
  */
 import './vaisseau.css'
 import * as noyau from 'pixelfx'
-import { rocheDeLaTempete, vieMultipliee, degatsMultiplies, placeDeLEcharde, frontDeLaNova, ancreDansLeMonde, zoneDuDe, coupeDUnCube, formeDeLaCoupe, liesAuDrain, encaisser, type Ennemi, type Evenement, type Monde, impactDuRayon, asteroidesVisibles, avancerLeMonde, finDuTrio, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur, xpDuNiveau, ennemiLePlusProche, ennemiVerrouille, verrouiller, angleDuBalayage } from '../../logic/vaisseau/jeu.ts'
+import { rayonDe, rocheDeLaTempete, vieMultipliee, degatsMultiplies, placeDeLEcharde, frontDeLaNova, ancreDansLeMonde, zoneDuDe, coupeDUnCube, formeDeLaCoupe, liesAuDrain, encaisser, type Ennemi, type Evenement, type Monde, impactDuRayon, asteroidesVisibles, avancerLeMonde, finDuTrio, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur, xpDuNiveau, ennemiLePlusProche, ennemiVerrouille, verrouiller, angleDuBalayage } from '../../logic/vaisseau/jeu.ts'
 import { ETALONS as ETALONS_DU_BANC, acheter, ajouterLesPiecesDEssai, capacite, poidsTotal, POIDS_SERIE, configDuHangar, demonter, demonterA, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, montantCourt, monteeA, monter, monterA, peutAcheter, peutMonter, perdreLesMontees, estDeBase, exemplaires, libres, pieceDe, piecesDe, placeLourde, possede, aimantMonte, radarMonte, type Jauge, type Piece, type Sorte } from '../../logic/vaisseau/hangar.ts'
 import { drawWord, spell } from 'pixelfx/fx/ui/_lib'
 import { firePuff, hotFirst, smokePuff } from 'pixelfx/fx/fire/_lib'
@@ -906,7 +906,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   }
 
   // ---------------------------------------------------------------- le manche (celui du survivor)
-  let manche: { id: number; centre: Vecteur; doigt: Vecteur } | null = null
+  /** Le manche du vol : `t0` et `depart`, l'instant et le point de l'appui ; `vu`, s'il est déjà paru (voir `dessinerLeManche`). */
+  let manche: { id: number; centre: Vecteur; doigt: Vecteur; t0?: number; depart?: Vecteur; vu?: boolean } | null = null
   /**
    * LE REGARD (Keko, 12/11 : « une fois le joystick enfoncé, si le joueur maintient un deuxième doigt et fait des
    * mouvements, on déplace l'orientation du vaisseau — maintien 1 = direction et orientation, maintien 2 = prend le pas
@@ -7197,7 +7198,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       if (manche !== null && !fantome) return
       ev.preventDefault()
       racine.setPointerCapture(ev.pointerId)
-      manche = { id: ev.pointerId, centre: q, doigt: q }
+      manche = { id: ev.pointerId, centre: q, doigt: q, t0: t, depart: q, vu: false }
     } else {
       if (regard !== null && !fantome) return
       ev.preventDefault()
@@ -7259,7 +7260,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
     if (manche === null || ev.pointerId !== manche.id) return
     const doigt = { x: ev.clientX, y: ev.clientY }
-    manche = { id: manche.id, centre: suivre ? manche.centre : centreQuiSuit(MANCHE, manche.centre, doigt), doigt }
+    manche = { ...manche, centre: suivre ? manche.centre : centreQuiSuit(MANCHE, manche.centre, doigt), doigt }
   })
   /**
    * LES FLAMMES DU LANCE-FLAMMES (la Salamandre, Keko, 15/11) : des particules crachées par la buse dans le cône, tant
@@ -7275,17 +7276,24 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   let flammesDesBrules: { x: number; y: number; vx: number; vy: number; t0: number; vie: number }[] = []
   /** Une tape commencée sur un ennemi (au doigt) : elle le verrouille si elle est brève et ne bouge pas. */
   let tapeVerrou: { id: number; x: number; y: number; a: number; cible: number } | null = null
-  /** L'ennemi sous ce point de l'écran (le plus proche, à une marge près, pour qu'une petite cible se touche), ou null. */
+  /**
+   * L'ennemi sous ce point de l'écran, ou null : celui dont LE BORD est le plus près du doigt, à une marge près, pour
+   * qu'une petite cible se touche. (UNE AIDE POUR LES ROCHERS — Keko, 20/11 : « quand j'essaie de cibler un rocher, j'ai
+   * du mal à cliquer dessus » : la marge se comptait depuis le CENTRE, 12 pixels, et un gros rocher touché sur son bord
+   * était manqué ; elle se compte depuis le bord, et un rocher a la sienne plus large, `MARGE_DU_ROCHER`.)
+   */
+  const MARGE_DU_ROCHER = 20
   function ennemiSous(clientX: number, clientY: number): number | null {
     const q = enTampon(clientX, clientY)
     const wx = camera.x + (q.x - W / 2) * champApplique
     const wy = camera.y + (q.y - centreY()) * champApplique
-    const marge = Math.max(CONF.ennemi.rayon + 6, 12 * champApplique)
+    const marge = Math.max(6, 12 * champApplique - CONF.ennemi.rayon)
+    const margeRoche = MARGE_DU_ROCHER * champApplique
     let meilleur: number | null = null
-    let dm = marge
+    let dm = Infinity
     for (const e of m.ennemis) {
-      const d = Math.hypot(e.corps.x - wx, e.corps.y - wy)
-      if (d <= dm) (dm = d), (meilleur = e.id)
+      const bord = Math.max(0, Math.hypot(e.corps.x - wx, e.corps.y - wy) - rayonDe(CONF, e))
+      if (bord <= (e.asteroide !== undefined ? margeRoche : marge) && bord < dm) (dm = bord), (meilleur = e.id)
     }
     return meilleur
   }
@@ -13545,6 +13553,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     else plaque(p, ac - 3, axe - 7, 7, 14, 'or')
   }
   /** Le manche, EN PIXELS dans le tampon (plus de surcouche) : l'anneau au centre posé, le pouce dans la direction du doigt. */
+  const TENUE_DU_MANCHE = 0.35
   function dessinerLeManche(p: Peintre): void {
     if (parametres.has('doigts')) {
       p.place(0, 0)
@@ -13585,6 +13594,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
     dessinerLaReglette(p)
     if (manche === null) return
+    // (IL NE PARAÎT PAS SUR UNE SIMPLE TAPE — Keko, 20/11 : « quand je clique sur le rocher, le joystick apparaît, ce qui
+    // est assez bizarre ; qu'il n'apparaisse que quand on le laisse enfoncé suffisamment longtemps » : comme celui du
+    // regard, il attend que le doigt reste posé le temps d'une tape (`TENUE_DU_MANCHE`), ou qu'il glisse plus loin qu'une
+    // tape ; paru, il reste. Il pilote dès l'appui : seul son dessin attend)
+    if (manche.vu !== true) {
+      const dp = manche.depart === undefined ? Infinity : Math.hypot(manche.doigt.x - manche.depart.x, manche.doigt.y - manche.depart.y)
+      if (t - (manche.t0 ?? -1) < TENUE_DU_MANCHE && dp < 14) return
+      manche.vu = true
+    }
     p.place(0, 0)
     const r = C.manche.rayon / zoom
     const doigt = enTampon(manche.doigt.x, manche.doigt.y)

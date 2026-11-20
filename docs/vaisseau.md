@@ -6964,3 +6964,14 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     `recycle`, sinon il repartirait aussitôt). Mesuré au retour : trois secteurs sur huit, de 347 à 418.
   Testé : visant l'insecte derrière une roche, le canon la frappe (70) et l'épargne ; une meute restée loin revient
   sur trois secteurs, étalée sur 65. Les vaisseaux restent fermés, sauf les quatre de départ (`&tous` les ouvre).
+
+- **20/11, viser un rocher au doigt** (Keko : « quand j'essaie de cibler un rocher, j'ai du mal à cliquer dessus ; le
+  joystick apparaît quand je clique sur le rocher, ce qui est assez bizarre ; qu'il n'apparaisse que quand on le laisse
+  enfoncé suffisamment longtemps, et une aide à la sélection des rochers »).
+  - LA TAPE (`ennemiSous`) : la marge se comptait depuis le CENTRE (12 pixels du tampon), et un gros rocher (jusqu'à 34
+    de rayon) touché sur son bord était manqué. Elle se compte depuis LE BORD ; un rocher a la sienne plus large,
+    `MARGE_DU_ROCHER` (20 pixels du tampon, ~50 à l'écran du téléphone couché), un insecte garde l'ancienne ; c'est
+    le bord le plus proche du doigt qui gagne — un doigt posé sur le rocher le prend.
+  - LE MANCHE NE PARAÎT PLUS SUR UNE TAPE : il pilote dès l'appui, mais ne se dessine qu'après `TENUE_DU_MANCHE`
+    (0,35 s, la durée d'une tape de verrou) ou dès que le doigt a glissé plus loin qu'une tape (14 px) ; paru, il
+    reste. Comme le manche du regard depuis le 13/11. Vu à la capture : tenu 100 ms, rien ; tenu 600 ms, le manche.
