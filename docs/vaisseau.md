@@ -6693,3 +6693,9 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   vortex, un critique fait une fois et demie le coup (`FACTEUR_CRITIQUE_DU_VORTEX` ; deux fois avant) ; la pause a sa
   ligne, « Dégâts critiques 150 % », sous « Critique 1 % ». (Un critique de mitrailleuse fait 22,5 : le chiffre affiché
   est arrondi, 23.) Vu à la capture.
+- LA PAUSE, SANS SLASH NI TROP D'INFORMATIONS (Keko, 20/11 : « pour la régénération, donne juste le % — ce sera toutes les
+  15 s et on ne pourra pas le changer ; on veut éviter des lignes avec des slashes et trop d'informations ; la vitesse
+  d'attaque, en attaques par seconde, sans préciser l'unité ») : « Régénération 1 % » ; les dégâts d'une arme, un nombre
+  seul (par coup, ou par seconde pour ce qui frappe en continu — plus de « / s », ni de « × dé », ni de « × 3 ») ; la
+  ligne « Cadence … / min » devient « Vitesse d'attaque », en attaques par seconde, une décimale au plus (le laser 0,9,
+  la tentacule 2,4). Vu à la capture.

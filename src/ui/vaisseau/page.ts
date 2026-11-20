@@ -1806,7 +1806,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (CONF.bouclier.points > 0) l.push({ nom: 'Bouclier', valeur: `${Math.round(CONF.bouclier.points)}` })
     if (m.plaques.length > 0) l.push({ nom: 'Surblindage', valeur: `${m.plaques.length}` })
     if (CONF.dephasage.chance > 0) l.push({ nom: 'Déphasage', valeur: `${Math.round(CONF.dephasage.chance * 100)} %` })
-    if (CONF.regeneration > 0) l.push({ nom: 'Régénération', valeur: `${Math.round(CONF.regeneration * 15 * 100)} % / 15 s` })
+    // (le pour cent seul — Keko, 20/11 : « ce sera toutes les 15 secondes et on ne pourra pas le changer ; on veut éviter des
+    // lignes avec des slashes et trop d'informations »)
+    if (CONF.regeneration > 0) l.push({ nom: 'Régénération', valeur: `${Math.round(CONF.regeneration * 15 * 100)} %` })
     l.push({ nom: 'Vitesse', valeur: `${Math.round(CONF.vitesseMax)}` })
     l.push({ nom: 'Maniabilité', valeur: `${Math.round(agiliteDe(CONF) * 10)}` })
     l.push({ nom: 'Critique', valeur: `${Math.round(CONF.passifs.critique * 100)} %` })
@@ -1827,13 +1829,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       }
       return 0
     }
-    // (plusieurs armes qui frappent chacune — les trois drones : « × 3 »)
-    const fois = !CONF.alternance && CONF.armes.length > 1 ? ` × ${CONF.armes.length}` : ''
-    // (le lance-flammes : ses dégâts sont par seconde)
-    l.push(a.flamme !== undefined ? { nom: 'Dégâts', valeur: `${Math.round(a.degats)} / s` } : a.degats > 0 ? { nom: 'Dégâts', valeur: `${Math.round(a.degats)}${a.de !== undefined ? ' × dé' : ''}${fois}` } : { nom: 'Dégâts', valeur: `${Math.round(continus(a))} / s${fois}` })
-    // (la cadence : celle du vaisseau — deux armes qui tirent à tour de rôle tirent ensemble à la cadence d'une)
+    // (UN NOMBRE SEUL, SANS UNITÉ NI SIGNE — Keko, 20/11 : « éviter des lignes avec des slashes et trop d'informations » :
+    // le coup, ou ce qui frappe en continu, par seconde)
+    l.push({ nom: 'Dégâts', valeur: `${Math.round(a.flamme !== undefined || a.degats > 0 ? a.degats : continus(a))}` })
+    // (LA VITESSE D'ATTAQUE, EN ATTAQUES PAR SECONDE, sans unité — Keko, 20/11 ; une décimale au plus : celle du vaisseau,
+    // deux armes qui tirent à tour de rôle tirent ensemble à la cadence d'une)
     const n = CONF.alternance ? CONF.armes.length : 1
-    if (a.degats > 0 && a.flamme === undefined && a.cadence > 0.1) l.push({ nom: 'Cadence', valeur: `${Math.round((60 * n) / a.cadence)} / min` })
+    if (a.degats > 0 && a.flamme === undefined && a.cadence > 0.1) l.push({ nom: 'Vitesse d’attaque', valeur: String(Math.round((10 * n) / a.cadence) / 10).replace('.', ',') })
     if (a.portee > 0) l.push({ nom: 'Portée', valeur: `${Math.round(a.portee)}` })
     return l
   }
