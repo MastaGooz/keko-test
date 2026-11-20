@@ -6575,3 +6575,7 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
 - LES XÉNOÏDES, 15 % DE VIE EN MOINS (Keko, 20/11 : « réduis la vie de tous les xénoïdes de 15 % ») : le Kraken 11 → 9,
   la Vouivre 8 → 7, le Dévoreur 6 → 5 (`REGLAGES_DU_VORTEX`), au point entier le plus proche comme tout le blindage
   (9,35, 6,8 et 5,1 exacts : −18 %, −12,5 %, −17 %). Leur régénération, une part de la vie pleine, suit.
+- LA NOVA UN PEU PLUS PETITE, SANS SA COURONNE DE PICS (Keko, 20/11 : « réduis un peu la taille de la nova de givre et
+  enlève le contour de pic qui se produit lors de l'explosion pour tester ») : rayon, portée et plaque de verglas
+  56 → 48 (−15 %) ; la couronne de 32 dents de givre sur le front ne se dessine plus (`DENTS_DU_FRONT`, à `false` pour
+  l'essai) — les cristaux qui jaillissent du sol, le flocon, les bris de glace et le vent restent. Vu à la capture.

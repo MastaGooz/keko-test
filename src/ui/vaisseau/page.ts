@@ -8082,6 +8082,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    */
   const novas: { x: number; y: number; r: number; t0: number; id: number }[] = []
   const DUREE_DE_LA_NOVA = 1.4
+  /** La couronne de dents de givre sur le front de la nova (retirée pour l'essai, Keko, 20/11). */
+  const DENTS_DU_FRONT = false
   function dessinerLesNovas(p: Peintre): void {
     for (let i = novas.length - 1; i >= 0; i--) if (t - novas[i].t0 > DUREE_DE_LA_NOVA) novas.splice(i, 1)
     if (novas.length === 0) return
@@ -8112,10 +8114,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       }
       // (le front : plus un anneau lisse et sa lueur, qui faisaient une bulle — Keko, 19/11 — mais UNE COURONNE DE DENTS
       // DE GIVRE qui s'ouvre, pointées vers le dehors, de longueurs inégales, qui pâlissent)
+      // (… RETIRÉE POUR L'ESSAI — Keko, 20/11 : « enlève le contour de pic qui se produit lors de l'explosion pour tester » :
+      // `DENTS_DU_FRONT` la rend ; les cristaux qui jaillissent du sol restent)
       const u = Math.min(1, age / 0.5)
       if (u < 1) {
         // (mesuré à la capture : à un pixel et demi de large, elles se lisaient comme un pointillé)
-        for (let j = 0; j < 32; j++) {
+        for (let j = 0; j < (DENTS_DU_FRONT ? 32 : 0); j++) {
           const a = (j / 32) * Math.PI * 2 + alea(nv.id, j, 41) * 0.12
           const lg = (3.5 + 4 * alea(nv.id, j, 42)) * (1 - u * 0.5)
           const ux = Math.cos(a)

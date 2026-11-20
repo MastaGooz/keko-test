@@ -2522,7 +2522,7 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   verifier(`sans insecte, la nova part à sa cadence (${novas} en 7 s) et le blizzard aussi (${tornades}), droit devant le nez`, w.ennemis.length === 0 && novas >= 2 && tornades >= 1 && w.tornades.every((tn) => Math.abs(Math.atan2(tn.vy, tn.vx) - Math.PI / 2) < 1e-6))
 }
 // LA NOVA, UNE ONDE QUI S'OUVRE (Keko, 19/11 : « le cercle touche visuellement les ennemis, mais ils ne subissent pas de
-// dégâts ; agrandis la nova pour qu'elle matche sa pleine distance visuelle ») : sa portée est 56 ; son front s'ouvre en
+// dégâts ; agrandis la nova pour qu'elle matche sa pleine distance visuelle ») : sa portée est 48 (56 d'abord, réduite le 20/11) ; son front s'ouvre en
 // 0,35 s et frappe chaque insecte une fois quand il l'atteint — celui qui y entre en chemin aussi —, rien au-delà
 {
   const insecte = (id: number, x: number, y: number) => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv: 1000, fait: 'marche' as const, roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, calmeA: 1e9 })
@@ -2530,14 +2530,14 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, armes: [nova], ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, pv: 1000, vitesseMax: 0, poussee: 0 } }
   const w = nouveauMonde(cfg, 3)
   // (l'un au bord de la portée ; l'autre au-delà ; le troisième, loin au départ, est porté dans l'onde après 0,1 s)
-  w.ennemis.push(insecte(1, 55, 0), insecte(2, 0, 64), insecte(3, -90, 0))
+  w.ennemis.push(insecte(1, 47, 0), insecte(2, 0, 56), insecte(3, -90, 0))
   const touches = new Map<number, number>()
   for (let i = 0; i < 40; i++) {
     w.vaisseau = { ...w.vaisseau, x: 0, y: 0, vx: 0, vy: 0 }
-    if (i === 6) w.ennemis[2].corps = { ...w.ennemis[2].corps, x: -40, y: 0 }
+    if (i === 6) w.ennemis[2].corps = { ...w.ennemis[2].corps, x: -34, y: 0 }
     for (const e of avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements) if (e.type === 'ennemiTouche') touches.set(e.id, (touches.get(e.id) ?? 0) + 1)
   }
-  verifier(`l'onde frappe au bord de sa portée (56) une fois, celui qui y entre en chemin aussi, rien au-delà (${[1, 2, 3].map((id) => touches.get(id) ?? 0).join(', ')})`, nova.nova?.rayon === 56 && touches.get(1) === 1 && !touches.has(2) && touches.get(3) === 1 && w.novas.length === 0)
+  verifier(`l'onde frappe au bord de sa portée (48) une fois, celui qui y entre en chemin aussi, rien au-delà (${[1, 2, 3].map((id) => touches.get(id) ?? 0).join(', ')})`, nova.nova?.rayon === 48 && touches.get(1) === 1 && !touches.has(2) && touches.get(3) === 1 && w.novas.length === 0)
 }
 // LA PLAQUE DE LA NOVA A SA TAILLE (Keko, 19/11 : « que la zone qu'on laisse après la nova ait la même taille que la nova
 // prend au moment de l'explosion »)
