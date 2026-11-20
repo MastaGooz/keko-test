@@ -6551,3 +6551,6 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   son vaisseau violet restait noyé sous la lueur d'or blanc de son cristal. Déphasé, les lueurs de lumière se taisent
   (le cristal du Prisme, le cœur du Tesseract, la verrière), et le plus clair du violet s'arrête un ton sous le blanc
   (le Prisme, presque blanc, n'était plus qu'un halo). Vu à la capture sur les trois vaisseaux.
+- LE DÉPHASAGE À 100 % POUR L'ESSAI (Keko, 20/11 : « mets à 100 % les chances de déphasage pour les 3 vaisseaux pour
+  test ») : le Prisme, le Néant et le Tesseract esquivent tous les coups (`ModeleDeVaisseau.dephasage` à 1 ; avant :
+  5 %, 15 %, 10 %, notés à côté). À remettre après l'essai.

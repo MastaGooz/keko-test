@@ -222,7 +222,8 @@ export const MODELES: ModeleDeVaisseau[] = [
     nom: 'Prisme',
     classe: 'chasseur',
     race: 'innommes',
-    dephasage: 0.05,
+    // (À 100 % POUR L'ESSAI — Keko, 20/11 : « mets à 100 % les chances de déphasage pour les 3 vaisseaux pour test » ; avant : 0.05)
+    dephasage: 1,
     dit: 'Un cristal de lumière pris dans sa cage d’arches, d’une pureté aveuglante.',
     pieces: ['coque-12', 'propulseur-q3', 'arme-faisceau', 'arme-cristaux', 'arme-rail'],
     serie: { possedees: ['coque-12', 'propulseur-q3', 'arme-faisceau', 'arme-cristaux', 'arme-rail'], montees: { coque: 'coque-12', propulseur: 'propulseur-q3' }, outils: [], armes: ['arme-faisceau'] },
@@ -255,7 +256,8 @@ export const MODELES: ModeleDeVaisseau[] = [
     nom: 'Néant',
     classe: 'chasseur',
     race: 'innommes',
-    dephasage: 0.15,
+    // (À 100 % POUR L'ESSAI — Keko, 20/11 : « mets à 100 % les chances de déphasage pour les 3 vaisseaux pour test » ; avant : 0.15)
+    dephasage: 1,
     dit: 'Un cœur de néant qui bat entre deux anneaux : il plie l’espace et dévore la lumière.',
     pieces: ['coque-13', 'propulseur-n3', 'arme-puits', 'arme-drain', 'arme-vrilles'],
     serie: { possedees: ['coque-13', 'propulseur-n3', 'arme-puits', 'arme-drain', 'arme-vrilles'], montees: { coque: 'coque-13', propulseur: 'propulseur-n3' }, outils: [], armes: ['arme-puits'] },
@@ -276,7 +278,8 @@ export const MODELES: ModeleDeVaisseau[] = [
     nom: 'Tesseract',
     classe: 'chasseur',
     race: 'innommes',
-    dephasage: 0.1,
+    // (À 100 % POUR L'ESSAI — Keko, 20/11 : « mets à 100 % les chances de déphasage pour les 3 vaisseaux pour test » ; avant : 0.1)
+    dephasage: 1,
     dit: 'Un cube en quatre dimensions, qui joue avec la géométrie de l’espace-temps.',
     pieces: ['coque-15', 'propulseur-t3', 'arme-hypercube', 'arme-de', 'arme-coupe'],
     serie: { possedees: ['coque-15', 'propulseur-t3', 'arme-hypercube', 'arme-de', 'arme-coupe'], montees: { coque: 'coque-15', propulseur: 'propulseur-t3' }, outils: [], armes: ['arme-hypercube'] },
