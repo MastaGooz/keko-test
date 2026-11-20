@@ -6562,3 +6562,5 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   par `REGLAGES_DU_VORTEX` : le Prisme 110 / agilité 7,45 / blindage 6 ; le Tesseract 98 / 7,9 / 5 ; le Néant 86 / 8,6 /
   4. Le déphasage à 5 / 7 / 9 % (l'essai à 100 % est fini) ; sa jauge met 9 % aux trois quarts (`DEPHASAGE_MAX` 0,12).
   Vu à la capture des trois fiches.
+- LE DÉPHASAGE À 4 / 6 / 8 % (Keko, 20/11 : « passe les chances de déphasage à 4/6/8 % plutôt que 5/7/9 ») : le Prisme
+  4 %, le Tesseract 6 %, le Néant 8 % ; la jauge met 8 % aux trois quarts (`DEPHASAGE_MAX` 0,08 / 0,75).

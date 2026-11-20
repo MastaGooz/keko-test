@@ -84,7 +84,7 @@ export type ModeleDeVaisseau = {
   race: Race
   /** Ses plaques de blindage, s'il est humain (voir `vieSelonLaRace`) : trois sans autre dit. */
   plaques?: number
-  /** Sa chance de déphasage, s'il est Yhg'tharr (voir `vieSelonLaRace`) : de 0,05 à 0,09 (Keko, 20/11 — d'abord « entre 5 et 15 % »), 0,1 sans autre dit. */
+  /** Sa chance de déphasage, s'il est Yhg'tharr (voir `vieSelonLaRace`) : de 0,04 à 0,08 (Keko, 20/11 — d'abord « entre 5 et 15 % »), 0,1 sans autre dit. */
   dephasage?: number
   dit: string
   /** TOUTES les pièces qu'il peut porter (celles de série comprises). */
@@ -222,8 +222,8 @@ export const MODELES: ModeleDeVaisseau[] = [
     nom: 'Prisme',
     classe: 'chasseur',
     race: 'innommes',
-    // (Keko, 20/11 : le Prisme 5 %, le moins fuyant ; le Néant 9 %, le plus ; le Tesseract 7 %)
-    dephasage: 0.05,
+    // (Keko, 20/11 : le Prisme 4 %, le moins fuyant ; le Néant 8 %, le plus ; le Tesseract 6 % — d'abord 5, 9, 7)
+    dephasage: 0.04,
     dit: 'Un cristal de lumière pris dans sa cage d’arches, d’une pureté aveuglante.',
     pieces: ['coque-12', 'propulseur-q3', 'arme-faisceau', 'arme-cristaux', 'arme-rail'],
     serie: { possedees: ['coque-12', 'propulseur-q3', 'arme-faisceau', 'arme-cristaux', 'arme-rail'], montees: { coque: 'coque-12', propulseur: 'propulseur-q3' }, outils: [], armes: ['arme-faisceau'] },
@@ -256,8 +256,8 @@ export const MODELES: ModeleDeVaisseau[] = [
     nom: 'Néant',
     classe: 'chasseur',
     race: 'innommes',
-    // (Keko, 20/11 : le Prisme 5 %, le moins fuyant ; le Néant 9 %, le plus ; le Tesseract 7 %)
-    dephasage: 0.09,
+    // (Keko, 20/11 : le Prisme 4 %, le moins fuyant ; le Néant 8 %, le plus ; le Tesseract 6 % — d'abord 5, 9, 7)
+    dephasage: 0.08,
     dit: 'Un cœur de néant qui bat entre deux anneaux : il plie l’espace et dévore la lumière.',
     pieces: ['coque-13', 'propulseur-n3', 'arme-puits', 'arme-drain', 'arme-vrilles'],
     serie: { possedees: ['coque-13', 'propulseur-n3', 'arme-puits', 'arme-drain', 'arme-vrilles'], montees: { coque: 'coque-13', propulseur: 'propulseur-n3' }, outils: [], armes: ['arme-puits'] },
@@ -278,8 +278,8 @@ export const MODELES: ModeleDeVaisseau[] = [
     nom: 'Tesseract',
     classe: 'chasseur',
     race: 'innommes',
-    // (Keko, 20/11 : le Prisme 5 %, le moins fuyant ; le Néant 9 %, le plus ; le Tesseract 7 %)
-    dephasage: 0.07,
+    // (Keko, 20/11 : le Prisme 4 %, le moins fuyant ; le Néant 8 %, le plus ; le Tesseract 6 % — d'abord 5, 9, 7)
+    dephasage: 0.06,
     dit: 'Un cube en quatre dimensions, qui joue avec la géométrie de l’espace-temps.',
     pieces: ['coque-15', 'propulseur-t3', 'arme-hypercube', 'arme-de', 'arme-coupe'],
     serie: { possedees: ['coque-15', 'propulseur-t3', 'arme-hypercube', 'arme-de', 'arme-coupe'], montees: { coque: 'coque-15', propulseur: 'propulseur-t3' }, outils: [], armes: ['arme-hypercube'] },
