@@ -1950,6 +1950,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     } else if (a.nuee !== undefined) {
       // (son budget se partage entre les insectes qu'elle mord à la fois : tous ceux à portée)
       ligne('Dégâts partagés', ent(a.nuee.budget)), portee()
+      if (a.nuee.festin !== undefined) ligne('Croissance par morsure', pct(a.nuee.festin.pas)), ligne('Croissance max', `+${pct(a.nuee.festin.max)}`)
     } else if (a.rejeton !== undefined) {
       // (un rejeton fouette, et chasse à `vue` de lui)
       const r = a.rejeton
@@ -10299,7 +10300,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // pas de cible ; lorsqu'une cible approche, les bras projetés sont beaucoup plus denses » : trente au repos ; à mesure
       // que les bras s'allongent, jusqu'à cent trente, dont les quatre cinquièmes dans les bras)
       const tendu = bras.reduce((mx, b) => Math.max(mx, b.u), 0)
-      const combien = Math.round(MOUCHERONS_AU_REPOS + (MOUCHERONS - MOUCHERONS_AU_REPOS) * Math.min(1, tendu * 1.5))
+      // (… ET ELLE GROSSIT EN SE NOURRISSANT — Keko, 20/11 : ses moucherons suivent sa croissance, jusqu'au double)
+      const combien = Math.round((MOUCHERONS_AU_REPOS + (MOUCHERONS - MOUCHERONS_AU_REPOS) * Math.min(1, tendu * 1.5)) * (1 + n.croissance))
       const dansLesBras = 0.8 * Math.min(1, tendu * 1.5)
       for (let j = 0; j < combien; j++) {
         let x: number

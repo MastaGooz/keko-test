@@ -689,7 +689,14 @@ export type Arme = {
   // qu'un ennemi est à portée, la nuée l'attaque ; pas besoin d'une zone où elle attaque et d'une zone où elle poursuit » :
   // tout insecte à `portee` est mordu TOUT DE SUITE ; les jets qui s'étendent vers lui ne sont plus qu'à l'image, et
   // `rayon` n'est plus que la taille du nuage dessiné autour du vaisseau)
-  nuee?: { rayon: number; budget: number; deploiement: number; periode: number }
+  // (… ET ELLE SE NOURRIT — Keko, 20/11 : « la nuée est clairement en dessous : on prend beaucoup de risques, le vaisseau
+  // est peu maniable, lent, proche des ennemis ; à chaque fois que la nuée inflige des dégâts, ses dégâts partagés et le
+  // nombre de ses particules augmentent, et plus on passe de temps sans infliger de dégâts, plus ça diminue, avec un
+  // maximum ; à chaque tic de dégâts, de 1 % par exemple » : `festin` — à chaque morsure signalée (toutes les `periode`
+  // secondes), CHAQUE INSECTE MORDU ajoute `pas` à sa croissance, jusqu'à `max` ; une morsure sans personne à mordre en
+  // retire `perte`. Ses dégâts sont `budget` × (1 + croissance) ; la page en multiplie ses moucherons. *Les chiffres sont
+  // de moi.*)
+  nuee?: { rayon: number; budget: number; deploiement: number; periode: number; festin?: { pas: number; max: number; perte: number } }
   /**
    * DES REJETONS (la troisième arme du Kraken, Keko, 16/11 : « on spawn un mini vaisseau qui est autonome et attaque les
    * ennemis, un genre de truc avec des tentacules qui flottent derrière lui et s'en sert pour attaquer ») : à sa cadence,
@@ -1040,7 +1047,7 @@ export type Monde = {
   /** LES TENTACULES (voir `Arme.tentacule`) : une par ancre, au repos ou non. */
   tentacules: Tentacule[]
   /** LES NUAGES D'INSECTES (voir `Arme.nuee`) : un par arme, où (sur le vaisseau), la dernière morsure signalée, ses bras — leur insecte, leur allongement (0 à 1), le dernier point où il était. */
-  nuees: { arme: number; x: number; y: number; mordA: number; bras: { cible: number; u: number; tx: number; ty: number }[] }[]
+  nuees: { arme: number; x: number; y: number; mordA: number; bras: { cible: number; u: number; tx: number; ty: number }[]; /** Ce qu'elle a mangé : la part de dégâts qu'elle a gagnée (0 à `festin.max`). */ croissance: number }[]
   /** LES REJETONS (voir `Arme.rejeton`). */
   rejetons: Rejeton[]
   /** LES FLAQUES D'ACIDE (voir `Arme.crachat`) : un cône au sol — sa pointe, son cap, quand il est né, son arme. */
@@ -3717,7 +3724,7 @@ function menerLesNuees(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[])
     if (nu === undefined) return
     let n = m.nuees.find((x) => x.arme === i)
     if (n === undefined) {
-      n = { arme: i, x: v.x, y: v.y, mordA: m.t, bras: [] }
+      n = { arme: i, x: v.x, y: v.y, mordA: m.t, bras: [], croissance: 0 }
       m.nuees.push(n)
     }
     n.x = v.x
@@ -3745,8 +3752,11 @@ function menerLesNuees(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[])
     if (signale) n.mordA = m.t
     // (mordus : tous ceux à portée, tout de suite — ils se partagent le budget de la nuée)
     const mordus = proches
+    // (ELLE SE NOURRIT : à chaque morsure, un pas par insecte mordu ; une morsure à vide, elle maigrit)
+    const fe = nu.festin
+    if (fe !== undefined && signale) n.croissance = mordus.length > 0 ? Math.min(fe.max, n.croissance + fe.pas * mordus.length) : Math.max(0, n.croissance - fe.perte)
     for (const e of mordus) {
-      e.pv -= (nu.budget / mordus.length) * dt
+      e.pv -= ((nu.budget * (1 + n.croissance)) / mordus.length) * dt
       if (signale) ev.push({ type: 'morsure', id: e.id, x: e.corps.x, y: e.corps.y })
       if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
     }

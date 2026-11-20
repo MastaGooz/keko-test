@@ -6806,3 +6806,13 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   - ILS NE SE PILOTENT PAS : un vaisseau verrouillé qu'on pilotait, ou demandé par `&vaisseau=`, cède la place au
     Chasseur ; ils sortent des listes de la flotte (missions, pastilles, choix). `&tous` les ouvre tous.
   Vu à la capture : la grille, la fiche d'un verrouillé, `&vaisseau=frimas` qui ouvre sur le Chasseur.
+- LA NUÉE SE NOURRIT (Keko, 20/11 : « la nuée est clairement en dessous : on prend beaucoup de risques, le vaisseau est
+  peu maniable, lent, proche des ennemis ; à chaque fois que la nuée inflige des dégâts, ses dégâts partagés et le nombre
+  de ses particules augmentent, et plus on passe de temps sans infliger de dégâts, plus ça diminue, avec un maximum ; à
+  chaque tic de dégâts, de 1 % par exemple ») : `nuee.festin` — à chaque morsure signalée (toutes les 0,4 s), CHAQUE
+  INSECTE MORDU lui ajoute 1 % (un tic de dégâts, c'est un chiffre par insecte, comme à l'écran), jusqu'à +100 % ; une
+  morsure à vide lui en retire 1 % (2,5 % par seconde). Ses dégâts : 110 × (1 + croissance) ; ses moucherons, autant
+  de fois plus nombreux. Elle repart de zéro à la mort du vaisseau. Le panneau dit « Croissance par morsure 1 % » et
+  « Croissance max +100 % ». *Le maximum et la perte sont de moi.* Testé : un insecte mordu 10 s, +26 % ; 4 s à vide,
+  −10 % ; cinq insectes 40 s, le double. Au banc, son indice passe de 1,00 à 1,42 (la Tentacule, 1,00) : c'est le
+  surcroît voulu pour le risque qu'elle fait prendre, le banc ne mesure pas ce risque.

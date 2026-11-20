@@ -1642,6 +1642,28 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   const deux = planer([[8, 0], [-8, 0]], 0, 1)
   const trois = planer([[8, 0], [-8, 0], [0, 8]], 0, 1)
   verifier(`la nuée partage son budget : seul, un insecte dans le nuage perd 14 par seconde ; à deux, 7 chacun (${deux.pv.map((x) => x.toFixed(1)).join(' / ')}) ; à trois, 4,7 (${trois.pv.map((x) => x.toFixed(1)).join(' / ')})`, deux.pv.every((x) => Math.abs(x - 7) < 0.2) && trois.pv.every((x) => Math.abs(x - 14 / 3) < 0.2))
+  // (ELLE SE NOURRIT — Keko, 20/11 : +1 % de dégâts par insecte mordu, à chaque morsure, jusqu'au double ; à vide, elle maigrit)
+  {
+    const cfgF = { ...cfg, armes: [{ ...nuee, nuee: { ...nuee.nuee, festin: { pas: 0.01, max: 1, perte: 0.01 } } }] }
+    const w = nouveauMonde(cfgF, 3)
+    const tenir = (places: [number, number][], secondes: number): number => {
+      w.ennemis = places.map(([x, y], k) => insecte(k + 1, x, y))
+      const pv0 = w.ennemis.reduce((s, e) => s + e.pv, 0)
+      for (let i = 0; i < 60 * secondes; i++) {
+        places.forEach(([x, y], k) => (w.ennemis[k].corps = { ...w.ennemis[k].corps, x, y, vx: 0, vy: 0 }))
+        w.vaisseau = { ...w.vaisseau, x: 0, y: 0, vx: 0, vy: 0 }
+        avancerLeMonde(cfgF, w, 1 / 60, { x: 0, y: 0 })
+      }
+      return pv0 - w.ennemis.reduce((s, e) => s + e.pv, 0)
+    }
+    const debut = tenir([[30, 0]], 1)
+    const apres10 = (tenir([[30, 0]], 10), w.nuees[0].croissance)
+    const fin = tenir([[30, 0]], 1)
+    tenir([], 4)
+    const maigrie = w.nuees[0].croissance
+    tenir([[30, 0], [-30, 0], [0, 30], [0, -30], [20, 20]], 40)
+    verifier(`la nuée se nourrit : un insecte mordu 10 s la fait croître de ${Math.round(apres10 * 100)} % (une morsure toutes les 0,4 s), ses dégâts suivent (${debut.toFixed(1)} puis ${fin.toFixed(1)} par seconde) ; 4 s à vide, elle maigrit (${Math.round(maigrie * 100)} %) ; cinq insectes 40 s, elle plafonne au double`, Math.abs(apres10 - 0.25) < 0.02 && fin > debut * 1.25 && maigrie < apres10 - 0.05 && w.nuees[0].croissance === 1)
+  }
 }
 // LES REJETONS DU KRAKEN (Keko, 16/11) : pondus quand un insecte est à portée, ils nagent jusqu'à lui et le fouettent ;
 // trois au plus ; ils meurent au bout de leur durée
