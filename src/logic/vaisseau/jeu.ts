@@ -1698,6 +1698,27 @@ function menerLInvasion(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
   inv.prochainA = m.t + (inv.aNaitre > 0 ? cadenceDeLaVague(c, inv.vague) : c.invasion.repos)
 }
 
+/**
+ * CE QUE LE VAISSEAU A POSÉ ATTIRE LES INSECTES SUR LUI (Keko, 20/11 : « quand un ennemi se trouve à portée d'un
+ * rejeton, du Kraken, d'une tourelle ou de n'importe quelle chose que le vaisseau pose, il aggro sur le vaisseau ») : un
+ * insecte à portée d'une tourelle déployée (la portée de son arme), d'un rejeton ou d'un mini-ver (leur vue), d'une vrille
+ * (son allonge) ou d'une mine posée (sa zone) prend le vaisseau en chasse — même hors de `aggro`, même pendant son
+ * calme — et ne le lâche pas tant qu'il y est.
+ */
+function aPorteeDUnePose(c: ConfigVaisseau, m: Monde, e: Ennemi): boolean {
+  const b = e.corps
+  const pres = (x: number, y: number, r: number | undefined): boolean => r !== undefined && Math.hypot(b.x - x, b.y - y) <= r + c.ennemi.rayon
+  const arme = (i: number): Arme | undefined => c.armes[i]
+  return m.tourelles.some((t) => t.deployee && pres(t.x, t.y, arme(t.arme)?.portee))
+    || m.rejetons.some((r) => pres(r.x, r.y, arme(r.arme)?.rejeton?.vue))
+    || m.miniVers.some((v) => pres(v.x, v.y, arme(v.arme)?.ponte?.vue))
+    || m.vrilles.some((v) => pres(v.x, v.y, arme(v.arme)?.vrille?.allonge))
+    || m.mines.some((mi) => {
+      const a = arme(mi.arme)?.mine
+      return a !== undefined && m.t >= mi.lancee + a.vol && pres(mi.x, mi.y, a.rayon)
+    })
+}
+
 /** Ce que fait UN INSECTE pendant `dt` : il marche vers le portail et le traverse ; ou il chasse le joueur qui l'a approché, le mord, et le lâche s'il est entraîné trop loin. */
 function conduireLInsecte(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number, ev: Evenement[]): Choc[] {
   const I = c.invasion
@@ -1720,16 +1741,18 @@ function conduireLInsecte(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number, ev
     }
     return []
   }
+  // (CE QUE LE VAISSEAU A POSÉ L'ATTIRE SUR LUI — voir `aPorteeDUnePose`)
+  const attire = m.phase === 'vol' && aPorteeDUnePose(c, m, e)
   if (e.fait === 'aggro') {
     // (IL LÂCHE QUAND LE JOUEUR S'ÉLOIGNE TROP DE LUI — Keko, 16/11 : « qu'ils poursuivent le joueur beaucoup plus loin dans
     // l'espace ; que l'ennemi arrête de suivre le joueur quand le joueur s'éloigne trop de lui, mais tant qu'il est à une
     // certaine distance, il peut le poursuivre très loin » : plus de laisse autour du portail — il lâche à `lache` du
-    // joueur, ou le joueur abattu)
-    if (m.phase !== 'vol' || dj > I.lache) {
+    // joueur, ou le joueur abattu ; jamais tant qu'il est à portée de ce que le vaisseau a posé)
+    if (m.phase !== 'vol' || (dj > I.lache && !attire)) {
       e.fait = 'marche'
       e.calmeA = m.t + I.calme
     }
-  } else if (m.phase === 'vol' && dj <= I.aggro && m.t >= (e.calmeA ?? 0)) e.fait = 'aggro'
+  } else if (attire || (m.phase === 'vol' && dj <= I.aggro && m.t >= (e.calmeA ?? 0))) e.fait = 'aggro'
   else e.fait = 'marche'
   let direction: Vecteur
   if (e.fait === 'aggro') {

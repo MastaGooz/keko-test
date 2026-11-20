@@ -1833,12 +1833,22 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * unité), PORTÉE (jusqu'où elle va chercher), ZONE (le rayon de ce qu'elle couvre), PROJECTILES, les DURÉES en
    * secondes, le RALENTISSEMENT et les parts en pour cent ; ce qu'elle pose ou fait naître se compte à son nom (Tourelles,
    * Vers, Mines…).
+   * (… EN DEUX PARTIES POUR LES INVOCATIONS — Keko, 20/11 : « une partie qui concerne l'activité du vaisseau, comme la
+   * cadence de ponte des rejetons, et une partie dédiée uniquement à la chose invoquée — ses dégâts, sa cadence, sa
+   * vitesse —, pour qu'on distingue bien la partie vaisseau et la partie invocation » : les drones, les tourelles, les
+   * mini-vers des œufs, les vrilles et les rejetons ont une partie « Vaisseau » — ce qu'il pose, combien, à quel rythme —
+   * puis une partie à leur nom ; `titre` marque la tête d'une partie. Les mines et les cristaux restent d'un bloc : ils
+   * ne font rien d'eux-mêmes.)
+   * (LES CIBLES NE SE DISENT QUE COMPTÉES — Keko, 20/11 : « quand c'est toutes, on ne le précise pas ; on précise le
+   * nombre de cibles quand c'est autre chose que 1 pour les attaques mono-cibles et toute une zone » : plus de
+   * « Cibles toutes » ; une ligne « Cibles » seulement pour un nombre.)
    */
-  function lignesDeLArme(): { nom: string; valeur: string }[] {
+  function lignesDeLArme(): { nom: string; valeur: string; titre?: boolean }[] {
     const a = CONF.armes[0]
     if (a === undefined) return []
-    const l: { nom: string; valeur: string }[] = []
+    const l: { nom: string; valeur: string; titre?: boolean }[] = []
     const ligne = (nom: string, valeur: string): void => void l.push({ nom, valeur })
+    const partie = (nom: string): void => void l.push({ nom, valeur: '', titre: true })
     const ent = (v: number): string => `${Math.round(v)}`
     const dec = (v: number): string => String(Math.round(v * 10) / 10).replace('.', ',')
     const sec = (v: number): string => `${dec(v)} s`
@@ -1869,19 +1879,22 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       if (c.dpsBrulure > 0) ligne('Brûlure', ent(c.dpsBrulure)), ligne('Durée de brûlure', sec(c.brulure))
     } else if (a.orbite !== undefined) {
       // (les drones : chacun tire à sa cadence ; ils partent sur un insecte à `laisse` du vaisseau)
-      ligne('Drones', ent(CONF.armes.length)), ligne('Dégâts', ent(a.degats)), cadence(a.cadence), portee(a.orbite.laisse ?? a.portee)
+      partie('Vaisseau'), ligne('Drones', ent(CONF.armes.length)), portee(a.orbite.laisse ?? a.portee)
+      partie('Drone'), ligne('Dégâts', ent(a.degats)), cadence(a.cadence), portee(), ligne('Vitesse', ent(a.orbite.vol ?? 0))
     } else if (a.pose !== undefined) {
-      ligne('Tourelles', ent(a.pose.max)), ligne('Dégâts', ent(a.degats)), cadence(a.cadence), portee(), ligne('Durée', sec(a.pose.duree)), ligne('Délai de pose', sec(a.pose.tous))
+      partie('Vaisseau'), ligne('Délai de pose', sec(a.pose.tous)), ligne('Tourelles', ent(a.pose.max))
+      partie('Tourelle'), ligne('Dégâts', ent(a.degats)), cadence(a.cadence), portee(), ligne('Durée', sec(a.pose.duree))
     } else if (a.scie !== undefined) {
       // (elle traverse tout, et frappe chaque insecte à l'aller puis au retour)
-      ligne('Dégâts', ent(a.degats)), portee(), ligne('Cibles', 'toutes'), ligne('Passages', '2')
+      ligne('Dégâts', ent(a.degats)), portee(), ligne('Passages', '2')
     } else if (a.chaine !== undefined) {
       const c = a.chaine
       ligne('Dégâts', ent(a.degats)), cadence(a.cadence), portee(), ligne('Rebonds', ent(c.rebonds)), ligne('Portée des rebonds', ent(c.saut)), ligne('Perte par rebond', pct(1 - c.attenuation))
     } else if (a.aura !== undefined) {
       ligne('Dégâts', ent(a.aura.dps)), zone(a.aura.rayon)
     } else if (a.drain !== undefined) {
-      ligne('Dégâts', ent(a.drain.dps)), zone(a.drain.rayon), ligne('Cibles', a.drain.cibles !== undefined ? ent(a.drain.cibles) : 'toutes')
+      ligne('Dégâts', ent(a.drain.dps)), zone(a.drain.rayon)
+      if (a.drain.cibles !== undefined) ligne('Cibles', ent(a.drain.cibles))
     } else if (a.fleau !== undefined) {
       const f = a.fleau
       ligne('Dégâts', ent(a.degats)), ligne('Dégâts de la chaîne', ent(f.chaine.degats)), portee(), ligne('Tours par seconde', dec(f.vitesse / (2 * Math.PI)))
@@ -1899,11 +1912,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const to = a.tornade
       ligne('Dégâts', ent(to.dps)), cadence(a.cadence), portee(), zone(to.rayon), ligne('Durée', sec(to.duree)), ralentit(to.ralenti)
     } else if (a.ponte !== undefined) {
-      // (les dégâts et la cadence sont ceux d'un mini-ver qui mord ; il chasse à `vue` de lui)
+      // (un mini-ver mord, et chasse à `vue` de lui)
       const o = a.ponte
-      ligne('Dégâts', ent(o.morsure)), cadence(o.cadence), portee(o.vue), ligne('Vers par œuf', ent(o.nombre)), ligne('Œufs', ent(o.max)), ligne('Délai de ponte', sec(o.tous)), ligne('Éclosion', sec(o.eclosion)), ligne('Durée des vers', sec(o.duree))
+      partie('Vaisseau'), ligne('Délai de ponte', sec(o.tous)), ligne('Œufs', ent(o.max)), ligne('Éclosion', sec(o.eclosion)), ligne('Vers par œuf', ent(o.nombre))
+      partie('Mini-ver'), ligne('Dégâts', ent(o.morsure)), cadence(o.cadence), portee(o.vue), ligne('Vitesse', ent(o.vitesse)), ligne('Durée', sec(o.duree))
     } else if (a.epines !== undefined || a.rail !== undefined) {
-      ligne('Dégâts', ent(a.degats)), cadence(a.cadence), portee(), ligne('Cibles', 'toutes')
+      ligne('Dégâts', ent(a.degats)), cadence(a.cadence), portee()
     } else if (a.sphere !== undefined) {
       // (la sphère tire sur tout ce qui est dans sa zone, `periode` après `periode`)
       const s = a.sphere
@@ -1913,17 +1927,19 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       ligne('Dégâts', ent(a.degats)), cadence(a.cadence), portee(), zone(s.eclat), ligne('Attraction', ent(s.rayon)), ligne('Durée', sec(s.duree))
     } else if (a.vrille !== undefined) {
       const v = a.vrille
-      ligne('Dégâts', ent(v.dps)), cadence(a.cadence), portee(), ligne('Vrilles', ent(v.max)), ligne('Durée', sec(v.duree)), ligne('Allonge', ent(v.allonge)), ligne('Arrachement', ent(v.arrache))
+      partie('Vaisseau'), ligne('Délai d’invocation', sec(a.cadence)), ligne('Vrilles', ent(v.max)), portee()
+      partie('Vrille'), ligne('Dégâts', ent(v.dps)), ligne('Allonge', ent(v.allonge)), ligne('Arrachement', ent(v.arrache)), ligne('Durée', sec(v.duree))
     } else if (a.essaim !== undefined) {
       ligne('Dégâts', ent(a.degats)), cadence(a.cadence), portee(), ligne('Projectiles', ent(a.essaim.nombre))
     } else if (a.nuee !== undefined) {
       // (son budget se partage entre les insectes qu'elle mord à la fois)
       const n = a.nuee
-      ligne('Dégâts partagés', ent(n.budget)), portee(), zone(n.rayon), ligne('Cibles', 'toutes')
+      ligne('Dégâts partagés', ent(n.budget)), portee(), zone(n.rayon)
     } else if (a.rejeton !== undefined) {
-      // (les dégâts et la cadence sont ceux d'un rejeton qui fouette)
+      // (un rejeton fouette, et chasse à `vue` de lui)
       const r = a.rejeton
-      ligne('Dégâts', ent(a.degats)), cadence(r.periode), portee(), ligne('Rejetons', ent(r.max)), ligne('Durée', sec(r.duree)), ligne('Délai de ponte', sec(a.cadence))
+      partie('Vaisseau'), ligne('Délai de ponte', sec(a.cadence)), ligne('Rejetons', ent(r.max)), portee()
+      partie('Rejeton'), ligne('Dégâts', ent(a.degats)), cadence(r.periode), portee(r.vue), ligne('Vitesse', ent(r.vitesse)), ligne('Durée', sec(r.duree))
     } else if (a.crachat !== undefined) {
       const c = a.crachat
       ligne('Dégâts', ent(a.degats)), cadence(a.cadence), portee(), ouverture(c.cone), ligne('Acide', ent(c.acide.dps)), ligne('Durée de l’acide', sec(c.acide.duree)), ligne('Dégâts subis', `+${pct(c.acide.bonus)}`), ligne('Durée de la flaque', sec(c.duree))
@@ -1966,8 +1982,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     plaque(p, x, y + dy, w, h, 'encre')
     const titre = pauseSurLArme ? (pieceDe(armeDuVortex())?.nom ?? '') : modeleDeVaisseau(flotte.actif).nom
     ecrire(p, titre, x + w / 2, y + dy + 5, PEPITE[3], { align: 'center', police: GRAS })
-    lignes.forEach((li, k) => {
+    lignes.forEach((li: { nom: string; valeur: string; titre?: boolean }, k) => {
       const ly = y + dy + 18 + k * 10
+      // (la tête d'une partie : son nom en or, un filet jusqu'au bord)
+      if (li.titre === true) {
+        ecrire(p, li.nom, x + 7, ly, PEPITE[3])
+        p.rect(x + 7 + largeurDe(li.nom) + 4, ly + 4, w - 18 - largeurDe(li.nom), 1, PEPITE[3], 0.4)
+        return
+      }
       ecrire(p, li.nom, x + 7, ly, COQUE[4])
       ecrire(p, li.valeur, x + w - 7, ly, N.WHITE, { align: 'right' })
     })

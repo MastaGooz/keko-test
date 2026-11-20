@@ -6750,3 +6750,23 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   transpercer ; là, on dirait qu'ils portent des chaussures ») : `contourDuCrochet` trace un dard d'os dans le
   prolongement de la tentacule — un col renflé, puis une lame droite qui s'effile, sa pointe à `POINTE_DU_CROCHET` (3,8,
   la faucille faisait 2,7 de long) —, sur le corps comme au bout de la tentacule qui pique. Vu au hangar, avant et après.
+- CE QUE LE VAISSEAU POSE ATTIRE LES INSECTES SUR LUI (Keko, 20/11 : « quand un ennemi se trouve à portée d'un rejeton du
+  Kraken, d'une tourelle ou de n'importe quelle chose que le vaisseau pose, il aggro sur le vaisseau ») :
+  `aPorteeDUnePose` — un insecte à portée d'une tourelle déployée (la portée de son arme), d'un rejeton ou d'un mini-ver
+  (leur vue), d'une vrille (son allonge) ou d'une mine posée (sa zone) prend le vaisseau en chasse, même loin de lui et
+  même pendant son calme, et ne le lâche pas tant qu'il y est. Les flaques, les traînées et les cristaux n'ont pas de
+  portée, ils n'attirent rien (à trancher). Testé : une tourelle à 30 d'un insecte, le vaisseau à 360 de lui — il
+  chasse ; sans tourelle, il marche au portail.
+- LE PANNEAU DES INVOCATIONS EN DEUX PARTIES (Keko, 20/11 : « une partie qui concerne l'activité du vaisseau, comme la
+  cadence de ponte des rejetons, et une partie dédiée uniquement à la chose invoquée — ses dégâts, sa cadence, sa
+  vitesse —, pour qu'on distingue bien la partie vaisseau et la partie invocation ») : les Drones, les Tourelles, les
+  Œufs, les Vrilles d'ombre et les Rejetons ont une tête « Vaisseau » (délai de pose ou de ponte, combien à la fois, la
+  portée où il les lance) puis une tête au nom de l'invocation (Drone, Tourelle, Mini-ver, Vrille, Rejeton : dégâts,
+  cadence, portée, vitesse, durée…) — le nom en or et un filet. Les mines et les cristaux restent d'un bloc (« pour
+  les mines, c'est pas un bon exemple »). Vu à la capture.
+- « CIBLES » NE SE DIT QU'EN NOMBRE (Keko, 20/11 : « quand c'est toutes, on ne le précise pas ; on précise le nombre de
+  cibles quand c'est autre chose que 1 pour les attaques mono-cibles et toute une zone ») : plus de « Cibles toutes »
+  (la nuée, la scie, l'épine, la désintégration, l'intrication).
+- (LA ZONE DE LA NUÉE, une question de Keko : c'est le nuage autour du vaisseau, 14 de rayon — ce qui y entre est mordu
+  tout de suite ; au-delà, jusqu'à 55, la nuée doit d'abord étendre un jet vers l'insecte, 0,3 s. Depuis qu'elle mord
+  tout ce qui est à portée, elle ne change presque plus rien.)

@@ -1,7 +1,7 @@
 /**
  * Vérifications du vaisseau, sans navigateur : le temps est injecté.
  */
-import { vieMultipliee, cadenceDeLaVague, asteroideDeLaCase, coupeDUnCube, asteroidesAutour, avancer, avancerLeMonde, encaisser, purger, impactDuRayon, lancerLaBombe, larguer, porteeDeLaBombe, MINERAIS, nouveauMonde, nouveauVaisseau, solidite, voler, totalDe, stationDeLaCase, stationLaPlusProche, VAISSEAU, verrouiller, ennemiLePlusProche, type ConfigVaisseau, type Evenement, type Vaisseau, xpDuNiveau } from './jeu.ts'
+import { vieMultipliee, cadenceDeLaVague, asteroideDeLaCase, coupeDUnCube, asteroidesAutour, avancer, avancerLeMonde, encaisser, purger, impactDuRayon, lancerLaBombe, larguer, porteeDeLaBombe, MINERAIS, nouveauMonde, nouveauVaisseau, solidite, voler, totalDe, stationDeLaCase, stationLaPlusProche, VAISSEAU, verrouiller, ennemiLePlusProche, type ConfigVaisseau, type Ennemi, type Evenement, type Vaisseau, xpDuNiveau } from './jeu.ts'
 import { acheter, configDuHangar, hangarNeuf, monter, pieceDe } from './hangar.ts'
 
 /** Les règles sont vérifiées SANS la zone calme de la base (le rival naît où que soit le joueur) et AVEC les extracteurs par case (éteints en jeu pour l'instant) ; la base et la station seule ont leurs propres vérifications, plus bas. */
@@ -301,6 +301,24 @@ verifier('une fraction de bouclier prend sa part du coup, la coque le reste', zb
   z.vaisseau = { ...z.vaisseau, x: ins.corps.x + cfg.invasion.lache + 40, y: 0, vx: 0, vy: 0 }
   avancerLeMonde(cfg, z, 1 / 60, { x: 0, y: 0 })
   verifier('une grande zone d’aggro ; loin du portail (à 1 500), il poursuit toujours le joueur qui reste à portée de lui ; il ne lâche que quand le joueur s’éloigne trop de lui', cfg.invasion.aggro >= 150 && tient && ins.fait === 'marche')
+  // (CE QUE LE VAISSEAU POSE L'ATTIRE SUR LUI — Keko, 20/11) : le joueur loin de l'insecte, hors de toute aggro ; une
+  // tourelle posée à 30 de l'insecte (sa portée, 75) le fait chasser le vaisseau — même au-delà de `lache` ; sans elle, il marche
+  {
+    const tourelle = { id: 'tourelle', cadence: 0.8, degats: 0, portee: 75, vitesse: 220, vie: 0.5, dispersion: 0, guide: false, pose: { tous: 1e9, ecart: 28, max: 5, duree: 18, pivot: 8, jet: 34, vol: 0.4 } }
+    const cfgT = { ...cfg, armes: [tourelle] }
+    const essai = (avecTourelle: boolean): Ennemi['fait'] => {
+      const w = nouveauMonde(cfgT, 7)
+      loin(w)
+      for (let i = 0; i < 60 * 6 && w.ennemis.length === 0; i++) avancerLeMonde(cfgT, w, 1 / 60, { x: 0, y: 0 }), loin(w)
+      const e = w.ennemis[0]
+      w.vaisseau = { ...nouveauVaisseau(), x: e.corps.x + cfg.invasion.lache + 100, y: e.corps.y }
+      if (avecTourelle) w.tourelles.push({ id: 999, x: e.corps.x + 30, y: e.corps.y, nee: w.t, cap: 0, tirA: 1e9, arme: 0, x0: e.corps.x + 30, y0: e.corps.y, lancee: w.t, deployee: true })
+      avancerLeMonde(cfgT, w, 1 / 60, { x: 0, y: 0 })
+      avancerLeMonde(cfgT, w, 1 / 60, { x: 0, y: 0 })
+      return e.fait
+    }
+    verifier('un insecte à portée d’une tourelle posée prend le vaisseau en chasse, même loin de lui ; sans elle, il marche au portail', essai(true) === 'aggro' && essai(false) === 'marche')
+  }
   // le contour du portail téléporte, même un insecte en chasse
   const c2 = nouveauMonde(cfg, 7)
   loin(c2)
