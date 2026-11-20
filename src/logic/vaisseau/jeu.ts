@@ -694,9 +694,12 @@ export type Arme = {
   // nombre de ses particules augmentent, et plus on passe de temps sans infliger de dégâts, plus ça diminue, avec un
   // maximum ; à chaque tic de dégâts, de 1 % par exemple » : `festin` — à chaque morsure signalée (toutes les `periode`
   // secondes), CHAQUE INSECTE MORDU ajoute `pas` à sa croissance, jusqu'à `max` ; une morsure sans personne à mordre en
-  // retire `perte`. Ses dégâts sont `budget` × (1 + croissance) ; la page en multiplie ses moucherons. *Les chiffres sont
+  // retire `perte`. (… PUIS ELLE FOND VITE — Keko, 20/11 : « la taille de l'essaim doit diminuer beaucoup plus vite qu'elle
+  // ne grossit : dans ce type de jeu, on est quasiment tout le temps en train d'infliger des dégâts, on doit vraiment punir
+  // un joueur qui ne frappe plus avec la nuée ; en 3 secondes, l'essaim doit avoir rétréci » : plus de `perte` par
+  // morsure ; sans personne à portée, elle perd tout son maximum en `fonte` secondes, en continu.) Ses dégâts sont `budget` × (1 + croissance) ; la page en multiplie ses moucherons. *Les chiffres sont
   // de moi.*)
-  nuee?: { rayon: number; budget: number; deploiement: number; periode: number; festin?: { pas: number; max: number; perte: number; /** Sa croissance au départ (0 ; `&festin=P` l'essaie). */ depart?: number } }
+  nuee?: { rayon: number; budget: number; deploiement: number; periode: number; festin?: { pas: number; max: number; /** En combien de secondes sans rien à mordre elle perd tout (voir plus haut). */ fonte: number; /** Sa croissance au départ (0 ; `&festin=P` l'essaie). */ depart?: number } }
   /**
    * DES REJETONS (la troisième arme du Kraken, Keko, 16/11 : « on spawn un mini vaisseau qui est autonome et attaque les
    * ennemis, un genre de truc avec des tentacules qui flottent derrière lui et s'en sert pour attaquer ») : à sa cadence,
@@ -3754,7 +3757,8 @@ function menerLesNuees(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[])
     const mordus = proches
     // (ELLE SE NOURRIT : à chaque morsure, un pas par insecte mordu ; une morsure à vide, elle maigrit)
     const fe = nu.festin
-    if (fe !== undefined && signale) n.croissance = mordus.length > 0 ? Math.min(fe.max, n.croissance + fe.pas * mordus.length) : Math.max(0, n.croissance - fe.perte)
+    if (fe !== undefined && signale && mordus.length > 0) n.croissance = Math.min(fe.max, n.croissance + fe.pas * mordus.length)
+    if (fe !== undefined && mordus.length === 0) n.croissance = Math.max(0, n.croissance - (fe.max * dt) / fe.fonte)
     for (const e of mordus) {
       e.pv -= ((nu.budget * (1 + n.croissance)) / mordus.length) * dt
       if (signale) ev.push({ type: 'morsure', id: e.id, x: e.corps.x, y: e.corps.y })

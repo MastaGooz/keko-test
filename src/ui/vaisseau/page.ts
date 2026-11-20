@@ -1952,7 +1952,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     } else if (a.nuee !== undefined) {
       // (son budget se partage entre les insectes qu'elle mord à la fois : tous ceux à portée)
       ligne('Dégâts partagés', ent(a.nuee.budget)), portee()
-      if (a.nuee.festin !== undefined) ligne('Croissance par morsure', pct(a.nuee.festin.pas)), ligne('Croissance max', `+${pct(a.nuee.festin.max)}`)
+      if (a.nuee.festin !== undefined) ligne('Croissance par morsure', pct(a.nuee.festin.pas)), ligne('Croissance max', `+${pct(a.nuee.festin.max)}`), ligne('Fonte', sec(a.nuee.festin.fonte))
     } else if (a.rejeton !== undefined) {
       // (un rejeton fouette, et chasse à `vue` de lui)
       const r = a.rejeton
@@ -10294,8 +10294,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // le joueur la voie réduire quand il n'attaque pas » : de son `rayon` à vide jusqu'à sa portée au maximum)
       const fe = nu.festin
       const plein = fe === undefined ? 0 : Math.min(1, n.croissance / fe.max)
-      const R = nu.rayon + (Math.max(nu.rayon, CONF.armes[n.arme]?.portee ?? nu.rayon) - nu.rayon) * plein
+      const Rn = nu.rayon + (Math.max(nu.rayon, CONF.armes[n.arme]?.portee ?? nu.rayon) - nu.rayon) * plein
       const bras = n.bras
+      // (L'ESSAIM SE CONTRACTE POUR FORMER SES BRAS — Keko, 20/11 : « quand la nuée attaque, l'essaim se contracte pour former
+      // le bras ; quand le bras sort, l'essaim diminue en taille, pour donner l'impression que le bras est constitué de
+      // l'essaim ; et plus l'essaim est gros, plus le bras est dense » : à mesure que ses bras s'allongent, le nuage se
+      // resserre — jusqu'à moins de la moitié de sa taille — et perd les moucherons qui partent dans les bras)
+      const tendu = bras.reduce((mx, b) => Math.max(mx, b.u), 0)
+      const sorti = Math.min(1, tendu * 1.5)
+      const R = Math.max(nu.rayon * 0.5, Rn * (1 - 0.55 * sorti))
       p.disc(n.x, n.y, R, BILE[0], (d) => 0.16 * (1 - d * d))
       // (le voile le long des bras)
       for (const b of bras) for (let q = 1; q <= 4; q++) {
@@ -10306,15 +10313,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // (… CLAIRSEMÉE AU REPOS, DENSE DANS SES BRAS — Keko, 19/11 : « diminue beaucoup le nombre d'insectes lorsqu'il n'y a
       // pas de cible ; lorsqu'une cible approche, les bras projetés sont beaucoup plus denses » : trente au repos ; à mesure
       // que les bras s'allongent, jusqu'à cent trente, dont les quatre cinquièmes dans les bras)
-      const tendu = bras.reduce((mx, b) => Math.max(mx, b.u), 0)
-      // (… ET ELLE GROSSIT EN SE NOURRISSANT — Keko, 20/11 : ceux du nuage suivent sa taille, ceux des bras sa croissance,
-      // jusqu'au double)
-      const combien = Math.round((MOUCHERONS_AU_REPOS * R) / nu.rayon + (MOUCHERONS - MOUCHERONS_AU_REPOS) * Math.min(1, tendu * 1.5) * (1 + n.croissance))
-      const dansLesBras = 0.8 * Math.min(1, tendu * 1.5)
+      // (… ET ELLE GROSSIT EN SE NOURRISSANT — Keko, 20/11 : ceux du nuage suivent sa taille ; ceux des bras, la taille de
+      // l'essaim — jusqu'à deux fois et demie au plein — : les premiers moucherons sont dans les bras, les autres dans le
+      // nuage, qui en perd six sur dix quand ils sont tendus)
+      const dansLesBras = bras.length === 0 ? 0 : Math.round((MOUCHERONS - MOUCHERONS_AU_REPOS) * sorti * (1 + 1.5 * plein))
+      const combien = dansLesBras + Math.round(((MOUCHERONS_AU_REPOS * Rn) / nu.rayon) * (1 - 0.6 * sorti))
       for (let j = 0; j < combien; j++) {
         let x: number
         let y: number
-        const b = bras.length > 0 && alea(j, 1, 70) < dansLesBras ? bras[j % bras.length] : undefined
+        const b = j < dansLesBras ? bras[j % bras.length] : undefined
         if (b !== undefined) {
           const L = Math.hypot(b.tx - n.x, b.ty - n.y) || 1
           const px = -(b.ty - n.y) / L

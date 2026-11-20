@@ -6822,3 +6822,15 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   n'attaque pas ») : son rayon dessiné va de 14 à vide jusqu'à sa portée, 55, au maximum, à proportion de la croissance ;
   ses moucherons au repos suivent sa taille (30 à vide, 118 au plein), ceux de ses jets sa croissance. `&festin=P` la
   fait partir nourrie à P de son maximum (elle maigrit ensuite sans rien à mordre). Vu à la capture, à vide et nourrie.
+- L'ESSAIM FORME SES BRAS, ET FOND EN TROIS SECONDES (Keko, 20/11 : « quand la nuée attaque, l'essaim se contracte pour
+  former le bras ; quand le bras sort, l'essaim diminue en taille, pour donner l'impression que le bras est constitué de
+  l'essaim ; plus l'essaim est gros, plus le bras est dense ; et la taille de l'essaim doit diminuer beaucoup plus vite
+  qu'elle ne grossit : on est quasiment tout le temps en train d'infliger des dégâts, on doit vraiment punir un joueur
+  qui ne frappe plus avec la nuée ; en 3 secondes, l'essaim doit avoir rétréci ») :
+  - À L'IMAGE : à mesure que ses bras s'allongent, le nuage se resserre jusqu'à 45 % de sa taille et perd six moucherons
+    sur dix ; les bras en portent jusqu'à deux fois et demie plus quand l'essaim est plein (100 à vide, 250 au plein).
+  - LA RÈGLE : `festin.fonte` (3 s) remplace la perte par morsure à vide — sans personne à portée, la nuée perd tout son
+    maximum en trois secondes, en continu. Testé : −14 points en 0,5 s, tout en 3 s. Le banc ne bouge pas (1,42 : il
+    mord sans cesse).
+  Vu à la capture, de près : les bras partent de l'essaim resserré ; l'essaim plein, bras dehors, n'a pas pu être pris
+  (la nuée fond avant que les insectes n'arrivent sur le vaisseau immobile).
