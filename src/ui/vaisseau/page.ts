@@ -11197,6 +11197,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const CHITINE_SOMBRE = N.hex('#1a0c12')
   /** L'instant du dernier bourdonnement de morsure (un à la fois). */
   let morsureSonneA = -10
+  /** LE BOURDON DE LA NUÉE (voir `regler`) : sa taille (0 à 1, sa croissance) et si elle mord — un bras tendu ; null sans nuée. */
+  const bourdonDeLaNuee = (): { taille: number; mord: boolean } | null => {
+    const n = m.phase === 'vol' ? m.nuees[0] : undefined
+    const fe = n === undefined ? undefined : CONF.armes[n.arme]?.nuee?.festin
+    if (n === undefined) return null
+    return { taille: fe === undefined ? 0 : Math.min(1, n.croissance / fe.max), mord: n.bras.some((b) => b.u >= 0.5) }
+  }
   /** L'instant du dernier claquement de tentacule (trois à la fois : un seul son). */
   let fouetSonneA = -10
   /** L'instant du dernier craquement de givre (voir l'événement `gele`). */
@@ -14223,12 +14230,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           }
           break
         case 'morsure':
-          // (le nuage mord : l'insecte blanchit, un bourdonnement qui grince — un seul à la fois)
+          // (le nuage mord : l'insecte blanchit ; plus de son à chaque morsure — Keko, 20/11 : « pas un son par à-coups » —,
+          // c'est le bourdonnement continu de la nuée qui enfle, voir `regler`)
           toucheEnnemiA.set(ev.id, t)
-          if (t - morsureSonneA > 0.25) {
-            morsureSonneA = t
-            jouer('morsure', { dx: ev.x - v.x, dy: ev.y - v.y })
-          }
           break
         case 'piqure':
           // (l'aiguille se plante : son « tchk » charnu, une giclée de bile)
@@ -14743,7 +14747,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // de l'extraction monte avec l'arc d'or (et se tait quand le compte est au bout : le son de l'extraction la relève)
       if (m.extraction !== compteVu) compteMonte = m.extraction > compteVu
       compteVu = m.extraction
-      regler(m.phase === 'vol' ? Math.max(flamme, 0.6 * v.poussee) : 0, m.phase === 'vol' && (m.forage !== null || m.canal !== null), m.phase === 'vol' ? m.extraction / CONF.extraction.duree : 0, compteMonte, m.phase === 'vol' && m.crache, genreDePropulsion())
+      regler(m.phase === 'vol' ? Math.max(flamme, 0.6 * v.poussee) : 0, m.phase === 'vol' && (m.forage !== null || m.canal !== null), m.phase === 'vol' ? m.extraction / CONF.extraction.duree : 0, compteMonte, m.phase === 'vol' && m.crache, genreDePropulsion(), bourdonDeLaNuee())
       if (m.phase === 'vol') annoncerLesSons()
       for (const e of m.ennemis) {
         const f = flammesEnnemies.get(e.id) ?? 0

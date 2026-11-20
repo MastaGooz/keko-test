@@ -6834,3 +6834,13 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     mord sans cesse).
   Vu à la capture, de près : les bras partent de l'essaim resserré ; l'essaim plein, bras dehors, n'a pas pu être pris
   (la nuée fond avant que les insectes n'arrivent sur le vaisseau immobile).
+- LA NUÉE FOND EN 5 S, ET BOURDONNE EN CONTINU (Keko, 20/11 : « l'essaim diminue trop vite ; il peut passer de sa taille
+  100 % à sa taille minimale en 5 secondes ; et change le bruit de l'essaim, c'est un peu bizarre : pas un son par
+  à-coups, un genre de bourdonnement léger mais continu, qui s'intensifie un petit peu quand l'essaim attaque ») :
+  - `festin.fonte` 3 → 5 s. Testé : 0 % au bout de 5 s à vide.
+  - `voixDeLaNuee` (sons.ts) : cinq ailes en dents de scie entre 180 et 236 Hz, jamais accordées, qui tremblent chacune à
+    son rythme, un passe-bande vers 900 Hz, un battement d'ailes à 24 Hz, à peine. Réglée à chaque image par `regler`
+    (sa taille, et si un bras est tendu) : à peine au repos (0,035), plus fort, plus haut d'un ton et plus clair quand
+    elle mord (0,075), un peu plus fort avec sa taille (+40 % au plein) ; muette sans nuée, en pause, au hangar. Le son de
+    la morsure, rejoué à chaque morsure, est retiré de la nuée. *Les niveaux sont de moi, réglés sur ceux du souffle et
+    du lance-flammes — à rejuger à l'oreille.*

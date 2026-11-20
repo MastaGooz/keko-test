@@ -697,7 +697,8 @@ export type Arme = {
   // retire `perte`. (… PUIS ELLE FOND VITE — Keko, 20/11 : « la taille de l'essaim doit diminuer beaucoup plus vite qu'elle
   // ne grossit : dans ce type de jeu, on est quasiment tout le temps en train d'infliger des dégâts, on doit vraiment punir
   // un joueur qui ne frappe plus avec la nuée ; en 3 secondes, l'essaim doit avoir rétréci » : plus de `perte` par
-  // morsure ; sans personne à portée, elle perd tout son maximum en `fonte` secondes, en continu.) Ses dégâts sont `budget` × (1 + croissance) ; la page en multiplie ses moucherons. *Les chiffres sont
+  // morsure ; sans personne à portée, elle perd tout son maximum en `fonte` secondes, en continu — 3, puis 5 : « l'essaim
+  // diminue trop vite ; il peut passer de sa taille 100 % à sa taille minimale en 5 secondes ».) Ses dégâts sont `budget` × (1 + croissance) ; la page en multiplie ses moucherons. *Les chiffres sont
   // de moi.*)
   nuee?: { rayon: number; budget: number; deploiement: number; periode: number; festin?: { pas: number; max: number; /** En combien de secondes sans rien à mordre elle perd tout (voir plus haut). */ fonte: number; /** Sa croissance au départ (0 ; `&festin=P` l'essaie). */ depart?: number } }
   /**

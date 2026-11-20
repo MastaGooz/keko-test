@@ -240,6 +240,53 @@ let forage: Voix | null = null
 let charge: (Voix & { notes: OscillatorNode[]; lfo: OscillatorNode }) | null = null
 let chargeMuette = true
 let flamme: Voix | null = null
+let bourdon: Voix | null = null
+
+/**
+ * LA NUÉE, UN BOURDONNEMENT CONTINU (Keko, 20/11 : « change le bruit de l'essaim, c'est un peu bizarre ; pas un son par
+ * à-coups : un genre de bourdonnement léger mais continu, qui s'intensifie un petit peu quand l'essaim attaque » — c'était
+ * le grincement de la morsure, rejoué à chaque morsure) : cinq ailes, des dents de scie entre 180 et 236 Hz qui ne
+ * s'accordent jamais (elles battent entre elles), chacune tremblant de quelques hertz à son rythme ; un passe-bande vers
+ * 900 Hz qui en garde le froissement ; un battement d'ailes à 24 Hz, à peine. Au repos, à peine audible ; quand l'essaim
+ * mord, plus fort, plus haut, plus clair ; il grossit un peu avec l'essaim.
+ */
+const AILES_DE_LA_NUEE = [180, 191, 203, 219, 236]
+function voixDeLaNuee(ctx: AudioContext): Voix {
+  const filtre = ctx.createBiquadFilter()
+  filtre.type = 'bandpass'
+  filtre.frequency.value = 900
+  filtre.Q.value = 0.8
+  const battement = ctx.createGain()
+  battement.gain.value = 0.85
+  const lfo = ctx.createOscillator()
+  lfo.frequency.value = 24
+  const profondeur = ctx.createGain()
+  profondeur.gain.value = 0.15
+  lfo.connect(profondeur).connect(battement.gain)
+  const gain = ctx.createGain()
+  gain.gain.value = 0
+  const notes = AILES_DE_LA_NUEE.map((f, k) => {
+    const o = ctx.createOscillator()
+    o.type = 'sawtooth'
+    o.frequency.value = f
+    // (chaque aile tremble à son rythme : quelques hertz, 5 à 9 fois par seconde)
+    const vib = ctx.createOscillator()
+    vib.frequency.value = 5 + k
+    const ampleur = ctx.createGain()
+    ampleur.gain.value = 3 + k
+    vib.connect(ampleur).connect(o.frequency)
+    vib.start()
+    const g = ctx.createGain()
+    g.gain.value = 0.2
+    o.connect(g).connect(filtre)
+    o.start()
+    ;(o as OscillatorNode & { rapport?: number }).rapport = f / AILES_DE_LA_NUEE[0]
+    return o
+  })
+  filtre.connect(battement).connect(gain).connect(ctx.destination)
+  lfo.start()
+  return { gain, filtre, notes, lfo }
+}
 
 /**
  * LE LANCE-FLAMMES, UNE VOIX CONTINUE (Keko, 15/11 : « le bruit est un peu bizarre, il faudrait un bruit continu, là on
@@ -552,7 +599,7 @@ function voixDeCharge(ctx: AudioContext): NonNullable<typeof charge> {
  * Règle les sons continus, à chaque image : la poussée du vaisseau (0 à 1), si la foreuse creuse, où en est le compte
  * de l'extraction (`compte`, de 0 à 1) et s'il monte (à quai) ou redescend (hors du parvis).
  */
-export function regler(poussee: number, creuse: boolean, compte: number, monte: boolean, crache = false, genre: GenreDePropulsion = 'souffle'): void {
+export function regler(poussee: number, creuse: boolean, compte: number, monte: boolean, crache = false, genre: GenreDePropulsion = 'souffle', nuee: { taille: number; mord: boolean } | null = null): void {
   try {
     const ctx = ZZFX.audioContext
     if (ctx.state !== 'running') return
@@ -564,7 +611,15 @@ export function regler(poussee: number, creuse: boolean, compte: number, monte: 
     if (forage === null && creuse) forage = voixDeForage(ctx)
     if (charge === null && compte > 0) charge = voixDeCharge(ctx)
     if (flamme === null && crache) flamme = voixDeFlamme(ctx)
+    if (bourdon === null && nuee !== null) bourdon = voixDeLaNuee(ctx)
     const t = ctx.currentTime
+    // (la nuée : à peine au repos, un peu plus quand elle mord, et avec sa taille ; elle se tait sans nuée)
+    if (bourdon !== null) {
+      const fort = nuee === null ? 0 : (nuee.mord ? 0.075 : 0.035) * (1 + 0.4 * nuee.taille)
+      bourdon.gain.gain.setTargetAtTime(ZZFX.volume * fort, t, nuee?.mord === true ? 0.08 : 0.25)
+      bourdon.filtre!.frequency.setTargetAtTime(nuee?.mord === true ? 1300 : 850, t, 0.15)
+      for (const o of bourdon.notes ?? []) o.frequency.setTargetAtTime(AILES_DE_LA_NUEE[0] * ((o as OscillatorNode & { rapport?: number }).rapport ?? 1) * (nuee?.mord === true ? 1.12 : 1), t, 0.2)
+    }
     if (flamme !== null) flamme.gain.gain.setTargetAtTime(crache ? ZZFX.volume * 0.38 : 0, t, crache ? 0.03 : 0.07) // (0,5 d'abord — Keko, 15/11 : « un tout petit peu moins fort »)
     if (propulsion !== null) {
       if (g === 'bete') {
