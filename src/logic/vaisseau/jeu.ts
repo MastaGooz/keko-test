@@ -282,7 +282,12 @@ export const VAISSEAU = {
     // ennemis » — le vaisseau va deux fois et demie plus vite qu'eux : `devant` — quand il file (plus de 20 par seconde),
     // cette part des naissances se fait DANS SON AXE DE VOL, à ±`cone` radians ; `recycle` — un insecte resté à plus de
     // tant du vaisseau RÉAPPARAÎT hors de vue, devant lui (la règle de Vampire Survivors). *Chiffres de moi.*)
-    continu: { actif: false as boolean, debut: 0.5, montee: 0.5, max: 6, vivantsMax: 120, devant: 0.6, cone: 0.9, recycle: 460 },
+    // (… ET LE TRAÎNARD NE REVIENT PAS EN CERCLE — Keko, 20/11 : « quand je meurs et que je respawn, tout un cercle
+    // d'ennemis apparaît autour de moi dans toutes les directions ; ça fait pas très organique » : revenu au centre, toute
+    // la meute était traînarde et réapparaissait d'un coup, à la même distance, tout autour. Vaisseau lent, le traînard
+    // revient DU CÔTÉ OÙ IL ÉTAIT, à ±`cone` ; à toute vitesse, devant comme avant ; et à une distance étalée de la
+    // naissance jusqu'à `etalement` de plus — sous `recycle`, sinon il repartirait aussitôt)
+    continu: { actif: false as boolean, debut: 0.5, montee: 0.5, max: 6, vivantsMax: 120, devant: 0.6, cone: 0.9, recycle: 460, etalement: 0.2 },
     eviteRoche: 24,
     heurteRoche: 0.6,
   },
@@ -2036,8 +2041,9 @@ function conduireLInsecte(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number, ev
   // (LE TRAÎNARD REVIENT DEVANT — voir `continu.recycle` : resté trop loin derrière, il réapparaît hors de vue, dans l'axe
   // de vol du vaisseau)
   if (I.continu.actif && m.phase === 'vol' && dj > I.continu.recycle) {
-    const a = angleDeNaissance(c, m, e.id * 7919 + Math.floor(m.t * 10))
-    const { x, y } = dansLArene(c, m, a, I.naissance)
+    const cle = Math.floor(m.t * 10)
+    const a = Math.hypot(v.vx, v.vy) > 20 ? angleDeNaissance(c, m, e.id * 7919 + cle) : Math.atan2(b.y - v.y, b.x - v.x) + (tire(m.graine, e.id, 53, cle) * 2 - 1) * I.continu.cone
+    const { x, y } = dansLArene(c, m, a, I.naissance * (1 + I.continu.etalement * tire(m.graine, e.id, 54, cle)))
     e.corps = { ...b, x, y, vx: 0, vy: 0, cap: Math.atan2(v.y - y, v.x - x) }
     return []
   }
@@ -4962,6 +4968,17 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
     }
     let fini = o.vie <= 0
     let eclate = false
+    // (CE QU'UN OBUS PEUT TOUCHER : les insectes, ET LES ROCHES QUI DÉRIVENT même masquées — Keko, 20/11 : « je tire sur un
+    // ennemi, il y a un astéroïde entre moi et l'ennemi, et mon projectile traverse l'astéroïde comme s'il n'était pas
+    // là » : `rochesMasquees` ne retire les roches qu'au choix des cibles ; sur la course du tir, elles sont là — le
+    // napalm passe au-dessus, comme d'un insecte)
+    const touchables = masquees.length > 0 ? [...m.ennemis, ...masquees] : m.ennemis
+    const abattre = (e: Ennemi): void => {
+      abattreLEnnemi(c, m, e, ev)
+      // (une roche masquée brisée ne revient pas avec les autres)
+      const k = masquees.indexOf(e)
+      if (k >= 0) masquees.splice(k, 1)
+    }
     // (une boule de napalm ne touche rien en vol : elle passe au-dessus ; à terre, elle devient une flaque)
     if (fini && o.napalm !== undefined) {
       m.flaques.push({ id: m.prochainId++, x: o.x, y: o.y, nee: m.t, ...o.napalm })
@@ -4969,24 +4986,24 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
     }
     // (UN ÉCLAT QUI TRAVERSE : il touche tout ce qu'il croise, une fois chacun, et continue)
     if (!fini && o.perce !== undefined) {
-      for (const e of [...m.ennemis]) {
+      for (const e of [...touchables]) {
         if (o.perce.includes(e.id) || Math.hypot(e.corps.x - o.x, e.corps.y - o.y) > rayonDe(c, e) + 1.5) continue
         o.perce.push(e.id)
         if (o.gel !== undefined) geler(m, e, o.gel.duree, o.gel.ralenti, ev)
         e.pv -= o.degats
         ev.push({ type: 'ennemiTouche', id: e.id, x: o.x, y: o.y, critique: o.critique === true })
-        if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
+        if (e.pv <= 0) abattre(e)
       }
     }
     if (!fini && o.napalm === undefined && o.perce === undefined) {
-      for (const e of m.ennemis) {
+      for (const e of touchables) {
         if (Math.hypot(e.corps.x - o.x, e.corps.y - o.y) > rayonDe(c, e) + 1.5) continue
         fini = true
         // (un éclat de glace gèle ce qu'il touche — avant le coup : mort, il vole en éclats)
         if (o.gel !== undefined) geler(m, e, o.gel.duree, o.gel.ralenti, ev)
         e.pv -= o.degats
         ev.push({ type: 'ennemiTouche', id: e.id, x: o.x, y: o.y, critique: o.critique === true })
-        if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
+        if (e.pv <= 0) abattre(e)
         if (o.zone !== undefined) exploser(c, m, o.x, o.y, o.zone, e, ev, o.arme)
         // (UN ÉCLAT QUI SE BRISE : ses petits fragments filent en cône derrière l'insecte, sans le retoucher)
         if (o.eclatement !== undefined) {

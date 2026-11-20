@@ -2820,6 +2820,21 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
     const seule = pv0 - r.pv
     verifier(`l’insecte d’abord : un insecte à portée, la roche n’est pas visée (${avecInsecte} contre ${insecteTouche}) ; verrouillée, elle l’est (${verrouillee}) ; seule, aussi (${seule})`, avecInsecte === 0 && insecteTouche > 0 && verrouillee > 0 && seule > 0)
   }
+  // (… MAIS LE TIR NE LA TRAVERSE PAS — Keko, 20/11 : visant l'insecte qui est derrière elle, il s'écrase sur elle)
+  {
+    const canon = { id: 'canon', cadence: 0.3, degats: 10, portee: 120, vitesse: 400, vie: 1, dispersion: 0, guide: false, infaillible: true }
+    const cfg = { ...base, armes: [canon] }
+    const w = nouveauMonde(cfg, 5)
+    const r = roche(1, 40, 200, 0, 0, 500)
+    const ins = insecte(2, 90, 200)
+    w.ennemis.push(r, ins)
+    for (let i = 0; i < 60 * 2; i++) {
+      w.vaisseau = { ...w.vaisseau, x: 0, y: 200, vx: 0, vy: 0 }
+      for (const e of w.ennemis) e.corps = { ...e.corps, x: e.id === 1 ? 40 : 90, y: 200, vx: 0, vy: 0 }
+      avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+    }
+    verifier(`le tir ne traverse pas la roche : visant l’insecte derrière elle, il la frappe (${500 - r.pv}) et l’épargne (${1e6 - ins.pv}) ; elle reste dans le champ`, r.pv < 500 && ins.pv === 1e6 && w.ennemis.includes(r))
+  }
   // (abattue, elle éclate et rend une pépite par 60 points — un insecte, une par 120)
   {
     const canon = { id: 'canon', cadence: 0.3, degats: 10, portee: 120, vitesse: 400, vie: 1, dispersion: 0, guide: false, infaillible: true }
@@ -3006,6 +3021,20 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
     for (const e of avancerLeMonde(cfgN, wn, 1 / 60, { x: 0, y: 0 }).evenements) if (e.type === 'ennemiApparait') (nes += 1), (horsArene += Math.hypot(e.x, e.y) > A.rayon - A.marge + 0.01 ? 1 : 0)
   }
   verifier(`l’arène : dans la tempête, l’énergie ronge ${tempete.toFixed(2)} en 2 s (${A.dps} par seconde), rien dans l’arène (${dedans}) ; poussé au-delà, il est retenu au bord (${Math.round(Math.hypot(wb.vaisseau.x, wb.vaisseau.y))}) ; une roche de la tempête le heurte ; ${nes} insectes nés au bord de l’arène, aucun dans la tempête (${horsArene})`, Math.abs(tempete - 2 * A.dps) < 0.05 && dedans === 0 && Math.abs(Math.hypot(wb.vaisseau.x, wb.vaisseau.y) - (A.rayon + A.largeur)) < 0.5 && heurte && wr.coque < 1000 && nes > 10 && horsArene === 0)
+}
+
+// LE TRAÎNARD NE REVIENT PAS EN CERCLE (Keko, 20/11 : « quand je respawn, tout un cercle d'ennemis apparaît autour de
+// moi ») : une meute restée loin d'un vaisseau à l'arrêt revient DE SON CÔTÉ, à des distances étalées
+{
+  const cfg = { ...VAISSEAU, coque: 1e9, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9, morsure: 0, continu: { ...VAISSEAU.invasion.continu, actif: true } }, ennemi: { ...VAISSEAU.ennemi, pv: 1e9, apparait: 1e9, rayon: 5 } }
+  const w = nouveauMonde(cfg, 5)
+  w.invasion.prochainA = 1e9
+  for (let k = 0; k < 40; k++) w.ennemis.push({ id: 100 + k, corps: { ...nouveauVaisseau(), x: 700 + (k % 8) * 6, y: 200 + Math.floor(k / 8) * 6 }, pv: 1e9, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 } })
+  avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+  const secteurs = new Set(w.ennemis.map((e) => Math.floor(((Math.atan2(e.corps.y, e.corps.x) + Math.PI) / (2 * Math.PI)) * 8) % 8))
+  const d = w.ennemis.map((e) => Math.hypot(e.corps.x, e.corps.y))
+  const etale = Math.max(...d) - Math.min(...d)
+  verifier(`la meute revient de son côté : ${secteurs.size} secteurs sur 8, des distances étalées sur ${etale.toFixed(0)} (toutes sous ${VAISSEAU.invasion.continu.recycle})`, secteurs.size <= 3 && etale > 30 && Math.max(...d) < VAISSEAU.invasion.continu.recycle)
 }
 
 // (TOUJOURS EN DERNIER : des blocs ajoutés après cette ligne échouaient sans faire échouer `npm run verif` — 17/11)

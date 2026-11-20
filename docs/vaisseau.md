@@ -6947,3 +6947,20 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     bord de l'arène. 1 800 particules et 56 roches d'abord : la tempête était presque vide à l'écran.
   Testé : 1,2 rongé en 2 s, rien dans l'arène ; retenu au bord (1 220) ; une roche de la tempête finit par le heurter ;
   aucun insecte né dans la tempête. Vu à la capture. *Tous les chiffres sont de moi.*
+
+- **20/11, le tir s'écrase sur la roche ; la meute ne revient plus en cercle** (Keko : « avec les mitraillettes du
+  chasseur ou ses missiles, parfois il y a un astéroïde entre moi et l'ennemi, et mon projectile traverse
+  l'astéroïde comme s'il n'était pas là » ; « quand je meurs et que je respawn, tout un cercle d'ennemis apparaît
+  autour de moi dans toutes les directions ; ça fait pas très organique »).
+  - LA CAUSE DU TIR : `rochesMasquees` retirait les roches qui dérivent de `m.ennemis` pour TOUTE la section des
+    armes, et le vol des obus y est — ils ne les voyaient plus. Elles ne sont plus masquées qu'au choix des cibles :
+    sur sa course, un obus (canon, mitrailleuse, missiles, salves, éclats) touche la première chose qu'il croise,
+    insecte ou roche (`touchables`) ; un tir qui perce la touche au passage ; le napalm passe toujours au-dessus ; une
+    roche masquée brisée ne revient pas. Les armes à part (météore, rayon, scie…) n'ont pas changé.
+  - LA CAUSE DU CERCLE (mesurée) : mort à ~730 du centre, les 52 insectes se regroupent là où il est tombé ; revenu au
+    centre, tous sont traînards (`recycle`, 460) et réapparaissaient d'un coup, à 346 – 347, tout autour (huit
+    secteurs sur huit). Maintenant, vaisseau lent (sous 20), le traînard revient DU CÔTÉ OÙ IL ÉTAIT, à ±`cone` ;
+    à toute vitesse, devant comme avant ; et à une distance étalée de la naissance à 20 % de plus (`etalement` — sous
+    `recycle`, sinon il repartirait aussitôt). Mesuré au retour : trois secteurs sur huit, de 347 à 418.
+  Testé : visant l'insecte derrière une roche, le canon la frappe (70) et l'épargne ; une meute restée loin revient
+  sur trois secteurs, étalée sur 65. Les vaisseaux restent fermés, sauf les quatre de départ (`&tous` les ouvre).
