@@ -12,7 +12,7 @@
  */
 import './vaisseau.css'
 import * as noyau from 'pixelfx'
-import { degatsMultiplies, placeDeLEcharde, frontDeLaNova, ancreDansLeMonde, zoneDuDe, coupeDUnCube, formeDeLaCoupe, liesAuDrain, encaisser, type Ennemi, type Evenement, type Monde, impactDuRayon, asteroidesVisibles, avancerLeMonde, finDuTrio, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur, xpDuNiveau, ennemiLePlusProche, ennemiVerrouille, verrouiller, angleDuBalayage } from '../../logic/vaisseau/jeu.ts'
+import { vieMultipliee, degatsMultiplies, placeDeLEcharde, frontDeLaNova, ancreDansLeMonde, zoneDuDe, coupeDUnCube, formeDeLaCoupe, liesAuDrain, encaisser, type Ennemi, type Evenement, type Monde, impactDuRayon, asteroidesVisibles, avancerLeMonde, finDuTrio, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur, xpDuNiveau, ennemiLePlusProche, ennemiVerrouille, verrouiller, angleDuBalayage } from '../../logic/vaisseau/jeu.ts'
 import { ETALONS as ETALONS_DU_BANC, acheter, ajouterLesPiecesDEssai, capacite, poidsTotal, POIDS_SERIE, configDuHangar, demonter, demonterA, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, montantCourt, monteeA, monter, monterA, peutAcheter, peutMonter, perdreLesMontees, estDeBase, exemplaires, libres, pieceDe, piecesDe, placeLourde, possede, aimantMonte, radarMonte, type Jauge, type Piece, type Sorte } from '../../logic/vaisseau/hangar.ts'
 import { drawWord, spell } from 'pixelfx/fx/ui/_lib'
 import { firePuff, hotFirst, smokePuff } from 'pixelfx/fx/fire/_lib'
@@ -981,6 +981,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       if (VORTEX) conf = { ...conf, ...blindageAuVortex(vieSelonLaRace(modeleDeVaisseau(flotte.actif).race, { coque: conf.coque, bouclier: conf.bouclier, regeneration: conf.regeneration, plaques: conf.plaques, corruption: conf.corruption, dephasage: conf.dephasage }, modeleDeVaisseau(flotte.actif).plaques, modeleDeVaisseau(flotte.actif).dephasage), flotte.actif) }
       if (bouclierDEssai > 0) conf = { ...conf, bouclier: { ...conf.bouclier, points: bouclierDEssai } }
       if (dephasageDEssai !== null) conf = { ...conf, dephasage: { ...conf.dephasage, chance: dephasageDEssai } }
+      // (LA VIE DU VAISSEAU, FOIS `ECHELLE_DE_LA_VIE` — en dernier : tous les points posés plus haut, `&bouclier=N` compris)
+      if (VORTEX) conf = vieMultipliee(conf, ECHELLE_DE_LA_VIE)
       // (LES BOUCHES ET LES ANCRES SUIVENT LE VAISSEAU PLUS GROS — voir `ECHELLE_EN_VOL`)
       if (echelle !== 1)
         conf = {
@@ -1047,7 +1049,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     volantes.length = 0
     m.minerai = minerai0
     m.cargaison.fer = minerai0
-    if (coque0 > 0) m.coque = Math.min(m.coque, coque0)
+    if (coque0 > 0) m.coque = Math.min(m.coque, coque0 * CONF.uniteDeVie)
     m.tresor = { ...tresor }
     m.banque = totalDe(tresor)
     m.refuses = refuses // (le même objet : le panneau de soute le règle en vol)
@@ -1315,6 +1317,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * nombres. Le catalogue garde ses chiffres, ceux du Nova Drifter.
    */
   const ECHELLE_DU_VORTEX = 10
+  /**
+   * L'ÉCHELLE DE LA VIE DU VAISSEAU AU VORTEX (Keko, 20/11 : « 9 points de vie, c'est beaucoup trop faible, ça laisse trop
+   * peu de marge pour les échelles de dégâts ; donne-leur un multiple, genre ×50 ») : le blindage, le bouclier et tout ce
+   * qui frappe le vaisseau, fois cinquante (`vieMultipliee`) — le Kraken a 450 de vie, une morsure en fait 50. La barre
+   * garde un trait par tranche de cinquante ; la fiche du hangar compte toujours en cases.
+   */
+  const ECHELLE_DE_LA_VIE = 50
   /** L'INSECTE de l'invasion, en chiffres de rival (de moi, à rejuger) : deux obus de canon l'abattent ; il marche à 40, vire vite ; il lâche UNE PÉPITE (de l'expérience) et ne tire pas — il mord. Ses points de vie à l'échelle du vortex. */
   const INSECTE = { pv: 12 * ECHELLE_DU_VORTEX, poussee: 90, vitesseMax: 40, rotation: 6, rayon: 5, butinRendu: 1, armes: [] as never[] }
   let vortexFx: Instance | null = null
@@ -1672,8 +1681,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const prendre = (ta: Talent) => (): void => {
       CONF = ta.appliquer(CONF)
       // (un point de blindage ou de bouclier gagné est donné tout de suite)
-      if (ta.id === 'blindage') m.coque = Math.min(CONF.coque, m.coque + 1)
-      if (ta.id === 'bouclier') m.bouclier = Math.min(CONF.bouclier.points, m.bouclier + 1)
+      if (ta.id === 'blindage') m.coque = Math.min(CONF.coque, m.coque + CONF.uniteDeVie)
+      if (ta.id === 'bouclier') m.bouclier = Math.min(CONF.bouclier.points, m.bouclier + CONF.uniteDeVie)
       jouer('equipe')
       secouer(1)
       choixDeTalent = apresUnChoix(ch)
@@ -2196,7 +2205,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           chocAnnonceA = t
           // (annoncé en avance, on ne sait pas encore ce que coûtera le choc : sous un point entier de bouclier, on
           // annonce le blindage — c'est lui qui a la priorité)
-          jouer(CONF.bouclier.points > 0 && m.bouclier >= 1 ? 'bouclier' : 'touche')
+          jouer(CONF.bouclier.points > 0 && m.bouclier >= CONF.uniteDeVie ? 'bouclier' : 'touche')
           break
         }
       }
@@ -7521,7 +7530,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   function dessinerLAlerte(p: Peintre): void {
     const du = t - toucheA
     const db = t - bouclierA
-    const dernier = m.phase === 'vol' && m.coque <= 1
+    const dernier = m.phase === 'vol' && m.coque <= CONF.uniteDeVie
     const rouge = du < 0.3 ? 1 - du / 0.3 : dernier ? 0.3 + 0.18 * Math.sin(t * 5) : 0
     const bleu = db < 0.3 ? 1 - db / 0.3 : 0
     const force = Math.max(rouge, bleu)
@@ -12396,7 +12405,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const nb = CONF.bouclier.points
       if (nb <= 0 || rel < 0 || rel >= nb) return null
       const db = t - bouclierA
-      if (rel >= m.bouclier) return db >= 0 && db < 0.32 && rel < m.bouclier + 1 && Math.floor(t * 30) % 2 === 0 ? N.WHITE : null
+      if (rel >= m.bouclier) return db >= 0 && db < 0.32 && rel < m.bouclier + CONF.uniteDeVie && Math.floor(t * 30) % 2 === 0 ? N.WHITE : null
       const onde = db >= 0 && db < 0.45 ? Math.exp(-Math.pow((m.bouclier - rel) / Math.max(1, nb) - db / 0.3, 2) * 40) : 0
       if (onde > 0.5) return k === 0 ? N.WHITE : VERRIERE[2]
       return k === 0 ? VERRIERE[2] : k === 1 ? VERRIERE[1] : N.hex('#12708a')
@@ -12406,7 +12415,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const cerneDuBlindage = (): number => {
       const du = t - toucheA
       if (du >= 0 && du < 0.3) return du < 0.08 ? ROUGE[5] : ROUGE[4]
-      if (m.phase === 'vol' && m.coque <= 1) return Math.sin(t * 5) > 0 ? ROUGE[5] : ROUGE[3]
+      if (m.phase === 'vol' && m.coque <= CONF.uniteDeVie) return Math.sin(t * 5) > 0 ? ROUGE[5] : ROUGE[3]
       return encre
     }
     // (LES TRAITS DES POINTS SONT FONDUS DANS LA BARRE — Keko, 13/11 : « trop prononcés : plus fins, et dans une couleur
@@ -12477,7 +12486,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const TOT = CONF.coque + nb
       const du = t - toucheA
       const db = t - bouclierA
-      const dernier = m.phase === 'vol' && m.coque <= 1
+      const dernier = m.phase === 'vol' && m.coque <= CONF.uniteDeVie
       const TIENT = 0.15 // (0,42 avant — Keko, 14/11 : la trace du coup restait trop longtemps avant de se vider)
       const VIDE = 0.5
       const fantomeA = (valeur: number): number => {
@@ -12505,14 +12514,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const by = oy + (DEUX_BARRES ? BAISSE : 17)
       const or = dernier ? [ROUGE[5], ROUGE[4], ROUGE[3]] : vieVerte() ? VERT_DE_LA_VIE : [PEPITE[3], PEPITE[2], PEPITE[1]]
       const yDe = (part: number): number => by + BH * (1 - part)
-      if (m.coque < coqueConnue - 0.04) { // (la corruption qui ronge d'un rien à chaque image n'est pas un coup)
+      if (m.coque < coqueConnue - 0.04 * CONF.uniteDeVie) { // (la corruption qui ronge d'un rien à chaque image n'est pas un coup)
         const depuis = fantomeA(coqueConnue)
         coqueFantome = depuis
         coqueCoupA = t
         for (let i = 0; i < 11; i++) gerbe(bx + 1 + R.next() * (lw - 2), yDe((m.coque + (depuis - m.coque) * R.next()) / TOT), 1, [N.WHITE, or[0], or[1], or[2]], 75)
       }
       coqueConnue = m.coque
-      if (nb > 0 && m.bouclier < bouclierConnu - 0.01) gerbe(bx + lw / 2, yDe((m.coque + m.bouclier) / TOT), 9, [N.WHITE, VERRIERE[2], VERRIERE[1]], 55)
+      if (nb > 0 && m.bouclier < bouclierConnu - 0.01 * CONF.uniteDeVie) gerbe(bx + lw / 2, yDe((m.coque + m.bouclier) / TOT), 9, [N.WHITE, VERRIERE[2], VERRIERE[1]], 55)
       bouclierConnu = m.bouclier
       // (LA MÊME PLAQUE D'ACIER QUE LA SOUTE — Keko, 13/11 : deux contenants différents « cassent la cohérence de l'UI », et
       // sombres, on y distinguait mal une barre vide : l'acier est plus clair que le creux des barres)
@@ -12531,7 +12540,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.rect(bx - 1, by - 1, lw + 2, BH + 2, cerneDuBlindage())
       if (dernier) p.glow(bx + lw / 2, by + BH / 2, BH * 0.6, ROUGE[4], 0.22 + 0.14 * Math.sin(t * 5))
       const traits = new Set<number>()
-      for (let i = 1; i < TOT; i++) traits.add(Math.round(yDe(i / TOT)))
+      // (un trait par point — UN POINT, C'EST L'UNITÉ DE VIE : cinquante au vortex)
+      for (let i = CONF.uniteDeVie; i < TOT - 1e-6; i += CONF.uniteDeVie) traits.add(Math.round(yDe(i / TOT)))
       for (let y = 0; y < BH; y++) {
         const u = 1 - (y + 0.5) / BH
         for (let x = 0; x < lw; x++) {
@@ -12584,7 +12594,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const TOT = CONF.coque + nb
     const du = t - toucheA
     const db = t - bouclierA
-    const dernier = m.phase === 'vol' && m.coque <= 1
+    const dernier = m.phase === 'vol' && m.coque <= CONF.uniteDeVie
     const TIENT = 0.15 // (0,42 avant — Keko, 14/11 : la trace du coup restait trop longtemps avant de se vider)
     const VIDE = 0.5
     const fantomeA = (valeur: number): number => {
@@ -12606,7 +12616,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const bh = DEUX_BARRES ? 6 : 8
     const or = dernier ? [ROUGE[5], ROUGE[4], ROUGE[3]] : vieVerte() ? VERT_DE_LA_VIE : [PEPITE[3], PEPITE[2], PEPITE[1]]
     // un coup dans le blindage : le fantôme part d'où on en était, des éclats tombent du morceau perdu
-    if (m.coque < coqueConnue - 0.04) { // (la corruption qui ronge d'un rien à chaque image n'est pas un coup)
+    if (m.coque < coqueConnue - 0.04 * CONF.uniteDeVie) { // (la corruption qui ronge d'un rien à chaque image n'est pas un coup)
       const depuis = fantomeA(coqueConnue)
       coqueFantome = depuis
       coqueCoupA = t
@@ -12614,7 +12624,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
     coqueConnue = m.coque
     // un coup dans le bouclier : des étincelles froides sur la cellule perdue
-    if (nb > 0 && m.bouclier < bouclierConnu - 0.01) gerbe(bx + (BW * (m.coque + m.bouclier)) / TOT, by + bh / 2, 9, [N.WHITE, VERRIERE[2], VERRIERE[1]], 55)
+    if (nb > 0 && m.bouclier < bouclierConnu - 0.01 * CONF.uniteDeVie) gerbe(bx + (BW * (m.coque + m.bouclier)) / TOT, by + bh / 2, 9, [N.WHITE, VERRIERE[2], VERRIERE[1]], 55)
     bouclierConnu = m.bouclier
 
     eteindreSous(ox, oy, wp, 19)
@@ -12633,7 +12643,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     p.rect(bx - 1, by - 1, BW + 2, bh + 2, cerneDuBlindage())
     if (dernier) p.glow(bx + BW / 2, by + bh / 2, BW * 0.6, ROUGE[4], 0.22 + 0.14 * Math.sin(t * 5))
     const traits = new Set<number>()
-    for (let i = 1; i < TOT; i++) traits.add(Math.round((BW * i) / TOT))
+    for (let i = CONF.uniteDeVie; i < TOT - 1e-6; i += CONF.uniteDeVie) traits.add(Math.round((BW * i) / TOT))
     for (let x = 0; x < BW; x++) {
       const u = (x + 0.5) / BW
       for (let v = 0; v < bh; v++) {
@@ -14311,7 +14321,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (coupDEssai > 0 && enJeu && m.phase === 'vol' && t >= coupDEssaiA) {
       coupDEssaiA = t + coupDEssai
       if (m.bouclier > 0) {
-        m.bouclier = Math.max(0, m.bouclier - 1)
+        m.bouclier = Math.max(0, m.bouclier - CONF.uniteDeVie)
         m.toucheA = m.t
         bouclierA = t
         // (le coup d'essai vient d'un côté qui tourne : la bulle montre son onde, et sa fêlure au dernier point)
@@ -14319,19 +14329,19 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       } else if (m.plaques.length > 0 || CONF.corruption.ronge > 0 || CONF.dephasage.chance > 0) {
         // (un vaisseau à plaques, corruptible ou qui se déphase : le coup d'essai passe par la règle, comme un vrai — au
         // bout, tout revient)
-        if (m.coque <= 1.3) {
+        if (m.coque <= 1.3 * CONF.uniteDeVie) {
           m.coque = CONF.coque
           m.plaques = m.plaques.map(() => true)
           m.corruption = 0
         } else {
           const evs: Evenement[] = []
-          encaisser(CONF, m, v.x, v.y, 0.8, evs)
+          encaisser(CONF, m, v.x, v.y, 0.8 * CONF.uniteDeVie, evs)
           for (const e of evs) if (e.type === 'plaque') (plaquesCasseesA[e.k] = t), jouer('plaque')
           for (const e of evs) if (e.type === 'dephase') (purgeA = t), jouer('dephase')
           if (evs.some((e) => e.type === 'touche' || e.type === 'corrompu')) toucheA = t
         }
       } else {
-        m.coque = m.coque > 1.3 ? m.coque - 0.8 : CONF.coque
+        m.coque = m.coque > 1.3 * CONF.uniteDeVie ? m.coque - 0.8 * CONF.uniteDeVie : CONF.coque
         m.toucheA = m.t
         if (m.coque < CONF.coque) toucheA = t
       }

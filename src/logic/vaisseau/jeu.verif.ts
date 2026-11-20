@@ -1,7 +1,7 @@
 /**
  * Vérifications du vaisseau, sans navigateur : le temps est injecté.
  */
-import { cadenceDeLaVague, asteroideDeLaCase, coupeDUnCube, asteroidesAutour, avancer, avancerLeMonde, encaisser, purger, impactDuRayon, lancerLaBombe, larguer, porteeDeLaBombe, MINERAIS, nouveauMonde, nouveauVaisseau, solidite, voler, totalDe, stationDeLaCase, stationLaPlusProche, VAISSEAU, verrouiller, ennemiLePlusProche, type ConfigVaisseau, type Evenement, type Vaisseau, xpDuNiveau } from './jeu.ts'
+import { vieMultipliee, cadenceDeLaVague, asteroideDeLaCase, coupeDUnCube, asteroidesAutour, avancer, avancerLeMonde, encaisser, purger, impactDuRayon, lancerLaBombe, larguer, porteeDeLaBombe, MINERAIS, nouveauMonde, nouveauVaisseau, solidite, voler, totalDe, stationDeLaCase, stationLaPlusProche, VAISSEAU, verrouiller, ennemiLePlusProche, type ConfigVaisseau, type Evenement, type Vaisseau, xpDuNiveau } from './jeu.ts'
 import { acheter, configDuHangar, hangarNeuf, monter, pieceDe } from './hangar.ts'
 
 /** Les règles sont vérifiées SANS la zone calme de la base (le rival naît où que soit le joueur) et AVEC les extracteurs par case (éteints en jeu pour l'instant) ; la base et la station seule ont leurs propres vérifications, plus bas. */
@@ -2690,6 +2690,16 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
       for (const a of w.ennemis) for (const b of w.ennemis) if (a.id < b.id) pire = Math.min(pire, Math.hypot(a.corps.x - b.corps.x, a.corps.y - b.corps.y))
   }
   verifier(`douze insectes qui poursuivent un vaisseau en rond ne s'empilent pas (au plus près : ${pire.toFixed(1)}, leurs rayons font 10)`, pire >= 9.5)
+}
+
+// LA VIE DU VAISSEAU FOIS CINQUANTE (Keko, 20/11 : « 9 points de vie, c'est beaucoup trop faible ») : le blindage, le
+// bouclier et tout ce qui frappe le vaisseau suivent — une morsure prend autant de la barre qu'avant
+{
+  const c = vieMultipliee({ ...VAISSEAU, coque: 9, bouclier: { points: 3, delai: 4, regain: 0.5 } }, 50)
+  verifier(`la vie fois 50 : blindage ${c.coque}, bouclier ${c.bouclier.points} (recharge ${c.bouclier.regain} par seconde), morsure ${c.invasion.morsure}, unité ${c.uniteDeVie}`, c.coque === 450 && c.bouclier.points === 150 && c.bouclier.regain === 25 && c.invasion.morsure === 50 && c.uniteDeVie === 50)
+  const w = nouveauMonde({ ...c, bouclier: { ...c.bouclier, points: 0 } })
+  encaisser({ ...c, bouclier: { ...c.bouclier, points: 0 } }, w, 0, 0, c.invasion.morsure, [])
+  verifier(`une morsure prend la même part de la barre : ${w.coque} sur 450 (8 sur 9 avant)`, w.coque === 400)
 }
 
 // (TOUJOURS EN DERNIER : des blocs ajoutés après cette ligne échouaient sans faire échouer `npm run verif` — 17/11)

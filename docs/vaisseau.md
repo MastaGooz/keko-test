@@ -6699,3 +6699,19 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   seul (par coup, ou par seconde pour ce qui frappe en continu — plus de « / s », ni de « × dé », ni de « × 3 ») ; la
   ligne « Cadence … / min » devient « Vitesse d'attaque », en attaques par seconde, une décimale au plus (le laser 0,9,
   la tentacule 2,4). Vu à la capture.
+- LA VIE DU VAISSEAU FOIS CINQUANTE, COHÉRENTE AVEC CELLE DES INSECTES (Keko, 20/11 : « les chiffres utilisés pour la vie
+  sont trop faibles — 9 points de vie, c'est beaucoup trop faible, ça laisse trop peu de marge pour les échelles de
+  dégâts ; donne-leur un multiple, genre ×50, et pense l'échelle de dégâts en fonction » ; puis « une cohérence entre les
+  dégâts qu'on inflige aux ennemis et ceux qu'ils nous infligent : les points de vie d'un ennemi cohérents avec ceux du
+  personnage, les ennemis faibles en ont moins, les forts plus ») :
+  - LA RÈGLE (`vieMultipliee`, `ConfigVaisseau.uniteDeVie`) : le blindage, le bouclier et sa recharge, et tout ce qui
+    frappe le vaisseau — la morsure d'un insecte, les chocs, la corruption — fois `k` ; « un point de plus » d'un talent
+    en ajoute `k` ; le bouclier est levé à `k`. Les plaques, le déphasage et la régénération (une part) n'ont pas
+    d'échelle. Au vortex, `ECHELLE_DE_LA_VIE` = 50. Testé : une morsure prend la même part de la barre (50 sur 450).
+  - LA PAGE : la barre garde un trait par tranche de cinquante (9 cases pour le Kraken) ; « dernier point » rouge sous
+    cinquante ; le coup d'essai (`&coup=N`) frappe de 40 ; `&coque=N` compte en cases. La fiche du hangar compte toujours
+    en cases ; la pause dit les vrais nombres (« Vie 450 »).
+  - LA COHÉRENCE, MESURÉE : UN SEUL ÉTALON des deux côtés — un insecte, l'ennemi faible, a 120 points de vie et mord de
+    50 ; un vaisseau a de 200 (le Chasseur, le Frimas, le Néant) à 450 (le Kraken) de blindage, plus son bouclier (150 à
+    450 chez les Vectrans) ; le Pulsar a 100 de coque sous 450 de bouclier. Les armes font de 15 (la mitrailleuse) à 135
+    par coup. Les ennemis plus forts (élites, boss) viendront au-dessus des vaisseaux, dans le même étalon.

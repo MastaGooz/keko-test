@@ -121,6 +121,12 @@ export const VAISSEAU = {
    * donnait DEUX coups dans la même image, sa morsure et le choc : la plaque prenait le premier, la barre le second.
    */
   invulnerabilite: 1,
+  /**
+   * L'UNITÉ DE VIE : ce que vaut « un point » de blindage ou de bouclier (1 ; au vortex, `vieMultipliee` la pose — Keko,
+   * 20/11 : « 9 points de vie, c'est beaucoup trop faible, ça laisse trop peu de marge pour les échelles de dégâts ») :
+   * ce qu'ajoute un talent « un point de plus », ce qu'il faut de bouclier pour qu'il soit levé.
+   */
+  uniteDeVie: 1,
   /** LE FOREUR DU JOUEUR d'après la foreuse montée au hangar (`hangar.ts`) : des facteurs sur le débit et la portée de `forage`, et sur la portée de son aimant (1 = de série). Le rival creuse avec `forage` tel quel. IL NE SERT QU'AUX ROCHES (Keko, 09/11 : « rendre la foreuse exclusive aux astéroïdes, plus une arme »). */
   foreuse: { debit: 1, portee: 1, aimant: 1 },
   /**
@@ -1563,6 +1569,25 @@ function faireNaitreUnInsecte(c: ConfigVaisseau, m: Monde, ev: Evenement[]): voi
  */
 const critiqueTire = (c: ConfigVaisseau, m: Monde): boolean => c.passifs.critique > 0 && tire(m.graine, m.prochainId++, 12) < c.passifs.critique
 
+/**
+ * LA VIE DU VAISSEAU À UNE AUTRE ÉCHELLE (Keko, 20/11 : « les chiffres utilisés pour la vie sont trop faibles ; 9 points
+ * de vie, c'est beaucoup trop faible ; donne-leur un multiple, genre ×50, et pense l'échelle de dégâts en fonction ») :
+ * le blindage, le bouclier et sa recharge, et TOUT CE QUI LUI FAIT DU MAL — la morsure d'un insecte, les chocs, la
+ * corruption — fois `k` ; l'unité de vie aussi (un talent « un point de plus » en ajoute `k`). Les plaques, le déphasage
+ * et la régénération (une part de la vie pleine) n'ont pas d'échelle.
+ */
+export function vieMultipliee(c: ConfigVaisseau, k: number): ConfigVaisseau {
+  return {
+    ...c,
+    coque: c.coque * k,
+    bouclier: { ...c.bouclier, points: c.bouclier.points * k, regain: c.bouclier.regain * k },
+    corruption: { ronge: c.corruption.ronge * k, purge: c.corruption.purge * k },
+    invasion: { ...c.invasion, morsure: c.invasion.morsure * k },
+    collision: { ...c.collision, degatsCoque: c.collision.degatsCoque * k },
+    uniteDeVie: c.uniteDeVie * k,
+  }
+}
+
 /** Les champs de dégâts d'une arme (ceux qu'une échelle multiplie) — jamais une portée, un rayon, une durée ni une part. */
 export const CHAMPS_DE_DEGATS: ReadonlySet<string> = new Set(['degats', 'dps', 'dpsMin', 'dpsMax', 'dpsBrulure', 'budget', 'morsure', 'arrache', 'fin'])
 /**
@@ -1852,7 +1877,7 @@ function conduireLEnnemi(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number, ev:
  * ramassées. Modifie `m` en place ; rend les chocs du joueur et ce qui s'est passé.
  */
 /** Le bouclier du joueur est levé (il lui reste au moins un point) : ses chocs n'abîment pas ce qu'il heurte. */
-const sousBouclier = (c: ConfigVaisseau, m: Monde): boolean => c.bouclier.points > 0 && m.bouclier >= 1
+const sousBouclier = (c: ConfigVaisseau, m: Monde): boolean => c.bouclier.points > 0 && m.bouclier >= c.uniteDeVie
 
 /**
  * LES VAISSEAUX SE HEURTENT (Keko : « fais en sorte que les vaisseaux collident entre eux ») : le joueur et un rival qui
