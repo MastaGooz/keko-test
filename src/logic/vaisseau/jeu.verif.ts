@@ -1644,7 +1644,7 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   verifier(`la nuée partage son budget : seul, un insecte dans le nuage perd 14 par seconde ; à deux, 7 chacun (${deux.pv.map((x) => x.toFixed(1)).join(' / ')}) ; à trois, 4,7 (${trois.pv.map((x) => x.toFixed(1)).join(' / ')})`, deux.pv.every((x) => Math.abs(x - 7) < 0.2) && trois.pv.every((x) => Math.abs(x - 14 / 3) < 0.2))
   // (ELLE SE NOURRIT — Keko, 20/11 : +1 % de dégâts par insecte mordu, à chaque morsure, jusqu'au double ; à vide, elle maigrit)
   {
-    const cfgF = { ...cfg, armes: [{ ...nuee, nuee: { ...nuee.nuee, festin: { pas: 0.01, max: 1, fonte: 5 } } }] }
+    const cfgF = { ...cfg, armes: [{ ...nuee, nuee: { ...nuee.nuee, festin: { pas: 0.01, max: 1, fonte: 10 } } }] }
     const w = nouveauMonde(cfgF, 3)
     const tenir = (places: [number, number][], secondes: number): number => {
       w.ennemis = places.map(([x, y], k) => insecte(k + 1, x, y))
@@ -1661,10 +1661,10 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
     const fin = tenir([[30, 0]], 1)
     tenir([], 0.5)
     const maigrie = w.nuees[0].croissance
-    tenir([], 4.6)
+    tenir([], 9.6)
     const fondue = w.nuees[0].croissance
     tenir([[30, 0], [-30, 0], [0, 30], [0, -30], [20, 20]], 40)
-    verifier(`la nuée se nourrit : un insecte mordu 10 s la fait croître de ${Math.round(apres10 * 100)} % (une morsure toutes les 0,4 s), ses dégâts suivent (${debut.toFixed(1)} puis ${fin.toFixed(1)} par seconde) ; à vide, elle fond vite — ${Math.round(maigrie * 100)} % après 0,5 s, ${Math.round(fondue * 100)} % après 5 s (elle perd son maximum en 5 s) ; cinq insectes 40 s, elle plafonne au double`, Math.abs(apres10 - 0.25) < 0.02 && fin > debut * 1.25 && maigrie < apres10 - 0.05 && fondue === 0 && w.nuees[0].croissance === 1)
+    verifier(`la nuée se nourrit : un insecte mordu 10 s la fait croître de ${Math.round(apres10 * 100)} % (une morsure toutes les 0,4 s), ses dégâts suivent (${debut.toFixed(1)} puis ${fin.toFixed(1)} par seconde) ; à vide, elle fond vite — ${Math.round(maigrie * 100)} % après 0,5 s, ${Math.round(fondue * 100)} % après 10 s (elle perd son maximum en 10 s) ; cinq insectes 40 s, elle plafonne au double`, Math.abs(apres10 - 0.25) < 0.02 && fin > debut * 1.25 && maigrie < apres10 && fondue === 0 && w.nuees[0].croissance === 1)
   }
 }
 // LES REJETONS DU KRAKEN (Keko, 16/11) : pondus quand un insecte est à portée, ils nagent jusqu'à lui et le fouettent ;

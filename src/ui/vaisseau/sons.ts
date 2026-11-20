@@ -248,7 +248,8 @@ let bourdon: Voix | null = null
  * le grincement de la morsure, rejoué à chaque morsure) : cinq ailes, des dents de scie entre 180 et 236 Hz qui ne
  * s'accordent jamais (elles battent entre elles), chacune tremblant de quelques hertz à son rythme ; un passe-bande vers
  * 900 Hz qui en garde le froissement ; un battement d'ailes à 24 Hz, à peine. Au repos, à peine audible ; quand l'essaim
- * mord, plus fort, plus haut, plus clair ; il grossit un peu avec l'essaim.
+ * mord, plus fort (0,075 puis 0,09 — Keko, 20/11 : « monte très légèrement le bruit de l'essaim quand il attaque »), plus
+ * haut, plus clair ; il grossit un peu avec l'essaim.
  */
 const AILES_DE_LA_NUEE = [180, 191, 203, 219, 236]
 function voixDeLaNuee(ctx: AudioContext): Voix {
@@ -615,7 +616,7 @@ export function regler(poussee: number, creuse: boolean, compte: number, monte: 
     const t = ctx.currentTime
     // (la nuée : à peine au repos, un peu plus quand elle mord, et avec sa taille ; elle se tait sans nuée)
     if (bourdon !== null) {
-      const fort = nuee === null ? 0 : (nuee.mord ? 0.075 : 0.035) * (1 + 0.4 * nuee.taille)
+      const fort = nuee === null ? 0 : (nuee.mord ? 0.09 : 0.035) * (1 + 0.4 * nuee.taille)
       bourdon.gain.gain.setTargetAtTime(ZZFX.volume * fort, t, nuee?.mord === true ? 0.08 : 0.25)
       bourdon.filtre!.frequency.setTargetAtTime(nuee?.mord === true ? 1300 : 850, t, 0.15)
       for (const o of bourdon.notes ?? []) o.frequency.setTargetAtTime(AILES_DE_LA_NUEE[0] * ((o as OscillatorNode & { rapport?: number }).rapport ?? 1) * (nuee?.mord === true ? 1.12 : 1), t, 0.2)

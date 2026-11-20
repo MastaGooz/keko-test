@@ -6844,3 +6844,7 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     elle mord (0,075), un peu plus fort avec sa taille (+40 % au plein) ; muette sans nuée, en pause, au hangar. Le son de
     la morsure, rejoué à chaque morsure, est retiré de la nuée. *Les niveaux sont de moi, réglés sur ceux du souffle et
     du lance-flammes — à rejuger à l'oreille.*
+- LA NUÉE FOND EN 10 S, ET MORD UN PEU PLUS FORT À L'OREILLE (Keko, 20/11 : « monte très légèrement le bruit de l'essaim
+  quand il attaque ; et l'essaim réduit encore en taille trop vite : en une seconde ou deux, sa taille a réduit
+  énormément ») : `festin.fonte` 5 → 10 s — la fonte est linéaire, une nuée à moitié pleine perdait tout en 2,5 s ; elle
+  en met 5 ; le bourdon de la morsure 0,075 → 0,09. Testé : 0 % au bout de 10 s à vide.
