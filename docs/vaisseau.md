@@ -6689,3 +6689,7 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   critique ; en bas, un bouton « Arme : son nom » ouvre son panneau (ses dégâts — « / s » pour le lance-flammes et ce
   qui frappe en continu —, sa cadence, sa portée), « Retour » revient. La plaque garde sa hauteur d'un panneau à l'autre ;
   rouvrir la pause rouvre le panneau du vaisseau (`pauseSurLArme`). Vu à la capture.
+- LES DÉGÂTS CRITIQUES, 150 % DE BASE (Keko, 20/11 : « rajoute une ligne dégâts critiques avec 150 % en base ») : au
+  vortex, un critique fait une fois et demie le coup (`FACTEUR_CRITIQUE_DU_VORTEX` ; deux fois avant) ; la pause a sa
+  ligne, « Dégâts critiques 150 % », sous « Critique 1 % ». (Un critique de mitrailleuse fait 22,5 : le chiffre affiché
+  est arrondi, 23.) Vu à la capture.

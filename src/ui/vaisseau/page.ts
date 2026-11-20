@@ -963,7 +963,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // (L'ÉCHELLE DES DÉGÂTS DU VORTEX : les armes et la collision contre les insectes, fois `ECHELLE_DU_VORTEX` — voir
       // `INSECTE`)
       if (VORTEX) conf = { ...conf, armes: conf.armes.map((a) => degatsMultiplies(a, ECHELLE_DU_VORTEX)), collision: { ...conf.collision, degatsEnnemi: conf.collision.degatsEnnemi * ECHELLE_DU_VORTEX } }
-      if (VORTEX) conf = { ...conf, champ: { ...conf.champ, densite: 0 }, station: { ...conf.station, portee: -1 }, invasion: { ...conf.invasion, active: true, viePortail: Math.max(1, Number(parametres.get('portail')) || conf.invasion.viePortail) /* (`&portail=N` : la vie du portail au départ, pour voir la fin d'un lien) */ }, ennemi: { ...conf.ennemi, ...INSECTE }, bouclier: { ...conf.bouclier, points: Math.max(conf.bouclier.points, BOUCLIER_DU_VORTEX) }, passifs: { ...conf.passifs, critique: conf.passifs.critique + CRITIQUE_DU_VORTEX } }
+      if (VORTEX) conf = { ...conf, champ: { ...conf.champ, densite: 0 }, station: { ...conf.station, portee: -1 }, invasion: { ...conf.invasion, active: true, viePortail: Math.max(1, Number(parametres.get('portail')) || conf.invasion.viePortail) /* (`&portail=N` : la vie du portail au départ, pour voir la fin d'un lien) */ }, ennemi: { ...conf.ennemi, ...INSECTE }, bouclier: { ...conf.bouclier, points: Math.max(conf.bouclier.points, BOUCLIER_DU_VORTEX) }, passifs: { ...conf.passifs, critique: conf.passifs.critique + CRITIQUE_DU_VORTEX, critiqueFacteur: FACTEUR_CRITIQUE_DU_VORTEX } }
       // LE RIVAL EST UN CUIRASSÉ LOURDEMENT ARMÉ (Keko, 14/11, à l'essai : « pour voir si je peux arriver à le tuer avec mon
       // chasseur ») : gros, lent, qui vire mal, très solide, et qui tire trois fois plus souvent, de plus loin ; il ne
       // fuit plus. `&rival=serie` rend le petit rival d'avant. *Chiffres au jugé.*
@@ -1301,7 +1301,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const VIRAGE_MAX = 2.9
   /** L'agilité d'un vaisseau rapportée à celle de référence (9, à peu près le Chasseur) : de 0,55 (la Salamandre) à 1. */
   const manieDe = (cf: ConfigVaisseau): number => agiliteDe(cf) / 9
-  /** LA CHANCE DE COUP CRITIQUE DE BASE au vortex (Keko, 20/11 : « 1 % de chance à chaque dégât ») : les talents et la recherche s'y ajoutent ; un critique fait deux fois les dégâts. `&critique=P` la pose (de 0 à 1), pour voir les critiques. */
+  /** LA CHANCE DE COUP CRITIQUE DE BASE au vortex (Keko, 20/11 : « 1 % de chance à chaque dégât ») : les talents et la recherche s'y ajoutent ; un critique fait une fois et demie les dégâts (`FACTEUR_CRITIQUE_DU_VORTEX`). `&critique=P` la pose (de 0 à 1), pour voir les critiques. */
+  /** LES DÉGÂTS D'UN COUP CRITIQUE au vortex (Keko, 20/11 : « une ligne dégâts critiques, avec 150 % en base ») : une fois et demie le coup (deux fois avant). */
+  const FACTEUR_CRITIQUE_DU_VORTEX = 1.5
   const CRITIQUE_DU_VORTEX = parametres.has('critique') ? Math.max(0, Math.min(1, Number(parametres.get('critique')) || 0)) : 0.01
   /** Le bouclier de base du jeu du vortex, en points (un chiffre de moi, à rejuger). */
   const BOUCLIER_DU_VORTEX = 3
@@ -1807,7 +1809,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (CONF.regeneration > 0) l.push({ nom: 'Régénération', valeur: `${Math.round(CONF.regeneration * 15 * 100)} % / 15 s` })
     l.push({ nom: 'Vitesse', valeur: `${Math.round(CONF.vitesseMax)}` })
     l.push({ nom: 'Maniabilité', valeur: `${Math.round(agiliteDe(CONF) * 10)}` })
-    l.push({ nom: 'Critique', valeur: `${Math.round(CONF.passifs.critique * 100)} % (× ${CONF.passifs.critiqueFacteur})` })
+    l.push({ nom: 'Critique', valeur: `${Math.round(CONF.passifs.critique * 100)} %` })
+    l.push({ nom: 'Dégâts critiques', valeur: `${Math.round(CONF.passifs.critiqueFacteur * 100)} %` })
     return l
   }
   function lignesDeLArme(): { nom: string; valeur: string }[] {
