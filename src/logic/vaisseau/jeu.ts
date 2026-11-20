@@ -336,6 +336,20 @@ export const VAISSEAU = {
    * d'utiliser le laser de manière offensive »). Abattu, il rend son butin plus tant de pépites.
    */
   /**
+   * L'ARÈNE ET SA TEMPÊTE (le jeu du vortex — Keko, 20/11 : « on va partir sur une arène circulaire ; pour marquer
+   * visuellement le contour, une tempête circulaire tout autour de la zone, dans laquelle des particules et des
+   * astéroïdes tournent assez vite ; si le joueur va dans la zone de la tempête, il risque de se faire frapper par les
+   * astéroïdes, et de toute façon il subit des dégâts sur la durée à cause de l'énergie ») : éteinte hors du vortex. Le
+   * jeu se tient dans un cercle de `rayon` autour du centre du monde ; au-delà, sur `largeur`, LA TEMPÊTE : le vaisseau
+   * y perd `dps` unités de vie par seconde (le bouclier d'abord, aucune plaque contre l'énergie ; déphasé, rien ne le
+   * touche, comme ailleurs), et `roches`
+   * roches de `rocheMin` à `rocheMax` y tournent autour du centre, à `vitesse` le long du cercle — une roche qui le
+   * heurte lui coûte `choc` unités de vie et l'emporte. Au bord extérieur, rien ne passe : le vaisseau et les insectes y
+   * sont retenus. Les insectes ne naissent et ne reviennent que dans l'arène, à `marge` de la tempête. *Les chiffres
+   * sont de moi.*
+   */
+  arene: { active: false as boolean, rayon: 1000, largeur: 220, dps: 0.6, roches: 110, rocheMin: 7, rocheMax: 24, vitesse: 150, choc: 2, marge: 30 },
+  /**
    * LES ASTÉROÏDES QUI DÉRIVENT (le jeu du vortex — Keko, 20/11 : « un système d'astéroïdes un peu comme avant : chaque
    * astéroïde lâche des pépites, les mêmes que les ennemis ; mais ils dérivent : de temps en temps on fait passer des
    * astéroïdes qui avancent plus ou moins lentement — certains vite, d'autres plus lentement, ce qui peut aussi
@@ -1632,6 +1646,88 @@ function faireNaitreUnEnnemi(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void
  */
 export const rayonDe = (c: ConfigVaisseau, e: Ennemi): number => e.asteroide?.rayon ?? c.ennemi.rayon
 
+/** UNE ROCHE DE LA TEMPÊTE (voir `arene`) : la k-ième, à l'instant `t` — tirée de son rang, rien n'est gardé. */
+export function rocheDeLaTempete(c: ConfigVaisseau, k: number, t: number): { x: number; y: number; vx: number; vy: number; rayon: number; graine: number; angle0: number; vitesseAngulaire: number } {
+  const A = c.arene
+  const r = A.rayon + A.largeur * (0.15 + 0.7 * tire(7, k, 1))
+  const w = (A.vitesse * (0.8 + 0.4 * tire(7, k, 2))) / r
+  const a = ((k + tire(7, k, 3) * 0.8) / A.roches) * Math.PI * 2 + w * t
+  return { x: Math.cos(a) * r, y: Math.sin(a) * r, vx: -Math.sin(a) * w * r, vy: Math.cos(a) * w * r, rayon: A.rocheMin + (A.rocheMax - A.rocheMin) * tire(7, k, 4) ** 1.5, graine: hache(7, k), angle0: tire(7, k, 5) * 6.28, vitesseAngulaire: (tire(7, k, 6) - 0.5) * 3 }
+}
+
+/** UN POINT DE NAISSANCE DANS L'ARÈNE (voir `arene`) : à `d` du vaisseau dans la direction `a` — tourné, ou ramené, s'il tombait dans la tempête. */
+function dansLArene(c: ConfigVaisseau, m: Monde, a: number, d: number): Vecteur {
+  const v = m.vaisseau
+  const limite = c.arene.rayon - c.arene.marge
+  for (let essai = 0; essai < 12; essai++) {
+    const an = a + (essai % 2 === 0 ? 1 : -1) * Math.ceil(essai / 2) * 0.5
+    const p = { x: v.x + Math.cos(an) * d, y: v.y + Math.sin(an) * d }
+    if (!c.arene.active || Math.hypot(p.x, p.y) <= limite) return p
+  }
+  const p = { x: v.x + Math.cos(a) * d, y: v.y + Math.sin(a) * d }
+  const r = Math.hypot(p.x, p.y) || 1
+  return { x: (p.x / r) * limite, y: (p.y / r) * limite }
+}
+
+/**
+ * L'ARÈNE (voir `arene`) : la tempête ronge le vaisseau qui y est, ses roches le heurtent ; au bord extérieur, le
+ * vaisseau et les insectes sont retenus. Rend les chocs (pour l'étincelle) ; le vaisseau perdu, la phase change.
+ */
+function subirLArene(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]): Choc[] {
+  const A = c.arene
+  if (!A.active) return []
+  const chocs: Choc[] = []
+  const v = m.vaisseau
+  const butoir = A.rayon + A.largeur
+  // (le bord extérieur : on ne va pas plus loin)
+  const retenir = (b: Vaisseau): Vaisseau => {
+    const r = Math.hypot(b.x, b.y)
+    if (r <= butoir) return b
+    const nx = b.x / r
+    const ny = b.y / r
+    const vn = b.vx * nx + b.vy * ny
+    return { ...b, x: nx * butoir, y: ny * butoir, vx: b.vx - Math.max(0, vn) * nx, vy: b.vy - Math.max(0, vn) * ny }
+  }
+  m.vaisseau = retenir(v)
+  for (const e of m.ennemis) if (e.asteroide === undefined) e.corps = retenir(e.corps)
+  const w = m.vaisseau
+  if (Math.hypot(w.x, w.y) <= A.rayon || m.t < m.dephaseJusque) return chocs
+  // (L'ÉNERGIE RONGE : le bouclier d'abord, puis le blindage — les plaques n'y peuvent rien)
+  let reste = A.dps * c.uniteDeVie * dt
+  if (m.bouclier > 0) {
+    const pris = Math.min(m.bouclier, reste)
+    m.bouclier -= pris
+    reste -= pris
+  }
+  m.coque -= reste
+  if (m.coque <= 1e-9) {
+    m.coque = 0
+    m.phase = 'perdu'
+    if (c.invasion.active) m.invasion.retourA = m.t + c.invasion.penalite
+    ev.push({ type: 'perdu' })
+    return chocs
+  }
+  // (LES ROCHES DE LA TEMPÊTE : celle qui le touche le repousse et l'emporte ; un choc lui coûte `choc`)
+  for (let k = 0; k < A.roches; k++) {
+    const r = rocheDeLaTempete(c, k, m.t)
+    const dx = w.x - r.x
+    const dy = w.y - r.y
+    const d = Math.hypot(dx, dy) || 0.001
+    const min = c.rayon + r.rayon
+    if (d >= min) continue
+    const nx = dx / d
+    const ny = dy / d
+    const vn = (w.vx - r.vx) * nx + (w.vy - r.vy) * ny
+    m.vaisseau = { ...m.vaisseau, x: r.x + nx * min, y: r.y + ny * min, vx: vn < 0 ? m.vaisseau.vx - (1 + c.rebond) * vn * nx : m.vaisseau.vx, vy: vn < 0 ? m.vaisseau.vy - (1 + c.rebond) * vn * ny : m.vaisseau.vy }
+    if (vn < -c.seuilChoc) {
+      chocs.push({ x: r.x + nx * r.rayon, y: r.y + ny * r.rayon, force: -vn, asteroide: -2 })
+      encaisser(c, m, r.x + nx * r.rayon, r.y + ny * r.rayon, A.choc * c.uniteDeVie, ev)
+      if (m.phase !== 'vol') return chocs
+    }
+  }
+  return chocs
+}
+
 /** LES ROCHES QUI DÉRIVENT (voir `derive`) : une naît à son heure, tant qu'il y en a moins de `max`. */
 function menerLesDerives(c: ConfigVaisseau, m: Monde): void {
   const D = c.derive
@@ -1735,8 +1831,8 @@ function faireNaitreUnInsecte(c: ConfigVaisseau, m: Monde, ev: Evenement[]): voi
   m.graine = hache(m.graine, 7)
   // (SANS PORTAIL : autour du vaisseau, hors de sa vue, et il le chasse dès sa naissance)
   const o = centreDuChamp(c, m)
-  const x = o.x + Math.cos(a) * c.invasion.naissance
-  const y = o.y + Math.sin(a) * c.invasion.naissance
+  // (DANS L'ARÈNE : un point de naissance tombé dans la tempête est tourné, ou ramené dedans)
+  const { x, y } = c.invasion.sansPortail ? dansLArene(c, m, a, c.invasion.naissance) : { x: o.x + Math.cos(a) * c.invasion.naissance, y: o.y + Math.sin(a) * c.invasion.naissance }
   const e: Ennemi = { id: m.prochainId++, corps: { ...nouveauVaisseau(), x, y, cap: Math.atan2(o.y - y, o.x - x) }, pv: c.ennemi.pv, fait: c.invasion.sansPortail ? 'aggro' : 'marche', roche: null, forage: null, tirA: 0, butin: 0, cargaison: cargaisonVide() }
   m.ennemis.push(e)
   ev.push({ type: 'ennemiApparait', id: e.id, x, y })
@@ -1941,8 +2037,7 @@ function conduireLInsecte(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number, ev
   // de vol du vaisseau)
   if (I.continu.actif && m.phase === 'vol' && dj > I.continu.recycle) {
     const a = angleDeNaissance(c, m, e.id * 7919 + Math.floor(m.t * 10))
-    const x = v.x + Math.cos(a) * I.naissance
-    const y = v.y + Math.sin(a) * I.naissance
+    const { x, y } = dansLArene(c, m, a, I.naissance)
     e.corps = { ...b, x, y, vx: 0, vy: 0, cap: Math.atan2(v.y - y, v.x - x) }
     return []
   }
@@ -4670,8 +4765,11 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   // (DÉPHASÉ, il traverse les roches — voir `dephasage`)
   const r = voler(c, m.t < m.dephaseJusque ? { ...moteur, fantome: true } : moteur, m.vaisseau, dt, dir, m.detruits, c.tourelles ? undefined : regard)
   m.vaisseau = r.vaisseau
+  // (L'ARÈNE : la tempête, ses roches, son bord — voir `arene`)
+  const chocsDeLArene = subirLArene(c, m, dt, ev)
+  if (m.phase !== 'vol') return { chocs: chocsDeLArene, evenements: ev }
   const v = m.vaisseau
-  const chocs = [...r.chocs]
+  const chocs = [...r.chocs, ...chocsDeLArene]
   // les chocs du joueur : la coque en souffre selon la vitesse, la roche aussi — SAUF SOUS BOUCLIER (Keko : sinon les
   // joueurs s'en servent de bélier) : le bouclier prend le coup, la roche n'a rien
   for (const choc of r.chocs) {

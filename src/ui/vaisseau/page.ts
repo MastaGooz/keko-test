@@ -12,7 +12,7 @@
  */
 import './vaisseau.css'
 import * as noyau from 'pixelfx'
-import { vieMultipliee, degatsMultiplies, placeDeLEcharde, frontDeLaNova, ancreDansLeMonde, zoneDuDe, coupeDUnCube, formeDeLaCoupe, liesAuDrain, encaisser, type Ennemi, type Evenement, type Monde, impactDuRayon, asteroidesVisibles, avancerLeMonde, finDuTrio, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur, xpDuNiveau, ennemiLePlusProche, ennemiVerrouille, verrouiller, angleDuBalayage } from '../../logic/vaisseau/jeu.ts'
+import { rocheDeLaTempete, vieMultipliee, degatsMultiplies, placeDeLEcharde, frontDeLaNova, ancreDansLeMonde, zoneDuDe, coupeDUnCube, formeDeLaCoupe, liesAuDrain, encaisser, type Ennemi, type Evenement, type Monde, impactDuRayon, asteroidesVisibles, avancerLeMonde, finDuTrio, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur, xpDuNiveau, ennemiLePlusProche, ennemiVerrouille, verrouiller, angleDuBalayage } from '../../logic/vaisseau/jeu.ts'
 import { ETALONS as ETALONS_DU_BANC, acheter, ajouterLesPiecesDEssai, capacite, poidsTotal, POIDS_SERIE, configDuHangar, demonter, demonterA, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, montantCourt, monteeA, monter, monterA, peutAcheter, peutMonter, perdreLesMontees, estDeBase, exemplaires, libres, pieceDe, piecesDe, placeLourde, possede, aimantMonte, radarMonte, type Jauge, type Piece, type Sorte } from '../../logic/vaisseau/hangar.ts'
 import { drawWord, spell } from 'pixelfx/fx/ui/_lib'
 import { firePuff, hotFirst, smokePuff } from 'pixelfx/fx/fire/_lib'
@@ -469,6 +469,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const monterLeMonde = () => {
     const monde = nouveauMonde(CONF, graineDuVol || 1)
     if (parametres.has('quai')) monde.sorti = true
+    // (`&bord` : il décolle au bord de l'arène, la tempête en vue — pour la juger d'un lien)
+    if (parametres.has('bord') && CONF.arene.active) monde.vaisseau = { ...monde.vaisseau, x: CONF.arene.rayon - 90 }
     // (le jeu du vortex : les deux canons tirent À TOUR DE RÔLE — le second part une demi-cadence après le premier)
     if (parametres.has('vortex') && CONF.armes.length === 2) monde.armesA = [0, CONF.armes[0].cadence / 2]
     return monde
@@ -997,6 +999,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       if (dephasageDEssai !== null) conf = { ...conf, dephasage: { ...conf.dephasage, chance: dephasageDEssai } }
       // (LES ROCHES QUI DÉRIVENT, au vortex — voir `derive` ; `&roche` en fait passer une dès la deuxième seconde, puis
       // toutes les quatre, `&roche=0` les éteint)
+      // (L'ARÈNE ET SA TEMPÊTE, au vortex — voir `arene`)
+      if (VORTEX) conf = { ...conf, arene: { ...conf.arene, active: true } }
       if (VORTEX) conf = { ...conf, derive: { ...conf.derive, active: parametres.get('roche') !== '0', ...(parametres.has('roche') && parametres.get('roche') !== '0' ? { premier: 2, tousMin: 4, tousMax: 4 } : {}) } }
       // (`&festin=P` : la nuée part nourrie à P de son maximum — pour voir son nuage grand sans mordre longtemps)
       if (parametres.has('festin')) conf = { ...conf, armes: conf.armes.map((a) => (a.nuee?.festin === undefined ? a : { ...a, nuee: { ...a.nuee, festin: { ...a.nuee.festin, depart: a.nuee.festin.max * Math.max(0, Math.min(1, Number(parametres.get('festin')) || 0)) } } })) }
@@ -1741,6 +1745,17 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    */
   function dessinerLInvasion(p: Peintre): void {
     const inv = m.invasion
+    // (DANS LA TEMPÊTE, l'énergie le ronge : un cadre violet bat autour de l'écran — voir `arene`)
+    if (CONF.arene.active && m.phase === 'vol' && Math.hypot(v.x, v.y) > CONF.arene.rayon) {
+      const a = 0.3 + 0.2 * Math.sin(t * 12)
+      for (let k = 0; k < 4; k++) {
+        const al = a * (1 - k / 4)
+        p.rect(k, k, W - 2 * k, 1, TEMPETE[2], al)
+        p.rect(k, H - 1 - k, W - 2 * k, 1, TEMPETE[2], al)
+        p.rect(k, k, 1, H - 2 * k, TEMPETE[2], al)
+        p.rect(W - 1 - k, k, 1, H - 2 * k, TEMPETE[2], al)
+      }
+    }
     dessinerLeVerrou(p)
     dessinerLesDegats(p)
     // (À NEUF PIXELS DES BORDS, les deux blocs rapprochés l'un de l'autre — Keko, 14/11 : « qu'ils s'éloignent des bords »)
@@ -11366,6 +11381,68 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.glow(sx, sy, 4, PEPITE[2], 0.25 + 0.2 * Math.sin(m.t * 5 + b.id))
     }
   }
+  /**
+   * LA TEMPÊTE AUTOUR DE L'ARÈNE (Keko, 20/11 — voir `arene`) : au bord de l'arène, UN MUR D'ÉNERGIE qui crépite (des
+   * pixels violets et cyan qui tremblent sur le cercle, des lueurs) ; dans la tempête, un voile de lumière, MILLE HUIT
+   * CENTS PARTICULES qui filent autour du centre, plus vite que les roches — de petits traits le long de leur course —, et
+   * LES ROCHES DE LA TEMPÊTE (`rocheDeLaTempete`) qui tournent. Seul ce qui est dans la vue se dessine.
+   */
+  /** Les particules de la tempête : une pour 250 unités carrées de son anneau, environ. */
+  const PARTICULES_DE_LA_TEMPETE = 6000
+  /** L'écart entre deux angles, ramené entre −π et π. */
+  const ecartAngulaire = (a: number, b: number): number => Math.atan2(Math.sin(a - b), Math.cos(a - b))
+  const TEMPETE = [N.hex('#2a0f4d'), N.hex('#6a2fc0'), N.hex('#a35cff'), N.hex('#cf9bff'), N.hex('#7fe3ff'), N.hex('#f1dcff')]
+  function dessinerLaTempete(p: Peintre): void {
+    const A = CONF.arene
+    if (!A.active) return
+    const ox = -camera.x + W / 2
+    const oy = -camera.y + centreY()
+    const vue = Math.hypot(W, H) / 2 + 30
+    const dc = Math.hypot(camera.x, camera.y)
+    // (rien de la tempête n'est dans la vue : on s'arrête là)
+    if (dc + vue < A.rayon) return
+    const dedans = (x: number, y: number, marge: number): boolean => x + ox > -marge && x + ox < W + marge && y + oy > -marge && y + oy < H + marge
+    // LE VOILE ET LE MUR : le long des angles en vue
+    const phi = Math.atan2(camera.y, camera.x)
+    const span = Math.min(Math.PI, (vue + 40) / Math.max(1, A.rayon))
+    for (let a = phi - span; a <= phi + span; a += 28 / (A.rayon + A.largeur / 2)) {
+      const r = A.rayon + A.largeur / 2
+      const x = Math.cos(a) * r
+      const y = Math.sin(a) * r
+      if (dedans(x, y, 80)) p.glow(x + ox, y + oy, A.largeur * 0.45, TEMPETE[1], 0.16)
+    }
+    for (let a = phi - span; a <= phi + span; a += 1.2 / A.rayon) {
+      const fremit = Math.sin(t * 31 + a * 173) + Math.sin(t * 17 - a * 311)
+      const r = A.rayon + fremit * 1.5
+      const x = Math.cos(a) * r
+      const y = Math.sin(a) * r
+      if (!dedans(x, y, 4)) continue
+      const vif = fremit > 1.2
+      p.px(Math.round(x + ox), Math.round(y + oy), vif ? TEMPETE[5] : fremit > 0 ? TEMPETE[3] : TEMPETE[2])
+      if (Math.sin(a * 997 + Math.floor(t * 12)) > 0.985) p.glow(x + ox, y + oy, 7, TEMPETE[4], 0.35)
+    }
+    // LES PARTICULES : elles filent autour du centre, chacune à son rayon et à sa vitesse (seules celles de l'arc en vue
+    // se dessinent)
+    for (let k = 0; k < PARTICULES_DE_LA_TEMPETE; k++) {
+      const r = A.rayon + A.largeur * (0.02 + 0.96 * ((alea(k, 1, 81) + alea(k, 1, 82)) / 2))
+      const w = (220 * (1 + alea(k, 1, 83))) / r
+      const a = alea(k, 1, 84) * Math.PI * 2 + w * m.t
+      if (Math.abs(ecartAngulaire(a, phi)) > span) continue
+      const x = Math.cos(a) * r
+      const y = Math.sin(a) * r
+      if (!dedans(x, y, 4)) continue
+      const tx = -Math.sin(a)
+      const ty = Math.cos(a)
+      const teinte = k % 9 === 0 ? TEMPETE[5] : k % 3 === 0 ? TEMPETE[4] : TEMPETE[3]
+      for (let q = 0; q < 5; q++) p.rect(Math.round(x + ox - tx * q * 1.5), Math.round(y + oy - ty * q * 1.5), 1, 1, teinte, 0.85 - q * 0.17)
+    }
+    // LES ROCHES DE LA TEMPÊTE
+    for (let k = 0; k < A.roches; k++) {
+      const r = rocheDeLaTempete(CONF, k, m.t)
+      if (!dedans(r.x, r.y, r.rayon + 4)) continue
+      dessinerAsteroide(p, { id: 90000 + k, x: r.x, y: r.y, rayon: r.rayon, graine: r.graine, angle0: r.angle0, vitesseAngulaire: r.vitesseAngulaire, minerai: 'fer', richesse: 0.2 }, t, Math.round(r.x + ox), Math.round(r.y + oy))
+    }
+  }
   function dessinerLesEnnemis(p: Peintre): void {
     if (VORTEX) {
       dessinerLesAspires(p)
@@ -14922,6 +14999,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         N.painterFor(frame)
       }
       dessinerLesTaches(p)
+      dessinerLaTempete(p)
     } else dessinerLesStations(p, separe ? 'monde' : 'tout')
     dessinerLeGivre(p)
     dessinerLesNovas(p)

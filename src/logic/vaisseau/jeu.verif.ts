@@ -2966,5 +2966,47 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   verifier(`fuir ne sert à rien : filant tout droit à 100, il a en moyenne ${a.toFixed(1)} insectes à moins de 300 (${s0.toFixed(1)} sans les deux règles)`, a > 3 * s0 && a > 5)
 }
 
+// L'ARÈNE ET SA TEMPÊTE (Keko, 20/11) : l'énergie ronge, les roches de la tempête frappent, le bord retient, et rien ne
+// naît dans la tempête
+{
+  const base = { ...VAISSEAU, coque: 5, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, rayon: 5 }, arene: { ...VAISSEAU.arene, active: true } }
+  const A = VAISSEAU.arene
+  // (l'énergie : dans la tempête, sans roche, il perd `dps` par seconde ; dans l'arène, rien)
+  const ronge = (x: number): number => {
+    const cfg = { ...base, arene: { ...base.arene, roches: 0 } }
+    const w = nouveauMonde(cfg, 3)
+    for (let i = 0; i < 120; i++) {
+      w.vaisseau = { ...w.vaisseau, x, y: 0, vx: 0, vy: 0 }
+      avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+    }
+    return 5 - w.coque
+  }
+  const dedans = ronge(A.rayon - 50)
+  const tempete = ronge(A.rayon + 50)
+  // (le bord : poussé au-delà, il est retenu au bord extérieur)
+  const cfgB = { ...base, arene: { ...base.arene, roches: 0, dps: 0 } }
+  const wb = nouveauMonde(cfgB, 3)
+  wb.vaisseau = { ...wb.vaisseau, x: A.rayon + A.largeur + 80, y: 0, vx: 50, vy: 0 }
+  avancerLeMonde(cfgB, wb, 1 / 60, { x: 1, y: 0 })
+  // (les roches : posé au milieu de la tempête, une roche finit par le heurter)
+  const cfgR = { ...base, coque: 1000, arene: { ...base.arene, dps: 0 } }
+  const wr = nouveauMonde(cfgR, 3)
+  let heurte = false
+  for (let i = 0; i < 60 * 20 && !heurte; i++) {
+    wr.vaisseau = { ...wr.vaisseau, x: 0, y: A.rayon + A.largeur * 0.5, vx: 0, vy: 0 }
+    if (avancerLeMonde(cfgR, wr, 1 / 60, { x: 0, y: 0 }).chocs.length > 0) heurte = true
+  }
+  // (les naissances : le vaisseau au bord de l'arène, aucun insecte ne naît dans la tempête)
+  const cfgN = { ...base, coque: 1e9, invasion: { ...base.invasion, premiere: 0, continu: { ...VAISSEAU.invasion.continu, actif: true } }, ennemi: { ...base.ennemi, pv: 1e9 }, arene: { ...base.arene, roches: 0, dps: 0 } }
+  const wn = nouveauMonde(cfgN, 3)
+  let horsArene = 0
+  let nes = 0
+  for (let i = 0; i < 60 * 30; i++) {
+    wn.vaisseau = { ...wn.vaisseau, x: A.rayon - 40, y: 0, vx: 0, vy: 0 }
+    for (const e of avancerLeMonde(cfgN, wn, 1 / 60, { x: 0, y: 0 }).evenements) if (e.type === 'ennemiApparait') (nes += 1), (horsArene += Math.hypot(e.x, e.y) > A.rayon - A.marge + 0.01 ? 1 : 0)
+  }
+  verifier(`l’arène : dans la tempête, l’énergie ronge ${tempete.toFixed(2)} en 2 s (${A.dps} par seconde), rien dans l’arène (${dedans}) ; poussé au-delà, il est retenu au bord (${Math.round(Math.hypot(wb.vaisseau.x, wb.vaisseau.y))}) ; une roche de la tempête le heurte ; ${nes} insectes nés au bord de l’arène, aucun dans la tempête (${horsArene})`, Math.abs(tempete - 2 * A.dps) < 0.05 && dedans === 0 && Math.abs(Math.hypot(wb.vaisseau.x, wb.vaisseau.y) - (A.rayon + A.largeur)) < 0.5 && heurte && wr.coque < 1000 && nes > 10 && horsArene === 0)
+}
+
 // (TOUJOURS EN DERNIER : des blocs ajoutés après cette ligne échouaient sans faire échouer `npm run verif` — 17/11)
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)

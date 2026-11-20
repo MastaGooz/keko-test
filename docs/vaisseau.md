@@ -6924,3 +6924,26 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   En coopération, l'astuce du décalage ne marche plus (on ne peut pas décaler le monde pour l'un sans l'autre) : j'ai
   proposé une ARÈNE BORNÉE (un cercle d'environ 2 000, un bord qui repousse, une flèche vers le partenaire), ou une vraie
   carte qui boucle (toutes les distances par le bord — lourd). À trancher par Keko.
+- LA COOP ET LE RECYCLAGE (une question de Keko, 20/11 : « quand un des joueurs s'éloignera et que les ennemis seront
+  téléportés devant lui, l'autre joueur, qui les regarde, va les voir disparaître ») : oui, avec la règle d'aujourd'hui.
+  À DEUX, UN INSECTE NE SE RECYCLE QUE LOIN DE TOUS LES JOUEURS (plus de `recycle` de chacun), et réapparaît hors de la
+  vue de tous (aucun écran ne montre plus de ~310 autour de son vaisseau). À écrire le jour où la coop arrive : un seul
+  vaisseau aujourd'hui.
+- L'ARÈNE ET SA TEMPÊTE (Keko, 20/11 : « on va partir sur une arène circulaire ; pour marquer visuellement le contour,
+  une tempête circulaire tout autour de la zone, dans laquelle des particules et des astéroïdes tournent assez vite ; si
+  le joueur va dans la tempête, il risque de se faire frapper par les astéroïdes, et de toute façon il subit des dégâts
+  sur la durée à cause de l'énergie ») : `VAISSEAU.arene`, allumée au vortex —
+  - LA RÈGLE (`subirLArene`) : l'arène, un cercle de 1 000 autour du centre du monde (là où l'on revient après la mort) ;
+    au-delà, sur 220, LA TEMPÊTE : 0,6 unité de vie par seconde (30 au vortex : le bouclier d'abord, aucune plaque ;
+    déphasé, rien ne le touche) ; 110 ROCHES de 7 à 24 y tournent autour du centre à ~150 le long du cercle
+    (`rocheDeLaTempete`, tirées de leur rang et du temps, rien n'est gardé ; ni visées ni lootables) — une qui le heurte
+    le repousse, l'emporte, et lui coûte 2 unités (100) ; au bord extérieur, le vaisseau et les insectes sont retenus.
+  - LES NAISSANCES ET LE RECYCLAGE se font dans l'arène, à 30 de la tempête (`dansLArene` : le point tombé dehors est
+    tourné, sinon ramené). Les roches qui dérivent peuvent entrer par la tempête. Les insectes ne craignent pas
+    l'énergie, et ne la fuient pas (à trancher).
+  - LA PAGE (`dessinerLaTempete`) : au bord, UN MUR D'ÉNERGIE qui crépite comme un éclair (violet, cyan, des lueurs) ;
+    dans la tempête, un voile violet, 6 000 particules en traits qui filent autour du centre (seules celles de l'arc en
+    vue sont calculées), et les roches ; dans la tempête, un cadre violet bat autour de l'écran. `&bord` décolle au
+    bord de l'arène. 1 800 particules et 56 roches d'abord : la tempête était presque vide à l'écran.
+  Testé : 1,2 rongé en 2 s, rien dans l'arène ; retenu au bord (1 220) ; une roche de la tempête finit par le heurter ;
+  aucun insecte né dans la tempête. Vu à la capture. *Tous les chiffres sont de moi.*
