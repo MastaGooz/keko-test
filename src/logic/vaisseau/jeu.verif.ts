@@ -2918,5 +2918,31 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   }
 }
 
+// LE FLOT CONTINU (Keko, 20/11 : « pas de vagues : un spawn continu, de plus en plus soutenu ») : tout autour du vaisseau,
+// un rythme qui monte avec le temps, un plafond d'insectes vivants
+{
+  const cfg = { ...VAISSEAU, coque: 1e9, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 0, continu: { ...VAISSEAU.invasion.continu, actif: true } }, ennemi: { ...VAISSEAU.ennemi, pv: 1e9, apparait: 1e9 } }
+  const w = nouveauMonde(cfg, 5)
+  const nes: number[] = []
+  const angles: number[] = []
+  for (let i = 0; i < 60 * 300; i++) {
+    for (const e of avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements) if (e.type === 'ennemiApparait') nes.push(w.t), angles.push(Math.atan2(e.y - w.vaisseau.y, e.x - w.vaisseau.x))
+    // (le vaisseau ne bouge pas, et rien ne le blesse : on ne garde que les naissances ; les insectes sont retirés)
+    w.ennemis = w.ennemis.filter((e) => e.id < 0)
+    w.vaisseau = { ...w.vaisseau, x: 0, y: 0, vx: 0, vy: 0 }
+  }
+  const entre = (a: number, b: number): number => nes.filter((x) => x >= a && x < b).length
+  const cadrans = new Set(angles.map((a) => Math.floor(((a + Math.PI) / (Math.PI / 2)) % 4)))
+  const vivants = (() => {
+    const w2 = nouveauMonde(cfg, 5)
+    for (let i = 0; i < 60 * 200; i++) {
+      avancerLeMonde(cfg, w2, 1 / 60, { x: 0, y: 0 })
+      w2.vaisseau = { ...w2.vaisseau, x: 5000, y: 5000, vx: 0, vy: 0 }
+    }
+    return w2.ennemis.length
+  })()
+  verifier(`le flot continu : ${entre(0, 60)} insectes la première minute, ${entre(120, 180)} la troisième, ${entre(240, 300)} la cinquième ; tout autour (${cadrans.size} cadrans) ; jamais plus de 120 en vie (${vivants})`, entre(0, 60) >= 25 && entre(0, 60) <= 50 && entre(120, 180) > entre(0, 60) * 2 && entre(240, 300) > entre(120, 180) && cadrans.size === 4 && vivants === 120)
+}
+
 // (TOUJOURS EN DERNIER : des blocs ajoutés après cette ligne échouaient sans faire échouer `npm run verif` — 17/11)
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)

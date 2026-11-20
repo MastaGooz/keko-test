@@ -6895,3 +6895,20 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   Testé : nés à 360 du vaisseau loin du centre, en chasse, ils foncent sur lui ; une roche entre eux, contournée à 19,8
   de son centre sans la toucher ; poussé dedans, il la heurte, 60 chacun ; les roches naissent autour du vaisseau. Vu à
   la capture, couché et debout.
+- LE SOUFFLE DES XÉNOÏDES, UN FLOT CONTINU, DES ROCHES DE TOUTES LES TAILLES (Keko, 20/11) :
+  - LE PROPULSEUR DE LA BÊTE (« ça fait le bruit d'une casserole d'eau qui bout, avec des bulles ; il manque un petit
+    côté gaz, ça fait vraiment trop liquide ») : plus de bulles en vol (`bulle` retirée), plus de passe-bande serré ; un
+    SOUFFLE (bruit passe-haut à 700 Hz, bande large vers 1,6 kHz qui flotte), un corps sourd vers 450 Hz, le grondement,
+    et des BOUFFÉES irrégulières (2,3 et 0,9 Hz) — les deux pustules qui crachent. Plus fort et plus clair avec la
+    poussée. *Pas écouté : à juger à l'oreille.*
+  - PLUS DE VAGUES (« je ne veux pas que les ennemis spawnent par vagues ; un spawn continu de plus en plus soutenu ») :
+    `invasion.continu` — un insecte tout autour du vaisseau (plus de cadrans, plus de flèches de vague), au rythme de
+    0,5 par seconde, +0,5 par minute de vol, 6 au plus ; jamais plus de 120 en vie. Testé : 45 la première minute, 103
+    la troisième, 162 la cinquième. *Chiffres de moi.*
+  - LES ROCHES (« varie davantage la taille des astéroïdes, ils sont trop petits et tous d'une taille trop similaire ») :
+    un rayon de 8 à 34 (6 à 13 avant), tiré un peu plus souvent petit ; leurs points, 500 à 10 de rayon, à la puissance
+    1,5 du rayon (360 à 3 100 ; 5 × rayon² aurait fait 5 800 pour la plus grosse) ; leurs pépites suivent (6 à 52).
+  - TOUTE LA ROCHE SE TOUCHE : `rayonDe` (le rayon d'un insecte, ou celui de la roche) remplace `ennemi.rayon` dans toutes
+    les touches et les portées des armes — une grosse roche ne se laisse plus traverser jusqu'à son cœur.
+  - LA CARTE QUI BOUCLE (sortir à gauche, rentrer à droite) : une question de Keko, pas encore faite — voir la réponse du
+    20/11 : tout étant autour du vaisseau, le monde peut se recentrer d'un bloc quand il passe un bord, le ciel répété.

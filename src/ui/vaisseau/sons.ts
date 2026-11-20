@@ -345,60 +345,64 @@ function voixDeFlamme(ctx: AudioContext): Voix {
  * plus discret, en continu. (Le volume était d'abord HACHÉ à 9 Hz — Keko, 16/11 : « un bruit par à-coups, au lieu de
  * quelque chose de continu ; j'aime bien le petit bruit de bulle du décollage : en vol, ce petit bruit, plus discret et
  * permanent ».)
+ * PUIS UN JET DE GAZ (Keko, 20/11 : « ça fait le bruit d'une casserole d'eau qui bout, avec des bulles ; il manque un
+ * petit côté gaz, ça fait vraiment trop liquide ») : PLUS DE BULLES EN VOL, et plus de passe-bande serré (Q 3,2 : il
+ * glougloutait) ; un SOUFFLE — du bruit, passe-haut à 700 Hz, dans une bande large vers 1,6 kHz qui flotte lentement —,
+ * un corps plus sourd vers 450 Hz, à peine résonant, le grondement grave ; et LES DEUX PUSTULES QUI CRACHENT : le souffle
+ * enfle et retombe par bouffées irrégulières (deux ondes lentes, 2,3 et 0,9 Hz, qui ne s'accordent pas).
  */
 function voixDeBete(ctx: AudioContext): Voix {
-  const b = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate)
+  const b = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate)
   const d = b.getChannelData(0)
   for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1
   const bruit = ctx.createBufferSource()
   bruit.buffer = b
   bruit.loop = true
+  // (le souffle : passe-haut, puis une bande large qui flotte)
+  const haut = ctx.createBiquadFilter()
+  haut.type = 'highpass'
+  haut.frequency.value = 700
   const filtre = ctx.createBiquadFilter()
   filtre.type = 'bandpass'
-  filtre.frequency.value = 420
-  filtre.Q.value = 3.2
-  const ondule = ctx.createOscillator()
-  ondule.frequency.value = 3.7
-  const ampOndule = ctx.createGain()
-  ampOndule.gain.value = 160
-  ondule.connect(ampOndule).connect(filtre.frequency)
-  const ondule2 = ctx.createOscillator()
-  ondule2.frequency.value = 1.3
-  const ampOndule2 = ctx.createGain()
-  ampOndule2.gain.value = 110
-  ondule2.connect(ampOndule2).connect(filtre.frequency)
-  const hache = ctx.createGain()
-  hache.gain.value = 0.5
+  filtre.frequency.value = 1600
+  filtre.Q.value = 0.6
+  const flotte = ctx.createOscillator()
+  flotte.frequency.value = 0.7
+  const ampFlotte = ctx.createGain()
+  ampFlotte.gain.value = 300
+  flotte.connect(ampFlotte).connect(filtre.frequency)
+  // (les bouffées : le souffle enfle et retombe, irrégulier)
+  const bouffees = ctx.createGain()
+  bouffees.gain.value = 0.55
+  for (const [f, a] of [[2.3, 0.22], [0.9, 0.15]]) {
+    const o = ctx.createOscillator()
+    o.frequency.value = f
+    const g = ctx.createGain()
+    g.gain.value = a
+    o.connect(g).connect(bouffees.gain)
+    o.start()
+  }
+  // (le corps, sourd ; le grondement)
+  const corps = ctx.createBiquadFilter()
+  corps.type = 'bandpass'
+  corps.frequency.value = 450
+  corps.Q.value = 0.9
+  const gainCorps = ctx.createGain()
+  gainCorps.gain.value = 0.3
   const grave = ctx.createBiquadFilter()
   grave.type = 'lowpass'
-  grave.frequency.value = 220
+  grave.frequency.value = 200
   const gainGrave = ctx.createGain()
-  gainGrave.gain.value = 0.5
+  gainGrave.gain.value = 0.45
   const gain = ctx.createGain()
   gain.gain.value = 0
-  bruit.connect(filtre).connect(hache).connect(gain)
+  bruit.connect(haut).connect(filtre).connect(bouffees).connect(gain)
+  bruit.connect(corps).connect(gainCorps).connect(gain)
   bruit.connect(grave).connect(gainGrave).connect(gain)
   gain.connect(ctx.destination)
   bruit.start()
-  ondule.start()
-  ondule2.start()
+  flotte.start()
   return { gain, filtre }
-}
-
-/** UNE PETITE BULLE de la bête : un sinus bref qui grimpe d'une octave (un « bloup »), posé sur l'horloge audio, vite éteint. */
-let prochaineBulle = 0
-function bulle(ctx: AudioContext, quand: number, volume: number): void {
-  const o = ctx.createOscillator()
-  const f = 190 + 420 * Math.random()
-  o.frequency.setValueAtTime(f, quand)
-  o.frequency.exponentialRampToValueAtTime(f * 2.1, quand + 0.045)
-  const g = ctx.createGain()
-  g.gain.setValueAtTime(0.0001, quand)
-  g.gain.exponentialRampToValueAtTime(volume, quand + 0.004)
-  g.gain.exponentialRampToValueAtTime(0.0001, quand + 0.06 + 0.04 * Math.random())
-  o.connect(g).connect(new StereoPannerNode(ctx, { pan: (Math.random() - 0.5) * 0.8 })).connect(ctx.destination)
-  o.start(quand)
-  o.stop(quand + 0.12)
 }
 
 /**
@@ -624,16 +628,9 @@ export function regler(poussee: number, creuse: boolean, compte: number, monte: 
     if (flamme !== null) flamme.gain.gain.setTargetAtTime(crache ? ZZFX.volume * 0.38 : 0, t, crache ? 0.03 : 0.07) // (0,5 d'abord — Keko, 15/11 : « un tout petit peu moins fort »)
     if (propulsion !== null) {
       if (g === 'bete') {
-        // (le fond de gaz, discret ; et les bulles, de 5 à 13 par seconde selon la poussée, au hasard, à peine)
-        propulsion.gain.gain.setTargetAtTime(ZZFX.volume * 0.07 * poussee, t, 0.05)
-        propulsion.filtre!.frequency.setTargetAtTime(320 + 380 * poussee, t, 0.1)
-        if (poussee > 0.05) {
-          if (prochaineBulle < t) prochaineBulle = t + 0.02
-          while (prochaineBulle < t + 0.1) {
-            bulle(ctx, prochaineBulle, ZZFX.volume * 0.05 * (0.5 + 0.5 * poussee))
-            prochaineBulle += (0.4 + 1.2 * Math.random()) / (5 + 8 * poussee)
-          }
-        }
+        // (le jet de gaz, discret : il souffle plus fort et plus clair avec la poussée — plus de bulles en vol, Keko, 20/11)
+        propulsion.gain.gain.setTargetAtTime(ZZFX.volume * 0.09 * poussee, t, 0.06)
+        propulsion.filtre!.frequency.setTargetAtTime(1300 + 900 * poussee, t, 0.12)
       } else if (g === 'neant') {
         // (le bourdon, grave : 0,22 d'abord — Keko, 16/11 : « réduis le volume du son que fait la propulsion du Néant en vol »)
         propulsion.gain.gain.setTargetAtTime(ZZFX.volume * 0.1 * poussee, t, 0.08)

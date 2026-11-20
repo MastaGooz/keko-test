@@ -272,6 +272,13 @@ export const VAISSEAU = {
      * perdent `derive.chocInsecte`, une fois par `heurteRoche` secondes.
      */
     sansPortail: false as boolean,
+    /**
+     * UN FLOT CONTINU, PLUS DE VAGUES (Keko, 20/11 : « je ne veux pas que les ennemis spawnent par vagues, on arrête ça ;
+     * on fait un spawn continu, de plus en plus soutenu ») : `continu.actif` — un insecte naît tout autour du centre du
+     * champ (plus de cadrans), au rythme de `debut` par seconde, qui monte de `montee` par minute de vol jusqu'à `max` ;
+     * jamais plus de `vivantsMax` insectes à la fois. *Les chiffres sont de moi.*
+     */
+    continu: { actif: false as boolean, debut: 0.5, montee: 0.5, max: 6, vivantsMax: 120 },
     eviteRoche: 24,
     heurteRoche: 0.6,
   },
@@ -336,10 +343,12 @@ export const VAISSEAU = {
    * moins de `visee` du portail, à `vitesseMin`–`vitesseMax` ; elle quitte le monde une fois repassée à `marge` au-delà.
    * C'EST UN ENNEMI D'UN GENRE À PART (`Ennemi.asteroide`) : toutes les armes la frappent, elle ne mord ni ne marche au
    * portail, et LES ARMES NE LA VOIENT PAS tant qu'un insecte est à portée du vaisseau (voir `rochesMasquees`), sauf
-   * verrouillée. Elle a `pvParRayon2` × rayon² points ; détruite, elle lâche `pepitesParPv` pépite par point de vie (un
+   * verrouillée. Elle a `pvA10` points à 10 de rayon, à la puissance `exposant` du rayon (un rayon tiré de 8 à 34 —
+   * Keko, 20/11 : « varie davantage la taille des astéroïdes, ils sont trop petits et tous d'une taille trop similaire » ;
+   * c'était 6 à 13, et 5 × rayon² : une grosse roche aurait demandé une minute) ; détruite, elle lâche `pepitesParPv` pépite par point de vie (un
    * insecte, une pour 120) ; elle heurte le vaisseau de `choc` unités de vie. *Les chiffres sont de moi, à rejuger.*
    */
-  derive: { active: false as boolean, premier: 12, tousMin: 8, tousMax: 16, max: 3, marge: 60, visee: 200, rayonMin: 6, rayonMax: 13, vitesseMin: 10, vitesseMax: 42, pvParRayon2: 5, pepitesParPv: 1 / 60, choc: 2, chocInsecte: 60 },
+  derive: { active: false as boolean, premier: 12, tousMin: 8, tousMax: 16, max: 3, marge: 60, visee: 200, rayonMin: 8, rayonMax: 34, vitesseMin: 10, vitesseMax: 42, pvA10: 500, exposant: 1.5, pepitesParPv: 1 / 60, choc: 2, chocInsecte: 60 },
   ennemi: { apparait: 10, revient: 5, distance: 320, pv: 36, poussee: 120, vitesseMax: 85, rotation: 5, rayon: 4, cherche: 260, rode: 450, voit: 130, accourt: 420, tient: 80, fuit: 10, lache: 260, cadence: 1.8, vitesseTir: 130, dispersion: 0.16, vieTir: 2, butinRendu: 3,
     /**
      * LE RIVAL PEUT PORTER DE VRAIES ARMES (Keko, 14/11 : « deux canons, le reste en mitraillette, et deux missiles dans
@@ -1613,6 +1622,12 @@ function faireNaitreUnEnnemi(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void
   ev.push({ type: 'ennemiApparait', id: e.id, x, y })
 }
 
+/**
+ * LE RAYON D'UN ENNEMI, pour qu'on le touche : celui des insectes (`ennemi.rayon`), ou celui de la roche qui dérive —
+ * toute sa surface se touche, pas seulement son cœur (Keko, 20/11 : des roches plus grosses, jusqu'à 34).
+ */
+export const rayonDe = (c: ConfigVaisseau, e: Ennemi): number => e.asteroide?.rayon ?? c.ennemi.rayon
+
 /** LES ROCHES QUI DÉRIVENT (voir `derive`) : une naît à son heure, tant qu'il y en a moins de `max`. */
 function menerLesDerives(c: ConfigVaisseau, m: Monde): void {
   const D = c.derive
@@ -1630,8 +1645,8 @@ function menerLesDerives(c: ConfigVaisseau, m: Monde): void {
   const dv = D.visee * Math.sqrt(tire(m.graine, id, 44))
   const cap = Math.atan2(o.y + Math.sin(av) * dv - y, o.x + Math.cos(av) * dv - x)
   const vit = D.vitesseMin + (D.vitesseMax - D.vitesseMin) * tire(m.graine, id, 45)
-  const rayon = D.rayonMin + (D.rayonMax - D.rayonMin) * tire(m.graine, id, 46)
-  const pv = Math.round(D.pvParRayon2 * rayon * rayon)
+  const rayon = D.rayonMin + (D.rayonMax - D.rayonMin) * tire(m.graine, id, 46) ** 1.2
+  const pv = Math.round(D.pvA10 * (rayon / 10) ** D.exposant)
   m.ennemis.push({ id, corps: { ...nouveauVaisseau(), x, y, vx: Math.cos(cap) * vit, vy: Math.sin(cap) * vit, cap }, pv, fait: 'marche', roche: null, forage: null, tirA: 0, butin: 0, cargaison: cargaisonVide(), grand: true, asteroide: { rayon, graine: hache(m.graine, id), angle0: tire(m.graine, id, 47) * Math.PI * 2, vitesseAngulaire: (tire(m.graine, id, 48) - 0.5) * 1.2, pvMax: pv } })
 }
 
@@ -1690,17 +1705,18 @@ function rochesMasquees(c: ConfigVaisseau, m: Monde): Ennemi[] {
   if (!m.ennemis.some((e) => e.asteroide !== undefined)) return []
   const v = m.vaisseau
   const portee = Math.max(60, ...c.armes.map((a) => Math.max(a.portee, a.orbite?.laisse ?? 0)))
-  const insecte = m.ennemis.some((e) => e.asteroide === undefined && Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= portee + c.ennemi.rayon)
+  const insecte = m.ennemis.some((e) => e.asteroide === undefined && Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= portee + rayonDe(c, e))
   return insecte ? m.ennemis.filter((e) => e.asteroide !== undefined && e.id !== m.verrou) : []
 }
 
 /** Un insecte de l'invasion naît sur le cercle de naissance, dans une direction tirée de la graine du monde, tourné vers le portail. */
 function faireNaitreUnInsecte(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
-  // (dans UN DES CADRANS DE LA VAGUE, à tour de rôle ; pas sur ses bords : un dixième de marge de chaque côté)
+  // (dans UN DES CADRANS DE LA VAGUE, à tour de rôle ; pas sur ses bords : un dixième de marge de chaque côté — en flot
+  // continu, tout autour)
   const cadrans = m.invasion.cadrans.length > 0 ? m.invasion.cadrans : [0]
   const q = cadrans[m.invasion.nes % cadrans.length]
   m.invasion.nes += 1
-  const a = (q + 0.1 + 0.8 * tire(m.graine, m.prochainId, 3)) * (Math.PI / 2)
+  const a = c.invasion.continu.actif ? tire(m.graine, m.prochainId, 3) * Math.PI * 2 : (q + 0.1 + 0.8 * tire(m.graine, m.prochainId, 3)) * (Math.PI / 2)
   m.graine = hache(m.graine, 7)
   // (SANS PORTAIL : autour du vaisseau, hors de sa vue, et il le chasse dès sa naissance)
   const o = centreDuChamp(c, m)
@@ -1820,6 +1836,13 @@ export function cadenceDeLaVague(c: ConfigVaisseau, vague: number): number {
 function menerLInvasion(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
   const inv = m.invasion
   if (m.t < inv.prochainA) return
+  // LE FLOT CONTINU (voir `continu`) : un insecte, puis le suivant au rythme du moment
+  const fl = c.invasion.continu
+  if (fl.actif) {
+    inv.prochainA = m.t + 1 / Math.min(fl.max, fl.debut + (fl.montee * m.t) / 60)
+    if (m.ennemis.filter((e) => e.asteroide === undefined).length < fl.vivantsMax) faireNaitreUnInsecte(c, m, ev)
+    return
+  }
   if (inv.aNaitre === 0) {
     if (m.ennemis.some((e) => e.asteroide === undefined)) return
     inv.vague += 1
@@ -2231,9 +2254,9 @@ function cracherLaFlamme(c: ConfigVaisseau, m: Monde, arme: Arme, fl: { cone: nu
   const by = bo === undefined ? v.y : v.y + Math.sin(v.cap) * bo.x + Math.cos(v.cap) * bo.y
   const dans = m.ennemis.filter((e) => {
     const d = Math.hypot(e.corps.x - bx, e.corps.y - by)
-    if (d > arme.portee + c.ennemi.rayon) return false
+    if (d > arme.portee + rayonDe(c, e)) return false
     // (collé à la bouche, il est dedans quel que soit l'angle)
-    return d <= c.ennemi.rayon + 1 || Math.abs(ecartDAngle(v.cap, Math.atan2(e.corps.y - by, e.corps.x - bx))) <= fl.cone
+    return d <= rayonDe(c, e) + 1 || Math.abs(ecartDAngle(v.cap, Math.atan2(e.corps.y - by, e.corps.x - bx))) <= fl.cone
   })
   if (dans.length === 0) return
   m.crache = true
@@ -2255,13 +2278,13 @@ function mener_L_Electricite(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenem
     const au = a.aura
     if (au !== undefined)
       for (const e of [...m.ennemis]) {
-        if (Math.hypot(e.corps.x - v.x, e.corps.y - v.y) > au.rayon + c.ennemi.rayon) continue
+        if (Math.hypot(e.corps.x - v.x, e.corps.y - v.y) > au.rayon + rayonDe(c, e)) continue
         e.pv -= au.dps * dt
         if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
       }
     const ch = a.chaine
     if (ch === undefined || m.t < (m.armesA[i] ?? 0)) return
-    const aPortee = (e: Ennemi): boolean => Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= a.portee + c.ennemi.rayon
+    const aPortee = (e: Ennemi): boolean => Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= a.portee + rayonDe(c, e)
     let premiere: Ennemi | undefined
     const ve = ennemiVerrouille(m)
     if (ve !== null && aPortee(ve)) premiere = ve
@@ -2303,7 +2326,7 @@ function menerLesScies(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[])
   c.armes.forEach((a, i) => {
     const sc = a.scie
     if (sc === undefined || m.phase !== 'vol' || m.t < (m.armesA[i] ?? 0) || m.scies.some((s) => s.arme === i)) return
-    const aPortee = (e: Ennemi): boolean => Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= a.portee + c.ennemi.rayon
+    const aPortee = (e: Ennemi): boolean => Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= a.portee + rayonDe(c, e)
     let cible: Ennemi | undefined
     const ve = ennemiVerrouille(m)
     if (ve !== null && aPortee(ve)) cible = ve
@@ -2354,7 +2377,7 @@ function menerLesScies(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[])
     s.y += s.vy * dt
     // LES COUPES : une fois par insecte et par sens
     for (const e of [...m.ennemis]) {
-      if (s.touches.includes(e.id) || Math.hypot(e.corps.x - s.x, e.corps.y - s.y) > sc.rayon + c.ennemi.rayon) continue
+      if (s.touches.includes(e.id) || Math.hypot(e.corps.x - s.x, e.corps.y - s.y) > sc.rayon + rayonDe(c, e)) continue
       s.touches.push(e.id)
       const critique = c.passifs.critique > 0 && tire(m.graine, m.prochainId++, 12) < c.passifs.critique
       e.pv -= a.degats * (critique ? c.passifs.critiqueFacteur : 1)
@@ -2393,7 +2416,7 @@ function menerLeGivre(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]):
     let pire: Givre | undefined
     let venin: Givre | undefined
     for (const g of m.givres) {
-      if (Math.hypot(e.corps.x - g.x, e.corps.y - g.y) > g.rayon + c.ennemi.rayon * 0.5) continue
+      if (Math.hypot(e.corps.x - g.x, e.corps.y - g.y) > g.rayon + rayonDe(c, e) * 0.5) continue
       if (g.poison === true) {
         if (venin === undefined || g.dps > venin.dps) venin = g
       } else if (pire === undefined || g.ralenti < pire.ralenti) pire = g
@@ -2437,7 +2460,7 @@ function lancerLesNovas(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
     const front = frontDeLaNova(nv.rayon, m.t - o.nee, ouverture)
     for (const e of m.ennemis) {
       if (o.frappes.includes(e.id) || e.pv <= 0) continue
-      if (Math.hypot(e.corps.x - o.x, e.corps.y - o.y) > front + c.ennemi.rayon) continue
+      if (Math.hypot(e.corps.x - o.x, e.corps.y - o.y) > front + rayonDe(c, e)) continue
       o.frappes.push(e.id)
       const critique = c.passifs.critique > 0 && tire(m.graine, m.prochainId++, 12) < c.passifs.critique
       e.pv -= a.degats * (critique ? c.passifs.critiqueFacteur : 1)
@@ -2520,7 +2543,7 @@ function menerLesTornades(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement
     tn.y += tn.vy * dt
     // LA ZONE : ce qui est dedans est gelé et rongé
     for (const e of [...m.ennemis]) {
-      if (Math.hypot(e.corps.x - tn.x, e.corps.y - tn.y) > to.rayon + c.ennemi.rayon * 0.5) continue
+      if (Math.hypot(e.corps.x - tn.x, e.corps.y - tn.y) > to.rayon + rayonDe(c, e) * 0.5) continue
       geler(m, e, 0.25, to.ralenti, ev)
       e.pv -= to.dps * dt
       if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
@@ -2535,7 +2558,7 @@ function tirerLesSalves(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
     const sa = a.salve
     if (sa === undefined || m.phase !== 'vol' || m.t < (m.armesA[i] ?? 0)) return
     // (LA COURONNE S'ORIENTE : le premier éclat vers la cible — la verrouillée à portée, sinon la plus proche)
-    const aPortee = (e: Ennemi): boolean => Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= a.portee + c.ennemi.rayon
+    const aPortee = (e: Ennemi): boolean => Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= a.portee + rayonDe(c, e)
     let cible: Ennemi | undefined
     const ve = ennemiVerrouille(m)
     if (ve !== null && aPortee(ve)) cible = ve
@@ -2588,7 +2611,7 @@ function condenserLesEchardes(c: ConfigVaisseau, m: Monde, ev: Evenement[]): voi
     // (les cibles : à portée, le verrouillé d'abord, puis du plus proche au plus lointain)
     const ve = ennemiVerrouille(m)
     const cibles = m.ennemis
-      .filter((e) => e.pv > 0 && Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= a.portee + c.ennemi.rayon)
+      .filter((e) => e.pv > 0 && Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= a.portee + rayonDe(c, e))
       .sort((p, q) => (p === ve ? -1 : q === ve ? 1 : Math.hypot(p.corps.x - v.x, p.corps.y - v.y) - Math.hypot(q.corps.x - v.x, q.corps.y - v.y)))
     // (la rafale : toutes les prêtes, l'une après l'autre)
     if (cibles.length > 0 && !miennes.some((e) => e.depart !== undefined)) {
@@ -2622,7 +2645,7 @@ function tirerLesEssaims(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
   c.armes.forEach((a, i) => {
     const es = a.essaim
     if (es === undefined || m.phase !== 'vol' || m.t < (m.armesA[i] ?? 0)) return
-    const aPortee = (e: Ennemi): boolean => Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= a.portee + c.ennemi.rayon
+    const aPortee = (e: Ennemi): boolean => Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= a.portee + rayonDe(c, e)
     const ve = ennemiVerrouille(m)
     const cibles = ve !== null && aPortee(ve) ? [ve] : m.ennemis.filter(aPortee)
     if (cibles.length === 0) return
@@ -2666,7 +2689,7 @@ function menerLesSpheres(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[
   c.armes.forEach((a, i) => {
     const sp = a.sphere
     if (sp === undefined || m.phase !== 'vol' || m.t < (m.armesA[i] ?? 0)) return
-    const aPortee = (e: Ennemi): boolean => Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= a.portee + c.ennemi.rayon
+    const aPortee = (e: Ennemi): boolean => Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= a.portee + rayonDe(c, e)
     let cible: Ennemi | undefined
     const ve = ennemiVerrouille(m)
     if (ve !== null && aPortee(ve)) cible = ve
@@ -2700,7 +2723,7 @@ function menerLesSpheres(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[
     // (un petit trait sur CHAQUE insecte à portée d'elle : il part vers lui, un peu de travers, et le rattrape en zigzaguant)
     let tirs = 0
     for (const e of m.ennemis) {
-      if (Math.hypot(e.corps.x - s.x, e.corps.y - s.y) > sp.rayon + c.ennemi.rayon) continue
+      if (Math.hypot(e.corps.x - s.x, e.corps.y - s.y) > sp.rayon + rayonDe(c, e)) continue
       const id = m.prochainId++
       const an = Math.atan2(e.corps.y - s.y, e.corps.x - s.x) + (tire(m.graine, id, 23) - 0.5) * 1.6
       const critique = c.passifs.critique > 0 && tire(m.graine, id, 12) < c.passifs.critique
@@ -2721,7 +2744,7 @@ function menerLesMeteores(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
     let cible = ennemiVerrouille(m)
     if (cible === null || d(cible) > a.portee + c.ennemi.rayon) {
       cible = null
-      for (const e of m.ennemis) if (d(e) <= a.portee + c.ennemi.rayon && (cible === null || d(e) < d(cible))) cible = e
+      for (const e of m.ennemis) if (d(e) <= a.portee + rayonDe(c, e) && (cible === null || d(e) < d(cible))) cible = e
     }
     if (cible === null) return
     m.armesA[i] = m.t + a.cadence
@@ -2761,7 +2784,7 @@ function menerLesPuits(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[])
   c.armes.forEach((a, i) => {
     const pu = a.puits
     if (pu === undefined || m.phase !== 'vol' || m.t < (m.armesA[i] ?? 0)) return
-    const aPortee = (e: Ennemi): boolean => Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= a.portee + c.ennemi.rayon
+    const aPortee = (e: Ennemi): boolean => Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= a.portee + rayonDe(c, e)
     // (au cœur de la nuée : l'insecte qui a le plus de voisins dans le rayon du puits ; le verrouillé d'abord)
     let cible: Ennemi | undefined
     const ve = ennemiVerrouille(m)
@@ -2802,7 +2825,7 @@ function menerLesPuits(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[])
       const dx = p.x - e.corps.x
       const dy = p.y - e.corps.y
       const d = Math.hypot(dx, dy)
-      if (d > pu.rayon + c.ennemi.rayon || d < 1e-6) continue
+      if (d > pu.rayon + rayonDe(c, e) || d < 1e-6) continue
       const pas = Math.min(d, pu.force * dt)
       e.corps = { ...e.corps, x: e.corps.x + (dx / d) * pas, y: e.corps.y + (dy / d) * pas }
     }
@@ -2811,7 +2834,7 @@ function menerLesPuits(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[])
     m.puits.splice(k, 1)
     ev.push({ type: 'puitsEclate', x: p.x, y: p.y, rayon: pu.eclat })
     for (const e of [...m.ennemis]) {
-      if (Math.hypot(e.corps.x - p.x, e.corps.y - p.y) > pu.eclat + c.ennemi.rayon) continue
+      if (Math.hypot(e.corps.x - p.x, e.corps.y - p.y) > pu.eclat + rayonDe(c, e)) continue
       const critique = c.passifs.critique > 0 && tire(m.graine, m.prochainId++, 12) < c.passifs.critique
       e.pv -= a.degats * (critique ? c.passifs.critiqueFacteur : 1)
       ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })
@@ -2827,7 +2850,7 @@ function tirerLesRails(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
     const ra = a.rail
     if (ra === undefined || m.phase !== 'vol' || m.t < (m.armesA[i] ?? 0)) return
     const b = boucheDansLeMonde(v, a)
-    const aPortee = (e: Ennemi): boolean => Math.hypot(e.corps.x - b.x, e.corps.y - b.y) <= a.portee + c.ennemi.rayon
+    const aPortee = (e: Ennemi): boolean => Math.hypot(e.corps.x - b.x, e.corps.y - b.y) <= a.portee + rayonDe(c, e)
     const enVue = m.ennemis.filter(aPortee)
     if (enVue.length === 0) return
     // (ceux que traverse la ligne de la bouche, dans la direction `an`, sur toute la portée)
@@ -2838,7 +2861,7 @@ function tirerLesRails(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
         const ex = e.corps.x - b.x
         const ey = e.corps.y - b.y
         const le = ex * ux + ey * uy
-        return le >= -c.ennemi.rayon && le <= a.portee + c.ennemi.rayon && Math.abs(ex * uy - ey * ux) <= ra.largeur + c.ennemi.rayon
+        return le >= -rayonDe(c, e) && le <= a.portee + rayonDe(c, e) && Math.abs(ex * uy - ey * ux) <= ra.largeur + rayonDe(c, e)
       })
     }
     const ve = ennemiVerrouille(m)
@@ -2887,7 +2910,7 @@ function menerLesTentacules(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void 
     if (te?.alterne !== true || m.phase !== 'vol' || m.t < (m.armesA[i] ?? 0)) return
     const libres = m.tentacules.filter((x) => x.arme === i && x.fait === 'repos')
     if (libres.length === 0) return
-    const aPortee = (e: Ennemi): boolean => Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= a.portee + c.ennemi.rayon
+    const aPortee = (e: Ennemi): boolean => Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= a.portee + rayonDe(c, e)
     const visees = new Set(m.tentacules.filter((x) => x.fait !== 'repos').map((x) => x.cible))
     const ve = ennemiVerrouille(m)
     let choix: Ennemi | undefined = ve !== null && aPortee(ve) ? ve : undefined
@@ -2930,7 +2953,7 @@ function menerLesTentacules(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void 
     const age = m.t - tn.depuis
     const cible = tn.cible === null ? undefined : m.ennemis.find((e) => e.id === tn.cible)
     if (cible !== undefined) (tn.tx = cible.corps.x), (tn.ty = cible.corps.y)
-    const aPortee = (e: Ennemi): boolean => Math.hypot(e.corps.x - an.x, e.corps.y - an.y) <= a.portee + c.ennemi.rayon
+    const aPortee = (e: Ennemi): boolean => Math.hypot(e.corps.x - an.x, e.corps.y - an.y) <= a.portee + rayonDe(c, e)
     if (tn.fait === 'repos') {
       tn.u = 0
       if (te.alterne === true || m.phase !== 'vol' || age < a.cadence) continue
@@ -3026,7 +3049,7 @@ function cracherLAcide(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[])
     const cr = a.crachat
     if (cr === undefined || m.phase !== 'vol' || m.t < (m.armesA[i] ?? 0)) return
     const b = boucheDansLeMonde(v, a)
-    const aPortee = (e: Ennemi): boolean => Math.hypot(e.corps.x - b.x, e.corps.y - b.y) <= a.portee + c.ennemi.rayon
+    const aPortee = (e: Ennemi): boolean => Math.hypot(e.corps.x - b.x, e.corps.y - b.y) <= a.portee + rayonDe(c, e)
     let cible: Ennemi | undefined
     const ve = ennemiVerrouille(m)
     if (ve !== null && aPortee(ve)) cible = ve
@@ -3043,7 +3066,7 @@ function cracherLAcide(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[])
     m.flaquesAcides.push({ id: m.prochainId++, arme: i, x: b.x, y: b.y, cap, nee: m.t })
     ev.push({ type: 'crachat', x: b.x, y: b.y, cap, cone: cr.cone, portee: a.portee, arme: a.id })
     for (const e of [...m.ennemis]) {
-      if (!dansLeCone(e.corps.x, e.corps.y, b.x, b.y, cap, cr.cone, a.portee, c.ennemi.rayon)) continue
+      if (!dansLeCone(e.corps.x, e.corps.y, b.x, b.y, cap, cr.cone, a.portee, rayonDe(c, e))) continue
       ronger(m, e, cr.acide, ev)
       const critique = c.passifs.critique > 0 && tire(m.graine, m.prochainId++, 12) < c.passifs.critique
       e.pv -= a.degats * (critique ? c.passifs.critiqueFacteur : 1)
@@ -3056,7 +3079,7 @@ function cracherLAcide(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[])
     const a = c.armes[f.arme]
     const cr = a?.crachat
     if (a === undefined || cr === undefined || m.t - f.nee >= cr.duree) return false
-    for (const e of m.ennemis) if (dansLeCone(e.corps.x, e.corps.y, f.x, f.y, f.cap, cr.cone, a.portee, c.ennemi.rayon)) ronger(m, e, cr.acide, ev)
+    for (const e of m.ennemis) if (dansLeCone(e.corps.x, e.corps.y, f.x, f.y, f.cap, cr.cone, a.portee, rayonDe(c, e))) ronger(m, e, cr.acide, ev)
     return true
   })
   // (l'acide ronge : ses dégâts à lui ; le poison, les siens)
@@ -3079,7 +3102,7 @@ function menerLesParasites(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenemen
     if (pa === undefined || m.phase !== 'vol' || m.t < (m.armesA[i] ?? 0)) return
     if (m.parasites.filter((p) => p.arme === i).length >= pa.max) return
     const pris = porteurs()
-    const libre = (e: Ennemi): boolean => !pris.has(e.id) && Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= a.portee + c.ennemi.rayon
+    const libre = (e: Ennemi): boolean => !pris.has(e.id) && Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= a.portee + rayonDe(c, e)
     let cible: Ennemi | undefined
     const ve = ennemiVerrouille(m)
     if (ve !== null && libre(ve)) cible = ve
@@ -3163,7 +3186,7 @@ function menerLesParasites(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenemen
     p.vy += ((dy / d) * a.vitesse - p.vy) * k
     p.x += p.vx * dt
     p.y += p.vy * dt
-    if (Math.hypot(cible.corps.x - p.x, cible.corps.y - p.y) <= c.ennemi.rayon + 2) {
+    if (Math.hypot(cible.corps.x - p.x, cible.corps.y - p.y) <= rayonDe(c, cible) + 2) {
       p.hote = cible.id
       p.cible = null
       ev.push({ type: 'parasiteAccroche', id: cible.id, x: cible.corps.x, y: cible.corps.y })
@@ -3211,7 +3234,7 @@ function menerLesFleaux(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]
     if (m.phase !== 'vol') return
     for (const e of [...m.ennemis]) {
       // (LA MASSE, à sa prise)
-      if (Math.hypot(e.corps.x - f.x, e.corps.y - f.y) <= fl.prise + c.ennemi.rayon) {
+      if (Math.hypot(e.corps.x - f.x, e.corps.y - f.y) <= fl.prise + rayonDe(c, e)) {
         if (m.t - (f.frappes[e.id] ?? -1e9) < fl.rebond) continue
         f.frappes[e.id] = m.t
         f.frappesChaine[e.id] = m.t
@@ -3226,7 +3249,7 @@ function menerLesFleaux(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]
       const ex = e.corps.x - v.x
       const ey = e.corps.y - v.y
       const le = ex * ux + ey * uy
-      if (le < 0 || le > fl.longueur || Math.abs(ex * uy - ey * ux) > fl.chaine.epaisseur + c.ennemi.rayon) continue
+      if (le < 0 || le > fl.longueur || Math.abs(ex * uy - ey * ux) > fl.chaine.epaisseur + rayonDe(c, e)) continue
       if (m.t - (f.frappesChaine[e.id] ?? -1e9) < fl.rebond) continue
       f.frappesChaine[e.id] = m.t
       const critique = critiqueTire(c, m)
@@ -3269,11 +3292,11 @@ function menerLesMines(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
       ev.push({ type: 'mineFinie', x: mn.x, y: mn.y })
       return false
     }
-    if (!m.ennemis.some((e) => Math.hypot(e.corps.x - mn.x, e.corps.y - mn.y) <= mi.rayon + c.ennemi.rayon)) return true
+    if (!m.ennemis.some((e) => Math.hypot(e.corps.x - mn.x, e.corps.y - mn.y) <= mi.rayon + rayonDe(c, e))) return true
     // (ELLE ÉCLATE EN GAZ : tout ce qui est dans le nuage perd ses dégâts et est EMPOISONNÉ — Keko, 19/11)
     ev.push({ type: 'gaz', x: mn.x, y: mn.y, rayon: mi.rayon })
     for (const e of [...m.ennemis]) {
-      if (Math.hypot(e.corps.x - mn.x, e.corps.y - mn.y) > mi.rayon + c.ennemi.rayon) continue
+      if (Math.hypot(e.corps.x - mn.x, e.corps.y - mn.y) > mi.rayon + rayonDe(c, e)) continue
       empoisonner(m, e, mi.poison)
       const critique = c.passifs.critique > 0 && tire(m.graine, m.prochainId++, 12) < c.passifs.critique
       e.pv -= a.degats * (critique ? c.passifs.critiqueFacteur : 1)
@@ -3359,7 +3382,7 @@ function menerLesRejetons(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement
     r.x += r.vx * dt
     r.y += r.vy * dt
     // (à portée de tentacule : il fouette)
-    if (proie !== undefined && dist(proie) <= rj.allonge + c.ennemi.rayon && m.t >= r.frappeA) {
+    if (proie !== undefined && dist(proie) <= rj.allonge + rayonDe(c, proie) && m.t >= r.frappeA) {
       r.frappeA = m.t + rj.periode
       const critique = c.passifs.critique > 0 && tire(m.graine, m.prochainId++, 12) < c.passifs.critique
       proie.pv -= a.degats * (critique ? c.passifs.critiqueFacteur : 1)
@@ -3402,7 +3425,7 @@ function menerLesEpines(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]
     b.y += b.vy * dt
     // (ELLE TRAVERSE TOUT : chacun à sa largeur prend le coup, une fois, et reste où il est)
     for (const e of [...m.ennemis]) {
-      if (b.touches.includes(e.id) || Math.hypot(e.corps.x - b.x, e.corps.y - b.y) > c.ennemi.rayon + ep.largeur) continue
+      if (b.touches.includes(e.id) || Math.hypot(e.corps.x - b.x, e.corps.y - b.y) > rayonDe(c, e) + ep.largeur) continue
       b.touches.push(e.id)
       const critique = c.passifs.critique > 0 && tire(m.graine, b.id * 31 + e.id, 12) < c.passifs.critique
       e.pv -= a.degats * (critique ? c.passifs.critiqueFacteur : 1)
@@ -3517,7 +3540,7 @@ function menerLesCoupes(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
   c.armes.forEach((a, i) => {
     const cp = a.coupe
     if (cp === undefined || m.phase !== 'vol' || m.t < (m.armesA[i] ?? 0)) return
-    const aPortee = (e: Ennemi): boolean => Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= a.portee + c.ennemi.rayon
+    const aPortee = (e: Ennemi): boolean => Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= a.portee + rayonDe(c, e)
     // (au cœur de la nuée : l'insecte qui a le plus de voisins dans sa coupe ; le verrouillé d'abord)
     let cible: Ennemi | undefined
     const ve = ennemiVerrouille(m)
@@ -3545,7 +3568,7 @@ function menerLesCoupes(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
     while (m.t >= co.prochain && co.prochain < co.nee + cp.duree) {
       const f = formeDeLaCoupe(co, cp, co.prochain)
       for (const e of [...m.ennemis]) {
-        if (!dansLaForme(f, e.corps.x, e.corps.y, c.ennemi.rayon)) continue
+        if (!dansLaForme(f, e.corps.x, e.corps.y, rayonDe(c, e))) continue
         const critique = c.passifs.critique > 0 && tire(m.graine, co.id * 31 + e.id * 7 + Math.round(co.prochain * 100), 12) < c.passifs.critique
         e.pv -= a.degats * (critique ? c.passifs.critiqueFacteur : 1)
         ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })
@@ -3557,7 +3580,7 @@ function menerLesCoupes(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
     // (LE POINT FINAL : la tranche se referme sur son centre, et ce qui est dessous prend le gros coup)
     let touches = 0
     for (const e of [...m.ennemis]) {
-      if (Math.hypot(e.corps.x - co.x, e.corps.y - co.y) > c.ennemi.rayon) continue
+      if (Math.hypot(e.corps.x - co.x, e.corps.y - co.y) > rayonDe(c, e)) continue
       const critique = c.passifs.critique > 0 && tire(m.graine, co.id * 31 + e.id * 7, 64) < c.passifs.critique
       e.pv -= cp.fin * (critique ? c.passifs.critiqueFacteur : 1)
       touches++
@@ -3582,7 +3605,7 @@ function menerLesDes(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
     let cible = ennemiVerrouille(m)
     if (cible === null || d(cible) > a.portee + c.ennemi.rayon) {
       cible = null
-      for (const e of m.ennemis) if (d(e) <= a.portee + c.ennemi.rayon && (cible === null || d(e) < d(cible))) cible = e
+      for (const e of m.ennemis) if (d(e) <= a.portee + rayonDe(c, e) && (cible === null || d(e) < d(cible))) cible = e
     }
     if (cible === null) return
     m.armesA[i] = m.t + a.cadence
@@ -3609,7 +3632,7 @@ function menerLesDes(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
     ev.push({ type: 'deImpact', id: dd.id, x: dd.x, y: dd.y, face: dd.face, rayon: zone })
     // (IL S'ABAT : toute la zone, d'autant plus large et plus fort que le chiffre est haut)
     for (const e of [...m.ennemis]) {
-      if (Math.hypot(e.corps.x - dd.x, e.corps.y - dd.y) > zone + c.ennemi.rayon) continue
+      if (Math.hypot(e.corps.x - dd.x, e.corps.y - dd.y) > zone + rayonDe(c, e)) continue
       const critique = c.passifs.critique > 0 && tire(m.graine, dd.id * 31 + e.id * 7, 12) < c.passifs.critique
       e.pv -= a.degats * dd.face * (critique ? c.passifs.critiqueFacteur : 1)
       ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })
@@ -3678,7 +3701,7 @@ function menerLesHypercubes(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void 
     const rayon = hc.rayon * Math.pow(hc.croissance, h.contacts - 1)
     ev.push({ type: 'rebondHypercube', id: h.id, x: h.x1, y: h.y1, rayon, contact: h.contacts })
     for (const e of [...m.ennemis]) {
-      if (Math.hypot(e.corps.x - h.x1, e.corps.y - h.y1) > rayon + c.ennemi.rayon) continue
+      if (Math.hypot(e.corps.x - h.x1, e.corps.y - h.y1) > rayon + rayonDe(c, e)) continue
       const critique = c.passifs.critique > 0 && tire(m.graine, h.id * 31 + e.id * 7 + h.contacts, 12) < c.passifs.critique
       e.pv -= a.degats * (critique ? c.passifs.critiqueFacteur : 1)
       ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })
@@ -3762,11 +3785,11 @@ function menerLesOeufs(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[])
     // (sans proie, il vire doucement : à pleine vitesse de virage, il tournait en rond)
     const vire = proie === undefined ? Math.min(po.virage, 1.5) : po.virage
     w.cap += Math.max(-vire * dt, Math.min(vire * dt, e))
-    const pas = proie === undefined ? po.vitesse * 0.4 * dt : Math.min(po.vitesse * dt, Math.max(0, dist(proie) - c.ennemi.rayon - 1))
+    const pas = proie === undefined ? po.vitesse * 0.4 * dt : Math.min(po.vitesse * dt, Math.max(0, dist(proie) - rayonDe(c, proie) - 1))
     w.x += Math.cos(w.cap) * pas
     w.y += Math.sin(w.cap) * pas
     // (AU CONTACT, IL MORD, à sa cadence)
-    if (proie !== undefined && dist(proie) <= c.ennemi.rayon + 3 && m.t >= w.mordA) {
+    if (proie !== undefined && dist(proie) <= rayonDe(c, proie) + 3 && m.t >= w.mordA) {
       w.mordA = m.t + po.cadence
       const critique = critiqueTire(c, m)
       proie.pv -= po.morsure * (critique ? c.passifs.critiqueFacteur : 1)
@@ -3795,7 +3818,7 @@ function menerLeDrain(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]):
       // (LA PORTÉE N'ACCROCHE QUE : le verrouillé d'abord, puis les plus proches, qu'aucun lien ne tient déjà)
       const tenus = new Set(m.liens.map((l) => l.cible))
       const d = (e: Ennemi): number => Math.hypot(e.corps.x - v.x, e.corps.y - v.y)
-      const dans = m.ennemis.filter((e) => !tenus.has(e.id) && d(e) <= dr.rayon + c.ennemi.rayon).sort((p, q) => d(p) - d(q))
+      const dans = m.ennemis.filter((e) => !tenus.has(e.id) && d(e) <= dr.rayon + rayonDe(c, e)).sort((p, q) => d(p) - d(q))
       const ve = ennemiVerrouille(m)
       if (ve !== null && dans.includes(ve)) dans.splice(dans.indexOf(ve), 1), dans.unshift(ve)
       for (const e of dans.slice(0, (dr.cibles ?? Infinity) - siens)) {
@@ -3821,7 +3844,7 @@ function menerLesVrilles(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[
   c.armes.forEach((a, i) => {
     const vr = a.vrille
     if (vr === undefined || m.phase !== 'vol' || m.t < (m.armesA[i] ?? 0)) return
-    if (!m.ennemis.some((e) => Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= a.portee + c.ennemi.rayon)) return
+    if (!m.ennemis.some((e) => Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= a.portee + rayonDe(c, e))) return
     m.armesA[i] = m.t + a.cadence
     // (la plus vieille rentre si elles sont déjà toutes sorties)
     const siennes = m.vrilles.filter((r) => r.arme === i)
@@ -3909,7 +3932,7 @@ function menerLesNuees(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[])
     n.y = v.y
     // (vers qui il s'étend : tous les insectes à portée, le verrouillé d'abord)
     const dist = (e: Ennemi): number => Math.hypot(e.corps.x - v.x, e.corps.y - v.y)
-    const proches = m.phase === 'vol' ? m.ennemis.filter((e) => dist(e) <= a.portee + c.ennemi.rayon).sort((p, q) => dist(p) - dist(q)) : []
+    const proches = m.phase === 'vol' ? m.ennemis.filter((e) => dist(e) <= a.portee + rayonDe(c, e)).sort((p, q) => dist(p) - dist(q)) : []
     const ve = ennemiVerrouille(m)
     if (ve !== null && proches.includes(ve)) proches.splice(proches.indexOf(ve), 1), proches.unshift(ve)
     const vises = new Set(proches.map((e) => e.id))
@@ -4046,7 +4069,7 @@ function menerLesBalises(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[
     const l2 = dx * dx + dy * dy || 1
     const dessus = m.ennemis.filter((e) => {
       const u = ((e.corps.x - b.x) * dx + (e.corps.y - b.y) * dy) / l2
-      return u > 0 && u < 1 && Math.hypot(b.x + dx * u - e.corps.x, b.y + dy * u - e.corps.y) <= ba.garde + c.ennemi.rayon
+      return u > 0 && u < 1 && Math.hypot(b.x + dx * u - e.corps.x, b.y + dy * u - e.corps.y) <= ba.garde + rayonDe(c, e)
     })
     let decharges = dessus.filter((e) => !li.sur.includes(e.id)).length
     if (decharges === 0 && dessus.length > 0 && m.t >= li.dechargeA) decharges = 1
@@ -4084,7 +4107,7 @@ function canaliserLeRayon(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement
     return
   }
   const v = m.vaisseau
-  const aPortee = (e: Ennemi): boolean => Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= a.portee + c.ennemi.rayon
+  const aPortee = (e: Ennemi): boolean => Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= a.portee + rayonDe(c, e)
   let cible: Ennemi | undefined
   const ve = ennemiVerrouille(m)
   if (ve !== null && aPortee(ve)) cible = ve
@@ -4138,13 +4161,13 @@ function menerLeRayon(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
   for (const a of c.armes) {
     if (a.balayage === undefined) continue
     let proche: Ennemi | undefined
-    for (const e of m.ennemis) if (Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= a.balayage.longueur + c.ennemi.rayon && (proche === undefined || Math.hypot(e.corps.x - v.x, e.corps.y - v.y) < Math.hypot(proche.corps.x - v.x, proche.corps.y - v.y))) proche = e
+    for (const e of m.ennemis) if (Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= a.balayage.longueur + rayonDe(c, e) && (proche === undefined || Math.hypot(e.corps.x - v.x, e.corps.y - v.y) < Math.hypot(proche.corps.x - v.x, proche.corps.y - v.y))) proche = e
     if (proche !== undefined) m.rayonVu = { x: proche.corps.x, y: proche.corps.y, t: m.t }
   }
   c.armes.forEach((a, i) => {
     const bl = a.balayage
     if (bl === undefined || m.balayage !== null || m.t < (m.armesA[i] ?? 0)) return
-    const enVue = m.ennemis.filter((e) => Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= bl.longueur + c.ennemi.rayon)
+    const enVue = m.ennemis.filter((e) => Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= bl.longueur + rayonDe(c, e))
     // (UN RAYON ANNONCÉ VA AU BOUT — Keko, 18/11 : « le bruit du rayon se lance, mais pas le rayon ; dès qu'on commence un
     // rayon, il faut aller jusqu'au bout » — mesuré : la page joue son son d'avance, jusqu'à 0,25 s, dès qu'un insecte est à
     // portée ; mort ou sorti entre-temps, le rayon ne partait plus, 6 % des fois. S'il a vu un insecte à portée dans la
@@ -4202,7 +4225,7 @@ function menerLeRayon(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
     const ix = l.x0 + (l.x1 - l.x0) * part
     const iy = l.y0 + (l.y1 - l.y0) * part
     for (const e of [...m.ennemis]) {
-      if (b.touches.includes(e.id) || Math.hypot(e.corps.x - ix, e.corps.y - iy) > bl.trace.rayon + c.ennemi.rayon) continue
+      if (b.touches.includes(e.id) || Math.hypot(e.corps.x - ix, e.corps.y - iy) > bl.trace.rayon + rayonDe(c, e)) continue
       b.touches.push(e.id)
       const critique = critiqueTire(c, m)
       e.pv -= bl.degats * (critique ? c.passifs.critiqueFacteur : 1)
@@ -4240,8 +4263,8 @@ function menerLeRayon(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
     const dx = e.corps.x - v.x
     const dy = e.corps.y - v.y
     const d = Math.hypot(dx, dy)
-    if (d > bl.longueur + c.ennemi.rayon) continue
-    const marge = Math.atan2(c.ennemi.rayon, Math.max(1, d))
+    if (d > bl.longueur + rayonDe(c, e)) continue
+    const marge = Math.atan2(rayonDe(c, e), Math.max(1, d))
     let ecart = (Math.atan2(dy, dx) - de) % (2 * Math.PI)
     if (ecart < -marge) ecart += 2 * Math.PI
     if (ecart > ouverture + marge) continue
@@ -4279,7 +4302,7 @@ function brulerLesFlaques(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement
   for (const e of [...m.ennemis]) {
     // (plusieurs flaques ne s'additionnent pas : la plus forte)
     let f: Flaque | undefined
-    for (const g of m.flaques) if (Math.hypot(e.corps.x - g.x, e.corps.y - g.y) <= g.rayon + c.ennemi.rayon * 0.5 && (f === undefined || g.dps > f.dps)) f = g
+    for (const g of m.flaques) if (Math.hypot(e.corps.x - g.x, e.corps.y - g.y) <= g.rayon + rayonDe(c, e) * 0.5 && (f === undefined || g.dps > f.dps)) f = g
     if (f === undefined) continue
     e.pv -= f.dps * dt
     e.bruleA = m.t + f.brulure
@@ -4293,7 +4316,7 @@ function brulerLesFlaques(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement
 function exploser(c: ConfigVaisseau, m: Monde, x: number, y: number, zone: { rayon: number; degats: number }, touche: Ennemi | null, ev: Evenement[], arme?: string): void {
   ev.push({ type: 'explosionDeZone', x, y, rayon: zone.rayon, ...(arme === undefined ? {} : { arme }) })
   for (const e of [...m.ennemis]) {
-    if (e === touche || Math.hypot(e.corps.x - x, e.corps.y - y) > zone.rayon + c.ennemi.rayon) continue
+    if (e === touche || Math.hypot(e.corps.x - x, e.corps.y - y) > zone.rayon + rayonDe(c, e)) continue
     const critique = critiqueTire(c, m)
     e.pv -= zone.degats * (critique ? c.passifs.critiqueFacteur : 1)
     ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })
@@ -4825,7 +4848,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
     // (UN ÉCLAT QUI TRAVERSE : il touche tout ce qu'il croise, une fois chacun, et continue)
     if (!fini && o.perce !== undefined) {
       for (const e of [...m.ennemis]) {
-        if (o.perce.includes(e.id) || Math.hypot(e.corps.x - o.x, e.corps.y - o.y) > c.ennemi.rayon + 1.5) continue
+        if (o.perce.includes(e.id) || Math.hypot(e.corps.x - o.x, e.corps.y - o.y) > rayonDe(c, e) + 1.5) continue
         o.perce.push(e.id)
         if (o.gel !== undefined) geler(m, e, o.gel.duree, o.gel.ralenti, ev)
         e.pv -= o.degats
@@ -4835,7 +4858,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
     }
     if (!fini && o.napalm === undefined && o.perce === undefined) {
       for (const e of m.ennemis) {
-        if (Math.hypot(e.corps.x - o.x, e.corps.y - o.y) > c.ennemi.rayon + 1.5) continue
+        if (Math.hypot(e.corps.x - o.x, e.corps.y - o.y) > rayonDe(c, e) + 1.5) continue
         fini = true
         // (un éclat de glace gèle ce qu'il touche — avant le coup : mort, il vole en éclats)
         if (o.gel !== undefined) geler(m, e, o.gel.duree, o.gel.ralenti, ev)
@@ -4881,14 +4904,14 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
     b.x += b.vx * dt
     b.y += b.vy * dt
     let eclate = b.vie <= 0
-    if (!eclate) eclate = m.ennemis.some((e) => Math.hypot(e.corps.x - b.x, e.corps.y - b.y) <= c.ennemi.rayon + 3)
+    if (!eclate) eclate = m.ennemis.some((e) => Math.hypot(e.corps.x - b.x, e.corps.y - b.y) <= rayonDe(c, e) + 3)
     if (!eclate) eclate = asteroidesVisibles(c, m, b.x, b.y, c.champ.rayonMax + 3).some((a) => Math.hypot(b.x - a.x, b.y - a.y) <= a.rayon + 1)
     if (!eclate) continue
     m.bombes.splice(i, 1)
     ev.push({ type: 'explosion', x: b.x, y: b.y, rayon: c.bombe.rayon })
     for (const a of asteroidesVisibles(c, m, b.x, b.y, c.bombe.rayon + c.champ.rayonMax)) if (Math.hypot(b.x - a.x, b.y - a.y) - a.rayon <= c.bombe.rayon) eclaterLaRoche(c, m, a, ev)
     for (const e of [...m.ennemis]) {
-      if (Math.hypot(e.corps.x - b.x, e.corps.y - b.y) > c.bombe.rayon + c.ennemi.rayon) continue
+      if (Math.hypot(e.corps.x - b.x, e.corps.y - b.y) > c.bombe.rayon + rayonDe(c, e)) continue
       e.pv -= c.bombe.degats
       ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique: false })
       if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
