@@ -6772,3 +6772,8 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
 - (LA ZONE DE LA NUÉE, une question de Keko : c'est le nuage autour du vaisseau, 14 de rayon — ce qui y entre est mordu
   tout de suite ; au-delà, jusqu'à 55, la nuée doit d'abord étendre un jet vers l'insecte, 0,3 s. Depuis qu'elle mord
   tout ce qui est à portée, elle ne change presque plus rien.)
+- LA NUÉE, UNE SEULE PORTÉE (Keko, 20/11 : « fusionner la zone et la portée de la nuée ; on va juste dire portée, et dès
+  qu'un ennemi est à portée, la nuée l'attaque ; pas besoin d'une zone où elle attaque et d'une zone où elle poursuit ») :
+  tout insecte à 55 est mordu TOUT DE SUITE (il fallait attendre que son jet soit tendu, 0,3 s, hors du nuage de 14) ;
+  les jets qui s'étendent ne sont plus qu'à l'image, et `nuee.rayon` n'est plus que la taille du nuage dessiné. Le
+  panneau : « Dégâts partagés » et « Portée ». Testé : un insecte à 40 perd 28 en 2 s ; cinq à portée se partagent 14. Son indice (`npm run equilibrage`) passe de 0,97 à 1,00 : dans l'équilibre.

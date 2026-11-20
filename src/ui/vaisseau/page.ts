@@ -1932,9 +1932,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     } else if (a.essaim !== undefined) {
       ligne('Dégâts', ent(a.degats)), cadence(a.cadence), portee(), ligne('Projectiles', ent(a.essaim.nombre))
     } else if (a.nuee !== undefined) {
-      // (son budget se partage entre les insectes qu'elle mord à la fois)
-      const n = a.nuee
-      ligne('Dégâts partagés', ent(n.budget)), portee(), zone(n.rayon)
+      // (son budget se partage entre les insectes qu'elle mord à la fois : tous ceux à portée)
+      ligne('Dégâts partagés', ent(a.nuee.budget)), portee()
     } else if (a.rejeton !== undefined) {
       // (un rejeton fouette, et chasse à `vue` de lui)
       const r = a.rejeton

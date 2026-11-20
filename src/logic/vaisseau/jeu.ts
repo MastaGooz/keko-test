@@ -678,6 +678,10 @@ export type Arme = {
   // (… ET SANS LIMITE D'INSECTES — Keko, 20/11 : « on va carrément enlever le système de bras : la nuée attaque autant
   // d'ennemis à portée, en divisant ses dégâts entre ceux-ci, sans limite d'ennemis » : plus de `bras` au plus ; elle
   // s'étend vers TOUS les insectes à `portee`, et tous ceux qu'elle mord se partagent `budget`)
+  // (… ET UNE SEULE PORTÉE — Keko, 20/11 : « fusionner la zone et la portée de la nuée ; on va juste dire portée, et dès
+  // qu'un ennemi est à portée, la nuée l'attaque ; pas besoin d'une zone où elle attaque et d'une zone où elle poursuit » :
+  // tout insecte à `portee` est mordu TOUT DE SUITE ; les jets qui s'étendent vers lui ne sont plus qu'à l'image, et
+  // `rayon` n'est plus que la taille du nuage dessiné autour du vaisseau)
   nuee?: { rayon: number; budget: number; deploiement: number; periode: number }
   /**
    * DES REJETONS (la troisième arme du Kraken, Keko, 16/11 : « on spawn un mini vaisseau qui est autonome et attaque les
@@ -3732,9 +3736,8 @@ function menerLesNuees(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[])
     if (m.phase !== 'vol') return
     const signale = m.t - n.mordA >= nu.periode
     if (signale) n.mordA = m.t
-    // (mordus : au bout d'un bras tendu, ou dans le nuage — ils se partagent le budget de la nuée)
-    const auBout = new Set(n.bras.filter((b) => b.u >= 0.85 && vises.has(b.cible)).map((b) => b.cible))
-    const mordus = m.ennemis.filter((e) => auBout.has(e.id) || dist(e) <= nu.rayon + c.ennemi.rayon)
+    // (mordus : tous ceux à portée, tout de suite — ils se partagent le budget de la nuée)
+    const mordus = proches
     for (const e of mordus) {
       e.pv -= (nu.budget / mordus.length) * dt
       if (signale) ev.push({ type: 'morsure', id: e.id, x: e.corps.x, y: e.corps.y })
