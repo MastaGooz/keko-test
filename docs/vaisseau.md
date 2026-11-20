@@ -6733,3 +6733,20 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     puissance » (le faisceau)…
   Huit lignes au plus (les œufs, le crachat, le rayon thermique) ; la plaque prend la hauteur du plus long des deux
   panneaux. Dix armes vues à la capture.
+- LA PAUSE CENTRÉE EN PAYSAGE (Keko, 20/11 : « les statistiques sont très à droite de l'écran, et les boutons à gauche ;
+  on ne peut pas faire quelque chose de plus centré, plus harmonieux ? ») : les boutons (au tiers de l'écran) et le
+  panneau (collé au bord droit) font un seul bloc centré, 24 pixels entre eux. Debout, rien ne change. Vu à la capture.
+- LA NUÉE SANS BRAS COMPTÉS (Keko, 20/11 : « pour la nuée, ne précise pas le nombre de bras ; on va carrément enlever le
+  système de bras : la nuée attaque autant d'ennemis à portée en divisant ses dégâts entre ceux-ci, sans limite
+  d'ennemis ») : plus de `nuee.bras` ; elle s'étend vers TOUS les insectes à portée (le dessin garde un jet vers chacun,
+  c'est ce qui montre qui elle mord), et tous se partagent ses 110 par seconde. Le panneau : « Dégâts partagés »,
+  Portée, Zone, « Cibles toutes ». Testé : cinq insectes à portée, cinq mordus, le budget partagé.
+- LES MISSILES DU CHASSEUR, LES MÊMES DÉGÂTS DANS TOUTE LA ZONE (Keko, 20/11 : « ne sépare pas les dégâts du missile et
+  les dégâts de zone ; les mêmes dégâts dans toute la zone, peu importe que l'ennemi soit touché directement ou par la
+  zone ») : `Arme.zone` n'a plus que son rayon ; l'explosion fait les dégâts de l'arme (80) à tout ce qui est à 18, la
+  cible comprise. Le panneau ne dit plus « Dégâts de zone » : Dégâts, Cadence, Portée, Zone.
+- LES CROCHETS DU KRAKEN DEVIENNENT DES DARDS DROITS (Keko, 20/11 : « les crochets au bout des tentacules sont courbés
+  bizarrement ; des crochets un peu plus gros, mais droits, pour que quand on pique on ait vraiment l'impression de
+  transpercer ; là, on dirait qu'ils portent des chaussures ») : `contourDuCrochet` trace un dard d'os dans le
+  prolongement de la tentacule — un col renflé, puis une lame droite qui s'effile, sa pointe à `POINTE_DU_CROCHET` (3,8,
+  la faucille faisait 2,7 de long) —, sur le corps comme au bout de la tentacule qui pique. Vu au hangar, avant et après.

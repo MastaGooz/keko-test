@@ -379,7 +379,10 @@ export type Arme = {
    * toucher les ennemis aux alentours — un côté zone d'effet qu'aucun autre projectile n'a ») : à l'impact — ou au bout
    * de sa course —, tout autre ennemi à moins de `rayon` perd `degats`.
    */
-  zone?: { rayon: number; degats: number }
+  // (… LES MÊMES DÉGÂTS DANS TOUTE LA ZONE — Keko, 20/11 : « ne sépare pas les dégâts du missile et les dégâts de zone ;
+  // les mêmes dégâts dans toute la zone, peu importe que l'ennemi soit touché directement ou par la zone » : plus de
+  // `degats` à elle, ce sont ceux de l'arme)
+  zone?: { rayon: number }
   /**
    * DU NAPALM (la Salamandre, Keko, 15/11) : le tir est une boule de gel LANCÉE EN CLOCHE vers la cible — elle passe
    * au-dessus des insectes et retombe là où la cible sera — et y laisse UNE FLAQUE DE FEU (`Monde.flaques`) de `rayon`,
@@ -672,7 +675,10 @@ export type Arme = {
   // nuée a un budget de X dégâts par seconde : si un seul ennemi est attaqué, il prend la totalité ; si deux, c'est divisé
   // par deux » : les insectes mordus en même temps — au bout d'un bras tendu, ou dans le nuage — se partagent `budget`
   // points par seconde, à parts égales)
-  nuee?: { rayon: number; budget: number; bras: number; deploiement: number; periode: number }
+  // (… ET SANS LIMITE D'INSECTES — Keko, 20/11 : « on va carrément enlever le système de bras : la nuée attaque autant
+  // d'ennemis à portée, en divisant ses dégâts entre ceux-ci, sans limite d'ennemis » : plus de `bras` au plus ; elle
+  // s'étend vers TOUS les insectes à `portee`, et tous ceux qu'elle mord se partagent `budget`)
+  nuee?: { rayon: number; budget: number; deploiement: number; periode: number }
   /**
    * DES REJETONS (la troisième arme du Kraken, Keko, 16/11 : « on spawn un mini vaisseau qui est autonome et attaque les
    * ennemis, un genre de truc avec des tentacules qui flottent derrière lui et s'en sert pour attaquer ») : à sa cadence,
@@ -3672,12 +3678,12 @@ function menerLesNuees(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[])
     }
     n.x = v.x
     n.y = v.y
-    // (vers qui il s'étend : les `bras` insectes à portée les plus proches, le verrouillé d'abord)
+    // (vers qui il s'étend : tous les insectes à portée, le verrouillé d'abord)
     const dist = (e: Ennemi): number => Math.hypot(e.corps.x - v.x, e.corps.y - v.y)
     const proches = m.phase === 'vol' ? m.ennemis.filter((e) => dist(e) <= a.portee + c.ennemi.rayon).sort((p, q) => dist(p) - dist(q)) : []
     const ve = ennemiVerrouille(m)
     if (ve !== null && proches.includes(ve)) proches.splice(proches.indexOf(ve), 1), proches.unshift(ve)
-    const vises = new Set(proches.slice(0, nu.bras).map((e) => e.id))
+    const vises = new Set(proches.map((e) => e.id))
     const pas = dt / nu.deploiement
     // (les bras tendus vers un insecte encore visé s'allongent ; les autres se rétractent, vers le dernier point où il était)
     for (const b of n.bras) {
@@ -4532,7 +4538,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
     const y0 = bo === undefined ? v.y + Math.sin(angle) * (c.rayon + 3) : v.y + Math.sin(v.cap) * bo.x + Math.cos(v.cap) * bo.y
     // (le coup critique du labo : tiré du même hachage que la dispersion, sur une autre clé)
     const critique = c.passifs.critique > 0 && tire(m.graine, m.prochainId, 12) < c.passifs.critique
-    m.obus.push({ id: m.prochainId++, x: x0, y: y0, vx: Math.cos(angle) * arme.vitesse, vy: Math.sin(angle) * arme.vitesse, vie: vieDuTir, degats: arme.degats * (critique ? c.passifs.critiqueFacteur : 1), guide: arme.guide, arme: arme.id, critique, ...(arme.infaillible === true && cibleDuTir !== null ? { verrou: cibleDuTir.id } : {}), ...(arme.zone === undefined ? {} : { zone: arme.zone }), ...(arme.napalm === undefined ? {} : { napalm: arme.napalm, vie0: vieDuTir }), ...(arme.plasma === undefined ? {} : { zone: arme.plasma, perce: [], vie0: vieDuTir }) })
+    m.obus.push({ id: m.prochainId++, x: x0, y: y0, vx: Math.cos(angle) * arme.vitesse, vy: Math.sin(angle) * arme.vitesse, vie: vieDuTir, degats: arme.degats * (critique ? c.passifs.critiqueFacteur : 1), guide: arme.guide, arme: arme.id, critique, ...(arme.infaillible === true && cibleDuTir !== null ? { verrou: cibleDuTir.id } : {}), ...(arme.zone === undefined ? {} : { zone: { rayon: arme.zone.rayon, degats: arme.degats } }), ...(arme.napalm === undefined ? {} : { napalm: arme.napalm, vie0: vieDuTir }), ...(arme.plasma === undefined ? {} : { zone: arme.plasma, perce: [], vie0: vieDuTir }) })
     ev.push({ type: 'obus', x: x0, y: y0, arme: arme.id })
   })
   // les obus volent (les guidés tournent vers le rival le plus proche, à 3,5 rad/s), touchent le rival, s'écrasent sur une roche

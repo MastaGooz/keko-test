@@ -849,20 +849,15 @@ export function cordesDuKraken(flamme: number, t: number, devie = 0): [number, n
  * tentacule, large à sa base, puis se recourbe d'un côté en s'effilant jusqu'à sa pointe, qui revient un peu en arrière.
  * (… PLUS UNE GRIFFE EN FAUCILLE — Keko, 19/11 : « on dirait des chaussures à talons » : la griffe épaisse et son épine
  * de l'autre côté faisaient un escarpin ; plus d'épine.) `epais` : 1, le crochet ; moins, son reflet, plus mince.
+ * (… PUIS UN DARD DROIT, PLUS GROS — Keko, 20/11 : « les crochets sont courbés bizarrement ; des crochets un peu plus
+ * gros, mais droits, pour que quand on pique on ait vraiment l'impression de transpercer ; là, on dirait qu'ils portent
+ * des chaussures » : la faucille se lisait encore en pied. Un dard d'os dans le prolongement de la tentacule : un col
+ * renflé qui l'emboîte, puis une lame droite qui s'effile jusqu'à sa pointe, `POINTE_DU_CROCHET` devant.)
  */
+export const POINTE_DU_CROCHET = 3.8
 export function contourDuCrochet(epais = 1): [number, number][] {
-  const r = 1.35
-  const ext: [number, number][] = []
-  const int: [number, number][] = []
-  const n = 8
-  for (let i = 0; i <= n; i++) {
-    const s = i / n
-    const th = -Math.PI / 2 + s * 2.5
-    const w = 0.55 * (1 - s) * epais
-    ext.push([Math.cos(th) * (r + w), r + Math.sin(th) * (r + w)])
-    int.unshift([Math.cos(th) * (r - w), r + Math.sin(th) * (r - w)])
-  }
-  return [[-0.5, -0.55 * epais], ...ext, ...int, [-0.5, 0.55 * epais]]
+  const w = epais
+  return [[-0.6, -0.75 * w], [-0.1, -0.95 * w], [0.5, -0.8 * w], [POINTE_DU_CROCHET * 0.55, -0.4 * w], [POINTE_DU_CROCHET * (epais < 1 ? 0.85 : 1), 0], [POINTE_DU_CROCHET * 0.55, 0.4 * w], [0.5, 0.8 * w], [-0.1, 0.95 * w], [-0.6, 0.75 * w]]
 }
 /** UN CROCHET D'OS au bout d'une tentacule (en `x`, `y`, tournée vers `an`), recourbé du côté `sg` (voir `contourDuCrochet`). */
 export function formesDuCrochet(x: number, y: number, an: number, sg: number): Forme[] {

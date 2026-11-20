@@ -1016,7 +1016,7 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
 }
 // LES MINI-MISSILES (Keko, 15/11) : à l'impact, ils explosent et touchent aussi les ennemis aux alentours
 {
-  const mini = { id: 'minimissile', cadence: 1.6, degats: 5, portee: 120, vitesse: 110, vie: 1.8, dispersion: 0, guide: true, zone: { rayon: 18, degats: 5 } }
+  const mini = { id: 'minimissile', cadence: 1.6, degats: 5, portee: 120, vitesse: 110, vie: 1.8, dispersion: 0, guide: true, zone: { rayon: 18 } }
   const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, armes: [mini], ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, pv: 1000 } }
   const insecte = (id: number, x: number, y: number) => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv: 1000, fait: 'marche' as const, roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, calmeA: 1e9 })
   const w = nouveauMonde(cfg, 3)
@@ -1566,7 +1566,7 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
 // bras, qui mordent une fois tendus
 {
   const insecte = (id: number, x: number, y: number) => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv: 1000, fait: 'marche' as const, roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, calmeA: 1e9 })
-  const nuee = { id: 'nuee', cadence: 1, degats: 0, portee: 55, vitesse: 0, vie: 0, dispersion: 0, guide: false, nuee: { rayon: 14, budget: 14, bras: 3, deploiement: 0.3, periode: 0.4 } }
+  const nuee = { id: 'nuee', cadence: 1, degats: 0, portee: 55, vitesse: 0, vie: 0, dispersion: 0, guide: false, nuee: { rayon: 14, budget: 14, deploiement: 0.3, periode: 0.4 } }
   const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, armes: [nuee], ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, pv: 1000 } }
   const planer = (places: [number, number][], vitesse: number, duree: number) => {
     const w = nouveauMonde(cfg, 3)
@@ -1586,7 +1586,8 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   const un = planer([[40, 0], [0, 90]], 0, 2)
   verifier(`un insecte à 40 (hors du nuage, à portée) : un bras s’étend vers lui (à mi-course au bout de 0,15 s) et le mord une fois tendu (${un.pv[0].toFixed(1)} en 2 s) ; le lointain, rien`, un.bras05 > 0.4 && un.bras05 < 0.7 && un.pv[0] > 14 * 1.6 && un.pv[0] < 14 * 1.8 && un.pv[1] === 0 && un.ev.some((e) => e.type === 'morsure'))
   const cinq = planer([[30, 0], [-30, 0], [0, 35], [0, -40], [45, 30]], 0, 1)
-  verifier('cinq insectes à portée : trois bras, vers les trois plus proches — les deux autres ne sont pas mordus', cinq.w.nuees[0].bras.length === 3 && cinq.pv[0] > 0 && cinq.pv[1] > 0 && cinq.pv[2] > 0 && cinq.pv[3] === 0 && cinq.pv[4] === 0)
+  // (SANS LIMITE — Keko, 20/11 : « la nuée attaque autant d'ennemis à portée, en divisant ses dégâts entre ceux-ci »)
+  verifier(`cinq insectes à portée : elle s’étend vers les cinq, et ils se partagent ses 14 points par seconde (${cinq.pv.map((x) => x.toFixed(1)).join(' / ')} en 1 s)`, cinq.w.nuees[0].bras.length === 5 && cinq.pv.every((x) => x > 0) && cinq.pv.reduce((s, x) => s + x, 0) < 14)
   const verrou = (() => {
     const w = nouveauMonde(cfg, 3)
     ;([[30, 0], [-30, 0], [0, 35], [45, 30]] as [number, number][]).forEach(([x, y], k) => w.ennemis.push(insecte(k + 1, x, y)))

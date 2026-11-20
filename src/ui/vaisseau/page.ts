@@ -20,7 +20,7 @@ import { VOLT, bowed, crackle, stroke, zigzag } from 'pixelfx/fx/lightning/_lib'
 import { Panes, snowflake } from 'pixelfx/fx/ice/_lib'
 import { textWidth } from 'pixelfx'
 import { HAUT_ACCENTS } from './police.ts'
-import { RACINES_DU_KRAKEN, contourDuCrochet, cordesDuKraken } from './rendu-vaisseau.ts'
+import { RACINES_DU_KRAKEN, POINTE_DU_CROCHET, contourDuCrochet, cordesDuKraken } from './rendu-vaisseau.ts'
 import { boucheMontee, gabaritDe, tailleDe, placeDOutil, queueDe, tuyeresOmni, formesDuSocleDeTourelle, formesDeLaTeteDeTourelle, formesDeLaCapsule, formesDuCristalPose, formesDeLaScie, formesDeLaBalise, formesDuBecDeBalise, canonDeLaForeuse, formesDeLAimant, formesDuChassis, formesDeLaForeuse, formesDeLArme, formesDuPropulseur, formesDuRadar, formesDuVaisseau, formesDuVer, CRISTAL_DU_PRISME, sommetsDUnHypercube, ARETES_DE_L_HYPERCUBE, rampeDeLaMatiere, LIVREES, COULEURS_DE_JOUEUR, ovale, peindreDansUneCase, peindreFormes, rampesDeLaLivree, tonsDeLaLivree, tonsDeLaMatiere, ANCRES_DU_KRAKEN, type Habit } from './rendu-vaisseau.ts'
 import { peauDe, peauxDe, rampesDeLaPeau, tonsDeLaPeau, type Peau } from './peaux.ts'
 import { boiteDe } from './rendu-vaisseau.ts'
@@ -1919,7 +1919,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     } else if (a.nuee !== undefined) {
       // (son budget se partage entre les insectes qu'elle mord à la fois)
       const n = a.nuee
-      ligne('Dégâts partagés', ent(n.budget)), portee(), zone(n.rayon), ligne('Bras', ent(n.bras))
+      ligne('Dégâts partagés', ent(n.budget)), portee(), zone(n.rayon), ligne('Cibles', 'toutes')
     } else if (a.rejeton !== undefined) {
       // (les dégâts et la cadence sont ceux d'un rejeton qui fouette)
       const r = a.rejeton
@@ -1951,7 +1951,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // éclats, son gel)
       ligne('Dégâts', ent(a.degats)), cadence(a.cadence, CONF.alternance ? CONF.armes.length : 1), portee()
       if (a.salve !== undefined) ligne('Projectiles', ent(a.salve.nombre))
-      if (a.zone !== undefined) zone(a.zone.rayon), ligne('Dégâts de zone', ent(a.zone.degats))
+      if (a.zone !== undefined) zone(a.zone.rayon)
       if (a.plasma !== undefined) zone(a.plasma.rayon), ligne('Dégâts de zone', ent(a.plasma.degats))
       if (a.chaine === undefined && a.gel !== undefined) ligne('Gel', sec(a.gel.duree)), ralentit(a.gel.ralenti)
     }
@@ -1986,12 +1986,17 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // (la hauteur : celle du plus haut des deux panneaux, qu'elle ne saute pas d'un panneau à l'autre)
     const hp = hauteurDesStats(Math.max(lignesDesStats().length, lignesDeLArme().length))
     const cy = couche ? Math.round(H / 2) : Math.round(H / 2) - Math.round(hp / 2) - 10
-    const cx = couche ? Math.round(W * 0.3) : Math.round(W / 2)
-    motEnRelief(p, 'Pause', cx, cy - 34 + Math.round((1 - u0) * 8), true, TITRE)
     const bw = largeurDe('Retour à la base', GRAS) + 30
-    const bx = Math.round(cx - bw / 2)
     const lp = Math.min(couche ? Math.round(W * 0.42) : W - 24, 160)
-    dessinerLesStatsEnPause(p, couche ? W - 12 - lp : Math.round(W / 2 - lp / 2), couche ? Math.round(H / 2 - hp / 2) : cy + 42, lp, u0)
+    // (EN PAYSAGE, LES BOUTONS ET LE PANNEAU FONT UN SEUL BLOC, CENTRÉ — Keko, 20/11 : « les statistiques sont très à droite
+    // de l'écran, et les boutons à gauche ; on ne peut pas faire quelque chose de plus centré, plus harmonieux ? » : les
+    // boutons étaient au tiers de l'écran, le panneau collé au bord droit)
+    const ecart = 24
+    const x0 = Math.round((W - (bw + ecart + lp)) / 2)
+    const cx = couche ? x0 + Math.round(bw / 2) : Math.round(W / 2)
+    motEnRelief(p, 'Pause', cx, cy - 34 + Math.round((1 - u0) * 8), true, TITRE)
+    const bx = Math.round(cx - bw / 2)
+    dessinerLesStatsEnPause(p, couche ? x0 + bw + ecart : Math.round(W / 2 - lp / 2), couche ? Math.round(H / 2 - hp / 2) : cy + 42, lp, u0)
     bouton(p, bx, cy - 8, bw, 17, 'Reprendre', true, () => (pauseOuverte = false), 'retour')
     bouton(p, bx, cy + 14, bw, 17, 'Retour à la base', true, () => {
       pauseOuverte = false
@@ -10081,7 +10086,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     for (let i = 0; i <= n; i++) p.circle(pts[i][0], pts[i][1], epais(i) + 0.8, CHAIR[0])
     for (let i = 0; i <= n; i++) p.circle(pts[i][0], pts[i][1], epais(i), Math.floor((i / n) * 7) % 2 === 0 ? chair[3] : chitine[3])
     for (let i = 0; i <= n; i++) p.circle(pts[i][0] - 0.5, pts[i][1] - 0.5, Math.max(0.5, epais(i) * 0.45), Math.floor((i / n) * 7) % 2 === 0 ? chair[4] : chitine[4])
-    // (le crochet d'os, sur la tangente du bout, recourbé vers le côté de sa racine)
+    // (le dard d'os, sur la tangente du bout, droit)
     const [x1, y1] = pts[n]
     const [x0, y0] = pts[n - 1]
     const tl = Math.hypot(x1 - x0, y1 - y0) || 1
@@ -10089,10 +10094,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const uy = (y1 - y0) / tl
     const k = 1.25 * E
     const crochet = (av: number, co: number): [number, number] => [x1 + (ux * av - uy * co * cote) * k, y1 + (uy * av + ux * co * cote) * k]
-    // (la faucille du corps, sa lumière plus mince dedans, la pointe claire)
+    // (le dard, sa lumière plus mince dedans, la pointe claire)
     p.poly(contourDuCrochet().map(([av, co]) => crochet(av, co)), OS[0])
     p.poly(contourDuCrochet(0.5).map(([av, co]) => crochet(av, co)), OS[2])
-    const pointe = crochet(Math.cos(-Math.PI / 2 + 2.5) * 1.35, 1.35 + Math.sin(-Math.PI / 2 + 2.5) * 1.35)
+    const pointe = crochet(POINTE_DU_CROCHET, 0)
     p.px(Math.round(pointe[0]), Math.round(pointe[1]), OS[3])
     if (plantee) p.glow(tn.tx, tn.ty, 5, BILE[1], 0.35)
   }
