@@ -6564,3 +6564,6 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   Vu à la capture des trois fiches.
 - LE DÉPHASAGE À 4 / 6 / 8 % (Keko, 20/11 : « passe les chances de déphasage à 4/6/8 % plutôt que 5/7/9 ») : le Prisme
   4 %, le Tesseract 6 %, le Néant 8 % ; la jauge met 8 % aux trois quarts (`DEPHASAGE_MAX` 0,08 / 0,75).
+- LA JAUGE DU DÉPHASAGE VA JUSQU'À 15 % (Keko, 20/11 : « change l'échelle de la barre de déphasage pour que le maximum
+  ce soit 15 % ») : `DEPHASAGE_MAX` 0,15 — le Néant (8 %) un peu plus qu'à moitié, le Tesseract (6 %) à 40 %, le Prisme
+  (4 %) à un peu plus du quart.

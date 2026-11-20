@@ -1664,10 +1664,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * LE DÉPHASAGE SUR LA BARRE (les Yhg'tharr, Keko, 20/11 : « sa barre de blindage devient violette, comme l'effet qu'on a
    * pour la purge ») : tant qu'il est déphasé, tout le plein de la barre prend le violet qui ondule de la corruption ; les
    * dernières 0,35 s, il clignote avec l'or — la fin approche. La fiche du hangar montre sa chance en violet, sous le
-   * blindage : une barre (pas de cases), 8 % aux trois quarts — le plus fuyant, le Néant —, comme les autres jauges
-   * (`DEPHASAGE_MAX`).
+   * blindage : une barre (pas de cases), PLEINE À 15 % (Keko, 20/11 : « que le maximum ce soit 15 % » ; d'abord le Néant aux
+   * trois quarts) — `DEPHASAGE_MAX`.
    */
-  const DEPHASAGE_MAX = 0.08 / 0.75
+  const DEPHASAGE_MAX = 0.15
   const barreDephasee = (): boolean => {
     if (m.phase !== 'vol' || m.t >= m.dephaseJusque) return false
     const reste = m.dephaseJusque - m.t
