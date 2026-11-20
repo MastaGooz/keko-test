@@ -1258,7 +1258,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const REGLAGES_DU_VORTEX: Record<string, { vitesseMax?: number; poussee?: number; rotation?: number; blindage?: number; bouclier?: number }> = {
     sentinelle: { vitesseMax: 72 / 104.5, rotation: 7.36 / 6.24, blindage: 5 / 3, bouclier: 3 },
     frimas: { rotation: 7.5 / 7.32, blindage: 4 / 3, bouclier: 6 },
-    pulsar: { vitesseMax: 86 / 110, bouclier: 9 }, chasseur: { vitesseMax: 104 / 126, rotation: 1.45, blindage: 0.5 }, salamandre: { vitesseMax: 97 / 88, blindage: 7 / 9 }, ingenieur: { vitesseMax: 68 / 94, rotation: 1.746, blindage: 6 / 9 }, kraken: { vitesseMax: 72 / 104.5, rotation: 4.6 / 5.12, blindage: 11 / 9 }, vouivre: { vitesseMax: 78 / 110, rotation: 8.2 / 7 }, mante: { vitesseMax: 95 / 110, rotation: 7.4 / 8.69, blindage: 6 / 7 },
+    pulsar: { vitesseMax: 86 / 110, bouclier: 9 }, chasseur: { vitesseMax: 104 / 126, rotation: 1.45, blindage: 0.5 }, salamandre: { vitesseMax: 97 / 88, blindage: 7 / 9 }, ingenieur: { vitesseMax: 68 / 94, rotation: 1.746, blindage: 6 / 9 }, kraken: { vitesseMax: 72 / 104.5, rotation: 4.6 / 5.12, blindage: 9 / 9 }, vouivre: { vitesseMax: 78 / 110, rotation: 8.2 / 7, blindage: 7 / 8 }, mante: { vitesseMax: 95 / 110, rotation: 7.4 / 8.69, blindage: 5 / 7 },
+    // (LES XÉNOÏDES, 15 % DE VIE EN MOINS — Keko, 20/11 : « réduis la vie de tous les xénoïdes de 15 % » : le Kraken 11 → 9,
+    // la Vouivre 8 → 7, le Dévoreur 6 → 5, au point entier le plus proche comme tout le blindage — 9,35, 6,8 et 5,1)
     // (LES YHG'THARR — Keko, 20/11 : « le prisme, la plus haute vitesse des trois et une maniabilité correcte, un blindage
     // correct ; le void, la plus haute maniabilité mais la vitesse la plus faible, le blindage le plus faible ; le
     // tesseract, un blindage entre le void et le prisme, une vitesse et une maniabilité moyennes » : MESURÉ, tous trois

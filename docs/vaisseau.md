@@ -6572,3 +6572,6 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   milieu une vingtaine de pixels d'écran (dix du jeu) au-dessus du centre de l'aire, quand le cœur du Néant y est. Au
   hangar, il est posé 4 unités plus bas (`recaleY`, décollage compris) : son cristal à 222, le cœur du Néant à 220,5.
   (Un premier essai à 7 unités le mettait trop bas : l'écran agrandit les pixels du jeu deux fois.)
+- LES XÉNOÏDES, 15 % DE VIE EN MOINS (Keko, 20/11 : « réduis la vie de tous les xénoïdes de 15 % ») : le Kraken 11 → 9,
+  la Vouivre 8 → 7, le Dévoreur 6 → 5 (`REGLAGES_DU_VORTEX`), au point entier le plus proche comme tout le blindage
+  (9,35, 6,8 et 5,1 exacts : −18 %, −12,5 %, −17 %). Leur régénération, une part de la vie pleine, suit.
