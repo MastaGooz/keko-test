@@ -1809,6 +1809,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * `lignesDeLArme`) ; « Retour » revient.
    */
   let pauseSurLArme = false
+  /** Le panneau des statistiques en pause, masqué pour l'instant (Keko, 20/11) ; `&stats` le montre. */
+  const STATS_EN_PAUSE = parametres.has('stats')
   function lignesDesStats(): { nom: string; valeur: string }[] {
     const l: { nom: string; valeur: string }[] = []
     l.push({ nom: vieVerte() ? 'Vie' : 'Blindage', valeur: `${Math.round(CONF.coque)}` })
@@ -2005,10 +2007,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const u0 = sortie((t - pauseA) / 0.25)
     p.rect(0, 0, W, H, NUIT, 0.75 * u0)
     zones = []
-    // (LE PANNEAU DES STATISTIQUES — voir `dessinerLesStatsEnPause` : à droite des boutons en paysage, dessous debout)
-    const couche = W > H
+    // (LE PANNEAU DES STATISTIQUES — voir `dessinerLesStatsEnPause` : à droite des boutons en paysage, dessous debout ;
+    // MASQUÉ POUR L'INSTANT — Keko, 20/11 : « n'affiche plus les statistiques dans le menu pause, juste les deux boutons ;
+    // on va avoir plus de facilité à équilibrer le jeu sans détailler chaque statistique » : `&stats` le montre encore)
+    const couche = W > H && STATS_EN_PAUSE
     // (la hauteur : celle du plus haut des deux panneaux, qu'elle ne saute pas d'un panneau à l'autre)
-    const hp = hauteurDesStats(Math.max(lignesDesStats().length, lignesDeLArme().length))
+    const hp = STATS_EN_PAUSE ? hauteurDesStats(Math.max(lignesDesStats().length, lignesDeLArme().length)) : 0
     const cy = couche ? Math.round(H / 2) : Math.round(H / 2) - Math.round(hp / 2) - 10
     const bw = largeurDe('Retour à la base', GRAS) + 30
     const lp = Math.min(couche ? Math.round(W * 0.42) : W - 24, 160)
@@ -2020,7 +2024,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const cx = couche ? x0 + Math.round(bw / 2) : Math.round(W / 2)
     motEnRelief(p, 'Pause', cx, cy - 34 + Math.round((1 - u0) * 8), true, TITRE)
     const bx = Math.round(cx - bw / 2)
-    dessinerLesStatsEnPause(p, couche ? x0 + bw + ecart : Math.round(W / 2 - lp / 2), couche ? Math.round(H / 2 - hp / 2) : cy + 42, lp, u0)
+    if (STATS_EN_PAUSE) dessinerLesStatsEnPause(p, couche ? x0 + bw + ecart : Math.round(W / 2 - lp / 2), couche ? Math.round(H / 2 - hp / 2) : cy + 42, lp, u0)
     bouton(p, bx, cy - 8, bw, 17, 'Reprendre', true, () => (pauseOuverte = false), 'retour')
     bouton(p, bx, cy + 14, bw, 17, 'Retour à la base', true, () => {
       pauseOuverte = false

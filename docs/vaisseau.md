@@ -6790,3 +6790,8 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   rester dans l'équilibre : sans maximum, 220 par seconde faisaient l'indice 1,75 ; 8 au catalogue (80 par seconde),
   1,00 (1,02 avant). Testé : 8 cristaux à la fois en 12 s ; 35 s après sa fermeture, chaque triangle s'éteint, le
   trio resté ouvert demeure.
+- LES STATISTIQUES DE LA PAUSE, MASQUÉES (Keko, 20/11 : « finalement, n'affiche plus les statistiques dans le menu pause,
+  juste les deux boutons, continuer et retour ; pour l'instant on masque les statistiques : on va avoir plus de facilité
+  à équilibrer le jeu sans détailler chaque statistique ») : la pause redevient « Pause », « Reprendre » et « Retour à
+  la base », centrés. Le panneau et ses lignes restent écrits (`STATS_EN_PAUSE`) : `&stats` les montre. Vu à la
+  capture, couché et debout.
