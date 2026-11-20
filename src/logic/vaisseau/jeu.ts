@@ -311,6 +311,22 @@ export const VAISSEAU = {
    * en arme à portée de forage, les deux rayons se superposaient en face à face — « on va juste empêcher l'ennemi
    * d'utiliser le laser de manière offensive »). Abattu, il rend son butin plus tant de pépites.
    */
+  /**
+   * LES ASTÉROÏDES QUI DÉRIVENT (le jeu du vortex — Keko, 20/11 : « un système d'astéroïdes un peu comme avant : chaque
+   * astéroïde lâche des pépites, les mêmes que les ennemis ; mais ils dérivent : de temps en temps on fait passer des
+   * astéroïdes qui avancent plus ou moins lentement — certains vite, d'autres plus lentement, ce qui peut aussi
+   * représenter un danger de collision ; si le joueur les détruit, il récupère un nombre important de pépites — le ratio
+   * est meilleur que sur les ennemis ; en revanche, on cible en priorité les ennemis : pour détruire un astéroïde, il faut
+   * être loin des ennemis, sans ennemi à portée, ou utiliser le verrouillage ») : éteints hors du vortex. Toutes les
+   * `tousMin` à `tousMax` secondes (le premier à `premier`), `max` à la fois au plus, une roche de `rayonMin` à `rayonMax`
+   * naît sur un cercle à `marge` au-delà de celui des insectes et TRAVERSE LE CHAMP en ligne droite, vers un point tiré à
+   * moins de `visee` du portail, à `vitesseMin`–`vitesseMax` ; elle quitte le monde une fois repassée à `marge` au-delà.
+   * C'EST UN ENNEMI D'UN GENRE À PART (`Ennemi.asteroide`) : toutes les armes la frappent, elle ne mord ni ne marche au
+   * portail, et LES ARMES NE LA VOIENT PAS tant qu'un insecte est à portée du vaisseau (voir `rochesMasquees`), sauf
+   * verrouillée. Elle a `pvParRayon2` × rayon² points ; détruite, elle lâche `pepitesParPv` pépite par point de vie (un
+   * insecte, une pour 120) ; elle heurte le vaisseau de `choc` unités de vie. *Les chiffres sont de moi, à rejuger.*
+   */
+  derive: { active: false as boolean, premier: 12, tousMin: 8, tousMax: 16, max: 3, marge: 60, visee: 200, rayonMin: 6, rayonMax: 13, vitesseMin: 10, vitesseMax: 42, pvParRayon2: 5, pepitesParPv: 1 / 60, choc: 2 },
   ennemi: { apparait: 10, revient: 5, distance: 320, pv: 36, poussee: 120, vitesseMax: 85, rotation: 5, rayon: 4, cherche: 260, rode: 450, voit: 130, accourt: 420, tient: 80, fuit: 10, lache: 260, cadence: 1.8, vitesseTir: 130, dispersion: 0.16, vieTir: 2, butinRendu: 3,
     /**
      * LE RIVAL PEUT PORTER DE VRAIES ARMES (Keko, 14/11 : « deux canons, le reste en mitraillette, et deux missiles dans
@@ -946,6 +962,8 @@ export type Ennemi = {
   tenuA?: number
   /** UN GRAND : un mini-boss, un boss (aucun encore) — une vrille le saisit sans l'immobiliser. */
   grand?: boolean
+  /** UN ASTÉROÏDE QUI DÉRIVE (voir `derive`) : sa taille, son dessin (graine, angle, rotation), ses points au départ. */
+  asteroide?: { rayon: number; graine: number; angle0: number; vitesseAngulaire: number; pvMax: number }
   butin: number
   cargaison: Cargaison
 }
@@ -973,6 +991,8 @@ export type Monde = {
   forages: (Forage | null)[]
   ennemis: Ennemi[]
   prochainEnnemiA: number
+  /** La prochaine roche qui dérive (voir `derive`). */
+  prochaineDeriveA: number
   /** L'invasion : la vague en cours, ce qu'il lui reste à faire naître, l'instant de la prochaine naissance, ceux qui ont traversé le portail, ceux qu'on a abattus. */
   invasion: { vague: number; aNaitre: number; prochainA: number; passes: number; abattus: number; /** L'expérience du niveau en cours, le niveau (1 au départ), l'instant du retour d'un joueur abattu. */ xp: number; niveau: number; retourA: number; /** La vie du portail, en pour cent ; à zéro, la partie est finie. */ vie: number; finie: boolean; /** Les cadrans d'où vient la vague en cours (0 : est-sud, puis en tournant), et combien de ses insectes sont nés. */ cadrans: number[]; nes: number }
   tirs: Tir[]
@@ -1260,7 +1280,7 @@ export function nouveauVaisseau(): Vaisseau {
 }
 
 export function nouveauMonde(c: ConfigVaisseau = VAISSEAU, graine = 1): Monde {
-  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, plaques: Array.from({ length: c.plaques }, () => true), intouchableJusque: -1, corruption: 0, dephaseJusque: -100, toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, scies: [], balises: [], givres: [], tornades: [], novas: [], echardes: [], spheres: [], puits: [], meteores: [], tentacules: [], nuees: [], rejetons: [], flaquesAcides: [], mines: [], fleaux: [], parasites: [], vrilles: [], liens: [], oeufs: [], brochettes: [], miniVers: [], hypercubes: [], des: [], coupes: [], rayonVu: null }
+  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, plaques: Array.from({ length: c.plaques }, () => true), intouchableJusque: -1, corruption: 0, dephaseJusque: -100, toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, prochaineDeriveA: c.derive.premier, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, scies: [], balises: [], givres: [], tornades: [], novas: [], echardes: [], spheres: [], puits: [], meteores: [], tentacules: [], nuees: [], rejetons: [], flaquesAcides: [], mines: [], fleaux: [], parasites: [], vrilles: [], liens: [], oeufs: [], brochettes: [], miniVers: [], hypercubes: [], des: [], coupes: [], rayonVu: null }
 }
 
 /** Un hachage entier déterministe (celui de pixelfx), et un réel dans [0, 1) qui en sort. */
@@ -1539,13 +1559,16 @@ export function purger(c: ConfigVaisseau, m: Monde, x: number, y: number, ev: Ev
 function abattreLEnnemi(c: ConfigVaisseau, m: Monde, e: Ennemi, ev: Evenement[]): void {
   m.ennemis = m.ennemis.filter((x) => x !== e)
   m.prochainEnnemiA = m.t + c.ennemi.revient
-  if (c.invasion.active) m.invasion.abattus += 1
+  const ro = e.asteroide
+  if (c.invasion.active && ro === undefined) m.invasion.abattus += 1
   purger(c, m, e.corps.x, e.corps.y, ev)
-  ev.push({ type: 'ennemiDetruit', id: e.id, x: e.corps.x, y: e.corps.y, vx: e.corps.vx, vy: e.corps.vy, brule: (e.bruleA ?? -1) > m.t, gele: (e.bruleA ?? -1) <= m.t && (e.geleA ?? -1) > m.t })
+  // (UNE ROCHE QUI DÉRIVE éclate comme une roche, et rend ses pépites — voir `derive`)
+  if (ro !== undefined) ev.push({ type: 'eclat', x: e.corps.x, y: e.corps.y, rayon: ro.rayon, graine: ro.graine, minerai: 'fer' })
+  else ev.push({ type: 'ennemiDetruit', id: e.id, x: e.corps.x, y: e.corps.y, vx: e.corps.vx, vy: e.corps.vy, brule: (e.bruleA ?? -1) > m.t, gele: (e.bruleA ?? -1) <= m.t && (e.geleA ?? -1) > m.t })
   // il rend sa cargaison, minerai par minerai, plus tant de pépites de fer
   const rendues: Minerai[] = []
   for (const k of MINERAIS) for (let i = 0; i < e.cargaison[k]; i++) rendues.push(k)
-  for (let i = 0; i < c.ennemi.butinRendu; i++) rendues.push('fer')
+  for (let i = 0; i < (ro === undefined ? c.ennemi.butinRendu : Math.max(1, Math.round(ro.pvMax * c.derive.pepitesParPv))); i++) rendues.push('fer')
   const n = rendues.length
   for (let i = 0; i < n; i++) {
     const an = (i / n) * Math.PI * 2 + tire(e.id, 30, i)
@@ -1573,6 +1596,48 @@ function faireNaitreUnEnnemi(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void
   const e: Ennemi = { id: m.prochainId++, corps: { ...nouveauVaisseau(), x, y, cap: Math.atan2(v.y - y, v.x - x) }, pv: c.ennemi.pv, fait: 'mine', roche: null, forage: null, tirA: m.t + c.ennemi.cadence, butin: 0, cargaison: cargaisonVide() }
   m.ennemis.push(e)
   ev.push({ type: 'ennemiApparait', id: e.id, x, y })
+}
+
+/** LES ROCHES QUI DÉRIVENT (voir `derive`) : une naît à son heure, tant qu'il y en a moins de `max`. */
+function menerLesDerives(c: ConfigVaisseau, m: Monde): void {
+  const D = c.derive
+  if (!D.active || m.t < m.prochaineDeriveA) return
+  const id = m.prochainId++
+  m.prochaineDeriveA = m.t + D.tousMin + (D.tousMax - D.tousMin) * tire(m.graine, id, 41)
+  if (m.ennemis.filter((e) => e.asteroide !== undefined).length >= D.max) return
+  const a = tire(m.graine, id, 42) * Math.PI * 2
+  const loin = c.invasion.naissance + D.marge
+  const x = Math.cos(a) * loin
+  const y = Math.sin(a) * loin
+  // (vers un point tiré près du portail : elle traverse le champ)
+  const av = tire(m.graine, id, 43) * Math.PI * 2
+  const dv = D.visee * Math.sqrt(tire(m.graine, id, 44))
+  const cap = Math.atan2(Math.sin(av) * dv - y, Math.cos(av) * dv - x)
+  const vit = D.vitesseMin + (D.vitesseMax - D.vitesseMin) * tire(m.graine, id, 45)
+  const rayon = D.rayonMin + (D.rayonMax - D.rayonMin) * tire(m.graine, id, 46)
+  const pv = Math.round(D.pvParRayon2 * rayon * rayon)
+  m.ennemis.push({ id, corps: { ...nouveauVaisseau(), x, y, vx: Math.cos(cap) * vit, vy: Math.sin(cap) * vit, cap }, pv, fait: 'marche', roche: null, forage: null, tirA: 0, butin: 0, cargaison: cargaisonVide(), grand: true, asteroide: { rayon, graine: hache(m.graine, id), angle0: tire(m.graine, id, 47) * Math.PI * 2, vitesseAngulaire: (tire(m.graine, id, 48) - 0.5) * 1.2, pvMax: pv } })
+}
+
+/** Une roche dérive tout droit, sans rien voir ; repassée au-delà de son cercle de naissance, elle quitte le monde. */
+function deriver(c: ConfigVaisseau, e: Ennemi, dt: number): void {
+  const b = e.corps
+  e.corps = { ...b, x: b.x + b.vx * dt, y: b.y + b.vy * dt }
+  if (Math.hypot(e.corps.x, e.corps.y) > c.invasion.naissance + c.derive.marge + 1 && e.corps.x * b.vx + e.corps.y * b.vy > 0) e.parti = true
+}
+
+/**
+ * LES INSECTES D'ABORD (Keko, 20/11 : « on cible en priorité les ennemis avant de s'attaquer aux astéroïdes ; pour en
+ * détruire un, il faut être loin des ennemis, sans ennemi à portée, ou utiliser le verrouillage ») : tant qu'un insecte
+ * est à portée du vaisseau — la plus longue de ses armes, 60 au moins —, LES ROCHES SONT MASQUÉES AUX ARMES (pas la
+ * verrouillée) : elles ne visent, ne touchent ni ne blessent qu'eux. Rend les roches masquées.
+ */
+function rochesMasquees(c: ConfigVaisseau, m: Monde): Ennemi[] {
+  if (!m.ennemis.some((e) => e.asteroide !== undefined)) return []
+  const v = m.vaisseau
+  const portee = Math.max(60, ...c.armes.map((a) => Math.max(a.portee, a.orbite?.laisse ?? 0)))
+  const insecte = m.ennemis.some((e) => e.asteroide === undefined && Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= portee + c.ennemi.rayon)
+  return insecte ? m.ennemis.filter((e) => e.asteroide !== undefined && e.id !== m.verrou) : []
 }
 
 /** Un insecte de l'invasion naît sur le cercle de naissance, dans une direction tirée de la graine du monde, tourné vers le portail. */
@@ -1645,6 +1710,7 @@ function ecarterLesInsectes(c: ConfigVaisseau, m: Monde): void {
   const grille = new Map<number, Ennemi[]>()
   const cle = (i: number, j: number): number => i * 100003 + j
   for (const e of m.ennemis) {
+    if (e.asteroide !== undefined) continue
     const k = cle(Math.floor(e.corps.x / min), Math.floor(e.corps.y / min))
     const l = grille.get(k)
     if (l === undefined) grille.set(k, [e])
@@ -1652,6 +1718,7 @@ function ecarterLesInsectes(c: ConfigVaisseau, m: Monde): void {
   }
   const tenu = (e: Ennemi): boolean => (e.tenuA ?? -1) > m.t && e.grand !== true
   for (const e of m.ennemis) {
+    if (e.asteroide !== undefined) continue
     const i0 = Math.floor(e.corps.x / min)
     const j0 = Math.floor(e.corps.y / min)
     for (let di = -1; di <= 1; di++)
@@ -1698,7 +1765,7 @@ function menerLInvasion(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
   const inv = m.invasion
   if (m.t < inv.prochainA) return
   if (inv.aNaitre === 0) {
-    if (m.ennemis.length > 0) return
+    if (m.ennemis.some((e) => e.asteroide === undefined)) return
     inv.vague += 1
     inv.aNaitre = c.invasion.vague + (inv.vague - 1) * c.invasion.renfort
     // SES CADRANS : un par joueur, tirés de la graine — le premier n'est pas celui de la vague d'avant
@@ -1806,6 +1873,10 @@ function conduireLInsecte(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number, ev
 
 /** Ce que fait un ennemi pendant `dt` : il chasse le joueur s'il le voit, sinon il mine la roche la plus proche de lui. Rend ses chocs. */
 function conduireLEnnemi(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number, ev: Evenement[]): Choc[] {
+  if (e.asteroide !== undefined) {
+    deriver(c, e, dt)
+    return []
+  }
   // (TENU PAR UNE VRILLE, un petit ne bouge plus, ne mord ni ne tire — voir `Arme.vrille`)
   if ((e.tenuA ?? -1) > m.t && e.grand !== true) {
     e.corps = { ...e.corps, vx: 0, vy: 0 }
@@ -1956,8 +2027,24 @@ function heurterLesVaisseaux(c: ConfigVaisseau, m: Monde, ev: Evenement[]): bool
     const dx = b.x - v.x
     const dy = b.y - v.y
     const d = Math.hypot(dx, dy) || 0.001
-    const minimum = c.rayon + c.ennemi.rayon
+    const minimum = c.rayon + (e.asteroide?.rayon ?? c.ennemi.rayon)
     if (d >= minimum) continue
+    // (UNE ROCHE QUI DÉRIVE : bien plus lourde que lui — il rebondit sur elle, elle ne dévie pas ; un choc franc lui coûte
+    // `derive.choc` unités de vie, la roche n'a rien)
+    if (e.asteroide !== undefined) {
+      const nx = dx / d
+      const ny = dy / d
+      v.x -= nx * (minimum - d)
+      v.y -= ny * (minimum - d)
+      const vn = (b.vx - v.vx) * nx + (b.vy - v.vy) * ny
+      if (vn < 0) {
+        v.vx += (1 + c.rebond) * vn * nx
+        v.vy += (1 + c.rebond) * vn * ny
+        if (-vn >= c.seuilChoc) encaisser(c, m, v.x + nx * c.rayon, v.y + ny * c.rayon, c.derive.choc * c.uniteDeVie, ev)
+        if (m.phase !== 'vol') return false
+      }
+      continue
+    }
     const nx = dx / d
     const ny = dy / d
     const recul = (minimum - d) / 2
@@ -4344,6 +4431,7 @@ export const xpDuNiveau = (c: ConfigVaisseau, n: number): number => c.invasion.x
 function avancerSansLeJoueur(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]): void {
   m.t += dt
   menerLInvasion(c, m, ev)
+  menerLesDerives(c, m)
   for (const e of [...m.ennemis]) conduireLEnnemi(c, m, e, dt, ev)
   m.ennemis = m.ennemis.filter((e) => !e.parti)
   ecarterLesInsectes(c, m)
@@ -4471,6 +4559,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   for (const e of m.ennemis) if (e.acide !== undefined && e.acide.jusque > m.t) avantLAcide.set(e, e.pv)
   if (c.invasion.active) menerLInvasion(c, m, ev)
   else if (m.ennemis.length === 0 && m.t >= m.prochainEnnemiA && Math.hypot(v.x, v.y) >= c.base.calme) faireNaitreUnEnnemi(c, m, ev)
+  menerLesDerives(c, m)
   for (const e of [...m.ennemis]) {
     chocs.push(...conduireLEnnemi(c, m, e, dt, ev))
     // (il brûle encore : le lance-flammes l'a touché — mais à sa sortie seulement : dans la flamme, c'est elle qui brûle)
@@ -4504,6 +4593,9 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   }
 
   // LES ARMES : chacune tire seule, à sa cadence, sur le rival le plus proche à sa portée, avec de l'avance et sa dispersion
+  // (LES INSECTES D'ABORD : les roches qui dérivent leur sont masquées tant qu'un insecte est à portée — voir `rochesMasquees`)
+  const masquees = rochesMasquees(c, m)
+  if (masquees.length > 0) m.ennemis = m.ennemis.filter((e) => !masquees.includes(e))
   m.crache = false
   menerLesDrones(c, m, dt, ev)
   menerLesTourelles(c, m, dt, ev)
@@ -4715,6 +4807,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
     }
   }
   majorerParLAcide(c, m, avantLAcide, ev)
+  if (masquees.length > 0) m.ennemis = [...m.ennemis, ...masquees]
 
   // L'EXTRACTION, à la station la plus proche : à quai (après être sorti une fois d'un parvis), le compte monte ; hors
   // du parvis il redescend ; au bout, la partie est extraite et tout le minerai porté passe en banque

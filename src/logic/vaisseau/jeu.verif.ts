@@ -2765,5 +2765,87 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   verifier(`une morsure prend la même part de la barre : ${w.coque} sur 450 (8 sur 9 avant)`, w.coque === 400)
 }
 
+// LES ROCHES QUI DÉRIVENT (Keko, 20/11) : elles traversent le champ, les armes visent les insectes d'abord, elles
+// rendent beaucoup de pépites, et elles heurtent le vaisseau
+{
+  const roche = (id: number, x: number, y: number, vx: number, vy: number, pv: number): Ennemi => ({ id, corps: { ...nouveauVaisseau(), x, y, vx, vy }, pv, fait: 'marche', roche: null, forage: null, tirA: 0, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, grand: true, asteroide: { rayon: 10, graine: 1, angle0: 0, vitesseAngulaire: 0, pvMax: 500 } })
+  const insecte = (id: number, x: number, y: number): Ennemi => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv: 1e6, fait: 'marche', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, calmeA: 1e9 })
+  const base = { ...VAISSEAU, coque: 1e6, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, pv: 120, butinRendu: 1, apparait: 1e9 } }
+  // (elles naissent à leur heure, traversent tout droit, trois au plus, et s'en vont)
+  {
+    const cfg = { ...base, derive: { ...VAISSEAU.derive, active: true, premier: 0.5, tousMin: 1, tousMax: 1, max: 3 } }
+    const w = nouveauMonde(cfg, 5)
+    w.vaisseau = { ...w.vaisseau, x: 3000, y: 3000 }
+    let auPlus = 0
+    let droites = true
+    const vus = new Set<number>()
+    for (let i = 0; i < 60 * 40; i++) {
+      const avant = new Map(w.ennemis.map((e) => [e.id, { vx: e.corps.vx, vy: e.corps.vy }]))
+      avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+      w.vaisseau = { ...w.vaisseau, x: 3000, y: 3000, vx: 0, vy: 0 }
+      for (const e of w.ennemis) {
+        vus.add(e.id)
+        const a = avant.get(e.id)
+        if (a !== undefined && (a.vx !== e.corps.vx || a.vy !== e.corps.vy)) droites = false
+      }
+      auPlus = Math.max(auPlus, w.ennemis.length)
+    }
+    verifier(`les roches dérivent : ${vus.size} passées en 40 s, trois au plus à la fois, chacune tout droit, et elles s’en vont`, auPlus === 3 && vus.size > 3 && droites && w.ennemis.every((e) => e.asteroide !== undefined))
+  }
+  // (les armes visent l'insecte à portée, pas la roche ; verrouillée, la roche ; seule, la roche)
+  {
+    const canon = { id: 'canon', cadence: 0.3, degats: 10, portee: 120, vitesse: 400, vie: 1, dispersion: 0, guide: false, infaillible: true }
+    const cfg = { ...base, armes: [canon] }
+    const w = nouveauMonde(cfg, 5)
+    const r = roche(1, 40, 200, 0, 0, 500)
+    const ins = insecte(2, -40, 200)
+    w.ennemis.push(r, ins)
+    const tenir = (secondes: number): void => {
+      for (let i = 0; i < 60 * secondes; i++) {
+        w.vaisseau = { ...w.vaisseau, x: 0, y: 200, vx: 0, vy: 0 }
+        for (const e of w.ennemis) e.corps = { ...e.corps, x: e.id === 1 ? 40 : -40, y: 200, vx: 0, vy: 0 }
+        avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+      }
+    }
+    tenir(2)
+    const avecInsecte = 500 - r.pv
+    const insecteTouche = 1e6 - ins.pv
+    verrouiller(w, 1)
+    tenir(1)
+    const verrouillee = 500 - r.pv - avecInsecte
+    w.verrou = null
+    w.ennemis = w.ennemis.filter((e) => e.id !== 2)
+    const pv0 = r.pv
+    tenir(1)
+    const seule = pv0 - r.pv
+    verifier(`l’insecte d’abord : un insecte à portée, la roche n’est pas visée (${avecInsecte} contre ${insecteTouche}) ; verrouillée, elle l’est (${verrouillee}) ; seule, aussi (${seule})`, avecInsecte === 0 && insecteTouche > 0 && verrouillee > 0 && seule > 0)
+  }
+  // (abattue, elle éclate et rend une pépite par 60 points — un insecte, une par 120)
+  {
+    const canon = { id: 'canon', cadence: 0.3, degats: 10, portee: 120, vitesse: 400, vie: 1, dispersion: 0, guide: false, infaillible: true }
+    const cfg = { ...base, armes: [canon], forage: { ...VAISSEAU.forage, aimant: 0 } }
+    const w = nouveauMonde(cfg, 5)
+    w.ennemis.push(roche(1, 80, 200, 0, 0, 5))
+    let eclat = false
+    let pepites = 0
+    for (let i = 0; i < 60 * 2 && !eclat; i++) {
+      w.vaisseau = { ...w.vaisseau, x: 0, y: 200, vx: 0, vy: 0 }
+      const ev = avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements
+      if (ev.some((e) => e.type === 'eclat')) (eclat = true), (pepites = w.pepites.length)
+    }
+    verifier(`abattue, la roche éclate et rend ${pepites} pépites (500 points : une par 60) — un insecte de 120 points en rend une`, eclat && pepites === Math.round(500 / 60))
+  }
+  // (elle heurte le vaisseau : il rebondit et perd `choc` unités de vie, une fois ; elle ne dévie pas)
+  {
+    const cfg = { ...base, coque: 5 }
+    const w = nouveauMonde(cfg, 5)
+    w.vaisseau = { ...w.vaisseau, x: 0, y: 200 }
+    const r = roche(1, 60, 200, -40, 0, 500)
+    w.ennemis.push(r)
+    for (let i = 0; i < 60 * 2; i++) avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+    verifier(`une roche qui dérive heurte le vaisseau : ${5 - w.coque} points de coque perdus (deux), il est repoussé, elle garde sa course`, w.coque === 5 - VAISSEAU.derive.choc && r.corps.vx === -40 && w.vaisseau.x < -10)
+  }
+}
+
 // (TOUJOURS EN DERNIER : des blocs ajoutés après cette ligne échouaient sans faire échouer `npm run verif` — 17/11)
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)

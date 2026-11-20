@@ -995,6 +995,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       if (VORTEX) conf = { ...conf, ...blindageAuVortex(vieSelonLaRace(modeleDeVaisseau(flotte.actif).race, { coque: conf.coque, bouclier: conf.bouclier, regeneration: conf.regeneration, plaques: conf.plaques, corruption: conf.corruption, dephasage: conf.dephasage }, modeleDeVaisseau(flotte.actif).plaques, modeleDeVaisseau(flotte.actif).dephasage), flotte.actif) }
       if (bouclierDEssai > 0) conf = { ...conf, bouclier: { ...conf.bouclier, points: bouclierDEssai } }
       if (dephasageDEssai !== null) conf = { ...conf, dephasage: { ...conf.dephasage, chance: dephasageDEssai } }
+      // (LES ROCHES QUI DÉRIVENT, au vortex — voir `derive` ; `&roche` en fait passer une dès la deuxième seconde, puis
+      // toutes les quatre, `&roche=0` les éteint)
+      if (VORTEX) conf = { ...conf, derive: { ...conf.derive, active: parametres.get('roche') !== '0', ...(parametres.has('roche') && parametres.get('roche') !== '0' ? { premier: 2, tousMin: 4, tousMax: 4 } : {}) } }
       // (`&festin=P` : la nuée part nourrie à P de son maximum — pour voir son nuage grand sans mordre longtemps)
       if (parametres.has('festin')) conf = { ...conf, armes: conf.armes.map((a) => (a.nuee?.festin === undefined ? a : { ...a, nuee: { ...a.nuee, festin: { ...a.nuee.festin, depart: a.nuee.festin.max * Math.max(0, Math.min(1, Number(parametres.get('festin')) || 0)) } } })) }
       // (LA VIE DU VAISSEAU, FOIS `ECHELLE_DE_LA_VIE` — en dernier : tous les points posés plus haut, `&bouclier=N` compris)
@@ -11364,6 +11367,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         const sx = b.x - camera.x + W / 2
         const sy = b.y - camera.y + centreY()
         const blanchi = t - (toucheEnnemiA.get(e.id) ?? -10) < 0.1
+        // (UNE ROCHE QUI DÉRIVE — voir `derive` : la roche du Nova Drifter, de fer veiné, qui tourne ; touchée, elle tremble
+        // un instant ; entamée, sa jauge dessous)
+        const ro = e.asteroide
+        if (ro !== undefined) {
+          const tremble = blanchi ? 1 : 0
+          dessinerAsteroide(p, { id: e.id, x: b.x, y: b.y, rayon: ro.rayon, graine: ro.graine, angle0: ro.angle0, vitesseAngulaire: ro.vitesseAngulaire, minerai: 'fer', richesse: 0.7 }, t, Math.round(sx + tremble * (alea(e.id, Math.floor(t * 30), 3) - 0.5) * 2), Math.round(sy))
+          if (e.pv < ro.pvMax) dessinerUneJauge(p, sx, sy + ro.rayon + 4, Math.round(ro.rayon * 1.6), e.pv / ro.pvMax, ROUGE[4], ROUGE[5], blanchi)
+          continue
+        }
         dessinerUnInsecte(p, sx, sy, b.cap, e.id * 1.7, blanchi, e.fait === 'aggro')
         // IL EST GELÉ (le givre) : une gangue de glace bleue sur lui, un liseré clair, des éclats de givre qui scintillent
         if ((e.geleA ?? -1) > m.t) {

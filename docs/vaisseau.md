@@ -6848,3 +6848,27 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   quand il attaque ; et l'essaim réduit encore en taille trop vite : en une seconde ou deux, sa taille a réduit
   énormément ») : `festin.fonte` 5 → 10 s — la fonte est linéaire, une nuée à moitié pleine perdait tout en 2,5 s ; elle
   en met 5 ; le bourdon de la morsure 0,075 → 0,09. Testé : 0 % au bout de 10 s à vide.
+- LES ASTÉROÏDES QUI DÉRIVENT (Keko, 20/11 : « un système d'astéroïdes un peu comme avant : chaque astéroïde lâche des
+  pépites, les mêmes que les ennemis ; mais ils dérivent : de temps en temps on fait passer des astéroïdes qui avancent
+  plus ou moins lentement, ce qui peut aussi représenter un danger de collision ; si le joueur les détruit, il récupère
+  un nombre important de pépites, le ratio est meilleur que sur les ennemis ; en revanche, on cible en priorité les
+  ennemis : pour détruire un astéroïde, il faut être loin des ennemis, sans ennemi à portée, ou utiliser le
+  verrouillage ») : `VAISSEAU.derive`, allumé au vortex.
+  - UN ENNEMI D'UN GENRE À PART (`Ennemi.asteroide`) : toutes les armes le frappent sans qu'aucune n'ait changé. Il ne
+    mord pas, ne marche pas au portail, ne s'écarte pas des insectes, n'est pas immobilisé par une vrille (un « grand ») ;
+    il ne compte ni dans les abattus ni pour finir une vague.
+  - SA COURSE (`menerLesDerives`, `deriver`) : toutes les 8 à 16 s (la première à 12 s), trois au plus, une roche de 6 à
+    13 de rayon naît à 60 au-delà du cercle des insectes et file tout droit vers un point tiré à moins de 200 du
+    portail, à 10–42 par seconde ; repassée au-delà, elle s'en va.
+  - LES INSECTES D'ABORD (`rochesMasquees`) : tant qu'un insecte est à portée du vaisseau (la plus longue de ses armes,
+    60 au moins), les roches sont MASQUÉES AUX ARMES pendant leur pas — ni visées, ni touchées, ni blessées par une
+    zone —, sauf la verrouillée.
+  - SES PÉPITES : 5 × rayon² points (180 à 845) ; abattue, elle éclate comme une roche (l'événement `eclat`) et rend
+    une pépite par 60 points (3 à 14) — un insecte, une pour 120 : le double.
+  - LE CHOC (`heurterLesVaisseaux`) : bien plus lourde que lui, elle le repousse sans dévier ; un choc franc lui coûte
+    deux unités de vie (100 au vortex, deux morsures), une fois par invulnérabilité ; déphasé, il la traverse.
+  - LA PAGE : la roche du Nova Drifter (fer veiné) qui tourne, qui tremble touchée, sa jauge dessous une fois entamée.
+    `&roche` en fait passer une dès la deuxième seconde puis toutes les quatre ; `&roche=0` les éteint.
+  Testé : elles passent tout droit, trois au plus ; un insecte à portée, la roche n'est pas visée, verrouillée elle
+  l'est, seule aussi ; 500 points rendent 8 pépites ; le choc coûte deux. Vu à la capture. *Tous les chiffres sont de
+  moi, à rejuger.*
