@@ -6912,3 +6912,15 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     les touches et les portées des armes — une grosse roche ne se laisse plus traverser jusqu'à son cœur.
   - LA CARTE QUI BOUCLE (sortir à gauche, rentrer à droite) : une question de Keko, pas encore faite — voir la réponse du
     20/11 : tout étant autour du vaisseau, le monde peut se recentrer d'un bloc quand il passe un bord, le ciel répété.
+- FUIR NE SERT À RIEN (Keko, 20/11 : « un joueur qui fonce tout droit à l'infini esquive finalement très facilement les
+  ennemis » — mesuré : le Chasseur file à 104, le Kraken à 95, un insecte à 40 ; ceux nés derrière ne le rattrapaient
+  jamais) : les deux règles de Vampire Survivors, `invasion.continu` —
+  - `devant` : quand le vaisseau file (plus de 20 par seconde), 60 % des naissances se font DANS SON AXE DE VOL, à ±0,9
+    radian (`angleDeNaissance`) ;
+  - `recycle` : un insecte resté à plus de 460 du vaisseau (il naît à 360, la vue va jusqu'à ~310) RÉAPPARAÎT hors de
+    vue, devant lui, avec ses points de vie.
+  Testé : filant tout droit à 100 pendant 90 s, il garde en moyenne 27 insectes à moins de 300 de lui ; sans ces deux
+  règles, 2,6. *Chiffres de moi.* LA CARTE QUI BOUCLE NE L'AURAIT PAS RÉGLÉ (le décalage d'un bloc garde les distances).
+  En coopération, l'astuce du décalage ne marche plus (on ne peut pas décaler le monde pour l'un sans l'autre) : j'ai
+  proposé une ARÈNE BORNÉE (un cercle d'environ 2 000, un bord qui repousse, une flèche vers le partenaire), ou une vraie
+  carte qui boucle (toutes les distances par le bord — lourd). À trancher par Keko.

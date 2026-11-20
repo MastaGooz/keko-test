@@ -2944,5 +2944,27 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   verifier(`le flot continu : ${entre(0, 60)} insectes la première minute, ${entre(120, 180)} la troisième, ${entre(240, 300)} la cinquième ; tout autour (${cadrans.size} cadrans) ; jamais plus de 120 en vie (${vivants})`, entre(0, 60) >= 25 && entre(0, 60) <= 50 && entre(120, 180) > entre(0, 60) * 2 && entre(240, 300) > entre(120, 180) && cadrans.size === 4 && vivants === 120)
 }
 
+// FUIR NE SERT À RIEN (Keko, 20/11) : un vaisseau qui file tout droit à pleine vitesse garde la meute autour de lui —
+// les naissances devant lui, les traînards qui reviennent devant ; sans ces deux règles, il la sème
+{
+  const avec = { ...VAISSEAU, coque: 1e9, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 0, morsure: 0, continu: { ...VAISSEAU.invasion.continu, actif: true } }, ennemi: { ...VAISSEAU.ennemi, pv: 1e9, apparait: 1e9, poussee: 90, vitesseMax: 40, rotation: 6, rayon: 5 } }
+  const sans = { ...avec, invasion: { ...avec.invasion, continu: { ...avec.invasion.continu, devant: 0, recycle: Infinity } } }
+  const autour = (cfg: ConfigVaisseau): number => {
+    const w = nouveauMonde(cfg, 5)
+    let somme = 0
+    let n = 0
+    for (let i = 0; i < 60 * 90; i++) {
+      w.vaisseau = { ...w.vaisseau, x: (i / 60) * 100, y: 0, vx: 100, vy: 0 }
+      avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+      w.vaisseau = { ...w.vaisseau, x: (i / 60) * 100, y: 0, vx: 100, vy: 0 }
+      if (i >= 60 * 30 && i % 30 === 0) (somme += w.ennemis.filter((e) => Math.hypot(e.corps.x - w.vaisseau.x, e.corps.y) <= 300).length), n++
+    }
+    return somme / n
+  }
+  const a = autour(avec)
+  const s0 = autour(sans)
+  verifier(`fuir ne sert à rien : filant tout droit à 100, il a en moyenne ${a.toFixed(1)} insectes à moins de 300 (${s0.toFixed(1)} sans les deux règles)`, a > 3 * s0 && a > 5)
+}
+
 // (TOUJOURS EN DERNIER : des blocs ajoutés après cette ligne échouaient sans faire échouer `npm run verif` — 17/11)
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)

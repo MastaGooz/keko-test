@@ -278,7 +278,11 @@ export const VAISSEAU = {
      * champ (plus de cadrans), au rythme de `debut` par seconde, qui monte de `montee` par minute de vol jusqu'à `max` ;
      * jamais plus de `vivantsMax` insectes à la fois. *Les chiffres sont de moi.*
      */
-    continu: { actif: false as boolean, debut: 0.5, montee: 0.5, max: 6, vivantsMax: 120 },
+    // (… ET FUIR NE SERT À RIEN — Keko, 20/11 : « un joueur qui fonce tout droit à l'infini esquive très facilement les
+    // ennemis » — le vaisseau va deux fois et demie plus vite qu'eux : `devant` — quand il file (plus de 20 par seconde),
+    // cette part des naissances se fait DANS SON AXE DE VOL, à ±`cone` radians ; `recycle` — un insecte resté à plus de
+    // tant du vaisseau RÉAPPARAÎT hors de vue, devant lui (la règle de Vampire Survivors). *Chiffres de moi.*)
+    continu: { actif: false as boolean, debut: 0.5, montee: 0.5, max: 6, vivantsMax: 120, devant: 0.6, cone: 0.9, recycle: 460 },
     eviteRoche: 24,
     heurteRoche: 0.6,
   },
@@ -1709,6 +1713,17 @@ function rochesMasquees(c: ConfigVaisseau, m: Monde): Ennemi[] {
   return insecte ? m.ennemis.filter((e) => e.asteroide !== undefined && e.id !== m.verrou) : []
 }
 
+/**
+ * OÙ NAÎT UN INSECTE DU FLOT CONTINU (voir `continu`) : tout autour du vaisseau ; mais quand il file, `devant` des
+ * naissances se font dans son axe de vol, à ±`cone`. `k` : une clé du tirage.
+ */
+function angleDeNaissance(c: ConfigVaisseau, m: Monde, k: number): number {
+  const fl = c.invasion.continu
+  const v = m.vaisseau
+  if (Math.hypot(v.vx, v.vy) > 20 && tire(m.graine, k, 51) < fl.devant) return Math.atan2(v.vy, v.vx) + (tire(m.graine, k, 52) * 2 - 1) * fl.cone
+  return tire(m.graine, k, 3) * Math.PI * 2
+}
+
 /** Un insecte de l'invasion naît sur le cercle de naissance, dans une direction tirée de la graine du monde, tourné vers le portail. */
 function faireNaitreUnInsecte(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
   // (dans UN DES CADRANS DE LA VAGUE, à tour de rôle ; pas sur ses bords : un dixième de marge de chaque côté — en flot
@@ -1716,7 +1731,7 @@ function faireNaitreUnInsecte(c: ConfigVaisseau, m: Monde, ev: Evenement[]): voi
   const cadrans = m.invasion.cadrans.length > 0 ? m.invasion.cadrans : [0]
   const q = cadrans[m.invasion.nes % cadrans.length]
   m.invasion.nes += 1
-  const a = c.invasion.continu.actif ? tire(m.graine, m.prochainId, 3) * Math.PI * 2 : (q + 0.1 + 0.8 * tire(m.graine, m.prochainId, 3)) * (Math.PI / 2)
+  const a = c.invasion.continu.actif ? angleDeNaissance(c, m, m.prochainId) : (q + 0.1 + 0.8 * tire(m.graine, m.prochainId, 3)) * (Math.PI / 2)
   m.graine = hache(m.graine, 7)
   // (SANS PORTAIL : autour du vaisseau, hors de sa vue, et il le chasse dès sa naissance)
   const o = centreDuChamp(c, m)
@@ -1922,6 +1937,15 @@ function conduireLInsecte(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number, ev
   }
   // (CE QUE LE VAISSEAU A POSÉ L'ATTIRE SUR LUI — voir `aPorteeDUnePose`)
   const attire = m.phase === 'vol' && aPorteeDUnePose(c, m, e)
+  // (LE TRAÎNARD REVIENT DEVANT — voir `continu.recycle` : resté trop loin derrière, il réapparaît hors de vue, dans l'axe
+  // de vol du vaisseau)
+  if (I.continu.actif && m.phase === 'vol' && dj > I.continu.recycle) {
+    const a = angleDeNaissance(c, m, e.id * 7919 + Math.floor(m.t * 10))
+    const x = v.x + Math.cos(a) * I.naissance
+    const y = v.y + Math.sin(a) * I.naissance
+    e.corps = { ...b, x, y, vx: 0, vy: 0, cap: Math.atan2(v.y - y, v.x - x) }
+    return []
+  }
   // (SANS PORTAIL, il chasse toujours le vaisseau, même abattu : il va là où il est tombé)
   if (I.sansPortail) e.fait = 'aggro'
   else if (e.fait === 'aggro') {
