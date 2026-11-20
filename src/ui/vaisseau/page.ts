@@ -1258,7 +1258,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const REGLAGES_DU_VORTEX: Record<string, { vitesseMax?: number; poussee?: number; rotation?: number; blindage?: number; bouclier?: number }> = {
     sentinelle: { vitesseMax: 72 / 104.5, rotation: 7.36 / 6.24, blindage: 5 / 3, bouclier: 3 },
     frimas: { rotation: 7.5 / 7.32, blindage: 4 / 3, bouclier: 6 },
-    pulsar: { vitesseMax: 86 / 110, bouclier: 9 }, chasseur: { vitesseMax: 104 / 126, rotation: 1.45, blindage: 0.5 }, salamandre: { vitesseMax: 97 / 88, blindage: 7 / 9 }, ingenieur: { vitesseMax: 68 / 94, rotation: 1.746, blindage: 6 / 9 }, kraken: { vitesseMax: 72 / 104.5, rotation: 4.6 / 5.12, blindage: 11 / 9 }, vouivre: { vitesseMax: 78 / 110, rotation: 8.2 / 7 }, mante: { vitesseMax: 95 / 110, rotation: 7.4 / 8.69, blindage: 6 / 7 } }
+    pulsar: { vitesseMax: 86 / 110, bouclier: 9 }, chasseur: { vitesseMax: 104 / 126, rotation: 1.45, blindage: 0.5 }, salamandre: { vitesseMax: 97 / 88, blindage: 7 / 9 }, ingenieur: { vitesseMax: 68 / 94, rotation: 1.746, blindage: 6 / 9 }, kraken: { vitesseMax: 72 / 104.5, rotation: 4.6 / 5.12, blindage: 11 / 9 }, vouivre: { vitesseMax: 78 / 110, rotation: 8.2 / 7 }, mante: { vitesseMax: 95 / 110, rotation: 7.4 / 8.69, blindage: 6 / 7 },
+    // (LES YHG'THARR — Keko, 20/11 : « le prisme, la plus haute vitesse des trois et une maniabilité correcte, un blindage
+    // correct ; le void, la plus haute maniabilité mais la vitesse la plus faible, le blindage le plus faible ; le
+    // tesseract, un blindage entre le void et le prisme, une vitesse et une maniabilité moyennes » : MESURÉ, tous trois
+    // filaient à 110 avec 5 de blindage ; la vitesse 110 / 98 / 86, l'agilité 7,45 / 7,9 / 8,6, le blindage 6 / 5 / 4)
+    prisme: { blindage: 6 / 5 }, tesseract: { vitesseMax: 98 / 110, rotation: 7.9 / 6.77 }, neant: { vitesseMax: 86 / 110, rotation: 8.6 / 8.05, blindage: 4 / 5 } }
   /**
    * L'AGILITÉ D'UN VAISSEAU AU VORTEX (Keko, 18/11 : « la maniabilité, ça change quoi ? les vaisseaux se tournent tout
    * seuls » ; choisi : qu'elle dise comment il vire — « un vaisseau lourd sera peu maniable, un léger tournera sec ») : sa
@@ -1659,9 +1664,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * LE DÉPHASAGE SUR LA BARRE (les Yhg'tharr, Keko, 20/11 : « sa barre de blindage devient violette, comme l'effet qu'on a
    * pour la purge ») : tant qu'il est déphasé, tout le plein de la barre prend le violet qui ondule de la corruption ; les
    * dernières 0,35 s, il clignote avec l'or — la fin approche. La fiche du hangar montre sa chance en violet, sous le
-   * blindage : une barre (pas de cases), 15 % aux trois quarts, comme les autres jauges (`DEPHASAGE_MAX`).
+   * blindage : une barre (pas de cases), 9 % aux trois quarts — le plus fuyant, le Néant —, comme les autres jauges
+   * (`DEPHASAGE_MAX`).
    */
-  const DEPHASAGE_MAX = 0.2
+  const DEPHASAGE_MAX = 0.12
   const barreDephasee = (): boolean => {
     if (m.phase !== 'vol' || m.t >= m.dephaseJusque) return false
     const reste = m.dephaseJusque - m.t

@@ -6554,3 +6554,11 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
 - LE DÉPHASAGE À 100 % POUR L'ESSAI (Keko, 20/11 : « mets à 100 % les chances de déphasage pour les 3 vaisseaux pour
   test ») : le Prisme, le Néant et le Tesseract esquivent tous les coups (`ModeleDeVaisseau.dephasage` à 1 ; avant :
   5 %, 15 %, 10 %, notés à côté). À remettre après l'essai.
+- LES STATISTIQUES DES YHG'THARR (Keko, 20/11 : « le prisme devra avoir la plus haute vitesse des trois et une
+  maniabilité correcte, un blindage correct, mais la plus faible chance de déphasage, 5 % ; le void, la plus haute
+  maniabilité mais la vitesse la plus faible, le blindage le plus faible, mais la plus haute chance de déphasage, 9 % ;
+  le tesseract, 7 %, un blindage entre le void et le prisme, une vitesse et une maniabilité moyennes ») : MESURÉ, tous
+  trois filaient à 110 avec 5 de blindage (la flotte : vitesse 68 à 110, agilité 4,6 à 9,0, blindage 2 à 11). Réglés
+  par `REGLAGES_DU_VORTEX` : le Prisme 110 / agilité 7,45 / blindage 6 ; le Tesseract 98 / 7,9 / 5 ; le Néant 86 / 8,6 /
+  4. Le déphasage à 5 / 7 / 9 % (l'essai à 100 % est fini) ; sa jauge met 9 % aux trois quarts (`DEPHASAGE_MAX` 0,12).
+  Vu à la capture des trois fiches.
