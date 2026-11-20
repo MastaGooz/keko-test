@@ -1704,6 +1704,9 @@ function menerLInvasion(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
  * insecte à portée d'une tourelle déployée (la portée de son arme), d'un rejeton ou d'un mini-ver (leur vue), d'une vrille
  * (son allonge) ou d'une mine posée (sa zone) prend le vaisseau en chasse — même hors de `aggro`, même pendant son
  * calme — et ne le lâche pas tant qu'il y est.
+ * (… ET CE QU'IL SÈME AU SOL — Keko, 20/11, « oui » à : « les flaques, les traînées et les cristaux, faut-il qu'un ennemi
+ * qui marche dedans prenne aussi le vaisseau en chasse ? » : un insecte DANS une flaque de feu (le napalm, la traînée du
+ * rayon thermique), une plaque de givre, de poison ou de verglas, une flaque d'acide, ou SUR la ligne de deux cristaux.)
  */
 function aPorteeDUnePose(c: ConfigVaisseau, m: Monde, e: Ennemi): boolean {
   const b = e.corps
@@ -1717,6 +1720,13 @@ function aPorteeDUnePose(c: ConfigVaisseau, m: Monde, e: Ennemi): boolean {
       const a = arme(mi.arme)?.mine
       return a !== undefined && m.t >= mi.lancee + a.vol && pres(mi.x, mi.y, a.rayon)
     })
+    || m.flaques.some((f) => pres(f.x, f.y, f.rayon))
+    || m.givres.some((g) => pres(g.x, g.y, g.rayon))
+    || m.flaquesAcides.some((f) => {
+      const a = arme(f.arme)
+      return a?.crachat !== undefined && dansLeCone(b.x, b.y, f.x, f.y, f.cap, a.crachat.cone, a.portee, c.ennemi.rayon)
+    })
+    || m.balises.some((ba) => ba.liens.some((li) => li.sur.includes(e.id)))
 }
 
 /** Ce que fait UN INSECTE pendant `dt` : il marche vers le portail et le traverse ; ou il chasse le joueur qui l'a approché, le mord, et le lâche s'il est entraîné trop loin. */

@@ -6754,9 +6754,11 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   Kraken, d'une tourelle ou de n'importe quelle chose que le vaisseau pose, il aggro sur le vaisseau ») :
   `aPorteeDUnePose` — un insecte à portée d'une tourelle déployée (la portée de son arme), d'un rejeton ou d'un mini-ver
   (leur vue), d'une vrille (son allonge) ou d'une mine posée (sa zone) prend le vaisseau en chasse, même loin de lui et
-  même pendant son calme, et ne le lâche pas tant qu'il y est. Les flaques, les traînées et les cristaux n'ont pas de
-  portée, ils n'attirent rien (à trancher). Testé : une tourelle à 30 d'un insecte, le vaisseau à 360 de lui — il
-  chasse ; sans tourelle, il marche au portail.
+  même pendant son calme, et ne le lâche pas tant qu'il y est. ET CE QU'IL SÈME AU SOL (Keko, « oui » : « les flaques,
+  les traînées et les cristaux, faut-il qu'un ennemi qui marche dedans prenne aussi le vaisseau en chasse ? ») : un
+  insecte dans une flaque de feu, une plaque de givre, de poison ou de verglas, une flaque d'acide, ou sur la ligne de
+  deux cristaux. Testé : une tourelle à 30 d'un insecte, le vaisseau à 360 de lui — il
+  chasse ; dans une flaque de feu, pareil ; sans rien, il marche au portail.
 - LE PANNEAU DES INVOCATIONS EN DEUX PARTIES (Keko, 20/11 : « une partie qui concerne l'activité du vaisseau, comme la
   cadence de ponte des rejetons, et une partie dédiée uniquement à la chose invoquée — ses dégâts, sa cadence, sa
   vitesse —, pour qu'on distingue bien la partie vaisseau et la partie invocation ») : les Drones, les Tourelles, les

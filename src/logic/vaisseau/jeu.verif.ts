@@ -306,18 +306,19 @@ verifier('une fraction de bouclier prend sa part du coup, la coque le reste', zb
   {
     const tourelle = { id: 'tourelle', cadence: 0.8, degats: 0, portee: 75, vitesse: 220, vie: 0.5, dispersion: 0, guide: false, pose: { tous: 1e9, ecart: 28, max: 5, duree: 18, pivot: 8, jet: 34, vol: 0.4 } }
     const cfgT = { ...cfg, armes: [tourelle] }
-    const essai = (avecTourelle: boolean): Ennemi['fait'] => {
+    const essai = (pose: 'tourelle' | 'flaque' | null): Ennemi['fait'] => {
       const w = nouveauMonde(cfgT, 7)
       loin(w)
       for (let i = 0; i < 60 * 6 && w.ennemis.length === 0; i++) avancerLeMonde(cfgT, w, 1 / 60, { x: 0, y: 0 }), loin(w)
       const e = w.ennemis[0]
       w.vaisseau = { ...nouveauVaisseau(), x: e.corps.x + cfg.invasion.lache + 100, y: e.corps.y }
-      if (avecTourelle) w.tourelles.push({ id: 999, x: e.corps.x + 30, y: e.corps.y, nee: w.t, cap: 0, tirA: 1e9, arme: 0, x0: e.corps.x + 30, y0: e.corps.y, lancee: w.t, deployee: true })
+      if (pose === 'flaque') w.flaques.push({ id: 998, x: e.corps.x + 5, y: e.corps.y, nee: w.t, rayon: 14, duree: 4, dps: 0, brulure: 0, dpsBrulure: 0 })
+      if (pose === 'tourelle') w.tourelles.push({ id: 999, x: e.corps.x + 30, y: e.corps.y, nee: w.t, cap: 0, tirA: 1e9, arme: 0, x0: e.corps.x + 30, y0: e.corps.y, lancee: w.t, deployee: true })
       avancerLeMonde(cfgT, w, 1 / 60, { x: 0, y: 0 })
       avancerLeMonde(cfgT, w, 1 / 60, { x: 0, y: 0 })
       return e.fait
     }
-    verifier('un insecte à portée d’une tourelle posée prend le vaisseau en chasse, même loin de lui ; sans elle, il marche au portail', essai(true) === 'aggro' && essai(false) === 'marche')
+    verifier('un insecte à portée d’une tourelle posée — ou dans une flaque de feu — prend le vaisseau en chasse, même loin de lui ; sans elles, il marche au portail', essai('tourelle') === 'aggro' && essai('flaque') === 'aggro' && essai(null) === 'marche')
   }
   // le contour du portail téléporte, même un insecte en chasse
   const c2 = nouveauMonde(cfg, 7)
