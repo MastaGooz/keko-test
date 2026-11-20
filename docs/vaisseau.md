@@ -6674,3 +6674,11 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     11,9999 par un arrondi de calcul) ; 11,5 (115) : 0,92 — l'échelle permet ce demi.
   - LA RÉGÉNÉRATION (« beaucoup trop rapide ; vise de l'ordre de 1 % toutes les 15 secondes ») : 2 % de la vie pleine par
     seconde → 1 % toutes les 15 s, en continu (`vieSelonLaRace`, 0,01 / 15 par seconde) — trente fois plus lent.
+- LES STATISTIQUES EN PAUSE (Keko, 20/11 : « quand on met pause en jeu, en plus des boutons retour / continuer, rajoute un
+  panneau des stats actuelles du vaisseau, en chiffres ») : une plaque d'encre au nom du vaisseau, à droite des boutons
+  en paysage, dessous debout (`lignesDesStats`, `dessinerLesStatsEnPause`) — celles DU VOL EN COURS (la configuration
+  avec ses talents, la vie qui reste), en entiers : le blindage (ou la vie) restant sur le plein, et selon la race le
+  bouclier, le surblindage, le déphasage, la régénération (« 1 % / 15 s ») ; la vitesse ; la maniabilité (l'agilité, fois
+  dix) ; l'arme, ses dégâts par coup (« × dé » pour le dé, « / s » pour une arme qui frappe en continu, « × 3 » pour les
+  trois drones), sa cadence en coups par minute (celle du vaisseau : deux ailes à tour de rôle comptent ensemble), sa
+  portée ; le critique (« 1 % (× 2) »). Vu à la capture, en paysage et debout.
