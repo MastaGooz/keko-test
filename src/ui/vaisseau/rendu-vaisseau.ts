@@ -426,7 +426,15 @@ export type Options = {
    * angle ») : 1, vu d'en haut ; moins, vu de trois quarts — la hauteur de l'image est écrasée d'autant, après la rotation.
    */
   aplatir?: number
+  /**
+   * DÉPHASÉ (les Yhg'tharr, Keko, 20/11 : « son vaisseau bénéficie d'un effet visuel ») : il sort à demi du plan — ses tons
+   * ramenés à une rampe violette par leur clarté, peints à `alpha` (le fond passe au travers), des lignes qui glissent d'un
+   * pixel par à-coups, des bandes tramées qui défilent. `t` : les secondes depuis l'entrée en déphasage.
+   */
+  dephase?: { t: number; alpha: number }
 }
+/** La rampe violette du vaisseau déphasé, de l'ombre à la lumière. */
+const VIOLET_DEPHASE = ['#1c0840', '#3a1272', '#6326ad', '#9a52e8', '#cf98ff', '#f4e2ff'].map(hex)
 
 /**
  * Peint des formes centrées sur (cx, cy) de l'écran, à `s` pixels l'unité. Le peintre est à l'origine de l'écran.
@@ -572,6 +580,22 @@ export function peindreFormes(p: Peintre, formes: Forme[], cx: number, cy: numbe
   }
   const blanc = o.blanc ?? 0
   const reflet = o.reflet ?? hex('#4a86b4')
+  // (DÉPHASÉ — voir `Options.dephase` : chaque pixel posé passe par là)
+  const ph = o.dephase
+  const poser = (x: number, y: number, c: number): void => {
+    if (ph === undefined) {
+      p.rect(x, y, 1, 1, c)
+      return
+    }
+    const bande = Math.floor((y - y0) / 2)
+    const cran = Math.floor(ph.t * 18)
+    if ((bande + cran) % 5 === 0 && BAYER[(y & 1) * 2 + (x & 1)] >= 2) return
+    const glisse = Math.sin(bande * 2.7 + cran * 1.9) > 0.8 ? (bande % 2 === 0 ? 1 : -1) : 0
+    const u = c >>> 0
+    const clarte = (0.3 * (u & 0xff) + 0.59 * ((u >> 8) & 0xff) + 0.11 * ((u >> 16) & 0xff)) / 255
+    const k = Math.max(0, Math.min(VIOLET_DEPHASE.length - 1, Math.round(clarte * 1.3 * (VIOLET_DEPHASE.length - 1))))
+    p.rect(x + glisse, y, 1, 1, VIOLET_DEPHASE[k], ph.alpha)
+  }
   // 3. la peinture : les tons tramés, le spéculaire, le reflet sur les bords à l'ombre
   for (let py = 0; py < H; py++) for (let px = 0; px < W; px++) {
     const i = py * W + px
@@ -580,16 +604,16 @@ export function peindreFormes(p: Peintre, formes: Forme[], cx: number, cy: numbe
     const f = formes[k]
     const R = rampeDe(f)
     if (blanc > 0.5) {
-      p.rect(x0 + px, y0 + py, 1, 1, BLANC)
+      poser(x0 + px, y0 + py, BLANC)
       continue
     }
     // (le cœur du Néant et les lueurs ne prennent pas la lumière : ils la font)
     if (f.relief === 'coeur' && f.coeur) {
-      p.rect(x0 + px, y0 + py, 1, 1, pixelDuCoeur(f.coeur, loc[i * 2], loc[i * 2 + 1], paletteDuCoeur(R)))
+      poser(x0 + px, y0 + py, pixelDuCoeur(f.coeur, loc[i * 2], loc[i * 2 + 1], paletteDuCoeur(R)))
       continue
     }
     if (f.relief === 'lueur') {
-      p.rect(x0 + px, y0 + py, 1, 1, R[Math.max(0, Math.min(R.length - 1, f.ton ?? 5))])
+      poser(x0 + px, y0 + py, R[Math.max(0, Math.min(R.length - 1, f.ton ?? 5))])
       continue
     }
     // la trame ne sert qu'à la frontière entre deux tons (une bande étroite), et jamais sur une plaque à plat
@@ -608,7 +632,7 @@ export function peindreFormes(p: Peintre, formes: Forme[], cx: number, cy: numbe
       const vide = bx < 0 || by < 0 || bx >= W || by >= H || ids[by * W + bx] < 0
       if (vide && lum[i] < 0.62) c = reflet
     }
-    p.rect(x0 + px, y0 + py, 1, 1, c)
+    poser(x0 + px, y0 + py, c)
   }
   // 4. le contour sélectif, autour de ce qui n'est pas émissif
   for (let py = 0; py < H; py++) for (let px = 0; px < W; px++) {
@@ -629,7 +653,9 @@ export function peindreFormes(p: Peintre, formes: Forme[], cx: number, cy: numbe
     }
     if (meilleur < 0) continue
     const c = blanc > 0.5 ? BLANC : bMax > 0.7 ? rampeDe(formes[meilleur])[1] : CONTOUR
-    p.rect(x0 + px, y0 + py, 1, 1, c)
+    // (déphasé, le contour luit : c'est lui qui dessine encore la silhouette)
+    if (ph !== undefined) p.rect(x0 + px, y0 + py, 1, 1, VIOLET_DEPHASE[4], ph.alpha * 0.9)
+    else p.rect(x0 + px, y0 + py, 1, 1, c)
   }
 }
 

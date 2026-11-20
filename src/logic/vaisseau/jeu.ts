@@ -105,6 +105,15 @@ export const VAISSEAU = {
    */
   corruption: { ronge: 0, purge: 0 },
   /**
+   * LE DÉPHASAGE (les Yhg'tharr, Keko, 20/11 — à la place de la corruption, « pas hyper facile à comprendre » : « chaque
+   * vaisseau obtient une chance de déphasage, entre 5 et 15 % ; à chaque fois que le vaisseau est touché, il joue cette
+   * chance, et s'il réussit, à la place de subir les dégâts, il entre en déphasage ; il devient invincible et traverse tous
+   * les obstacles, pendant un court instant ») : un coup qui atteint le blindage (le bouclier, s'il y en a un, le prend
+   * d'abord) est esquivé avec la chance `chance` — un tirage seedé —, et pendant `duree` secondes le vaisseau ne prend
+   * plus aucun coup et ne heurte plus rien, ni roche ni insecte. `chance` à zéro : jamais. (La durée est de moi.)
+   */
+  dephasage: { chance: 0, duree: 1.5 },
+  /**
    * L'INVULNÉRABILITÉ APRÈS UN COUP (Keko, 17/11 : « quand le vaisseau touche un ennemi, il devrait subir des dégâts,
    * clignoter une petite seconde, et pendant cet intervalle ne pas pouvoir prendre d'autres dégâts ; sinon on peut se
    * faire éclater en un rien de temps avec de multiples touches très rapides ») : tant de secondes, après un coup reçu —
@@ -921,6 +930,8 @@ export type Monde = {
   intouchableJusque: number
   /** La part de la coque qui est corrompue (en points, jamais plus que la coque) — voir la configuration. */
   corruption: number
+  /** Jusqu'à quel instant (`t` du monde) le joueur est déphasé — voir `dephasage`. */
+  dephaseJusque: number
   toucheA: number
   forage: Forage | null
   /** Le laser de CHAQUE foreuse du joueur, dans l'ordre de `foreuses` (`forage` reste le premier qui creuse). */
@@ -1085,6 +1096,8 @@ export type Evenement =
   | { type: 'plaque'; x: number; y: number; k: number }
   /** Le coup a corrompu la coque (les Innommés) : elle ne baisse pas encore. */
   | { type: 'corrompu'; x: number; y: number }
+  /** Le coup a été esquivé : le vaisseau entre en déphasage (voir `dephasage`). */
+  | { type: 'dephase'; x: number; y: number }
   /** Un insecte abattu a purgé de la corruption (`x`, `y` : où il est mort). */
   | { type: 'purge'; x: number; y: number }
   /** Une arme du joueur tire. */
@@ -1212,7 +1225,7 @@ export function nouveauVaisseau(): Vaisseau {
 }
 
 export function nouveauMonde(c: ConfigVaisseau = VAISSEAU, graine = 1): Monde {
-  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, plaques: Array.from({ length: c.plaques }, () => true), intouchableJusque: -1, corruption: 0, toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, scies: [], balises: [], givres: [], tornades: [], novas: [], echardes: [], spheres: [], puits: [], meteores: [], tentacules: [], nuees: [], rejetons: [], flaquesAcides: [], mines: [], fleaux: [], parasites: [], vrilles: [], liens: [], oeufs: [], brochettes: [], miniVers: [], hypercubes: [], des: [], coupes: [], rayonVu: null }
+  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, plaques: Array.from({ length: c.plaques }, () => true), intouchableJusque: -1, corruption: 0, dephaseJusque: -100, toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, scies: [], balises: [], givres: [], tornades: [], novas: [], echardes: [], spheres: [], puits: [], meteores: [], tentacules: [], nuees: [], rejetons: [], flaquesAcides: [], mines: [], fleaux: [], parasites: [], vrilles: [], liens: [], oeufs: [], brochettes: [], miniVers: [], hypercubes: [], des: [], coupes: [], rayonVu: null }
 }
 
 /** Un hachage entier déterministe (celui de pixelfx), et un réel dans [0, 1) qui en sort. */
@@ -1308,7 +1321,7 @@ export const solidite = (c: ConfigVaisseau, a: Asteroide): number => c.forage.du
 /** L'écart d'angle le plus court de `de` vers `vers`, dans [−π, π]. */
 const ecartDAngle = (de: number, vers: number): number => Math.atan2(Math.sin(vers - de), Math.cos(vers - de))
 
-type Moteur = { poussee: number; vitesseMax: number; rotation: number; rayon: number; /** Sa masse, s'il peut traverser les roches légères (le joueur ; le rival n'en a pas). */ masse?: number; /** Son virage (voir `ConfigVaisseau.virage`) : le joueur seul. */ virage?: number }
+type Moteur = { poussee: number; vitesseMax: number; rotation: number; rayon: number; /** Il traverse les roches (le joueur déphasé — voir `dephasage`). */ fantome?: boolean; /** Sa masse, s'il peut traverser les roches légères (le joueur ; le rival n'en a pas). */ masse?: number; /** Son virage (voir `ConfigVaisseau.virage`) : le joueur seul. */ virage?: number }
 
 /**
  * Fait voler un corps de `dt` secondes sous une direction (longueur 0 à 1) : la poussée, le frein du vide, le plafond,
@@ -1372,7 +1385,7 @@ export function voler(c: ConfigVaisseau, moteur: Moteur, v: Vaisseau, dt: number
   // est franc (au-dessus du seuil) et nouveau (on ne touchait pas déjà cette roche)
   const chocs: Choc[] = []
   let contact: number | null = null
-  for (const a of asteroidesAutour(c, x, y, c.champ.rayonMax + moteur.rayon + 2)) {
+  for (const a of moteur.fantome === true ? [] : asteroidesAutour(c, x, y, c.champ.rayonMax + moteur.rayon + 2)) {
     if (detruits.has(a.id)) continue
     const dx = x - a.x
     const dy = y - a.y
@@ -1764,6 +1777,8 @@ const sousBouclier = (c: ConfigVaisseau, m: Monde): boolean => c.bouclier.points
  * PREND PAS si le bouclier du joueur est levé (Keko : pas de bélier). Rend faux si la partie est perdue.
  */
 function heurterLesVaisseaux(c: ConfigVaisseau, m: Monde, ev: Evenement[]): boolean {
+  // (déphasé, il passe au travers — voir `dephasage`)
+  if (m.t < m.dephaseJusque) return true
   const v = m.vaisseau
   for (const e of [...m.ennemis]) {
     const b = e.corps
@@ -1825,6 +1840,13 @@ export function encaisser(c: ConfigVaisseau, m: Monde, x: number, y: number, deg
     // l'invincibilité après avoir été touché ; touché plusieurs fois d'affilée, il encaisse tous les dégâts ; l'invincibilité
     // ne concerne que le blindage » : tout bu par lui, le coup n'ouvre aucune invincibilité)
     if (reste <= 1e-9) return
+  }
+  // LE DÉPHASAGE (voir la configuration) : le coup qui atteindrait le blindage est esquivé, et le vaisseau est déphasé
+  if (c.dephasage.chance > 0 && tire(m.graine, m.prochainId++, 31) < c.dephasage.chance) {
+    m.dephaseJusque = m.t + c.dephasage.duree
+    m.intouchableJusque = Math.max(m.intouchableJusque, m.dephaseJusque)
+    ev.push({ type: 'dephase', x, y })
+    return
   }
   // (le coup passe au blindage — plaques, corruption, coque : l'invincibilité s'ouvre, il clignote)
   m.intouchableJusque = m.t + c.invulnerabilite
@@ -4150,6 +4172,7 @@ function avancerSansLeJoueur(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenem
   m.plaques = Array.from({ length: c.plaques }, () => true)
   m.intouchableJusque = m.t + c.invulnerabilite // (il revient en clignotant : rien ne le touche le temps d'un souffle)
   m.corruption = 0
+  m.dephaseJusque = -100
   m.toucheA = -100
   m.phase = 'vol'
   ev.push({ type: 'retour' })
@@ -4240,7 +4263,8 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   const moteur = boost > 0 ? { poussee: c.poussee * (pousse ? c.postcombustion.poussee : 1), vitesseMax: c.vitesseMax * (1 + (c.postcombustion.vitesse - 1) * boost), rotation: c.rotation, rayon: c.rayon, masse: c.masse, virage: c.virage } : c
   const dir = pousse && Math.hypot(direction.x, direction.y) < 0.2 ? { x: Math.cos(m.vaisseau.cap), y: Math.sin(m.vaisseau.cap) } : direction
   // (un vaisseau à tourelles ne tourne pas vers son regard : il ne sert plus bas qu'à viser)
-  const r = voler(c, moteur, m.vaisseau, dt, dir, m.detruits, c.tourelles ? undefined : regard)
+  // (DÉPHASÉ, il traverse les roches — voir `dephasage`)
+  const r = voler(c, m.t < m.dephaseJusque ? { ...moteur, fantome: true } : moteur, m.vaisseau, dt, dir, m.detruits, c.tourelles ? undefined : regard)
   m.vaisseau = r.vaisseau
   const v = m.vaisseau
   const chocs = [...r.chocs]

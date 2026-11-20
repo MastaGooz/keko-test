@@ -2506,8 +2506,6 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   verifier('toute rongée, la partie est perdue', md.phase === 'perdu' && md.coque === 0)
 }
 
-// (TOUJOURS EN DERNIER : des blocs ajoutés après cette ligne échouaient sans faire échouer `npm run verif` — 17/11)
-if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)
 // LE FRIMAS SANS PERSONNE AUTOUR (Keko, 19/11 : « lancer les tempêtes de givre, la nova de givre, même quand il n'y a pas
 // d'ennemis ; et doubler le nombre d'éclats de glace ») : la nova et le blizzard partent à leur cadence dans le vide (le
 // blizzard droit devant le nez) ; ses éclats sont seize
@@ -2573,3 +2571,60 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   const touches = ev.filter((e) => e.type === 'ennemiTouche').length
   verifier(`un insecte à 110 : les cinq partent l'une après l'autre en 0,3 s (${parties}), le touchent (${touches}) et le gèlent`, parties === 5 && touches === 5 && (w.ennemis[0].geleA ?? 0) > w.t && w.ennemis[0].pv === 1000 - 5 * eclats.degats)
 }
+
+// LE DÉPHASAGE (les Yhg'tharr, Keko, 20/11) : le coup esquivé, invincible et traversant un court instant ; sans chance, rien
+{
+  const c: ConfigVaisseau = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, coque: 5, dephasage: { chance: 1, duree: 1.5 } }
+  const md = nouveauMonde(c)
+  const ev: Evenement[] = []
+  encaisser(c, md, 0, 0, 2, ev)
+  verifier('un coup esquivé : la coque ne baisse pas, le vaisseau est déphasé', md.coque === 5 && md.dephaseJusque === md.t + 1.5 && ev.some((e) => e.type === 'dephase') && !ev.some((e) => e.type === 'touche'))
+  md.t += 1
+  const ev2: Evenement[] = []
+  encaisser({ ...c, dephasage: { chance: 0, duree: 1.5 } }, md, 0, 0, 2, ev2)
+  verifier('déphasé, il ne prend aucun coup', md.coque === 5 && ev2.length === 0)
+  md.t += 1
+  encaisser({ ...c, dephasage: { chance: 0, duree: 1.5 } }, md, 0, 0, 2, [])
+  verifier('le déphasage fini, le coup suivant porte', md.coque === 3)
+  // (il traverse une roche : sans déphasage, elle l'arrête)
+  const champ = { ...VAISSEAU.champ, densite: 1 }
+  const roche = asteroidesAutour({ ...c, champ }, 200, 0, 400).find((a) => a.rayon >= 6 && Math.hypot(a.x, a.y) > 60)
+  if (roche !== undefined) {
+    const traverse = (dephase: boolean): number => {
+      const cc: ConfigVaisseau = { ...c, champ }
+      const w = nouveauMonde(cc)
+      const an = Math.atan2(roche.y, roche.x)
+      w.vaisseau = { ...w.vaisseau, x: roche.x - Math.cos(an) * (roche.rayon + 14), y: roche.y - Math.sin(an) * (roche.rayon + 14), vx: Math.cos(an) * 60, vy: Math.sin(an) * 60, cap: an }
+      if (dephase) w.dephaseJusque = 1e9
+      let plusPres = Infinity
+      for (let i = 0; i < 40; i++) {
+        avancerLeMonde(cc, w, 1 / 60, { x: Math.cos(an), y: Math.sin(an) })
+        plusPres = Math.min(plusPres, Math.hypot(w.vaisseau.x - roche.x, w.vaisseau.y - roche.y))
+      }
+      return plusPres
+    }
+    const sans = traverse(false)
+    const avec = traverse(true)
+    verifier(`déphasé, il traverse la roche (au plus près : ${avec.toFixed(1)} du centre, ${sans.toFixed(1)} sans déphasage, la roche fait ${roche.rayon.toFixed(1)})`, avec < roche.rayon * 0.5 && sans >= roche.rayon)
+  } else verifier('une roche pour le test du déphasage', false)
+  // (sans chance, jamais)
+  const c0: ConfigVaisseau = { ...c, dephasage: { chance: 0, duree: 1.5 } }
+  const m0 = nouveauMonde(c0)
+  const e0: Evenement[] = []
+  encaisser(c0, m0, 0, 0, 2, e0)
+  verifier('sans chance de déphasage, le coup porte', m0.coque === 3 && !e0.some((e) => e.type === 'dephase'))
+  // (une chance de 15 % : à peu près un coup sur sept esquivé, sur 2 000 coups)
+  const c15: ConfigVaisseau = { ...c, coque: 1e9, dephasage: { chance: 0.15, duree: 0 }, invulnerabilite: 0 }
+  const m15 = nouveauMonde(c15)
+  let esquives = 0
+  for (let i = 0; i < 2000; i++) {
+    const e: Evenement[] = []
+    m15.t += 0.01
+    encaisser(c15, m15, 0, 0, 1, e)
+    if (e.some((x) => x.type === 'dephase')) esquives++
+  }
+  verifier(`une chance de 15 % : ${esquives} esquives sur 2 000 coups`, esquives > 250 && esquives < 350)
+}
+
+// (TOUJOURS EN DERNIER : des blocs ajoutés après cette ligne échouaient sans faire échouer `npm run verif` — 17/11)
+if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)

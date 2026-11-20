@@ -56,15 +56,16 @@ export const RACES: { id: Race; nom: string }[] = [
  * leur spécificité. `coque`, `bouclier` : ce que donnent les pièces (le bouclier de base du jeu compris). *Les chiffres
  * sont de moi, à rejuger en jouant.*
  */
-export type Vie = { coque: number; bouclier: { points: number; delai: number; regain: number }; regeneration: number; plaques: number; corruption: { ronge: number; purge: number } }
+export type Vie = { coque: number; bouclier: { points: number; delai: number; regain: number }; regeneration: number; plaques: number; corruption: { ronge: number; purge: number }; dephasage: { chance: number; duree: number } }
 // LES HUMAINS : PAS DE BOUCLIER, DES PLAQUES DE BLINDAGE (Keko, 17/11 : chacune encaisse tout un coup avant que la barre
 // soit entamée ; « on peut même varier le nombre de plaques selon les vaisseaux » — `plaques`, celles du modèle) ; et LE
 // BLINDAGE LE PLUS ÉPAIS (plus 2) : rien ne se répare, ils doivent tenir sur une seule vie.
-// LES INNOMMÉS : PAS DE BOUCLIER, LA CORRUPTION (les blessures différées) : un coup corrompt, la corruption ronge un demi-
-// point par seconde, chaque insecte abattu en purge un demi-point.
-export function vieSelonLaRace(race: Race, v: Vie, plaques = 3): Vie {
+// LES INNOMMÉS : PAS DE BOUCLIER, LE DÉPHASAGE (Keko, 20/11 — d'abord la corruption, les blessures différées, retirée) :
+// un coup sur tant est esquivé, et le vaisseau, déphasé, est invincible et traverse tout un court instant — `dephasage`,
+// la chance du modèle (voir `ModeleDeVaisseau.dephasage`).
+export function vieSelonLaRace(race: Race, v: Vie, plaques = 3, dephasage = 0.1): Vie {
   if (race === 'humains') return { ...v, coque: v.coque + 2, bouclier: { ...v.bouclier, points: 0 }, plaques }
-  if (race === 'innommes') return { ...v, bouclier: { ...v.bouclier, points: 0 }, corruption: { ronge: 0.5, purge: 0.5 } }
+  if (race === 'innommes') return { ...v, bouclier: { ...v.bouclier, points: 0 }, dephasage: { ...v.dephasage, chance: dephasage } }
   if (race === 'etheres') return { ...v, coque: Math.max(1, v.coque - 3), bouclier: { points: v.bouclier.points + 5, delai: 3, regain: 2.5 }, regeneration: v.regeneration }
   if (race === 'essaim') return { ...v, coque: v.coque + 2, bouclier: { ...v.bouclier, points: 0 }, regeneration: Math.max(v.regeneration, 0.02) }
   return v
@@ -83,6 +84,8 @@ export type ModeleDeVaisseau = {
   race: Race
   /** Ses plaques de blindage, s'il est humain (voir `vieSelonLaRace`) : trois sans autre dit. */
   plaques?: number
+  /** Sa chance de déphasage, s'il est Yhg'tharr (voir `vieSelonLaRace`) : de 0,05 à 0,15 (Keko, 20/11), 0,1 sans autre dit. */
+  dephasage?: number
   dit: string
   /** TOUTES les pièces qu'il peut porter (celles de série comprises). */
   pieces: string[]
@@ -219,6 +222,7 @@ export const MODELES: ModeleDeVaisseau[] = [
     nom: 'Prisme',
     classe: 'chasseur',
     race: 'innommes',
+    dephasage: 0.05,
     dit: 'Un cristal de lumière pris dans sa cage d’arches, d’une pureté aveuglante.',
     pieces: ['coque-12', 'propulseur-q3', 'arme-faisceau', 'arme-cristaux', 'arme-rail'],
     serie: { possedees: ['coque-12', 'propulseur-q3', 'arme-faisceau', 'arme-cristaux', 'arme-rail'], montees: { coque: 'coque-12', propulseur: 'propulseur-q3' }, outils: [], armes: ['arme-faisceau'] },
@@ -251,6 +255,7 @@ export const MODELES: ModeleDeVaisseau[] = [
     nom: 'Néant',
     classe: 'chasseur',
     race: 'innommes',
+    dephasage: 0.15,
     dit: 'Un cœur de néant qui bat entre deux anneaux : il plie l’espace et dévore la lumière.',
     pieces: ['coque-13', 'propulseur-n3', 'arme-puits', 'arme-drain', 'arme-vrilles'],
     serie: { possedees: ['coque-13', 'propulseur-n3', 'arme-puits', 'arme-drain', 'arme-vrilles'], montees: { coque: 'coque-13', propulseur: 'propulseur-n3' }, outils: [], armes: ['arme-puits'] },
@@ -271,6 +276,7 @@ export const MODELES: ModeleDeVaisseau[] = [
     nom: 'Tesseract',
     classe: 'chasseur',
     race: 'innommes',
+    dephasage: 0.1,
     dit: 'Un cube en quatre dimensions, qui joue avec la géométrie de l’espace-temps.',
     pieces: ['coque-15', 'propulseur-t3', 'arme-hypercube', 'arme-de', 'arme-coupe'],
     serie: { possedees: ['coque-15', 'propulseur-t3', 'arme-hypercube', 'arme-de', 'arme-coupe'], montees: { coque: 'coque-15', propulseur: 'propulseur-t3' }, outils: [], armes: ['arme-hypercube'] },

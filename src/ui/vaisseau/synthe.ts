@@ -433,6 +433,18 @@ const RECETTES = {
       souffle(m, h, 0, 0.3, 0.1, { f: 3000, glisse: { vers: 5000, en: 0.15 }, q: 2, bande: true, a: 0.01, d: 0.12 })
     },
   },
+  /**
+   * LE VAISSEAU SE DÉPHASE (les Yhg'tharr, Keko, 20/11) : il sort du plan — une note creuse qui plonge, battue vite comme
+   * un écho qui se dédouble, un souffle qui s'aspire vers le grave, et un reflet aigu qui s'éloigne
+   */
+  dephase: {
+    duree: 0.9, niveau: 0.45, salle: [0.7, 0.3],
+    faire: (m, h) => {
+      note(m, 0, 0.7, 0, { f: 440, glisse: { vers: 165, en: 0.35 }, a: 0.005, d: 0.5, partiels: [[1, 1, 1], [1.5, 0.4, 0.8], [2, 0.25, 0.6]], battement: 14 })
+      souffle(m, h, 0, 0.5, 0, { f: 3500, glisse: { vers: 400, en: 0.3 }, q: 4, bande: true, a: 0.02, d: 0.3, large: true })
+      note(m, 0.04, 0.25, 0.3, { f: 1760, glisse: { vers: 1320, en: 0.4 }, a: 0.01, d: 0.45, partiels: [[1, 1, 1]], battement: 7 })
+    },
+  },
   /** l'extraction : l'accord de ré qui monte, en clochettes, sur une nappe */
   extrait: {
     duree: 2.2, niveau: 0.55, salle: [0.75, 0.3],

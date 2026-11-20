@@ -6525,3 +6525,24 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   frisson et sa barre qui s'éclairait aussi) ; un insecte qu'elle abat purge comme les autres. LE SYSTÈME DE LA
   CORRUPTION RESTE À REPENSER — pistes proposées : un déphasage (une chance d'esquiver un coup), un retour du néant (une
   seconde vie à recharge), une purge plafonnée, une vengeance du vide (une onde quand une jauge de coups se remplit).
+- LE DÉPHASAGE REMPLACE LA CORRUPTION (Keko, 20/11 : « chaque vaisseau obtient une chance de déphasage, entre 5 et 15 % ;
+  c'est représenté par la barre violette sous le blindage dans les statistiques ; à chaque fois que le vaisseau est
+  touché, il joue cette chance, et s'il réussit, à la place de subir les dégâts, il entre en déphasage ; sa barre de
+  blindage devient violette, comme l'effet qu'on a pour la purge, et son vaisseau bénéficie d'un effet visuel ; il devient
+  invincible et traverse tous les obstacles, pendant un court instant ») :
+  - LA RÈGLE (`ConfigVaisseau.dephasage`, `Monde.dephaseJusque`, `encaisser`) : le coup qui atteindrait le blindage est
+    esquivé avec la chance du vaisseau (un tirage seedé), un événement `dephase` ; pendant `duree` (1,5 s, de moi) il ne
+    prend plus de coup, `heurterLesVaisseaux` le laisse passer à travers les insectes et `voler` à travers les roches
+    (`Moteur.fantome`). LES CHANCES (de moi, à rejuger) : le Néant 15 %, le Tesseract 10 %, le Prisme 5 %
+    (`ModeleDeVaisseau.dephasage`, `vieSelonLaRace`). Les Yhg'tharr n'ont plus de corruption ; sa règle reste écrite.
+  - LA FICHE : « Purge » devient « Déphasage », une barre violette (pas des cases), 15 % aux trois quarts comme les autres
+    jauges (`DEPHASAGE_MAX` 0,2).
+  - EN VOL : la barre de blindage prend tout entière le violet qui ondule de la corruption (elle s'éclaire à l'entrée,
+    clignote avec l'or les dernières 0,35 s) ; le vaisseau ne clignote pas, il SORT DU PLAN (`Options.dephase` de
+    `peindreFormes`) — ses tons ramenés à une rampe violette par leur clarté, à demi transparent, des lignes qui glissent
+    d'un pixel par à-coups, des bandes tramées qui défilent, le contour qui luit —, un écho de lui-même traîne derrière,
+    une lueur violette respire, des grains de vide s'en détachent ; à l'entrée, une gerbe violette et son son (`dephase` :
+    une note creuse qui plonge, battue, un souffle aspiré). Vu à la capture.
+  - `&dephasage=P` pose la chance du vaisseau piloté (`&dephasage=1&coup=2` : chaque coup d'essai le déphase).
+  - (En passant : les tests du Frimas étaient écrits APRÈS la ligne qui fait échouer `npm run verif` — ils passaient, mais
+    un échec n'aurait rien fait échouer ; la ligne est revenue en dernier.)

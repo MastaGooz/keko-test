@@ -759,6 +759,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** `&coup=N` : un coup toutes les N secondes en vol, sans jamais percer la coque — le banc de la barre de blindage ; `&bouclier=N` y ajoute N points de bouclier. */
   const coupDEssai = Math.max(0, Number(parametres.get('coup')) || 0)
   const bouclierDEssai = Math.max(0, Math.floor(Number(parametres.get('bouclier')) || 0))
+  /** `&dephasage=P` : la chance de déphasage du vaisseau piloté, de 0 à 1 (`&dephasage=1` : tous les coups esquivés) — le banc du déphasage. */
+  const dephasageDEssai = parametres.has('dephasage') ? Math.max(0, Math.min(1, Number(parametres.get('dephasage')) || 0)) : null
   let coupDEssaiA = 0
   let soutePleineVue = false
   let souteVue = 0
@@ -973,8 +975,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       }
       // LA VIE SELON LA RACE (Keko, 17/11 — voir `vieSelonLaRace`) : les Éthérés, un gros bouclier sur un blindage fragile ;
       // l'Essaim, pas de bouclier, une coque qui se régénère
-      if (VORTEX) conf = { ...conf, ...blindageAuVortex(vieSelonLaRace(modeleDeVaisseau(flotte.actif).race, { coque: conf.coque, bouclier: conf.bouclier, regeneration: conf.regeneration, plaques: conf.plaques, corruption: conf.corruption }, modeleDeVaisseau(flotte.actif).plaques), flotte.actif) }
+      if (VORTEX) conf = { ...conf, ...blindageAuVortex(vieSelonLaRace(modeleDeVaisseau(flotte.actif).race, { coque: conf.coque, bouclier: conf.bouclier, regeneration: conf.regeneration, plaques: conf.plaques, corruption: conf.corruption, dephasage: conf.dephasage }, modeleDeVaisseau(flotte.actif).plaques, modeleDeVaisseau(flotte.actif).dephasage), flotte.actif) }
       if (bouclierDEssai > 0) conf = { ...conf, bouclier: { ...conf.bouclier, points: bouclierDEssai } }
+      if (dephasageDEssai !== null) conf = { ...conf, dephasage: { ...conf.dephasage, chance: dephasageDEssai } }
       // (LES BOUCHES ET LES ANCRES SUIVENT LE VAISSEAU PLUS GROS — voir `ECHELLE_EN_VOL`)
       if (echelle !== 1)
         conf = {
@@ -1652,6 +1655,18 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * long de la barre ; `bord` : 0 le liseré clair, 1 le corps, 2 l'ombre.
    */
   const CORRUPTION = [N.hex('#f0c8ff'), N.hex('#b05ef0'), N.hex('#7a2cc8'), N.hex('#4a1488')]
+  /**
+   * LE DÉPHASAGE SUR LA BARRE (les Yhg'tharr, Keko, 20/11 : « sa barre de blindage devient violette, comme l'effet qu'on a
+   * pour la purge ») : tant qu'il est déphasé, tout le plein de la barre prend le violet qui ondule de la corruption ; les
+   * dernières 0,35 s, il clignote avec l'or — la fin approche. La fiche du hangar montre sa chance en violet, sous le
+   * blindage : une barre (pas de cases), 15 % aux trois quarts, comme les autres jauges (`DEPHASAGE_MAX`).
+   */
+  const DEPHASAGE_MAX = 0.2
+  const barreDephasee = (): boolean => {
+    if (m.phase !== 'vol' || m.t >= m.dephaseJusque) return false
+    const reste = m.dephaseJusque - m.t
+    return reste > 0.35 || Math.floor(reste / 0.06) % 2 === 0
+  }
   let purgeA = -10
   const tonDeLaCorruption = (pos: number, bord: number): number => {
     if (t - purgeA < 0.12) return CORRUPTION[0]
@@ -4375,7 +4390,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const ETALONS = etalonsDesJauges()
       // (la vie de SA RACE — Keko, 17/11 ; L'ESSAIM N'A PAS DE LIGNE DE RÉGÉNÉRATION — « on régénère les PV en % » : elle
       // vaut la même part pour tous les siens, une jauge ne dirait rien)
-      const vie = blindageAuVortex(vieSelonLaRace(de.race, { coque: cf.coque, bouclier: { ...cf.bouclier, points: Math.max(cf.bouclier.points, BOUCLIER_DU_VORTEX) }, regeneration: cf.regeneration, plaques: cf.plaques, corruption: cf.corruption }, de.plaques), de.id)
+      const vie = blindageAuVortex(vieSelonLaRace(de.race, { coque: cf.coque, bouclier: { ...cf.bouclier, points: Math.max(cf.bouclier.points, BOUCLIER_DU_VORTEX) }, regeneration: cf.regeneration, plaques: cf.plaques, corruption: cf.corruption, dephasage: cf.dephasage }, de.plaques, de.dephasage), de.id)
       const jauges: Jauge[] = [
         { nom: 'Vitesse', valeur: sur(cf.vitesseMax, ETALONS.vitesse), max: 1 },
         // (au vortex, plus d'accélération : elle est dans la maniabilité — Keko, 18/11)
@@ -4386,7 +4401,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         // tard on permettra son amélioration ; l'ingénieur à 75 % » : au vortex, douze cases pour le blindage, la vie et le
         // bouclier — les 9 de l'Ingénieur aux trois quarts ; les plaques gardent leurs huit, les 6 de l'Ingénieur aussi)
         de.race === 'essaim' ? { nom: 'Vie', valeur: vie.coque, max: CASES_DE_LA_VIE, cellules: true } : { nom: 'Blindage', valeur: vie.coque, max: CASES_DE_LA_VIE, cellules: true },
-        vie.bouclier.points > 0 ? { nom: 'Bouclier', valeur: vie.bouclier.points, max: CASES_DE_LA_VIE, cellules: true } : vie.plaques > 0 ? { nom: 'Surblindage', valeur: vie.plaques, max: 8, cellules: true } : vie.corruption.ronge > 0 ? { nom: 'Purge', valeur: Math.round(vie.corruption.purge * 8), max: 8, cellules: true } : { nom: '', valeur: 0, max: 8 },
+        vie.bouclier.points > 0 ? { nom: 'Bouclier', valeur: vie.bouclier.points, max: CASES_DE_LA_VIE, cellules: true } : vie.plaques > 0 ? { nom: 'Surblindage', valeur: vie.plaques, max: 8, cellules: true } : vie.dephasage.chance > 0 ? { nom: 'Déphasage', valeur: vie.dephasage.chance, max: DEPHASAGE_MAX } : { nom: '', valeur: 0, max: 8 },
       ]
       return jauges.filter((j) => j.nom !== '')
     }
@@ -5870,7 +5885,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // technologie humaine, le mot plaque est un peu flou ; un terme plus évocateur d'un blindage renforcé »)
     const acier = j.nom === 'Surblindage'
     const vert = j.nom === 'Vie' || j.nom === 'Régénération'
-    const violet = j.nom === 'Purge'
+    const violet = j.nom === 'Déphasage'
     const teinte = j.nom === 'Bouclier' ? VERRIERE[2] : acier ? ACIER_DES_PLAQUES[1] : vert ? VERT_DE_LA_VIE[1] : violet ? CORRUPTION[2] : rouge ? ROUGE[3] : PEPITE[2]
     const clair = j.nom === 'Bouclier' ? VERRIERE[3] : acier ? ACIER_DES_PLAQUES[0] : vert ? VERT_DE_LA_VIE[0] : violet ? CORRUPTION[1] : rouge ? ROUGE[5] : N.hex('#ffe68a')
     const sombre = j.nom === 'Bouclier' ? VERRIERE[1] : acier ? ACIER_DES_PLAQUES[2] : vert ? VERT_DE_LA_VIE[2] : violet ? CORRUPTION[3] : rouge ? ROUGE[2] : N.hex('#a8650f')
@@ -7301,10 +7316,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * cible (`vise`, un angle dans le repère du vaisseau). Autour : la lueur de la tuyère et de la verrière, les feux de
    * position qui clignotent au bout des ailes, l'anneau du bouclier. Le rival est le châssis de série dans SES matières.
    */
+  /** Les violets du déphasage, autour du vaisseau (sa lueur, ses grains) : de la lumière à l'ombre. */
+  const VIOLET_DU_VIDE = [N.hex('#f4e2ff'), N.hex('#cf98ff'), N.hex('#9a52e8'), N.hex('#6326ad')]
   const MATIERES_DU_RIVAL = { coque: 'carmin', aile: 'grenat', verre: 'ambre', rouge: 'or', laser: 'violet' } as const
   /** L'échelle à laquelle le vaisseau est peint en ce moment : celle du vol, 1 dans l'aperçu du hangar. */
   const echelleVue = (): number => (enApercu ? 1 : ECHELLE_EN_VOL)
-  function dessinerUnVaisseau(p: Peintre, corps: Vaisseau, flam: number, vise: number, allure: Allure, blanchi: boolean, rival: boolean, devie = 0): void {
+  function dessinerUnVaisseau(p: Peintre, corps: Vaisseau, flam: number, vise: number, allure: Allure, blanchi: boolean, rival: boolean, devie = 0, dephase?: { t: number; alpha: number }): void {
     const E = echelleVue()
     // (au pixel entier : entre deux pixels, la silhouette changerait à chaque image)
     const sx = Math.round(corps.x - camera.x + W / 2)
@@ -7318,7 +7335,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const [fx, fy] = ici(queueDe(allure.coque) - 0.5 * (cp - 1) - (1 + 3 * flam), 0)
       p.glow(fx, fy, (5 + 7 * flam + 2 * (cp - 1)) * E, rival ? FEU[4] : lueurDeLaFlamme(allure.coque, cp), 0.4 + 0.45 * flam + 0.08 * Math.sin(t * 9))
     }
-    peindreFormes(p, formesDuVaisseau(allure, flam, t, vise, devie), sx, sy, E, { cap: corps.cap, lumiere: LUMIERE_DU_VOL, blanc: blanchi ? 1 : 0, matieres: rival ? MATIERES_DU_RIVAL : undefined, rampes: rival ? undefined : rampesDuJoueur(), reflet: rival ? REFLET_DU_RIVAL : REFLET_DU_VOL })
+    peindreFormes(p, formesDuVaisseau(allure, flam, t, vise, devie), sx, sy, E, { cap: corps.cap, lumiere: LUMIERE_DU_VOL, blanc: blanchi ? 1 : 0, matieres: rival ? MATIERES_DU_RIVAL : undefined, rampes: rival ? undefined : rampesDuJoueur(), reflet: rival ? REFLET_DU_RIVAL : REFLET_DU_VOL, dephase })
     // (LE CRISTAL DU PRISME RAYONNE — Keko, 18/11 : « le vaisseau de lumière » : une lueur d'or blanc qui respire, sur son
     // cristal ; un halo plus large autour de lui)
     if (allure.coque === 12 && !rival) {
@@ -7480,8 +7497,26 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
     // (INTOUCHABLE APRÈS UN COUP, IL CLIGNOTE — Keko, 17/11 : « subir des dégâts, clignoter une petite seconde » : une
     // tranche de 70 ms sur deux, il n'est pas dessiné ; voir `invulnerabilite` dans `jeu.ts`)
-    const clignote = m.phase === 'vol' && m.t < m.intouchableJusque && Math.floor((m.intouchableJusque - m.t) / 0.07) % 2 === 1
-    if (!clignote) dessinerUnVaisseau(p, v, flamme, vise, al, blanchi, false, devieDeLaFlamme)
+    // (… SAUF DÉPHASÉ — les Yhg'tharr, Keko, 20/11 : il ne clignote pas, il SORT DU PLAN : violet, à demi transparent, ses
+    // lignes qui glissent (voir `Options.dephase`), un écho de lui-même qui traîne derrière, une lueur violette qui
+    // respire, des grains de vide qui s'en détachent)
+    const dephase = m.phase === 'vol' && m.t < m.dephaseJusque
+    const clignote = !dephase && m.phase === 'vol' && m.t < m.intouchableJusque && Math.floor((m.intouchableJusque - m.t) / 0.07) % 2 === 1
+    if (dephase) {
+      const age = CONF.dephasage.duree - (m.dephaseJusque - m.t)
+      const E = echelleVue()
+      const sx = v.x - camera.x + W / 2
+      const sy = v.y - camera.y + centreY()
+      p.glow(sx, sy, 16 * E * tailleDe(al.coque), VIOLET_DU_VIDE[2], 0.3 + 0.1 * Math.sin(t * 9))
+      const ecart = 0.09 + 0.03 * Math.sin(t * 6)
+      dessinerUnVaisseau(p, { ...v, x: v.x - v.vx * ecart + Math.sin(t * 7) * 2, y: v.y - v.vy * ecart + Math.cos(t * 5) * 2 }, 0, vise, al, false, false, 0, { t: age + 0.5, alpha: 0.3 })
+      dessinerUnVaisseau(p, v, flamme, vise, al, false, false, devieDeLaFlamme, { t: age, alpha: 0.78 })
+      if (R.next() < 0.5) {
+        const a = R.range(0, Math.PI * 2)
+        const d = R.range(4, 10) * E * tailleDe(al.coque)
+        etincelles.ajouter('etincelle', v.x + Math.cos(a) * d, v.y + Math.sin(a) * d, Math.cos(a) * 14, Math.sin(a) * 14, R.range(0.25, 0.5), R.next() < 0.3 ? N.WHITE : VIOLET_DU_VIDE[R.next() < 0.5 ? 1 : 3], 1, 1)
+      }
+    } else if (!clignote) dessinerUnVaisseau(p, v, flamme, vise, al, blanchi, false, devieDeLaFlamme)
     // LES JETS DE MANŒUVRE : de courtes flammes froides, blanches au cœur et bleues au bout — DEUX AU NEZ, qui soufflent
     // vers l'avant quand on recule ; UNE PAR FLANC, qui souffle à l'opposé du côté où l'on glisse. Elles frémissent.
     {
@@ -12235,7 +12270,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       dessinerLEcusson(ex + 1, oy + 4 + bond, blanc, true)
       // la barre : le creux, le plein (clair à gauche, sombre à droite), le fantôme, les séparations des cases
       const val = Math.max(0, Math.min(1, m.coque / TOT))
-      const corrompu = Math.max(0, Math.min(val, m.corruption / TOT))
+      const corrompu = barreDephasee() ? val : Math.max(0, Math.min(val, m.corruption / TOT))
       const fant = Math.max(val, Math.min(1, fantomeA(m.coque) / TOT))
       const dc = t - coqueCoupA
       p.rect(bx - 1, by - 1, lw + 2, BH + 2, cerneDuBlindage())
@@ -12337,7 +12372,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
 
     // la barre de blindage : le creux, le plein (clair dessus, sombre dessous), le fantôme, les séparations des cases
     const val = Math.max(0, Math.min(1, m.coque / TOT))
-    const corrompu = Math.max(0, Math.min(val, m.corruption / TOT))
+    const corrompu = barreDephasee() ? val : Math.max(0, Math.min(val, m.corruption / TOT))
     const fant = Math.max(val, Math.min(1, fantomeA(m.coque) / TOT))
     const dc = t - coqueCoupA
     p.rect(bx - 1, by - 1, BW + 2, bh + 2, cerneDuBlindage())
@@ -13310,6 +13345,19 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           }
           break
         }
+        case 'dephase': {
+          // LE COUP ESQUIVÉ, LE VAISSEAU SE DÉPHASE (les Yhg'tharr, Keko, 20/11) : son « vwoum » creux, la barre qui
+          // s'éclaire puis passe au violet, une gerbe de grains violets qui s'écartent de lui, pas de secousse
+          jouer('dephase')
+          purgeA = t
+          for (let i = 0; i < 16; i++) {
+            const a = (i / 16) * Math.PI * 2 + R.range(-0.2, 0.2)
+            const vit = R.range(40, 90)
+            etincelles.ajouter('etincelle', v.x, v.y, Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.25, 0.5), i % 4 === 0 ? N.WHITE : VIOLET_DU_VIDE[1 + (i % 3)], 1, 2)
+          }
+          if (typeof navigator.vibrate === 'function') vibrer(15)
+          break
+        }
         case 'purge': {
           // UN INSECTE ABATTU PURGE LA CORRUPTION : un frisson qui remonte, un filet violet de l'insecte au vaisseau, la
           // barre qui s'éclaire
@@ -14012,8 +14060,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         bouclierA = t
         // (le coup d'essai vient d'un côté qui tourne : la bulle montre son onde, et sa fêlure au dernier point)
         coupsAuBouclier.push({ x: v.x + Math.cos(t * 2.3) * 20, y: v.y + Math.sin(t * 2.3) * 20, t0: t, brise: m.bouclier <= 0 })
-      } else if (m.plaques.length > 0 || CONF.corruption.ronge > 0) {
-        // (un vaisseau à plaques ou corruptible : le coup d'essai passe par la règle, comme un vrai — au bout, tout revient)
+      } else if (m.plaques.length > 0 || CONF.corruption.ronge > 0 || CONF.dephasage.chance > 0) {
+        // (un vaisseau à plaques, corruptible ou qui se déphase : le coup d'essai passe par la règle, comme un vrai — au
+        // bout, tout revient)
         if (m.coque <= 1.3) {
           m.coque = CONF.coque
           m.plaques = m.plaques.map(() => true)
@@ -14022,6 +14071,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           const evs: Evenement[] = []
           encaisser(CONF, m, v.x, v.y, 0.8, evs)
           for (const e of evs) if (e.type === 'plaque') (plaquesCasseesA[e.k] = t), jouer('plaque')
+          for (const e of evs) if (e.type === 'dephase') (purgeA = t), jouer('dephase')
           if (evs.some((e) => e.type === 'touche' || e.type === 'corrompu')) toucheA = t
         }
       } else {
