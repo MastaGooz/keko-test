@@ -381,8 +381,8 @@ export const VAISSEAU = {
    * astéroïdes tournent assez vite ; si le joueur va dans la zone de la tempête, il risque de se faire frapper par les
    * astéroïdes, et de toute façon il subit des dégâts sur la durée à cause de l'énergie ») : éteinte hors du vortex. Le
    * jeu se tient dans un cercle de `rayon` autour du centre du monde ; au-delà, sur `largeur`, LA TEMPÊTE : le vaisseau
-   * y perd `dps` unités de vie par seconde (le bouclier d'abord, aucune plaque contre l'énergie ; déphasé, rien ne le
-   * touche, comme ailleurs), et `roches`
+   * y perd `dps` unités de vie par seconde (DROIT AU BLINDAGE depuis le 21/11 — voir `blesserParLaTempete` ; déphasé,
+   * rien ne le touche, comme ailleurs), et `roches`
    * roches de `rocheMin` à `rocheMax` y tournent autour du centre, à `vitesse` le long du cercle — une roche qui le
    * heurte lui coûte `choc` unités de vie et l'emporte. Au bord extérieur, rien ne passe : le vaisseau et les insectes y
    * sont retenus. Les insectes ne naissent et ne reviennent que dans l'arène, à `marge` de la tempête. *Les chiffres
@@ -1755,6 +1755,24 @@ function placementDeLaTempete(c: ConfigVaisseau): { r: number; a0: number; rayon
   return l
 }
 
+/**
+ * UN COUP DE LA TEMPÊTE — son énergie, ses roches (Keko, 21/11 : « on attaque directement le blindage ; on ignore les
+ * boucliers bleus, les plaques de blindage ; on ne peut pas déclencher de déphasage ») : les `degats` passent au blindage
+ * tout droit, sans `encaisser` — ni bouclier, ni plaque, ni corruption, ni déphasage, ni invincibilité ; percé, le vaisseau
+ * est perdu. `signal` : le coup se montre (une roche) ; l'énergie, qui ronge à chaque pas, se tait.
+ */
+function blesserParLaTempete(c: ConfigVaisseau, m: Monde, x: number, y: number, degats: number, ev: Evenement[], signal: boolean): void {
+  m.coque -= degats
+  m.corruption = Math.min(m.corruption, Math.max(0, m.coque))
+  if (signal) ev.push({ type: 'touche', x, y })
+  if (m.coque <= 1e-9) {
+    m.coque = 0
+    m.phase = 'perdu'
+    if (c.invasion.active) m.invasion.retourA = m.t + c.invasion.penalite
+    ev.push({ type: 'perdu' })
+  }
+}
+
 /** UN POINT DE NAISSANCE DANS L'ARÈNE (voir `arene`) : à `d` du vaisseau dans la direction `a` — tourné, ou ramené, s'il tombait dans la tempête. */
 function dansLArene(c: ConfigVaisseau, m: Monde, a: number, d: number): Vecteur {
   const v = m.vaisseau
@@ -1815,21 +1833,11 @@ function subirLArene(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[], a
   for (const e of m.ennemis) if (e.asteroide === undefined) e.corps = retenir(e.corps)
   const w = m.vaisseau
   if (Math.hypot(w.x, w.y) <= A.rayon || m.t < m.dephaseJusque || m.t < m.renaitJusque) return chocs
-  // (L'ÉNERGIE RONGE : le bouclier d'abord, puis le blindage — les plaques n'y peuvent rien)
-  let reste = A.dps * c.uniteDeVie * dt
-  if (m.bouclier > 0) {
-    const pris = Math.min(m.bouclier, reste)
-    m.bouclier -= pris
-    reste -= pris
-  }
-  m.coque -= reste
-  if (m.coque <= 1e-9) {
-    m.coque = 0
-    m.phase = 'perdu'
-    if (c.invasion.active) m.invasion.retourA = m.t + c.invasion.penalite
-    ev.push({ type: 'perdu' })
-    return chocs
-  }
+  // (L'ÉNERGIE RONGE LE BLINDAGE, DIRECTEMENT — Keko, 21/11 : « on attaque directement le blindage ; on ignore les
+  // boucliers bleus, les plaques de blindage ; et on ne peut pas déclencher de déphasage aux dégâts de la tempête » :
+  // voir `blesserParLaTempete`)
+  blesserParLaTempete(c, m, w.x, w.y, A.dps * c.uniteDeVie * dt, ev, false)
+  if (m.phase !== 'vol') return chocs
   // (LES ROCHES DE LA TEMPÊTE : celle qui le touche le repousse et l'emporte ; un choc lui coûte `choc` — et celles qu'elle a
   // prises, pareil)
   const wt = vitesseDeLaTempete(c)
@@ -1851,7 +1859,7 @@ function subirLArene(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[], a
     m.vaisseau = { ...m.vaisseau, x: r.x + nx * min, y: r.y + ny * min, vx: vn < 0 ? m.vaisseau.vx - (1 + c.rebond) * vn * nx : m.vaisseau.vx, vy: vn < 0 ? m.vaisseau.vy - (1 + c.rebond) * vn * ny : m.vaisseau.vy }
     if (vn < -c.seuilChoc) {
       chocs.push({ x: r.x + nx * r.rayon, y: r.y + ny * r.rayon, force: -vn, asteroide: -2 })
-      encaisser(c, m, r.x + nx * r.rayon, r.y + ny * r.rayon, A.choc * c.uniteDeVie, ev)
+      blesserParLaTempete(c, m, r.x + nx * r.rayon, r.y + ny * r.rayon, A.choc * c.uniteDeVie, ev, true)
       if (m.phase !== 'vol') return chocs
     }
   }
@@ -5072,6 +5080,10 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   // (le lance-flammes ne crache qu'en vol, à ce pas : abattu, il se tait — Keko, 15/11 : « quand je meurs, le souffle
   // du lance-flammes reste en place pendant le compte du retour »)
   m.crache = false
+  // (… NI SES PROJECTILES, NI CE QU'IL A POSÉ — Keko, 21/11 : « quand je suis mort, les balles de mitraillette sont restées
+  // sur place, sans bouger, durant tout le temps de la résurrection » : rien ne les menait plus ; obus, bombes, traits,
+  // flaques, givres, balises et tourelles partent avec lui)
+  if (m.phase !== 'vol') (m.obus = []), (m.bombes = []), (m.tirs = []), (m.flaques = []), (m.givres = []), (m.balises = []), (m.tourelles = [])
   if (m.phase !== 'vol') (m.drones = []), (m.balayage = null), (m.canal = null), (m.scies = []), (m.tornades = []), (m.novas = []), (m.echardes = []), (m.spheres = []), (m.puits = []), (m.meteores = []), (m.tentacules = []), (m.nuees = []), (m.rejetons = []), (m.flaquesAcides = []), (m.mines = []), (m.fleaux = []), (m.parasites = []), (m.vrilles = []), (m.liens = []), (m.oeufs = []), (m.brochettes = []), (m.miniVers = []), (m.hypercubes = []), (m.des = []), (m.coupes = [])
   // (le portail tombé, la partie est finie : plus rien n'avance)
   if (m.invasion.finie) return { chocs: [], evenements: ev }

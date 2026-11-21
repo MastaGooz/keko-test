@@ -3338,5 +3338,29 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   verifier(`le moucheron : ${Math.round((100 * mouch) / nes)} % du flot, ${120 * g.vie} points de vie, rayon ${rayonDe(cfg, mini)}, ${Math.round(vMini)} contre ${Math.round(vPetit)} de vitesse ; cent abattus, ${w3.pepites.length} pépites (${w3.ennemis.length} restés)`, Math.abs(mouch / nes - 1 / 3) < 0.06 && g.vie * 120 === 30 && Math.abs(rayonDe(cfg, mini) - 3) < 1e-9 && vMini > vPetit * 1.15 && w3.ennemis.length === 0 && w3.pepites.length > 35 && w3.pepites.length < 65)
 }
 
+// LA TEMPÊTE FRAPPE LE BLINDAGE, DIRECTEMENT (Keko, 21/11 : « on ignore les boucliers bleus, les plaques ; on ne peut pas
+// déclencher de déphasage ») : un vaisseau à bouclier, à plaques et sûr de se déphaser y perd son blindage, garde son
+// bouclier et ses plaques, ne se déphase pas ; abattu, ses projectiles partent avec lui
+{
+  const cfg = { ...VAISSEAU, coque: 1000, uniteDeVie: 50, plaques: 3, bouclier: { ...VAISSEAU.bouclier, points: 100 }, dephasage: { chance: 1, duree: 0.5 }, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, arene: { ...VAISSEAU.arene, active: true, roches: 0 } }
+  const w = nouveauMonde(cfg, 5)
+  w.invasion.prochainA = 1e9
+  w.vaisseau = { ...w.vaisseau, x: cfg.arene.rayon + 60, y: 0 }
+  for (let i = 0; i < 60; i++) {
+    avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+    w.vaisseau = { ...w.vaisseau, x: cfg.arene.rayon + 60, y: 0, vx: 0, vy: 0 }
+  }
+  const perte = 1000 - w.coque
+  const attendu = cfg.arene.dps * cfg.uniteDeVie
+  const intact = w.bouclier === 100 && w.plaques.every((x) => x) && w.dephaseJusque < w.t
+  // (abattu : ses obus partent)
+  const w2 = nouveauMonde(cfg, 5)
+  w2.obus.push({ id: 900, x: 0, y: 0, vx: 100, vy: 0, vie: 5, degats: 1, guide: false, arme: 'canon' })
+  w2.phase = 'perdu'
+  w2.invasion.retourA = 1e9
+  avancerLeMonde(cfg, w2, 1 / 60, { x: 0, y: 0 })
+  verifier(`la tempête frappe le blindage : ${perte.toFixed(1)} perdus en une seconde (${attendu} attendus), bouclier, plaques et déphasage intacts (${intact}) ; abattu, ses obus partent (${w2.obus.length})`, Math.abs(perte - attendu) < 0.5 && intact && w2.obus.length === 0)
+}
+
 // (TOUJOURS EN DERNIER : des blocs ajoutés après cette ligne échouaient sans faire échouer `npm run verif` — 17/11)
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)

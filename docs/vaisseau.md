@@ -7292,3 +7292,28 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   Testé : 34 % du flot, 30 points, rayon 3, 52 contre 40 de vitesse, cinquante et une pépites pour cent abattus. Le
   test du cornu ne compte plus les moucherons (mesuré sur quatre graines : sa part reste 20 % — les 27 % d'une
   minute du test étaient un écart du hasard, ses tirages décalés par la nouvelle sorte).
+
+- **21/11, la mort, la pause, la tempête, la caméra et le zoom sur PC.**
+  - Keko : « quand je suis mort, les balles de mitraillette sont restées sur place, sans bouger, durant tout le temps de
+    la résurrection ». Rien ne les menait plus : abattu, obus, bombes, traits, flaques, givres, balises et tourelles
+    partent avec lui (comme ses drones et ses autres armes posées). Testé.
+  - Keko : « quand je mets pause, certaines animations persistent ; tout le jeu doit se mettre en pause, même les petites
+    animations des personnages, rien ne doit bouger ». En pause, au choix d'un talent, la soute ouverte, L'HORLOGE DU
+    MONDE `t` S'ARRÊTE (et le pas des étincelles, des effets, de la caméra est nul) ; L'HORLOGE DE L'INTERFACE `tReel`
+    continue — les menus, l'appui et le refus des boutons, le décompte du talent. MESURÉ : en pause, rien ne change en une
+    seconde (0 pixel sur 329 160).
+  - Keko : « sur PC, quand je choisis mon amélioration ou que j'appuie sur pause, et qu'en même temps j'appuie sur les
+    touches de déplacement, la caméra se déplace ». Réglé par le même gel : la caméra glisse au pas du monde. MESURÉ : en
+    pause, D tenue une seconde et demie, 0 pixel ne change.
+  - Keko : « dans le vortex, un contour rouge plutôt que violet ; on attaque directement le blindage, on ignore les
+    boucliers bleus, les plaques ; on ne peut pas déclencher de déphasage aux dégâts de la tempête ». Le cadre bat en
+    rouge ; l'énergie ET les roches de la tempête frappent le blindage tout droit (`blesserParLaTempete` : ni bouclier,
+    ni plaque, ni corruption, ni déphasage, ni invincibilité). Testé : 30 perdus en une seconde (0,6 × 50), bouclier,
+    plaques et déphasage intacts.
+  - Keko : « sur PC, le zoom est plus fort que sur téléphone ; impression, ou le champ de vision est vraiment plus grand
+    sur téléphone ? » — MESURÉ, vraiment : au téléphone couché, l'interface est dans des bandeaux À CÔTÉ de la vue
+    (320 × 180 fois le champ) ; sur PC, ses colonnes de 36 pixels d'interface étaient posées SUR le monde — en 1920 ×
+    1080, 290 de large entre elles (278 en 1366 × 768). La vue PC s'élargit de la place des colonnes (`COLONNE_SUR_PC`,
+    trois passes : leur valeur en pixels du monde dépend de l'échelle de l'interface) : 320 × 199 en 1920 × 1080,
+    320 × 207 en 1366 × 768 — au moins ce que voit le téléphone, la règle du 15/11. Vu à la capture, en se présentant
+    comme un PC.

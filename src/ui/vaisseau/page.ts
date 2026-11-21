@@ -539,6 +539,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** De combien le tampon de l'interface dépasse la vue de référence (sur PC : elle est dessinée plus fin) ; et ce qu'un de ses pixels vaut à l'écran, au plus. */
   let echelleUI = 1
   const PIXEL_D_INTERFACE_SUR_PC = 2.5 // (3 d'abord : encore trop gros)
+  /** La largeur d'une colonne d'interface posée sur le jeu, sur PC couché, en pixels d'interface (voir `largeurDeBande`). */
+  const COLONNE_SUR_PC = 36
   /** Le champ du tampon QU'ON PEINT : celui du monde pendant qu'on peint le monde, 1 pour l'interface. */
   let champDeLaVue = 1
   const CHAMP_MAX = 2
@@ -882,6 +884,17 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         w = VW
         h = Math.min(640, Math.round(VW / r))
       }
+      // (… ET ELLE TIENT ENTIÈRE ENTRE LES COLONNES — Keko, 21/11 : « sur PC, le zoom est plus fort que sur téléphone ;
+      // est-ce que c'est juste une impression ? » — MESURÉ : non. Au téléphone couché, l'interface est dans des bandeaux À
+      // CÔTÉ de la vue ; sur PC, ses colonnes sont posées SUR le monde, et en 16:9 on n'en voyait plus que 290 de large
+      // sur 320. Couché, la vue s'élargit de la place des deux colonnes — `COLONNE_SUR_PC` pixels d'interface chacune, dont
+      // la valeur en pixels du monde dépend de l'échelle de l'interface, qui dépend de la vue : trois passes y suffisent)
+      if (paysage)
+        for (let k = 0; k < 3; k++) {
+          const e = Math.max(1, large / w / PIXEL_D_INTERFACE_SUR_PC)
+          w = Math.min(640, Math.max(w, Math.round(VW + (2 * COLONNE_SUR_PC) / e)))
+          h = Math.min(640, Math.max(VH, Math.round(w / r)))
+        }
       // L'INTERFACE EST DESSINÉE PLUS FIN SUR PC (Keko, 15/11 : « sur téléphone c'est la bonne échelle, mais sur PC
       // l'interface est dessinée beaucoup trop gros ») : son tampon est plus grand que la vue de référence — un pixel
       // d'interface vaut TROIS pixels d'écran au plus, au lieu de cinq ou six — ; le monde, lui, garde son tampon à
@@ -1401,6 +1414,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   let choixDeTalent: Choix | null = null
   let reserveDeTalents = 0
   let talentFinA = 0
+  /** L'horloge de l'interface : elle ne s'arrête jamais, même quand le monde est figé (voir `image`). */
+  let tReel = 0
   let talentA = -10
   /**
    * LA BARRE D'EXPÉRIENCE (Keko, 14/11 : « une barre qui se remplit avec les pépites ; ne mets pas le mot XP ni aucun
@@ -1718,7 +1733,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   function dessinerLeChoixDeTalent(p: Peintre): void {
     const ch = choixDeTalent
     if (ch === null) return
-    const u0 = sortie((t - talentA) / 0.2)
+    const u0 = sortie((tReel - talentA) / 0.2)
     p.rect(0, 0, W, H, NUIT, 0.72 * u0)
     zones = []
     const cartes = proposer(graineDuVol, m.invasion.niveau, ch.rang, talentsHorsDeLaRace(modeleDeVaisseau(flotte.actif).race))
@@ -1728,7 +1743,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const hautTotal = 40 + (cote ? hc : cartes.length * (hc + 4))
     const y0 = Math.max(4, Math.round((H - hautTotal) / 2)) + Math.round((1 - u0) * 8)
     motEnRelief(p, `Niveau ${m.invasion.niveau}`, W / 2, y0, true, TITRE)
-    const reste = Math.max(0, talentFinA - t)
+    const reste = Math.max(0, talentFinA - tReel)
     const consigne = ch.aFaire > 1 ? `Choisissez un talent (${ch.aFaire} à choisir)` : 'Choisissez un talent'
     ecrire(p, consigne, W / 2, y0 + 16, COQUE[5], { align: 'center' })
     // le temps qui reste : une barre qui se vide, et les secondes
@@ -1745,11 +1760,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       jouer('equipe')
       secouer(1)
       choixDeTalent = apresUnChoix(ch)
-      talentFinA = t + DUREE_DU_CHOIX
-      talentA = t
+      talentFinA = tReel + DUREE_DU_CHOIX
+      talentA = tReel
     }
     cartes.forEach((ta, i) => {
-      const age = t - talentA - 0.06 * i
+      const age = tReel - talentA - 0.06 * i
       if (age < 0) return
       const x = cote ? Math.round(W / 2 - (3 * cw + 8) / 2) + i * (cw + 4) : 12
       const y = y0 + 40 + (cote ? 0 : i * (hc + 4)) + Math.round((1 - sortie(age / 0.2)) * 6)
@@ -1781,15 +1796,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    */
   function dessinerLInvasion(p: Peintre): void {
     const inv = m.invasion
-    // (DANS LA TEMPÊTE, l'énergie le ronge : un cadre violet bat autour de l'écran — voir `arene`)
+    // (DANS LA TEMPÊTE, l'énergie le ronge : un cadre ROUGE bat autour de l'écran — voir `arene` ; violet d'abord, rouge
+    // depuis le 21/11 — Keko : « plutôt que de mettre un contour violet, mets un contour rouge »)
     if (CONF.arene.active && m.phase === 'vol' && Math.hypot(v.x, v.y) > CONF.arene.rayon) {
       const a = 0.3 + 0.2 * Math.sin(t * 12)
       for (let k = 0; k < 4; k++) {
         const al = a * (1 - k / 4)
-        p.rect(k, k, W - 2 * k, 1, TEMPETE[2], al)
-        p.rect(k, H - 1 - k, W - 2 * k, 1, TEMPETE[2], al)
-        p.rect(k, k, 1, H - 2 * k, TEMPETE[2], al)
-        p.rect(W - 1 - k, k, 1, H - 2 * k, TEMPETE[2], al)
+        p.rect(k, k, W - 2 * k, 1, ROUGE[4], al)
+        p.rect(k, H - 1 - k, W - 2 * k, 1, ROUGE[4], al)
+        p.rect(k, k, 1, H - 2 * k, ROUGE[4], al)
+        p.rect(W - 1 - k, k, 1, H - 2 * k, ROUGE[4], al)
       }
     }
     dessinerLeVerrou(p)
@@ -1867,7 +1883,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     boutonBase(p, x, y, B, B, true, () => {
       pauseOuverte = true
       pauseSurLArme = false
-      pauseA = t
+      pauseA = tReel
       manche = null
       touches.clear()
     }, (dx, dy) => {
@@ -2083,7 +2099,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   function dessinerLaPause(p: Peintre): void {
     if (pauseOuverte && (!enJeu || m.invasion.finie)) pauseOuverte = false
     if (!pauseOuverte) return
-    const u0 = sortie((t - pauseA) / 0.25)
+    const u0 = sortie((tReel - pauseA) / 0.25)
     p.rect(0, 0, W, H, NUIT, 0.75 * u0)
     zones = []
     // (LE PANNEAU DES STATISTIQUES — voir `dessinerLesStatsEnPause` : à droite des boutons en paysage, dessous debout ;
@@ -2742,7 +2758,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** Le tremblement d'une chose qui manque, pendant un refus qui la nomme. */
   const trembleDe = (quoi: string): number => {
     const r = refus
-    return r !== null && t - r.t0 < 0.3 && r.manque !== undefined && r.manque.includes(quoi) ? Math.round(Math.sin((t - r.t0) * 70) * 2 * (1 - (t - r.t0) / 0.3)) : 0
+    return r !== null && tReel - r.t0 < 0.3 && r.manque !== undefined && r.manque.includes(quoi) ? Math.round(Math.sin((tReel - r.t0) * 70) * 2 * (1 - (tReel - r.t0) / 0.3)) : 0
   }
   const memeCoin = (a: { x: number; y: number } | null, x: number, y: number): boolean => a !== null && Math.abs(a.x - x) < 0.5 && Math.abs(a.y - y) < 0.5
   type EtatDuBouton = { dx: number; dy: number; enfonce: boolean; flash: boolean; survole: boolean }
@@ -2793,9 +2809,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   }
   const zonesDecalees = new WeakSet<object>()
   function etatDuBouton(x: number, y: number, w: number, h: number): EtatDuBouton {
-    const age = enfonce !== null && memeCoin(enfonce, x + ORIGINE.x, y + ORIGINE.y) ? t - enfonce.t0 : 99
+    const age = enfonce !== null && memeCoin(enfonce, x + ORIGINE.x, y + ORIGINE.y) ? tReel - enfonce.t0 : 99
     const r = refus
-    const tremble = r !== null && memeCoin(r, x, y) && t - r.t0 < 0.3 ? Math.round(Math.sin((t - r.t0) * 70) * 2 * (1 - (t - r.t0) / 0.3)) : 0
+    const tremble = r !== null && memeCoin(r, x, y) && tReel - r.t0 < 0.3 ? Math.round(Math.sin((tReel - r.t0) * 70) * 2 * (1 - (tReel - r.t0) / 0.3)) : 0
     const survole = survol !== null && survol.x >= x && survol.x < x + w && survol.y >= y && survol.y < y + h
     return { dx: tremble, dy: age < 0.1 ? 1 : 0, enfonce: age < 0.1, flash: age >= 0.1 && age < 0.17, survole }
   }
@@ -2804,7 +2820,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     zones.push({ x: x + ORIGINE.x, y: y + ORIGINE.y, w, h, action, son, dx: ORIGINE.x, dy: ORIGINE.y })
   }
   function zoneDeRefus(x: number, y: number, w: number, h: number, manque?: string[]): void {
-    zones.push({ x: x + ORIGINE.x, y: y + ORIGINE.y, w, h, action: () => (refus = { x, y, t0: t, manque }), son: 'refus' })
+    zones.push({ x: x + ORIGINE.x, y: y + ORIGINE.y, w, h, action: () => (refus = { x, y, t0: tReel, manque }), son: 'refus' })
   }
   /** Le reflet d'une plaque survolée : il la traverse en boucle, vite. */
   const refletDeSurvol = (x: number, w: number, survole: boolean): number | null => (survole ? x - 10 + ((t * 1.6) % 1.2) * (w + 30) : null)
@@ -3194,7 +3210,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const wn = largeurDe(n, GRAS)
     const allume = t - creditsA < 0.45
     const r = refus
-    const tremble = r !== null && t - r.t0 < 0.3 && (r.manque === undefined || r.manque.includes('credits')) ? Math.round(Math.sin((t - r.t0) * 70) * 2 * (1 - (t - r.t0) / 0.3)) : 0
+    const tremble = r !== null && tReel - r.t0 < 0.3 && (r.manque === undefined || r.manque.includes('credits')) ? Math.round(Math.sin((tReel - r.t0) * 70) * 2 * (1 - (tReel - r.t0) / 0.3)) : 0
     const saut = t - creditsA < 0.12 ? -1 : 0
     const wp = wn + 21
     const px = W - 4 - wp + tremble
@@ -3681,7 +3697,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const wn = largeurDe(n, GRAS)
     const allume = t - creditsA < 0.45
     const r = refus
-    const tremble = r !== null && t - r.t0 < 0.3 && (r.manque === undefined || r.manque.includes('credits')) ? Math.round(Math.sin((t - r.t0) * 70) * 2 * (1 - (t - r.t0) / 0.3)) : 0
+    const tremble = r !== null && tReel - r.t0 < 0.3 && (r.manque === undefined || r.manque.includes('credits')) ? Math.round(Math.sin((tReel - r.t0) * 70) * 2 * (1 - (tReel - r.t0) / 0.3)) : 0
     const saut = t - creditsA < 0.12 ? -1 : 0
     // LA LANGUETTE (Keko, 12/11 : « vide cet espace en donnant une forme non rectangulaire à la zone » — le pointillé
     // et sa flèche, à gauche des crédits, ne plaisaient pas) : l'en-tête s'arrête sous le titre, et seul ce pan d'acier
@@ -7265,7 +7281,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   }
   /** Une zone touchée : elle s'enfonce, agit, et sonne. */
   function appuyer(z: { x: number; y: number; action: () => void; son?: Son | null }): void {
-    enfonce = { x: z.x, y: z.y, t0: t }
+    enfonce = { x: z.x, y: z.y, t0: tReel }
     const n = [eclats.length, flottants.length, volantes.length, envolsDePiece.length]
     z.action()
     // (ce que l'action a semé — une gerbe, un nombre qui monte, des pièces qui volent — l'était dans la fenêtre de sa zone)
@@ -12670,7 +12686,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * couvre la page, une colonne de même largeur posée SUR le jeu (Keko, 15/11 : « il faudrait que l'interface sur PC
    * suive la même disposition que sur téléphone en paysage : les barres sur le côté »).
    */
-  const largeurDeBande = (): number => (couvreApplique && paysage ? 36 : bandeCote())
+  const largeurDeBande = (): number => (couvreApplique && paysage ? COLONNE_SUR_PC : bandeCote())
   const interfaceEnBande = (): boolean => paysage && largeurDeBande() >= 30
   /**
    * Le partage du surplus : LE HAUT D'ABORD, jusqu'à la hauteur de l'interface (la soute et le porté tiennent alors
@@ -14553,8 +14569,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           if (enCours === null) {
             choixDeTalent = ouvrirLeChoix(reserveDeTalents)
             reserveDeTalents = 0
-            talentFinA = t + DUREE_DU_CHOIX
-            talentA = t
+            talentFinA = tReel + DUREE_DU_CHOIX
+            talentA = tReel
           } else choixDeTalent = { aFaire: enCours.aFaire + 1, rang: enCours.rang }
           break
         }
@@ -15167,8 +15183,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
   }
   function image(ms: number): void {
-    const dt = Math.min(0.25, (ms - avant) / 1000)
+    const dtReel = Math.min(0.25, (ms - avant) / 1000)
     avant = ms
+    // TOUT LE JEU SE FIGE EN PAUSE (Keko, 21/11 : « quand je mets pause, certaines animations persistent ; il faudrait que
+    // tout le jeu se mette en pause, même les petites animations des personnages, rien ne doit bouger ») : en pause, au
+    // choix d'un talent, la soute ouverte, L'HORLOGE DU MONDE `t` S'ARRÊTE, et avec elle tout ce qui s'anime — les
+    // insectes, la tempête, les étincelles, les effets ; L'HORLOGE DE L'INTERFACE `tReel` continue : les menus, les
+    // boutons, le décompte du talent
+    tReel += dtReel
+    const figee = enJeu && (pauseOuverte || choixDeTalent !== null || souteOuverte)
+    const dt = figee ? 0 : dtReel
     t += dt
     // (le tampon se couche ou se relève quand on décolle ou qu'on rentre, téléphone couché)
     // LE CHAMP DE VISION glisse vers ce que les boutons « + » et « − » ont demandé (un quart par tape, en un sixième de
@@ -15226,7 +15250,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // (la soute ouverte : le monde est en pause, ses sons continus se taisent)
     if (souteOuverte && (!enJeu || m.phase !== 'vol')) souteOuverte = false
     // LE CHOIX D'UN TALENT : le jeu est en pause pour tout le monde ; le délai passé, ce qui reste à choisir part en réserve
-    if (choixDeTalent !== null && t >= talentFinA) {
+    if (choixDeTalent !== null && tReel >= talentFinA) {
       reserveDeTalents += reserveApresLeDelai(choixDeTalent)
       choixDeTalent = null
     }
