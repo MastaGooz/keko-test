@@ -390,6 +390,68 @@ function enveloppeDe(pts: [number, number][]): [number, number][] {
   }
   return bas.slice(0, -1).concat(haut.slice(0, -1))
 }
+/**
+ * L'INSECTE DE L'INVASION, LE MOB LE PLUS FAIBLE (Keko, 21/11 : « je trouve les ennemis un peu moches, simplistes, et pas
+ * vraiment dans le style des vaisseaux ; rework les ennemis avec l'objectif de créer les ennemis les plus basiques du
+ * jeu » — « insecte chitineux », choisi parmi trois, de la taille d'avant) : UNE PETITE BÊTE DE L'ESSAIM, DANS LA
+ * LANGUE DES VAISSEAUX — des formes éclairées par la lumière du monde, des matières, un contour d'encre. Vue de dessus,
+ * la tête vers +x, en pixels du monde (16 de long) : six pattes articulées qui marchent (`marche`), un abdomen de
+ * chitine violette annelé et son dard d'os, deux ailes de membrane qui vibrent, un thorax, une tête en dôme, deux yeux de
+ * bile, deux mandibules d'os qui s'ouvrent (`morsure`, de 0 fermées à 1 grandes ouvertes). En chasse, la page la
+ * recolore par ses matières (la chitine en carmin, les yeux en rouge).
+ */
+export function formesDeLInsecte(marche: number, morsure: number): Forme[] {
+  const f: Forme[] = []
+  // LES PATTES : trois par flanc — l'avant vers l'avant, l'arrière vers l'arrière —, deux segments, qui vont et viennent
+  // en opposition (le flanc droit en retard d'un demi-pas)
+  for (const sg of [-1, 1])
+    for (let k = 0; k < 3; k++) {
+      const pas = Math.sin(marche + k * 2.1 + (sg > 0 ? Math.PI : 0))
+      const hx = [1.3, 0.1, -1.1][k]
+      const gx = hx + [1, 0, -1.3][k] + pas * 0.4
+      const px = hx + [2.6, 0.3, -3.2][k] + pas * 1.1
+      f.push({ pts: barre(hx, sg * 1.6, gx, sg * 4.1, 0.85), mat: 'mauve', relief: 'plat' })
+      f.push({ pts: barre(gx, sg * 4.1, px, sg * 6, 0.65), mat: 'mauve', relief: 'plat' })
+    }
+  // LES AILES : deux lames de membrane qui dépassent des élytres, de part et d'autre, et vibrent
+  const ouvre = 0.62 + 0.2 * Math.sin(marche * 3.3)
+  for (const sg of [-1, 1]) {
+    const a = Math.PI - sg * ouvre
+    const ux = Math.cos(a)
+    const uy = Math.sin(a)
+    const cx = -1.5 + ux * 2.6
+    const cy = sg * 1.6 + uy * 2.6
+    const pts: [number, number][] = ovale(0, 0, 2.8, 0.95, 12).map(([x, y]) => [cx + x * ux - y * uy, cy + x * uy + y * ux])
+    f.push({ pts, mat: 'membrane', relief: 'plat', penche: sg })
+  }
+  // L'ABDOMEN SOUS SES ÉLYTRES : deux coques de chitine bombées, chacune penchée vers son flanc, une fente sombre entre
+  // elles ; le bout de l'abdomen dépasse, annelé, et son dard d'os
+  f.push({ pts: ovale(-6.6, 0, 2.6, 1.9, 12), mat: 'lie', relief: 'cyl' })
+  f.push({ pts: [[-8.8, -0.6], [-10.4, 0], [-8.8, 0.6]], mat: 'os', relief: 'plat' })
+  for (const sg of [-1, 1]) {
+    const elytre: [number, number][] = []
+    for (let i = 0; i <= 10; i++) {
+      const u = i / 10
+      const x = 1 - u * 8.4
+      elytre.push([x, sg * (0.15 + 3.1 * Math.sin(Math.PI * Math.min(1, 0.18 + u * 0.82)) ** 0.7)])
+    }
+    // (… refermée LE LONG DE LA FENTE, pas en diagonale : sinon une demi-lune creuse — mesuré à la planche)
+    elytre.push([-7.4, sg * 0.15], [1, sg * 0.15])
+    f.push({ pts: elytre, mat: 'mauve', relief: 'plat', penche: sg })
+  }
+  f.push({ pts: barre(0.8, 0, -7.2, 0, 0.45), mat: 'lie', relief: 'plat' })
+  // LE THORAX, LA TÊTE, LES YEUX
+  f.push({ pts: ovale(1.6, 0, 1.9, 2.3, 14), mat: 'mauve', relief: 'cyl' })
+  f.push({ pts: ovale(4, 0, 1.6, 1.5, 14), mat: 'lie', relief: 'dome', dome: { x: 4, y: 0, rx: 1.6, ry: 1.5 } })
+  for (const sg of [-1, 1]) f.push({ pts: ovale(4.5, sg * 0.95, 0.6, 0.6, 10), mat: 'bile', relief: 'dome', dome: { x: 4.5, y: sg * 0.95, rx: 0.6, ry: 0.6 } })
+  // LES MANDIBULES : deux crochets d'os, qui s'ouvrent quand il chasse
+  for (const sg of [-1, 1]) {
+    const ecart = 0.3 + 1.1 * morsure
+    f.push({ pts: barre(5.2, sg * 0.6, 6.5, sg * (0.4 + ecart), 0.6), mat: 'os', relief: 'plat' })
+    f.push({ pts: barre(6.5, sg * (0.4 + ecart), 7.5, sg * (0.1 + ecart * 0.55), 0.45), mat: 'os', relief: 'plat' })
+  }
+  return f
+}
 /** Un trait épais en polygone, de (x0, y0) à (x1, y1). */
 export function barre(x0: number, y0: number, x1: number, y1: number, e: number): [number, number][] {
   const l = Math.hypot(x1 - x0, y1 - y0) || 1

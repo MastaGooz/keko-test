@@ -22,7 +22,7 @@ import { textWidth } from 'pixelfx'
 import { pixelsDeLIcone } from './icones-armes.ts'
 import { HAUT_ACCENTS } from './police.ts'
 import { RACINES_DU_KRAKEN, POINTE_DU_CROCHET, contourDuCrochet, cordesDuKraken } from './rendu-vaisseau.ts'
-import { boucheMontee, gabaritDe, tailleDe, placeDOutil, queueDe, tuyeresOmni, formesDuSocleDeTourelle, formesDeLaTeteDeTourelle, formesDeLaCapsule, formesDuCristalPose, formesDeLaScie, formesDeLaBalise, formesDuBecDeBalise, canonDeLaForeuse, formesDeLAimant, formesDuChassis, formesDeLaForeuse, formesDeLArme, formesDuPropulseur, formesDuRadar, formesDuVaisseau, formesDuVer, CRISTAL_DU_PRISME, sommetsDUnHypercube, ARETES_DE_L_HYPERCUBE, rampeDeLaMatiere, LIVREES, COULEURS_DE_JOUEUR, ovale, peindreDansUneCase, peindreFormes, rampesDeLaLivree, tonsDeLaLivree, tonsDeLaMatiere, ANCRES_DU_KRAKEN, type Habit } from './rendu-vaisseau.ts'
+import { formesDeLInsecte, boucheMontee, gabaritDe, tailleDe, placeDOutil, queueDe, tuyeresOmni, formesDuSocleDeTourelle, formesDeLaTeteDeTourelle, formesDeLaCapsule, formesDuCristalPose, formesDeLaScie, formesDeLaBalise, formesDuBecDeBalise, canonDeLaForeuse, formesDeLAimant, formesDuChassis, formesDeLaForeuse, formesDeLArme, formesDuPropulseur, formesDuRadar, formesDuVaisseau, formesDuVer, CRISTAL_DU_PRISME, sommetsDUnHypercube, ARETES_DE_L_HYPERCUBE, rampeDeLaMatiere, LIVREES, COULEURS_DE_JOUEUR, ovale, peindreDansUneCase, peindreFormes, rampesDeLaLivree, tonsDeLaLivree, tonsDeLaMatiere, ANCRES_DU_KRAKEN, type Habit } from './rendu-vaisseau.ts'
 import { peauDe, peauxDe, rampesDeLaPeau, tonsDeLaPeau, type Peau } from './peaux.ts'
 import { boiteDe } from './rendu-vaisseau.ts'
 import { dessinerLAireDuHangar, dessinerLeSolDuHangar, dessinerLesLampesDuHangar } from './hangars.ts'
@@ -8317,15 +8317,25 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const cle = ((ic * POSES_DE_LA_MARCHE + im) * POSES_DE_LA_MORSURE + io) * 2 + (aggro ? 1 : 0)
       let im_ = imagesDesInsectes.get(cle)
       if (im_ === undefined) {
-        im_ = imageDe(TAILLE_DE_L_INSECTE, (p2, c) => peindreUnInsecte(p2, c, c, (ic / POSES_DU_CAP) * tour, (im / POSES_DE_LA_MARCHE) * tour, (io / POSES_DE_LA_MORSURE) * tour, false, aggro, undefined))
+        im_ = imageDe(TAILLE_DE_L_INSECTE, (p2, c) => peindreLInsecte(p2, c, c, (ic / POSES_DU_CAP) * tour, (im / POSES_DE_LA_MARCHE) * tour, (io / POSES_DE_LA_MORSURE) * tour, false, aggro))
         imagesDesInsectes.set(cle, im_)
       }
       poserLImage(p, im_, x, y)
       if (aggro) p.glow(x, y, 9, N.hex('#ff3a4a'), 0.25 + 0.1 * Math.sin(t * 9 + phase))
       return
     }
-    peindreUnInsecte(p, x, y, cap, marche, morsure, blanchi, aggro, deforme)
+    if (deforme === undefined) peindreLInsecte(p, x, y, cap, marche, morsure, blanchi, aggro)
+    else peindreUnInsecte(p, x, y, cap, marche, morsure, blanchi, aggro, deforme)
     if (aggro && !blanchi) p.glow(x, y, 9, N.hex('#ff3a4a'), 0.25 + 0.1 * Math.sin(t * 9 + phase))
+  }
+  /**
+   * L'INSECTE DANS LA LANGUE DES VAISSEAUX (Keko, 21/11 — voir `formesDeLInsecte`) : ses formes peintes par le peintre des
+   * vaisseaux, sous la lumière du vol ; EN CHASSE, ses yeux passent au rouge (`matieres` ; sa chitine reste violette : au vortex il chasse toujours) ; blanc
+   * sous un coup. (Pris par le portail, il est encore peint à l'ancienne : voir `peindreUnInsecte`.)
+   */
+  function peindreLInsecte(p: Peintre, x: number, y: number, cap: number, marche: number, morsure: number, blanchi: boolean, aggro: boolean): void {
+    const ouvre = aggro ? 0.55 + 0.45 * Math.sin(morsure) : 0.15
+    peindreFormes(p, formesDeLInsecte(marche, ouvre), x, y, 1, { cap, lumiere: LUMIERE_DU_VOL, reflet: REFLET_DU_VOL, blanc: blanchi ? 1 : 0, matieres: aggro ? { bile: 'laser' } : undefined })
   }
   const POSES_DU_CAP = 48
   const POSES_DE_LA_MARCHE = 8

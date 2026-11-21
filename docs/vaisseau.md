@@ -7235,3 +7235,15 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     de son rayon, le choc gardant `derive.rebond` (0,6, de moi) de leur vitesse relative.
   Testé : aucun recouvrement dans la tempête à trois instants ; une roche prise ne s'enfonce jamais dans les siennes ;
   deux roches face à face se touchent à 30 (contact à 30) et repartent. Vu à la capture.
+
+- **21/11, L'INSECTE REFAIT, LE MOB LE PLUS FAIBLE** (Keko : « je trouve les ennemis un peu moches, simplistes, et pas
+  vraiment dans le style des vaisseaux ; rework les ennemis avec l'objectif de créer les ennemis les plus basiques du
+  jeu » — « insecte chitineux » et « la taille d'aujourd'hui », choisis parmi trois et deux). UN PETIT SCARABÉE DE L'ESSAIM,
+  DANS LA LANGUE DES VAISSEAUX (`formesDeLInsecte`, `rendu-vaisseau.ts`, peint par `peindreFormes` sous la lumière du
+  vol) : six pattes de chitine en deux segments qui marchent, DEUX ÉLYTRES bombées, chacune penchée vers son flanc, une
+  fente sombre entre elles, le bout de l'abdomen annelé et son dard d'os, deux ailes de membrane qui dépassent et vibrent,
+  un thorax, une tête en dôme, deux yeux de bile, deux mandibules d'os qui s'ouvrent en chasse. EN CHASSE, SES YEUX
+  ROUGISSENT ; sa chitine reste violette (de moi : au vortex il chasse toujours — tout en carmin, le violet ne se serait
+  jamais vu ; la planche avait les deux). Toujours une image gardée par pose (cap, pas, mandibules). Jugé sur une planche
+  agrandie hors du navigateur (pixelfx tourne sous Node) : la première version, ailes couchées sur l'abdomen, faisait une
+  tache grise ; puis des élytres en demi-lunes creuses (refermées en diagonale) ; puis vu dans le jeu.
