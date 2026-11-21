@@ -7385,3 +7385,15 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     les grands éclats au soleil), logé dans un creux — un pixel d'ombre du côté opposé à la lampe, une lèvre de pierre
     claire du côté de la lampe ; un sur trois est au bord et DÉPASSE de la silhouette (sa part dehors cernée comme elle).
     Un quart de la roche au plus. Vu à la planche, sur trois graines, et en jeu (`&vitrine&roche`).
+  - Keko : « beaucoup mieux ; la rotation des astéroïdes est saccadée, il faudrait une rotation beaucoup plus fluide et
+    continue ; il n'y a pas beaucoup d'astéroïdes dans la zone de jeu ». LES ROCHES QUI DÉRIVENT SONT REDESSINÉES À
+    CHAQUE IMAGE, à leur angle exact (une image gardée par pose, quarante-huit poses par tour, les faisait tourner par
+    crans de 7,5°) ; celles de la tempête, qui ne tournent plus, et celles qu'elle a prises gardent leur image. MESURÉ
+    (le profileur, `&roche&champ=1.5`, quatre roches) : 32 % de l'image d'abord, dont 13 % à chercher si un pixel est
+    dans un éclat ; un éclat lointain écarté par la distance avant tout angle, 16 %, 137 images par seconde.
+  - Keko : « que ce soit plus clair que les gros astéroïdes contiennent plus de pépites ; incruster des plus grosses
+    pépites en partie, en plus des plus petites ; qu'on voie que les gros astéroïdes sont remplis de trésors ». Les
+    éclats GRANDISSENT AVEC LA ROCHE (celui d'une grosse gemme de 3,2 sur une roche de 12 à 5,6 sur une de 34), une
+    POUSSIÈRE de petits éclats s'y ajoute (aucun sous 12, R² ÷ 75 au-delà : quinze sur une de 34), jusqu'à un peu plus
+    du tiers de la roche ; et LES GRANDS ÉCLATS SCINTILLENT, une petite étoile qui s'ouvre de temps en temps, à
+    contretemps. Vu à la planche, sur trois graines.

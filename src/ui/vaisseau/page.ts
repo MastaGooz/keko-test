@@ -12021,9 +12021,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         const ro = e.asteroide
         if (ro !== undefined) {
           const tremble = blanchi ? 1 : 0
-          // (… UNE ROCHE NATURELLE, SES PÉPITES SERTIES — Keko, 21/11 : voir `dessinerRocheDuVortex` ; une image par pose,
-          // comme celles de la tempête : elle est ombrée pixel par pixel)
-          poserUneRoche(p, -1, e.id, { rayon: ro.rayon, graine: ro.graine, angle0: ro.angle0, vitesseAngulaire: ro.vitesseAngulaire }, Math.round(sx + tremble * (alea(e.id, Math.floor(t * 30), 3) - 0.5) * 2), Math.round(sy), gemmesDuButin(CONF, butinDeLaRoche(CONF, ro.pvMax)))
+          // (… UNE ROCHE NATURELLE, SES PÉPITES PRISES DANS LA PIERRE — Keko, 21/11 : voir `dessinerRocheDuVortex` ;
+          // REDESSINÉE À CHAQUE IMAGE, QUI TOURNE EN CONTINU — Keko : « la rotation des astéroïdes est saccadée ; il
+          // faudrait une rotation beaucoup plus fluide ; il n'y a pas beaucoup d'astéroïdes dans la zone de jeu » : une
+          // image par pose, quarante-huit poses par tour, tournait par crans de 7,5°)
+          dessinerRocheDuVortex(p, { id: e.id, x: 0, y: 0, rayon: ro.rayon, graine: ro.graine, angle0: ro.angle0, vitesseAngulaire: ro.vitesseAngulaire, minerai: 'fer', richesse: 0.2 }, t, Math.round(sx + tremble * (alea(e.id, Math.floor(t * 30), 3) - 0.5) * 2), Math.round(sy), gemmesDuButin(CONF, butinDeLaRoche(CONF, ro.pvMax)), XP)
           if (e.pv < ro.pvMax) dessinerUneJauge(p, sx, sy + ro.rayon + 4, Math.round(ro.rayon * 1.6), e.pv / ro.pvMax, ROUGE[4], ROUGE[5], blanchi)
           continue
         }

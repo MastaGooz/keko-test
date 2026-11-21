@@ -466,12 +466,20 @@ export function dessinerRocheDuVortex(p: PeintreRoche, a: Asteroide, t: number, 
     const d = bordA(th) * (0.3 + 0.4 * tire(a.graine, 16, i))
     crateres.push({ x: Math.cos(th) * d, y: Math.sin(th) * d, r: Math.max(1.6, R * (0.09 + 0.06 * tire(a.graine, 17, i))) })
   }
-  // LES ÉCLATS DE PÉPITE : un par gemme, la plus grosse d'abord, écartés ; un sur trois au bord (il dépasse)
+  // LES ÉCLATS DE PÉPITE : un par gemme, la plus grosse d'abord, écartés ; un sur trois au bord (il dépasse) — ET UNE
+  // GROSSE ROCHE EST PLEINE DE TRÉSORS (Keko, 21/11 : « que ce soit plus clair que les gros astéroïdes contiennent plus de
+  // pépites ; incruster des plus grosses pépites en partie, en plus des plus petites ; qu'on voie que les gros
+  // astéroïdes sont remplis de trésors ») : les éclats grandissent avec la roche (celui d'une grosse gemme, de 3 sur une
+  // roche de 12 à 5,5 sur une de 34), et une POUSSIÈRE de petits éclats s'y ajoute, d'autant plus nombreuse que la
+  // roche est grande (aucune sous 12, une quinzaine sur une de 34)
   type Eclat = { x: number; y: number; r: number; g: number; bord: boolean }
   const eclats: Eclat[] = []
-  let place = 0.26 * Math.PI * R * R
-  for (const [i, val] of [...gemmes].sort((u, v) => v - u).entries()) {
-    const r = val >= 10 ? 3.2 : val >= 3 ? 2.3 : 1.5
+  let place = 0.36 * Math.PI * R * R
+  const echelle = Math.max(1, Math.min(1.75, 0.65 + R / 30))
+  const tailles = [...gemmes].sort((u, v) => v - u).map((val) => (val >= 10 ? 3.2 : val >= 3 ? 2.3 : 1.5) * echelle)
+  const poussiere = R < 12 ? 0 : Math.round((R * R) / 75)
+  for (let k = 0; k < poussiere; k++) tailles.push(1.1 + 0.6 * tire(a.graine, 94, k))
+  for (const [i, r] of tailles.entries()) {
     if (Math.PI * r * r > place) continue
     const auBord = tire(a.graine, 92, i) < 0.34
     for (let essai = 0; essai < 24; essai++) {
@@ -481,7 +489,7 @@ export function dessinerRocheDuVortex(p: PeintreRoche, a: Asteroide, t: number, 
       if (d < 0) continue
       const x = Math.cos(th) * d
       const y = Math.sin(th) * d
-      if (eclats.some((o) => Math.hypot(o.x - x, o.y - y) < o.r + r + 1.5)) continue
+      if (eclats.some((o) => Math.hypot(o.x - x, o.y - y) < o.r + r + (r < 2 ? 1 : 1.5))) continue
       eclats.push({ x, y, r, g: hacheDe(a.graine, i), bord: auBord })
       place -= Math.PI * r * r
       break
@@ -493,7 +501,10 @@ export function dessinerRocheDuVortex(p: PeintreRoche, a: Asteroide, t: number, 
     for (const e of eclats) {
       const ox = lx - e.x
       const oy = ly - e.y
-      if (Math.hypot(ox, oy) <= rayonDeLEclat(e, Math.atan2(oy, ox))) return e
+      // (loin de lui, pas d'angle à calculer : son rayon ne dépasse jamais 1,38 fois le sien — les FPS, 21/11)
+      const d2 = ox * ox + oy * oy
+      if (d2 > e.r * e.r * 1.91) continue
+      if (Math.sqrt(d2) <= rayonDeLEclat(e, Math.atan2(oy, ox))) return e
     }
     return null
   }
@@ -586,6 +597,20 @@ export function dessinerRocheDuVortex(p: PeintreRoche, a: Asteroide, t: number, 
       return couleurDeLEclat(ec, lx, ly, eclairage(lx, ly).e)
     })
   }
+  // LES GRANDS ÉCLATS SCINTILLENT : de temps en temps, une petite étoile s'ouvre sur l'un d'eux, à contretemps des
+  // autres (rien dans une image gardée : `t` y est nul et la roche ne scintille pas — celles de la tempête sont nues)
+  if (t > 0)
+    for (const ec of eclats) {
+      if (ec.r < 2.2) continue
+      const u = (t * 0.35 + tire(ec.g, 5)) % 1
+      if (u >= 0.12) continue
+      const k = Math.sin((u / 0.12) * Math.PI)
+      const [gx, gy] = tourne(ec.x + (lxp / ll) * ec.r * 0.4, ec.y + (lyp / ll) * ec.r * 0.4).map(Math.floor)
+      const L = Math.round((ec.r >= 3.5 ? 3 : 2) * k)
+      p.dot(gx, gy, 0xffffffff)
+      for (let e = 1; e <= L; e++) for (const [ax, ay] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) p.dot(gx + ax * e, gy + ay * e, e === L ? T[3] : 0xffffffff, 1 - e / (L + 1))
+      p.glow(gx, gy, 3 + ec.r, 0xffffffff, 0.35 * k)
+    }
 }
 /** Une graine dérivée (pour la forme de chaque éclat). */
 const hacheDe = (g: number, i: number): number => Math.floor(tire(g, 93, i) * 0x7fffffff)
