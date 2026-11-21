@@ -1677,13 +1677,17 @@ function faireNaitreUnEnnemi(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void
  */
 export const rayonDe = (c: ConfigVaisseau, e: Ennemi): number => e.asteroide?.rayon ?? c.ennemi.rayon
 
-/** UNE ROCHE DE LA TEMPÊTE (voir `arene`) : la k-ième, à l'instant `t` — tirée de son rang, rien n'est gardé. */
+/**
+ * UNE ROCHE DE LA TEMPÊTE (voir `arene`) : la k-ième, à l'instant `t` — tirée de son rang, rien n'est gardé. ELLE NE
+ * TOURNE PAS SUR ELLE-MÊME (Keko, 21/11 : « pas obligé de faire tourner les astéroïdes dans le vortex ») : elle tourne
+ * autour du centre, c'est tout — et la page n'en garde qu'une image.
+ */
 export function rocheDeLaTempete(c: ConfigVaisseau, k: number, t: number): { x: number; y: number; vx: number; vy: number; rayon: number; graine: number; angle0: number; vitesseAngulaire: number } {
   const A = c.arene
   const r = A.rayon + A.largeur * (0.15 + 0.7 * tire(7, k, 1))
   const w = (A.vitesse * (0.8 + 0.4 * tire(7, k, 2))) / r
   const a = ((k + tire(7, k, 3) * 0.8) / A.roches) * Math.PI * 2 + w * t
-  return { x: Math.cos(a) * r, y: Math.sin(a) * r, vx: -Math.sin(a) * w * r, vy: Math.cos(a) * w * r, rayon: A.rocheMin + (A.rocheMax - A.rocheMin) * tire(7, k, 4) ** 1.5, graine: hache(7, k), angle0: tire(7, k, 5) * 6.28, vitesseAngulaire: (tire(7, k, 6) - 0.5) * 3 }
+  return { x: Math.cos(a) * r, y: Math.sin(a) * r, vx: -Math.sin(a) * w * r, vy: Math.cos(a) * w * r, rayon: A.rocheMin + (A.rocheMax - A.rocheMin) * tire(7, k, 4) ** 1.5, graine: hache(7, k), angle0: tire(7, k, 5) * 6.28, vitesseAngulaire: 0 }
 }
 
 /** UN POINT DE NAISSANCE DANS L'ARÈNE (voir `arene`) : à `d` du vaisseau dans la direction `a` — tourné, ou ramené, s'il tombait dans la tempête. */
@@ -1859,7 +1863,8 @@ function deriver(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number): void {
   const A = c.arene
   const ro = e.asteroide!
   if (A.active && Math.hypot(b.x, b.y) > A.rayon) {
-    m.rochesPrises.push({ id: e.id, x: b.x, y: b.y, rayon: ro.rayon, graine: ro.graine, angle0: ro.angle0, vitesseAngulaire: ro.vitesseAngulaire })
+    // (… et, comme elles, elle cesse de tourner sur elle-même : figée à l'angle où elle est prise)
+    m.rochesPrises.push({ id: e.id, x: b.x, y: b.y, rayon: ro.rayon, graine: ro.graine, angle0: ro.angle0 + ro.vitesseAngulaire * m.t, vitesseAngulaire: 0 })
     if (m.verrou === e.id) m.verrou = null
     e.parti = true
     return

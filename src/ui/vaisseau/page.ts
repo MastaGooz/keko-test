@@ -11827,7 +11827,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
   }
   const POSES_DES_ROCHES = 48
-  const IMAGES_DES_ROCHES_MAX = 6000
+  // (… UNE IMAGE PAR ROCHE depuis qu'elles ne tournent plus sur elles-mêmes — Keko, 21/11 : 110, et celles qu'elle prend ;
+  // elles étaient 110 × 48, ~25 Mo)
+  const IMAGES_DES_ROCHES_MAX = 400
   const imagesDesRoches = new Map<number, ImageGardee>()
   /** La lumière du voile au milieu de l'anneau : ce que donnaient les lueurs d'avant, sommées (0,16 chacune, sept l'une sur l'autre). */
   const VOILE = 0.38

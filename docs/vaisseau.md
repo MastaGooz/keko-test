@@ -7215,3 +7215,9 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   grossières, on peut les remplacer par des particules ? ») : les filaments ne sont plus tracés (`&filaments` les rend) ;
   les six mille particules de la tempête de toujours filent par-dessus le voile texturé. Mesuré dans les mêmes
   conditions : 41,5 images par seconde (la tempête actuelle : 42) — le même coût. Vu à la capture.
+
+- **21/11, les roches de la tempête ne tournent plus sur elles-mêmes** (Keko : « t'es pas obligé de faire tourner les
+  astéroïdes dans le vortex ») : elles tournent autour du centre, c'est tout (`rocheDeLaTempete`, `vitesseAngulaire` 0) ;
+  une roche prise est figée à l'angle où la tempête la prend. La page n'en garde plus qu'UNE IMAGE PAR ROCHE (400 au plus,
+  contre 110 × 48, ~25 Mo). Mesuré dézoomé au plus, au bord, cent vingt insectes : 47 images par seconde. Ce qui reste
+  du dessin des roches (10 %) : les quelques roches qui dérivent, qui tournent et se repeignent à chaque image.
