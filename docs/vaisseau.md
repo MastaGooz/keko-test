@@ -7003,3 +7003,10 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     prend toute la colonne, il ne restait plus de place dessous — c'est le seul écart avec le 17/11 (« couché, sous la
     fiche »). Debout, il reste entre la grille et la fiche. Au hangar, la fiche sans nom n'a pas changé.
   Vu à la capture, debout et couché, sur les quatre races et un vaisseau fermé.
+
+- **21/11, les mots raccourcis ; la remise à zéro garde les quatre vaisseaux.** Keko : « pour le déphasage, annule
+  parfois les dégâts subis, pas besoin d'en mettre plus ; pour le bouclier, un bouclier protecteur qui se recharge, on
+  n'en dit pas plus » — l'encart tient maintenant sur deux lignes, la fiche raccourcit d'autant. Et : « quand je clique
+  sur Remise à zéro du jeu, je perds le Kraken, la Sentinelle et le Prisme » : au chargement, le vortex ajoute ses
+  vaisseaux à la flotte ; la remise à zéro reprenait une flotte neuve, le Chasseur seul. Elle passe maintenant par
+  `donnerLesVaisseauxDuVortex`, comme le chargement. Vu à la capture : remis à zéro, les quatre restent ouverts.

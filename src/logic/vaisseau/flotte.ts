@@ -46,9 +46,9 @@ export const RACES: { id: Race; nom: string; defense: { nom: string; dit: string
   // (… PUIS LES VECTRANS ET LES XL'QOTH, PUIS YHG'THARR — Keko, 19/11 : « pour les Éthérés, un nom qui sonne vraiment technologie avancée ;
   // pour les Innommés, un nom eldritch qui sonne presque imprononçable » ; puis, la Convergence essayée : « je veux
   // vraiment un nom de race, un peu comme les Xénoïdes » — choisis par Keko parmi mes propositions)
-  { id: 'etheres', nom: 'Les Vectrans', defense: { nom: 'Bouclier', dit: 'Un bouclier protecteur qui se recharge et absorbe les dégâts.' } },
+  { id: 'etheres', nom: 'Les Vectrans', defense: { nom: 'Bouclier', dit: 'Un bouclier protecteur qui se recharge.' } },
   // (… PUIS LES YHG'THARR — Keko, 19/11 : « Xl'qoth commence par un X, comme les Xénoïdes, c'est dommage »)
-  { id: 'innommes', nom: 'Les Yhg’tharr', defense: { nom: 'Déphasage', dit: 'Annule parfois les dégâts subis et devient brièvement invincible.' } },
+  { id: 'innommes', nom: 'Les Yhg’tharr', defense: { nom: 'Déphasage', dit: 'Annule parfois les dégâts subis.' } },
 ]
 
 /**

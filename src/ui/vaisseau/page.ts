@@ -186,7 +186,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   if (parametres.has('vortex')) sauvegardeDe('vortex')
   let { flotte, tresor, credits, labo, marche, quetes } = chargerHangar(heureDuMarche())
   // (LA SALAMANDRE EST DONNÉE D'OFFICE dans le jeu du vortex, pour l'essai — Keko, 15/11)
-  if (parametres.has('vortex')) for (const id of ['salamandre', 'sentinelle', 'ingenieur', 'frimas', 'pulsar', 'kraken', 'vouivre', 'prisme', 'neant', 'mante', 'tesseract']) flotte = ajouterLeVaisseau(flotte, id) // (et la Sentinelle, puis l'Ingénieur, puis le Frimas, dès le début — Keko, 15/11 ; puis le Pulsar, le Kraken, la Vouivre et le Prisme, 16/11)
+  // (et la Sentinelle, puis l'Ingénieur, puis le Frimas, dès le début — Keko, 15/11 ; puis le Pulsar, le Kraken, la Vouivre
+  // et le Prisme, 16/11)
+  // (… ET LA REMISE À ZÉRO LES REND AUSSI — Keko, 21/11 : « quand je clique sur Remise à zéro du jeu, je perds le Kraken, la
+  // Sentinelle et le Prisme, alors que les quatre vaisseaux doivent être toujours disponibles dès le début » : elle
+  // reprenait une flotte neuve, le Chasseur seul ; elle passe maintenant par `donnerLesVaisseauxDuVortex`)
+  const donnerLesVaisseauxDuVortex = (f: typeof flotte): typeof flotte => (parametres.has('vortex') ? ['salamandre', 'sentinelle', 'ingenieur', 'frimas', 'pulsar', 'kraken', 'vouivre', 'prisme', 'neant', 'mante', 'tesseract'].reduce(ajouterLeVaisseau, f) : f)
+  flotte = donnerLesVaisseauxDuVortex(flotte)
   // (`&vaisseau=ID` : pilote ce vaisseau de la flotte d'emblée — avec `&direct`, on décolle avec lui)
   if (parametres.has('vaisseau')) flotte = choisirLeVaisseau(flotte, parametres.get('vaisseau') ?? '')
   /**
@@ -3815,7 +3821,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           return
         }
         resetDemandeA = -10
-        flotte = flotteNeuve()
+        flotte = donnerLesVaisseauxDuVortex(flotteNeuve())
         livree = livreeDuVaisseau()
         hangar = hangarActif(flotte)
         labo = laboNeuf()
