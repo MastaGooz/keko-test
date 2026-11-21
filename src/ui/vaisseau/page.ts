@@ -1980,7 +1980,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // le temps qui reste : une barre qui se vide, et les secondes
     const lb = Math.min(140, W - 60)
     const xb = Math.round(W / 2 - lb / 2)
-    p.rect(xb - 1, y0 + 30, lb + 2, 4, MATIERES.encre.contour)
+    // (LA PISTE VIDE SE VOIT — Keko, 21/11 : « on ne voit pas le total de la jauge du timer, le fond est noir quand elle se
+    // vide » : un creux d'acier sombre, liseré d'un ton plus clair, sous la part qui reste)
+    p.rect(xb - 2, y0 + 29, lb + 4, 6, MATIERES.encre.contour)
+    p.rect(xb - 1, y0 + 30, lb + 2, 4, COQUE[2])
+    p.rect(xb, y0 + 31, lb, 2, COQUE[1])
     p.rect(xb, y0 + 31, Math.round(lb * (reste / DUREE_DU_CHOIX)), 2, reste < 5 ? ROUGE[4] : PEPITE[2])
     ecrire(p, String(Math.ceil(reste)), xb + lb + 4, y0 + 28, reste < 5 ? ROUGE[5] : COQUE[5], { police: GRAS })
     const { w: CW, h: CH, ecart: GAP } = CARTE_DE_TALENT

@@ -7514,3 +7514,5 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   - Keko : « ne marque pas la rareté textuellement, la couleur suffit ; dans la description, attention à ce que deux
     lignes ne se touchent pas ». Le nom de la rareté en pied est retiré ; les lignes de la description sont à dix
     pixels l'une de l'autre (huit : les accents de l'une touchaient les jambages de l'autre). Vu à la capture.
+  - Keko : « on ne voit pas le total de la jauge du timer, le fond est noir quand elle se vide ». La barre du temps a
+    sa PISTE : un creux d'acier sombre liseré d'un ton plus clair, dans un cerne d'encre, sous la part qui reste. Vu.
