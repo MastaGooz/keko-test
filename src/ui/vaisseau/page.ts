@@ -4909,8 +4909,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * toute la largeur ; puis CE QUI DÉFEND SA RACE dans un encart creux — le mot en gras à la couleur de la race, deux
    * points, ce qu'il fait ; et ce qu'est le vaisseau pour finir. Toujours de la même hauteur
    * (`hauteurDeLaFicheDuVaisseau`) : la grille ne bouge pas d'un vaisseau à l'autre. Rend sa hauteur.
-   * (`action` : COUCHÉ, « Piloter » se pose à droite du bandeau — la fiche prend toute la colonne, il n'y a plus de
-   * place dessous.)
+   * (`action` : « Piloter » se pose à droite du bandeau.)
+   * (UN VAISSEAU VERROUILLÉ dit, à la place de ce qu'il est, COMMENT LE DÉBLOQUER — Keko, 21/11 : « un texte qui explique
+   * comment le débloquer ; pour l'instant un placeholder ; bien visible, un peu plus que la définition du vaisseau, un
+   * peu en avant, pour que l'œil du joueur soit attrapé dessus » : un encart creux au liseré d'or, un cadenas d'or qui
+   * luit doucement, le texte en or clair — `DEBLOCAGE_A_VENIR`, en attendant les vraies conditions)
    */
   function dessinerLaFicheEnBandeau(p: Peintre, y: number, mo: ReturnType<typeof modeleDeVaisseau>, aSoi: boolean, cache: boolean, jauges: Jauge[], repere: ((j: Jauge) => number | null) | null, depuis: number, dit: string[], action: ((xd: number, yc: number) => void) | null): number {
     const hd = hauteurDeLaFicheDuVaisseau(mo)
@@ -4958,9 +4961,37 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       })
       yy += he + 3
     }
-    // CE QU'EST LE VAISSEAU
-    dit.forEach((li, i) => ecrire(p, li, 10, yy + i * INTERLIGNE, COQUE[4]))
+    // CE QU'EST LE VAISSEAU — ou, verrouillé, comment le débloquer
+    if (cache) {
+      const lignes = replier(DEBLOCAGE_A_VENIR, W - 16 - 26)
+      const hb = Math.min(y + hd - 3 - yy, 3 * INTERLIGNE + 2)
+      plaque(p, 8, yy, W - 16, hb, 'creux', { bord: PEPITE[2] })
+      const lx = 16
+      const ly = yy + Math.round(hb / 2) - 5
+      p.glow(lx + 3, ly + 6, 11, PEPITE[2], 0.22 + 0.12 * Math.sin(t * 3))
+      dessinerUnCadenas(p, lx, ly)
+      const y0 = yy + Math.round((hb - lignes.length * INTERLIGNE) / 2) + 1
+      lignes.forEach((li, i) => ecrire(p, li, lx + 14, y0 + i * INTERLIGNE, PEPITE[3]))
+    } else dit.forEach((li, i) => ecrire(p, li, 10, yy + i * INTERLIGNE, COQUE[4]))
     return hd
+  }
+  /** Ce qu'un vaisseau verrouillé dit pour être débloqué — EN ATTENDANT les vraies conditions (Keko, 21/11 : « un placeholder »). */
+  const DEBLOCAGE_A_VENIR = 'Faites ceci pour débloquer ce vaisseau.'
+  /** Un petit cadenas d'or, cerné d'encre : 9 de large, 11 de haut, `x`, `y` son coin haut gauche. */
+  function dessinerUnCadenas(p: Peintre, x: number, y: number): void {
+    const encre = MATIERES.encre.contour
+    // (l'anse)
+    p.rect(x + 2, y, 5, 1, encre)
+    p.rect(x + 1, y + 1, 1, 4, encre)
+    p.rect(x + 7, y + 1, 1, 4, encre)
+    p.rect(x + 3, y + 1, 3, 1, PEPITE[3])
+    p.rect(x + 2, y + 1, 1, 4, PEPITE[2])
+    p.rect(x + 6, y + 1, 1, 4, PEPITE[2])
+    // (le corps, la serrure)
+    p.rect(x, y + 4, 9, 7, encre)
+    p.rect(x + 1, y + 5, 7, 5, PEPITE[2])
+    p.rect(x + 1, y + 5, 7, 1, PEPITE[3])
+    p.rect(x + 4, y + 6, 1, 3, encre)
   }
   // (LE CUIRASSÉ EST MIS DE CÔTÉ — Keko, 15/11 : la Salamandre a sa place)
   // (RANGÉS PAR RACE — Keko, 17/11 : « je voudrais diviser les vaisseaux en catégories : la race qui les utilise »)
@@ -5024,9 +5055,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const tous = modelesDuVortex()
     const choisi = tous.find((mo) => mo.id === vaisseauChoisi) ?? tous[0]
     const a = aLeVaisseau(flotte, choisi.id) && !verrouille(choisi.id)
-    // LE BOUTON « PILOTER » (ou « Piloté », ou « Pas encore disponible ») — Keko, 17/11 : DEBOUT, ENTRE LA GRILLE ET LA FICHE
-    // (« on remonte le grid un peu pour placer le bouton dessous ») ; COUCHÉ, SOUS LA FICHE, dans la colonne de droite (« on
-    // a un espace vide ; ainsi le grid peut être un peu plus gros à gauche »). Il prend `HAUT_DU_PILOTER` de haut.
+    // LE BOUTON « PILOTER » — Keko, 17/11 : debout entre la grille et la fiche, couché sous la fiche ; puis, le 21/11, DANS
+    // LE BANDEAU DE LA FICHE, à droite du nom, couché (la place manquait) ET DEBOUT (« j'aime bien où tu l'as mis en mode
+    // paysage ; fais la même chose en mode portrait, on gagnera de la place pour le grid ») — voir `dessinerLaFicheEnBandeau`.
+    // « Piloté » en or pour le piloté ; RIEN POUR UN VAISSEAU VERROUILLÉ (Keko, 21/11 : « à la place du bouton Piloter, ne
+    // mets rien quand le vaisseau est verrouillé » — « Pas encore disponible » est parti)
     const piloter = (): void => {
       sauver()
       flotte = choisirLeVaisseau(flotte, choisi.id)
@@ -5037,15 +5070,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       vaisseauxOuverts = false
       feterLEquipement()
     }
-    const boutonPiloter = (yb: number): void => {
-      if (choisi.id === flotte.actif) {
-        motEnRelief(p, 'Piloté', W / 2, yb + 4, true)
-      } else if (a) {
-        const bw = largeurDe('Piloter', GRAS) + 22
-        bouton(p, Math.round(W / 2 - bw / 2), yb, bw, 15, 'Piloter', true, piloter, 'equipe')
-      } else ecrire(p, 'Pas encore disponible', W / 2, yb + 4, COQUE[4], { align: 'center' }) // (comme les armes — Keko, 15/11)
-    }
-    const HAUT_DU_PILOTER = 19
     if (partie !== 'fiche') {
     enTete(p, y, 'Vaisseaux', fermer)
     y += HT + 3
@@ -5055,7 +5079,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // rangée par race (trois colonnes) ; couché, une colonne par race (trois rangées) ; dans chaque case, LE PORTRAIT
     // (`peindreLePortrait`), et dessous le symbole de la race et le nom. La choisie est cerclée d'or et saute un peu ; la
     // pilotée porte « PILOTE » ; une tape en choisit une autre.
-    const reserve = partie === 'liste' ? 4 : HAUT_DU_PILOTER + hauteurDeLaFicheDuVaisseau(choisi) + 4
+    const reserve = partie === 'liste' ? 4 : hauteurDeLaFicheDuVaisseau(choisi) + 4
     const parColonne = partie === 'liste'
     const ESP = 3
     const COLS = parColonne ? RACES.length : 3
@@ -5114,18 +5138,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       zone(0, 0, W, H, () => {}, null)
       return
     }
-    if (partie === 'tout') {
-      boutonPiloter(y)
-      y += HAUT_DU_PILOTER
-    }
-    // (COUCHÉ, « Piloter » est dans le bandeau de la fiche : voir `dessinerLaFicheEnBandeau`)
-    dessinerLaFicheDuVaisseau(p, y, choisi, a, vaisseauxA, true, true, partie === 'fiche' ? (xd, yc) => {
+    dessinerLaFicheDuVaisseau(p, y, choisi, a, vaisseauxA, true, true, (xd, yc) => {
       if (choisi.id === flotte.actif) ecrire(p, 'Piloté', xd, yc - 4, PEPITE[2], { align: 'right', police: GRAS })
       else if (a) {
         const bw = largeurDe('Piloter', GRAS) + 16
         bouton(p, xd - bw, yc - 8, bw, 15, 'Piloter', true, piloter, 'equipe')
       }
-    } : null)
+    })
     if (u0 < 1) p.rect(0, HAUT_BARRE, W, H - HAUT_BARRE, NUIT, 1 - u0)
     zone(0, 0, W, H, () => {}, null)
   }

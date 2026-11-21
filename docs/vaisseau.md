@@ -7010,3 +7010,16 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   sur Remise à zéro du jeu, je perds le Kraken, la Sentinelle et le Prisme » : au chargement, le vortex ajoute ses
   vaisseaux à la flotte ; la remise à zéro reprenait une flotte neuve, le Chasseur seul. Elle passe maintenant par
   `donnerLesVaisseauxDuVortex`, comme le chargement. Vu à la capture : remis à zéro, les quatre restent ouverts.
+
+- **21/11, « Piloter » dans le bandeau partout ; un vaisseau verrouillé dit comment le débloquer.** Keko : « mets le
+  bouton piloter au même endroit en mode portrait qu'en mode paysage, à côté du nom du vaisseau et de la race ; on
+  gagnera de la place pour le grid » ; « remplace la définition du vaisseau, quand il est verrouillé, par un texte qui
+  explique comment le débloquer — un placeholder du style « Faites ceci pour débloquer ce vaisseau » —, bien visible,
+  un peu plus que la définition classique, un peu en avant, pour que l'œil du joueur soit attrapé dessus » ; « à la
+  place du bouton Piloter, ne mets rien quand le vaisseau est verrouillé ».
+  - DEBOUT AUSSI, « Piloter » (ou « Piloté » en or) est à droite du bandeau ; la grille prend les 19 pixels du bouton
+    d'avant. « Pas encore disponible » est parti : un vaisseau verrouillé n'a rien à cette place.
+  - VERROUILLÉ, à la place de sa description : un encart creux au LISERÉ D'OR, un PETIT CADENAS D'OR qui luit
+    doucement (`dessinerUnCadenas`), le texte en or pâle — `DEBLOCAGE_A_VENIR`, « Faites ceci pour débloquer ce
+    vaisseau. », en attendant les vraies conditions.
+  Vu à la capture, debout et couché.
