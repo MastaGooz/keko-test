@@ -82,13 +82,21 @@ export const VAISSEAU = {
    * LE BOUCLIER du joueur (la coque à bouclier du hangar) : tant de points qui prennent les coups avant la coque, et se
    * rechargent de `regain` point par seconde passé `delai` secondes sans coup. Zéro point : pas de bouclier.
    */
-  bouclier: { points: 0, delai: 4, regain: 0.5 },
+  // (`plein` : en tant de secondes le bouclier se remplit tout entier — sa recharge EN PART de lui-même, Keko, 21/11 : « le
+  // bouclier se régénère après 5 secondes sans subir de dégâts, et met 10 secondes à se régénérer totalement » ; une carte
+  // qui le grandit grandit ce qu'il regagne ; 0 : `regain` points par seconde, comme avant)
+  bouclier: { points: 0, delai: 4, regain: 0.5 } as { points: number; delai: number; regain: number; plein?: number },
   /**
    * LA COQUE SE RÉGÉNÈRE (l'Essaim, Keko, 17/11 : « une barre de vie qui se régénère lentement sur la durée, beaucoup
    * plus lentement que le bouclier, mais en permanence ») : TANT DE LA COQUE PLEINE PAR SECONDE, coup reçu ou non — une
    * part, pas des points (Keko, 17/11 : « on régénère les PV en % » : elle suit la coque qui grandit). Zéro : jamais.
    */
   regeneration: 0,
+  /**
+   * LA RÉPARATION DES PLAQUES (l'Empire, Keko, 21/11 — « réparation en % », choisi parmi trois) : une plaque cassée
+   * revient au bout de `reparation` secondes sans qu'une autre casse — une à la fois. Zéro : elles ne se réparent pas.
+   */
+  reparation: 0,
   /**
    * LES PLAQUES DE BLINDAGE (les humains, Keko, 17/11 — d'abord une plaque par portion de la barre ; puis « tout
    * simplement : tu as 3 plaques, tu peux subir 3 coups avant que ta vraie barre de vie soit entamée ; l'histoire de
@@ -245,7 +253,7 @@ export const VAISSEAU = {
      * d'expérience ; `xpBase` points pour le niveau 2, `xpPas` de plus à chaque niveau ; un niveau gagné s'annonce
      * (`niveau`) — la page met alors le jeu en pause pour le choix d'un talent.
      */
-    penalite: 10, xpBase: 5, xpPas: 3,
+    penalite: 10, xpBase: 5, xpPas: 3, /** Ce que vaut l'expérience d'une pépite, en part (les cartes « Expérience » le grandissent). */ gainXp: 1,
     /**
      * LE RETOUR, SANS PORTAIL (Keko, 21/11 : « on ne devrait pas faire respawn le vaisseau au milieu de la map, mais là où
      * il est mort ; mort dans le vortex, en dehors de la zone, au coin de la zone le plus proche ; on garde le compteur et
@@ -626,7 +634,7 @@ export type Arme = {
    */
   // (… ET UNE TRAÎNÉE DE POISON, celle du Ver — Keko, 17/11 : « le Ver récupère un sort qui fait une traînée de poison » :
   // `poison` — la même traînée, qui ne gèle ni ne ralentit ; un insecte dedans est empoisonné, `Ennemi.poisonA`)
-  givre?: { ecart: number; rayon: number; duree: number; dps: number; ralenti: number; poison?: boolean }
+  givre?: { ecart: number; rayon: number; duree: number; dps: number; ralenti: number; poison?: boolean; /** CORROSIVE (la traînée du Ver) : qui y est est rongé — voir `ronger`. */ corrosion?: { duree: number; bonus: number } }
   /**
    * UNE NOVA DE GIVRE (le Frimas, à la place de sa traînée — Keko, 17/11 : « une nova de givre qui laisse une plaque de
    * verglas, plus grosse, mais pas en permanence une traînée ») : à sa cadence, un insecte à moins de `rayon`, une onde
@@ -880,7 +888,7 @@ export type Arme = {
   // (… ET ELLE ÉCLATE DÈS QU'UN INSECTE ENTRE DANS SA ZONE D'EFFET — Keko, 16/11 : le déclenchement, c'est le `rayon`)
   // (… PUIS ELLES EMPOISONNENT — Keko, 19/11 : « les mines de la Vouivre doivent appliquer l'état empoisonné » : plus
   // l'acide du crachat, `poison` — voir `Ennemi.poison`)
-  mine?: { max: number; duree: number; vol: number; rayon: number; poison: { duree: number; dps: number } }
+  mine?: { max: number; duree: number; vol: number; rayon: number; poison?: { duree: number; dps: number }; /** Son gaz RONGE (Keko, 21/11 : l'effet corrosif, la vulnérabilité, à la place des dégâts du poison). */ corrosion?: { duree: number; bonus: number } }
   /**
    * UN FLÉAU D'ARMES (la troisième arme de l'Ingénieur, à la place des balises — gardées pour un futur vaisseau ; Keko,
    * 16/11 : « une chaîne reliée au vaisseau qui tourne autour de lui, et au bout de la chaîne une grosse massue avec des
@@ -1118,6 +1126,8 @@ export type Monde = {
   corruption: number
   /** Jusqu'à quel instant (`t` du monde) le joueur est déphasé — voir `dephasage`. */
   dephaseJusque: number
+  /** Quand une plaque a cassé pour la dernière fois, ou a été réparée (voir `reparation`). */
+  plaqueCasseeA: number
   /** Jusqu'à quel instant le joueur revenu est invincible et passe au travers de tout — voir `invasion.retour` ; -100 : rien. */
   renaitJusque: number
   /** Les roches qui dérivaient et que la tempête a prises : elles tournent avec les siennes (voir `menerLesRochesPrises`). */
@@ -1257,7 +1267,7 @@ export type Puits = { id: number; arme: number; x0: number; y0: number; cx: numb
 export type Tornade = { id: number; arme: number; x: number; y: number; vx: number; vy: number; nee: number }
 
 /** Une plaque de givre semée par le vaisseau (voir `Arme.givre`). */
-export type Givre = { id: number; arme: number; x: number; y: number; nee: number; rayon: number; duree: number; dps: number; ralenti: number; /** De poison (le Ver), pas de givre ; de verglas (la nova). */ poison?: boolean; verglas?: boolean }
+export type Givre = { id: number; arme: number; x: number; y: number; nee: number; rayon: number; duree: number; dps: number; ralenti: number; /** De poison (le Ver), pas de givre ; de verglas (la nova). */ poison?: boolean; verglas?: boolean; corrosion?: { duree: number; bonus: number } }
 
 /** Une balise posée (voir `Arme.balise`) : où, quand, son arme, la balise à laquelle elle est reliée (son id, ou null), le prochain tir de leur paire. */
 export type Balise = { id: number; x: number; y: number; nee: number; arme: number; /** Son rang dans son trio (0, 1, 2 : la troisième ferme le triangle), et son trio (l'id de sa première balise). */ rang: number; trio: number; /** Les balises auxquelles elle est reliée (posées avant elle), et pour chaque ligne les insectes qui sont dessus et l'instant de sa prochaine décharge s'ils y restent. */ liens: { vers: number; sur: number[]; dechargeA: number }[] }
@@ -1276,6 +1286,7 @@ export type Drone = { x: number; y: number; vx: number; vy: number; cible: numbe
 
 /** Ce qui s'est passé pendant un pas, pour le dessin et le son. */
 export type Evenement =
+  | { type: 'plaqueReparee'; k: number }
   | { type: 'aimant'; x: number; y: number }
   | { type: 'eclat'; x: number; y: number; rayon: number; graine: number; minerai: Minerai }
   | { type: 'ramasse'; x: number; y: number; par: 'joueur' | 'ennemi'; minerai: Minerai }
@@ -1420,7 +1431,7 @@ export function nouveauVaisseau(): Vaisseau {
 }
 
 export function nouveauMonde(c: ConfigVaisseau = VAISSEAU, graine = 1): Monde {
-  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, plaques: Array.from({ length: c.plaques }, () => true), intouchableJusque: -1, corruption: 0, dephaseJusque: -100, renaitJusque: -100, rochesPrises: [], toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, prochaineDeriveA: c.derive.premier, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, scies: [], balises: [], givres: [], tornades: [], novas: [], echardes: [], spheres: [], puits: [], meteores: [], tentacules: [], nuees: [], rejetons: [], flaquesAcides: [], mines: [], fleaux: [], parasites: [], vrilles: [], liens: [], oeufs: [], brochettes: [], miniVers: [], hypercubes: [], des: [], coupes: [], rayonVu: null }
+  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, plaques: Array.from({ length: c.plaques }, () => true), intouchableJusque: -1, corruption: 0, dephaseJusque: -100, plaqueCasseeA: 0, renaitJusque: -100, rochesPrises: [], toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, prochaineDeriveA: c.derive.premier, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, scies: [], balises: [], givres: [], tornades: [], novas: [], echardes: [], spheres: [], puits: [], meteores: [], tentacules: [], nuees: [], rejetons: [], flaquesAcides: [], mines: [], fleaux: [], parasites: [], vrilles: [], liens: [], oeufs: [], brochettes: [], miniVers: [], hypercubes: [], des: [], coupes: [], rayonVu: null }
 }
 
 /** Un hachage entier déterministe (celui de pixelfx), et un réel dans [0, 1) qui en sort. */
@@ -2753,6 +2764,7 @@ export function encaisser(c: ConfigVaisseau, m: Monde, x: number, y: number, deg
   const k = m.plaques.indexOf(true)
   if (k >= 0) {
     m.plaques[k] = false
+    m.plaqueCasseeA = m.t
     ev.push({ type: 'plaque', x, y, k })
     return
   }
@@ -2939,7 +2951,7 @@ function menerLeGivre(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]):
     let derniere: Givre | undefined
     for (const g of m.givres) if (g.arme === i) derniere = g
     if (derniere !== undefined && Math.hypot(derniere.x - x, derniere.y - y) < gi.ecart) return
-    m.givres.push({ id: m.prochainId++, arme: i, x, y, nee: m.t, rayon: gi.rayon, duree: gi.duree, dps: gi.dps, ralenti: gi.ralenti, ...(gi.poison === true ? { poison: true } : {}) })
+    m.givres.push({ id: m.prochainId++, arme: i, x, y, nee: m.t, rayon: gi.rayon, duree: gi.duree, dps: gi.dps, ralenti: gi.ralenti, ...(gi.poison === true ? { poison: true } : {}), ...(gi.corrosion !== undefined ? { corrosion: gi.corrosion } : {}) })
   })
   if (m.givres.length === 0) return
   for (const e of [...m.ennemis]) {
@@ -2956,6 +2968,8 @@ function menerLeGivre(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]):
     if (venin !== undefined) {
       e.poisonA = m.t + 0.4
       e.pv -= venin.dps * dt
+      // (LA TRAÎNÉE CORROSIVE RONGE : qui y est est vulnérable — voir `ronger`)
+      if (venin.corrosion !== undefined) ronger(m, e, { duree: venin.corrosion.duree, dps: 0, bonus: venin.corrosion.bonus }, ev)
     }
     if (pire !== undefined) {
       geler(m, e, 0.25, pire.ralenti, ev)
@@ -3829,7 +3843,9 @@ function menerLesMines(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
     ev.push({ type: 'gaz', x: mn.x, y: mn.y, rayon: mi.rayon })
     for (const e of [...m.ennemis]) {
       if (Math.hypot(e.corps.x - mn.x, e.corps.y - mn.y) > mi.rayon + rayonDe(c, e)) continue
-      empoisonner(m, e, mi.poison)
+      // (LE GAZ RONGE — Keko, 21/11 : la vulnérabilité de l'effet corrosif, à la place des dégâts du poison)
+      if (mi.corrosion !== undefined) ronger(m, e, { duree: mi.corrosion.duree, dps: 0, bonus: mi.corrosion.bonus }, ev)
+      else if (mi.poison !== undefined) empoisonner(m, e, mi.poison)
       const critique = c.passifs.critique > 0 && tire(m.graine, m.prochainId++, 12) < c.passifs.critique
       e.pv -= a.degats * (critique ? c.passifs.critiqueFacteur : 1)
       ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })
@@ -5073,7 +5089,7 @@ function gagnerLaPepite(c: ConfigVaisseau, m: Monde, p: Pepite, ev: Evenement[])
     ev.push({ type: 'aimant', x: p.x, y: p.y })
     return
   }
-  m.invasion.xp += p.valeur ?? 1
+  m.invasion.xp += (p.valeur ?? 1) * (c.invasion.gainXp ?? 1)
   while (m.invasion.xp >= xpDuNiveau(c, m.invasion.niveau)) {
     m.invasion.xp -= xpDuNiveau(c, m.invasion.niveau)
     m.invasion.niveau += 1
@@ -5208,7 +5224,16 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   }
   m.t += dt
   // le bouclier se recharge, passé le délai sans coup
-  if (c.bouclier.points > 0 && m.bouclier < c.bouclier.points && m.t - m.toucheA >= c.bouclier.delai) m.bouclier = Math.min(c.bouclier.points, m.bouclier + c.bouclier.regain * dt)
+  if (c.bouclier.points > 0 && m.bouclier < c.bouclier.points && m.t - m.toucheA >= c.bouclier.delai) m.bouclier = Math.min(c.bouclier.points, m.bouclier + ((c.bouclier.plein ?? 0) > 0 ? c.bouclier.points / c.bouclier.plein! : c.bouclier.regain) * dt)
+  // (LES PLAQUES SE RÉPARENT — voir `reparation` : la dernière cassée revient, une à la fois)
+  if (c.reparation > 0 && m.phase === 'vol' && m.t - m.plaqueCasseeA >= c.reparation) {
+    const k = m.plaques.lastIndexOf(false)
+    if (k >= 0) {
+      m.plaques[k] = true
+      m.plaqueCasseeA = m.t
+      ev.push({ type: 'plaqueReparee', k })
+    }
+  }
   // la coque se régénère, sans attendre (l'Essaim)
   if (c.regeneration > 0 && m.coque > 0 && m.coque < c.coque) m.coque = Math.min(c.coque, m.coque + c.regeneration * c.coque * dt)
   // la corruption ronge la coque (les Innommés) ; toute rongée, la partie est perdue

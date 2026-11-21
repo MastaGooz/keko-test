@@ -21,16 +21,22 @@ verifier(`les chances des raretés font 100 % (${Math.round(RARETES.reduce((n, r
 const tirees = Array.from({ length: 10000 }, (_, i) => rareteTiree((i + 0.5) / 10000))
 verifier(`le tirage suit les chances : ${RARETES.map((r) => `${r.nom} ${Math.round((tirees.filter((x) => x === r.id).length / 100) * 10) / 10} %`).join(', ')}`, Math.abs(tirees.filter((x) => x === 'commune').length - 5500) <= 1 && tirees.filter((x) => x === 'legendaire').length === 100)
 
-// LE POOL D'UNE ARME : ce qu'elle porte
-verifier(`le canon : ${statsDeLArme(canon).join(', ')} ; le napalm : ${statsDeLArme(napalm).join(', ')} ; les drones (le rayon de leur orbite n'est pas une zone) : ${statsDeLArme(drones).join(', ')}`, statsDeLArme(canon).join() === 'degats,cadence,portee' && statsDeLArme(napalm).join() === 'degats,cadence,portee,zone,duree' && !statsDeLArme(drones).includes('zone'))
+// LE POOL D'UNE ARME : le commun (dégâts, critique, coups critiques), puis ce qu'elle porte
+const crachat = { ...canon, id: 'crachat', crachat: { cone: 0.4, duree: 3, acide: { duree: 3, dps: 0, bonus: 0.35 } } } as Arme
+const givre = { ...canon, id: 'givre', cadence: 0.1, portee: 0, givre: { ecart: 5, rayon: 8, duree: 4, dps: 12, ralenti: 0.5 } } as Arme
+const tourelle = { ...canon, id: 'tourelle', pose: { tous: 3, ecart: 10, max: 3, duree: 8, pivot: 1 } } as unknown as Arme
+verifier(`le canon : ${statsDeLArme(canon).join(', ')} ; le napalm : ${statsDeLArme(napalm).join(', ')} ; le crachat : ${statsDeLArme(crachat).join(', ')} ; le givre : ${statsDeLArme(givre).join(', ')} ; les tourelles : ${statsDeLArme(tourelle).join(', ')} ; les drones (leur orbite n'est pas une zone) : ${statsDeLArme(drones).join(', ')}`, statsDeLArme(canon).join() === 'degats,critique,critiques,cadence,portee' && statsDeLArme(napalm).join() === 'degats,critique,critiques,cadence,portee,zone,pose,feu' && statsDeLArme(crachat).includes('corrosion') && statsDeLArme(givre).includes('givre') && !statsDeLArme(givre).includes('portee') && statsDeLArme(tourelle).includes('pose') && !statsDeLArme(drones).includes('zone'))
 const n2 = armeAmelioree(napalm, 'zone', 0.12)
-const d2 = armeAmelioree(napalm, 'degats', 0.05)
-verifier(`en pour cent : zone +12 % → rayon ${n2.napalm!.rayon.toFixed(2)} (14) ; dégâts +5 % → ${d2.degats}, ${d2.napalm!.dps}, ${d2.napalm!.dpsBrulure} (60, 20, 10 : un de plus au moins) ; cadence +8 % → ${armeAmelioree(canon, 'cadence', 0.08).cadence.toFixed(3)} ; l'orbite des drones ne bouge pas`, Math.abs(n2.napalm!.rayon - 15.68) < 1e-9 && d2.degats === 63 && d2.napalm!.dps === 21 && d2.napalm!.dpsBrulure === 11 && Math.abs(armeAmelioree(canon, 'cadence', 0.08).cadence - 1.1 / 1.08) < 1e-9 && armeAmelioree(drones, 'zone', 0.5).orbite!.rayon === 30)
+const f2 = armeAmelioree(napalm, 'feu', 0.2)
+const g2 = armeAmelioree(givre, 'givre', 0.2)
+verifier(`zone +12 % → rayon ${n2.napalm!.rayon.toFixed(2)} (14) ; feu +20 % → la brûlure ${f2.napalm!.dpsBrulure} (10), le reste non (${f2.napalm!.dps}, ${f2.degats}) ; givre +20 % → ralenti ${g2.givre!.ralenti.toFixed(2)} (0,5 : on ôte 60 % de la vitesse au lieu de 50) ; corrosion +20 % → vulnérabilité ${armeAmelioree(crachat, 'corrosion', 0.2).crachat!.acide.bonus.toFixed(2)} (0,35) ; durée des posées +25 % → napalm ${armeAmelioree(napalm, 'pose', 0.25).napalm!.duree} (3), tourelles ${(armeAmelioree(tourelle, 'pose', 0.25) as unknown as { pose: { duree: number } }).pose.duree} (8)`, Math.abs(n2.napalm!.rayon - 15.68) < 1e-9 && f2.napalm!.dpsBrulure === 12 && f2.napalm!.dps === 20 && f2.degats === 60 && Math.abs(g2.givre!.ralenti - 0.4) < 1e-9 && Math.abs(armeAmelioree(crachat, 'corrosion', 0.2).crachat!.acide.bonus - 0.42) < 1e-9 && armeAmelioree(napalm, 'pose', 0.25).napalm!.duree === 3.75 && (armeAmelioree(tourelle, 'pose', 0.25) as unknown as { pose: { duree: number } }).pose.duree === 10)
+const crit = avecLesBonus(base, ajouterLeBonus(ajouterLeBonus([], carte({ sorte: 'arme', arme: 'canon' }, 'critique', 'commune')), carte({ sorte: 'arme', arme: 'canon' }, 'critiques', 'rare')))
+verifier(`le critique : une commune +1 point de chance (${(crit.passifs.critique * 100).toFixed(0)} %), une rare +12 points de dégâts critiques (${(crit.passifs.critiqueFacteur * 100).toFixed(0)} %, ${(base.passifs.critiqueFacteur * 100).toFixed(0)} avant)`, Math.abs(crit.passifs.critique - base.passifs.critique - 0.01) < 1e-9 && Math.abs(crit.passifs.critiqueFacteur - base.passifs.critiqueFacteur - 0.12) < 1e-9)
 
 // LE POOL D'UNE FACTION
-verifier(`les factions : ${Object.entries(STATS_DE_FACTION).map(([r, s]) => `${r} ${s.join('/')}`).join(' ; ')}`, (Object.values(STATS_DE_FACTION) as string[][]).every((s) => s.includes('blindage') && s.includes('moteur') && s.includes('aimant')) && STATS_DE_FACTION.essaim.includes('regeneration') && STATS_DE_FACTION.etheres.includes('bouclier') && STATS_DE_FACTION.innommes.includes('dephasage'))
-const f = (s: Parameters<typeof factionAmelioree>[1]): ConfigVaisseau => factionAmelioree(base, s, 0.25)
-verifier('en pour cent : PV, régénération, bouclier, recharge, déphasage, moteur — rien d’autre ne bouge', f('blindage').coque === base.coque * 1.25 && f('regeneration').regeneration === 0.0125 && f('bouclier').bouclier.points === 3.75 && f('recharge').bouclier.delai < base.bouclier.delai && Math.abs(f('dephasage').dephasage.chance - 0.0625) < 1e-12 && f('moteur').vitesseMax === base.vitesseMax * 1.25 && f('blindage').armes === base.armes)
+verifier(`les factions : ${Object.entries(STATS_DE_FACTION).map(([r, s]) => `${r} ${s.join('/')}`).join(' ; ')}`, (Object.values(STATS_DE_FACTION) as string[][]).every((s) => ['blindage', 'moteur', 'maniabilite', 'aimant', 'experience'].every((x) => s.includes(x))) && STATS_DE_FACTION.essaim.includes('regeneration') && STATS_DE_FACTION.etheres.includes('bouclier') && STATS_DE_FACTION.innommes.includes('dephasage') && STATS_DE_FACTION.humains.includes('reparation') && STATS_DE_FACTION.humains.includes('plaque'))
+const f = (s: Parameters<typeof factionAmelioree>[1], k = 0.25): ConfigVaisseau => factionAmelioree({ ...base, reparation: 20, plaques: 3 }, s, k)
+verifier(`PV, régénération, bouclier, expérience (${f('experience').invasion.gainXp}), réparation (${f('reparation').reparation} s sur 20), maniabilité ; le déphasage EN POINTS (+3 : ${(f('dephasage', 0.03).dephasage.chance * 100).toFixed(0)} %) ; « +1 plaque » (${f('plaque', 1).plaques})`, f('blindage').coque === base.coque * 1.25 && f('regeneration').regeneration === 0.0125 && f('bouclier').bouclier.points === 3.75 && f('experience').invasion.gainXp === 1.25 && f('reparation').reparation === 16 && f('maniabilite').rotation === base.rotation * 1.25 && Math.abs(f('dephasage', 0.03).dephasage.chance - 0.08) < 1e-12 && f('plaque', 1).plaques === 4)
 
 // UNE CARTE : elle ne touche que son arme ; elle se cumule
 const deux: ConfigVaisseau = { ...base, armes: [canon, { ...canon, id: 'autre' }] }
@@ -45,13 +51,17 @@ verifier(`une carte d'arme ne change que son arme (${avecLesBonus(deux, un).arme
 const p1 = proposer(7, 2, 0, canon, 'essaim')
 verifier(`trois cartes différentes, du pool de l'arme et de la faction : ${p1.map((x) => `${x.id} (${x.rarete})`).join(', ')} ; les mêmes pour la même partie et le même niveau`, p1.length === 3 && new Set(p1.map((x) => x.id)).size === 3 && proposer(7, 2, 0, canon, 'essaim').map((x) => x.id + x.rarete).join() === p1.map((x) => x.id + x.rarete).join() && p1.every((x) => (x.cible.sorte === 'arme' ? x.cible.arme === 'canon' : x.cible.race === 'essaim')))
 let rien = true
-for (let n = 1; n < 200; n++) for (const x of proposer(3, n, 0, canon, 'humains')) if (x.stat === 'bouclier' || x.stat === 'regeneration' || x.stat === 'zone' || x.stat === 'dephasage') rien = false
+for (let n = 1; n < 200; n++) for (const x of proposer(3, n, 0, canon, 'humains')) if (x.stat === 'bouclier' || x.stat === 'regeneration' || x.stat === 'zone' || x.stat === 'dephasage' || x.stat === 'feu') rien = false
 verifier('une carte hors du pool n’est jamais proposée (le canon n’a pas de zone, l’Empire ni bouclier, ni régénération, ni déphasage)', rien)
 const rar = new Map<string, number>()
 for (let n = 1; n <= 3000; n++) for (const x of proposer(11, n, 0, canon, 'etheres')) rar.set(x.rarete, (rar.get(x.rarete) ?? 0) + 1)
 verifier(`sur 9 000 cartes tirées : ${RARETES.map((r) => `${r.nom} ${Math.round(((rar.get(r.id) ?? 0) / 9000) * 1000) / 10} %`).join(', ')}`, Math.abs((rar.get('commune') ?? 0) / 9000 - 0.55) < 0.03 && (rar.get('legendaire') ?? 0) > 30 && (rar.get('legendaire') ?? 0) < 160)
 
 verifier('un choix à faire, plus la réserve ; le dernier choisi, c’est fini', ouvrirLeChoix(0).aFaire === 1 && ouvrirLeChoix(1).aFaire === 2 && apresUnChoix(ouvrirLeChoix(0)) === null && apresUnChoix(ouvrirLeChoix(1))?.aFaire === 1 && apresUnChoix(ouvrirLeChoix(1))?.rang === 1)
+let plaques = 0
+let horsLegendaire = 0
+for (let n = 1; n <= 4000; n++) for (const x of proposer(5, n, 0, canon, 'humains')) if (x.stat === 'plaque') (plaques++, x.rarete !== 'legendaire' && horsLegendaire++)
+verifier(`« +1 plaque » ne paraît qu'en légendaire : ${plaques} sur 12 000 cartes, ${horsLegendaire} hors légendaire ; sa carte vaut une plaque`, plaques > 5 && horsLegendaire === 0 && carte({ sorte: 'faction', race: 'humains' }, 'plaque', 'legendaire').bonus === 1)
 verifier('le délai passé, ce qui restait à choisir part en réserve', reserveApresLeDelai(ouvrirLeChoix(0)) === 1 && reserveApresLeDelai(ouvrirLeChoix(1)) === 2 && reserveApresLeDelai(apresUnChoix(ouvrirLeChoix(1))!) === 1)
 
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)

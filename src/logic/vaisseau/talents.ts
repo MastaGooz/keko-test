@@ -42,21 +42,39 @@ export function rareteTiree(u: number): Rarete {
   return 'commune'
 }
 
-/** Ce qu'une carte d'arme peut changer. */
-export type StatDArme = 'degats' | 'cadence' | 'portee' | 'zone' | 'duree'
-/** Ce qu'une carte de faction peut changer. */
-export type StatDeFaction = 'blindage' | 'moteur' | 'aimant' | 'repit' | 'regeneration' | 'bouclier' | 'recharge' | 'dephasage' | 'phase'
 /**
- * LE POOL DE CHAQUE FACTION : ses points de vie, ce qui fait SA défense (les plaques de l'Empire ne se comptent pas en
- * pour cent : il a le répit, l'invulnérabilité après un coup ; la régénération des Xénoïdes ; le bouclier des Vectrans ;
- * le déphasage des Yhg'tharr), et le moteur et l'aimant, que toutes ont.
+ * LE POOL CLASSIQUE (Keko, 21/11 : « chance de critique, dégâts des coups critiques, dégâts : ce qui est commun à toutes
+ * les armes ; ensuite, zone d'effet pour les armes de type zone, portée pour les armes qui utilisent une portée,
+ * cadence pour les armes qui se déclenchent à intervalles réguliers, dégâts du feu pour les armes qui appliquent le feu
+ * — uniquement les dégâts périodiques de l'effet —, l'effet corrosif — la vulnérabilité qu'il cause — et le
+ * ralentissement du givre » ; et « la durée des armes posées », choisie parmi quatre oublis. Le nombre de projectiles ou
+ * de créatures, « extrêmement puissant », est gardé de côté.)
  */
+export type StatDArme = 'degats' | 'critique' | 'critiques' | 'cadence' | 'portee' | 'zone' | 'pose' | 'feu' | 'corrosion' | 'givre'
+/**
+ * LES CARTES DE FACTION (Keko, 21/11) : pour toutes, le blindage (les points de vie des Xénoïdes), la vitesse, la
+ * maniabilité, l'aimant (la distance) et l'expérience (+X % par pépite) ; l'Empire, la RÉPARATION de ses plaques (en
+ * pour cent) et « +1 plaque », en légendaire seulement — « augmenter le nombre de plaques est extrêmement fort ; la
+ * rareté ne peut pas en faire varier la puissance » : la rareté dit sa chance d'apparaître, pas sa force (choisi parmi
+ * trois) ; les Xénoïdes, la régénération ; les Vectrans, LA CAPACITÉ du bouclier seule (« on ne touche pas au temps qu'il
+ * met à se régénérer ») ; les Yhg'tharr, la chance de déphasage, EN POINTS à l'échelle (+1 à +5 points selon la rareté,
+ * choisi parmi trois : en relatif, une carte valait à peine +0,2 point), pas sa durée.
+ */
+export type StatDeFaction = 'blindage' | 'moteur' | 'maniabilite' | 'aimant' | 'experience' | 'reparation' | 'plaque' | 'regeneration' | 'bouclier' | 'dephasage'
 export const STATS_DE_FACTION: Record<Race, StatDeFaction[]> = {
-  humains: ['blindage', 'repit', 'moteur', 'aimant'],
-  essaim: ['blindage', 'regeneration', 'moteur', 'aimant'],
-  etheres: ['blindage', 'bouclier', 'recharge', 'moteur', 'aimant'],
-  innommes: ['blindage', 'dephasage', 'phase', 'moteur', 'aimant'],
+  humains: ['blindage', 'reparation', 'plaque', 'moteur', 'maniabilite', 'aimant', 'experience'],
+  essaim: ['blindage', 'regeneration', 'moteur', 'maniabilite', 'aimant', 'experience'],
+  etheres: ['blindage', 'bouclier', 'moteur', 'maniabilite', 'aimant', 'experience'],
+  innommes: ['blindage', 'dephasage', 'moteur', 'maniabilite', 'aimant', 'experience'],
 }
+/** Les cartes qui ne paraissent qu'à une rareté (« +1 plaque » : en légendaire seulement). */
+export const SEULEMENT_EN: Partial<Record<StatDArme | StatDeFaction, Rarete>> = { plaque: 'legendaire' }
+/**
+ * LES CHANCES SE COMPTENT EN POINTS, À L'ÉCHELLE DE LA RARETÉ (le déphasage — Keko ; le critique, pareil : en relatif,
+ * « +12 % » d'1 % de chance n'en faisait que 1,12) : la commune +1 point, la légendaire +5.
+ */
+export const POINTS_DE_CHANCE: Record<Rarete, number> = { commune: 0.01, peuCommune: 0.02, rare: 0.03, epique: 0.04, legendaire: 0.05 }
+const EN_POINTS: ReadonlySet<string> = new Set(['critique', 'dephasage'])
 
 export type Cible = { sorte: 'arme'; arme: string } | { sorte: 'faction'; race: Race }
 export type Talent = {
@@ -77,7 +95,12 @@ export function ajouterLeBonus(b: Bonus, ta: Talent): Bonus {
 /** LA CONFIGURATION AVEC SES BONUS : celle du décollage, chaque stat à `base × (1 + somme)`. */
 export function avecLesBonus(base: ConfigVaisseau, b: Bonus): ConfigVaisseau {
   let c = base
-  for (const x of b) c = x.cible.sorte === 'arme' ? { ...c, armes: c.armes.map((a) => (a.id === (x.cible as { arme: string }).arme ? armeAmelioree(a, x.stat as StatDArme, x.somme) : a)) } : factionAmelioree(c, x.stat as StatDeFaction, x.somme)
+  for (const x of b) {
+    // (le critique est au vaisseau : la chance en points, les dégâts critiques en points du facteur — 150 % +12 % : 162 %)
+    if (x.stat === 'critique') c = { ...c, passifs: { ...c.passifs, critique: c.passifs.critique + x.somme } }
+    else if (x.stat === 'critiques') c = { ...c, passifs: { ...c.passifs, critiqueFacteur: c.passifs.critiqueFacteur + x.somme } }
+    else c = x.cible.sorte === 'arme' ? { ...c, armes: c.armes.map((a) => (a.id === (x.cible as { arme: string }).arme ? armeAmelioree(a, x.stat as StatDArme, x.somme) : a)) } : factionAmelioree(c, x.stat as StatDeFaction, x.somme)
+  }
   return c
 }
 
@@ -106,37 +129,70 @@ function changer<A>(a: A, cles: ReadonlySet<string>, f: (v: number) => number): 
   return passe(a) as A
 }
 const CLES_DE_ZONE: ReadonlySet<string> = new Set(['rayon', 'largeur'])
-const CLES_DE_DUREE: ReadonlySet<string> = new Set(['duree'])
 const CLES_DE_CADENCE: ReadonlySet<string> = new Set(['cadence', 'tous'])
+/** (les branches de ce qu'une arme POSE — tourelles, balises, mines, flaques de napalm, œufs — et leur durée) */
+const POSEES = ['pose', 'balise', 'mine', 'napalm', 'ponte'] as const
+const CLES_DU_FEU: ReadonlySet<string> = new Set(['dpsBrulure'])
+const CLES_DU_GIVRE: ReadonlySet<string> = new Set(['ralenti'])
+/** Ce que l'arme pose, et sa durée. */
+const poseesDe = (a: Arme): { cle: (typeof POSEES)[number]; duree: number }[] => POSEES.flatMap((cle) => {
+  const b = (a as Record<string, unknown>)[cle] as { duree?: number } | undefined
+  return b !== undefined && typeof b.duree === 'number' && b.duree > 0 ? [{ cle, duree: b.duree }] : []
+})
+/** L'arme corrode-t-elle (son acide, ses mines, sa traînée) — et de combien rend-elle vulnérable. */
+export const corrodeDe = (a: Arme): number[] => [a.crachat?.acide.bonus, a.mine?.corrosion?.bonus, a.givre?.corrosion?.bonus, a.parasite?.acide?.bonus].filter((b): b is number => b !== undefined && b > 0)
 
-/** LE POOL D'UNE ARME : les stats qu'elle porte. */
+/** LE POOL D'UNE ARME : le commun (dégâts, critique), puis ce qu'elle porte. */
 export function statsDeLArme(a: Arme): StatDArme[] {
-  const s: StatDArme[] = []
-  if (valeurs(a, CHAMPS_DE_DEGATS).some((v) => v > 0)) s.push('degats')
+  const s: StatDArme[] = ['degats', 'critique', 'critiques']
   if (a.cadence > 0 && Number.isFinite(a.cadence)) s.push('cadence')
   if (a.portee > 0) s.push('portee')
   if (valeurs(a, CLES_DE_ZONE).some((v) => v > 0)) s.push('zone')
-  if (valeurs(a, CLES_DE_DUREE).some((v) => v > 0)) s.push('duree')
+  if (poseesDe(a).length > 0) s.push('pose')
+  if (valeurs(a, CLES_DU_FEU).some((v) => v > 0)) s.push('feu')
+  if (corrodeDe(a).length > 0) s.push('corrosion')
+  if (valeurs(a, CLES_DU_GIVRE).some((v) => v > 0 && v < 1)) s.push('givre')
   return s
 }
-/** L'arme améliorée de `k` (une part) sur `stat`. Les dégâts restent des entiers, et montent d'un au moins. */
+/**
+ * L'ARME AMÉLIORÉE de `k` (la somme des bonus) sur `stat` : `base × (1 + k)`. Les dégâts restent des entiers et montent
+ * d'un au moins ; la cadence raccourcit aussi l'intervalle de ce qu'elle pose ; le ralentissement grandit la part de
+ * vitesse ÔTÉE (un insecte au ralenti 0,5 perd la moitié de sa vitesse ; +20 % : 0,6, il en garde 0,4 — un dixième au
+ * moins). Le critique est au vaisseau : voir `avecLesBonus`.
+ */
 export function armeAmelioree(a: Arme, stat: StatDArme, k: number): Arme {
   switch (stat) {
     case 'degats':
       return changer(a, CHAMPS_DE_DEGATS, (v) => Math.max(v + 1, Math.round(v * (1 + k))))
     case 'cadence':
-      // (un délai plus court : la cadence de l'arme et l'intervalle de ce qu'elle pose)
       return changer(a, CLES_DE_CADENCE, (v) => v / (1 + k))
     case 'portee':
-      // (plus loin : sa portée, et la vie de ses projectiles pour qu'ils y arrivent)
       return { ...a, portee: a.portee * (1 + k), vie: a.vie * (1 + k) }
     case 'zone':
       return changer(a, CLES_DE_ZONE, (v) => v * (1 + k))
-    case 'duree':
-      return changer(a, CLES_DE_DUREE, (v) => v * (1 + k))
+    case 'pose': {
+      const r: Record<string, unknown> = { ...a }
+      for (const { cle } of poseesDe(a)) r[cle] = { ...(a as unknown as Record<string, object>)[cle], duree: (a as unknown as Record<string, { duree: number }>)[cle].duree * (1 + k) }
+      return r as Arme
+    }
+    case 'feu':
+      return changer(a, CLES_DU_FEU, (v) => Math.max(v + 1, Math.round(v * (1 + k))))
+    case 'corrosion':
+      return {
+        ...a,
+        ...(a.crachat !== undefined ? { crachat: { ...a.crachat, acide: { ...a.crachat.acide, bonus: a.crachat.acide.bonus * (1 + k) } } } : {}),
+        ...(a.mine?.corrosion !== undefined ? { mine: { ...a.mine, corrosion: { ...a.mine.corrosion, bonus: a.mine.corrosion.bonus * (1 + k) } } } : {}),
+        ...(a.givre?.corrosion !== undefined ? { givre: { ...a.givre, corrosion: { ...a.givre.corrosion, bonus: a.givre.corrosion.bonus * (1 + k) } } } : {}),
+        ...(a.parasite?.acide !== undefined ? { parasite: { ...a.parasite, acide: { ...a.parasite.acide, bonus: a.parasite.acide.bonus * (1 + k) } } } : {}),
+      }
+    case 'givre':
+      return changer(a, CLES_DU_GIVRE, (v) => (v < 1 ? Math.max(0.1, 1 - (1 - v) * (1 + k)) : v))
+    case 'critique':
+    case 'critiques':
+      return a
   }
 }
-/** La configuration où la faction gagne `k` (une part) sur `stat`. */
+/** La configuration où la faction gagne `k` (la somme des bonus ; pour « +1 plaque », le nombre de cartes) sur `stat`. */
 export function factionAmelioree(c: ConfigVaisseau, stat: StatDeFaction, k: number): ConfigVaisseau {
   const f = 1 + k
   switch (stat) {
@@ -144,26 +200,32 @@ export function factionAmelioree(c: ConfigVaisseau, stat: StatDeFaction, k: numb
       return { ...c, coque: c.coque * f }
     case 'moteur':
       return { ...c, vitesseMax: c.vitesseMax * f, poussee: c.poussee * f }
+    case 'maniabilite':
+      return { ...c, rotation: c.rotation * f, virage: c.virage * f }
     case 'aimant':
       return { ...c, foreuse: { ...c.foreuse, aimant: c.foreuse.aimant * f } }
-    case 'repit':
-      return { ...c, invulnerabilite: c.invulnerabilite * f }
+    case 'experience':
+      return { ...c, invasion: { ...c.invasion, gainXp: (c.invasion.gainXp ?? 1) * f } }
+    case 'reparation':
+      // (un délai plus court : les plaques reviennent plus vite)
+      return { ...c, reparation: c.reparation / f }
+    case 'plaque':
+      return { ...c, plaques: c.plaques + Math.round(k) }
     case 'regeneration':
       return { ...c, regeneration: c.regeneration * f }
     case 'bouclier':
       return { ...c, bouclier: { ...c.bouclier, points: c.bouclier.points * f } }
-    case 'recharge':
-      return { ...c, bouclier: { ...c.bouclier, delai: c.bouclier.delai / f, regain: c.bouclier.regain * f } }
     case 'dephasage':
-      return { ...c, dephasage: { ...c.dephasage, chance: c.dephasage.chance * f } }
-    case 'phase':
-      return { ...c, dephasage: { ...c.dephasage, duree: c.dephasage.duree * f } }
+      // (en points : `k` s'ajoute à la chance)
+      return { ...c, dephasage: { ...c.dephasage, chance: c.dephasage.chance + k } }
   }
 }
 
 /** Une carte : sa cible, sa stat, sa rareté. */
 export function carte(cible: Cible, stat: StatDArme | StatDeFaction, rarete: Rarete): Talent {
-  return { id: `${cible.sorte === 'arme' ? `arme-${cible.arme}` : cible.race}:${stat}`, cible, stat, rarete, bonus: rareteDe(rarete).bonus }
+  // (« +1 plaque » vaut une plaque ; une chance, des points à l'échelle ; le reste, le bonus de la rareté)
+  const bonus = stat === 'plaque' ? 1 : EN_POINTS.has(stat) ? POINTS_DE_CHANCE[rarete] : rareteDe(rarete).bonus
+  return { id: `${cible.sorte === 'arme' ? `arme-${cible.arme}` : cible.race}:${stat}`, cible, stat, rarete, bonus }
 }
 
 /**
@@ -178,10 +240,14 @@ export function proposer(graine: number, niveau: number, rang: number, arme: Arm
   ]
   const choisies: Talent[] = []
   for (let k = 0; k < 3 && pool.length > 0; k++) {
-    const i = hache(hache(graine, niveau), hache(rang, k)) % pool.length
-    const { cible, stat } = pool.splice(i, 1)[0]
+    // (la rareté d'abord : une carte qui n'est que d'une rareté — « +1 plaque » — n'est tirée qu'à elle)
     const u = (hache(hache(graine, niveau, 17), hache(rang, k, 29)) % 1000000) / 1000000
-    choisies.push(carte(cible, stat, rareteTiree(u)))
+    const rarete = rareteTiree(u)
+    const permis = pool.filter((x) => SEULEMENT_EN[x.stat] === undefined || SEULEMENT_EN[x.stat] === rarete)
+    if (permis.length === 0) break
+    const choisie = permis[hache(hache(graine, niveau), hache(rang, k)) % permis.length]
+    pool.splice(pool.indexOf(choisie), 1)
+    choisies.push(carte(choisie.cible, choisie.stat, rarete))
   }
   return choisies
 }

@@ -7524,3 +7524,32 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     somme ; la recharge du bouclier, pareil). Un vol neuf repart sans bonus. Testé : dix « +12 % » de dégâts font +120 %
     (132 sur 60 — ils faisaient ×3,1 en se multipliant), dix de cadence un délai divisé par 2,2, +12 % puis +5 % de PV
     font +17 %. Vu en jeu : une carte prise, la partie reprend.
+
+- **21/11, LE POOL CLASSIQUE.** Keko : les armes — « chance de critique, dégâts des coups critiques, dégâts : commun à
+  toutes ; puis zone d'effet pour les armes de zone, portée pour celles qui en ont une, cadence pour celles qui se
+  déclenchent à intervalles réguliers, dégâts du feu (uniquement les dégâts périodiques de l'effet), l'effet corrosif
+  (la vulnérabilité ; on enlève les dégâts sur la durée de la corrosion), le ralentissement du givre » ; le nombre de
+  projectiles ou de créatures, « extrêmement puissant », gardé de côté ; les factions — pour toutes le blindage (les
+  points de vie des Xénoïdes), la vitesse, la maniabilité, l'aimant, l'expérience (+X % par pépite) ; la régénération
+  des Xénoïdes ; la CAPACITÉ du bouclier seule, qui « se régénère après 5 secondes sans dégâts et met 10 secondes à se
+  régénérer totalement » ; la chance de déphasage, pas sa durée. Choisis parmi trois : les plaques de l'Empire se
+  RÉPARENT (une cassée revient au bout de 20 s sans qu'une autre casse, une à la fois — `reparation`), les cartes en
+  raccourcissent le délai, et « +1 plaque » n'existe qu'en légendaire (`SEULEMENT_EN` : la rareté dit sa chance de
+  paraître, pas sa force) ; le déphasage EN POINTS à l'échelle de la rareté (+1 à +5) — le critique pareil (en relatif,
+  +12 % d'un pour cent n'en faisait que 1,12) ; et, des oublis proposés, LA DURÉE DES ARMES POSÉES (tourelles, balises,
+  mines, flaques de napalm, œufs).
+  - LA RÈGLE (`talents.ts`) : le pool d'une arme = dégâts, critique (+1 à +5 points de chance), impact (+X points de
+    dégâts critiques : 150 % +12 = 162 %) ; puis cadence, portée, zone, durée des posées, feu (`dpsBrulure` seul),
+    corrosion (la vulnérabilité de l'acide, des mines, de la traînée), givre (la part de vitesse ôtée grandit : un
+    ralenti de 0,5 à +20 % devient 0,4, un dixième gardé au moins) — lus dans l'arme. Le critique est au vaisseau.
+  - LA CORROSION N'A PLUS DE DÉGÂTS SUR LA DURÉE : le Crachat acide ne ronge plus de points (sa vulnérabilité de 35 %
+    reste) ; les MINES TOXIQUES n'empoisonnent plus, leur gaz RONGE (+35 % de dégâts subis pendant 4 s) ; la TRAÎNÉE
+    CORROSIVE garde ses dégâts de zone (ceux de l'arme) et ronge qui y est (35 %, une seconde après). Leurs textes
+    suivent. *Les 35 % des mines et de la traînée sont de moi (ceux du crachat).*
+  - LE BOUCLIER DU VORTEX se recharge EN PART DE LUI-MÊME (`bouclier.plein` : 10 s pour se remplir, après 5 s sans coup)
+    — une carte qui le grandit grandit ce qu'il regagne. L'EXPÉRIENCE d'une pépite est multipliée par `invasion.gainXp`.
+  - Testés : les pools (le canon, le napalm, le crachat, le givre, les tourelles, les drones), chaque effet en pour
+    cent, le critique en points, « +1 plaque » jamais hors légendaire (14 sur 12 000 cartes), deux plaques qui reviennent
+    à 20 puis 40 s, le bouclier plein à 15 s, une moyenne qui vaut 4,5 avec +50 %, une mine qui ronge sans plus rien
+    retirer ensuite. Vu à la capture sur quatre vaisseaux.
+  - *Les noms Impact (les dégâts critiques), Réparation, Maniabilité, et les 20 s de la réparation sont de moi.*

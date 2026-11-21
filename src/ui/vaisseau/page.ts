@@ -1028,7 +1028,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // (L'ÉCHELLE DES DÉGÂTS DU VORTEX : les armes et la collision contre les insectes, fois `ECHELLE_DU_VORTEX` — voir
       // `INSECTE`)
       if (VORTEX) conf = { ...conf, armes: conf.armes.map((a) => degatsMultiplies(a, ECHELLE_DU_VORTEX)), collision: { ...conf.collision, degatsEnnemi: conf.collision.degatsEnnemi * ECHELLE_DU_VORTEX } }
-      if (VORTEX) conf = { ...conf, champ: { ...conf.champ, densite: 0 }, station: { ...conf.station, portee: -1 }, invasion: { ...conf.invasion, active: true, sansPortail: true /* (PLUS DE PORTAIL — Keko, 20/11 : voir `sansPortail`) */, continu: { ...conf.invasion.continu, actif: true, ...(FLOT > 0 ? { debut: FLOT, max: FLOT } : {}) }, ...(parametres.has('cornus') ? { cornu: { ...conf.invasion.cornu, debut: 0, montee: 1e-6, part: Number(parametres.get('cornus')) || 0.5 } } : {}), ...(parametres.has('cuirassiers') ? { cuirassier: { ...conf.invasion.cuirassier, debut: 0, montee: 1e-6, part: Number(parametres.get('cuirassiers')) || 0.3 } } : {}), ...(parametres.has('moucherons') ? { moucheron: { ...conf.invasion.moucheron, part: Number(parametres.get('moucherons')) || 0 } } : {}) /* (`&cornus=P`, `&cuirassiers=P`, `&moucherons=P` : cette part de cornus, de cuirassiers, de moucherons, dès le départ) */, ...(parametres.has('aimant') ? { aimant: Number(parametres.get('aimant')) || 0.2 } : {}) /* (`&aimant=P` : la chance qu'un insecte lâche l'aimant — 0,2 sans nombre) */ /* (ET PLUS DE VAGUES : voir `continu`) */, viePortail: Math.max(1, Number(parametres.get('portail')) || conf.invasion.viePortail) /* (`&portail=N` : la vie du portail au départ, pour voir la fin d'un lien) */ }, ennemi: { ...conf.ennemi, ...INSECTE }, bouclier: { ...conf.bouclier, points: Math.max(conf.bouclier.points, BOUCLIER_DU_VORTEX) }, passifs: { ...conf.passifs, critique: conf.passifs.critique + CRITIQUE_DU_VORTEX, critiqueFacteur: FACTEUR_CRITIQUE_DU_VORTEX } }
+      if (VORTEX) conf = { ...conf, champ: { ...conf.champ, densite: 0 }, station: { ...conf.station, portee: -1 }, invasion: { ...conf.invasion, active: true, sansPortail: true /* (PLUS DE PORTAIL — Keko, 20/11 : voir `sansPortail`) */, continu: { ...conf.invasion.continu, actif: true, ...(FLOT > 0 ? { debut: FLOT, max: FLOT } : {}) }, ...(parametres.has('cornus') ? { cornu: { ...conf.invasion.cornu, debut: 0, montee: 1e-6, part: Number(parametres.get('cornus')) || 0.5 } } : {}), ...(parametres.has('cuirassiers') ? { cuirassier: { ...conf.invasion.cuirassier, debut: 0, montee: 1e-6, part: Number(parametres.get('cuirassiers')) || 0.3 } } : {}), ...(parametres.has('moucherons') ? { moucheron: { ...conf.invasion.moucheron, part: Number(parametres.get('moucherons')) || 0 } } : {}) /* (`&cornus=P`, `&cuirassiers=P`, `&moucherons=P` : cette part de cornus, de cuirassiers, de moucherons, dès le départ) */, ...(parametres.has('aimant') ? { aimant: Number(parametres.get('aimant')) || 0.2 } : {}) /* (`&aimant=P` : la chance qu'un insecte lâche l'aimant — 0,2 sans nombre) */ /* (ET PLUS DE VAGUES : voir `continu`) */, viePortail: Math.max(1, Number(parametres.get('portail')) || conf.invasion.viePortail) /* (`&portail=N` : la vie du portail au départ, pour voir la fin d'un lien) */ }, ennemi: { ...conf.ennemi, ...INSECTE }, bouclier: { ...conf.bouclier, points: Math.max(conf.bouclier.points, BOUCLIER_DU_VORTEX), delai: 5, plein: 10 } /* (LE BOUCLIER SE RECHARGE EN PART DE LUI-MÊME — Keko, 21/11 : « après 5 secondes sans subir de dégâts, en 10 secondes totalement » ; voir `bouclier.plein`) */, passifs: { ...conf.passifs, critique: conf.passifs.critique + CRITIQUE_DU_VORTEX, critiqueFacteur: FACTEUR_CRITIQUE_DU_VORTEX } }
       // LE RIVAL EST UN CUIRASSÉ LOURDEMENT ARMÉ (Keko, 14/11, à l'essai : « pour voir si je peux arriver à le tuer avec mon
       // chasseur ») : gros, lent, qui vire mal, très solide, et qui tire trois fois plus souvent, de plus loin ; il ne
       // fuit plus. `&rival=serie` rend le petit rival d'avant. *Chiffres au jugé.*
@@ -1043,6 +1043,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       }
       // LA VIE SELON LA RACE (Keko, 17/11 — voir `vieSelonLaRace`) : les Éthérés, un gros bouclier sur un blindage fragile ;
       // l'Essaim, pas de bouclier, une coque qui se régénère
+      // (LES PLAQUES DE L'EMPIRE SE RÉPARENT — Keko, 21/11 : voir `reparation` ; 20 s, de moi)
+      if (VORTEX && modeleDeVaisseau(flotte.actif).race === 'humains') conf = { ...conf, reparation: 20 }
       if (VORTEX) conf = { ...conf, ...blindageAuVortex(vieSelonLaRace(modeleDeVaisseau(flotte.actif).race, { coque: conf.coque, bouclier: conf.bouclier, regeneration: conf.regeneration, plaques: conf.plaques, corruption: conf.corruption, dephasage: conf.dephasage }, modeleDeVaisseau(flotte.actif).plaques, modeleDeVaisseau(flotte.actif).dephasage), flotte.actif) }
       if (bouclierDEssai > 0) conf = { ...conf, bouclier: { ...conf.bouclier, points: bouclierDEssai } }
       if (dephasageDEssai !== null) conf = { ...conf, dephasage: { ...conf.dephasage, chance: dephasageDEssai } }
@@ -1782,19 +1784,25 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** LES STATS : leur nom sur la carte, et ce que le bonus change (« +12 % » puis ces mots). */
   const STATS_DES_CARTES: Record<Talent['stat'], { nom: string; effet: string }> = {
     degats: { nom: 'Dégâts', effet: 'de dégâts' },
+    critique: { nom: 'Critique', effet: 'de chance de critique' },
+    critiques: { nom: 'Impact', effet: 'de dégâts critiques' },
     cadence: { nom: 'Cadence', effet: 'de cadence' },
     portee: { nom: 'Portée', effet: 'de portée' },
     zone: { nom: 'Zone', effet: 'de zone d’effet' },
-    duree: { nom: 'Durée', effet: 'de durée des effets' },
-    blindage: { nom: 'Blindage', effet: 'de points de vie' },
-    moteur: { nom: 'Moteur', effet: 'de vitesse' },
+    pose: { nom: 'Durée', effet: 'de durée' },
+    feu: { nom: 'Feu', effet: 'de dégâts du feu' },
+    corrosion: { nom: 'Corrosion', effet: 'd’effet corrosif' },
+    givre: { nom: 'Givre', effet: 'de ralentissement' },
+    blindage: { nom: 'Blindage', effet: 'de blindage' },
+    moteur: { nom: 'Vitesse', effet: 'de vitesse' },
+    maniabilite: { nom: 'Maniabilité', effet: 'de maniabilité' },
     aimant: { nom: 'Aimant', effet: 'de portée de l’aimant' },
-    repit: { nom: 'Répit', effet: 'd’invulnérabilité après un coup' },
+    experience: { nom: 'Expérience', effet: 'd’expérience par pépite' },
+    reparation: { nom: 'Réparation', effet: 'de vitesse de réparation' },
+    plaque: { nom: 'Plaque', effet: 'plaque de blindage' },
     regeneration: { nom: 'Régénération', effet: 'de régénération' },
-    bouclier: { nom: 'Bouclier', effet: 'de bouclier' },
-    recharge: { nom: 'Recharge', effet: 'de recharge du bouclier' },
+    bouclier: { nom: 'Bouclier', effet: 'de capacité du bouclier' },
     dephasage: { nom: 'Déphasage', effet: 'de chance de déphasage' },
-    phase: { nom: 'Phase', effet: 'de durée du déphasage' },
   }
   /** Deux couleurs mêlées (t de 0 à 1), opaques. */
   const meler = (a: number, b: number, t: number): number => {
@@ -1892,7 +1900,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       }
     } else dessinerLEmblemeDeRace(p, ta.cible.race, cx, cy)
     // le nom de la stat (en gras s'il tient, sinon en lettre fine)
-    const st = STATS_DES_CARTES[ta.stat]
+    const st0 = STATS_DES_CARTES[ta.stat]
+    // (le blindage des Xénoïdes, ce sont leurs points de vie — Keko, 21/11)
+    const st = ta.stat === 'blindage' && ta.cible.sorte === 'faction' && ta.cible.race === 'essaim' ? { nom: 'Points de vie', effet: 'de points de vie' } : st0
     let ly = y + 44
     ecrire(p, st.nom, cx, ly, F[4], { align: 'center', police: largeurDe(st.nom, GRAS) <= CW - 12 ? GRAS : TEXTE, ombre: ENCRE })
     // un filet orné : deux traits, un losange au milieu
@@ -1905,7 +1915,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // texture » ; la lettre des titres, et celle des en-têtes, faisaient d'un 8 un 0)
     ly += 6
     {
-      const mot = spell(`+${Math.round(ta.bonus * 100)} %`, GRAS) as { letters: { g: unknown; x: number }[]; w: number }
+      const mot = spell(ta.stat === 'plaque' ? '+1' : `+${Math.round(ta.bonus * 100)} %`, GRAS) as { letters: { g: unknown; x: number }[]; w: number }
       const x0 = Math.round(cx - mot.w / 2)
       const items = mot.letters.filter((L) => L.g).map((L) => ({ g: L.g, x: x0 + L.x, y: ly - decalage(GRAS), sx: 1, sy: 1 }))
       const eclat = ((tReel * 0.5 + i * 0.29) % 2.2) * 40 - 12
@@ -1918,7 +1928,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const effet = nomDeLArme === '' ? st.effet : `${st.effet} ${/^[aeiouyàâéèêëîïôœûüh]/i.test(nomDeLArme) ? 'd’' : 'de '}${nomDeLArme}`
     // (DEUX LIGNES NE SE TOUCHENT PAS — Keko, 21/11 : dix pixels d'une ligne à l'autre, huit d'abord : les accents de
     // l'une touchaient les jambages de l'autre)
-    for (const li of replier(effet, CW - 12).slice(0, 3)) {
+    for (const li of replier(effet, CW - 12).slice(0, 4)) {
       ecrire(p, li, cx, ly, COQUE[5], { align: 'center' })
       ly += 10
     }
@@ -1970,6 +1980,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // (ce qu'on gagne de vie ou de bouclier est donné tout de suite)
       if (CONF.coque > avant.coque) m.coque = Math.min(CONF.coque, m.coque + CONF.coque - avant.coque)
       if (CONF.bouclier.points > avant.bouclier.points) m.bouclier = Math.min(CONF.bouclier.points, m.bouclier + CONF.bouclier.points - avant.bouclier.points)
+      // (une plaque gagnée paraît debout)
+      for (let k = avant.plaques; k < CONF.plaques; k++) m.plaques.push(true)
       jouer('equipe')
       choixDeTalent = apresUnChoix(ch)
       talentFinA = tReel + DUREE_DU_CHOIX
@@ -2306,7 +2318,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       ligne('Dégâts', ent(a.degats)), cadence(a.cadence), portee(), ouverture(c.cone), ligne('Acide', ent(c.acide.dps)), ligne('Durée de l’acide', sec(c.acide.duree)), ligne('Dégâts subis', `+${pct(c.acide.bonus)}`), ligne('Durée de la flaque', sec(c.duree))
     } else if (a.mine !== undefined) {
       const mi = a.mine
-      ligne('Dégâts', ent(a.degats)), cadence(a.cadence), ligne('Mines', ent(mi.max)), zone(mi.rayon), ligne('Durée', sec(mi.duree)), ligne('Poison', ent(mi.poison.dps)), ligne('Durée du poison', sec(mi.poison.duree))
+      ligne('Dégâts', ent(a.degats)), cadence(a.cadence), ligne('Mines', ent(mi.max)), zone(mi.rayon), ligne('Durée', sec(mi.duree))
+      if (mi.corrosion !== undefined) ligne('Corrosion', `+${Math.round(mi.corrosion.bonus * 100)} %`), ligne('Durée de la corrosion', sec(mi.corrosion.duree))
+      else if (mi.poison !== undefined) ligne('Poison', ent(mi.poison.dps)), ligne('Durée du poison', sec(mi.poison.duree))
     } else if (a.parasite !== undefined) {
       const p = a.parasite
       ligne('Dégâts', ent(p.dps)), cadence(a.cadence), portee(), ligne('Parasites', ent(p.max)), ligne('Portée du saut', ent(p.saut))
@@ -14595,6 +14609,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           if (typeof navigator.vibrate === 'function') vibrer(30)
           break
         }
+        case 'plaqueReparee':
+          // (UNE PLAQUE RÉPARÉE — voir `reparation`)
+          jouer('bouclier')
+          break
         case 'aimant':
           aimantA = t
           jouer('aspire')

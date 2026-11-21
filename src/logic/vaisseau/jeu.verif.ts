@@ -3483,5 +3483,45 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   verifier(`six insectes heurtent une roche : ${blesses} blessés, la roche à ${roche?.pv} sur 500 ; une courante de plus de 24 : ${Math.round(grosses(0) * 100)} % au départ, ${Math.round(grosses(Tl.montee) * 100)} % après ${Tl.montee / 60} minutes`, roche?.pv === 500 && blesses >= 1 && grosses(0) < 0.18 && grosses(Tl.montee) > 0.22)
 }
 
+// LES PLAQUES SE RÉPARENT, L'EXPÉRIENCE SE GAGNE EN PART, LE BOUCLIER SE RECHARGE EN PART DE LUI-MÊME (Keko, 21/11)
+{
+  const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9, gainXp: 1.5 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9 }, derive: { ...VAISSEAU.derive, active: false }, plaques: 3, reparation: 20, bouclier: { points: 10, delai: 5, regain: 0, plein: 10 } }
+  const w = nouveauMonde(cfg, 3)
+  w.invasion.prochainA = 1e9
+  w.plaques = [false, false, true]
+  w.plaqueCasseeA = 0
+  w.bouclier = 0
+  w.toucheA = 0
+  const etat: string[] = []
+  let plein = -1
+  for (let i = 0; i < 60 * 45; i++) {
+    avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+    if (i === 60 * 19) etat.push(w.plaques.filter(Boolean).length + '')
+    if (i === 60 * 21) etat.push(w.plaques.filter(Boolean).length + '')
+    if (i === 60 * 41) etat.push(w.plaques.filter(Boolean).length + '')
+    if (plein < 0 && w.bouclier >= 10 - 1e-9) plein = w.t
+  }
+  verifier(`deux plaques cassées : à 19 s, ${etat[0]} debout ; à 21 s, ${etat[1]} ; à 41 s, ${etat[2]} (une à la fois, toutes les 20 s)`, etat.join() === '1,2,3')
+  verifier(`le bouclier à zéro, touché à 0 : plein à ${plein.toFixed(1)} s (5 s sans coup, puis 10 s)`, Math.abs(plein - 15) < 0.1)
+  w.pepites.push({ id: 900, x: w.vaisseau.x, y: w.vaisseau.y, vx: 0, vy: 0, graine: 1, minerai: 'fer', valeur: 3 })
+  avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+  verifier(`une moyenne (3) avec +50 % d'expérience : ${w.invasion.xp} points`, w.invasion.xp === 4.5)
+}
+
+// LE GAZ DES MINES RONGE (Keko, 21/11 : la vulnérabilité de l'effet corrosif, plus de dégâts du poison)
+{
+  const mine = { id: 'mine', cadence: 1e9, degats: 11, portee: 40, vitesse: 0, vie: 0, dispersion: 0, guide: false, mine: { max: 6, duree: 10, vol: 0.6, rayon: 20, corrosion: { duree: 4, bonus: 0.35 } } }
+  const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, pv: 500, apparait: 1e9 }, derive: { ...VAISSEAU.derive, active: false }, armes: [mine] }
+  const w = nouveauMonde(cfg, 3)
+  w.invasion.prochainA = 1e9
+  w.mines.push({ id: 1, arme: 0, x: 400, y: 0, x0: 400, y0: 0, nee: -10, posee: true } as never)
+  w.ennemis.push({ id: 200, corps: { ...nouveauVaisseau(), x: 400, y: 0 }, pv: 500, fait: 'marche', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 } })
+  for (let i = 0; i < 6; i++) avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+  const e = w.ennemis.find((x) => x.id === 200)
+  const apres = e?.pv ?? 0
+  for (let i = 0; i < 60; i++) avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+  verifier(`une mine éclate sur un insecte : ${500 - apres} points, il est rongé (+${Math.round((e?.acide?.bonus ?? 0) * 100)} % de dégâts subis), et ne perd plus rien ensuite (${apres - (e?.pv ?? 0)} en une seconde)`, apres < 500 && (e?.acide?.bonus ?? 0) === 0.35 && (e?.pv ?? 0) === apres)
+}
+
 // (TOUJOURS EN DERNIER : des blocs ajoutés après cette ligne échouaient sans faire échouer `npm run verif` — 17/11)
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)
