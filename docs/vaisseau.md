@@ -7055,3 +7055,9 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   - AU HANGAR, la ligne de l'arme passe de 20 à 24 de haut, la case à gauche du nom ; À LA SÉLECTION, chaque rangée
     grandit à sa case (22), la case à gauche du nom.
   Vu à la capture, debout et couché.
+
+- **21/11, trois icônes redessinées** (Keko : la tentacule « mal centrée et pas très jolie », la flèche de la
+  désintégration « pas terrible », l'éclair de la chaîne « pas très centré verticalement ») : la TENTACULE enroulée en
+  crosse, son crochet d'os au cœur, des ventouses le long de la tige ; la DÉSINTÉGRATION, un trait qui fait éclater sa
+  cible en fragments ; L'ÉCLAIR, de la deuxième rangée à la onzième. Choisies chacune parmi deux à six variantes sur
+  une planche agrandie.
