@@ -7210,3 +7210,8 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   - le troisième : UN CALCUL PAR BLOC d'un pixel d'écran (deux pixels du monde dézoomé au plus), le voile tramé au lieu
     de fondu, plus de lueur de fond : 43 images par seconde contre 42 — LE MÊME COÛT que la tempête actuelle, pas moins.
   La tempête actuelle reste par défaut ; à Keko de choisir.
+
+- **21/11, la tempête texturée, ses filaments remplacés par des particules** (Keko : « je trouve les traînées
+  grossières, on peut les remplacer par des particules ? ») : les filaments ne sont plus tracés (`&filaments` les rend) ;
+  les six mille particules de la tempête de toujours filent par-dessus le voile texturé. Mesuré dans les mêmes
+  conditions : 41,5 images par seconde (la tempête actuelle : 42) — le même coût. Vu à la capture.

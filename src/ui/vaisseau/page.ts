@@ -11731,6 +11731,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * lumière ni particules : le mur et les roches restent.
    */
   const TEMPETE_VOID = parametres.get('tempete') === 'void'
+  /** Les filaments de la tempête texturée, à la place de ses particules (`&filaments` : retirés le 21/11, « grossiers »). */
+  const FILAMENTS = parametres.has('filaments')
   const VOID_ = ['#06040b', '#150c26', '#2a1150', '#461a84', '#6f2cc0', '#9d5cec', '#cfa6ff', '#f6eaff'].map((c) => N.hex(c))
   const CYAN_DE_LA_TEMPETE = N.hex('#7fe3ff')
   /** Le bruit des bras de la tempête : `BRUIT_S` cases le long du cercle, `BRUIT_U` à travers l'anneau, tiré une fois. */
@@ -11793,7 +11795,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         let alpha = 1
         let lumiere = 0
         // LES FILAMENTS : de fins traits de lumière, presque le long du cercle, qui filent plus vite que les bras, cassés
-        const fil = Math.cos(qf * nFil * Math.PI * 2 + u * Math.PI * 2 * 14 + nz * 2)
+        // (… RETIRÉS — Keko, 21/11 : « je trouve les traînées grossières, on peut les remplacer par des particules ? » :
+        // les particules de la tempête de toujours filent par-dessus le voile ; `FILAMENTS` les rend)
+        const fil = FILAMENTS ? Math.cos(qf * nFil * Math.PI * 2 + u * Math.PI * 2 * 14 + nz * 2) : 0
         if (fil > 0.94 && fort > 0.22 && Math.cos(qf * nTrait * Math.PI * 2 + u * Math.PI * 2 * 2 + nz) > -0.2) {
           const trait = Math.cos(qf * nTrait * Math.PI * 2 + u * Math.PI * 2 * 2 + nz)
           c = chaud > 0.55 ? C[7] : trait > 0.75 ? CYAN_DE_LA_TEMPETE : fort > 0.55 ? C[6] : C[5]
@@ -11898,7 +11902,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // (leur rayon, leur vitesse angulaire et leur angle de départ sont tirés une fois — `particulesDeLaTempete` : quatre
     // hachages par particule et par image, vingt-quatre mille, pour des nombres qui ne changent jamais)
     const pt = particulesDeLaTempete()
-    for (let k = 0; k < (TEMPETE_VOID ? 0 : PARTICULES_DE_LA_TEMPETE); k++) {
+    for (let k = 0; k < (TEMPETE_VOID && FILAMENTS ? 0 : PARTICULES_DE_LA_TEMPETE); k++) {
       const r = pt.r[k]
       const a = pt.a0[k] + pt.w[k] * m.t
       if (Math.abs(ecartAngulaire(a, phi)) > span) continue
