@@ -452,6 +452,56 @@ export function formesDeLInsecte(marche: number, morsure: number): Forme[] {
   }
   return f
 }
+/**
+ * LE CORNU, L'INSECTE DE MILIEU DE GAMME (Keko, 21/11 : « un peu plus résistant et plus gros que les petits » — « un
+ * scarabée cornu blindé », choisi parmi trois) : le cousin trapu du petit, dans les mêmes unités (la page le peint une
+ * fois et demie plus grand) — des pattes épaisses, PAS D'AILES (il ne vole pas, il charge), des élytres d'obsidienne
+ * RENFORCÉES d'une arête et de deux clous d'os, un large BOUCLIER de chitine sur le thorax et ses deux petites cornes,
+ * une tête en dôme, deux yeux de bile, et UNE GRANDE CORNE d'os fourchue devant, sous laquelle les mandibules s'ouvrent
+ * en chasse (`morsure`, de 0 à 1).
+ */
+export function formesDuCornu(marche: number, morsure: number): Forme[] {
+  const f: Forme[] = []
+  // LES PATTES : comme celles du petit, plus épaisses
+  for (const sg of [-1, 1])
+    for (let k = 0; k < 3; k++) {
+      const pas = Math.sin(marche + k * 2.1 + (sg > 0 ? Math.PI : 0))
+      const hx = [1.3, 0.1, -1.1][k]
+      const gx = hx + [1, 0, -1.3][k] + pas * 0.35
+      const px = hx + [2.6, 0.3, -3.2][k] + pas * 0.9
+      f.push({ pts: barre(hx, sg * 1.8, gx, sg * 4.3, 1.15), mat: 'obsidienne', relief: 'plat' })
+      f.push({ pts: barre(gx, sg * 4.3, px, sg * 6.2, 0.85), mat: 'mauve', relief: 'plat' })
+    }
+  // L'ABDOMEN SOUS SES ÉLYTRES BLINDÉES : le bout annelé, le dard ; deux élytres d'obsidienne, chacune son arête et ses
+  // deux clous d'os ; la fente
+  f.push({ pts: ovale(-6.6, 0, 2.6, 2, 12), mat: 'lie', relief: 'cyl' })
+  f.push({ pts: [[-8.8, -0.7], [-10.4, 0], [-8.8, 0.7]], mat: 'os', relief: 'plat' })
+  for (const sg of [-1, 1]) {
+    const elytre: [number, number][] = []
+    for (let i = 0; i <= 10; i++) {
+      const u = i / 10
+      elytre.push([1 - u * 8.4, sg * (0.15 + 3.3 * Math.sin(Math.PI * Math.min(1, 0.18 + u * 0.82)) ** 0.7)])
+    }
+    elytre.push([-7.4, sg * 0.15], [1, sg * 0.15])
+    f.push({ pts: elytre, mat: 'obsidienne', relief: 'plat', penche: sg })
+    f.push({ pts: barre(-0.4, sg * 1.9, -5.6, sg * 1.7, 0.55), mat: 'os', relief: 'plat' })
+    for (const x of [-1.8, -4.4]) f.push({ pts: ovale(x, sg * 2.6, 0.42, 0.42, 8), mat: 'os', relief: 'dome', dome: { x, y: sg * 2.6, rx: 0.42, ry: 0.42 } })
+  }
+  f.push({ pts: barre(0.8, 0, -7.2, 0, 0.5), mat: 'lie', relief: 'plat' })
+  // LE BOUCLIER DU THORAX, plus large que les élytres, et ses deux petites cornes
+  for (const sg of [-1, 1]) f.push({ pts: [[2.4, sg * 3.2], [4.1, sg * 4.4], [3.2, sg * 2.6]], mat: 'os', relief: 'plat' })
+  f.push({ pts: [[3.4, -2.1], [2.8, -3.6], [0.8, -3.9], [-0.5, -3.1], [-0.7, 0], [-0.5, 3.1], [0.8, 3.9], [2.8, 3.6], [3.4, 2.1]], mat: 'obsidienne', relief: 'cyl' })
+  f.push({ pts: barre(-0.2, 0, 3, 0, 0.4), mat: 'mauve', relief: 'plat' })
+  // LA TÊTE, LES YEUX, LES MANDIBULES, LA CORNE
+  f.push({ pts: ovale(4.3, 0, 1.5, 1.45, 14), mat: 'lie', relief: 'dome', dome: { x: 4.3, y: 0, rx: 1.5, ry: 1.45 } })
+  for (const sg of [-1, 1]) f.push({ pts: ovale(4.6, sg * 1, 0.55, 0.55, 10), mat: 'bile', relief: 'dome', dome: { x: 4.6, y: sg * 1, rx: 0.55, ry: 0.55 } })
+  for (const sg of [-1, 1]) {
+    const ecart = 0.3 + 0.9 * morsure
+    f.push({ pts: barre(5.3, sg * 0.7, 6.4, sg * (0.5 + ecart), 0.55), mat: 'os', relief: 'plat' })
+  }
+  f.push({ pts: [[4.6, -0.75], [7.4, -0.45], [8.6, -1.1], [8.2, -0.2], [8.6, 0.6], [7.4, 0.35], [4.6, 0.75]], mat: 'os', relief: 'cyl' })
+  return f
+}
 /** Un trait épais en polygone, de (x0, y0) à (x1, y1). */
 export function barre(x0: number, y0: number, x1: number, y1: number, e: number): [number, number][] {
   const l = Math.hypot(x1 - x0, y1 - y0) || 1

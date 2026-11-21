@@ -7247,3 +7247,19 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   jamais vu ; la planche avait les deux). Toujours une image gardée par pose (cap, pas, mandibules). Jugé sur une planche
   agrandie hors du navigateur (pixelfx tourne sous Node) : la première version, ailes couchées sur l'abdomen, faisait une
   tache grise ; puis des élytres en demi-lunes creuses (refermées en diagonale) ; puis vu dans le jeu.
+
+- **21/11, des traînées courtes ; LE CORNU, l'insecte de milieu de gamme.**
+  - Keko : « réduis beaucoup leur traînée de propulsion : elles sont assez longues, et vu qu'il y a beaucoup d'insectes,
+    ça prend trop l'œil ». Au vortex, une braise verte sur huit images au lieu d'une sur deux, trois fois plus lente,
+    deux fois moins longue à vivre — cinq pixels au lieu de vingt-six —, partie du bout de l'abdomen.
+  - Keko : « un nouveau type d'insecte, milieu de gamme, un peu plus résistant et plus gros que les petits » — « un
+    scarabée cornu blindé », « ×3 de vie, ×1,5 de taille », « après une minute, de plus en plus souvent », choisis
+    parmi trois chaque fois. LA RÈGLE (`invasion.cornu`, `Ennemi.cornu`) : 360 points de vie (le petit 120), un rayon de
+    7,5 (5) partout où il compte — morsure, chocs, écart entre insectes, roches, coups (`rayonDe`) —, 35 de pointe (40),
+    une morsure ×1,5, trois pépites ; sa part du flot nulle la première minute, puis qui monte en ligne droite jusqu'au
+    cinquième à la cinquième (`partDesCornus`). L'IMAGE (`formesDuCornu`, peint une fois et demie plus grand) : le cousin
+    trapu du petit — pattes épaisses, pas d'ailes, des élytres d'obsidienne à arête et clous d'os, un large bouclier
+    sur le thorax et ses deux petites cornes, une GRANDE CORNE d'os fourchue devant ; en chasse, ses yeux rougissent.
+    Jugé sur une planche agrandie, puis dans le jeu. `&cornus=P` : cette part de cornus dès le départ.
+  Testé : 0 % la première minute, 8 % la troisième, 17 % la sixième ; 360 points, rayon 7,5, 35 contre 40 de vitesse ;
+  trois pépites.

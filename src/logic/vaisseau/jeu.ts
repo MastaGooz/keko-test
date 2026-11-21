@@ -262,6 +262,14 @@ export const VAISSEAU = {
     /** La part de leur poussée avec laquelle les insectes errent, le joueur abattu (voir `conduireLInsecte`). *De moi.* */
     errance: 0.45,
     /**
+     * LE CORNU, L'INSECTE DE MILIEU DE GAMME (Keko, 21/11 : « un nouveau type d'insecte, milieu de gamme, un peu plus
+     * résistant et plus gros que les petits » — un scarabée cornu blindé ; ×3 de vie et ×1,5 de taille ; après une minute,
+     * de plus en plus souvent ; choisis parmi trois) : `vie` fois les points de vie d'un insecte, `taille` fois son rayon,
+     * `vitesse` fois sa pointe et sa poussée, `morsure` fois sa morsure, `butin` pépites. Sa part dans le flot : rien avant
+     * `debut` secondes de vol, puis elle monte en ligne droite jusqu'à `part` en `montee` secondes.
+     */
+    cornu: { vie: 3, taille: 1.5, vitesse: 35 / 40, morsure: 1.5, butin: 3, debut: 60, montee: 240, part: 0.2 },
+    /**
      * LA VIE DU PORTAIL (Keko, 14/11 : « elle s'exprime en pourcentage : il commence à 100 %, et s'il atteint 0 c'est
      * la fin de la partie ; pour l'instant les ennemis lui enlèvent 1 % à chaque fois qu'ils passent ») : `viePortail`
      * au départ, `degatsAuPortail` par insecte qui le traverse. À zéro, la partie est FINIE (`fin`) : plus rien n'avance.
@@ -1025,6 +1033,8 @@ export type Ennemi = {
   poison?: { jusque: number; dps: number }
   /** IL EST TENU PAR UNE VRILLE (voir `Arme.vrille`) jusqu'à cet instant : immobilisé sur place. */
   tenuA?: number
+  /** UN CORNU : l'insecte de milieu de gamme (voir `invasion.cornu`). */
+  cornu?: boolean
   /** UN GRAND : un mini-boss, un boss (aucun encore) — une vrille le saisit sans l'immobiliser. */
   grand?: boolean
   /** Son dernier choc contre une roche qui dérive (voir `sansPortail`). */
@@ -1641,7 +1651,7 @@ function abattreLEnnemi(c: ConfigVaisseau, m: Monde, e: Ennemi, ev: Evenement[])
   // il rend sa cargaison, minerai par minerai, plus tant de pépites de fer
   const rendues: Minerai[] = []
   for (const k of MINERAIS) for (let i = 0; i < e.cargaison[k]; i++) rendues.push(k)
-  for (let i = 0; i < (ro === undefined ? c.ennemi.butinRendu : Math.max(1, Math.round(ro.pvMax * c.derive.pepitesParPv))); i++) rendues.push('fer')
+  for (let i = 0; i < (ro !== undefined ? Math.max(1, Math.round(ro.pvMax * c.derive.pepitesParPv)) : e.cornu === true ? c.invasion.cornu.butin : c.ennemi.butinRendu); i++) rendues.push('fer')
   const n = rendues.length
   for (let i = 0; i < n; i++) {
     const an = (i / n) * Math.PI * 2 + tire(e.id, 30, i)
@@ -1675,7 +1685,7 @@ function faireNaitreUnEnnemi(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void
  * LE RAYON D'UN ENNEMI, pour qu'on le touche : celui des insectes (`ennemi.rayon`), ou celui de la roche qui dérive —
  * toute sa surface se touche, pas seulement son cœur (Keko, 20/11 : des roches plus grosses, jusqu'à 34).
  */
-export const rayonDe = (c: ConfigVaisseau, e: Ennemi): number => e.asteroide?.rayon ?? c.ennemi.rayon
+export const rayonDe = (c: ConfigVaisseau, e: Ennemi): number => e.asteroide?.rayon ?? (e.cornu === true ? c.ennemi.rayon * c.invasion.cornu.taille : c.ennemi.rayon)
 
 /**
  * UNE ROCHE DE LA TEMPÊTE (voir `arene`) : la k-ième, à l'instant `t` — tirée de son rang, rien n'est gardé. ELLE NE
@@ -2025,7 +2035,7 @@ function heurterLesRoches(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
       const dx = e.corps.x - r.corps.x
       const dy = e.corps.y - r.corps.y
       const d = Math.hypot(dx, dy) || 0.001
-      const min = r.asteroide!.rayon + c.ennemi.rayon
+      const min = r.asteroide!.rayon + rayonDe(c, e)
       if (d >= min) continue
       e.corps = { ...e.corps, x: r.corps.x + (dx / d) * min, y: r.corps.y + (dy / d) * min }
       if (m.t - (e.heurteA ?? -100) < c.invasion.heurteRoche) continue
@@ -2067,6 +2077,12 @@ function angleDeNaissance(c: ConfigVaisseau, m: Monde, k: number): number {
 }
 
 /** Un insecte de l'invasion naît sur le cercle de naissance, dans une direction tirée de la graine du monde, tourné vers le portail. */
+/** La part des cornus parmi les insectes qui naissent à l'instant `t` du vol (voir `invasion.cornu`). */
+export function partDesCornus(c: ConfigVaisseau, t: number): number {
+  const C = c.invasion.cornu
+  return C.part * Math.max(0, Math.min(1, (t - C.debut) / C.montee))
+}
+
 function faireNaitreUnInsecte(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
   // (dans UN DES CADRANS DE LA VAGUE, à tour de rôle ; pas sur ses bords : un dixième de marge de chaque côté — en flot
   // continu, tout autour)
@@ -2079,7 +2095,9 @@ function faireNaitreUnInsecte(c: ConfigVaisseau, m: Monde, ev: Evenement[]): voi
   const o = centreDuChamp(c, m)
   // (DANS L'ARÈNE : un point de naissance tombé dans la tempête est tourné, ou ramené dedans)
   const { x, y } = c.invasion.sansPortail ? dansLArene(c, m, a, c.invasion.naissance) : { x: o.x + Math.cos(a) * c.invasion.naissance, y: o.y + Math.sin(a) * c.invasion.naissance }
-  const e: Ennemi = { id: m.prochainId++, corps: { ...nouveauVaisseau(), x, y, cap: Math.atan2(o.y - y, o.x - x) }, pv: c.ennemi.pv, fait: c.invasion.sansPortail ? 'aggro' : 'marche', roche: null, forage: null, tirA: 0, butin: 0, cargaison: cargaisonVide() }
+  // (UN CORNU, selon sa part du moment — voir `invasion.cornu`)
+  const cornu = tire(m.graine, m.prochainId, 71) < partDesCornus(c, m.t)
+  const e: Ennemi = { id: m.prochainId++, corps: { ...nouveauVaisseau(), x, y, cap: Math.atan2(o.y - y, o.x - x) }, pv: c.ennemi.pv * (cornu ? c.invasion.cornu.vie : 1), fait: c.invasion.sansPortail ? 'aggro' : 'marche', roche: null, forage: null, tirA: 0, butin: 0, cargaison: cargaisonVide(), ...(cornu ? { cornu: true } : {}) }
   m.ennemis.push(e)
   ev.push({ type: 'ennemiApparait', id: e.id, x, y })
 }
@@ -2135,12 +2153,13 @@ export function degatsMultiplies<A>(a: A, k: number): A {
  * bouge pas, l'autre fait tout le chemin. Une grille de cases de cette distance : on ne compare que les voisins.
  */
 function ecarterLesInsectes(c: ConfigVaisseau, m: Monde): void {
-  const min = 2 * c.ennemi.rayon + c.invasion.ecart
+  // (la case : l'écart de deux cornus, les plus gros ; chaque paire garde le sien, selon leurs rayons)
+  const cas = 2 * c.ennemi.rayon * c.invasion.cornu.taille + c.invasion.ecart
   const grille = new Map<number, Ennemi[]>()
   const cle = (i: number, j: number): number => i * 100003 + j
   for (const e of m.ennemis) {
     if (e.asteroide !== undefined) continue
-    const k = cle(Math.floor(e.corps.x / min), Math.floor(e.corps.y / min))
+    const k = cle(Math.floor(e.corps.x / cas), Math.floor(e.corps.y / cas))
     const l = grille.get(k)
     if (l === undefined) grille.set(k, [e])
     else l.push(e)
@@ -2148,8 +2167,8 @@ function ecarterLesInsectes(c: ConfigVaisseau, m: Monde): void {
   const tenu = (e: Ennemi): boolean => (e.tenuA ?? -1) > m.t && e.grand !== true
   for (const e of m.ennemis) {
     if (e.asteroide !== undefined) continue
-    const i0 = Math.floor(e.corps.x / min)
-    const j0 = Math.floor(e.corps.y / min)
+    const i0 = Math.floor(e.corps.x / cas)
+    const j0 = Math.floor(e.corps.y / cas)
     for (let di = -1; di <= 1; di++)
       for (let dj = -1; dj <= 1; dj++)
         for (const o of grille.get(cle(i0 + di, j0 + dj)) ?? []) {
@@ -2157,6 +2176,7 @@ function ecarterLesInsectes(c: ConfigVaisseau, m: Monde): void {
           let dx = o.corps.x - e.corps.x
           let dy = o.corps.y - e.corps.y
           let d = Math.hypot(dx, dy)
+          const min = rayonDe(c, e) + rayonDe(c, o) + c.invasion.ecart
           if (d >= min) continue
           // (pile au même point : on les sépare selon leurs identités, toujours dans le même sens)
           if (d < 1e-6) {
@@ -2311,9 +2331,9 @@ function conduireLInsecte(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number, ev
     direction = { x: Math.cos(a) * I.errance, y: Math.sin(a) * I.errance }
   } else if (e.fait === 'aggro') {
     direction = { x: (v.x - b.x) / dj, y: (v.y - b.y) / dj }
-    if (m.phase === 'vol' && dj <= c.rayon + c.ennemi.rayon + 2 && m.t >= (e.mordA ?? 0)) {
+    if (m.phase === 'vol' && dj <= c.rayon + rayonDe(c, e) + 2 && m.t >= (e.mordA ?? 0)) {
       e.mordA = m.t + I.cadenceMorsure
-      encaisser(c, m, v.x, v.y, I.morsure, ev)
+      encaisser(c, m, v.x, v.y, I.morsure * (e.cornu === true ? I.cornu.morsure : 1), ev)
     }
   } else direction = { x: -b.x / dp, y: -b.y / dp }
   // (IL ÉVITE LES ROCHES QUI DÉRIVENT : à moins de `eviteRoche` de leur bord, il s'en écarte d'autant plus qu'il en est près)
@@ -2325,7 +2345,7 @@ function conduireLInsecte(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number, ev
       const dx = b.x - r.corps.x
       const dy = b.y - r.corps.y
       const d = Math.hypot(dx, dy) || 0.001
-      const marge = d - r.asteroide.rayon - c.ennemi.rayon
+      const marge = d - r.asteroide.rayon - rayonDe(c, e)
       if (marge >= I.eviteRoche) continue
       const k = 2.5 * (1 - Math.max(0, marge) / I.eviteRoche)
       // (il s'en écarte ET LA CONTOURNE : une poussée de côté, du côté où il allait — pile en face, selon son identité ;
@@ -2346,8 +2366,9 @@ function conduireLInsecte(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number, ev
   }
   // (GELÉ, il avance à une part de sa vitesse : son moteur et sa pointe baissent d'autant, et il est freiné tout de suite)
   const gele = (e.geleA ?? -1) > m.t
-  const k = gele ? (e.ralenti ?? 1) : 1
-  e.corps = voler(c, gele ? { ...c.ennemi, poussee: c.ennemi.poussee * k, vitesseMax: c.ennemi.vitesseMax * k } : c.ennemi, b, dt, direction, m.detruits).vaisseau
+  // (UN CORNU va moins vite — voir `invasion.cornu`)
+  const k = (gele ? (e.ralenti ?? 1) : 1) * (e.cornu === true ? I.cornu.vitesse : 1)
+  e.corps = voler(c, k !== 1 ? { ...c.ennemi, poussee: c.ennemi.poussee * k, vitesseMax: c.ennemi.vitesseMax * k } : c.ennemi, b, dt, direction, m.detruits).vaisseau
   const vit = Math.hypot(e.corps.vx, e.corps.vy)
   if (gele && vit > c.ennemi.vitesseMax * k) e.corps = { ...e.corps, vx: (e.corps.vx * c.ennemi.vitesseMax * k) / vit, vy: (e.corps.vy * c.ennemi.vitesseMax * k) / vit }
   return []
@@ -2509,7 +2530,7 @@ function heurterLesVaisseaux(c: ConfigVaisseau, m: Monde, ev: Evenement[]): bool
     const dx = b.x - v.x
     const dy = b.y - v.y
     const d = Math.hypot(dx, dy) || 0.001
-    const minimum = c.rayon + (e.asteroide?.rayon ?? c.ennemi.rayon)
+    const minimum = c.rayon + rayonDe(c, e)
     if (d >= minimum) continue
     // (UNE ROCHE QUI DÉRIVE : bien plus lourde que lui — il rebondit sur elle, elle ne dévie pas ; un choc franc lui coûte
     // `derive.choc` unités de vie, la roche n'a rien)
