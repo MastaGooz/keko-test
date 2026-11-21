@@ -7061,3 +7061,21 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   crosse, son crochet d'os au cœur, des ventouses le long de la tige ; la DÉSINTÉGRATION, un trait qui fait éclater sa
   cible en fragments ; L'ÉCLAIR, de la deuxième rangée à la onzième. Choisies chacune parmi deux à six variantes sur
   une planche agrandie.
+
+- **21/11, les icônes aux couleurs des sorts ; l'armement dans la grille des vaisseaux.**
+  - Keko : « colorer les missiles magiques d'une couleur un peu violette, et une petite coloration aux dés du destin et
+    aux attaques du Tesseract, qu'elles matchent la couleur des effets de sort ». Le MISSILE IONIQUE du Pulsar est
+    violet, comme ses rubans en vol ; l'HYPERCUBE, le DÉ DU DESTIN et la SUPERPOSITION prennent le VERT D'EAU des sorts
+    du Tesseract (la `spectre` et la `lumiere` de sa peau d'origine, trois lettres de plus dans la palette) — le dé
+    comme en vol : une face sombre cerclée de vert d'eau, des points blancs. (Les sorts suivent la peau ; les icônes
+    gardent la couleur d'origine.)
+  - Keko : « enlever la description des vaisseaux dans la grille de sélection, et mettre à cet endroit un bouton
+    armement avec l'arme actuelle, son icône, et une possibilité de la changer en ouvrant le panneau d'armement depuis
+    la grille ». Dans la fiche d'un vaisseau ouvert, une RANGÉE « ARMEMENT » : la case de son arme, son nom, « Changer »
+    à droite, toute la rangée ouvre le panneau des armes DE CE VAISSEAU (`ouvrirLArmementDe`) ; chaque vaisseau garde
+    son arme (`armeDe`). Le panneau, son aperçu et « Équiper » valent pour le piloté : le vaisseau choisi EST PILOTÉ LE
+    TEMPS DU PANNEAU, sans rien sauver, et le vrai pilote revient à la fermeture (`rendreLePilote`) ; fermé, on revient
+    à la grille. Verrouillé, la fiche garde son « Faites ceci pour débloquer ce vaisseau ». La description n'est plus
+    affichée nulle part ; elle reste écrite dans `ModeleDeVaisseau.dit`.
+  Vu à la capture : couché, en pilotant le Chasseur, la Nuée équipée sur le Kraken depuis la grille — l'aperçu montre
+  le Kraken, la grille revient, le Chasseur reste piloté ; debout, la rangée tient.

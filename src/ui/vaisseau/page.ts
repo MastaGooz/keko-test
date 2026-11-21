@@ -1135,9 +1135,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const ARMES_PAR_VAISSEAU: Record<string, string[]> = { chasseur: ['arme-laser', 'arme-mitrailleuse', 'arme-minimissiles'], salamandre: ['arme-flammes', 'arme-rayon', 'arme-napalm'], sentinelle: ['arme-drones', 'arme-chaine', 'arme-aura'], ingenieur: ['arme-tourelles', 'arme-scie', 'arme-fleau'], frimas: ['arme-nova', 'arme-eclats', 'arme-tornade'], pulsar: ['arme-plasma', 'arme-essaim', 'arme-meteore'], kraken: ['arme-tentacules', 'arme-nuee', 'arme-rejetons'], vouivre: ['arme-crachat', 'arme-mines', 'arme-poison'], prisme: ['arme-faisceau', 'arme-cristaux', 'arme-rail'], neant: ['arme-puits', 'arme-drain', 'arme-vrilles'], mante: ['arme-parasites', 'arme-oeufs', 'arme-epines'], tesseract: ['arme-hypercube', 'arme-de', 'arme-coupe'] }
   const armesDuVortex = (): string[] => ARMES_PAR_VAISSEAU[flotte.actif] ?? ARMES_PAR_VAISSEAU.chasseur
   const armesChoisies: Record<string, string> = {}
-  const armeDuVortex = (): string => {
-    const l = armesDuVortex()
-    const a = (armesChoisies[flotte.actif] ??= chargerArme(flotte.actif))
+  const armeDuVortex = (): string => armeDe(flotte.actif)
+  /** L'arme équipée sur ce vaisseau (piloté ou non) : celle qu'on lui a choisie, ou sa première. */
+  const armeDe = (id: string): string => {
+    const l = ARMES_PAR_VAISSEAU[id] ?? ARMES_PAR_VAISSEAU.chasseur
+    const a = (armesChoisies[id] ??= chargerArme(id))
     return l.includes(a) ? a : l[0]
   }
   const choisirLArme = (id: string): void => {
@@ -4200,6 +4202,38 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   let armesOuvertes = false
   let armeChoisie = ''
   /**
+   * L'ARMEMENT D'UN AUTRE VAISSEAU (Keko, 21/11 : depuis la grille des vaisseaux, « un bouton armement avec l'arme
+   * actuelle, son icône, et une possibilité de la changer en ouvrant le panneau d'armement ») : le panneau des armes, son
+   * aperçu et « Équiper » valent pour le vaisseau piloté ; pour en armer un autre, IL EST PILOTÉ LE TEMPS DU PANNEAU —
+   * sans rien sauver —, et `piloteAvantLArmement` le rend à la fermeture (`rendreLePilote`). Fermé, on revient d'où on
+   * l'a ouvert : la grille des vaisseaux ou le hangar.
+   */
+  let piloteAvantLArmement: string | null = null
+  function ouvrirLArmementDe(id: string): void {
+    if (id !== flotte.actif && aLeVaisseau(flotte, id)) {
+      piloteAvantLArmement = flotte.actif
+      flotte = { ...avecLeHangar(flotte, hangar), actif: id }
+      hangar = hangarActif(flotte)
+      livree = livreeDuVaisseau()
+    }
+    armesOuvertes = true
+    vaisseauxA = t
+    armeChoisie = armeDuVortex()
+    surligneVaisseau = -1
+  }
+  function rendreLePilote(): void {
+    if (piloteAvantLArmement === null) return
+    flotte = { ...avecLeHangar(flotte, hangar), actif: piloteAvantLArmement }
+    hangar = hangarActif(flotte)
+    livree = livreeDuVaisseau()
+    piloteAvantLArmement = null
+  }
+  function fermerLArmement(): void {
+    armesOuvertes = false
+    etapeA = t
+    rendreLePilote()
+  }
+  /**
    * LA CASE D'UNE ARME (Keko, 21/11 : « associer à chaque arme du jeu une icône » — voir `icones-armes.ts`) : `TAILLE_DE_LA_CASE`
    * pixels de côté, cernée d'encre, le fond et le halo des portraits de la race du vaisseau, un liseré de ses teintes en
    * haut ; dedans, l'icône de l'arme et son contour. `vive` : la case de l'arme équipée, son liseré d'or.
@@ -4238,7 +4272,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const choisie = toutes.find((pc) => pc.id === armeChoisie) ?? toutes[0]
     const aSoi = armesDuVortex().includes(choisie.id)
     if (partie !== 'fiche') {
-      enTete(p, y, 'Armes', () => ((armesOuvertes = false), (etapeA = t)))
+      enTete(p, y, 'Armes', fermerLArmement)
       y += HT + 3
       // (UNE ICÔNE À CÔTÉ DE CHAQUE ARME — Keko, 21/11 : la rangée grandit à sa case, `RANG_D_ARME`)
       const RANG_D_ARME = TAILLE_DE_LA_CASE + 4
@@ -4271,8 +4305,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         // hangar, comme quand on sélectionne un véhicule »)
         bouton(p, Math.round(W / 2 - bw / 2), y, bw, 15, 'Équiper', true, () => {
           choisirLArme(choisie.id)
-          armesOuvertes = false
-          etapeA = t
+          fermerLArmement()
           feterLEquipement()
         }, 'equipe')
       } else ecrire(p, 'Pas encore disponible', W / 2, y + 4, COQUE[4], { align: 'center' })
@@ -4865,7 +4898,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * de vol sur les étalons du jeu (sans sa classe), son blindage et son bouclier — celui de base du jeu du vortex compris —, et, `avecDit`,
    * ce qu'il est. Au panneau des vaisseaux, et sous le nom au hangar (Keko, 15/11). Rend sa hauteur.
    */
-  function dessinerLaFicheDuVaisseau(p: Peintre, y: number, mo: ReturnType<typeof modeleDeVaisseau>, aSoi: boolean, depuis: number, avecDit: boolean, avecNom = true, action: ((xd: number, yc: number) => void) | null = null): number {
+  function dessinerLaFicheDuVaisseau(p: Peintre, y: number, mo: ReturnType<typeof modeleDeVaisseau>, aSoi: boolean, depuis: number, avecDit: boolean, avecNom = true, action: ((xd: number, yc: number) => void) | null = null, armement: (() => void) | null = null): number {
     const jaugesDuModele = (de: ReturnType<typeof modeleDeVaisseau>): Jauge[] => {
       const cf = regleAuVortex(configDuHangar(BASE, de.serie), de.id)
       // (… ET LE MEILLEUR NE VA QU'À 75 % — Keko, 18/11 : « avec des améliorations, plus tard, on pourra améliorer les
@@ -4906,7 +4939,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // qui est équipé à celui qu'on est en train de regarder » ; comme les jauges des pièces)
     const pilote = mo.id === flotte.actif || cache ? null : jaugesDuModele(modeleDeVaisseau(flotte.actif))
     const dit = avecDit ? (cache ? ['???'] : replier(mo.dit, W - 22).slice(0, 3)) : []
-    if (avecNom) return dessinerLaFicheEnBandeau(p, y, mo, aSoi, cache, jauges, pilote === null ? null : (j) => repereDe(pilote, j), depuis, dit, action)
+    if (avecNom) return dessinerLaFicheEnBandeau(p, y, mo, aSoi, cache, jauges, pilote === null ? null : (j) => repereDe(pilote, j), depuis, dit, action, armement)
     // (sans le nom — au hangar, il est juste au-dessus —, les jauges montent et la fiche raccourcit)
     // (plus de « Classe légère / lourde » sous le nom — Keko, 15/11 : les jauges remontent sous lui)
     // LA FICHE EN DEUX ÉTAGES (Keko, 17/11 : « l'emplacement du symbole fait encore un côté portrait rectangulaire, c'est
@@ -4955,7 +4988,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * peu en avant, pour que l'œil du joueur soit attrapé dessus » : un encart creux au liseré d'or, un cadenas d'or qui
    * luit doucement, le texte en or clair — `DEBLOCAGE_A_VENIR`, en attendant les vraies conditions)
    */
-  function dessinerLaFicheEnBandeau(p: Peintre, y: number, mo: ReturnType<typeof modeleDeVaisseau>, aSoi: boolean, cache: boolean, jauges: Jauge[], repere: ((j: Jauge) => number | null) | null, depuis: number, dit: string[], action: ((xd: number, yc: number) => void) | null): number {
+  function dessinerLaFicheEnBandeau(p: Peintre, y: number, mo: ReturnType<typeof modeleDeVaisseau>, aSoi: boolean, cache: boolean, jauges: Jauge[], repere: ((j: Jauge) => number | null) | null, depuis: number, dit: string[], action: ((xd: number, yc: number) => void) | null, armement: (() => void) | null): number {
     const hd = hauteurDeLaFicheDuVaisseau(mo)
     const [sombre, moyen, clair] = TEINTES_DES_RACES[mo.race]
     const [haut, bas, halo] = FONDS_DES_RACES[mo.race]
@@ -5012,6 +5045,23 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       dessinerUnCadenas(p, lx, ly)
       const y0 = yy + Math.round((hb - lignes.length * INTERLIGNE) / 2) + 1
       lignes.forEach((li, i) => ecrire(p, li, lx + 14, y0 + i * INTERLIGNE, PEPITE[3]))
+    } else if (armement !== null && aSoi) {
+      // L'ARMEMENT, À LA PLACE DE CE QU'EST LE VAISSEAU (Keko, 21/11 : « enlever la description des vaisseaux dans la grille
+      // de sélection, et mettre à cet endroit un bouton armement avec l'arme actuelle, son icône, et une possibilité de la
+      // changer ») : une rangée creuse — la case de son arme, « ARMEMENT » et son nom, « Changer » à droite ; toute la
+      // rangée ouvre le panneau des armes de CE vaisseau (`ouvrirLArmementDe`)
+      const arme = armeDe(mo.id)
+      const ha = TAILLE_DE_LA_CASE + 6
+      plaque(p, 8, yy, W - 16, ha, 'creux')
+      dessinerLaCaseDArme(p, arme, 11, yy + 3, mo.race, true)
+      const xa = 11 + TAILLE_DE_LA_CASE + 5
+      p.text('ARMEMENT', xa, yy + 4, COQUE[3])
+      ecrire(p, pieceDe(arme)?.nom ?? '', xa, yy + 13, N.hex('#f6ecd2'))
+      const bw = largeurDe('Changer', GRAS) + 12
+      const bx = W - 11 - bw
+      const yb = yy + Math.round((ha - 16) / 2)
+      boutonBase(p, bx, yb, bw, 16, true, armement, (dx, dy) => ecrire(p, 'Changer', bx + bw / 2 + dx, yb + dy + 4, COQUE[5], { align: 'center' }), 'ouvre', { matiere: 'acier' })
+      zone(8, yy, W - 16, ha, armement, 'ouvre')
     } else dit.forEach((li, i) => ecrire(p, li, 10, yy + i * INTERLIGNE, COQUE[4]))
     return hd
   }
@@ -5184,12 +5234,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         const bw = largeurDe('Piloter', GRAS) + 16
         bouton(p, xd - bw, yc - 8, bw, 15, 'Piloter', true, piloter, 'equipe')
       }
-    })
+    }, () => ouvrirLArmementDe(choisi.id))
     if (u0 < 1) p.rect(0, HAUT_BARRE, W, H - HAUT_BARRE, NUIT, 1 - u0)
     zone(0, 0, W, H, () => {}, null)
   }
   function dessinerLesVaisseaux(p: Peintre, voile = true, partie: 'tout' | 'liste' | 'fiche' = 'tout'): void {
     if (vue !== 'hangar' || etape !== 'vaisseau' || equipementOuvert) (vaisseauxOuverts = false), (armesOuvertes = false)
+    if (!armesOuvertes) rendreLePilote()
     if (VORTEX && armesOuvertes) return dessinerLesArmesEnListe(p, voile, partie)
     if (!vaisseauxOuverts) return
     if (VORTEX) return dessinerLesVaisseauxEnListe(p, voile, partie)
@@ -5295,7 +5346,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const bwa = largeurDe('Changer', GRAS) + 16
       const bxa = W - 7 - bwa
       const yb = y + Math.round((ha - 16) / 2)
-      boutonBase(p, bxa, yb, bwa, 16, true, () => ((armesOuvertes = true), (vaisseauxA = t), (armeChoisie = armeDuVortex()), (surligneVaisseau = -1)), (dx, dy) => ecrire(p, 'Changer', bxa + bwa / 2 + dx, yb + dy + 4, COQUE[5], { align: 'center' }), 'ouvre', { matiere: 'acier' })
+      boutonBase(p, bxa, yb, bwa, 16, true, () => ouvrirLArmementDe(flotte.actif), (dx, dy) => ecrire(p, 'Changer', bxa + bwa / 2 + dx, yb + dy + 4, COQUE[5], { align: 'center' }), 'ouvre', { matiere: 'acier' })
       // (UN BOUTON SECONDAIRE — Keko, 15/11 : « pas le même graphisme que changer de vaisseau, un peu moins visible » :
       // l'acier sombre, la lettre courante en gris clair, au lieu de l'acier clair et du gras)
       return
