@@ -15291,12 +15291,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     dessinerLesBords(p)
     dessinerLesBandeaux(p)
     dessinerLAlerte(p)
-    dessinerLePointeur(p)
-    dessinerLeRadar(p)
+    // (AU VORTEX, PLUS AUCUNE FLÈCHE AU BORD — Keko, 21/11 : « enlever les flèches qui indiquent où sont les ennemis et
+    // celles qui indiquent l'ancien portail, la flèche jaune est encore là » : ni la base, ni le radar, ni l'annonce des
+    // vagues, qui n'en a plus d'objet depuis le flot continu)
+    if (!VORTEX) dessinerLePointeur(p)
+    if (!VORTEX) dessinerLeRadar(p)
     zones = []
     dessinerLeScore(p)
     if (VORTEX) dessinerLInvasion(p)
-    if (VORTEX) dessinerLAnnonceDeLaVague(p)
+    if (VORTEX && !CONF.invasion.sansPortail) dessinerLAnnonceDeLaVague(p)
     dessinerLeBanc(p)
     dessinerLaPlaqueDeLaPostcombustion(p)
     dessinerLaCapacite(p)

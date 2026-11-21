@@ -3037,5 +3037,30 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   verifier(`la meute revient de son côté : ${secteurs.size} secteurs sur 8, des distances étalées sur ${etale.toFixed(0)} (toutes sous ${VAISSEAU.invasion.continu.recycle})`, secteurs.size <= 3 && etale > 30 && Math.max(...d) < VAISSEAU.invasion.continu.recycle)
 }
 
+// LA TEMPÊTE RETIENT CE QUI S'Y ENFONCE (Keko, 21/11 : « de plus en plus ralentis du moment qu'ils vont vers
+// l'extérieur, pour empêcher de sortir de l'autre côté ») : poussé tout droit vers le dehors, le vaisseau ralentit à
+// mesure qu'il entre et n'atteint jamais le bord ; il revient vers l'arène à pleine vitesse
+{
+  const cfg = { ...VAISSEAU, coque: 1e9, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, arene: { ...VAISSEAU.arene, active: true, dps: 0, roches: 0 } }
+  const w = nouveauMonde(cfg, 5)
+  w.vaisseau = { ...w.vaisseau, x: cfg.arene.rayon - 60, y: 0, cap: 0 }
+  let rMax = 0
+  let vMilieu = -1
+  for (let i = 0; i < 60 * 30; i++) {
+    avancerLeMonde(cfg, w, 1 / 60, { x: 1, y: 0 })
+    const r = Math.hypot(w.vaisseau.x, w.vaisseau.y)
+    rMax = Math.max(rMax, r)
+    if (vMilieu < 0 && r >= cfg.arene.rayon + (cfg.arene.largeur * cfg.arene.retenue) / 2) vMilieu = w.vaisseau.vx
+  }
+  const avant = w.vaisseau.x
+  let vRetour = 0
+  for (let i = 0; i < 60 * 3; i++) {
+    avancerLeMonde(cfg, w, 1 / 60, { x: -1, y: 0 })
+    vRetour = Math.min(vRetour, w.vaisseau.vx)
+  }
+  const bord = cfg.arene.rayon + cfg.arene.largeur
+  verifier(`la tempête retient : poussé dehors 30 s, il s'arrête à ${Math.round(rMax)} (la tempête de ${cfg.arene.rayon} à ${bord}), à ${Math.round(vMilieu)} à mi-chemin (pointe ${cfg.vitesseMax}) ; il en revient à ${Math.round(-vRetour)}`, rMax <= cfg.arene.rayon + cfg.arene.largeur * cfg.arene.retenue + 1 && vMilieu > 0 && vMilieu < cfg.vitesseMax * 0.6 && w.vaisseau.x < avant - 50 && -vRetour > cfg.vitesseMax * 0.8)
+}
+
 // (TOUJOURS EN DERNIER : des blocs ajoutés après cette ligne échouaient sans faire échouer `npm run verif` — 17/11)
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)

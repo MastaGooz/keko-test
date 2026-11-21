@@ -7088,3 +7088,16 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   (`LARGEUR_DE_CHANGER`, 45 au lieu de 54 à 58) — la grille a au moins 4 pixels d'air pour tous. Au hangar, il restait 7
   et 1 pixels : UN NOM QUI NE TIENT PAS PASSE SUR DEUX LIGNES, toujours en relief (« Décharge / arcanique », « Traînée /
   corrosive ») — choisi par Keko parmi trois façons. Vu à la capture.
+
+- **21/11, plus de flèches au bord ; la tempête retient ce qui s'y enfonce.**
+  - Keko : « enlever les flèches qui indiquent où sont les ennemis et celles qui indiquent l'ancien portail, la flèche
+    jaune est encore là ». Au vortex, ni la flèche jaune vers la base (`dessinerLePointeur`), ni le radar, ni l'annonce
+    des vagues (sans objet depuis le flot continu) ; le Nova Drifter les garde.
+  - Keko : « quand les vaisseaux vont dans le vortex, qu'ils soient de plus en plus ralentis du moment qu'ils vont vers
+    l'extérieur, pour empêcher de sortir de l'autre côté ». Dans la tempête, la VITESSE VERS L'EXTÉRIEUR est plafonnée à
+    la pointe du vaisseau fois la part qui reste devant lui des six dixièmes de la tempête (`arene.retenue`) — LE PAS
+    AUSSI, depuis là où il était avant de voler (MESURÉ : plafonner la vitesse seule laissait la poussée de chaque image
+    le faire avancer d'un rien, et en trente secondes il touchait le bord ; puis, plafonné jusqu'au bord, il s'arrêtait
+    à 3 pixels de lui). Tourner et revenir vers l'arène restent libres. Testé : poussé dehors trente secondes, il
+    s'arrête à 1 132 (la tempête de 1 000 à 1 220), y passe à 55 à mi-chemin (pointe 110), en revient à 110 ; il reste
+    au milieu des roches de la tempête, qui frappent toujours. Le butoir du bord reste, pour les insectes.

@@ -353,7 +353,12 @@ export const VAISSEAU = {
    * sont retenus. Les insectes ne naissent et ne reviennent que dans l'arène, à `marge` de la tempête. *Les chiffres
    * sont de moi.*
    */
-  arene: { active: false as boolean, rayon: 1000, largeur: 220, dps: 0.6, roches: 110, rocheMin: 7, rocheMax: 24, vitesse: 150, choc: 2, marge: 30 },
+  // (… ET ELLE RETIENT CE QUI S'Y ENFONCE — Keko, 21/11 : « quand les vaisseaux vont dans le vortex, qu'ils soient de plus
+  // en plus ralentis du moment qu'ils vont vers l'extérieur, pour empêcher de sortir de l'autre côté » : dans la tempête,
+  // la vitesse VERS L'EXTÉRIEUR est plafonnée à `vitesseMax` fois la part qui reste devant lui de la `retenue` de la
+  // tempête (ses six dixièmes) — rien au-delà : on s'arrête en douceur dans la tempête, loin de son bord, au milieu de
+  // ses roches ; tourner et revenir vers l'arène restent libres)
+  arene: { active: false as boolean, rayon: 1000, largeur: 220, dps: 0.6, roches: 110, rocheMin: 7, rocheMax: 24, vitesse: 150, choc: 2, marge: 30, retenue: 0.6 },
   /**
    * LES ASTÉROÏDES QUI DÉRIVENT (le jeu du vortex — Keko, 20/11 : « un système d'astéroïdes un peu comme avant : chaque
    * astéroïde lâche des pépites, les mêmes que les ennemis ; mais ils dérivent : de temps en temps on fait passer des
@@ -1678,7 +1683,7 @@ function dansLArene(c: ConfigVaisseau, m: Monde, a: number, d: number): Vecteur 
  * L'ARÈNE (voir `arene`) : la tempête ronge le vaisseau qui y est, ses roches le heurtent ; au bord extérieur, le
  * vaisseau et les insectes sont retenus. Rend les chocs (pour l'étincelle) ; le vaisseau perdu, la phase change.
  */
-function subirLArene(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]): Choc[] {
+function subirLArene(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[], avant: Vaisseau = m.vaisseau): Choc[] {
   const A = c.arene
   if (!A.active) return []
   const chocs: Choc[] = []
@@ -1693,7 +1698,30 @@ function subirLArene(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]): 
     const vn = b.vx * nx + b.vy * ny
     return { ...b, x: nx * butoir, y: ny * butoir, vx: b.vx - Math.max(0, vn) * nx, vy: b.vy - Math.max(0, vn) * ny }
   }
-  m.vaisseau = retenir(v)
+  // (LA RETENUE DE LA TEMPÊTE : la vitesse vers l'extérieur plafonnée, d'autant plus bas qu'on s'y enfonce — voir
+  // `retenue` ; et LE PAS AUSSI, depuis là où il était avant de voler : plafonner la vitesse seule laissait la poussée
+  // de chaque image le faire avancer d'un rien, et en trente secondes il touchait le bord — mesuré)
+  const plafondA = (r: number): number => c.vitesseMax * Math.max(0, 1 - (r - A.rayon) / (A.largeur * A.retenue))
+  const retenue = (b: Vaisseau): Vaisseau => {
+    let r = Math.hypot(b.x, b.y)
+    if (r <= A.rayon) return b
+    let x = b.x
+    let y = b.y
+    const r0 = Math.hypot(avant.x, avant.y)
+    const permis = Math.max(A.rayon, r0 + plafondA(r0) * dt)
+    if (r > permis && r > r0) {
+      x = (x / r) * Math.max(r0, permis)
+      y = (y / r) * Math.max(r0, permis)
+      r = Math.hypot(x, y)
+    }
+    const nx = x / r
+    const ny = y / r
+    const vn = b.vx * nx + b.vy * ny
+    const plafond = plafondA(r)
+    if (vn <= plafond) return { ...b, x, y }
+    return { ...b, x, y, vx: b.vx - (vn - plafond) * nx, vy: b.vy - (vn - plafond) * ny }
+  }
+  m.vaisseau = retenue(retenir(v))
   for (const e of m.ennemis) if (e.asteroide === undefined) e.corps = retenir(e.corps)
   const w = m.vaisseau
   if (Math.hypot(w.x, w.y) <= A.rayon || m.t < m.dephaseJusque) return chocs
@@ -4770,9 +4798,10 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   // (un vaisseau à tourelles ne tourne pas vers son regard : il ne sert plus bas qu'à viser)
   // (DÉPHASÉ, il traverse les roches — voir `dephasage`)
   const r = voler(c, m.t < m.dephaseJusque ? { ...moteur, fantome: true } : moteur, m.vaisseau, dt, dir, m.detruits, c.tourelles ? undefined : regard)
+  const avantLeVol = m.vaisseau
   m.vaisseau = r.vaisseau
   // (L'ARÈNE : la tempête, ses roches, son bord — voir `arene`)
-  const chocsDeLArene = subirLArene(c, m, dt, ev)
+  const chocsDeLArene = subirLArene(c, m, dt, ev, avantLeVol)
   if (m.phase !== 'vol') return { chocs: chocsDeLArene, evenements: ev }
   const v = m.vaisseau
   const chocs = [...r.chocs, ...chocsDeLArene]
