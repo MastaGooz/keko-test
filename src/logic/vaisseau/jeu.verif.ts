@@ -3142,34 +3142,65 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   verifier(`abattu, les insectes errent : au bout de 8 s, ${errent} sur 30 à moins de 50 de l'épave`, errent <= 3)
 }
 
-// LA ROCHE PRISE PAR LA TEMPÊTE (Keko, 21/11 : « qu'il soit pris dans la tempête et se déplace comme les autres astéroïdes ;
-// on le fait disparaître hors du champ de vision ») : entrée dans la tempête, elle tourne autour du centre, au milieu de
-// l'anneau ; hors de vue, elle quitte le monde
+// LA ROCHE PRISE PAR LA TEMPÊTE (Keko, 21/11 : « pris dans la tempête, il se déplace comme les autres astéroïdes ; son
+// verrouillage supprimé ; invincible, ni ciblable ni destructible, inerte ; on le fait disparaître hors de vue ») : entrée
+// dans la tempête, elle quitte les ennemis, son verrou tombe ; elle tourne, vers le milieu de l'anneau ; aucun tir ne
+// l'entame ; hors de vue, elle quitte le monde
 {
-  const cfg = { ...VAISSEAU, coque: 1e9, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, arene: { ...VAISSEAU.arene, active: true, dps: 0, roches: 0 }, derive: { ...VAISSEAU.derive, active: true, premier: 1e9 } }
+  const canon = { id: 'canon', cadence: 0.2, degats: 10, portee: 400, vitesse: 400, vie: 2, dispersion: 0, guide: false, infaillible: true }
+  const cfg = { ...VAISSEAU, coque: 1e9, armes: [canon], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, arene: { ...VAISSEAU.arene, active: true, dps: 0, roches: 0 }, derive: { ...VAISSEAU.derive, active: true, premier: 1e9 } }
   const w = nouveauMonde(cfg, 5)
   w.invasion.prochainA = 1e9
   w.prochaineDeriveA = 1e9
   w.vaisseau = { ...w.vaisseau, x: 900, y: 0 }
-  const roche: Ennemi = { id: 300, corps: { ...nouveauVaisseau(), x: 980, y: 0, vx: 40, vy: 0 }, pv: 500, fait: 'marche', roche: null, forage: null, tirA: 0, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, grand: true, asteroide: { rayon: 10, graine: 1, angle0: 0, vitesseAngulaire: 0, pvMax: 500 } }
+  const roche: Ennemi = { id: 300, corps: { ...nouveauVaisseau(), x: 990, y: 0, vx: 40, vy: 0 }, pv: 500, fait: 'marche', roche: null, forage: null, tirA: 0, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, grand: true, asteroide: { rayon: 10, graine: 1, angle0: 0, vitesseAngulaire: 0, pvMax: 500 } }
   w.ennemis.push(roche)
+  verrouiller(w, 300)
+  const verrouillee = w.verrou === 300
   let rMin = Infinity
   let rMax = 0
   let tourne = false
   let partieA = -1
+  let tirs = 0
+  let vue = false
+  let quitte = false
+  let verrouTombe = false
   for (let i = 0; i < 60 * 12; i++) {
-    avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+    const evs = avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements
+    if (vue) tirs += evs.filter((e) => e.type === 'ennemiTouche').length
     w.vaisseau = { ...w.vaisseau, x: 900, y: 0, vx: 0, vy: 0 }
-    if (!w.ennemis.includes(roche)) {
-      partieA = w.t
-      break
+    const r = w.rochesPrises.find((x) => x.id === 300)
+    if (r === undefined) {
+      if (vue) {
+        partieA = w.t
+        break
+      }
+      continue
     }
-    const r = Math.hypot(roche.corps.x, roche.corps.y)
-    if (w.t > 2) (rMin = Math.min(rMin, r)), (rMax = Math.max(rMax, r))
-    if (roche.corps.y > 50) tourne = true
+    if (!vue) (vue = true), (quitte = !w.ennemis.includes(roche)), (verrouTombe = w.verrou === null)
+    const rr = Math.hypot(r.x, r.y)
+    if (w.t > 1) (rMin = Math.min(rMin, rr)), (rMax = Math.max(rMax, rr))
+    if (r.y > 50) tourne = true
   }
   const milieu = cfg.arene.rayon + cfg.arene.largeur / 2
-  verifier(`la roche prise par la tempête : elle tourne (${tourne}), dans la tempête, vers le milieu de l'anneau (${Math.round(rMin)}–${Math.round(rMax)}, milieu ${milieu}), et quitte le monde hors de vue (à ${partieA.toFixed(1)} s)`, tourne && rMin > cfg.arene.rayon && rMax <= milieu + 1 && partieA > 0 && partieA < 12)
+  verifier(`la roche prise par la tempête : verrouillée (${verrouillee}), elle quitte les ennemis (${quitte}) et son verrou tombe (${verrouTombe}) ; aucun tir ne la touche (${tirs}) ; elle tourne (${tourne}) dans la tempête, vers le milieu de l'anneau (${Math.round(rMin)}–${Math.round(rMax)}, milieu ${milieu}) ; hors de vue, elle part (à ${partieA.toFixed(1)} s)`, verrouillee && quitte && verrouTombe && tirs === 0 && tourne && rMin > cfg.arene.rayon && rMax <= milieu + 1 && partieA > 0 && partieA < 12)
+}
+
+// ABATTU, LE MANCHE DÉPLACE LA ZONE DE RETOUR (Keko, 21/11 : « que le joueur puisse déplacer la zone comme il déplace son
+// vaisseau, plus lentement ») : poussée deux secondes vers la droite, elle avance de deux fois `retour.vitesse` ; on revient
+// là où elle est
+{
+  const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, arene: { ...VAISSEAU.arene, active: true, dps: 0, roches: 0 } }
+  const w = nouveauMonde(cfg, 5)
+  w.invasion.prochainA = 1e9
+  w.vaisseau = { ...w.vaisseau, x: 100, y: 0 }
+  w.phase = 'perdu'
+  w.coque = 0
+  w.invasion.retourA = w.t + 2.5
+  for (let i = 0; i < 60 * 2; i++) avancerLeMonde(cfg, w, 1 / 60, { x: 1, y: 0 })
+  const fait = w.vaisseau.x - 100
+  for (let i = 0; i < 60; i++) avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+  verifier(`abattu, le manche déplace la zone : ${Math.round(fait)} en deux secondes (${2 * cfg.invasion.retour.vitesse} attendus) ; il revient là (${Math.round(w.vaisseau.x)})`, Math.abs(fait - 2 * cfg.invasion.retour.vitesse) < 2 && (w.phase as string) === 'vol' && Math.abs(w.vaisseau.x - (100 + fait)) < 1)
 }
 
 // (TOUJOURS EN DERNIER : des blocs ajoutés après cette ligne échouaient sans faire échouer `npm run verif` — 17/11)

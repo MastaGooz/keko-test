@@ -11807,21 +11807,24 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // LES ROCHES DE LA TEMPÊTE (… UNE IMAGE PAR ANGLE — les FPS, 21/11 : chacune était peinte pixel par pixel, facettes,
     // grain et cratères, à chaque image ; elle l'est une fois par angle, en `POSES_DES_ROCHES` angles, et gardée — les
     // `IMAGES_DES_ROCHES_MAX` dernières)
-    for (let k = 0; k < A.roches; k++) {
-      const r = rocheDeLaTempete(CONF, k, m.t)
-      if (!dedans(r.x, r.y, r.rayon + 4)) continue
+    // (… ET LES ROCHES QU'ELLE A PRISES — voir `menerLesRochesPrises` : peintes comme les siennes, sans barre de vie ; leur clé
+    // d'image est négative, celles de la tempête vont de 0 à `roches` × `POSES_DES_ROCHES`)
+    const poser = (n: number, id: number, r: { x: number; y: number; rayon: number; graine: number; angle0: number; vitesseAngulaire: number }): void => {
+      if (!dedans(r.x, r.y, r.rayon + 4)) return
       const tour = Math.PI * 2
       const ia = ((Math.round(((r.angle0 + r.vitesseAngulaire * t) / tour) * POSES_DES_ROCHES) % POSES_DES_ROCHES) + POSES_DES_ROCHES) % POSES_DES_ROCHES
-      const cle = k * POSES_DES_ROCHES + ia
+      const cle = n >= 0 ? n * POSES_DES_ROCHES + ia : -(id * POSES_DES_ROCHES + ia) - 1
       let im = imagesDesRoches.get(cle)
       if (im === undefined) {
         const taille = Math.ceil(r.rayon * 2.4) + 6
-        im = imageDe(taille, (p2, c) => dessinerAsteroide(p2, { id: 90000 + k, x: 0, y: 0, rayon: r.rayon, graine: r.graine, angle0: (ia / POSES_DES_ROCHES) * tour, vitesseAngulaire: 0, minerai: 'fer', richesse: 0.2 }, 0, Math.floor(c), Math.floor(c)))
+        im = imageDe(taille, (p2, c) => dessinerAsteroide(p2, { id, x: 0, y: 0, rayon: r.rayon, graine: r.graine, angle0: (ia / POSES_DES_ROCHES) * tour, vitesseAngulaire: 0, minerai: 'fer', richesse: 0.2 }, 0, Math.floor(c), Math.floor(c)))
         if (imagesDesRoches.size >= IMAGES_DES_ROCHES_MAX) imagesDesRoches.delete(imagesDesRoches.keys().next().value as number)
       } else imagesDesRoches.delete(cle)
       imagesDesRoches.set(cle, im)
       poserLImage(p, im, Math.round(r.x + ox), Math.round(r.y + oy))
     }
+    for (let k = 0; k < A.roches; k++) poser(k, 90000 + k, rocheDeLaTempete(CONF, k, m.t))
+    for (const r of m.rochesPrises) poser(-1, r.id, r)
   }
   function dessinerLesEnnemis(p: Peintre): void {
     if (VORTEX) {

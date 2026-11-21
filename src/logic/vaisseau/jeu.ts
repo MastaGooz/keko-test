@@ -257,7 +257,8 @@ export const VAISSEAU = {
      * il lâche son expérience (Keko) — ; puis `invincible` secondes où rien ne le touche et où il passe au travers de
      * tout ; à leur fin, ce qui le recouvre est écarté (`degager`). Le rayon (110) choisi par Keko parmi trois.
      */
-    retour: { rayon: 110, invincible: 2, marge: 60 },
+    // (`vitesse` : celle de la zone que le manche déplace pendant le compte — la moitié de la pointe d'un vaisseau ; de moi)
+    retour: { rayon: 110, invincible: 2, marge: 60, vitesse: 55 },
     /** La part de leur poussée avec laquelle les insectes errent, le joueur abattu (voir `conduireLInsecte`). *De moi.* */
     errance: 0.45,
     /**
@@ -1029,7 +1030,7 @@ export type Ennemi = {
   /** Son dernier choc contre une roche qui dérive (voir `sansPortail`). */
   heurteA?: number
   /** UN ASTÉROÏDE QUI DÉRIVE (voir `derive`) : sa taille, son dessin (graine, angle, rotation), ses points au départ. */
-  asteroide?: { rayon: number; graine: number; angle0: number; vitesseAngulaire: number; pvMax: number; /** Prise par la tempête : elle tourne avec ses roches (voir `deriver`). */ prise?: boolean }
+  asteroide?: { rayon: number; graine: number; angle0: number; vitesseAngulaire: number; pvMax: number }
   butin: number
   cargaison: Cargaison
 }
@@ -1053,6 +1054,8 @@ export type Monde = {
   dephaseJusque: number
   /** Jusqu'à quel instant le joueur revenu est invincible et passe au travers de tout — voir `invasion.retour` ; -100 : rien. */
   renaitJusque: number
+  /** Les roches qui dérivaient et que la tempête a prises : elles tournent avec les siennes (voir `menerLesRochesPrises`). */
+  rochesPrises: RochePrise[]
   toucheA: number
   forage: Forage | null
   /** Le laser de CHAQUE foreuse du joueur, dans l'ordre de `foreuses` (`forage` reste le premier qui creuse). */
@@ -1350,7 +1353,7 @@ export function nouveauVaisseau(): Vaisseau {
 }
 
 export function nouveauMonde(c: ConfigVaisseau = VAISSEAU, graine = 1): Monde {
-  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, plaques: Array.from({ length: c.plaques }, () => true), intouchableJusque: -1, corruption: 0, dephaseJusque: -100, renaitJusque: -100, toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, prochaineDeriveA: c.derive.premier, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, scies: [], balises: [], givres: [], tornades: [], novas: [], echardes: [], spheres: [], puits: [], meteores: [], tentacules: [], nuees: [], rejetons: [], flaquesAcides: [], mines: [], fleaux: [], parasites: [], vrilles: [], liens: [], oeufs: [], brochettes: [], miniVers: [], hypercubes: [], des: [], coupes: [], rayonVu: null }
+  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, plaques: Array.from({ length: c.plaques }, () => true), intouchableJusque: -1, corruption: 0, dephaseJusque: -100, renaitJusque: -100, rochesPrises: [], toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, prochaineDeriveA: c.derive.premier, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, scies: [], balises: [], givres: [], tornades: [], novas: [], echardes: [], spheres: [], puits: [], meteores: [], tentacules: [], nuees: [], rejetons: [], flaquesAcides: [], mines: [], fleaux: [], parasites: [], vrilles: [], liens: [], oeufs: [], brochettes: [], miniVers: [], hypercubes: [], des: [], coupes: [], rayonVu: null }
 }
 
 /** Un hachage entier déterministe (celui de pixelfx), et un réel dans [0, 1) qui en sort. */
@@ -1758,9 +1761,14 @@ function subirLArene(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[], a
     ev.push({ type: 'perdu' })
     return chocs
   }
-  // (LES ROCHES DE LA TEMPÊTE : celle qui le touche le repousse et l'emporte ; un choc lui coûte `choc`)
-  for (let k = 0; k < A.roches; k++) {
-    const r = rocheDeLaTempete(c, k, m.t)
+  // (LES ROCHES DE LA TEMPÊTE : celle qui le touche le repousse et l'emporte ; un choc lui coûte `choc` — et celles qu'elle a
+  // prises, pareil)
+  const prises = m.rochesPrises.map((r) => {
+    const a = Math.atan2(r.y, r.x)
+    return { x: r.x, y: r.y, vx: -Math.sin(a) * A.vitesse, vy: Math.cos(a) * A.vitesse, rayon: r.rayon }
+  })
+  for (let k = 0; k < A.roches + prises.length; k++) {
+    const r = k < A.roches ? rocheDeLaTempete(c, k, m.t) : prises[k - A.roches]
     const dx = w.x - r.x
     const dy = w.y - r.y
     const d = Math.hypot(dx, dy) || 0.001
@@ -1843,21 +1851,17 @@ function degager(c: ConfigVaisseau, m: Monde): void {
 function deriver(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number): void {
   const b = e.corps
   // PRISE PAR LA TEMPÊTE (Keko, 21/11 : « quand un astéroïde arrive dans le vortex, qu'il soit pris dans la tempête et se
-  // déplace comme les autres astéroïdes ; et dès qu'on a l'occasion, on le fait disparaître — hors du champ de vision du
-  // joueur ») : entrée dans la tempête, elle tourne autour du centre comme ses roches, à `arene.vitesse` le long du cercle,
-  // en glissant vers le milieu de l'anneau ; elle quitte le monde dès qu'elle est aussi loin du centre des roches que là
-  // où elles naissent (la naissance des insectes et `derive.marge` : 420, hors de vue même dézoomé au plus — la demi-
-  // diagonale de la vue y fait 367)
+  // déplace comme les autres astéroïdes ; on le fait disparaître dès qu'on a l'occasion, hors du champ de vision » ; puis :
+  // « s'il est verrouillé, on supprime son verrouillage ; il devient invincible, sa barre de vie disparaît, il prend
+  // exactement le comportement des rochers du vortex : on ne peut ni le cibler ni le détruire, il est inerte ; inutile
+  // de calculer pour lui ce qu'on calcule pour les autres rochers ») : entrée dans la tempête, ELLE QUITTE LES ENNEMIS —
+  // plus de visée, de coups, de pépites, d'évitement par les insectes — et rejoint `rochesPrises`, son verrou levé
   const A = c.arene
   const ro = e.asteroide!
-  if (A.active && ro.prise !== true && Math.hypot(b.x, b.y) > A.rayon) ro.prise = true
-  if (ro.prise === true) {
-    const r = Math.hypot(b.x, b.y) || 1
-    const vers = r + (A.rayon + A.largeur / 2 - r) * Math.min(1, dt * 0.8)
-    const a = Math.atan2(b.y, b.x) + (A.vitesse / r) * dt
-    e.corps = { ...b, x: Math.cos(a) * vers, y: Math.sin(a) * vers, vx: -Math.sin(a) * A.vitesse, vy: Math.cos(a) * A.vitesse }
-    const o = centreDesRoches(c, m)
-    if (Math.hypot(e.corps.x - o.x, e.corps.y - o.y) > c.invasion.naissance + c.derive.marge) e.parti = true
+  if (A.active && Math.hypot(b.x, b.y) > A.rayon) {
+    m.rochesPrises.push({ id: e.id, x: b.x, y: b.y, rayon: ro.rayon, graine: ro.graine, angle0: ro.angle0, vitesseAngulaire: ro.vitesseAngulaire })
+    if (m.verrou === e.id) m.verrou = null
+    e.parti = true
     return
   }
   e.corps = { ...b, x: b.x + b.vx * dt, y: b.y + b.vy * dt }
@@ -1878,6 +1882,29 @@ function centreDesRoches(c: ConfigVaisseau, m: Monde): Vecteur {
   // `invasion.retour` ; le centre des roches est le sien, comme en vol)
   if (c.invasion.sansPortail && m.phase === 'perdu') return pointDeRetour(c, m)
   return centreDuChamp(c, m)
+}
+
+/** Une roche prise par la tempête (voir `deriver`) : où elle est, et de quoi la peindre. */
+export type RochePrise = { id: number; x: number; y: number; rayon: number; graine: number; angle0: number; vitesseAngulaire: number }
+
+/**
+ * LES ROCHES PRISES PAR LA TEMPÊTE (voir `deriver`) : elles tournent autour du centre comme les siennes, à `arene.vitesse`
+ * le long du cercle, en glissant vers le milieu de l'anneau ; elles heurtent le vaisseau comme elles (`subirLArene`) ;
+ * elles quittent le monde dès qu'elles sont aussi loin du centre des roches que là où les roches naissent (420 : hors de
+ * vue même dézoomé au plus — la demi-diagonale de la vue y fait 367).
+ */
+function menerLesRochesPrises(c: ConfigVaisseau, m: Monde, dt: number): void {
+  if (m.rochesPrises.length === 0) return
+  const A = c.arene
+  const o = centreDesRoches(c, m)
+  m.rochesPrises = m.rochesPrises.filter((r) => {
+    const rr = Math.hypot(r.x, r.y) || 1
+    const vers = rr + (A.rayon + A.largeur / 2 - rr) * Math.min(1, dt * 0.8)
+    const a = Math.atan2(r.y, r.x) + (A.vitesse / rr) * dt
+    r.x = Math.cos(a) * vers
+    r.y = Math.sin(a) * vers
+    return Math.hypot(r.x - o.x, r.y - o.y) <= c.invasion.naissance + c.derive.marge
+  })
 }
 
 /** LE CENTRE DU CHAMP : le portail, au centre du monde ; sans portail, le vaisseau (voir `sansPortail`). */
@@ -4784,10 +4811,11 @@ export const xpDuNiveau = (c: ConfigVaisseau, n: number): number => c.invasion.x
  * L'INVASION CONTINUE SANS LE JOUEUR ABATTU : les vagues naissent, les insectes marchent et traversent le portail ; sa
  * pénalité passée, il REVIENT au portail, blindage et bouclier pleins.
  */
-function avancerSansLeJoueur(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]): void {
+function avancerSansLeJoueur(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[], direction: Vecteur = { x: 0, y: 0 }): void {
   m.t += dt
   menerLInvasion(c, m, ev)
   menerLesDerives(c, m)
+  menerLesRochesPrises(c, m, dt)
   for (const e of [...m.ennemis]) conduireLEnnemi(c, m, e, dt, ev)
   m.ennemis = m.ennemis.filter((e) => !e.parti)
   ecarterLesInsectes(c, m)
@@ -4796,6 +4824,14 @@ function avancerSansLeJoueur(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenem
   // s'y comptent, la caméra y va)
   const I = c.invasion
   if (I.sansPortail) {
+    // (… ET LE MANCHE LA DÉPLACE — Keko, 21/11 : « pendant le décompte de la résurrection, que le joueur puisse déplacer la
+    // zone comme il déplace son vaisseau, plus lentement ; pour essayer d'exploser un maximum d'insectes » : à
+    // `retour.vitesse` au plus ; elle reste dans l'arène, ramenée comme le point de retour)
+    const n = Math.hypot(direction.x, direction.y)
+    if (n > 0.01) {
+      const k = (I.retour.vitesse * Math.min(1, n) * dt) / n
+      m.vaisseau = { ...m.vaisseau, x: m.vaisseau.x + direction.x * k, y: m.vaisseau.y + direction.y * k }
+    }
     const o = pointDeRetour(c, m)
     const b = m.vaisseau
     const d = Math.hypot(o.x - b.x, o.y - b.y)
@@ -4887,7 +4923,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   if (m.invasion.finie) return { chocs: [], evenements: ev }
   if (m.verrou !== null && ennemiVerrouille(m) === null) m.verrou = null
   if (m.phase !== 'vol') {
-    if (c.invasion.active && m.phase === 'perdu') avancerSansLeJoueur(c, m, dt, ev)
+    if (c.invasion.active && m.phase === 'perdu') avancerSansLeJoueur(c, m, dt, ev, direction)
     return { chocs: [], evenements: ev }
   }
   m.t += dt
@@ -4947,6 +4983,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   if (c.invasion.active) menerLInvasion(c, m, ev)
   else if (m.ennemis.length === 0 && m.t >= m.prochainEnnemiA && Math.hypot(v.x, v.y) >= c.base.calme) faireNaitreUnEnnemi(c, m, ev)
   menerLesDerives(c, m)
+  menerLesRochesPrises(c, m, dt)
   for (const e of [...m.ennemis]) {
     chocs.push(...conduireLEnnemi(c, m, e, dt, ev))
     // (il brûle encore : le lance-flammes l'a touché — mais à sa sortie seulement : dans la flamme, c'est elle qui brûle)

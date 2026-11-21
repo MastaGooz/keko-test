@@ -7178,3 +7178,19 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
       images, elles se repeignaient sans cesse (mesuré : 16 % encore).
     Reste la composition de l'image (40 %), un coût fixe de pixelfx. `&flot=N` (N insectes par seconde dès le départ)
     est le banc de la foule.
+
+- **21/11, la roche prise est inerte ; la zone de retour se déplace au manche.**
+  - Keko : « à partir du moment où un rocher pénètre dans le vortex, il est happé ; s'il est verrouillé, on supprime son
+    verrouillage ; il devient invincible, sa barre de vie disparaît, il prend exactement le même comportement que les
+    rochers du vortex : on ne peut ni le cibler ni le détruire, il est inerte ; inutile de calculer pour lui ce qu'on
+    calcule pour les autres rochers ». Entrée dans la tempête, la roche QUITTE LES ENNEMIS — plus de visée, de coups, de
+    pépites, d'évitement ni de choc avec les insectes, de barre de vie — et rejoint `Monde.rochesPrises`, son verrou
+    levé : elle tourne avec les roches de la tempête (`menerLesRochesPrises`, vers le milieu de l'anneau), heurte le
+    vaisseau comme elles (`subirLArene`), est peinte comme elles (une image gardée par angle) et s'efface à 420 du
+    centre des roches, hors de vue. Testé : verrouillée, elle quitte les ennemis, son verrou tombe, aucun tir ne
+    l'entame, elle tourne, elle part.
+  - Keko : « quand le vaisseau est mort et que le décompte de la résurrection est en route, que le joueur puisse
+    déplacer la zone comme il déplace son vaisseau, plus lentement ; pour essayer d'exploser un maximum d'insectes ».
+    Abattu, le manche (ou le clavier) déplace l'épave — le centre de la zone et du compte, où la caméra reste — à
+    `retour.vitesse` (55, la moitié de la pointe d'un vaisseau ; de moi) ; elle reste dans l'arène, ramenée comme le
+    point de retour ; on revient là où elle est. Testé : poussée deux secondes, elle avance de 110.
