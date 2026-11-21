@@ -7194,3 +7194,19 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     Abattu, le manche (ou le clavier) déplace l'épave — le centre de la zone et du compte, où la caméra reste — à
     `retour.vitesse` (55, la moitié de la pointe d'un vaisseau ; de moi) ; elle reste dans l'arène, ramenée comme le
     point de retour ; on revient là où elle est. Testé : poussée deux secondes, elle avance de 110.
+
+- **21/11, une tempête texturée, à l'essai — `&tempete=void`** (Keko : « un graphisme alternatif pour le vortex, par
+  exemple l'effet autour du void orb de pixelfx ; un truc plus texturé que juste des pixels qui tournent ; ce serait
+  peut-être moins coûteux »). LA RECETTE DU VORTEX DU VOID ORB (`fx/shadow/void-orb.js` : des bras de poussière sombre
+  qui s'enroulent, un voile, un bord éclairé, de fins filaments plus rapides, un bruit tiré une fois), DÉROULÉE LE LONG
+  DE L'ANNEAU (`dessinerLaTempeteTexturee`) : chaque bloc est lu par sa place le long du cercle et à travers l'anneau ;
+  ses couleurs, celles du void orb, un cyan aux filaments vifs. Elle remplace le voile de lumière et les six mille
+  particules ; le mur d'énergie et les roches restent. Trois essais, mesurés :
+  - le premier, à l'échelle du void orb (48 pixels de rayon, l'anneau en fait 220) : des rayures épaisses, un aplat
+    violet, et UNE COUTURE à mi-hauteur — ses motifs ne faisaient pas un nombre entier de fois le tour ;
+  - le deuxième (chaque motif fait un nombre entier de tours ; les filaments fins, presque le long du cercle, cassés en
+    traits ; le voile plus sombre) : la bonne image, mais DEUX FOIS PLUS COÛTEUX — 21 images par seconde contre 42,
+    dézoomé au plus, au bord, cent vingt insectes ;
+  - le troisième : UN CALCUL PAR BLOC d'un pixel d'écran (deux pixels du monde dézoomé au plus), le voile tramé au lieu
+    de fondu, plus de lueur de fond : 43 images par seconde contre 42 — LE MÊME COÛT que la tempête actuelle, pas moins.
+  La tempête actuelle reste par défaut ; à Keko de choisir.

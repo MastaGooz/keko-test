@@ -80,6 +80,8 @@ type Noyau = {
   painterFor(frame: unknown): Peintre
   fit(palette: string[], n: number): number[]
   hex(h: string): number
+  /** Le bruit fractal du dépôt (la tempête texturée en tire ses bras une fois — voir `bruitDeLaTempete`). */
+  fbm(x: number, y: number, seed?: number, octaves?: number): number
   Particles: new (o: Record<string, unknown>) => Particules
   Bits: new (o: Record<string, unknown>) => Morceaux
   B: Record<string, number>
@@ -11717,6 +11719,109 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    */
   /** Les particules de la tempête : une pour 250 unités carrées de son anneau, environ. */
   const PARTICULES_DE_LA_TEMPETE = 6000
+  /**
+   * LA TEMPÊTE TEXTURÉE, À L'ESSAI (Keko, 21/11 : « un graphisme alternatif pour le vortex, par exemple l'effet autour du
+   * void orb de pixelfx ; un truc plus texturé que juste des pixels qui tournent ; ce serait peut-être moins coûteux ») —
+   * `&tempete=void`. LA RECETTE DU VORTEX DU VOID ORB (`fx/shadow/void-orb.js`), DÉROULÉE LE LONG DE L'ANNEAU : chaque pixel
+   * de l'anneau en vue est lu par sa place le long du cercle (`s`, en unités du monde) et à travers l'anneau (`u`, de 0 au
+   * bord de l'arène à 1 au bord du monde) ; DES BRAS de poussière sombre, en bandes obliques qui filent avec la tempête, un
+   * VOILE tramé plus dense en leur cœur, LEUR BORD ÉCLAIRÉ, et de FINS FILAMENTS de lumière qui filent plus vite qu'eux,
+   * cassés en traits ; tout s'échauffe vers le pâle près du mur d'énergie ; un bruit tiré une fois (`bruitDeLaTempete`)
+   * les rend irréguliers. Ses couleurs : celles du void orb (`VOID`), un cyan pour les filaments vifs. Ni voile de
+   * lumière ni particules : le mur et les roches restent.
+   */
+  const TEMPETE_VOID = parametres.get('tempete') === 'void'
+  const VOID_ = ['#06040b', '#150c26', '#2a1150', '#461a84', '#6f2cc0', '#9d5cec', '#cfa6ff', '#f6eaff'].map((c) => N.hex(c))
+  const CYAN_DE_LA_TEMPETE = N.hex('#7fe3ff')
+  /** Le bruit des bras de la tempête : `BRUIT_S` cases le long du cercle, `BRUIT_U` à travers l'anneau, tiré une fois. */
+  const BRUIT_S = 2048
+  const BRUIT_U = 24
+  let bruitDeLaTempete_: Float32Array | null = null
+  function bruitDeLaTempete(): Float32Array {
+    if (bruitDeLaTempete_ !== null) return bruitDeLaTempete_
+    const b = new Float32Array(BRUIT_S * BRUIT_U)
+    for (let j = 0; j < BRUIT_U; j++)
+      for (let i = 0; i < BRUIT_S; i++) {
+        // (le cercle se referme : le bruit est lu sur un cercle de son espace, sans couture)
+        const a = (i / BRUIT_S) * Math.PI * 2
+        b[j * BRUIT_S + i] = N.fbm(Math.cos(a) * 24 + j * 0.35, Math.sin(a) * 24 + j * 0.35, 17, 3)
+      }
+    return (bruitDeLaTempete_ = b)
+  }
+  function dessinerLaTempeteTexturee(p: Peintre, ox: number, oy: number): void {
+    const A = CONF.arene
+    const C = VOID_
+    const r0 = A.rayon
+    const r1 = A.rayon + A.largeur * 1.08
+    const rm = A.rayon + A.largeur / 2
+    const tour = 2 * Math.PI * rm
+    const bruit = bruitDeLaTempete()
+    // (CHAQUE MOTIF FAIT UN NOMBRE ENTIER DE FOIS LE TOUR — sinon il saute là où le cercle se referme : une couture,
+    // MESURÉE à la capture) : les bras tous les 260 environ, les filaments tous les 90, leurs traits tous les 70
+    const nBras = Math.round(tour / 260)
+    const nFil = Math.round(tour / 90)
+    const nTrait = Math.round(tour / 70)
+    const sBras = 90 * m.t
+    const sFil = 260 * m.t
+    const lisse = (a: number, b: number, x: number): number => {
+      const k = Math.max(0, Math.min(1, (x - a) / (b - a)))
+      return k * k * (3 - 2 * k)
+    }
+    // (UN CALCUL PAR BLOC — MESURÉ au profileur : un par pixel, la tempête texturée coûtait deux fois plus que l'autre, 21
+    // images par seconde contre 42, dézoomé au plus. Le bloc fait un pixel d'écran — `B` pixels du tampon du monde, deux
+    // dézoomé au plus —, le motif garde sa finesse à l'écran ; le voile se trame au lieu de se fondre ; plus de lueur de fond)
+    const B = Math.max(1, Math.round(champApplique))
+    const ligne = (s0: number, s1: number, sy: number, wy: number): void => {
+      for (let sx = Math.max(0, s0 - (s0 % B)); sx <= Math.min(W - 1, s1); sx += B) {
+        const wx = sx + B / 2 - ox
+        const r = Math.hypot(wx, wy)
+        if (r < r0 || r > r1) continue
+        const u = (r - r0) / A.largeur
+        // (la place le long du cercle, de 0 à 1 : un tour)
+        let q = Math.atan2(wy, wx) / (Math.PI * 2)
+        if (q < 0) q += 1
+        const qb = q - sBras / tour
+        const qf = q - sFil / tour
+        const nz = bruit[Math.min(BRUIT_U - 1, Math.floor(u * (BRUIT_U - 1))) * BRUIT_S + (Math.floor(qb * BRUIT_S) & (BRUIT_S - 1))]
+        const env = lisse(0, 0.08, u) * (1 - lisse(0.92, 1.08, u))
+        // LES BRAS : des bandes obliques de poussière sombre, irrégulières
+        const ph = qb * nBras * Math.PI * 2 + u * Math.PI * 2 * 1.2 + nz * 4
+        const fort = (0.5 + 0.5 * Math.cos(ph)) * env
+        // (près du mur d'énergie, tout s'échauffe)
+        const chaud = 1 - lisse(0, 0.3, u)
+        let c = 0
+        let alpha = 1
+        let lumiere = 0
+        // LES FILAMENTS : de fins traits de lumière, presque le long du cercle, qui filent plus vite que les bras, cassés
+        const fil = Math.cos(qf * nFil * Math.PI * 2 + u * Math.PI * 2 * 14 + nz * 2)
+        if (fil > 0.94 && fort > 0.22 && Math.cos(qf * nTrait * Math.PI * 2 + u * Math.PI * 2 * 2 + nz) > -0.2) {
+          const trait = Math.cos(qf * nTrait * Math.PI * 2 + u * Math.PI * 2 * 2 + nz)
+          c = chaud > 0.55 ? C[7] : trait > 0.75 ? CYAN_DE_LA_TEMPETE : fort > 0.55 ? C[6] : C[5]
+          lumiere = 0.08 + 0.2 * chaud
+        } else if (fort < 0.2) continue
+        // LE BORD ÉCLAIRÉ DES BRAS, là où ils tournent vers la lumière
+        else if (fort > 0.4 && fort < 0.47 && Math.sin(ph) > 0) c = chaud > 0.4 ? C[5] : C[3]
+        // LE VOILE : une poussière sombre, tramée, plus dense au cœur des bras
+        else {
+          c = fort > 0.7 ? C[2] : C[1]
+          alpha = Math.min(0.75, (fort - 0.2) * 1.5)
+        }
+        for (let dy = 0; dy < B; dy++)
+          for (let dx = 0; dx < B; dx++) {
+            p.dot(sx + dx, sy + dy, c, alpha)
+            if (lumiere > 0) p.light(sx + dx, sy + dy, c, lumiere)
+          }
+      }
+    }
+    for (let sy = 0; sy < H; sy += B) {
+      const wy = sy + B / 2 - oy
+      if (Math.abs(wy) >= r1) continue
+      const xo = Math.sqrt(r1 * r1 - wy * wy)
+      const xi = Math.abs(wy) < r0 ? Math.sqrt(r0 * r0 - wy * wy) : 0
+      ligne(Math.floor(ox - xo), Math.ceil(ox - xi), sy, wy)
+      ligne(Math.floor(ox + xi), Math.ceil(ox + xo), sy, wy)
+    }
+  }
   const POSES_DES_ROCHES = 48
   const IMAGES_DES_ROCHES_MAX = 6000
   const imagesDesRoches = new Map<number, ImageGardee>()
@@ -11757,7 +11862,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // reçoivent leur lumière, qui suit le même profil — `VOILE` au milieu de l'anneau, rien à 99 de lui
     const phi = Math.atan2(camera.y, camera.x)
     const span = Math.min(Math.PI, (vue + 40) / Math.max(1, A.rayon))
-    {
+    if (TEMPETE_VOID) dessinerLaTempeteTexturee(p, ox, oy)
+    else {
       const rm = A.rayon + A.largeur / 2
       const demi = A.largeur * 0.45
       const r1 = rm - demi
@@ -11792,7 +11898,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // (leur rayon, leur vitesse angulaire et leur angle de départ sont tirés une fois — `particulesDeLaTempete` : quatre
     // hachages par particule et par image, vingt-quatre mille, pour des nombres qui ne changent jamais)
     const pt = particulesDeLaTempete()
-    for (let k = 0; k < PARTICULES_DE_LA_TEMPETE; k++) {
+    for (let k = 0; k < (TEMPETE_VOID ? 0 : PARTICULES_DE_LA_TEMPETE); k++) {
       const r = pt.r[k]
       const a = pt.a0[k] + pt.w[k] * m.t
       if (Math.abs(ecartAngulaire(a, phi)) > span) continue
