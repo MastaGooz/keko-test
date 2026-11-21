@@ -270,6 +270,12 @@ export const VAISSEAU = {
      */
     cornu: { vie: 3, taille: 1.5, vitesse: 35 / 40, morsure: 1.5, butin: 3, debut: 60, montee: 240, part: 0.2 },
     /**
+     * LE MOUCHERON, LE MENU FRETIN (Keko, 21/11 : « des ennemis encore plus petits que les plus petits, vraiment des trash ;
+     * en revanche un peu plus rapides » — un moucheron ; « ¼ de vie, ×0,6 de taille, vitesse 52 » ; « dès le début, en
+     * nombre » ; choisis parmi trois) : `butin` peut être fractionnaire — une pépite une fois sur deux.
+     */
+    moucheron: { vie: 0.25, taille: 0.6, vitesse: 52 / 40, morsure: 0.5, butin: 0.5, debut: 0, montee: 1e-6, part: 1 / 3 },
+    /**
      * LE CUIRASSIER, L'INSECTE BLINDÉ (Keko, 21/11 : « un troisième type d'ennemi blindé, plus gros et plus résistant encore
      * que le scarabée » — « un cuirassier à plaques », « ×10 de vie, ×2,2 de taille », « après trois minutes, rare » ;
      * choisis parmi trois) : les mêmes champs que le cornu.
@@ -1657,7 +1663,7 @@ function abattreLEnnemi(c: ConfigVaisseau, m: Monde, e: Ennemi, ev: Evenement[])
   // il rend sa cargaison, minerai par minerai, plus tant de pépites de fer
   const rendues: Minerai[] = []
   for (const k of MINERAIS) for (let i = 0; i < e.cargaison[k]; i++) rendues.push(k)
-  for (let i = 0; i < (ro !== undefined ? Math.max(1, Math.round(ro.pvMax * c.derive.pepitesParPv)) : gabaritDInsecte(c, e).butin); i++) rendues.push('fer')
+  for (let i = 0; i < (ro !== undefined ? Math.max(1, Math.round(ro.pvMax * c.derive.pepitesParPv)) : butinDe(c, e)); i++) rendues.push('fer')
   const n = rendues.length
   for (let i = 0; i < n; i++) {
     const an = (i / n) * Math.PI * 2 + tire(e.id, 30, i)
@@ -1692,9 +1698,14 @@ function faireNaitreUnEnnemi(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void
  * toute sa surface se touche, pas seulement son cœur (Keko, 20/11 : des roches plus grosses, jusqu'à 34).
  */
 export const rayonDe = (c: ConfigVaisseau, e: Ennemi): number => e.asteroide?.rayon ?? c.ennemi.rayon * (e.sorte === undefined ? 1 : c.invasion[e.sorte].taille)
-/** Les sortes d'insectes au-dessus du petit : le cornu (milieu de gamme), le cuirassier (blindé). */
-export type SorteDInsecte = 'cornu' | 'cuirassier'
-export const SORTES_D_INSECTES: SorteDInsecte[] = ['cornu', 'cuirassier']
+/** Les sortes d'insectes autres que le petit : le moucheron (le menu fretin), le cornu (milieu de gamme), le cuirassier (blindé). */
+export type SorteDInsecte = 'moucheron' | 'cornu' | 'cuirassier'
+export const SORTES_D_INSECTES: SorteDInsecte[] = ['moucheron', 'cornu', 'cuirassier']
+/** Ce qu'un insecte rend de pépites : son butin, et sa part fractionnaire tirée de son identité (le moucheron : une fois sur deux). */
+function butinDe(c: ConfigVaisseau, e: Ennemi): number {
+  const b = gabaritDInsecte(c, e).butin
+  return Math.floor(b) + (tire(e.id, 33) < b - Math.floor(b) ? 1 : 0)
+}
 /** Le gabarit d'un insecte : ses facteurs de vie, de taille, de vitesse, de morsure, et son butin (un petit : 1, et `butinRendu`). */
 export function gabaritDInsecte(c: ConfigVaisseau, e: Ennemi): { vie: number; taille: number; vitesse: number; morsure: number; butin: number } {
   return e.sorte === undefined ? { vie: 1, taille: 1, vitesse: 1, morsure: 1, butin: c.ennemi.butinRendu } : c.invasion[e.sorte]

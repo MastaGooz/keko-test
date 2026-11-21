@@ -3252,7 +3252,7 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
 // LE CORNU, L'INSECTE DE MILIEU DE GAMME (Keko, 21/11) : aucun la première minute, puis une part qui monte jusqu'au
 // cinquième ; trois fois la vie, une fois et demie la taille, plus lent ; il rend trois pépites
 {
-  const cfg = { ...VAISSEAU, coque: 1e9, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 0, continu: { ...VAISSEAU.invasion.continu, actif: true }, cuirassier: { ...VAISSEAU.invasion.cuirassier, part: 0 } }, ennemi: { ...VAISSEAU.ennemi, pv: 120, butinRendu: 1, apparait: 1e9, poussee: 90, vitesseMax: 40, rotation: 6, rayon: 5 }, forage: { ...VAISSEAU.forage, aimant: 0 } }
+  const cfg = { ...VAISSEAU, coque: 1e9, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 0, continu: { ...VAISSEAU.invasion.continu, actif: true }, cuirassier: { ...VAISSEAU.invasion.cuirassier, part: 0 }, moucheron: { ...VAISSEAU.invasion.moucheron, part: 0 } }, ennemi: { ...VAISSEAU.ennemi, pv: 120, butinRendu: 1, apparait: 1e9, poussee: 90, vitesseMax: 40, rotation: 6, rayon: 5 }, forage: { ...VAISSEAU.forage, aimant: 0 } }
   const w = nouveauMonde(cfg, 5)
   const parMinute = [0, 0, 0, 0, 0, 0, 0]
   const nesParMinute = [0, 0, 0, 0, 0, 0, 0]
@@ -3302,6 +3302,40 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   const vPetit = Math.hypot(petit.corps.vx, petit.corps.vy)
   const vBlinde = Math.hypot(blinde.corps.vx, blinde.corps.vy)
   verifier(`le cuirassier : ${p(150) * 100} % à 2 min 30, ${(p(330) * 100).toFixed(1)} % à 5 min 30, ${(p(600) * 100).toFixed(1)} % à 10 min ; ${120 * g.vie} points de vie, rayon ${rayonDe(cfg, blinde)}, ${Math.round(vBlinde)} contre ${Math.round(vPetit)} de vitesse, ${g.butin} pépites`, p(150) === 0 && Math.abs(p(330) - 0.02) < 1e-9 && p(600) === 0.04 && g.vie === 10 && Math.abs(rayonDe(cfg, blinde) - 11) < 1e-9 && vBlinde < vPetit * 0.75 && g.butin === 10)
+}
+
+// LE MOUCHERON, LE MENU FRETIN (Keko, 21/11) : un insecte sur trois dès le départ ; un quart de la vie, 0,6 fois la
+// taille, plus rapide ; une pépite une fois sur deux
+{
+  const cfg = { ...VAISSEAU, coque: 1e9, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 0, continu: { ...VAISSEAU.invasion.continu, actif: true } }, ennemi: { ...VAISSEAU.ennemi, pv: 120, butinRendu: 1, apparait: 1e9, poussee: 90, vitesseMax: 40, rotation: 6, rayon: 5 } }
+  const w = nouveauMonde(cfg, 5)
+  let nes = 0
+  let mouch = 0
+  for (let i = 0; i < 60 * 50; i++) {
+    for (const e of avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements)
+      if (e.type === 'ennemiApparait') {
+        nes++
+        if (w.ennemis.find((x) => x.id === e.id)?.sorte === 'moucheron') mouch++
+      }
+    w.ennemis = w.ennemis.filter((e) => e.id < 0)
+    w.vaisseau = { ...w.vaisseau, x: 0, y: 0, vx: 0, vy: 0 }
+  }
+  const petit: Ennemi = { id: 500, corps: { ...nouveauVaisseau(), x: 200, y: 0 }, pv: 120, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 } }
+  const mini: Ennemi = { ...petit, id: 501, corps: { ...nouveauVaisseau(), x: 200, y: 60 }, sorte: 'moucheron' }
+  const g = gabaritDInsecte(cfg, mini)
+  const w2 = nouveauMonde(cfg, 5)
+  w2.invasion.prochainA = 1e9
+  w2.ennemis.push(petit, mini)
+  for (let i = 0; i < 60 * 4; i++) avancerLeMonde(cfg, w2, 1 / 60, { x: 0, y: 0 })
+  const vPetit = Math.hypot(petit.corps.vx, petit.corps.vy)
+  const vMini = Math.hypot(mini.corps.vx, mini.corps.vy)
+  // (son butin : cent moucherons abattus)
+  const cfg3 = { ...cfg, forage: { ...VAISSEAU.forage, aimant: 0 }, armes: [{ id: 'canon', cadence: 0.001, degats: 1e6, portee: 2000, vitesse: 1e5, vie: 1, dispersion: 0, guide: false, infaillible: true }] }
+  const w3 = nouveauMonde(cfg3, 5)
+  w3.invasion.prochainA = 1e9
+  for (let k = 0; k < 100; k++) w3.ennemis.push({ ...mini, id: 1000 + k, corps: { ...nouveauVaisseau(), x: 300 + (k % 10) * 20, y: 300 + Math.floor(k / 10) * 20 } })
+  for (let i = 0; i < 60 * 2; i++) avancerLeMonde(cfg3, w3, 1 / 60, { x: 0, y: 0 })
+  verifier(`le moucheron : ${Math.round((100 * mouch) / nes)} % du flot, ${120 * g.vie} points de vie, rayon ${rayonDe(cfg, mini)}, ${Math.round(vMini)} contre ${Math.round(vPetit)} de vitesse ; cent abattus, ${w3.pepites.length} pépites (${w3.ennemis.length} restés)`, Math.abs(mouch / nes - 1 / 3) < 0.06 && g.vie * 120 === 30 && Math.abs(rayonDe(cfg, mini) - 3) < 1e-9 && vMini > vPetit * 1.15 && w3.ennemis.length === 0 && w3.pepites.length > 35 && w3.pepites.length < 65)
 }
 
 // (TOUJOURS EN DERNIER : des blocs ajoutés après cette ligne échouaient sans faire échouer `npm run verif` — 17/11)

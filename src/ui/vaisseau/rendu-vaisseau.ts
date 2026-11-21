@@ -551,6 +551,38 @@ export function formesDuCuirassier(marche: number, morsure: number): Forme[] {
   for (const sg of [-1, 1]) f.push({ pts: ovale(6.4, sg * 1.2, 0.5, 0.5, 8), mat: 'bile', relief: 'dome', dome: { x: 6.4, y: sg * 1.2, rx: 0.5, ry: 0.5 } })
   return f
 }
+/**
+ * LE MOUCHERON, LE MENU FRETIN (Keko, 21/11 : « encore plus petits que les plus petits, vraiment des trash, un peu plus
+ * rapides » — « un moucheron », choisi parmi trois) : il vole, d'où sa vitesse — un petit corps rond rayé, une tête
+ * presque toute en YEUX de bile, une trompe d'os, et DEUX GRANDES AILES de membrane qui battent vite (`marche`) ; pas de
+ * pattes. Dans les unités du petit : la page le peint à 0,6.
+ */
+export function formesDuMoucheron(marche: number): Forme[] {
+  const f: Forme[] = []
+  // (DESSINÉ PLUS GRAND QUE LE PETIT DANS SES UNITÉS — mesuré à la planche : à 0,6, aux proportions du petit, il ne
+  // faisait que six pixels, une tache ; sa taille dans la règle ne change pas)
+  // LES AILES : elles battent d'avant en arrière, très vite
+  const bat = 0.5 + 0.55 * Math.abs(Math.sin(marche * 2))
+  for (const sg of [-1, 1]) {
+    const a = Math.PI - sg * bat
+    const ux = Math.cos(a)
+    const uy = Math.sin(a)
+    const cx = 0.4 + ux * 4.4
+    const cy = sg * 1.8 + uy * 4.4
+    f.push({ pts: ovale(0, 0, 4.8, 2.4, 12).map(([x, y]): [number, number] => [cx + x * ux - y * uy, cy + x * uy + y * ux]), mat: 'membrane', relief: 'plat', penche: sg })
+  }
+  // LE CORPS : rond, rayé, la pointe en arrière
+  f.push({ pts: ovale(-2, 0, 4.8, 3.4, 14), mat: 'mauve', relief: 'cyl' })
+  for (const x of [-0.6, -2.6, -4.5]) {
+    const l = 3.4 * Math.sqrt(Math.max(0, 1 - ((x + 2) / 4.8) ** 2))
+    f.push({ pts: barre(x, -l, x, l, 0.9), mat: 'lie', relief: 'plat' })
+  }
+  // LA TÊTE, SES GRANDS YEUX, SA TROMPE
+  f.push({ pts: ovale(3.6, 0, 2.4, 2.5, 12), mat: 'lie', relief: 'dome', dome: { x: 3.6, y: 0, rx: 2.4, ry: 2.5 } })
+  for (const sg of [-1, 1]) f.push({ pts: ovale(4.2, sg * 1.45, 1.35, 1.25, 10), mat: 'bile', relief: 'dome', dome: { x: 4.2, y: sg * 1.45, rx: 1.35, ry: 1.25 } })
+  f.push({ pts: barre(5.6, 0, 8.4, 0, 0.8), mat: 'os', relief: 'plat' })
+  return f
+}
 /** Un trait épais en polygone, de (x0, y0) à (x1, y1). */
 export function barre(x0: number, y0: number, x1: number, y1: number, e: number): [number, number][] {
   const l = Math.hypot(x1 - x0, y1 - y0) || 1

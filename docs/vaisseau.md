@@ -7279,3 +7279,16 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     départ (comme `&cornus=P`).
   Testé : 0 % à 2 min 30, 2 % à 5 min 30, 4 % à 10 min ; 1 200 points, rayon 11, 28 contre 40 de vitesse, dix pépites.
   Jugé sur une planche agrandie, puis vu dans le jeu.
+
+- **21/11, LE MOUCHERON, le menu fretin** (Keko : « des ennemis encore plus petits que les plus petits, vraiment des
+  trash ; en revanche un peu plus rapides » — « un moucheron », « ¼ de vie, ×0,6 de taille, vitesse 52 », « dès le
+  début, en nombre », choisis parmi trois chaque fois). LA RÈGLE (`invasion.moucheron`, une sorte de plus) : 30 points de
+  vie, un rayon de 3, 52 de pointe (40), une morsure ×0,5, UNE PÉPITE UNE FOIS SUR DEUX (`butinDe` : la part
+  fractionnaire du butin tirée de l'identité) ; un insecte sur trois dès le départ, une part fixe. L'IMAGE
+  (`formesDuMoucheron`, peint à 0,6) : il vole, d'où sa vitesse — un petit corps rond rayé, une tête presque toute en
+  yeux de bile (rouges en chasse), une trompe d'os, deux grandes ailes de membrane qui battent vite, pas de pattes ;
+  DESSINÉ PLUS GRAND QUE LE PETIT DANS SES UNITÉS (mesuré à la planche : à 0,6 aux proportions du petit, six pixels,
+  une tache ; une dizaine maintenant, ailes comprises). `&moucherons=P` règle sa part (0 : aucun).
+  Testé : 34 % du flot, 30 points, rayon 3, 52 contre 40 de vitesse, cinquante et une pépites pour cent abattus. Le
+  test du cornu ne compte plus les moucherons (mesuré sur quatre graines : sa part reste 20 % — les 27 % d'une
+  minute du test étaient un écart du hasard, ses tirages décalés par la nouvelle sorte).
