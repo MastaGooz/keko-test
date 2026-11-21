@@ -5481,7 +5481,11 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
     const d = dmin || 1
     // LA SOUTE PLEINE (la capacité de la coque — Keko), ou LE MINERAI REFUSÉ : la pépite reste là, ni ramassée ni aimantée
     const soutePleine = !c.invasion.active && plusProche.e === null && (m.minerai >= c.capacite || m.refuses[p.minerai])
-    if (d <= c.forage.ramassage && !soutePleine) {
+    // (LE JOUEUR QUI REVIENT N'AIMANTE RIEN TANT QU'IL EST INVINCIBLE — Keko, 21/11 : « que les pépites ne soient pas attirées
+    // immédiatement quand on respawn, qu'on attende la fin de l'animation : pile au retour, ça lance un gain de niveau la
+    // plupart du temps » — l'explosion du retour en sème tout autour ; voir `invasion.retour`)
+    const attend = c.invasion.active && m.t < m.renaitJusque
+    if (d <= c.forage.ramassage && !soutePleine && !attend) {
       m.pepites.splice(i, 1)
       if (c.invasion.active) {
         // (L'EXPÉRIENCE : une pépite, un point ; la barre pleine, un niveau)
@@ -5506,7 +5510,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
     // toujours finir par être capturée ») : prise une fois, elle ne le lâche plus, où qu'il aille — elle fonce droit sur
     // lui, de plus en plus vite (`accelerationAimantee` par seconde, depuis `vitessePepite` au moins), et toujours plus
     // vite que lui ; la soute pleine ou le minerai refusé la relâchent
-    const aimanteParLui = p.aimanteeA !== undefined && !(!c.invasion.active && (m.minerai >= c.capacite || m.refuses[p.minerai]))
+    const aimanteParLui = !attend && p.aimanteeA !== undefined && !(!c.invasion.active && (m.minerai >= c.capacite || m.refuses[p.minerai]))
     if (aimanteParLui) {
       const jx = v.x - p.x
       const jy = v.y - p.y
@@ -5541,8 +5545,8 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
     p.vx *= frein
     p.vy *= frein
     const aimant = c.forage.aimant * (plusProche.e === null ? c.foreuse.aimant : 1) // (l'aimant du joueur suit sa foreuse)
-    if (d <= aimant && !soutePleine && plusProche.e === null && c.forage.accelerationAimantee > 0) p.aimanteeA = m.t
-    if (d <= aimant && !soutePleine) {
+    if (d <= aimant && !soutePleine && !attend && plusProche.e === null && c.forage.accelerationAimantee > 0) p.aimanteeA = m.t
+    if (d <= aimant && !soutePleine && !attend) {
       const tirage = c.forage.vitessePepite * (1 - d / aimant) + 40
       p.vx += (dx / d) * tirage * dt * 6
       p.vy += (dy / d) * tirage * dt * 6

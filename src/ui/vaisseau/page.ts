@@ -12,7 +12,7 @@
  */
 import './vaisseau.css'
 import * as noyau from 'pixelfx'
-import { type SorteDInsecte, SORTES_D_INSECTES, pointDeRetour, rayonDe, rocheDeLaTempete, vieMultipliee, degatsMultiplies, placeDeLEcharde, frontDeLaNova, ancreDansLeMonde, zoneDuDe, coupeDUnCube, formeDeLaCoupe, liesAuDrain, encaisser, type Ennemi, type Evenement, type Monde, impactDuRayon, asteroidesVisibles, avancerLeMonde, finDuTrio, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur, xpDuNiveau, ennemiLePlusProche, ennemiVerrouille, verrouiller, angleDuBalayage } from '../../logic/vaisseau/jeu.ts'
+import { type SorteDInsecte, SORTES_D_INSECTES, gabaritDInsecte, pointDeRetour, rayonDe, rocheDeLaTempete, vieMultipliee, degatsMultiplies, placeDeLEcharde, frontDeLaNova, ancreDansLeMonde, zoneDuDe, coupeDUnCube, formeDeLaCoupe, liesAuDrain, encaisser, type Ennemi, type Evenement, type Monde, impactDuRayon, asteroidesVisibles, avancerLeMonde, finDuTrio, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur, xpDuNiveau, ennemiLePlusProche, ennemiVerrouille, verrouiller, angleDuBalayage } from '../../logic/vaisseau/jeu.ts'
 import { ETALONS as ETALONS_DU_BANC, acheter, ajouterLesPiecesDEssai, capacite, poidsTotal, POIDS_SERIE, configDuHangar, demonter, demonterA, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, montantCourt, monteeA, monter, monterA, peutAcheter, peutMonter, perdreLesMontees, estDeBase, exemplaires, libres, pieceDe, piecesDe, placeLourde, possede, aimantMonte, radarMonte, type Jauge, type Piece, type Sorte } from '../../logic/vaisseau/hangar.ts'
 import { drawWord, spell } from 'pixelfx/fx/ui/_lib'
 import { firePuff, hotFirst, smokePuff } from 'pixelfx/fx/fire/_lib'
@@ -541,6 +541,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const PIXEL_D_INTERFACE_SUR_PC = 2.5 // (3 d'abord : encore trop gros)
   /** La largeur d'une colonne d'interface posée sur le jeu, sur PC couché, en pixels d'interface (voir `largeurDeBande`). */
   const COLONNE_SUR_PC = 36
+  /** Sur PC, en vol : la part de la page que prend la fenêtre du jeu (des bandes noires tout autour — voir `cadrer`). */
+  const FENETRE_SUR_PC = 0.8
   /** Le champ du tampon QU'ON PEINT : celui du monde pendant qu'on peint le monde, 1 pour l'interface. */
   let champDeLaVue = 1
   const CHAMP_MAX = 2
@@ -870,9 +872,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // jusqu'aux bords : plus de marges autour, plus de bandeaux noirs. Au doigt et à la base, rien ne change.
     couvreApplique = doitCouvrir()
     if (couvreApplique && large > 0 && haut > 0) {
+      // (… DANS UNE FENÊTRE À `FENETRE_SUR_PC` DE LA PAGE, des bandes noires tout autour — Keko, 21/11 : « sur PC le vaisseau
+      // est trop gros, l'échelle du jeu est un peu grosse, comme zoomée ; le même champ de vision étiré sur un écran plus
+      // grand ; pas hyper beau de zoomer autant » — « bandes noires tout autour », « 80 % », choisis parmi trois : le
+      // même champ de vision, des pixels du jeu plus petits ; l'interface garde sa taille à l'écran)
+      const fl = large * FENETRE_SUR_PC
+      const fh = haut * FENETRE_SUR_PC
       const VW = paysage ? 320 : 180
       const VH = paysage ? 180 : 320
-      const r = large / haut
+      const r = fl / fh
       // (LA VUE DE RÉFÉRENCE Y TIENT TOUJOURS ENTIÈRE — Keko, 15/11 : « sur PC je suis beaucoup trop zoomé, je ne vois pas
       // loin, alors que sur téléphone je vois beaucoup plus loin » : le tampon était d'abord taillé DANS la vue de
       // référence — une fenêtre moins allongée qu'elle perdait ses côtés, une fenêtre à peu près carrée n'en gardait
@@ -891,7 +899,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // la valeur en pixels du monde dépend de l'échelle de l'interface, qui dépend de la vue : trois passes y suffisent)
       if (paysage)
         for (let k = 0; k < 3; k++) {
-          const e = Math.max(1, large / w / PIXEL_D_INTERFACE_SUR_PC)
+          const e = Math.max(1, fl / w / PIXEL_D_INTERFACE_SUR_PC)
           w = Math.min(640, Math.max(w, Math.round(VW + (2 * COLONNE_SUR_PC) / e)))
           h = Math.min(640, Math.max(VH, Math.round(w / r)))
         }
@@ -899,10 +907,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // l'interface est dessinée beaucoup trop gros ») : son tampon est plus grand que la vue de référence — un pixel
       // d'interface vaut TROIS pixels d'écran au plus, au lieu de cinq ou six — ; le monde, lui, garde son tampon à
       // lui, à l'échelle du jeu (`champApplique` en tient compte).
-      echelleUI = Math.max(1, large / w / PIXEL_D_INTERFACE_SUR_PC)
+      echelleUI = Math.max(1, fl / w / PIXEL_D_INTERFACE_SUR_PC)
       w = Math.round(w * echelleUI)
       h = Math.round(h * echelleUI)
-      zoom = large / w
+      zoom = fl / w
     } else echelleUI = 1
     if (h !== H || w !== W || canvas.height !== h || canvas.width !== w) {
       W = w
@@ -7698,11 +7706,26 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       if (ev.key === 'Escape') souteOuverte = false
       return
     }
+    // (ÉCHAP OUVRE LA PAUSE, OU LA REFERME — Keko, 21/11 : « sur PC, quand on appuie sur échap, ça ouvre le menu pause » ;
+    // comme son bouton : pas au choix d'un talent, ni la partie finie)
+    if (ev.key === 'Escape' && VORTEX && enJeu && !m.invasion.finie && choixDeTalent === null) {
+      if (pauseOuverte) pauseOuverte = false
+      else {
+        pauseOuverte = true
+        pauseSurLArme = false
+        pauseA = tReel
+        manche = null
+        touches.clear()
+      }
+      return
+    }
     if (ev.key === ' ' || ev.key === 'Shift') lancerLaPostcombustion()
     touches.add(ev.key.toLowerCase())
     // (PAS DANS LE JEU DU VORTEX EN COURS DE PARTIE — Keko, 15/11 : abattu, une touche de déplacement relançait tout de
     // suite une partie neuve ; le retour au portail attend sa pénalité, la fin attend « Rejouer »)
-    if (VORTEX && enJeu) return
+    // (… NI AU HANGAR — Keko, 21/11 : « dans le hangar, quand j'appuie sur une touche de déplacement, ça lance la partie ;
+    // les touches de déplacement ne doivent rien faire dans le hangar » : au vortex, on décolle par « Décoller », seulement)
+    if (VORTEX) return
     demarrer()
   })
   window.addEventListener('keyup', (ev) => touches.delete(ev.key.toLowerCase()))
@@ -7717,7 +7740,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   let appuiA = -1e9
   let appuiOu = { x: 0, y: 0 }
   function lancerLaPostcombustion(): void {
-    if (!enJeu || souteOuverte || t - arriveA < ARRIVE_A || !postcombustion(CONF, m)) return
+    // (ni en pause, ni au choix d'un talent : le monde y est figé)
+    if (!enJeu || souteOuverte || pauseOuverte || choixDeTalent !== null || t - arriveA < ARRIVE_A || !postcombustion(CONF, m)) return
     jouer('decolle')
     secousse = Math.max(secousse, 0.5)
     flashs.push({ x: v.x, y: v.y, t0: t, r: 7 })
@@ -12041,7 +12065,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           }
         }
         dernierVu.set(e.id, { cap: b.cap, aggro: e.fait === 'aggro' })
-        if (e.pv < CONF.ennemi.pv) dessinerUneJauge(p, sx, sy + CONF.ennemi.rayon + 5, 10, e.pv / CONF.ennemi.pv, ROUGE[4], ROUGE[5], blanchi)
+        // (SA BARRE DE VIE SUR SA VIE À LUI — Keko, 21/11 : « les tout petits ennemis commencent avec une barre déjà quasiment
+        // vide ; sur les très gros, je ne vois quasiment pas la barre, sauf à un certain point » : elle se comptait sur la
+        // vie d'un petit — un moucheron partait au quart, un cuirassier n'avait pas de barre avant 120 points. Elle se
+        // compte sur la vie de sa sorte, paraît au premier coup, et s'élargit avec sa taille)
+        const g = gabaritDInsecte(CONF, e)
+        const pvMax = CONF.ennemi.pv * g.vie
+        if (e.pv < pvMax) dessinerUneJauge(p, sx, sy + rayonDe(CONF, e) + 5, Math.round(10 * Math.sqrt(g.taille)), e.pv / pvMax, ROUGE[4], ROUGE[5], blanchi)
       }
       return
     }
@@ -15717,7 +15747,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     else N.composite(frame, img.data, cuireLeCiel())
     g.putImageData(img, 0, 0)
     secousse = Math.max(0, secousse - dt / 0.25)
-    canvas.style.transform = secousse > 0 ? `translate(${(Math.random() - 0.5) * secousse * 8}px, ${(Math.random() - 0.5) * secousse * 8}px)` : ''
+    // (LE MONDE FIGÉ NE TREMBLE PAS — Keko, 21/11 : « quand je dois choisir mon amélioration, j'ai parfois un léger
+    // tremblement bizarre » : une secousse en cours au moment de la pause ne s'amortissait plus, l'horloge du monde
+    // arrêtée, et l'écran tremblait au hasard tout le temps du choix)
+    canvas.style.transform = secousse > 0 && dt > 0 ? `translate(${(Math.random() - 0.5) * secousse * 8}px, ${(Math.random() - 0.5) * secousse * 8}px)` : ''
     canvasMonde.style.transform = canvas.style.transform
     requestAnimationFrame(image)
   }

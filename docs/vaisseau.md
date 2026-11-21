@@ -7317,3 +7317,25 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     trois passes : leur valeur en pixels du monde dépend de l'échelle de l'interface) : 320 × 199 en 1920 × 1080,
     320 × 207 en 1366 × 768 — au moins ce que voit le téléphone, la règle du 15/11. Vu à la capture, en se présentant
     comme un PC.
+
+- **21/11, PC : le tremblement, le hangar, Échap, la fenêtre ; les barres de vie ; les pépites au retour.**
+  - Keko : « sur PC, au choix d'une amélioration, j'ai parfois un léger tremblement bizarre ». MESURÉ dans le code : une
+    secousse en cours au moment du gel ne s'amortissait plus (elle suit l'horloge du monde, arrêtée), et l'écran tremblait
+    au hasard tout le temps du choix. Le monde figé ne tremble plus ; la postcombustion (Espace, Maj) ne part plus en pause
+    ni au choix d'un talent.
+  - Keko : « dans le hangar, une touche de déplacement lance la partie ; elles ne doivent rien faire dans le hangar ».
+    Au vortex, plus aucune touche ne décolle : « Décoller » seulement. Vu à la capture (D tenue, le hangar reste).
+  - Keko : « sur PC, échap ouvre le menu pause ». Échap l'ouvre, et le referme (pas au choix d'un talent). Vu.
+  - Keko : « les tout petits ennemis commencent avec une barre de vie déjà quasiment vide ; sur les très gros, je ne vois
+    quasiment pas la barre, sauf à un certain point ». La barre se comptait sur la vie d'un petit (120) : un moucheron
+    partait au quart, un cuirassier n'avait pas de barre avant 120 points. Elle se compte sur la vie de SA SORTE
+    (`gabaritDInsecte`), paraît au premier coup, s'élargit avec sa taille, sous son rayon.
+  - Keko : « sur PC, le vaisseau est trop gros, l'échelle du jeu un peu grosse ; le même champ de vision étiré sur un
+    écran plus grand ; pas hyper beau de zoomer autant » — « bandes noires tout autour », « 80 % », choisis parmi trois :
+    en vol, le jeu tient dans UNE FENÊTRE À 80 % DE LA PAGE (`FENETRE_SUR_PC`), centrée, des bandes sombres autour ; le
+    même champ de vision, des pixels du jeu un cinquième plus petits ; l'interface garde sa taille à l'écran. Vu.
+  - Keko : « quand on respawn, que les pépites ne soient pas attirées immédiatement ; qu'on attende la fin de l'animation
+    pour déclencher le magnétisme : pile au retour, ça lance un gain de niveau la plupart du temps ». Tant que le joueur
+    revenu est invincible (deux secondes), aucune pépite n'est aimantée ni ramassée. Testé : huit semées par l'explosion,
+    aucune ramassée pendant, puis un niveau — deux, semées en gerbe, ont dérivé hors de l'aimant le temps d'attendre :
+    il faut aller les chercher.

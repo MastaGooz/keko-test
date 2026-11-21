@@ -3362,5 +3362,25 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   verifier(`la tempête frappe le blindage : ${perte.toFixed(1)} perdus en une seconde (${attendu} attendus), bouclier, plaques et déphasage intacts (${intact}) ; abattu, ses obus partent (${w2.obus.length})`, Math.abs(perte - attendu) < 0.5 && intact && w2.obus.length === 0)
 }
 
+// AU RETOUR, LES PÉPITES ATTENDENT (Keko, 21/11 : « qu'on attende la fin de l'animation de respawn pour déclencher le
+// magnétisme ») : celles que l'explosion sème restent où elles sont tant qu'il est invincible, puis viennent à lui
+{
+  const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, pv: 120, butinRendu: 1, apparait: 1e9, rayon: 5 } }
+  const w = nouveauMonde(cfg, 5)
+  w.invasion.prochainA = 1e9
+  w.phase = 'perdu'
+  w.coque = 0
+  w.invasion.retourA = w.t + 0.1
+  for (let k = 0; k < 8; k++) w.ennemis.push({ id: 100 + k, corps: { ...nouveauVaisseau(), x: Math.cos(k) * 30, y: Math.sin(k) * 30 }, pv: 120, fait: 'marche', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 } })
+  let semees = 0
+  let pendant = -1
+  for (let i = 0; i < 60 * 4; i++) {
+    avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+    if (semees === 0 && w.pepites.length > 0) semees = w.pepites.length
+    if (pendant < 0 && w.renaitJusque > -100 && w.t > w.renaitJusque - 0.1) pendant = w.invasion.xp
+  }
+  verifier(`au retour, les pépites attendent : ${semees} semées, ${pendant} ramassées pendant l'invincibilité, ${w.pepites.length} restées après, hors de l'aimant (niveau ${w.invasion.niveau}) — semées en gerbe, elles ont dérivé le temps d'attendre`, semees >= 8 && pendant === 0 && w.pepites.length <= 3 && w.invasion.niveau >= 2)
+}
+
 // (TOUJOURS EN DERNIER : des blocs ajoutés après cette ligne échouaient sans faire échouer `npm run verif` — 17/11)
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)
