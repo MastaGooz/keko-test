@@ -7421,3 +7421,12 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     dôme, le bruit, les cratères, les éclats — est calculé une fois par roche sur une grille propre (`champsDe`, gardée) ;
     à chaque image, on la tourne et on applique la lumière ; le cerne se trace à l'écran. Même dessin, 135 images par
     seconde avec des géantes (16 % de l'image pour les roches).
+  - Keko : « ne fais pas clignoter en blanc les barres de vie quand les ennemis ou les astéroïdes subissent des dégâts ;
+    la barre des astéroïdes en gris clair plutôt qu'en rouge, pour bien les distinguer des ennemis ; le flash blanc des
+    ennemis beaucoup plus court : quand je tire très vite, ils sont quasiment en permanence blancs ». Les barres ne
+    clignotent plus ; celle d'une roche est grise (#a4a4b2 dessous, #d0d0da dessus) ; le flash d'un coup dure 0,035 s
+    (deux images) au lieu de 0,1.
+  - Keko, au test des géantes : « le test est très bon, on valide ; remets les astéroïdes de taille normale ; les géants
+    ne doivent apparaître que tard dans la partie ». `derive.tailles.apres` : AUCUNE GÉANTE AVANT HUIT MINUTES de vol,
+    puis 3 %, jusqu'à 10 % sept minutes plus tard (testé). `&geante` les montre toujours, dès le départ. *Les chiffres
+    sont de moi.*

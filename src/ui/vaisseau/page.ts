@@ -1042,7 +1042,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // toutes les quatre, `&roche=0` les éteint)
       // (L'ARÈNE ET SA TEMPÊTE, au vortex — voir `arene`)
       if (VORTEX) conf = { ...conf, arene: { ...conf.arene, active: true } }
-      if (VORTEX) conf = { ...conf, derive: { ...conf.derive, active: parametres.get('roche') !== '0', ...(parametres.has('roche') && parametres.get('roche') !== '0' ? { premier: 2, tousMin: 4, tousMax: 4 } : {}), ...(parametres.has('geante') ? { tailles: { ...conf.derive.tailles, partDebut: 1, partFin: 1 } } : {}) /* (`&geante` : rien que des géantes) */ } }
+      if (VORTEX) conf = { ...conf, derive: { ...conf.derive, active: parametres.get('roche') !== '0', ...(parametres.has('roche') && parametres.get('roche') !== '0' ? { premier: 2, tousMin: 4, tousMax: 4 } : {}), ...(parametres.has('geante') ? { tailles: { ...conf.derive.tailles, apres: 0, partDebut: 1, partFin: 1 } } : {}) /* (`&geante` : rien que des géantes) */ } }
       // (`&festin=P` : la nuée part nourrie à P de son maximum — pour voir son nuage grand sans mordre longtemps)
       if (parametres.has('festin')) conf = { ...conf, armes: conf.armes.map((a) => (a.nuee?.festin === undefined ? a : { ...a, nuee: { ...a.nuee, festin: { ...a.nuee.festin, depart: a.nuee.festin.max * Math.max(0, Math.min(1, Number(parametres.get('festin')) || 0)) } } })) }
       // (LA VIE DU VAISSEAU, FOIS `ECHELLE_DE_LA_VIE` — en dernier : tous les points posés plus haut, `&bouclier=N` compris)
@@ -12015,7 +12015,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         const b = e.corps
         const sx = b.x - camera.x + W / 2
         const sy = b.y - camera.y + centreY()
-        const blanchi = t - (toucheEnnemiA.get(e.id) ?? -10) < 0.1
+        // (LE FLASH BLANC D'UN COUP, BEAUCOUP PLUS COURT — Keko, 21/11 : « quand je tire très vite, ils sont quasiment en
+        // permanence blancs » : 0,1 s d'abord, deux images maintenant)
+        const blanchi = t - (toucheEnnemiA.get(e.id) ?? -10) < 0.035
         // (UNE ROCHE QUI DÉRIVE — voir `derive` : la roche du Nova Drifter, de fer veiné, qui tourne ; touchée, elle tremble
         // un instant ; entamée, sa jauge dessous)
         const ro = e.asteroide
@@ -12026,7 +12028,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           // faudrait une rotation beaucoup plus fluide ; il n'y a pas beaucoup d'astéroïdes dans la zone de jeu » : une
           // image par pose, quarante-huit poses par tour, tournait par crans de 7,5°)
           dessinerRocheDuVortex(p, { id: e.id, x: 0, y: 0, rayon: ro.rayon, graine: ro.graine, angle0: ro.angle0, vitesseAngulaire: ro.vitesseAngulaire, minerai: 'fer', richesse: 0.2 }, t, Math.round(sx + tremble * (alea(e.id, Math.floor(t * 30), 3) - 0.5) * 2), Math.round(sy), gemmesDuButin(CONF, butinDeLaRoche(CONF, ro.pvMax)), XP)
-          if (e.pv < ro.pvMax) dessinerUneJauge(p, sx, sy + ro.rayon + 4, Math.round(ro.rayon * 1.6), e.pv / ro.pvMax, ROUGE[4], ROUGE[5], blanchi)
+          // (SA BARRE EN GRIS CLAIR, PAS EN ROUGE, ET AUCUNE BARRE NE CLIGNOTE — Keko, 21/11 : « ne fais pas clignoter en
+          // blanc les barres de vie ; la barre des astéroïdes en gris clair pour bien les distinguer des ennemis »)
+          if (e.pv < ro.pvMax) dessinerUneJauge(p, sx, sy + ro.rayon + 4, Math.round(ro.rayon * 1.6), e.pv / ro.pvMax, GRIS_DE_ROCHE[0], GRIS_DE_ROCHE[1], false)
           continue
         }
         dessinerUnInsecte(p, sx, sy, b.cap, e.id * 1.7, blanchi, e.fait === 'aggro', undefined, e.sorte)
@@ -12091,7 +12095,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         // compte sur la vie de sa sorte, paraît au premier coup, et s'élargit avec sa taille)
         const g = gabaritDInsecte(CONF, e)
         const pvMax = CONF.ennemi.pv * g.vie
-        if (e.pv < pvMax) dessinerUneJauge(p, sx, sy + rayonDe(CONF, e) + 5, Math.round(10 * Math.sqrt(g.taille)), e.pv / pvMax, ROUGE[4], ROUGE[5], blanchi)
+        if (e.pv < pvMax) dessinerUneJauge(p, sx, sy + rayonDe(CONF, e) + 5, Math.round(10 * Math.sqrt(g.taille)), e.pv / pvMax, ROUGE[4], ROUGE[5], false)
       }
       return
     }
@@ -12112,6 +12116,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * à `part` ; `chaud` la blanchit (on vient de frapper). Le peintre est supposé à l'origine, (x, y) en coordonnées du
    * tampon, centrées.
    */
+  /** Le gris clair de la barre de vie d'une roche (le dessous, le dessus). */
+  const GRIS_DE_ROCHE = [N.hex('#a4a4b2'), N.hex('#d0d0da')]
   function dessinerUneJauge(p: Peintre, x: number, y: number, w: number, part: number, teinte: number, clair: number, chaud: boolean): void {
     const x0 = Math.round(x - w / 2)
     const yy = Math.round(y)

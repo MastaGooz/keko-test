@@ -3453,13 +3453,13 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   const D = VAISSEAU.derive
   const Tl = D.tailles
   const part = (t: number): number => {
-    const pg = Tl.partDebut + (Tl.partFin - Tl.partDebut) * Math.min(1, t / Tl.montee)
+    const pg = t < Tl.apres ? 0 : Tl.partDebut + (Tl.partFin - Tl.partDebut) * Math.min(1, (t - Tl.apres) / Tl.montee)
     let geantes = 0
     for (let id = 1; id <= 4000; id++) if (tire(77, id, 49) < pg) geantes++
     return geantes / 4000
   }
   const pvMax = Math.round(D.pvA10 * (D.rayonMax / 10) ** D.exposant)
-  verifier(`les géantes (36 à ${D.rayonMax}) : ${Math.round(part(0) * 100)} % au départ, ${Math.round(part(600) * 100)} % après dix minutes ; la plus grosse a ${pvMax} points et rend ${gemmesDuButin(VAISSEAU, Math.round(pvMax * D.pepitesParPv)).reduce((a, b) => a + b, 0)} d'expérience`, part(0) < 0.07 && part(600) > 0.08 && part(600) < 0.13 && pvMax > 10000)
+  verifier(`les géantes (36 à ${D.rayonMax}) : aucune avant ${Tl.apres / 60} minutes (${Math.round(part(Tl.apres - 1) * 100)} %), ${Math.round(part(Tl.apres + 1) * 100)} % à leur arrivée, ${Math.round(part(Tl.apres + Tl.montee) * 100)} % ${Tl.montee / 60} minutes plus tard ; la plus grosse a ${pvMax} points et rend ${gemmesDuButin(VAISSEAU, Math.round(pvMax * D.pepitesParPv)).reduce((a, b) => a + b, 0)} d'expérience`, part(0) === 0 && part(Tl.apres - 1) === 0 && part(Tl.apres + 1) > 0.01 && part(Tl.apres + Tl.montee) > 0.08 && part(Tl.apres + Tl.montee) < 0.13 && pvMax > 10000)
 }
 
 // (TOUJOURS EN DERNIER : des blocs ajoutés après cette ligne échouaient sans faire échouer `npm run verif` — 17/11)

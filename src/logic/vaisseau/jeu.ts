@@ -437,12 +437,14 @@ export const VAISSEAU = {
      * LES TAILLES (Keko, 21/11 : « rendre les gros astéroïdes un peu plus rares ; on en fait vraiment de toutes les
      * tailles ; plus on avance dans la partie, plus les gros deviennent un peu plus fréquents, mais pas tout le temps ;
      * les gros vraiment durs à détruire et qui donnent vraiment beaucoup de pépites ; le plus gros, encore plus gros ») :
-     * une GÉANTE (de `geante` à `rayonMax`) naît à `partDebut`, cette part montant jusqu'à `partFin` en `montee` secondes
-     * de vol ; sinon une roche COURANTE, de `rayonMin` à `courante`, toutes tailles (u^`k`). Et les points à la puissance 2
+     * une GÉANTE (de `geante` à `rayonMax`) — AUCUNE AVANT `apres` secondes de vol (Keko, 21/11, au test des géantes :
+     * « le test est très bon, on valide ; remets les astéroïdes de taille normale ; les géants ne doivent apparaître que
+     * tard dans la partie ») — naît ensuite à `partDebut`, cette part montant jusqu'à `partFin` en `montee` secondes ;
+     * sinon une roche COURANTE, de `rayonMin` à `courante`, toutes tailles (u^`k`). Et les points à la puissance 2
      * du rayon (1,5 avant), le butin suivant : la plus grosse, 46 de rayon (34 avant), 10 580 points et 176 d'expérience
      * (3 135 et 52 pour celle de 34 avant). *Les chiffres sont de moi.*
      */
-    tailles: { courante: 32, geante: 36, k: 1.3, partDebut: 0.04, partFin: 0.1, montee: 600 } },
+    tailles: { courante: 32, geante: 36, k: 1.3, apres: 480, partDebut: 0.03, partFin: 0.1, montee: 420 } },
   ennemi: { apparait: 10, revient: 5, distance: 320, pv: 36, poussee: 120, vitesseMax: 85, rotation: 5, rayon: 4, cherche: 260, rode: 450, voit: 130, accourt: 420, tient: 80, fuit: 10, lache: 260, cadence: 1.8, vitesseTir: 130, dispersion: 0.16, vieTir: 2, butinRendu: 3,
     /**
      * LE RIVAL PEUT PORTER DE VRAIES ARMES (Keko, 14/11 : « deux canons, le reste en mitraillette, et deux missiles dans
@@ -1943,7 +1945,7 @@ function menerLesDerives(c: ConfigVaisseau, m: Monde): void {
   const vit = D.vitesseMin + (D.vitesseMax - D.vitesseMin) * tire(m.graine, id, 45)
   // (une géante, de plus en plus souvent ; sinon une courante — voir `derive.tailles`)
   const Tl = D.tailles
-  const partGeante = Tl.partDebut + (Tl.partFin - Tl.partDebut) * Math.min(1, m.t / Tl.montee)
+  const partGeante = m.t < Tl.apres ? 0 : Tl.partDebut + (Tl.partFin - Tl.partDebut) * Math.min(1, (m.t - Tl.apres) / Tl.montee)
   const rayon = tire(m.graine, id, 49) < partGeante ? Tl.geante + (D.rayonMax - Tl.geante) * tire(m.graine, id, 46) : D.rayonMin + (Tl.courante - D.rayonMin) * tire(m.graine, id, 46) ** Tl.k
   const pv = Math.round(D.pvA10 * (rayon / 10) ** D.exposant)
   m.ennemis.push({ id, corps: { ...nouveauVaisseau(), x, y, vx: Math.cos(cap) * vit, vy: Math.sin(cap) * vit, cap }, pv, fait: 'marche', roche: null, forage: null, tirA: 0, butin: 0, cargaison: cargaisonVide(), grand: true, asteroide: { rayon, graine: hache(m.graine, id), angle0: tire(m.graine, id, 47) * Math.PI * 2, vitesseAngulaire: (tire(m.graine, id, 48) - 0.5) * 1.2, pvMax: pv } })
