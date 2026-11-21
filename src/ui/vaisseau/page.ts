@@ -4239,6 +4239,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * haut ; dedans, l'icône de l'arme et son contour. `vive` : la case de l'arme équipée, son liseré d'or.
    */
   const TAILLE_DE_LA_CASE = 18
+  /** Le bouton « Changer » d'une arme : son mot, en courant, et cinq pixels de chaque côté. */
+  const LARGEUR_DE_CHANGER = textWidth('Changer', TEXTE) + 10
   const couleursDesIcones = new Map<string, number>()
   function dessinerLaCaseDArme(p: Peintre, id: string, x0: number, y0: number, race: Race, vive = false): void {
     const x = Math.round(x0)
@@ -5057,7 +5059,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const xa = 11 + TAILLE_DE_LA_CASE + 5
       p.text('ARMEMENT', xa, yy + 4, COQUE[3])
       ecrire(p, pieceDe(arme)?.nom ?? '', xa, yy + 13, N.hex('#f6ecd2'))
-      const bw = largeurDe('Changer', GRAS) + 12
+      const bw = LARGEUR_DE_CHANGER
       const bx = W - 11 - bw
       const yb = yy + Math.round((ha - 16) / 2)
       boutonBase(p, bx, yb, bw, 16, true, armement, (dx, dy) => ecrire(p, 'Changer', bx + bw / 2 + dx, yb + dy + 4, COQUE[5], { align: 'center' }), 'ouvre', { matiere: 'acier' })
@@ -5342,9 +5344,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       dessinerLaCaseDArme(p, armeDuVortex(), 8, y + 3, modeleDeVaisseau(flotte.actif).race, true)
       // (le nom seul, sans « Arme » devant — Keko, 15/11)
       const xa = 8 + TAILLE_DE_LA_CASE + 6
-      motEnRelief(p, nomArme, xa + largeurDe(nomArme, GRAS) / 2, y + Math.round(ha / 2) - 4, true)
-      const bwa = largeurDe('Changer', GRAS) + 16
+      // (« CHANGER » À LA TAILLE DE SON MOT, ET UN NOM TROP LONG SUR DEUX LIGNES — Keko, 21/11 : « certains noms d'armes,
+      // comme la traînée corrosive, prennent trop de place et touchent le bouton changer » : le bouton était taillé sur le
+      // mot en gras, il est écrit en courant — `LARGEUR_DE_CHANGER` ; mesuré, « Décharge arcanique » débordait encore de 7
+      // pixels et « Traînée corrosive » d'un : un nom qui ne tient pas passe sur deux lignes, en relief toujours — choisi
+      // par Keko parmi trois façons)
+      const bwa = LARGEUR_DE_CHANGER
       const bxa = W - 7 - bwa
+      const lignesDuNom = largeurDe(nomArme, GRAS) <= bxa - 3 - xa ? [nomArme] : replier(nomArme, bxa - 3 - xa, GRAS).slice(0, 2)
+      lignesDuNom.forEach((li, k) => motEnRelief(p, li, xa + largeurDe(li, GRAS) / 2, y + Math.round(ha / 2) - 4 + (k - (lignesDuNom.length - 1) / 2) * 10, true))
       const yb = y + Math.round((ha - 16) / 2)
       boutonBase(p, bxa, yb, bwa, 16, true, () => ouvrirLArmementDe(flotte.actif), (dx, dy) => ecrire(p, 'Changer', bxa + bwa / 2 + dx, yb + dy + 4, COQUE[5], { align: 'center' }), 'ouvre', { matiere: 'acier' })
       // (UN BOUTON SECONDAIRE — Keko, 15/11 : « pas le même graphisme que changer de vaisseau, un peu moins visible » :

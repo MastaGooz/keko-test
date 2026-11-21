@@ -7079,3 +7079,12 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     affichée nulle part ; elle reste écrite dans `ModeleDeVaisseau.dit`.
   Vu à la capture : couché, en pilotant le Chasseur, la Nuée équipée sur le Kraken depuis la grille — l'aperçu montre
   le Kraken, la grille revient, le Chasseur reste piloté ; debout, la rangée tient.
+
+- **21/11, « Changer » affiné, les noms longs sur deux lignes** (Keko : « certains noms d'armes, comme la traînée
+  corrosive, prennent trop de place et touchent le bouton changer ; réduire un tout petit peu sa largeur »). MESURÉ sur
+  les 36 noms : dans la grille, seule « Décharge arcanique » débordait (5 pixels) ; au hangar, où le nom est en relief
+  doré, elle débordait de 20, « Traînée corrosive » de 14, « Rayon thermique » de 5. Le bouton était taillé sur le mot
+  en gras alors qu'il l'écrit en courant : il l'est maintenant sur son mot et cinq pixels de chaque côté
+  (`LARGEUR_DE_CHANGER`, 45 au lieu de 54 à 58) — la grille a au moins 4 pixels d'air pour tous. Au hangar, il restait 7
+  et 1 pixels : UN NOM QUI NE TIENT PAS PASSE SUR DEUX LIGNES, toujours en relief (« Décharge / arcanique », « Traînée /
+  corrosive ») — choisi par Keko parmi trois façons. Vu à la capture.
