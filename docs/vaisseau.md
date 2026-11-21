@@ -7430,3 +7430,10 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     ne doivent apparaître que tard dans la partie ». `derive.tailles.apres` : AUCUNE GÉANTE AVANT HUIT MINUTES de vol,
     puis 3 %, jusqu'à 10 % sept minutes plus tard (testé). `&geante` les montre toujours, dès le départ. *Les chiffres
     sont de moi.*
+  - Keko : « enlever les dégâts subis par les astéroïdes au contact des autres objets, comme les ennemis ou le joueur ;
+    les ennemis et le joueur subissent des dégâts en collision, mais pas les astéroïdes ». Le vaisseau n'en faisait déjà
+    aucun ; l'insecte qui heurte une roche perd `derive.chocInsecte`, LA ROCHE PLUS RIEN (`heurterLesRoches`). Testé :
+    six insectes la heurtent trois secondes, tous blessés, elle intacte.
+  - Keko : « trop de gros astéroïdes dès le départ ». Les roches courantes tirent leur rayon en u^k, k passant de 2,6
+    au départ à 1,3 en sept minutes (`tailles.kDebut`) : une roche de plus de 24, 15 % au départ, 27 % ensuite (c'était
+    27 % dès le départ ; mesuré sur 4 000 tirages). *Les chiffres sont de moi.*

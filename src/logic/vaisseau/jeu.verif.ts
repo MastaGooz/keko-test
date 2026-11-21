@@ -2920,7 +2920,7 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
       r.corps = { ...r.corps, x: 100, y: 0, vx: 0, vy: 0 }
       avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
     }
-    verifier(`un insecte entré dans une roche la heurte : il en est sorti, et tous deux perdent ${VAISSEAU.derive.chocInsecte} (lui ${120 - ins.pv}, elle ${500 - r.pv}), une fois`, ins.pv === 120 - VAISSEAU.derive.chocInsecte && r.pv === 500 - VAISSEAU.derive.chocInsecte && Math.hypot(ins.corps.x - 100, ins.corps.y) >= 15 - 1e-6)
+    verifier(`un insecte entré dans une roche la heurte : il en est sorti, et il perd ${VAISSEAU.derive.chocInsecte}, elle rien (Keko, 21/11) (lui ${120 - ins.pv}, elle ${500 - r.pv}), une fois`, ins.pv === 120 - VAISSEAU.derive.chocInsecte && r.pv === 500 && Math.hypot(ins.corps.x - 100, ins.corps.y) >= 15 - 1e-6)
   }
   // (les roches traversent le champ autour du vaisseau)
   {
@@ -3460,6 +3460,27 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   }
   const pvMax = Math.round(D.pvA10 * (D.rayonMax / 10) ** D.exposant)
   verifier(`les géantes (36 à ${D.rayonMax}) : aucune avant ${Tl.apres / 60} minutes (${Math.round(part(Tl.apres - 1) * 100)} %), ${Math.round(part(Tl.apres + 1) * 100)} % à leur arrivée, ${Math.round(part(Tl.apres + Tl.montee) * 100)} % ${Tl.montee / 60} minutes plus tard ; la plus grosse a ${pvMax} points et rend ${gemmesDuButin(VAISSEAU, Math.round(pvMax * D.pepitesParPv)).reduce((a, b) => a + b, 0)} d'expérience`, part(0) === 0 && part(Tl.apres - 1) === 0 && part(Tl.apres + 1) > 0.01 && part(Tl.apres + Tl.montee) > 0.08 && part(Tl.apres + Tl.montee) < 0.13 && pvMax > 10000)
+}
+
+// LES ROCHES N'ONT RIEN AUX CHOCS (Keko, 21/11 : « les ennemis et le joueur subissent des dégâts en collision, mais pas les
+// astéroïdes ») ; ET LES PETITES DOMINENT AU DÉPART (« trop de gros astéroïdes dès le départ »)
+{
+  const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, pv: 120, butinRendu: 1, apparait: 1e9, poussee: 90, vitesseMax: 40, rotation: 6, rayon: 5 }, derive: { ...VAISSEAU.derive, active: false } }
+  const w = nouveauMonde(cfg, 3)
+  w.invasion.prochainA = 1e9
+  w.ennemis.push({ id: 300, corps: { ...nouveauVaisseau(), x: 200, y: 0 }, pv: 500, fait: 'marche', roche: null, forage: null, tirA: 0, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, grand: true, asteroide: { rayon: 12, graine: 5, angle0: 0, vitesseAngulaire: 0, pvMax: 500 } })
+  for (let k = 0; k < 6; k++) w.ennemis.push({ id: 310 + k, corps: { ...nouveauVaisseau(), x: 200 + Math.cos(k) * 14, y: Math.sin(k) * 14 }, pv: 120, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 } })
+  for (let i = 0; i < 60 * 3; i++) avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+  const roche = w.ennemis.find((e) => e.id === 300)
+  const blesses = w.ennemis.filter((e) => e.id >= 310 && e.pv < 120).length
+  const Tl = VAISSEAU.derive.tailles
+  const grosses = (t: number): number => {
+    const k = Tl.kDebut + (Tl.k - Tl.kDebut) * Math.min(1, t / Tl.montee)
+    let n = 0
+    for (let id = 1; id <= 4000; id++) if (VAISSEAU.derive.rayonMin + (Tl.courante - VAISSEAU.derive.rayonMin) * tire(77, id, 46) ** k > 24) n++
+    return n / 4000
+  }
+  verifier(`six insectes heurtent une roche : ${blesses} blessés, la roche à ${roche?.pv} sur 500 ; une courante de plus de 24 : ${Math.round(grosses(0) * 100)} % au départ, ${Math.round(grosses(Tl.montee) * 100)} % après ${Tl.montee / 60} minutes`, roche?.pv === 500 && blesses >= 1 && grosses(0) < 0.18 && grosses(Tl.montee) > 0.22)
 }
 
 // (TOUJOURS EN DERNIER : des blocs ajoutés après cette ligne échouaient sans faire échouer `npm run verif` — 17/11)

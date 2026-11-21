@@ -440,11 +440,13 @@ export const VAISSEAU = {
      * une GÉANTE (de `geante` à `rayonMax`) — AUCUNE AVANT `apres` secondes de vol (Keko, 21/11, au test des géantes :
      * « le test est très bon, on valide ; remets les astéroïdes de taille normale ; les géants ne doivent apparaître que
      * tard dans la partie ») — naît ensuite à `partDebut`, cette part montant jusqu'à `partFin` en `montee` secondes ;
-     * sinon une roche COURANTE, de `rayonMin` à `courante`, toutes tailles (u^`k`). Et les points à la puissance 2
+     * sinon une roche COURANTE, de `rayonMin` à `courante`, toutes tailles (u^k) — LES PETITES DOMINENT AU DÉPART (Keko,
+     * 21/11 : « trop de gros astéroïdes dès le départ ») : k passe de `kDebut` à `k` en `montee` secondes (une roche de
+     * plus de 24 : 14 % au départ, 27 % ensuite — c'était 27 % dès le départ). Et les points à la puissance 2
      * du rayon (1,5 avant), le butin suivant : la plus grosse, 46 de rayon (34 avant), 10 580 points et 176 d'expérience
      * (3 135 et 52 pour celle de 34 avant). *Les chiffres sont de moi.*
      */
-    tailles: { courante: 32, geante: 36, k: 1.3, apres: 480, partDebut: 0.03, partFin: 0.1, montee: 420 } },
+    tailles: { courante: 32, geante: 36, kDebut: 2.6, k: 1.3, montee: 420, apres: 480, partDebut: 0.03, partFin: 0.1 } },
   ennemi: { apparait: 10, revient: 5, distance: 320, pv: 36, poussee: 120, vitesseMax: 85, rotation: 5, rayon: 4, cherche: 260, rode: 450, voit: 130, accourt: 420, tient: 80, fuit: 10, lache: 260, cadence: 1.8, vitesseTir: 130, dispersion: 0.16, vieTir: 2, butinRendu: 3,
     /**
      * LE RIVAL PEUT PORTER DE VRAIES ARMES (Keko, 14/11 : « deux canons, le reste en mitraillette, et deux missiles dans
@@ -1946,7 +1948,8 @@ function menerLesDerives(c: ConfigVaisseau, m: Monde): void {
   // (une géante, de plus en plus souvent ; sinon une courante — voir `derive.tailles`)
   const Tl = D.tailles
   const partGeante = m.t < Tl.apres ? 0 : Tl.partDebut + (Tl.partFin - Tl.partDebut) * Math.min(1, (m.t - Tl.apres) / Tl.montee)
-  const rayon = tire(m.graine, id, 49) < partGeante ? Tl.geante + (D.rayonMax - Tl.geante) * tire(m.graine, id, 46) : D.rayonMin + (Tl.courante - D.rayonMin) * tire(m.graine, id, 46) ** Tl.k
+  const kT = Tl.kDebut + (Tl.k - Tl.kDebut) * Math.min(1, m.t / Tl.montee)
+  const rayon = tire(m.graine, id, 49) < partGeante ? Tl.geante + (D.rayonMax - Tl.geante) * tire(m.graine, id, 46) : D.rayonMin + (Tl.courante - D.rayonMin) * tire(m.graine, id, 46) ** kT
   const pv = Math.round(D.pvA10 * (rayon / 10) ** D.exposant)
   m.ennemis.push({ id, corps: { ...nouveauVaisseau(), x, y, vx: Math.cos(cap) * vit, vy: Math.sin(cap) * vit, cap }, pv, fait: 'marche', roche: null, forage: null, tirA: 0, butin: 0, cargaison: cargaisonVide(), grand: true, asteroide: { rayon, graine: hache(m.graine, id), angle0: tire(m.graine, id, 47) * Math.PI * 2, vitesseAngulaire: (tire(m.graine, id, 48) - 0.5) * 1.2, pvMax: pv } })
 }
@@ -2118,7 +2121,9 @@ function centreDuChamp(c: ConfigVaisseau, m: Monde): Vecteur {
 
 /**
  * LES INSECTES HEURTENT LES ROCHES (voir `sansPortail`) : un insecte entré dans une roche qui dérive en est sorti ;
- * s'il n'en a pas heurté depuis `heurteRoche` secondes, tous deux perdent `derive.chocInsecte` — comme le vaisseau.
+ * s'il n'en a pas heurté depuis `heurteRoche` secondes, IL perd `derive.chocInsecte` — comme le vaisseau. LA ROCHE N'A
+ * RIEN (Keko, 21/11 : « enlever les dégâts subis par les astéroïdes au contact des autres objets, comme les ennemis ou le
+ * joueur ; les ennemis et le joueur subissent des dégâts en collision, mais pas les astéroïdes »).
  */
 function heurterLesRoches(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
   const roches = m.ennemis.filter((e) => e.asteroide !== undefined)
@@ -2135,12 +2140,9 @@ function heurterLesRoches(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
       e.corps = { ...e.corps, x: r.corps.x + (dx / d) * min, y: r.corps.y + (dy / d) * min }
       if (m.t - (e.heurteA ?? -100) < c.invasion.heurteRoche) continue
       e.heurteA = m.t
-      for (const qui of [e, r]) {
-        qui.pv -= c.derive.chocInsecte
-        ev.push({ type: 'ennemiTouche', id: qui.id, x: (e.corps.x + r.corps.x) / 2, y: (e.corps.y + r.corps.y) / 2, critique: false })
-      }
+      e.pv -= c.derive.chocInsecte
+      ev.push({ type: 'ennemiTouche', id: e.id, x: (e.corps.x + r.corps.x) / 2, y: (e.corps.y + r.corps.y) / 2, critique: false })
       if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
-      if (r.pv <= 0) abattreLEnnemi(c, m, r, ev)
       break
     }
   }
