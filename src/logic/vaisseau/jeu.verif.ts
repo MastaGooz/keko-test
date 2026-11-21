@@ -1,7 +1,7 @@
 /**
  * Vérifications du vaisseau, sans navigateur : le temps est injecté.
  */
-import { rayonDe, rocheDeLaTempete, vieMultipliee, cadenceDeLaVague, asteroideDeLaCase, coupeDUnCube, asteroidesAutour, avancer, avancerLeMonde, encaisser, purger, impactDuRayon, lancerLaBombe, larguer, porteeDeLaBombe, MINERAIS, nouveauMonde, nouveauVaisseau, solidite, voler, totalDe, stationDeLaCase, stationLaPlusProche, VAISSEAU, verrouiller, ennemiLePlusProche, type ConfigVaisseau, type Ennemi, type Evenement, type Vaisseau, xpDuNiveau } from './jeu.ts'
+import { partDe, gabaritDInsecte, rayonDe, rocheDeLaTempete, vieMultipliee, cadenceDeLaVague, asteroideDeLaCase, coupeDUnCube, asteroidesAutour, avancer, avancerLeMonde, encaisser, purger, impactDuRayon, lancerLaBombe, larguer, porteeDeLaBombe, MINERAIS, nouveauMonde, nouveauVaisseau, solidite, voler, totalDe, stationDeLaCase, stationLaPlusProche, VAISSEAU, verrouiller, ennemiLePlusProche, type ConfigVaisseau, type Ennemi, type Evenement, type Vaisseau, xpDuNiveau } from './jeu.ts'
 import { acheter, configDuHangar, hangarNeuf, monter, pieceDe } from './hangar.ts'
 
 /** Les règles sont vérifiées SANS la zone calme de la base (le rival naît où que soit le joueur) et AVEC les extracteurs par case (éteints en jeu pour l'instant) ; la base et la station seule ont leurs propres vérifications, plus bas. */
@@ -3252,7 +3252,7 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
 // LE CORNU, L'INSECTE DE MILIEU DE GAMME (Keko, 21/11) : aucun la première minute, puis une part qui monte jusqu'au
 // cinquième ; trois fois la vie, une fois et demie la taille, plus lent ; il rend trois pépites
 {
-  const cfg = { ...VAISSEAU, coque: 1e9, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 0, continu: { ...VAISSEAU.invasion.continu, actif: true } }, ennemi: { ...VAISSEAU.ennemi, pv: 120, butinRendu: 1, apparait: 1e9, poussee: 90, vitesseMax: 40, rotation: 6, rayon: 5 }, forage: { ...VAISSEAU.forage, aimant: 0 } }
+  const cfg = { ...VAISSEAU, coque: 1e9, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 0, continu: { ...VAISSEAU.invasion.continu, actif: true }, cuirassier: { ...VAISSEAU.invasion.cuirassier, part: 0 } }, ennemi: { ...VAISSEAU.ennemi, pv: 120, butinRendu: 1, apparait: 1e9, poussee: 90, vitesseMax: 40, rotation: 6, rayon: 5 }, forage: { ...VAISSEAU.forage, aimant: 0 } }
   const w = nouveauMonde(cfg, 5)
   const parMinute = [0, 0, 0, 0, 0, 0, 0]
   const nesParMinute = [0, 0, 0, 0, 0, 0, 0]
@@ -3263,7 +3263,7 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
         const en = w.ennemis.find((x) => x.id === e.id)!
         const mn = Math.min(6, Math.floor(w.t / 60))
         nesParMinute[mn]++
-        if (en.cornu === true) (parMinute[mn]++), (cornu ??= { ...en, corps: { ...en.corps } })
+        if (en.sorte === 'cornu') (parMinute[mn]++), (cornu ??= { ...en, corps: { ...en.corps } })
       }
     w.ennemis = w.ennemis.filter((e) => e.id < 0)
     w.vaisseau = { ...w.vaisseau, x: 0, y: 0, vx: 0, vy: 0 }
@@ -3273,7 +3273,7 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   const w2 = nouveauMonde(cfg, 5)
   w2.invasion.prochainA = 1e9
   const petit: Ennemi = { id: 500, corps: { ...nouveauVaisseau(), x: 200, y: 0 }, pv: 120, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 } }
-  const gros: Ennemi = { ...petit, id: 501, corps: { ...nouveauVaisseau(), x: 200, y: 40 }, pv: 360, cornu: true }
+  const gros: Ennemi = { ...petit, id: 501, corps: { ...nouveauVaisseau(), x: 200, y: 40 }, pv: 360, sorte: 'cornu' }
   w2.ennemis.push(petit, gros)
   for (let i = 0; i < 60 * 4; i++) avancerLeMonde(cfg, w2, 1 / 60, { x: 0, y: 0 })
   const vPetit = Math.hypot(petit.corps.vx, petit.corps.vy)
@@ -3285,6 +3285,23 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   w3.ennemis[0].pv = -1
   for (let i = 0; i < 2; i++) avancerLeMonde({ ...cfg, armes: [{ id: 'canon', cadence: 0.01, degats: 10, portee: 1000, vitesse: 4000, vie: 1, dispersion: 0, guide: false, infaillible: true }] }, w3, 1 / 60, { x: 0, y: 0 })
   verifier(`le cornu : ${part(0) * 100}% la première minute, ${Math.round(part(2) * 100)}% la troisième, ${Math.round(part(5) * 100)}% la sixième ; ${cornu?.pv} points de vie (le petit 120), rayon ${rayonDe(cfg, cornu!)} (5), ${Math.round(vGros)} contre ${Math.round(vPetit)} de vitesse ; ${w3.pepites.length} pépites`, part(0) === 0 && part(2) > 0.03 && part(2) < 0.12 && part(5) > 0.14 && part(5) < 0.27 && cornu?.pv === 360 && rayonDe(cfg, cornu!) === 7.5 && vGros < vPetit * 0.92 && w3.pepites.length === 3)
+}
+
+// LE CUIRASSIER, L'INSECTE BLINDÉ (Keko, 21/11) : aucun avant trois minutes, puis une part qui monte jusqu'au vingt-
+// cinquième vers la huitième ; dix fois la vie, 2,2 fois la taille, plus lent encore ; il rend dix pépites
+{
+  const cfg = { ...VAISSEAU, coque: 1e9, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 0 }, ennemi: { ...VAISSEAU.ennemi, pv: 120, butinRendu: 1, apparait: 1e9, poussee: 90, vitesseMax: 40, rotation: 6, rayon: 5 } }
+  const p = (t: number): number => partDe(cfg, 'cuirassier', t)
+  const petit: Ennemi = { id: 500, corps: { ...nouveauVaisseau(), x: 200, y: 0 }, pv: 120, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 } }
+  const blinde: Ennemi = { ...petit, id: 501, corps: { ...nouveauVaisseau(), x: 200, y: 60 }, sorte: 'cuirassier' }
+  const g = gabaritDInsecte(cfg, blinde)
+  const w2 = nouveauMonde(cfg, 5)
+  w2.invasion.prochainA = 1e9
+  w2.ennemis.push(petit, blinde)
+  for (let i = 0; i < 60 * 4; i++) avancerLeMonde(cfg, w2, 1 / 60, { x: 0, y: 0 })
+  const vPetit = Math.hypot(petit.corps.vx, petit.corps.vy)
+  const vBlinde = Math.hypot(blinde.corps.vx, blinde.corps.vy)
+  verifier(`le cuirassier : ${p(150) * 100} % à 2 min 30, ${(p(330) * 100).toFixed(1)} % à 5 min 30, ${(p(600) * 100).toFixed(1)} % à 10 min ; ${120 * g.vie} points de vie, rayon ${rayonDe(cfg, blinde)}, ${Math.round(vBlinde)} contre ${Math.round(vPetit)} de vitesse, ${g.butin} pépites`, p(150) === 0 && Math.abs(p(330) - 0.02) < 1e-9 && p(600) === 0.04 && g.vie === 10 && Math.abs(rayonDe(cfg, blinde) - 11) < 1e-9 && vBlinde < vPetit * 0.75 && g.butin === 10)
 }
 
 // (TOUJOURS EN DERNIER : des blocs ajoutés après cette ligne échouaient sans faire échouer `npm run verif` — 17/11)

@@ -502,6 +502,55 @@ export function formesDuCornu(marche: number, morsure: number): Forme[] {
   f.push({ pts: [[4.6, -0.75], [7.4, -0.45], [8.6, -1.1], [8.2, -0.2], [8.6, 0.6], [7.4, 0.35], [4.6, 0.75]], mat: 'os', relief: 'cyl' })
   return f
 }
+/**
+ * LE CUIRASSIER, L'INSECTE BLINDÉ (Keko, 21/11 : « un troisième type d'ennemi blindé, plus gros et plus résistant encore
+ * que le scarabée » — « un cuirassier à plaques », choisi parmi trois) : UNE BÊTE TRAPUE TOUTE EN PLAQUES qui se
+ * chevauchent, comme un cloporte — sept plaques d'obsidienne en travers, chacune bordée d'une lèvre d'os, celles de
+ * devant par-dessus celles de derrière ; un éventail au bout ; de courtes pattes massives qui dépassent à peine ; une
+ * tête en dôme, deux petits yeux de bile ; DEUX GROSSES PINCES devant, qui s'ouvrent en chasse (`morsure`, de 0 à 1).
+ * Dans les mêmes unités que le petit : la page le peint 2,2 fois plus grand.
+ */
+export function formesDuCuirassier(marche: number, morsure: number): Forme[] {
+  const f: Forme[] = []
+  const demi = (x: number): number => 4.3 * Math.sqrt(Math.max(0, 1 - ((x + 1) / 8.2) ** 2))
+  // LES PATTES : cinq paires courtes, qui dépassent à peine des plaques
+  for (const sg of [-1, 1])
+    for (let k = 0; k < 5; k++) {
+      const x = 3 - k * 2
+      const pas = Math.sin(marche + k * 1.3 + (sg > 0 ? Math.PI : 0)) * 0.7
+      f.push({ pts: barre(x, sg * (demi(x) - 0.6), x + pas - 0.3, sg * (demi(x) + 1.3), 1.1), mat: 'mauve', relief: 'plat' })
+    }
+  // L'ÉVENTAIL du bout
+  f.push({ pts: [[-7.6, -2.2], [-9.4, -1.4], [-9.8, 0], [-9.4, 1.4], [-7.6, 2.2]], mat: 'obsidienne', relief: 'plat' })
+  // LES PLAQUES, de l'arrière vers l'avant : chacune une bande courbe d'obsidienne, sa lèvre d'os devant
+  for (let k = 0; k < 7; k++) {
+    const xc = -7 + k * 1.75
+    const w = demi(xc)
+    const n = 8
+    const avant: [number, number][] = []
+    const arriere: [number, number][] = []
+    for (let i = 0; i <= n; i++) {
+      const y = -w + (2 * w * i) / n
+      const bombe = 0.6 * (1 - (y / Math.max(0.1, w)) ** 2)
+      avant.push([xc + 1.05 + bombe, y])
+      arriere.push([xc - 1.05 + bombe, y])
+    }
+    f.push({ pts: [...avant, ...arriere.reverse()], mat: 'obsidienne', relief: 'cyl' })
+    const levre: [number, number][] = avant.map(([x, y]) => [x - 0.45, y])
+    f.push({ pts: [...avant, ...levre.reverse()], mat: 'os', relief: 'plat' })
+  }
+  // LES PINCES : un bras d'obsidienne, deux mors d'os
+  for (const sg of [-1, 1]) {
+    const ouvre = 0.35 + 1.1 * morsure
+    f.push({ pts: barre(4.6, sg * 1.8, 7, sg * 2.9, 1.5), mat: 'obsidienne', relief: 'plat' })
+    f.push({ pts: [[7, sg * 2.2], [9.6, sg * (2.4 - ouvre * 0.4)], [10.2, sg * (1.6 - ouvre * 0.6)], [7.4, sg * 3]], mat: 'os', relief: 'plat' })
+    f.push({ pts: [[7.1, sg * 3.6], [9.4, sg * (3.6 + ouvre * 0.3)], [9.9, sg * (3.1 + ouvre * 0.3)], [7.2, sg * 2.6]], mat: 'os', relief: 'plat' })
+  }
+  // LA TÊTE, LES YEUX
+  f.push({ pts: ovale(5.6, 0, 1.6, 2.4, 14), mat: 'obsidienne', relief: 'dome', dome: { x: 5.6, y: 0, rx: 1.6, ry: 2.4 } })
+  for (const sg of [-1, 1]) f.push({ pts: ovale(6.4, sg * 1.2, 0.5, 0.5, 8), mat: 'bile', relief: 'dome', dome: { x: 6.4, y: sg * 1.2, rx: 0.5, ry: 0.5 } })
+  return f
+}
 /** Un trait épais en polygone, de (x0, y0) à (x1, y1). */
 export function barre(x0: number, y0: number, x1: number, y1: number, e: number): [number, number][] {
   const l = Math.hypot(x1 - x0, y1 - y0) || 1

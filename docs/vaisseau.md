@@ -7263,3 +7263,19 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     Jugé sur une planche agrandie, puis dans le jeu. `&cornus=P` : cette part de cornus dès le départ.
   Testé : 0 % la première minute, 8 % la troisième, 17 % la sixième ; 360 points, rayon 7,5, 35 contre 40 de vitesse ;
   trois pépites.
+
+- **21/11, LE CUIRASSIER, l'insecte blindé** (Keko : « un troisième type d'ennemi blindé, plus gros et plus résistant
+  encore que le scarabée » — « un cuirassier à plaques », « ×10 de vie, ×2,2 de taille », « après trois minutes,
+  rare », choisis parmi trois chaque fois).
+  - LES SORTES D'INSECTES : le drapeau du cornu devient `Ennemi.sorte` (`'cornu' | 'cuirassier'`), chaque sorte son
+    gabarit dans `invasion` (vie, taille, vitesse, morsure, butin ; debut, montee, part), lu par `gabaritDInsecte`,
+    `rayonDe`, `partDe` ; à la naissance, un tirage les départage selon leurs parts du moment.
+  - LE CUIRASSIER (`invasion.cuirassier`) : 1 200 points de vie (le cornu 360, le petit 120), un rayon de 11 (5), 28 de
+    pointe (40), une morsure ×2,5, dix pépites ; aucun avant trois minutes, puis une part qui monte jusqu'au
+    vingt-cinquième vers la huitième. L'IMAGE (`formesDuCuirassier`, 2,2 fois plus grand) : une bête trapue toute en
+    plaques qui se chevauchent, comme un cloporte — sept plaques d'obsidienne bordées d'os, celles de devant sur celles
+    de derrière, un éventail au bout, cinq paires de courtes pattes massives, une tête en dôme, deux yeux de bile
+    (rouges en chasse), DEUX GROSSES PINCES d'os qui s'ouvrent en chasse. `&cuirassiers=P` en met cette part dès le
+    départ (comme `&cornus=P`).
+  Testé : 0 % à 2 min 30, 2 % à 5 min 30, 4 % à 10 min ; 1 200 points, rayon 11, 28 contre 40 de vitesse, dix pépites.
+  Jugé sur une planche agrandie, puis vu dans le jeu.

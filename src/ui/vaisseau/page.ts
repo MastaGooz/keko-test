@@ -12,7 +12,7 @@
  */
 import './vaisseau.css'
 import * as noyau from 'pixelfx'
-import { pointDeRetour, rayonDe, rocheDeLaTempete, vieMultipliee, degatsMultiplies, placeDeLEcharde, frontDeLaNova, ancreDansLeMonde, zoneDuDe, coupeDUnCube, formeDeLaCoupe, liesAuDrain, encaisser, type Ennemi, type Evenement, type Monde, impactDuRayon, asteroidesVisibles, avancerLeMonde, finDuTrio, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur, xpDuNiveau, ennemiLePlusProche, ennemiVerrouille, verrouiller, angleDuBalayage } from '../../logic/vaisseau/jeu.ts'
+import { type SorteDInsecte, pointDeRetour, rayonDe, rocheDeLaTempete, vieMultipliee, degatsMultiplies, placeDeLEcharde, frontDeLaNova, ancreDansLeMonde, zoneDuDe, coupeDUnCube, formeDeLaCoupe, liesAuDrain, encaisser, type Ennemi, type Evenement, type Monde, impactDuRayon, asteroidesVisibles, avancerLeMonde, finDuTrio, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur, xpDuNiveau, ennemiLePlusProche, ennemiVerrouille, verrouiller, angleDuBalayage } from '../../logic/vaisseau/jeu.ts'
 import { ETALONS as ETALONS_DU_BANC, acheter, ajouterLesPiecesDEssai, capacite, poidsTotal, POIDS_SERIE, configDuHangar, demonter, demonterA, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, montantCourt, monteeA, monter, monterA, peutAcheter, peutMonter, perdreLesMontees, estDeBase, exemplaires, libres, pieceDe, piecesDe, placeLourde, possede, aimantMonte, radarMonte, type Jauge, type Piece, type Sorte } from '../../logic/vaisseau/hangar.ts'
 import { drawWord, spell } from 'pixelfx/fx/ui/_lib'
 import { firePuff, hotFirst, smokePuff } from 'pixelfx/fx/fire/_lib'
@@ -22,7 +22,7 @@ import { textWidth } from 'pixelfx'
 import { pixelsDeLIcone } from './icones-armes.ts'
 import { HAUT_ACCENTS } from './police.ts'
 import { RACINES_DU_KRAKEN, POINTE_DU_CROCHET, contourDuCrochet, cordesDuKraken } from './rendu-vaisseau.ts'
-import { formesDeLInsecte, formesDuCornu, boucheMontee, gabaritDe, tailleDe, placeDOutil, queueDe, tuyeresOmni, formesDuSocleDeTourelle, formesDeLaTeteDeTourelle, formesDeLaCapsule, formesDuCristalPose, formesDeLaScie, formesDeLaBalise, formesDuBecDeBalise, canonDeLaForeuse, formesDeLAimant, formesDuChassis, formesDeLaForeuse, formesDeLArme, formesDuPropulseur, formesDuRadar, formesDuVaisseau, formesDuVer, CRISTAL_DU_PRISME, sommetsDUnHypercube, ARETES_DE_L_HYPERCUBE, rampeDeLaMatiere, LIVREES, COULEURS_DE_JOUEUR, ovale, peindreDansUneCase, peindreFormes, rampesDeLaLivree, tonsDeLaLivree, tonsDeLaMatiere, ANCRES_DU_KRAKEN, type Habit } from './rendu-vaisseau.ts'
+import { formesDeLInsecte, formesDuCornu, formesDuCuirassier, boucheMontee, gabaritDe, tailleDe, placeDOutil, queueDe, tuyeresOmni, formesDuSocleDeTourelle, formesDeLaTeteDeTourelle, formesDeLaCapsule, formesDuCristalPose, formesDeLaScie, formesDeLaBalise, formesDuBecDeBalise, canonDeLaForeuse, formesDeLAimant, formesDuChassis, formesDeLaForeuse, formesDeLArme, formesDuPropulseur, formesDuRadar, formesDuVaisseau, formesDuVer, CRISTAL_DU_PRISME, sommetsDUnHypercube, ARETES_DE_L_HYPERCUBE, rampeDeLaMatiere, LIVREES, COULEURS_DE_JOUEUR, ovale, peindreDansUneCase, peindreFormes, rampesDeLaLivree, tonsDeLaLivree, tonsDeLaMatiere, ANCRES_DU_KRAKEN, type Habit } from './rendu-vaisseau.ts'
 import { peauDe, peauxDe, rampesDeLaPeau, tonsDeLaPeau, type Peau } from './peaux.ts'
 import { boiteDe } from './rendu-vaisseau.ts'
 import { dessinerLAireDuHangar, dessinerLeSolDuHangar, dessinerLesLampesDuHangar } from './hangars.ts'
@@ -991,7 +991,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // (L'ÉCHELLE DES DÉGÂTS DU VORTEX : les armes et la collision contre les insectes, fois `ECHELLE_DU_VORTEX` — voir
       // `INSECTE`)
       if (VORTEX) conf = { ...conf, armes: conf.armes.map((a) => degatsMultiplies(a, ECHELLE_DU_VORTEX)), collision: { ...conf.collision, degatsEnnemi: conf.collision.degatsEnnemi * ECHELLE_DU_VORTEX } }
-      if (VORTEX) conf = { ...conf, champ: { ...conf.champ, densite: 0 }, station: { ...conf.station, portee: -1 }, invasion: { ...conf.invasion, active: true, sansPortail: true /* (PLUS DE PORTAIL — Keko, 20/11 : voir `sansPortail`) */, continu: { ...conf.invasion.continu, actif: true, ...(FLOT > 0 ? { debut: FLOT, max: FLOT } : {}) }, ...(parametres.has('cornus') ? { cornu: { ...conf.invasion.cornu, debut: 0, montee: 1e-6, part: Number(parametres.get('cornus')) || 0.5 } } : {}) /* (`&cornus=P` : cette part de cornus dès le départ) */ /* (ET PLUS DE VAGUES : voir `continu`) */, viePortail: Math.max(1, Number(parametres.get('portail')) || conf.invasion.viePortail) /* (`&portail=N` : la vie du portail au départ, pour voir la fin d'un lien) */ }, ennemi: { ...conf.ennemi, ...INSECTE }, bouclier: { ...conf.bouclier, points: Math.max(conf.bouclier.points, BOUCLIER_DU_VORTEX) }, passifs: { ...conf.passifs, critique: conf.passifs.critique + CRITIQUE_DU_VORTEX, critiqueFacteur: FACTEUR_CRITIQUE_DU_VORTEX } }
+      if (VORTEX) conf = { ...conf, champ: { ...conf.champ, densite: 0 }, station: { ...conf.station, portee: -1 }, invasion: { ...conf.invasion, active: true, sansPortail: true /* (PLUS DE PORTAIL — Keko, 20/11 : voir `sansPortail`) */, continu: { ...conf.invasion.continu, actif: true, ...(FLOT > 0 ? { debut: FLOT, max: FLOT } : {}) }, ...(parametres.has('cornus') ? { cornu: { ...conf.invasion.cornu, debut: 0, montee: 1e-6, part: Number(parametres.get('cornus')) || 0.5 } } : {}), ...(parametres.has('cuirassiers') ? { cuirassier: { ...conf.invasion.cuirassier, debut: 0, montee: 1e-6, part: Number(parametres.get('cuirassiers')) || 0.3 } } : {}) /* (`&cornus=P`, `&cuirassiers=P` : cette part de cornus, de cuirassiers, dès le départ) */ /* (ET PLUS DE VAGUES : voir `continu`) */, viePortail: Math.max(1, Number(parametres.get('portail')) || conf.invasion.viePortail) /* (`&portail=N` : la vie du portail au départ, pour voir la fin d'un lien) */ }, ennemi: { ...conf.ennemi, ...INSECTE }, bouclier: { ...conf.bouclier, points: Math.max(conf.bouclier.points, BOUCLIER_DU_VORTEX) }, passifs: { ...conf.passifs, critique: conf.passifs.critique + CRITIQUE_DU_VORTEX, critiqueFacteur: FACTEUR_CRITIQUE_DU_VORTEX } }
       // LE RIVAL EST UN CUIRASSÉ LOURDEMENT ARMÉ (Keko, 14/11, à l'essai : « pour voir si je peux arriver à le tuer avec mon
       // chasseur ») : gros, lent, qui vire mal, très solide, et qui tire trois fois plus souvent, de plus loin ; il ne
       // fuit plus. `&rival=serie` rend le petit rival d'avant. *Chiffres au jugé.*
@@ -8301,7 +8301,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * (`deforme` : SON CORPS EST DÉFORMÉ ET PRIS DE LUMIÈRE VIOLETTE — le portail l'avale : étiré de `long` le long de
    * l'axe `axe` (vers le centre du vortex), resserré de `large` en travers, ses teintes passées au violet, `part` de 0 à 1.)
    */
-  function dessinerUnInsecte(p: Peintre, x: number, y: number, cap: number, phase: number, blanchi: boolean, aggro: boolean, deforme?: { axe: number; long: number; large: number; part: number }, cornu = false): void {
+  function dessinerUnInsecte(p: Peintre, x: number, y: number, cap: number, phase: number, blanchi: boolean, aggro: boolean, deforme?: { axe: number; long: number; large: number; part: number }, sorte?: SorteDInsecte): void {
+    const taille = sorte === undefined ? 1 : CONF.invasion[sorte].taille
     const marche = t * (aggro ? 22 : 13) + phase
     const morsure = t * 18 + phase
     // (UNE IMAGE PAR POSE — Keko, 21/11, les FPS dézoomé au plus : MESURÉ, cent vingt insectes peints polygone par polygone
@@ -8314,17 +8315,17 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const ic = q(cap, POSES_DU_CAP)
       const im = q(marche, POSES_DE_LA_MARCHE)
       const io = aggro ? q(morsure, POSES_DE_LA_MORSURE) : 0
-      const cle = (((ic * POSES_DE_LA_MARCHE + im) * POSES_DE_LA_MORSURE + io) * 2 + (aggro ? 1 : 0)) * 2 + (cornu ? 1 : 0)
+      const cle = (((ic * POSES_DE_LA_MARCHE + im) * POSES_DE_LA_MORSURE + io) * 2 + (aggro ? 1 : 0)) * 3 + (sorte === undefined ? 0 : sorte === 'cornu' ? 1 : 2)
       let im_ = imagesDesInsectes.get(cle)
       if (im_ === undefined) {
-        im_ = imageDe(cornu ? TAILLE_DU_CORNU : TAILLE_DE_L_INSECTE, (p2, c) => peindreLInsecte(p2, c, c, (ic / POSES_DU_CAP) * tour, (im / POSES_DE_LA_MARCHE) * tour, (io / POSES_DE_LA_MORSURE) * tour, false, aggro, cornu))
+        im_ = imageDe(Math.ceil(TAILLE_DE_L_INSECTE * taille) + 2, (p2, c) => peindreLInsecte(p2, c, c, (ic / POSES_DU_CAP) * tour, (im / POSES_DE_LA_MARCHE) * tour, (io / POSES_DE_LA_MORSURE) * tour, false, aggro, sorte))
         imagesDesInsectes.set(cle, im_)
       }
       poserLImage(p, im_, x, y)
-      if (aggro) p.glow(x, y, cornu ? 13 : 9, N.hex('#ff3a4a'), 0.25 + 0.1 * Math.sin(t * 9 + phase))
+      if (aggro) p.glow(x, y, 9 * taille ** 0.8, N.hex('#ff3a4a'), 0.25 + 0.1 * Math.sin(t * 9 + phase))
       return
     }
-    if (deforme === undefined) peindreLInsecte(p, x, y, cap, marche, morsure, blanchi, aggro, cornu)
+    if (deforme === undefined) peindreLInsecte(p, x, y, cap, marche, morsure, blanchi, aggro, sorte)
     else peindreUnInsecte(p, x, y, cap, marche, morsure, blanchi, aggro, deforme)
     if (aggro && !blanchi) p.glow(x, y, 9, N.hex('#ff3a4a'), 0.25 + 0.1 * Math.sin(t * 9 + phase))
   }
@@ -8333,16 +8334,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * vaisseaux, sous la lumière du vol ; EN CHASSE, ses yeux passent au rouge (`matieres` ; sa chitine reste violette : au vortex il chasse toujours) ; blanc
    * sous un coup. (Pris par le portail, il est encore peint à l'ancienne : voir `peindreUnInsecte`.)
    */
-  function peindreLInsecte(p: Peintre, x: number, y: number, cap: number, marche: number, morsure: number, blanchi: boolean, aggro: boolean, cornu = false): void {
+  function peindreLInsecte(p: Peintre, x: number, y: number, cap: number, marche: number, morsure: number, blanchi: boolean, aggro: boolean, sorte?: SorteDInsecte): void {
     const ouvre = aggro ? 0.55 + 0.45 * Math.sin(morsure) : 0.15
-    // (LE CORNU, une fois et demie plus grand — voir `formesDuCornu`, `invasion.cornu`)
-    peindreFormes(p, cornu ? formesDuCornu(marche, ouvre) : formesDeLInsecte(marche, ouvre), x, y, cornu ? CONF.invasion.cornu.taille : 1, { cap, lumiere: LUMIERE_DU_VOL, reflet: REFLET_DU_VOL, blanc: blanchi ? 1 : 0, matieres: aggro ? { bile: 'laser' } : undefined })
+    // (LE CORNU, une fois et demie plus grand ; LE CUIRASSIER, 2,2 fois — voir `formesDuCornu`, `formesDuCuirassier`)
+    const formes = sorte === 'cuirassier' ? formesDuCuirassier(marche, ouvre) : sorte === 'cornu' ? formesDuCornu(marche, ouvre) : formesDeLInsecte(marche, ouvre)
+    peindreFormes(p, formes, x, y, sorte === undefined ? 1 : CONF.invasion[sorte].taille, { cap, lumiere: LUMIERE_DU_VOL, reflet: REFLET_DU_VOL, blanc: blanchi ? 1 : 0, matieres: aggro ? { bile: 'laser' } : undefined })
   }
   const POSES_DU_CAP = 48
   const POSES_DE_LA_MARCHE = 8
   const POSES_DE_LA_MORSURE = 6
   const TAILLE_DE_L_INSECTE = 26
-  const TAILLE_DU_CORNU = 40
   const imagesDesInsectes = new Map<number, ImageGardee>()
   /** L'insecte peint pour de bon : `marche` et `morsure`, les phases de ses pattes et de ses mandibules (voir `dessinerUnInsecte`). */
   function peindreUnInsecte(p: Peintre, x: number, y: number, cap: number, marche: number, morsure: number, blanchi: boolean, aggro: boolean, deforme?: { axe: number; long: number; large: number; part: number }): void {
@@ -11968,7 +11969,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           if (e.pv < ro.pvMax) dessinerUneJauge(p, sx, sy + ro.rayon + 4, Math.round(ro.rayon * 1.6), e.pv / ro.pvMax, ROUGE[4], ROUGE[5], blanchi)
           continue
         }
-        dessinerUnInsecte(p, sx, sy, b.cap, e.id * 1.7, blanchi, e.fait === 'aggro', undefined, e.cornu === true)
+        dessinerUnInsecte(p, sx, sy, b.cap, e.id * 1.7, blanchi, e.fait === 'aggro', undefined, e.sorte)
         // IL EST GELÉ (le givre) : une gangue de glace bleue sur lui, un liseré clair, des éclats de givre qui scintillent
         if ((e.geleA ?? -1) > m.t) {
           p.circle(sx, sy, 5, GLACE[4], 0.32)
@@ -15453,7 +15454,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         if (e.corps.poussee > 0.05 && R.next() < (VORTEX ? 0.12 : 0.5)) {
           const b = e.corps
           const vitesse = VORTEX ? 10 + 14 * b.poussee : 30 + 40 * b.poussee
-          const recul = VORTEX ? 10.5 * (e.cornu === true ? CONF.invasion.cornu.taille : 1) : 8
+          const recul = VORTEX ? 10.5 * (e.sorte === undefined ? 1 : CONF.invasion[e.sorte].taille) : 8
           braises.ajouter('braise', b.x - Math.cos(b.cap) * recul + R.range(-1, 1), b.y - Math.sin(b.cap) * recul + R.range(-1, 1), b.vx * 0.3 - Math.cos(b.cap) * vitesse + R.range(-3, 3), b.vy * 0.3 - Math.sin(b.cap) * vitesse + R.range(-3, 3), VORTEX ? R.range(0.12, 0.22) : R.range(0.25, 0.5), VORTEX ? BRAISES_VERTES : 0, 1, 2)
         }
       }
