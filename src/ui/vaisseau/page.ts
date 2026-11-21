@@ -44,7 +44,7 @@ import { RASSEMBLE as TELEPORTE_A } from '../pixelfx/fx/keko/teleportation.js'
 import * as MATERIALISATION from '../pixelfx/fx/keko/materialisation.js'
 import * as QUETE_TERMINEE from '../pixelfx/fx/keko/quete-terminee.js'
 import * as VORTEX_FX from '../pixelfx/fx/keko/vortex.js'
-import { apresUnChoix, DUREE_DU_CHOIX, ouvrirLeChoix, proposer, reserveApresLeDelai, type Choix, type Talent } from '../../logic/vaisseau/talents.ts'
+import { apresUnChoix, DUREE_DU_CHOIX, ouvrirLeChoix, proposer, reserveApresLeDelai, type Choix, type FamilleDeTalent, type Talent } from '../../logic/vaisseau/talents.ts'
 import { APPARAIT as ARRIVE_A, REFROIDI as REFROIDI_A } from '../pixelfx/fx/keko/materialisation.js'
 import { Grains } from '../pixelfx/fx/keko/_espace.js'
 
@@ -1754,6 +1754,136 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * réserve pour le joueur qui n'a pas choisi, et il aura 2 choix la prochaine fois ») : un voile, le niveau, le temps
    * qui reste, et trois cartes — une tape en prend une.
    */
+  /** La carte d'un talent : sa taille, fixe, et l'écart entre deux. */
+  const CARTE_DE_TALENT = { w: 84, h: 116, ecart: 6 }
+  /** Le temps de l'éclat d'une carte prise, avant que le talent s'applique et que le jeu reprenne. */
+  const DUREE_DE_LA_PRISE = 0.42
+  /** La carte prise, en train d'éclater (voir `dessinerLeChoixDeTalent`). */
+  let talentPris: { i: number; ta: Talent; t0: number } | null = null
+  /** LES FAMILLES DE TALENT : leur nom, et les cinq tons de leur métal, du plus sombre au plus clair. */
+  const FAMILLES_DE_TALENT: Record<FamilleDeTalent, { nom: string; c: number[] }> = {
+    arme: { nom: 'Arme', c: ['#3a0f0a', '#8a2a14', '#d8542a', '#ff9a5a', '#ffe0c0'].map((c) => N.hex(c)) },
+    defense: { nom: 'Défense', c: ['#0c1a3a', '#1f4a8a', '#3a86d8', '#7cc4ff', '#e0f4ff'].map((c) => N.hex(c)) },
+    vol: { nom: 'Vol', c: ['#0a2a1e', '#16704c', '#2fbf7a', '#7cf0b0', '#e0ffec'].map((c) => N.hex(c)) },
+    butin: { nom: 'Butin', c: ['#3a2406', '#8a5a10', '#e0a020', '#ffd75a', '#fff6c8'].map((c) => N.hex(c)) },
+  }
+  /** Deux couleurs mêlées (t de 0 à 1), opaques. */
+  const meler = (a: number, b: number, t: number): number => {
+    const c = (k: number): number => Math.round(((a >>> k) & 255) + ((((b >>> k) & 255) - ((a >>> k) & 255)) * t))
+    return ((255 << 24) | (c(16) << 16) | (c(8) << 8) | c(0)) >>> 0
+  }
+  /**
+   * UNE CARTE DE TALENT, « CARTE DE RARETÉ » (Keko, 21/11 : « retravailler les boutons : même taille chacun, taille fixe
+   * toujours, style, juice, texture ; je veux un truc vraiment beau » — les cartes de talent, « cartes de rareté »,
+   * choisis parmi trois) : un cadre de métal à la teinte de sa FAMILLE (arme, défense, vol, butin), biseauté, aux coins
+   * ouvragés ; un fond sombre teinté, plus clair en haut, grenu, des rayons de sa teinte qui tournent derrière un
+   * MÉDAILLON où est son icône ; son nom, un filet orné, ce qu'il fait ; sa famille en pied ; un REFLET qui la traverse de
+   * temps en temps. `tient` : la part de l'appui (-1 : pas tenue) — elle s'emplit de lumière par le bas, une barre
+   * court ; `blanc` : son éclat blanc (0 à 1) ; `eteinte` : elle tombe, assombrie.
+   */
+  function dessinerUneCarteDeTalent(p: Peintre, ta: Talent, x: number, y: number, i: number, o: { survole: boolean; tient: number; blanc: number; eteinte: boolean }): void {
+    const { w: CW, h: CH } = CARTE_DE_TALENT
+    const F = FAMILLES_DE_TALENT[ta.famille].c
+    const ENCRE = N.hex('#07050d')
+    const NUIT_C = N.hex('#0d0b16')
+    const cx = x + CW / 2
+    const cy = y + 24
+    const vif = o.survole || o.tient >= 0
+    // l'ombre portée
+    p.rect(x + 2, y + 3, CW, CH, N.hex('#020208'), 0.55)
+    // LE FOND : sombre, teinté de la famille, plus clair en haut
+    for (let j = 0; j < CH; j++) p.rect(x, y + j, CW, 1, meler(meler(NUIT_C, F[0], 0.9), NUIT_C, Math.min(1, j / (CH * 0.9))))
+    // (le grain : des points plus clairs et plus sombres, tirés de la carte)
+    for (let k = 0; k < 70; k++) {
+      const gx = x + 3 + Math.floor(tire(i + 1, k, 81) * (CW - 6))
+      const gy = y + 3 + Math.floor(tire(i + 1, k, 82) * (CH - 6))
+      p.px(gx, gy, k % 3 === 0 ? meler(F[0], F[1], 0.6) : ENCRE)
+    }
+    // LES RAYONS derrière le médaillon : de la lumière de la famille qui tourne doucement
+    for (let j = 2; j < 64; j++)
+      for (let xx = 2; xx < CW - 2; xx++) {
+        const dx = x + xx - cx
+        const dy = y + j - cy
+        const d = Math.hypot(dx, dy)
+        if (d < 12 || d > 46) continue
+        const an = Math.atan2(dy, dx)
+        if (Math.sin(an * 8 + tReel * 0.6) > 0.35) p.light(x + xx, y + j, F[2], 0.11 * (1 - d / 46) * (vif ? 1.6 : 1))
+      }
+    // LE CADRE : un cerne d'encre, deux pixels de métal biseauté (clair en haut et à gauche), un filet sombre dedans
+    const haut = vif ? F[4] : F[3]
+    p.rect(x - 1, y - 1, CW + 2, 1, ENCRE)
+    p.rect(x - 1, y + CH, CW + 2, 1, ENCRE)
+    p.rect(x - 1, y, 1, CH, ENCRE)
+    p.rect(x + CW, y, 1, CH, ENCRE)
+    p.rect(x, y, CW, 2, haut)
+    p.rect(x, y, 2, CH, meler(haut, F[2], 0.4))
+    p.rect(x, y + CH - 2, CW, 2, F[1])
+    p.rect(x + CW - 2, y + 2, 2, CH - 2, F[1])
+    p.rect(x + 2, y + 2, CW - 4, 1, F[0])
+    p.rect(x + 2, y + CH - 3, CW - 4, 1, F[0])
+    p.rect(x + 2, y + 2, 1, CH - 4, F[0])
+    p.rect(x + CW - 3, y + 2, 1, CH - 4, F[0])
+    // les coins ouvragés : un losange de métal clair, cerné, une perle blanche au milieu
+    for (const [kx, ky] of [[x + 1, y + 1], [x + CW - 2, y + 1], [x + 1, y + CH - 2], [x + CW - 2, y + CH - 2]]) {
+      p.poly([[kx + 0.5, ky - 3], [kx + 4, ky + 0.5], [kx + 0.5, ky + 4], [kx - 3, ky + 0.5]], ENCRE)
+      p.poly([[kx + 0.5, ky - 2], [kx + 3, ky + 0.5], [kx + 0.5, ky + 3], [kx - 2, ky + 0.5]], F[3])
+      p.px(kx, ky, F[4])
+    }
+    // LE MÉDAILLON : un anneau de métal, son creux sombre où luit la famille, l'icône
+    p.circle(cx, cy, 14, ENCRE)
+    p.circle(cx, cy, 13, F[2])
+    p.arc(cx, cy, 13, 2, Math.PI, Math.PI * 1.75, haut)
+    p.arc(cx, cy, 13, 2, 0, Math.PI * 0.75, F[1])
+    p.circle(cx, cy, 10.5, ENCRE)
+    p.circle(cx, cy, 10, NUIT_C)
+    p.disc(cx, cy, 10, F[1], (d) => 0.7 * (1 - d))
+    dessinerLeGlyphe(p, ta.icone, Math.round(cx), cy, [F[1], F[3], F[4]])
+    // le nom, sur une ou deux lignes
+    const replie = (t: string, l: number, f: Police): string[] => replier(t.replace(/ %/g, '\u00a0%'), l, f).map((li) => li.replace(/\u00a0/g, ' '))
+    const nom = replie(ta.nom, CW - 14, GRAS).slice(0, 2)
+    let ly = y + 44
+    for (const li of nom) {
+      ecrire(p, li, cx, ly, F[4], { align: 'center', police: GRAS, ombre: ENCRE })
+      ly += 9
+    }
+    // un filet orné : deux traits, un losange au milieu
+    ly += 2
+    p.rect(x + 12, ly, CW / 2 - 16, 1, F[2])
+    p.rect(cx + 4, ly, CW / 2 - 16, 1, F[2])
+    p.poly([[cx + 0.5, ly - 2.5], [cx + 3, ly + 0.5], [cx + 0.5, ly + 3.5], [cx - 2, ly + 0.5]], F[3])
+    ly += 6
+    // ce qu'il fait
+    for (const li of replie(ta.dit, CW - 14, TEXTE).slice(0, 4)) {
+      ecrire(p, li, cx, ly, COQUE[5], { align: 'center' })
+      ly += 8
+    }
+    // sa famille, en pied, entre deux perles
+    const fam = FAMILLES_DE_TALENT[ta.famille].nom
+    const lf = largeurDe(fam)
+    ecrire(p, fam, cx, y + CH - 13, F[3], { align: 'center' })
+    p.px(Math.round(cx - lf / 2 - 5), y + CH - 9, F[2])
+    p.px(Math.round(cx + lf / 2 + 4), y + CH - 9, F[2])
+    // LE REFLET : une bande de lumière en biais qui la traverse, à contretemps des autres cartes
+    const u = ((tReel * 0.45 + i * 0.37) % 1.5) / 1.5
+    const bande = -30 + u * (CW + CH * 0.5 + 60)
+    if (u < 0.75)
+      for (let j = 2; j < CH - 2; j++) {
+        const x0 = Math.round(bande - j * 0.5)
+        for (let xx = Math.max(2, x0); xx < Math.min(CW - 2, x0 + 5); xx++) p.light(x + xx, y + j, N.WHITE, xx - x0 < 2 ? 0.16 : 0.08)
+      }
+    // TENUE : elle s'emplit de lumière par le bas, une barre court au pied
+    if (o.tient >= 0) {
+      const hm = Math.round((CH - 6) * o.tient)
+      for (let yy = y + CH - 3 - hm; yy < y + CH - 3; yy++) for (let xx = x + 3; xx < x + CW - 3; xx++) p.light(xx, yy, F[2], 0.2)
+      p.rect(x + 3, y + CH - 4, Math.round((CW - 6) * o.tient), 1, F[4])
+      p.glow(Math.round(cx), y + CH - 3 - hm, Math.round(CW / 2), F[3], 0.3 * o.tient)
+    }
+    if (vif) p.glow(Math.round(cx), Math.round(y + CH / 2), 46, F[2], 0.12)
+    // L'ÉCLAT BLANC (son arrivée, sa prise)
+    if (o.blanc > 0) for (let j = 0; j < CH; j++) for (let xx = 0; xx < CW; xx++) p.light(x + xx, y + j, N.WHITE, 0.55 * o.blanc)
+    // (assombrie sans trame : un voile translucide, pas un damier sur le texte)
+    if (o.eteinte) for (let j = -1; j <= CH; j++) for (let xx = -1; xx <= CW; xx++) p.blend(x + xx, y + j, NUIT_C, 0.55)
+  }
   /** Combien de secondes tenir une carte de talent pour la prendre (voir `tenue`). *De moi.* */
   const TENIR_LE_TALENT = 0.5
   function dessinerLeChoixDeTalent(p: Peintre): void {
@@ -1763,10 +1893,26 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     p.rect(0, 0, W, H, NUIT, 0.72 * u0)
     zones = []
     const cartes = proposer(graineDuVol, m.invasion.niveau, ch.rang, talentsHorsDeLaRace(modeleDeVaisseau(flotte.actif).race))
-    const cote = W >= 300
-    const cw = cote ? Math.min(100, Math.floor((W - 16 - 8) / 3)) : W - 24
-    const hc = cote ? 78 : 44
-    const hautTotal = 40 + (cote ? hc : cartes.length * (hc + 4))
+    // (LA PRISE MENÉE À SON TERME : le talent s'applique quand l'éclat est fini — voir `talentPris`)
+    const pris = talentPris
+    if (pris !== null && tReel - pris.t0 >= DUREE_DE_LA_PRISE) {
+      const ta = pris.ta
+      talentPris = null
+      CONF = ta.appliquer(CONF)
+      // (un point de blindage ou de bouclier gagné est donné tout de suite)
+      if (ta.id === 'blindage') m.coque = Math.min(CONF.coque, m.coque + CONF.uniteDeVie)
+      if (ta.id === 'bouclier') m.bouclier = Math.min(CONF.bouclier.points, m.bouclier + CONF.uniteDeVie)
+      jouer('equipe')
+      choixDeTalent = apresUnChoix(ch)
+      talentFinA = tReel + DUREE_DU_CHOIX
+      talentA = tReel
+      zone(0, 0, W, H, () => {}, null)
+      return
+    }
+    // LES CARTES ONT UNE TAILLE FIXE (Keko, 21/11 : « même taille chacun, taille fixe toujours » — le texte dépassait) :
+    // trois de front quand elles tiennent (couché, PC), deux puis une debout
+    const enLigne = W >= 3 * CARTE_DE_TALENT.w + 2 * CARTE_DE_TALENT.ecart + 8
+    const hautTotal = 40 + (enLigne ? CARTE_DE_TALENT.h : 2 * CARTE_DE_TALENT.h + CARTE_DE_TALENT.ecart)
     const y0 = Math.max(4, Math.round((H - hautTotal) / 2)) + Math.round((1 - u0) * 8)
     motEnRelief(p, `Niveau ${m.invasion.niveau}`, W / 2, y0, true, TITRE)
     const reste = Math.max(0, talentFinA - tReel)
@@ -1778,49 +1924,59 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     p.rect(xb - 1, y0 + 30, lb + 2, 4, MATIERES.encre.contour)
     p.rect(xb, y0 + 31, Math.round(lb * (reste / DUREE_DU_CHOIX)), 2, reste < 5 ? ROUGE[4] : PEPITE[2])
     ecrire(p, String(Math.ceil(reste)), xb + lb + 4, y0 + 28, reste < 5 ? ROUGE[5] : COQUE[5], { police: GRAS })
-    const prendre = (ta: Talent) => (): void => {
-      CONF = ta.appliquer(CONF)
-      // (un point de blindage ou de bouclier gagné est donné tout de suite)
-      if (ta.id === 'blindage') m.coque = Math.min(CONF.coque, m.coque + CONF.uniteDeVie)
-      if (ta.id === 'bouclier') m.bouclier = Math.min(CONF.bouclier.points, m.bouclier + CONF.uniteDeVie)
-      jouer('equipe')
-      secouer(1)
-      choixDeTalent = apresUnChoix(ch)
-      talentFinA = tReel + DUREE_DU_CHOIX
-      talentA = tReel
-    }
+    const { w: CW, h: CH, ecart: GAP } = CARTE_DE_TALENT
     cartes.forEach((ta, i) => {
-      const age = tReel - talentA - 0.06 * i
+      const age = tReel - talentA - 0.08 * i
       if (age < 0) return
-      const x = cote ? Math.round(W / 2 - (3 * cw + 8) / 2) + i * (cw + 4) : 12
-      const y = y0 + 40 + (cote ? 0 : i * (hc + 4)) + Math.round((1 - sortie(age / 0.2)) * 6)
-      const e0 = etatDuBouton(x, y, cw, hc)
-      // (TENUE, la carte est enfoncée et S'EMPLIT D'OR par le bas, une barre court sous elle — voir `tenue`)
-      const tient = partTenue(x, y)
-      const e = tient >= 0 ? { ...e0, dy: 1, enfonce: true } : e0
-      if (!e.enfonce) ombrePortee(p, x, y, cw, hc)
-      plaque(p, x, y + e.dy, cw, hc, 'encre', { bord: e.survole || tient >= 0 ? PEPITE[2] : PEPITE[1], enfonce: e.enfonce, flash: e.flash || age < 0.07 })
-      if (tient >= 0) {
-        const hm = Math.round((hc - 4) * tient)
-        // (de la lumière, pas un voile tramé : le texte reste net dessous)
-        for (let yy = y + e.dy + hc - 2 - hm; yy < y + e.dy + hc - 2; yy++) for (let xx = x + 2; xx < x + cw - 2; xx++) p.light(xx, yy, PEPITE[2], 0.22)
-        p.rect(x + 2, y + e.dy + hc - 3, Math.round((cw - 4) * tient), 2, PEPITE[3])
-        p.glow(Math.round(x + cw / 2), y + e.dy + hc - 2 - hm, Math.round(cw / 3), PEPITE[2], 0.25 * tient)
+      const x = enLigne ? Math.round(W / 2 - (3 * CW + 2 * GAP) / 2) + i * (CW + GAP) : i < 2 ? Math.round(W / 2 - (2 * CW + GAP) / 2) + i * (CW + GAP) : Math.round(W / 2 - CW / 2)
+      const y = y0 + 40 + (enLigne || i < 2 ? 0 : CH + GAP)
+      // L'ARRIVÉE : elle monte sur un ressort, un éclat blanc au départ
+      const ue = Math.min(1, age / 0.3)
+      let dy = Math.round((1 - (1 - Math.exp(-6 * ue) * Math.cos(9 * ue))) * 28)
+      let blanc = age < 0.05 ? 1 : 0
+      let tombe = false
+      if (pris !== null) {
+        const ap = tReel - pris.t0
+        // (PRISE : elle se soulève et flashe ; les autres tombent)
+        if (pris.i === i) {
+          dy -= Math.round(5 * sortie(ap / 0.12))
+          blanc = Math.max(0, 1 - ap / 0.12)
+        } else {
+          dy += Math.round(ap * ap * 900)
+          tombe = true
+        }
       }
-      const T: [number, number, number] = [N.hex('#a8650f'), PEPITE[2], N.hex('#fff2a8')]
-      if (cote) {
-        plaque(p, x + cw / 2 - 11, y + 5 + e.dy, 22, 20, 'creux')
-        dessinerLeGlyphe(p, ta.icone, Math.round(x + cw / 2), y + 15 + e.dy, T)
-        replier(ta.nom, cw - 8, GRAS).slice(0, 2).forEach((li, k) => ecrire(p, li, x + cw / 2, y + 28 + k * 9 + e.dy, PEPITE[3], { align: 'center', police: GRAS }))
-        replier(ta.dit, cw - 8).slice(0, 4).forEach((li, k) => ecrire(p, li, x + cw / 2, y + 48 + k * 8 + e.dy, COQUE[5], { align: 'center' }))
-      } else {
-        plaque(p, x + 4, y + 4 + e.dy, 22, hc - 8, 'creux')
-        dessinerLeGlyphe(p, ta.icone, x + 15, y + Math.round(hc / 2) + e.dy, T)
-        ecrire(p, ta.nom, x + 31, y + 5 + e.dy, PEPITE[3], { police: GRAS })
-        replier(ta.dit, cw - 36).slice(0, 3).forEach((li, k) => ecrire(p, li, x + 31, y + 16 + k * 9 + e.dy, COQUE[5]))
+      if (y + dy > H) return
+      const tient = pris === null ? partTenue(x, y) : -1
+      const survole = pris === null && survol !== null && survol.x >= x && survol.x < x + CW && survol.y >= y && survol.y < y + CH
+      if (tient >= 0) dy += 1
+      else if (survole) dy -= 2
+      // (tenue, elle tremble de plus en plus près du but)
+      const tremble = tient > 0.5 ? Math.round(Math.sin(tReel * 75 + i) * (tient - 0.5) * 3) : 0
+      dessinerUneCarteDeTalent(p, ta, x + tremble, y + dy, i, { survole, tient, blanc, eteinte: tombe })
+      if (pris === null) {
+        zone(x, y, CW, CH, () => {
+          if (talentPris === null) talentPris = { i, ta, t0: tReel }
+        }, 'achat')
+        zones[zones.length - 1].tenir = TENIR_LE_TALENT
       }
-      zone(x, y, cw, hc, prendre(ta), 'achat')
-      zones[zones.length - 1].tenir = TENIR_LE_TALENT
+      // L'ÉCLAT DE LA PRISE : un anneau, une gerbe d'étincelles aux teintes de la famille, qui partent du médaillon
+      if (pris !== null && pris.i === i) {
+        const ap = (tReel - pris.t0) / DUREE_DE_LA_PRISE
+        const F = FAMILLES_DE_TALENT[ta.famille].c
+        const cx = x + CW / 2
+        const cy = y + dy + 24
+        p.ring(cx, cy, 12 + 70 * sortie(ap), 2, F[3], Math.max(0, 1 - ap))
+        p.glow(cx, cy, 40, F[3], 0.6 * (1 - ap))
+        for (let k = 0; k < 28; k++) {
+          const an = (k / 28) * Math.PI * 2 + tire(k, 71) * 0.5
+          const d = 10 + (40 + 50 * tire(k, 72)) * sortie(ap * 1.2)
+          if (ap > 0.85 + 0.15 * tire(k, 73)) continue
+          const sx = Math.round(cx + Math.cos(an) * d)
+          const sy = Math.round(cy + Math.sin(an) * d * 0.8 + 30 * ap * ap)
+          p.rect(sx, sy, k % 3 === 0 ? 2 : 1, k % 3 === 0 ? 2 : 1, k % 2 === 0 ? F[4] : F[3])
+        }
+      }
     })
     // (rien d'autre ne répond pendant le choix)
     zone(0, 0, W, H, () => {}, null)

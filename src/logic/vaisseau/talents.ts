@@ -8,8 +8,14 @@
  */
 import { hache, type ConfigVaisseau } from './jeu.ts'
 
+/**
+ * LA FAMILLE D'UN TALENT (Keko, 21/11 : des cartes « de rareté », le cadre teinté selon le type de talent) : ce sur quoi
+ * il joue — les armes, la défense, le vol, le butin.
+ */
+export type FamilleDeTalent = 'arme' | 'defense' | 'vol' | 'butin'
 export type Talent = {
   id: string
+  famille: FamilleDeTalent
   nom: string
   /** Ce qu'il change, dit au joueur. */
   dit: string
@@ -19,14 +25,14 @@ export type Talent = {
 }
 
 export const TALENTS: Talent[] = [
-  { id: 'cadence', nom: 'Chargeurs rapides', dit: 'Les armes tirent 20 % plus souvent.', icone: 'cadence', appliquer: (c) => ({ ...c, armes: c.armes.map((a) => ({ ...a, cadence: a.cadence / 1.2 })) }) },
-  { id: 'degats', nom: 'Obus perforants', dit: 'Les armes font 25 % de dégâts en plus.', icone: 'critique', appliquer: (c) => ({ ...c, armes: c.armes.map((a) => ({ ...a, degats: Math.round(a.degats * 1.25) })) }) }, // (un entier — Keko, 20/11 : « pas de chiffres à virgule »)
-  { id: 'portee', nom: 'Longue vue', dit: 'Les armes portent 20 % plus loin.', icone: 'exploration', appliquer: (c) => ({ ...c, armes: c.armes.map((a) => ({ ...a, portee: a.portee * 1.2, vie: a.vie * 1.2 })) }) },
-  { id: 'moteur', nom: 'Moteur poussé', dit: 'Le vaisseau va 10 % plus vite et accélère 15 % plus fort.', icone: 'vitesse', appliquer: (c) => ({ ...c, vitesseMax: c.vitesseMax * 1.1, poussee: c.poussee * 1.15 }) },
-  { id: 'blindage', nom: 'Blindage renforcé', dit: 'Un point de blindage de plus.', icone: 'blindage', appliquer: (c) => ({ ...c, coque: c.coque + c.uniteDeVie }) },
-  { id: 'bouclier', nom: 'Bouclier étendu', dit: 'Un point de bouclier de plus.', icone: 'bouclier', appliquer: (c) => ({ ...c, bouclier: { ...c.bouclier, points: c.bouclier.points + c.uniteDeVie } }) },
-  { id: 'recharge', nom: 'Bouclier vif', dit: 'Le bouclier se recharge plus tôt et plus vite.', icone: 'acceleration', appliquer: (c) => ({ ...c, bouclier: { ...c.bouclier, delai: c.bouclier.delai * 0.75, regain: c.bouclier.regain * 1.3 } }) },
-  { id: 'aimant', nom: 'Champ étendu', dit: 'Les pépites sont attirées de 40 % plus loin.', icone: 'aimant', appliquer: (c) => ({ ...c, foreuse: { ...c.foreuse, aimant: c.foreuse.aimant * 1.4 } }) },
+  { id: 'cadence', famille: 'arme', nom: 'Chargeurs rapides', dit: 'Les armes tirent 20 % plus souvent.', icone: 'cadence', appliquer: (c) => ({ ...c, armes: c.armes.map((a) => ({ ...a, cadence: a.cadence / 1.2 })) }) },
+  { id: 'degats', famille: 'arme', nom: 'Obus perforants', dit: 'Les armes font 25 % de dégâts en plus.', icone: 'critique', appliquer: (c) => ({ ...c, armes: c.armes.map((a) => ({ ...a, degats: Math.round(a.degats * 1.25) })) }) }, // (un entier — Keko, 20/11 : « pas de chiffres à virgule »)
+  { id: 'portee', famille: 'arme', nom: 'Longue vue', dit: 'Les armes portent 20 % plus loin.', icone: 'exploration', appliquer: (c) => ({ ...c, armes: c.armes.map((a) => ({ ...a, portee: a.portee * 1.2, vie: a.vie * 1.2 })) }) },
+  { id: 'moteur', famille: 'vol', nom: 'Moteur poussé', dit: 'Le vaisseau va 10 % plus vite et accélère 15 % plus fort.', icone: 'vitesse', appliquer: (c) => ({ ...c, vitesseMax: c.vitesseMax * 1.1, poussee: c.poussee * 1.15 }) },
+  { id: 'blindage', famille: 'defense', nom: 'Blindage renforcé', dit: 'Un point de blindage de plus.', icone: 'blindage', appliquer: (c) => ({ ...c, coque: c.coque + c.uniteDeVie }) },
+  { id: 'bouclier', famille: 'defense', nom: 'Bouclier étendu', dit: 'Un point de bouclier de plus.', icone: 'bouclier', appliquer: (c) => ({ ...c, bouclier: { ...c.bouclier, points: c.bouclier.points + c.uniteDeVie } }) },
+  { id: 'recharge', famille: 'defense', nom: 'Bouclier vif', dit: 'Le bouclier se recharge plus tôt et plus vite.', icone: 'acceleration', appliquer: (c) => ({ ...c, bouclier: { ...c.bouclier, delai: c.bouclier.delai * 0.75, regain: c.bouclier.regain * 1.3 } }) },
+  { id: 'aimant', famille: 'butin', nom: 'Champ étendu', dit: 'Les pépites sont attirées de 40 % plus loin.', icone: 'aimant', appliquer: (c) => ({ ...c, foreuse: { ...c.foreuse, aimant: c.foreuse.aimant * 1.4 } }) },
 ]
 
 export const talentDe = (id: string): Talent | undefined => TALENTS.find((x) => x.id === id)

@@ -7457,3 +7457,23 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   moi) ; tenue, la carte s'enfonce, S'EMPLIT D'OR par le bas (de la lumière, pas un voile tramé : le texte reste net) et
   une barre court sous elle. La consigne dit « Maintenez un talent pour le choisir ». Vu à la capture : tenue 0,28 s
   puis lâchée, rien n'est pris ; tenue 0,75 s, le talent est pris, la partie reprend.
+
+- **21/11, LES CARTES DE TALENT.** Keko : « retravailler les boutons — certains ont le texte qui dépasse : même taille
+  chacun, taille fixe toujours, style, juice, texture ; je veux un truc vraiment beau » — « les cartes de talent »,
+  « cartes de rareté », choisis parmi trois chaque fois.
+  - LA RÈGLE : chaque talent a sa FAMILLE (`Talent.famille` : arme — cadence, dégâts, portée —, défense — blindage,
+    bouclier, recharge —, vol — moteur —, butin — aimant).
+  - LA CARTE (`dessinerUneCarteDeTalent`) : 84 × 116, TOUJOURS (`CARTE_DE_TALENT`) ; trois de front quand elles
+    tiennent (couché, PC), deux puis une debout. Un cadre de métal aux cinq tons de sa famille (`FAMILLES_DE_TALENT` :
+    braise pour l'arme, acier bleu pour la défense, vert pour le vol, or pour le butin), biseauté, cerné, un filet
+    sombre dedans, quatre coins ouvragés (un losange et sa perle) ; un fond sombre teinté, plus clair en haut, grenu ;
+    des RAYONS de lumière de sa teinte qui tournent derrière un MÉDAILLON (anneau de métal, creux qui luit, l'icône à
+    ses tons) ; le nom en gras sur deux lignes au plus, un filet orné, ce qu'il fait sur quatre lignes au plus (« 25 % »
+    ne se coupe plus), sa famille en pied entre deux perles ; un REFLET en biais qui la traverse, à contretemps des
+    autres. Le texte se replie à 14 pixels de moins que la carte : il ne touche plus le cadre.
+  - LE JUICE : elles ARRIVENT l'une après l'autre sur un ressort, dans un éclat blanc ; SURVOLÉE (souris), elle se
+    soulève et luit ; TENUE, elle s'enfonce, s'emplit de lumière par le bas, une barre court, et TREMBLE de plus en plus
+    passé la moitié ; PRISE, elle se soulève dans un éclat blanc, un anneau et vingt-huit étincelles de sa famille
+    partent du médaillon, les deux autres TOMBENT, assombries (un voile, pas un damier) ; le talent s'applique quand
+    l'éclat est fini (`DUREE_DE_LA_PRISE`, 0,42 s), et le jeu reprend.
+  - Vu à la capture : couché, debout, PC ; un appui court relâché ne prend rien ; la prise et sa gerbe.
