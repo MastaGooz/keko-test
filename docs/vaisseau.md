@@ -7437,3 +7437,11 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   - Keko : « trop de gros astéroïdes dès le départ ». Les roches courantes tirent leur rayon en u^k, k passant de 2,6
     au départ à 1,3 en sept minutes (`tailles.kDebut`) : une roche de plus de 24, 15 % au départ, 27 % ensuite (c'était
     27 % dès le départ ; mesuré sur 4 000 tirages). *Les chiffres sont de moi.*
+
+- **21/11, LE RENDEMENT PAR PV.** Mesuré d'abord, en pépites pour 100 PV : moucheron 1,67, petit 0,83, cornu 0,83,
+  cuirassier 0,83, roches 1,67 (une pépite par 60 PV, de toutes tailles). Keko : « pas terrible que le moucheron ait un
+  rendement plus haut que les autres ennemis ; plus l'ennemi est gros, plus son rendement devrait être important, sans
+  pour autant un écart énorme ; et les astéroïdes plus rentables que les ennemis par PV » — « monter les gros », choisi
+  parmi deux (l'autre baissait le menu fretin, et les niveaux du début avec) : le moucheron 0,25 pépite (une fois sur
+  quatre) → 0,83 ; le petit 1,2 (`butinRendu` du vortex : une pépite, et une de plus une fois sur cinq) → 1 ; le cornu
+  4 → 1,11 ; le cuirassier 14 → 1,17 ; les roches inchangées → 1,67. Testé : cent moucherons abattus, 22 pépites.

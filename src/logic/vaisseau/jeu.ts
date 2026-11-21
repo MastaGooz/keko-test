@@ -268,19 +268,19 @@ export const VAISSEAU = {
      * `vitesse` fois sa pointe et sa poussée, `morsure` fois sa morsure, `butin` pépites. Sa part dans le flot : rien avant
      * `debut` secondes de vol, puis elle monte en ligne droite jusqu'à `part` en `montee` secondes.
      */
-    cornu: { vie: 3, taille: 1.5, vitesse: 35 / 40, morsure: 1.5, butin: 3, debut: 60, montee: 240, part: 0.2 },
+    cornu: { vie: 3, taille: 1.5, vitesse: 35 / 40, morsure: 1.5, butin: 4, debut: 60, montee: 240, part: 0.2 },
     /**
      * LE MOUCHERON, LE MENU FRETIN (Keko, 21/11 : « des ennemis encore plus petits que les plus petits, vraiment des trash ;
      * en revanche un peu plus rapides » — un moucheron ; « ¼ de vie, ×0,6 de taille, vitesse 52 » ; « dès le début, en
      * nombre » ; choisis parmi trois) : `butin` peut être fractionnaire — une pépite une fois sur deux.
      */
-    moucheron: { vie: 0.25, taille: 0.6, vitesse: 52 / 40, morsure: 0.5, butin: 0.5, debut: 0, montee: 1e-6, part: 1 / 3 },
+    moucheron: { vie: 0.25, taille: 0.6, vitesse: 52 / 40, morsure: 0.5, butin: 0.25, debut: 0, montee: 1e-6, part: 1 / 3 },
     /**
      * LE CUIRASSIER, L'INSECTE BLINDÉ (Keko, 21/11 : « un troisième type d'ennemi blindé, plus gros et plus résistant encore
      * que le scarabée » — « un cuirassier à plaques », « ×10 de vie, ×2,2 de taille », « après trois minutes, rare » ;
      * choisis parmi trois) : les mêmes champs que le cornu.
      */
-    cuirassier: { vie: 10, taille: 2.2, vitesse: 28 / 40, morsure: 2.5, butin: 10, debut: 180, montee: 300, part: 0.04 },
+    cuirassier: { vie: 10, taille: 2.2, vitesse: 28 / 40, morsure: 2.5, butin: 14, debut: 180, montee: 300, part: 0.04 },
     /**
      * LES TROIS PÉPITES (Keko, 21/11 : « différentes pépites, une petite, une moyenne et une grosse, afin que les ennemis
      * lootent des ensembles un peu plus variés » — « 1 / 3 / 10 », « chaque ennemi a son butin propre ») : leurs valeurs
@@ -289,6 +289,11 @@ export const VAISSEAU = {
      * roche qui dérive, selon sa taille — et ce qu'elle rend, on le voit serti dans sa pierre.
      */
     gemmes: [10, 3, 1],
+    // (LE RENDEMENT MONTE AVEC LA TAILLE — Keko, 21/11 : « pas terrible que le moucheron ait un rendement plus haut que
+    // les autres ennemis ; plus l'ennemi est gros, plus son rendement devrait être important, sans écart énorme ; et les
+    // astéroïdes plus rentables que les ennemis par PV » — « monter les gros », choisi parmi deux : en pépites pour 100
+    // PV, le moucheron 0,83 (butin 0,25 : une fois sur quatre), le petit 1 (1,2 — `butinRendu` du vortex), le cornu 1,11
+    // (4), le cuirassier 1,17 (14), les roches 1,67 (`derive.pepitesParPv`) ; c'était 1,67 / 0,83 / 0,83 / 0,83 / 1,67)
     /**
      * L'AIMANT (Keko, 21/11 : « que les ennemis aient une faible chance de looter un petit symbole de la couleur des
      * pépites, un symbole d'aimant ; quand on le prend, ça attire toutes les pépites de la map » — « 1 sur 300 ») : la

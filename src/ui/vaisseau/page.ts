@@ -1391,7 +1391,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    */
   const ECHELLE_DE_LA_VIE = 50
   /** L'INSECTE de l'invasion, en chiffres de rival (de moi, à rejuger) : deux obus de canon l'abattent ; il marche à 40, vire vite ; il lâche UNE PÉPITE (de l'expérience) et ne tire pas — il mord. Ses points de vie à l'échelle du vortex. */
-  const INSECTE = { pv: 12 * ECHELLE_DU_VORTEX, poussee: 90, vitesseMax: 40, rotation: 6, rayon: 5, butinRendu: 1, armes: [] as never[] }
+  const INSECTE = { pv: 12 * ECHELLE_DU_VORTEX, poussee: 90, vitesseMax: 40, rotation: 6, rayon: 5, butinRendu: 1.2 /* (une pépite, et une de plus une fois sur cinq — voir `invasion.gemmes`) */, armes: [] as never[] }
   let vortexFx: Instance | null = null
   /** (« Tir face » est gardé, le bouton qui le comparait à un tir à 360° est retiré — Keko, 15/11 ; `&tir=360` l'essaie encore.) */
   const tirA360 = parametres.get('tir') === '360'
