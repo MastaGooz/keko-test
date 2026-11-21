@@ -1894,10 +1894,18 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     p.rect(x + 12, ly, CW / 2 - 16, 1, F[2])
     p.rect(cx + 4, ly, CW / 2 - 16, 1, F[2])
     p.poly([[cx + 0.5, ly - 2.5], [cx + 3, ly + 0.5], [cx + 0.5, ly + 3.5], [cx - 2, ly + 0.5]], F[3])
-    // LE BONUS, en grand : la lettre grasse au double (celle des titres faisait d'un 8 un 0)
-    ly += 5
-    p.text(`+${Math.round(ta.bonus * 100)} %`, Math.round(cx), ly - decalage(GRAS) * 2, F[4], { font: GRAS, scale: 2, align: 'center', shadow: ENCRE })
-    ly += 18
+    // LE BONUS : la lettre grasse EN RELIEF, aux tons de la rareté — un dégradé, un dessus éclairé, un dessous ombré, un
+    // contour — et un éclat qui la traverse de temps en temps (Keko, 21/11 : au double et à plat, « trop gros et sans
+    // texture » ; la lettre des titres, et celle des en-têtes, faisaient d'un 8 un 0)
+    ly += 6
+    {
+      const mot = spell(`+${Math.round(ta.bonus * 100)} %`, GRAS) as { letters: { g: unknown; x: number }[]; w: number }
+      const x0 = Math.round(cx - mot.w / 2)
+      const items = mot.letters.filter((L) => L.g).map((L) => ({ g: L.g, x: x0 + L.x, y: ly - decalage(GRAS), sx: 1, sy: 1 }))
+      const eclat = ((tReel * 0.5 + i * 0.29) % 2.2) * 40 - 12
+      drawWord(p, items, { fill: [F[3], F[4], N.WHITE], edge: N.WHITE, under: F[2], outline: ENCRE, shadow: 0, ...(eclat < mot.w + 12 ? { shine: x0 + eclat } : {}) })
+    }
+    ly += 14
     // ce qu'il change — LA CATÉGORIE NE S'ÉCRIT PAS, L'ICÔNE SUFFIT ; une carte d'arme nomme son arme (Keko, 21/11 : « ne
     // marque pas textuellement le type, l'icône suffit ; par contre pour l'arme précise : cadence de "nom de l'arme" »)
     const nomDeLArme = ta.cible.sorte === 'arme' ? (pieceDe(armeDuVortex())?.nom ?? '') : ''

@@ -7507,3 +7507,7 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   - Keko : « ne marque pas textuellement le type, l'icône suffit ; par contre pour l'arme précise : cadence de "nom de
     l'arme" ». La ligne de la cible (le nom de la faction ou de l'arme) est retirée ; une carte d'arme dit « +12 % de
     cadence de Canon laser » (« d' » devant une voyelle), sur trois lignes au plus. Vu à la capture.
+  - Keko : « le chiffre (%) est aussi trop gros et sans texture ». Le bonus est en LETTRE GRASSE À SA TAILLE, EN RELIEF
+    (`drawWord`, comme les titres : un dégradé, un dessus éclairé, un dessous ombré, un contour) aux tons de la rareté,
+    un éclat qui le traverse de temps en temps. Les lettres des titres et des en-têtes ont été essayées : leur « 8 » se
+    lit « 0 ». Vu à la capture.
