@@ -3286,7 +3286,7 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   w3.ennemis.push({ ...gros, id: 600, corps: { ...nouveauVaisseau(), x: 300, y: 300 }, pv: 1 })
   w3.ennemis[0].pv = -1
   for (let i = 0; i < 2; i++) avancerLeMonde({ ...cfg, armes: [{ id: 'canon', cadence: 0.01, degats: 10, portee: 1000, vitesse: 4000, vie: 1, dispersion: 0, guide: false, infaillible: true }] }, w3, 1 / 60, { x: 0, y: 0 })
-  verifier(`le cornu : ${part(0) * 100}% la première minute, ${Math.round(part(2) * 100)}% la troisième, ${Math.round(part(5) * 100)}% la sixième ; ${cornu?.pv} points de vie (le petit 120), rayon ${rayonDe(cfg, cornu!)} (5), ${Math.round(vGros)} contre ${Math.round(vPetit)} de vitesse ; ${valeurDes(w3.pepites)} points de pépites`, part(0) === 0 && part(2) > 0.03 && part(2) < 0.12 && part(5) > 0.14 && part(5) < 0.27 && cornu?.pv === 360 && rayonDe(cfg, cornu!) === 7.5 && vGros < vPetit * 0.92 && valeurDes(w3.pepites) === 4)
+  verifier(`le cornu : ${part(0) * 100}% la première minute, ${Math.round(part(2) * 100)}% la troisième, ${Math.round(part(5) * 100)}% la sixième ; ${cornu?.pv} points de vie (le petit 120), rayon ${rayonDe(cfg, cornu!)} (5), ${Math.round(vGros)} contre ${Math.round(vPetit)} de vitesse ; ${valeurDes(w3.pepites)} points de pépites (5,33 : 5 ou 6)`, part(0) === 0 && part(2) > 0.03 && part(2) < 0.12 && part(5) > 0.14 && part(5) < 0.27 && cornu?.pv === 480 && rayonDe(cfg, cornu!) === 7.5 && vGros < vPetit * 0.92 && valeurDes(w3.pepites) >= 5 && valeurDes(w3.pepites) <= 6)
 }
 
 // LE CUIRASSIER, L'INSECTE BLINDÉ (Keko, 21/11) : aucun avant trois minutes, puis une part qui monte jusqu'au vingt-
@@ -3303,7 +3303,7 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   for (let i = 0; i < 60 * 4; i++) avancerLeMonde(cfg, w2, 1 / 60, { x: 0, y: 0 })
   const vPetit = Math.hypot(petit.corps.vx, petit.corps.vy)
   const vBlinde = Math.hypot(blinde.corps.vx, blinde.corps.vy)
-  verifier(`le cuirassier : ${p(150) * 100} % à 2 min 30, ${(p(330) * 100).toFixed(1)} % à 5 min 30, ${(p(600) * 100).toFixed(1)} % à 10 min ; ${120 * g.vie} points de vie, rayon ${rayonDe(cfg, blinde)}, ${Math.round(vBlinde)} contre ${Math.round(vPetit)} de vitesse, ${g.butin} pépites`, p(150) === 0 && Math.abs(p(330) - 0.02) < 1e-9 && p(600) === 0.04 && g.vie === 10 && Math.abs(rayonDe(cfg, blinde) - 11) < 1e-9 && vBlinde < vPetit * 0.75 && g.butin === 14)
+  verifier(`le cuirassier : ${p(150) * 100} % à 2 min 30, ${(p(330) * 100).toFixed(1)} % à 5 min 30, ${(p(600) * 100).toFixed(1)} % à 10 min ; ${120 * g.vie} points de vie, rayon ${rayonDe(cfg, blinde)}, ${Math.round(vBlinde)} contre ${Math.round(vPetit)} de vitesse, ${g.butin} pépites`, p(150) === 0 && Math.abs(p(330) - 0.02) < 1e-9 && p(600) === 0.04 && g.vie === 15 && Math.abs(rayonDe(cfg, blinde) - 11) < 1e-9 && vBlinde < vPetit * 0.75 && g.butin === 21)
 }
 
 // LE MOUCHERON, LE MENU FRETIN (Keko, 21/11) : un insecte sur trois dès le départ ; un quart de la vie, 0,6 fois la

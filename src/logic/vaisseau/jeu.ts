@@ -268,7 +268,7 @@ export const VAISSEAU = {
      * `vitesse` fois sa pointe et sa poussée, `morsure` fois sa morsure, `butin` pépites. Sa part dans le flot : rien avant
      * `debut` secondes de vol, puis elle monte en ligne droite jusqu'à `part` en `montee` secondes.
      */
-    cornu: { vie: 3, taille: 1.5, vitesse: 35 / 40, morsure: 1.5, butin: 4, debut: 60, montee: 240, part: 0.2 },
+    cornu: { vie: 4, taille: 1.5, vitesse: 35 / 40, morsure: 1.5, butin: 16 / 3, debut: 60, montee: 240, part: 0.2 },
     /**
      * LE MOUCHERON, LE MENU FRETIN (Keko, 21/11 : « des ennemis encore plus petits que les plus petits, vraiment des trash ;
      * en revanche un peu plus rapides » — un moucheron ; « ¼ de vie, ×0,6 de taille, vitesse 52 » ; « dès le début, en
@@ -280,7 +280,7 @@ export const VAISSEAU = {
      * que le scarabée » — « un cuirassier à plaques », « ×10 de vie, ×2,2 de taille », « après trois minutes, rare » ;
      * choisis parmi trois) : les mêmes champs que le cornu.
      */
-    cuirassier: { vie: 10, taille: 2.2, vitesse: 28 / 40, morsure: 2.5, butin: 14, debut: 180, montee: 300, part: 0.04 },
+    cuirassier: { vie: 15, taille: 2.2, vitesse: 28 / 40, morsure: 2.5, butin: 21, debut: 180, montee: 300, part: 0.04 },
     /**
      * LES TROIS PÉPITES (Keko, 21/11 : « différentes pépites, une petite, une moyenne et une grosse, afin que les ennemis
      * lootent des ensembles un peu plus variés » — « 1 / 3 / 10 », « chaque ennemi a son butin propre ») : leurs valeurs
@@ -294,6 +294,10 @@ export const VAISSEAU = {
     // astéroïdes plus rentables que les ennemis par PV » — « monter les gros », choisi parmi deux : en pépites pour 100
     // PV, le moucheron 0,83 (butin 0,25 : une fois sur quatre), le petit 1 (1,2 — `butinRendu` du vortex), le cornu 1,11
     // (4), le cuirassier 1,17 (14), les roches 1,67 (`derive.pepitesParPv`) ; c'était 1,67 / 0,83 / 0,83 / 0,83 / 1,67)
+    // (… ET LES GROS PLUS DURS, LEUR BUTIN AVEC — Keko, 21/11 : « augmenter les PV des mobs plus forts que le ×1 et
+    // augmenter les pépites en conséquence » — « cornu ×4, cuirassier ×15 », choisi parmi trois : le cornu 480 PV et 5,33
+    // pépites (une moyenne et deux petites, une troisième une fois sur trois), le cuirassier 1 800 PV et 21 ; leurs
+    // rendements ne bougent pas — c'était ×3 et 4, ×10 et 14)
     /**
      * L'AIMANT (Keko, 21/11 : « que les ennemis aient une faible chance de looter un petit symbole de la couleur des
      * pépites, un symbole d'aimant ; quand on le prend, ça attire toutes les pépites de la map » — « 1 sur 300 ») : la

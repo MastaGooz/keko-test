@@ -7445,3 +7445,7 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   parmi deux (l'autre baissait le menu fretin, et les niveaux du début avec) : le moucheron 0,25 pépite (une fois sur
   quatre) → 0,83 ; le petit 1,2 (`butinRendu` du vortex : une pépite, et une de plus une fois sur cinq) → 1 ; le cornu
   4 → 1,11 ; le cuirassier 14 → 1,17 ; les roches inchangées → 1,67. Testé : cent moucherons abattus, 22 pépites.
+  - Keko : « augmenter les PV des mobs plus forts que le ×1 et augmenter les pépites en conséquence » — « cornu ×4,
+    cuirassier ×15 », choisi parmi trois : le cornu 480 PV (360) et 5,33 pépites (4), le cuirassier 1 800 PV (1 200) et
+    21 pépites (14) ; leurs rendements ne bougent pas (1,11 et 1,17 pour 100 PV). Les barres de vie suivent (elles se
+    comptent sur la vie de la sorte). Testé.
