@@ -4861,6 +4861,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // qui est équipé à celui qu'on est en train de regarder » ; comme les jauges des pièces)
     const pilote = mo.id === flotte.actif || cache ? null : jaugesDuModele(modeleDeVaisseau(flotte.actif))
     const dit = avecDit ? (cache ? ['???'] : replier(mo.dit, W - 22).slice(0, 3)) : []
+    // (CE QUI DÉFEND SA RACE, au panneau des vaisseaux — Keko, 20/11 : « une petite ligne qui précise le fonctionnement de
+    // chaque race » : sous l'identité et les jauges, à la couleur de la race, sur une hauteur fixe — `lignesDeLaDefense`)
+    const defense = avecNom && avecDit ? replier(RACES.find((r) => r.id === mo.race)?.defense ?? '', W - 22) : []
+    const hr = defense.length > 0 ? lignesDeLaDefense() * INTERLIGNE + 4 : 0
     // (sans le nom — au hangar, il est juste au-dessus —, les jauges montent et la fiche raccourcit)
     // (plus de « Classe légère / lourde » sous le nom — Keko, 15/11 : les jauges remontent sous lui)
     // LA FICHE EN DEUX ÉTAGES (Keko, 17/11 : « l'emplacement du symbole fait encore un côté portrait rectangulaire, c'est
@@ -4869,7 +4873,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // droite les JAUGES ; puis ce qu'il est
     const yj = avecNom ? 21 : 6
     const hh = avecNom ? Math.max(yj + hauteurDeLIdentite(mo.race) + 3, yj + jauges.length * 10 + 2) : yj + jauges.length * 10 + 2
-    const hd = hh + (dit.length > 0 ? dit.length * INTERLIGNE + 6 : 0)
+    const hd = hh + hr + (dit.length > 0 ? dit.length * INTERLIGNE + 6 : 0)
     // (sans le nom, sans l'image non plus — Keko, 15/11 : « on a déjà l'image juste à côté » : les jauges prennent toute la largeur)
     // (la colonne de l'identité tient le plus long nom de race sur une ligne)
     const gx = avecNom ? Math.max(62, 8 + 2 + Math.max(...RACES.map((r) => largeurDe(lignesDuNomDeRace(r.id)[0]))) + 2 + 5) : 10
@@ -4888,9 +4892,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const k = sortie((t - depuis - 0.05 - i * 0.045) / 0.32)
       dessinerUneJaugeDePiece(p, y + yj + i * 10, { ...j, valeur: j.cellules ? j.valeur : j.valeur * k }, repereDe(pilote, j), false, gx, k, colonne)
     })
-    if (dit.length > 0) {
+    if (defense.length > 0) {
       p.rect(10, y + hh - 1, W - 20, 1, MATIERES.encre.ombre)
-      dit.forEach((li, i) => ecrire(p, li, W / 2, y + hh + 3 + i * INTERLIGNE, COQUE[4], { align: 'center' }))
+      const y0 = y + hh + 3 + Math.round(((lignesDeLaDefense() - defense.length) * INTERLIGNE) / 2)
+      defense.forEach((li, i) => ecrire(p, li, W / 2, y0 + i * INTERLIGNE, TEINTES_DES_RACES[mo.race][2], { align: 'center' }))
+    }
+    if (dit.length > 0) {
+      p.rect(10, y + hh + hr - 1, W - 20, 1, MATIERES.encre.ombre)
+      dit.forEach((li, i) => ecrire(p, li, W / 2, y + hh + hr + 3 + i * INTERLIGNE, COQUE[4], { align: 'center' }))
     }
     return hd
   }
@@ -4928,7 +4937,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   // (LA GRILLE A UNE HAUTEUR FIXE — Keko, 17/11 : « la hauteur du grid varie en fonction du texte en dessous ; je voudrais
   // que le grid ait une hauteur fixe, la description limitée à trois lignes » : la fiche réserve toujours trois lignes)
   // (la plus haute des fiches : cinq jauges, ou l'identité d'une race au nom sur deux lignes — voir `dessinerLaFicheDuVaisseau`)
-  const hauteurDeLaFicheDuVaisseau = (_mo: ReturnType<typeof modeleDeVaisseau>): number => 21 + Math.max(5 * 10 + 2, ...RACES.map((r) => hauteurDeLIdentite(r.id) + 3)) + 3 * INTERLIGNE + 6
+  // (… ET LA LIGNE DE SA RACE, sur la hauteur de la plus longue)
+  const lignesDeLaDefense = (): number => Math.max(...RACES.map((r) => replier(r.defense, W - 22).length))
+  const hauteurDeLaFicheDuVaisseau = (_mo: ReturnType<typeof modeleDeVaisseau>): number => 21 + Math.max(5 * 10 + 2, ...RACES.map((r) => hauteurDeLIdentite(r.id) + 3)) + lignesDeLaDefense() * INTERLIGNE + 4 + 3 * INTERLIGNE + 6
   function dessinerLesVaisseauxEnListe(p: Peintre, voile: boolean, partie: 'tout' | 'liste' | 'fiche'): void {
     const u0 = sortie((t - vaisseauxA) / 0.18)
     p.rect(0, HAUT_BARRE, W, H - HAUT_BARRE, NUIT, voile || partie !== 'tout' ? 1 : 0)

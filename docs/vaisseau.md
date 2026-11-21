@@ -6975,3 +6975,12 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   - LE MANCHE NE PARAÎT PLUS SUR UNE TAPE : il pilote dès l'appui, mais ne se dessine qu'après `TENUE_DU_MANCHE`
     (0,35 s, la durée d'une tape de verrou) ou dès que le doigt a glissé plus loin qu'une tape (14 px) ; paru, il
     reste. Comme le manche du regard depuis le 13/11. Vu à la capture : tenu 100 ms, rien ; tenu 600 ms, le manche.
+
+- **20/11, une ligne par race au panneau des vaisseaux** (Keko : « une ligne sur le fonctionnement des différentes
+  races ; pour l'Empire, « Des plaques de blindage protègent des dégâts subis » ; pour les Xénoïdes, les points de vie
+  se régénèrent sur la durée ; pour le bouclier, un bouclier absorbe des dégâts ; pour le déphasage, une chance
+  d'annuler les dégâts subis » — « je ne sais pas trop où »). Ses mots, dans `RACES.defense` (`flotte.ts`). La place
+  est de moi : dans la fiche, SOUS L'IDENTITÉ ET LES JAUGES, entre deux filets, avant la description du vaisseau, à
+  la couleur claire de la race ; sur la hauteur de la plus longue (deux lignes, `lignesDeLaDefense`), la grille
+  rétrécit d'autant pour garder sa hauteur fixe. Un vaisseau verrouillé la montre aussi : sa race est déjà dite par
+  le médaillon. Pas au hangar (la fiche sans nom). Vu à la capture, debout et couché.
