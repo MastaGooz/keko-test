@@ -1898,14 +1898,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     ly += 5
     p.text(`+${Math.round(ta.bonus * 100)} %`, Math.round(cx), ly - decalage(GRAS) * 2, F[4], { font: GRAS, scale: 2, align: 'center', shadow: ENCRE })
     ly += 18
-    // ce qu'il change, puis sa cible
-    for (const li of replier(st.effet, CW - 12).slice(0, 2)) {
+    // ce qu'il change — LA CATÉGORIE NE S'ÉCRIT PAS, L'ICÔNE SUFFIT ; une carte d'arme nomme son arme (Keko, 21/11 : « ne
+    // marque pas textuellement le type, l'icône suffit ; par contre pour l'arme précise : cadence de "nom de l'arme" »)
+    const nomDeLArme = ta.cible.sorte === 'arme' ? (pieceDe(armeDuVortex())?.nom ?? '') : ''
+    const effet = nomDeLArme === '' ? st.effet : `${st.effet} ${/^[aeiouyàâéèêëîïôœûüh]/i.test(nomDeLArme) ? 'd’' : 'de '}${nomDeLArme}`
+    for (const li of replier(effet, CW - 12).slice(0, 3)) {
       ecrire(p, li, cx, ly, COQUE[5], { align: 'center' })
       ly += 8
     }
-    const cible = ta.cible.sorte === 'arme' ? (pieceDe(armeDuVortex())?.nom ?? '') : (RACES.find((r) => r.id === (ta.cible as { race: Race }).race)?.nom ?? '')
-    const lc = replier(cible, CW - 12)
-    if (lc.length === 1) ecrire(p, lc[0], cx, y + CH - 24, F[2], { align: 'center' })
     // sa rareté, en pied, entre deux perles
     const nr = rareteDe(ta.rarete).nom
     const lr = largeurDe(nr)

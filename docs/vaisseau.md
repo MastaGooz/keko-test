@@ -7504,3 +7504,6 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   - `&choix` ouvre un choix une seconde et demie après le décollage ; `&rarete=R` (commune, peuCommune, rare, epique,
     legendaire) met les trois cartes à cette rareté. Vu à la capture, sur quatre vaisseaux des quatre factions.
   - *Les noms des stats (Répit, Phase…), les pools de faction et la règle de pertinence sont de moi.*
+  - Keko : « ne marque pas textuellement le type, l'icône suffit ; par contre pour l'arme précise : cadence de "nom de
+    l'arme" ». La ligne de la cible (le nom de la faction ou de l'arme) est retirée ; une carte d'arme dit « +12 % de
+    cadence de Canon laser » (« d' » devant une voyelle), sur trois lignes au plus. Vu à la capture.
