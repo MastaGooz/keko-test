@@ -7031,3 +7031,7 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   le 1 % de toujours en remplit 40 %, de la marge pour les améliorations ; les trois Xénoïdes ont la même. Le panneau
   des statistiques en pause (`&stats`) dit « Carapace » aussi. Le 17/11, la régénération n'avait pas de ligne (« elle
   vaut la même part pour tous les siens ») : c'est Keko qui la rend. Vu à la capture, debout et couché.
+
+- **21/11, le déphasage redit** (Keko : « va pour : annule parfois les dégâts et devient invincible ») : « Déphasage :
+  Annule parfois les dégâts et devient invincible. » — mesuré à la police du jeu, deux lignes (137 et 126 pixels sur
+  145) ; « Chance d’annuler les dégâts et de devenir invincible » en prenait trois.
