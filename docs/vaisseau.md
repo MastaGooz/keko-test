@@ -7101,3 +7101,10 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     à 3 pixels de lui). Tourner et revenir vers l'arène restent libres. Testé : poussé dehors trente secondes, il
     s'arrête à 1 132 (la tempête de 1 000 à 1 220), y passe à 55 à mi-chemin (pointe 110), en revient à 110 ; il reste
     au milieu des roches de la tempête, qui frappent toujours. Le butoir du bord reste, pour les insectes.
+
+- **21/11, abattu, les roches ne disparaissent plus près du compteur** (Keko : « quand je suis mort et que la caméra
+  était sur le compteur, j'ai vu un astéroïde passer au même endroit que le compteur et disparaître »). LA CAUSE : une
+  roche qui dérive quitte le monde à 420 du centre du champ en s'en éloignant — sans portail, le vaisseau ; abattu,
+  l'épave reste là où elle est tombée, mais la caméra glisse au point de retour, au centre du monde. Les roches qui
+  passaient près du compteur, loin de l'épave, sortaient sous les yeux. Abattu, elles naissent et se comptent depuis le
+  point de retour (`centreDesRoches`). Testé, et le test échoue sans le correctif (la roche du centre partait).

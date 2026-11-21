@@ -1770,7 +1770,7 @@ function menerLesDerives(c: ConfigVaisseau, m: Monde): void {
   if (m.ennemis.filter((e) => e.asteroide !== undefined).length >= D.max) return
   const a = tire(m.graine, id, 42) * Math.PI * 2
   const loin = c.invasion.naissance + D.marge
-  const o = centreDuChamp(c, m)
+  const o = centreDesRoches(c, m)
   const x = o.x + Math.cos(a) * loin
   const y = o.y + Math.sin(a) * loin
   // (vers un point tiré près du centre du champ — le portail, ou le vaisseau : elle traverse le champ)
@@ -1787,10 +1787,24 @@ function menerLesDerives(c: ConfigVaisseau, m: Monde): void {
 function deriver(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number): void {
   const b = e.corps
   e.corps = { ...b, x: b.x + b.vx * dt, y: b.y + b.vy * dt }
-  const o = centreDuChamp(c, m)
+  const o = centreDesRoches(c, m)
   const dx = e.corps.x - o.x
   const dy = e.corps.y - o.y
   if (Math.hypot(dx, dy) > c.invasion.naissance + c.derive.marge + 1 && dx * b.vx + dy * b.vy > 0) e.parti = true
+}
+
+/**
+ * LE CENTRE DES ROCHES QUI DÉRIVENT : celui du champ — mais LE VAISSEAU ABATTU, c'est son point de retour, là où la
+ * caméra est partie (Keko, 21/11 : « quand je suis mort et que la caméra était sur le compteur, j'ai vu un astéroïde
+ * passer au même endroit que le compteur et disparaître » : comptées depuis l'épave, loin de là, les roches qu'on voyait
+ * passer près du compteur sortaient du monde sous les yeux).
+ */
+function centreDesRoches(c: ConfigVaisseau, m: Monde): Vecteur {
+  if (c.invasion.sansPortail && m.phase === 'perdu') {
+    const r = nouveauVaisseau()
+    return { x: r.x, y: r.y }
+  }
+  return centreDuChamp(c, m)
 }
 
 /** LE CENTRE DU CHAMP : le portail, au centre du monde ; sans portail, le vaisseau (voir `sansPortail`). */

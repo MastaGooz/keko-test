@@ -3062,5 +3062,23 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   verifier(`la tempête retient : poussé dehors 30 s, il s'arrête à ${Math.round(rMax)} (la tempête de ${cfg.arene.rayon} à ${bord}), à ${Math.round(vMilieu)} à mi-chemin (pointe ${cfg.vitesseMax}) ; il en revient à ${Math.round(-vRetour)}`, rMax <= cfg.arene.rayon + cfg.arene.largeur * cfg.arene.retenue + 1 && vMilieu > 0 && vMilieu < cfg.vitesseMax * 0.6 && w.vaisseau.x < avant - 50 && -vRetour > cfg.vitesseMax * 0.8)
 }
 
+// ABATTU, LES ROCHES SE COMPTENT DEPUIS LE POINT DE RETOUR (Keko, 21/11 : « un astéroïde passait au même endroit que le
+// compteur et disparaissait ») : l'épave loin du centre, une roche qui passe au centre en s'éloignant d'elle reste ;
+// celle qui s'éloigne du centre finit par partir
+{
+  const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9, penalite: 1e9 }, derive: { ...VAISSEAU.derive, active: true, premier: 1e9 } }
+  const roche = (id: number, x: number, vx: number): Ennemi => ({ id, corps: { ...nouveauVaisseau(), x, y: 0, vx, vy: 0 }, pv: 500, fait: 'marche', roche: null, forage: null, tirA: 0, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, grand: true, asteroide: { rayon: 10, graine: 1, angle0: 0, vitesseAngulaire: 0, pvMax: 500 } })
+  const w = nouveauMonde(cfg, 5)
+  w.prochaineDeriveA = 1e9
+  w.vaisseau = { ...w.vaisseau, x: 800, y: 0 }
+  w.phase = 'perdu'
+  w.invasion.retourA = 1e9
+  const auCentre = roche(1, 0, -30)
+  const auLoin = roche(2, 300, 40)
+  w.ennemis.push(auCentre, auLoin)
+  for (let i = 0; i < 60 * 5; i++) avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+  verifier(`abattu, les roches se comptent depuis le point de retour : celle qui passe au centre reste (${w.ennemis.includes(auCentre)}), celle qui s'en va au-delà part (${!w.ennemis.includes(auLoin)})`, w.ennemis.includes(auCentre) && !w.ennemis.includes(auLoin))
+}
+
 // (TOUJOURS EN DERNIER : des blocs ajoutés après cette ligne échouaient sans faire échouer `npm run verif` — 17/11)
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)
