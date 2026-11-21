@@ -7108,3 +7108,28 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   l'épave reste là où elle est tombée, mais la caméra glisse au point de retour, au centre du monde. Les roches qui
   passaient près du compteur, loin de l'épave, sortaient sous les yeux. Abattu, elles naissent et se comptent depuis le
   point de retour (`centreDesRoches`). Testé, et le test échoue sans le correctif (la roche du centre partait).
+
+- **21/11, ON REVIENT LÀ OÙ L'ON EST TOMBÉ, dans une explosion de lumière** (Keko : « on ne devrait pas faire respawn le
+  vaisseau au milieu de la map, mais là où il est mort ; mort dans le vortex, en dehors de la zone, dans le coin de la
+  zone le plus proche ; on garde le compteur, et dix secondes ; pendant le compteur, une zone circulaire autour de lui,
+  et tous les ennemis dans cette zone, à part les boss et les mini-boss, sont détruits au respawn — une explosion de
+  lumière, en même temps que l'animation de spawn, qui inflige d'énormes dégâts ; deux secondes d'invincibilité
+  complète, une animation dorée autour du vaisseau en mode bouclier ; il traverse tous les éléments ; attention qu'à la
+  fin il ne reste pas bloqué à l'intérieur d'un ennemi. Un peu comme Spell Brigade »).
+  - LA RÈGLE (`invasion.retour` : rayon 110 — choisi par Keko parmi trois —, invincible 2 s, marge 60) : abattu, l'épave
+    GLISSE À SON POINT DE RETOUR (`pointDeRetour` : là où elle est, ou, tombée dans la tempête ou trop près d'elle, le
+    point le plus proche à 60 en deçà de son bord) ; les insectes y convergent, les roches s'y comptent. Au retour, tout
+    ce qui n'est pas GRAND (`Ennemi.grand` : les boss et mini-boss à venir, et les roches qui dérivent) à moins de 110
+    est abattu et LÂCHE SON EXPÉRIENCE (choisi par Keko) ; puis deux secondes (`renaitJusque`) où rien ne le touche et
+    où il passe au travers de tout — insectes, roches, tempête ; à leur fin, il sort d'une roche et les insectes qui le
+    recouvrent sont écartés au contact, sans choc (`degager`). Le portail d'avant garde son retour au centre.
+  - L'ÉCRAN : la caméra reste sur l'épave ; LE COMPTE est au point de retour, au milieu de SA ZONE — un disque à peine
+    doré, un bord de points d'or qui tournent, un arc qui se remplit à mesure que le retour approche. Au retour, la
+    matérialisation du départ, là où il revient, et L'EXPLOSION DE LUMIÈRE (`deflagrations`) : un éclair blanc, une onde
+    d'or jusqu'au bord de la zone, seize rayons, quarante étincelles, une secousse. Pendant l'invincibilité, il ne
+    clignote pas : UNE BULLE D'OR l'entoure, qui respire, deux éclats en font le tour, et elle clignote sa dernière
+    demi-seconde.
+  Testé : tombé à 1 100 (dans la tempête), il revient à 940 ; l'explosion abat trois insectes proches (trois pépites
+  tombent), épargne un lointain et une roche ; un insecte posé sur lui ne le mord pas deux secondes ; à la fin, rien ne
+  le recouvre. Vu à la capture (`&crash=2`). Premier essai : l'onde était dessinée hors de l'écran (le peintre des
+  gerbes est déjà sur la caméra).

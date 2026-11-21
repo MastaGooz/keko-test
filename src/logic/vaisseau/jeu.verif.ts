@@ -3063,8 +3063,8 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
 }
 
 // ABATTU, LES ROCHES SE COMPTENT DEPUIS LE POINT DE RETOUR (Keko, 21/11 : « un astéroïde passait au même endroit que le
-// compteur et disparaissait ») : l'épave loin du centre, une roche qui passe au centre en s'éloignant d'elle reste ;
-// celle qui s'éloigne du centre finit par partir
+// compteur et disparaissait ») — depuis le même jour, l'épave elle-même, là où l'on revient et où est la caméra : une
+// roche qui passe près d'elle reste ; celle qui s'en éloigne au-delà finit par partir
 {
   const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9, penalite: 1e9 }, derive: { ...VAISSEAU.derive, active: true, premier: 1e9 } }
   const roche = (id: number, x: number, vx: number): Ennemi => ({ id, corps: { ...nouveauVaisseau(), x, y: 0, vx, vy: 0 }, pv: 500, fait: 'marche', roche: null, forage: null, tirA: 0, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, grand: true, asteroide: { rayon: 10, graine: 1, angle0: 0, vitesseAngulaire: 0, pvMax: 500 } })
@@ -3073,11 +3073,51 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   w.vaisseau = { ...w.vaisseau, x: 800, y: 0 }
   w.phase = 'perdu'
   w.invasion.retourA = 1e9
-  const auCentre = roche(1, 0, -30)
-  const auLoin = roche(2, 300, 40)
+  const auCentre = roche(1, 800, -30)
+  const auLoin = roche(2, 1100, 40)
   w.ennemis.push(auCentre, auLoin)
   for (let i = 0; i < 60 * 5; i++) avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
   verifier(`abattu, les roches se comptent depuis le point de retour : celle qui passe au centre reste (${w.ennemis.includes(auCentre)}), celle qui s'en va au-delà part (${!w.ennemis.includes(auLoin)})`, w.ennemis.includes(auCentre) && !w.ennemis.includes(auLoin))
+}
+
+// LE RETOUR LÀ OÙ L'ON EST TOMBÉ (Keko, 21/11 : « respawn là où il est mort ; mort dans le vortex, au coin de la zone le
+// plus proche ; les ennemis de la zone détruits, à part les boss ; deux secondes d'invincibilité où il traverse tout ; à la
+// fin, pas bloqué dans un ennemi ») : abattu dans la tempête, il revient en deçà d'elle ; l'explosion abat les insectes
+// proches (leur expérience tombe), épargne les plus loin et les roches ; invincible, il passe au travers ; à la fin, rien
+// ne le recouvre
+{
+  const cfg = { ...VAISSEAU, coque: 5, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, arene: { ...VAISSEAU.arene, active: true, dps: 0, roches: 0 }, ennemi: { ...VAISSEAU.ennemi, pv: 120, butinRendu: 1, apparait: 1e9, rayon: 5 }, forage: { ...VAISSEAU.forage, aimant: 0 } }
+  const insecte = (id: number, x: number, y: number): Ennemi => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv: 120, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 } })
+  const w = nouveauMonde(cfg, 5)
+  w.invasion.prochainA = 1e9
+  w.vaisseau = { ...w.vaisseau, x: 1100, y: 0 }
+  w.phase = 'perdu'
+  w.coque = 0
+  w.invasion.retourA = w.t + 0.5
+  const ici = cfg.arene.rayon - cfg.invasion.retour.marge
+  const pres = [insecte(100, ici - 40, 30), insecte(101, ici + 20, -40), insecte(102, ici - 80, 0)]
+  const loin = insecte(103, ici - 240, 0)
+  const roche: Ennemi = { id: 200, corps: { ...nouveauVaisseau(), x: ici + 5, y: 0 }, pv: 500, fait: 'marche', roche: null, forage: null, tirA: 0, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, grand: true, asteroide: { rayon: 10, graine: 1, angle0: 0, vitesseAngulaire: 0, pvMax: 500 } }
+  w.ennemis.push(...pres, loin, roche)
+  let deflagration = false
+  for (let i = 0; i < 36; i++) for (const e of avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements) if (e.type === 'deflagration') deflagration = true
+  const ou = { x: w.vaisseau.x, y: w.vaisseau.y }
+  const abattus = pres.every((e) => !w.ennemis.includes(e))
+  const epargnes = w.ennemis.includes(loin) && w.ennemis.includes(roche)
+  const pepites = w.pepites.length
+  // (un insecte posé sur lui : il ne mord pas, et le vaisseau passe au travers de la roche)
+  const colle = insecte(104, ou.x, ou.y)
+  w.ennemis.push(colle)
+  const coque0 = w.coque
+  let mordu = false
+  for (let i = 0; i < 60 * 1.9; i++) {
+    avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+    colle.corps = { ...colle.corps, x: w.vaisseau.x, y: w.vaisseau.y }
+    if (w.coque < coque0) mordu = true
+  }
+  for (let i = 0; i < 12; i++) avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+  const libre = Math.hypot(colle.corps.x - w.vaisseau.x, colle.corps.y - w.vaisseau.y) >= cfg.rayon + cfg.ennemi.rayon && Math.hypot(roche.corps.x - w.vaisseau.x, roche.corps.y - w.vaisseau.y) >= cfg.rayon + 10
+  verifier(`le retour : tombé à 1 100, il revient à ${Math.round(ou.x)} (en deçà de la tempête, ${ici}) ; l'explosion (${deflagration}) abat les trois proches (${abattus}), épargne le lointain et la roche (${epargnes}), ${pepites} pépites tombent ; invincible deux secondes, rien ne le mord (${!mordu}) ; à la fin, rien ne le recouvre (${libre})`, Math.abs(ou.x - ici) < 1 && Math.abs(ou.y) < 1 && deflagration && abattus && epargnes && pepites >= 3 && !mordu && libre && (w.phase as string) === 'vol')
 }
 
 // (TOUJOURS EN DERNIER : des blocs ajoutés après cette ligne échouaient sans faire échouer `npm run verif` — 17/11)

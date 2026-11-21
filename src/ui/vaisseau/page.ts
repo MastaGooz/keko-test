@@ -12,7 +12,7 @@
  */
 import './vaisseau.css'
 import * as noyau from 'pixelfx'
-import { rayonDe, rocheDeLaTempete, vieMultipliee, degatsMultiplies, placeDeLEcharde, frontDeLaNova, ancreDansLeMonde, zoneDuDe, coupeDUnCube, formeDeLaCoupe, liesAuDrain, encaisser, type Ennemi, type Evenement, type Monde, impactDuRayon, asteroidesVisibles, avancerLeMonde, finDuTrio, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur, xpDuNiveau, ennemiLePlusProche, ennemiVerrouille, verrouiller, angleDuBalayage } from '../../logic/vaisseau/jeu.ts'
+import { pointDeRetour, rayonDe, rocheDeLaTempete, vieMultipliee, degatsMultiplies, placeDeLEcharde, frontDeLaNova, ancreDansLeMonde, zoneDuDe, coupeDUnCube, formeDeLaCoupe, liesAuDrain, encaisser, type Ennemi, type Evenement, type Monde, impactDuRayon, asteroidesVisibles, avancerLeMonde, finDuTrio, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur, xpDuNiveau, ennemiLePlusProche, ennemiVerrouille, verrouiller, angleDuBalayage } from '../../logic/vaisseau/jeu.ts'
 import { ETALONS as ETALONS_DU_BANC, acheter, ajouterLesPiecesDEssai, capacite, poidsTotal, POIDS_SERIE, configDuHangar, demonter, demonterA, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, montantCourt, monteeA, monter, monterA, peutAcheter, peutMonter, perdreLesMontees, estDeBase, exemplaires, libres, pieceDe, piecesDe, placeLourde, possede, aimantMonte, radarMonte, type Jauge, type Piece, type Sorte } from '../../logic/vaisseau/hangar.ts'
 import { drawWord, spell } from 'pixelfx/fx/ui/_lib'
 import { firePuff, hotFirst, smokePuff } from 'pixelfx/fx/fire/_lib'
@@ -1387,6 +1387,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   let niveauA = -10
   /** Abattu, la caméra glisse du vaisseau vers le portail (0 : sur le vaisseau, 1 : sur le portail). */
   let versLePortail = 0
+  /** Les explosions de lumière du retour en cours (voir `invasion.retour`), et leur durée. */
+  const deflagrations: { x: number; y: number; r: number; t0: number }[] = []
+  const DUREE_DE_LA_DEFLAGRATION = 0.8
   let crashFait = false
   /** LE CHOIX D'UN TALENT en cours (null : on joue), ceux gardés en réserve, la fin du délai, l'instant de l'ouverture. */
   let choixDeTalent: Choix | null = null
@@ -1675,8 +1678,25 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   function dessinerLeRetour(p: Peintre): void {
     if (m.phase !== 'perdu') return
     const reste = Math.max(0, m.invasion.retourA - m.t)
-    const sx = -camera.x / champApplique + W / 2
-    const sy = -camera.y / champApplique + centreY()
+    // (SANS PORTAIL, LE COMPTE EST AU POINT DE RETOUR, au milieu de la ZONE QUE L'EXPLOSION NETTOIERA — Keko, 21/11 : « pendant
+    // tout le temps du compteur, une zone circulaire autour de lui » : un disque à peine doré, son bord de points d'or qui
+    // tournent, et un arc qui se remplit à mesure que le retour approche)
+    const o = CONF.invasion.sansPortail ? pointDeRetour(CONF, m) : { x: 0, y: 0 }
+    const sx = (o.x - camera.x) / champApplique + W / 2
+    const sy = (o.y - camera.y) / champApplique + centreY()
+    if (CONF.invasion.sansPortail) {
+      const R = CONF.invasion.retour.rayon / champApplique
+      const fait = 1 - reste / CONF.invasion.penalite
+      const bat = 0.5 + 0.5 * Math.sin(t * 4)
+      p.disc(sx, sy, R, PEPITE[2], (d) => (0.03 + 0.1 * d * d) * (0.7 + 0.3 * bat))
+      const n = Math.max(24, Math.round(R * 0.9))
+      for (let k = 0; k < n; k++) {
+        const a = (k / n) * Math.PI * 2 + t * 0.35
+        if (k % 3 === 2) continue
+        p.rect(Math.round(sx + Math.cos(a) * R), Math.round(sy + Math.sin(a) * R), 1, 1, k % 3 === 0 ? PEPITE[3] : PEPITE[2], 0.55 + 0.35 * bat)
+      }
+      p.arc(sx, sy, R + 2, 1, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * fait, PEPITE[3])
+    }
     const ub = Math.ceil(reste) - reste
     const tremble = ub < 0.22 ? 3 * (1 - ub / 0.22) : 0
     p.glow(sx, sy, 30, PEPITE[2], 0.25 + (ub < 0.12 ? 0.6 * (1 - ub / 0.12) : 0))
@@ -8168,7 +8188,28 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // lignes qui glissent (voir `Options.dephase`), un écho de lui-même qui traîne derrière, une lueur violette qui
     // respire, des grains de vide qui s'en détachent)
     const dephase = m.phase === 'vol' && m.t < m.dephaseJusque
-    const clignote = !dephase && m.phase === 'vol' && m.t < m.intouchableJusque && Math.floor((m.intouchableJusque - m.t) / 0.07) % 2 === 1
+    // (REVENU, IL NE CLIGNOTE PAS : un bouclier d'or l'entoure — voir plus bas)
+    const renait = m.phase === 'vol' && m.t < m.renaitJusque
+    const clignote = !dephase && !renait && m.phase === 'vol' && m.t < m.intouchableJusque && Math.floor((m.intouchableJusque - m.t) / 0.07) % 2 === 1
+    // LE BOUCLIER D'OR DU RETOUR (Keko, 21/11 : « deux secondes d'invincibilité complète, avec une animation dorée autour de
+    // son vaisseau en mode bouclier ») : une bulle d'or qui respire, son bord qui scintille, deux éclats qui en font le
+    // tour ; elle se dissout la dernière demi-seconde (en clignotant : la fin approche)
+    if (renait) {
+      const reste = m.renaitJusque - m.t
+      const E = echelleVue()
+      const sx = v.x - camera.x + W / 2
+      const sy = v.y - camera.y + centreY()
+      const rb = 13 * E * tailleDe(al.coque) * (1 + 0.04 * Math.sin(t * 7))
+      const fin = reste < 0.5 ? (Math.floor(reste / 0.08) % 2 === 0 ? 0.35 : 1) : 1
+      p.glow(sx, sy, rb * 1.5, PEPITE[2], 0.5 * fin)
+      p.disc(sx, sy, rb, PEPITE[2], (d) => (0.08 + 0.3 * d * d * d) * fin)
+      p.ring(sx, sy, rb + 1, 1, PEPITE[1], 0.9 * fin)
+      p.ring(sx, sy, rb, 1, PEPITE[3], fin)
+      for (let k = 0; k < 2; k++) {
+        const a = t * 3.2 + k * Math.PI
+        N.sparkle(p, sx + Math.cos(a) * rb, sy + Math.sin(a) * rb, 2, N.WHITE, PEPITE[3], 0.9 * fin)
+      }
+    }
     if (dephase) {
       const age = CONF.dephasage.duree - (m.dephaseJusque - m.t)
       const E = echelleVue()
@@ -13866,6 +13907,29 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.ring(f.x, f.y, 3 + 9 * sortie(u), Math.max(1, 2 * (1 - u)), u < 0.3 ? N.WHITE : f.c[3], 1.2 - u)
       p.glow(f.x, f.y, 12, f.c[2], 0.7 * (1 - u))
     }
+    // L'EXPLOSION DE LUMIÈRE DU RETOUR : un éclair blanc, une onde d'or qui court au bord de la zone en 0,45 s, seize rayons
+    // qui s'allongent puis s'éteignent
+    for (let i = deflagrations.length - 1; i >= 0; i--) {
+      const d = deflagrations[i]
+      const u = (t - d.t0) / DUREE_DE_LA_DEFLAGRATION
+      if (u >= 1) {
+        deflagrations.splice(i, 1)
+        continue
+      }
+      // (le peintre est déjà sur la caméra : les coordonnées du monde)
+      const sx = d.x
+      const sy = d.y
+      const onde = d.r * sortie(Math.min(1, u / 0.45))
+      if (u < 0.25) p.glow(sx, sy, d.r * 0.9, N.WHITE, 0.9 * (1 - u / 0.25))
+      p.glow(sx, sy, onde, PEPITE[2], 0.45 * (1 - u))
+      p.ring(sx, sy, onde, 2, N.WHITE, 1 - u)
+      p.ring(sx, sy, Math.max(1, onde - 3), 1, PEPITE[3], 0.8 * (1 - u))
+      for (let k = 0; k < 16; k++) {
+        const a = (k / 16) * Math.PI * 2 + d.t0
+        const l = onde * (k % 2 === 0 ? 1 : 0.7)
+        p.line(sx + Math.cos(a) * l * 0.3, sy + Math.sin(a) * l * 0.3, sx + Math.cos(a) * l, sy + Math.sin(a) * l, k % 2 === 0 ? PEPITE[3] : PEPITE[2], 0.7 * (1 - u))
+      }
+    }
     for (const f of flashs) {
       const u = (t - f.t0) / 0.4
       if (f.r === 0) {
@@ -14168,10 +14232,26 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           break
         }
         case 'retour': {
-          // LE JOUEUR REVIENT AU PORTAIL : la matérialisation du départ, et son son
+          // LE JOUEUR REVIENT (au portail ; sans portail, là où il est tombé) : la matérialisation du départ, et son son
           arriveA = t
           jouer('arrive', undefined, Math.max(0, ARRIVE_A - ECLOSION_DE_L_ARRIVEE))
-          effets.push({ fx: N.createFx(MATERIALISATION as Module, { x: -camera.x + W / 2, y: -camera.y + centreY(), rayon: CONF.rayon, seed: 4 }), x: 0, y: 0 })
+          const ou = CONF.invasion.sansPortail ? { x: m.vaisseau.x, y: m.vaisseau.y } : { x: 0, y: 0 }
+          effets.push({ fx: N.createFx(MATERIALISATION as Module, { x: ou.x - camera.x + W / 2, y: ou.y - camera.y + centreY(), rayon: CONF.rayon, seed: 4 }), x: ou.x, y: ou.y })
+          break
+        }
+        case 'deflagration': {
+          // L'EXPLOSION DE LUMIÈRE DU RETOUR (voir `invasion.retour`) : un éclair, une onde qui court jusqu'au bord de la zone,
+          // des rayons, une gerbe d'étincelles d'or, une secousse
+          deflagrations.push({ x: ev.x, y: ev.y, r: ev.rayon, t0: t })
+          jouer('extrait')
+          jouer('ennemiDetruit')
+          for (let k = 0; k < 40; k++) {
+            const a = (k / 40) * Math.PI * 2 + R.range(-0.05, 0.05)
+            const vit = R.range(90, 220)
+            etincelles.ajouter('etincelle', ev.x + Math.cos(a) * 6, ev.y + Math.sin(a) * 6, Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.35, 0.7), R.next() < 0.35 ? N.WHITE : PEPITE[R.next() < 0.5 ? 2 : 3], 1, 1)
+          }
+          secousse = Math.max(secousse, 1.2)
+          if (typeof navigator.vibrate === 'function') vibrer([40, 30, 80])
           break
         }
         case 'niveau': {
@@ -15128,8 +15208,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     decalageDeLaCamera.y += (cibleY - decalageDeLaCamera.y) * Math.min(1, dt * suivi)
     camera.x = v.x + decalageDeLaCamera.x
     camera.y = v.y + decalageDeLaCamera.y
-    // (abattu dans le jeu du vortex : la caméra glisse vers le portail, où le compte du retour s'affiche)
-    if (VORTEX) {
+    // (abattu dans le jeu du vortex : la caméra glisse vers le portail, où le compte du retour s'affiche — SANS PORTAIL, elle
+    // reste sur l'épave, qui glisse à son point de retour : voir `invasion.retour`)
+    if (VORTEX && !CONF.invasion.sansPortail) {
       versLePortail = m.phase === 'perdu' ? versLePortail + (1 - versLePortail) * Math.min(1, dt * 2.5) : 0
       camera.x *= 1 - versLePortail
       camera.y *= 1 - versLePortail

@@ -247,6 +247,18 @@ export const VAISSEAU = {
      */
     penalite: 10, xpBase: 5, xpPas: 3,
     /**
+     * LE RETOUR, SANS PORTAIL (Keko, 21/11 : « on ne devrait pas faire respawn le vaisseau au milieu de la map, mais là où
+     * il est mort ; mort dans le vortex, en dehors de la zone, au coin de la zone le plus proche ; on garde le compteur et
+     * dix secondes ; pendant le compteur, une zone circulaire autour de lui, et tous les ennemis dedans, à part les boss et
+     * les mini-boss, sont détruits au respawn — une explosion de lumière ; puis deux secondes d'invincibilité complète,
+     * une animation dorée en bouclier ; il traverse tout ; à la fin, il ne doit pas rester bloqué dans un ennemi. Un peu
+     * comme Spell Brigade ») : le point de retour est l'épave, ramenée à `marge` en deçà de la tempête (`pointDeRetour`) ;
+     * au retour, tout ce qui n'est pas GRAND (ni boss, ni mini-boss, ni roche qui dérive) à moins de `rayon` est abattu —
+     * il lâche son expérience (Keko) — ; puis `invincible` secondes où rien ne le touche et où il passe au travers de
+     * tout ; à leur fin, ce qui le recouvre est écarté (`degager`). Le rayon (110) choisi par Keko parmi trois.
+     */
+    retour: { rayon: 110, invincible: 2, marge: 60 },
+    /**
      * LA VIE DU PORTAIL (Keko, 14/11 : « elle s'exprime en pourcentage : il commence à 100 %, et s'il atteint 0 c'est
      * la fin de la partie ; pour l'instant les ennemis lui enlèvent 1 % à chaque fois qu'ils passent ») : `viePortail`
      * au départ, `degatsAuPortail` par insecte qui le traverse. À zéro, la partie est FINIE (`fin`) : plus rien n'avance.
@@ -1037,6 +1049,8 @@ export type Monde = {
   corruption: number
   /** Jusqu'à quel instant (`t` du monde) le joueur est déphasé — voir `dephasage`. */
   dephaseJusque: number
+  /** Jusqu'à quel instant le joueur revenu est invincible et passe au travers de tout — voir `invasion.retour` ; -100 : rien. */
+  renaitJusque: number
   toucheA: number
   forage: Forage | null
   /** Le laser de CHAQUE foreuse du joueur, dans l'ordre de `foreuses` (`forage` reste le premier qui creuse). */
@@ -1324,6 +1338,8 @@ export type Evenement =
   /** L'invasion : un niveau gagné ; le joueur abattu revient au portail. */
   | { type: 'niveau'; niveau: number }
   | { type: 'retour' }
+  /** L'explosion de lumière du retour (voir `invasion.retour`) : là où il revient, et sur quel rayon. */
+  | { type: 'deflagration'; x: number; y: number; rayon: number }
   /** L'invasion : le portail est tombé, la partie est finie. */
   | { type: 'fin'; vague: number }
 
@@ -1332,7 +1348,7 @@ export function nouveauVaisseau(): Vaisseau {
 }
 
 export function nouveauMonde(c: ConfigVaisseau = VAISSEAU, graine = 1): Monde {
-  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, plaques: Array.from({ length: c.plaques }, () => true), intouchableJusque: -1, corruption: 0, dephaseJusque: -100, toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, prochaineDeriveA: c.derive.premier, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, scies: [], balises: [], givres: [], tornades: [], novas: [], echardes: [], spheres: [], puits: [], meteores: [], tentacules: [], nuees: [], rejetons: [], flaquesAcides: [], mines: [], fleaux: [], parasites: [], vrilles: [], liens: [], oeufs: [], brochettes: [], miniVers: [], hypercubes: [], des: [], coupes: [], rayonVu: null }
+  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, plaques: Array.from({ length: c.plaques }, () => true), intouchableJusque: -1, corruption: 0, dephaseJusque: -100, renaitJusque: -100, toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, prochaineDeriveA: c.derive.premier, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, scies: [], balises: [], givres: [], tornades: [], novas: [], echardes: [], spheres: [], puits: [], meteores: [], tentacules: [], nuees: [], rejetons: [], flaquesAcides: [], mines: [], fleaux: [], parasites: [], vrilles: [], liens: [], oeufs: [], brochettes: [], miniVers: [], hypercubes: [], des: [], coupes: [], rayonVu: null }
 }
 
 /** Un hachage entier déterministe (celui de pixelfx), et un réel dans [0, 1) qui en sort. */
@@ -1724,7 +1740,7 @@ function subirLArene(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[], a
   m.vaisseau = retenue(retenir(v))
   for (const e of m.ennemis) if (e.asteroide === undefined) e.corps = retenir(e.corps)
   const w = m.vaisseau
-  if (Math.hypot(w.x, w.y) <= A.rayon || m.t < m.dephaseJusque) return chocs
+  if (Math.hypot(w.x, w.y) <= A.rayon || m.t < m.dephaseJusque || m.t < m.renaitJusque) return chocs
   // (L'ÉNERGIE RONGE : le bouclier d'abord, puis le blindage — les plaques n'y peuvent rien)
   let reste = A.dps * c.uniteDeVie * dt
   if (m.bouclier > 0) {
@@ -1783,6 +1799,44 @@ function menerLesDerives(c: ConfigVaisseau, m: Monde): void {
   m.ennemis.push({ id, corps: { ...nouveauVaisseau(), x, y, vx: Math.cos(cap) * vit, vy: Math.sin(cap) * vit, cap }, pv, fait: 'marche', roche: null, forage: null, tirA: 0, butin: 0, cargaison: cargaisonVide(), grand: true, asteroide: { rayon, graine: hache(m.graine, id), angle0: tire(m.graine, id, 47) * Math.PI * 2, vitesseAngulaire: (tire(m.graine, id, 48) - 0.5) * 1.2, pvMax: pv } })
 }
 
+/**
+ * LE POINT DE RETOUR DU JOUEUR ABATTU (voir `invasion.retour`) : là où est son épave — ramené, s'il est tombé dans la
+ * tempête ou trop près d'elle, au point le plus proche à `retour.marge` en deçà de son bord.
+ */
+export function pointDeRetour(c: ConfigVaisseau, m: Monde): Vecteur {
+  const v = m.vaisseau
+  if (!c.arene.active) return { x: v.x, y: v.y }
+  const limite = c.arene.rayon - c.invasion.retour.marge
+  const r = Math.hypot(v.x, v.y)
+  return r <= limite ? { x: v.x, y: v.y } : { x: (v.x / r) * limite, y: (v.y / r) * limite }
+}
+
+/**
+ * LA FIN DE L'INVINCIBILITÉ DU RETOUR (voir `invasion.retour` ; Keko : « attention à ce qu'à la fin, il ne reste pas
+ * bloqué à l'intérieur d'un ennemi ») : sorti d'une roche (elle est la plus lourde, c'est lui qui bouge), puis les
+ * insectes qui le recouvrent écartés au contact — sans choc ni dégâts.
+ */
+function degager(c: ConfigVaisseau, m: Monde): void {
+  for (const e of m.ennemis) {
+    if (e.asteroide === undefined) continue
+    const v = m.vaisseau
+    const dx = v.x - e.corps.x
+    const dy = v.y - e.corps.y
+    const d = Math.hypot(dx, dy) || 0.001
+    const min = c.rayon + e.asteroide.rayon + 1
+    if (d < min) m.vaisseau = { ...v, x: e.corps.x + (dx / d) * min, y: e.corps.y + (dy / d) * min }
+  }
+  const v = m.vaisseau
+  for (const e of m.ennemis) {
+    if (e.asteroide !== undefined) continue
+    const dx = e.corps.x - v.x
+    const dy = e.corps.y - v.y
+    const d = Math.hypot(dx, dy) || 0.001
+    const min = c.rayon + rayonDe(c, e) + 1
+    if (d < min) e.corps = { ...e.corps, x: v.x + (dx / d) * min, y: v.y + (dy / d) * min }
+  }
+}
+
 /** Une roche dérive tout droit, sans rien voir ; repassée au-delà de son cercle de naissance, elle quitte le monde. */
 function deriver(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number): void {
   const b = e.corps
@@ -1800,10 +1854,9 @@ function deriver(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number): void {
  * passer près du compteur sortaient du monde sous les yeux).
  */
 function centreDesRoches(c: ConfigVaisseau, m: Monde): Vecteur {
-  if (c.invasion.sansPortail && m.phase === 'perdu') {
-    const r = nouveauVaisseau()
-    return { x: r.x, y: r.y }
-  }
+  // (… DEPUIS LE 21/11, ON REVIENT LÀ OÙ ON EST TOMBÉ : l'épave glisse à son point de retour, la caméra la suit — voir
+  // `invasion.retour` ; le centre des roches est le sien, comme en vol)
+  if (c.invasion.sansPortail && m.phase === 'perdu') return pointDeRetour(c, m)
   return centreDuChamp(c, m)
 }
 
@@ -2295,8 +2348,8 @@ const sousBouclier = (c: ConfigVaisseau, m: Monde): boolean => c.bouclier.points
  * PREND PAS si le bouclier du joueur est levé (Keko : pas de bélier). Rend faux si la partie est perdue.
  */
 function heurterLesVaisseaux(c: ConfigVaisseau, m: Monde, ev: Evenement[]): boolean {
-  // (déphasé, il passe au travers — voir `dephasage`)
-  if (m.t < m.dephaseJusque) return true
+  // (déphasé, il passe au travers — voir `dephasage` ; revenu, aussi — voir `invasion.retour`)
+  if (m.t < m.dephaseJusque || m.t < m.renaitJusque) return true
   const v = m.vaisseau
   for (const e of [...m.ennemis]) {
     const b = e.corps
@@ -4712,8 +4765,29 @@ function avancerSansLeJoueur(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenem
   m.ennemis = m.ennemis.filter((e) => !e.parti)
   ecarterLesInsectes(c, m)
   if (c.invasion.sansPortail) heurterLesRoches(c, m, ev)
+  // (SANS PORTAIL, L'ÉPAVE GLISSE VERS SON POINT DE RETOUR — voir `invasion.retour` : les insectes y convergent, les roches
+  // s'y comptent, la caméra y va)
+  const I = c.invasion
+  if (I.sansPortail) {
+    const o = pointDeRetour(c, m)
+    const b = m.vaisseau
+    const d = Math.hypot(o.x - b.x, o.y - b.y)
+    const pas = Math.min(d, 400 * dt)
+    m.vaisseau = { ...b, x: d > 0 ? b.x + ((o.x - b.x) / d) * pas : b.x, y: d > 0 ? b.y + ((o.y - b.y) / d) * pas : b.y, vx: 0, vy: 0 }
+  }
   if (m.t < m.invasion.retourA) return
-  m.vaisseau = nouveauVaisseau()
+  if (I.sansPortail) {
+    // IL REVIENT LÀ OÙ IL EST TOMBÉ, dans une explosion de lumière qui abat ce qui l'entoure
+    const o = pointDeRetour(c, m)
+    m.vaisseau = { ...nouveauVaisseau(), x: o.x, y: o.y }
+    for (const e of [...m.ennemis]) {
+      if (e.grand === true || Math.hypot(e.corps.x - o.x, e.corps.y - o.y) > I.retour.rayon + rayonDe(c, e)) continue
+      ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique: false })
+      e.pv = 0
+      abattreLEnnemi(c, m, e, ev)
+    }
+    ev.push({ type: 'deflagration', x: o.x, y: o.y, rayon: I.retour.rayon })
+  } else m.vaisseau = nouveauVaisseau()
   m.coque = c.coque
   m.bouclier = c.bouclier.points
   m.plaques = Array.from({ length: c.plaques }, () => true)
@@ -4721,6 +4795,11 @@ function avancerSansLeJoueur(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenem
   m.corruption = 0
   m.dephaseJusque = -100
   m.toucheA = -100
+  // (… ET IL EST INVINCIBLE ET PASSE AU TRAVERS DE TOUT, le temps de se replacer — voir `invasion.retour`)
+  if (I.sansPortail) {
+    m.renaitJusque = m.t + I.retour.invincible
+    m.intouchableJusque = Math.max(m.intouchableJusque, m.renaitJusque)
+  }
   m.phase = 'vol'
   ev.push({ type: 'retour' })
 }
@@ -4811,7 +4890,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   const dir = pousse && Math.hypot(direction.x, direction.y) < 0.2 ? { x: Math.cos(m.vaisseau.cap), y: Math.sin(m.vaisseau.cap) } : direction
   // (un vaisseau à tourelles ne tourne pas vers son regard : il ne sert plus bas qu'à viser)
   // (DÉPHASÉ, il traverse les roches — voir `dephasage`)
-  const r = voler(c, m.t < m.dephaseJusque ? { ...moteur, fantome: true } : moteur, m.vaisseau, dt, dir, m.detruits, c.tourelles ? undefined : regard)
+  const r = voler(c, m.t < m.dephaseJusque || m.t < m.renaitJusque ? { ...moteur, fantome: true } : moteur, m.vaisseau, dt, dir, m.detruits, c.tourelles ? undefined : regard)
   const avantLeVol = m.vaisseau
   m.vaisseau = r.vaisseau
   // (L'ARÈNE : la tempête, ses roches, son bord — voir `arene`)
@@ -4851,6 +4930,11 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   if (c.invasion.active) m.ennemis = m.ennemis.filter((e) => !e.parti)
   if (c.invasion.active) ecarterLesInsectes(c, m)
   if (c.invasion.sansPortail) heurterLesRoches(c, m, ev)
+  // (L'INVINCIBILITÉ DU RETOUR FINIE : ce qui le recouvre est écarté — voir `degager`)
+  if (m.renaitJusque > -100 && m.t >= m.renaitJusque) {
+    degager(c, m)
+    m.renaitJusque = -100
+  }
   if (!heurterLesVaisseaux(c, m, ev)) return { chocs, evenements: ev }
 
   // le laser du joueur : la roche la plus proche à portée, au débit et à la portée de SA foreuse (le hangar) — LES ROCHES
