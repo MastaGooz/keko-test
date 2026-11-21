@@ -469,7 +469,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * plus un seul élément non pixel ») : un titre, un texte, puis le hangar et « Décoller » ; ses zones touchables sont
    * refaites à chaque image dessinée, en pixels du tampon.
    */
-  let zones: { x: number; y: number; w: number; h: number; action: () => void; son?: Son | null; dx?: number; dy?: number }[] = []
+  let zones: { x: number; y: number; w: number; h: number; action: () => void; son?: Son | null; dx?: number; dy?: number; /** Une zone À TENIR : l'action ne part qu'après `tenir` secondes d'appui (voir `tenue`). */ tenir?: number }[] = []
+  /**
+   * L'APPUI TENU (Keko, 21/11 : « exiger un appui sur le choix de l'amélioration au level up ; on laisse enfoncer pour
+   * valider, avec un petit indicateur visuel ; ça évite les misclics ») : la zone tenue, depuis quand, par quel doigt ;
+   * relâcher avant, ou sortir de la zone, l'annule.
+   */
+  let tenue: { x: number; y: number; w: number; h: number; a: number; id: number; tenir: number } | null = null
+  /** La part de l'appui faite sur la zone en (x, y) du tampon (0 à 1 ; -1 : elle n'est pas tenue). */
+  const partTenue = (x: number, y: number): number => (tenue !== null && memeCoin(tenue, x + ORIGINE.x, y + ORIGINE.y) ? Math.min(1, (tReel - tenue.a) / tenue.tenir) : -1)
 
   // ---------------------------------------------------------------- l'état
   /** `&quai` : le compte de l'extraction court dès le départ, sans sortir du parvis — pour juger l'arc d'un lien. */
@@ -1746,6 +1754,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * réserve pour le joueur qui n'a pas choisi, et il aura 2 choix la prochaine fois ») : un voile, le niveau, le temps
    * qui reste, et trois cartes — une tape en prend une.
    */
+  /** Combien de secondes tenir une carte de talent pour la prendre (voir `tenue`). *De moi.* */
+  const TENIR_LE_TALENT = 0.5
   function dessinerLeChoixDeTalent(p: Peintre): void {
     const ch = choixDeTalent
     if (ch === null) return
@@ -1760,7 +1770,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const y0 = Math.max(4, Math.round((H - hautTotal) / 2)) + Math.round((1 - u0) * 8)
     motEnRelief(p, `Niveau ${m.invasion.niveau}`, W / 2, y0, true, TITRE)
     const reste = Math.max(0, talentFinA - tReel)
-    const consigne = ch.aFaire > 1 ? `Choisissez un talent (${ch.aFaire} à choisir)` : 'Choisissez un talent'
+    const consigne = ch.aFaire > 1 ? `Maintenez pour choisir (${ch.aFaire} à choisir)` : 'Maintenez un talent pour le choisir'
     ecrire(p, consigne, W / 2, y0 + 16, COQUE[5], { align: 'center' })
     // le temps qui reste : une barre qui se vide, et les secondes
     const lb = Math.min(140, W - 60)
@@ -1784,9 +1794,19 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       if (age < 0) return
       const x = cote ? Math.round(W / 2 - (3 * cw + 8) / 2) + i * (cw + 4) : 12
       const y = y0 + 40 + (cote ? 0 : i * (hc + 4)) + Math.round((1 - sortie(age / 0.2)) * 6)
-      const e = etatDuBouton(x, y, cw, hc)
+      const e0 = etatDuBouton(x, y, cw, hc)
+      // (TENUE, la carte est enfoncée et S'EMPLIT D'OR par le bas, une barre court sous elle — voir `tenue`)
+      const tient = partTenue(x, y)
+      const e = tient >= 0 ? { ...e0, dy: 1, enfonce: true } : e0
       if (!e.enfonce) ombrePortee(p, x, y, cw, hc)
-      plaque(p, x, y + e.dy, cw, hc, 'encre', { bord: e.survole ? PEPITE[2] : PEPITE[1], enfonce: e.enfonce, flash: e.flash || age < 0.07 })
+      plaque(p, x, y + e.dy, cw, hc, 'encre', { bord: e.survole || tient >= 0 ? PEPITE[2] : PEPITE[1], enfonce: e.enfonce, flash: e.flash || age < 0.07 })
+      if (tient >= 0) {
+        const hm = Math.round((hc - 4) * tient)
+        // (de la lumière, pas un voile tramé : le texte reste net dessous)
+        for (let yy = y + e.dy + hc - 2 - hm; yy < y + e.dy + hc - 2; yy++) for (let xx = x + 2; xx < x + cw - 2; xx++) p.light(xx, yy, PEPITE[2], 0.22)
+        p.rect(x + 2, y + e.dy + hc - 3, Math.round((cw - 4) * tient), 2, PEPITE[3])
+        p.glow(Math.round(x + cw / 2), y + e.dy + hc - 2 - hm, Math.round(cw / 3), PEPITE[2], 0.25 * tient)
+      }
       const T: [number, number, number] = [N.hex('#a8650f'), PEPITE[2], N.hex('#fff2a8')]
       if (cote) {
         plaque(p, x + cw / 2 - 11, y + 5 + e.dy, 22, 20, 'creux')
@@ -1800,6 +1820,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         replier(ta.dit, cw - 36).slice(0, 3).forEach((li, k) => ecrire(p, li, x + 31, y + 16 + k * 9 + e.dy, COQUE[5]))
       }
       zone(x, y, cw, hc, prendre(ta), 'achat')
+      zones[zones.length - 1].tenir = TENIR_LE_TALENT
     })
     // (rien d'autre ne répond pendant le choix)
     zone(0, 0, W, H, () => {}, null)
@@ -7413,6 +7434,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       }
       const z = zones.find((z) => q.x >= z.x && q.x < z.x + z.w && q.y >= z.y && q.y < z.y + z.h)
       if (z !== undefined) {
+        // (une zone à tenir : l'appui commence, l'action viendra — voir `tenue`)
+        if (z.tenir !== undefined) {
+          tenue = { x: z.x, y: z.y, w: z.w, h: z.h, a: tReel, id: ev.pointerId, tenir: z.tenir }
+          racine.setPointerCapture(ev.pointerId)
+          jouer('clic')
+          return
+        }
         appuyer(z)
         return
       }
@@ -7475,6 +7503,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
   })
   racine.addEventListener('pointermove', (ev) => {
+    // (l'appui tenu : sorti de sa zone, il est annulé)
+    if (tenue !== null && ev.pointerId === tenue.id) {
+      const q = enTampon(ev.clientX, ev.clientY)
+      if (q.x < tenue.x || q.x >= tenue.x + tenue.w || q.y < tenue.y || q.y >= tenue.y + tenue.h) tenue = null
+    }
     // LE SURVOL, à la souris (PC) : ce qu'on survole s'éclaire, et le pointeur devient une main
     if (ev.pointerType === 'mouse') {
       if (ecranVisible()) {
@@ -7580,6 +7613,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   }
   const lever = (ev: PointerEvent) => {
     reveiller() // (au doigt, c'est le relâchement qui rend le son à la page)
+    // (l'appui tenu relâché avant son terme : rien)
+    if (tenue !== null && ev.pointerId === tenue.id) tenue = null
     if (tapeVerrou !== null && ev.pointerId === tapeVerrou.id) {
       const tv = tapeVerrou
       tapeVerrou = null
@@ -15268,6 +15303,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // insectes, la tempête, les étincelles, les effets ; L'HORLOGE DE L'INTERFACE `tReel` continue : les menus, les
     // boutons, le décompte du talent
     tReel += dtReel
+    // (l'appui tenu mené à son terme : la zone qu'il tient agit — retrouvée à sa place, les zones se refont à chaque image)
+    if (tenue !== null && tReel - tenue.a >= tenue.tenir) {
+      const tn = tenue
+      tenue = null
+      const cx = tn.x + tn.w / 2
+      const cy = tn.y + tn.h / 2
+      const z = zones.find((z) => z.tenir !== undefined && cx >= z.x && cx < z.x + z.w && cy >= z.y && cy < z.y + z.h)
+      if (z !== undefined) appuyer(z)
+    }
     const figee = enJeu && (pauseOuverte || choixDeTalent !== null || souteOuverte)
     const dt = figee ? 0 : dtReel
     t += dt

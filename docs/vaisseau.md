@@ -7449,3 +7449,11 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     cuirassier ×15 », choisi parmi trois : le cornu 480 PV (360) et 5,33 pépites (4), le cuirassier 1 800 PV (1 200) et
     21 pépites (14) ; leurs rendements ne bougent pas (1,11 et 1,17 pour 100 PV). Les barres de vie suivent (elles se
     comptent sur la vie de la sorte). Testé.
+
+- **21/11, LE TALENT SE PREND EN MAINTENANT LA CARTE.** Keko : « exiger un appui sur le choix de l'amélioration au level
+  up ; on laisse enfoncer pour valider, avec un petit indicateur visuel ; ça évite les misclics ». Une zone peut être À
+  TENIR (`tenir`, en secondes ; `tenue` dans la page) : l'appui commence au toucher (un clic), l'action part au bout du
+  temps, relâcher avant ou sortir de la carte l'annule. Les cartes de talent se tiennent 0,5 s (`TENIR_LE_TALENT`, de
+  moi) ; tenue, la carte s'enfonce, S'EMPLIT D'OR par le bas (de la lumière, pas un voile tramé : le texte reste net) et
+  une barre court sous elle. La consigne dit « Maintenez un talent pour le choisir ». Vu à la capture : tenue 0,28 s
+  puis lâchée, rien n'est pris ; tenue 0,75 s, le talent est pris, la partie reprend.
