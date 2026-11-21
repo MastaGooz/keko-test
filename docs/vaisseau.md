@@ -7023,3 +7023,11 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     doucement (`dessinerUnCadenas`), le texte en or pâle — `DEBLOCAGE_A_VENIR`, « Faites ceci pour débloquer ce
     vaisseau. », en attendant les vraies conditions.
   Vu à la capture, debout et couché.
+
+- **21/11, la carapace et la régénération des Xénoïdes** (Keko : « on va séparer la barre de vie et la régénération
+  dans les statistiques ; on laisse la vie actuelle, qu'on va renommer carapace, et on va mettre une barre en dessous,
+  régénération »). À la fiche, la jauge « Vie » devient « CARAPACE » (les mêmes cases vertes), et dessous une barre
+  verte « RÉGÉNÉRATION » : la part de la vie rendue en quinze secondes, pleine à 2,5 % (`REGENERATION_MAX`, de moi) —
+  le 1 % de toujours en remplit 40 %, de la marge pour les améliorations ; les trois Xénoïdes ont la même. Le panneau
+  des statistiques en pause (`&stats`) dit « Carapace » aussi. Le 17/11, la régénération n'avait pas de ligne (« elle
+  vaut la même part pour tous les siens ») : c'est Keko qui la rend. Vu à la capture, debout et couché.

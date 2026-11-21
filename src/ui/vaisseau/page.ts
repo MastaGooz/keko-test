@@ -1862,7 +1862,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const STATS_EN_PAUSE = parametres.has('stats')
   function lignesDesStats(): { nom: string; valeur: string }[] {
     const l: { nom: string; valeur: string }[] = []
-    l.push({ nom: vieVerte() ? 'Vie' : 'Blindage', valeur: `${Math.round(CONF.coque)}` })
+    l.push({ nom: vieVerte() ? 'Carapace' : 'Blindage', valeur: `${Math.round(CONF.coque)}` })
     if (CONF.bouclier.points > 0) l.push({ nom: 'Bouclier', valeur: `${Math.round(CONF.bouclier.points)}` })
     if (m.plaques.length > 0) l.push({ nom: 'Surblindage', valeur: `${m.plaques.length}` })
     if (CONF.dephasage.chance > 0) l.push({ nom: 'Déphasage', valeur: `${Math.round(CONF.dephasage.chance * 100)} %` })
@@ -2107,6 +2107,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * trois quarts) — `DEPHASAGE_MAX`.
    */
   const DEPHASAGE_MAX = 0.15
+  /**
+   * La barre de régénération des Xénoïdes, à la fiche : la part de la vie rendue en quinze secondes, PLEINE À 2,5 % — leur
+   * 1 % de toujours en remplit 40 %, de la marge pour les améliorations (de moi, 21/11).
+   */
+  const REGENERATION_MAX = 0.025
   const barreDephasee = (): boolean => {
     if (m.phase !== 'vol' || m.t >= m.dephaseJusque) return false
     const reste = m.dephaseJusque - m.t
@@ -4849,7 +4854,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         // (… ET SES BARRES À CASES GARDENT DE LA MARGE — Keko, 18/11 : « la barre de blindage ne doit jamais être pleine, plus
         // tard on permettra son amélioration ; l'ingénieur à 75 % » : au vortex, douze cases pour le blindage, la vie et le
         // bouclier — les 9 de l'Ingénieur aux trois quarts ; les plaques gardent leurs huit, les 6 de l'Ingénieur aussi)
-        de.race === 'essaim' ? { nom: 'Vie', valeur: vie.coque, max: CASES_DE_LA_VIE, cellules: true } : { nom: 'Blindage', valeur: vie.coque, max: CASES_DE_LA_VIE, cellules: true },
+        // (… NOMMÉE « CARAPACE », ET SA RÉGÉNÉRATION EN DESSOUS — Keko, 21/11 : « pour les xénoïdes, on va séparer la barre de
+        // vie et la régénération dans les statistiques ; la vie actuelle renommée carapace, et une barre en dessous,
+        // régénération » : une barre verte, pas de cases, sur `REGENERATION_MAX`)
+        de.race === 'essaim' ? { nom: 'Carapace', valeur: vie.coque, max: CASES_DE_LA_VIE, cellules: true } : { nom: 'Blindage', valeur: vie.coque, max: CASES_DE_LA_VIE, cellules: true },
+        ...(de.race === 'essaim' ? [{ nom: 'Régénération', valeur: vie.regeneration * 15, max: REGENERATION_MAX }] : []),
         vie.bouclier.points > 0 ? { nom: 'Bouclier', valeur: vie.bouclier.points, max: CASES_DE_LA_VIE, cellules: true } : vie.plaques > 0 ? { nom: 'Surblindage', valeur: vie.plaques, max: 8, cellules: true } : vie.dephasage.chance > 0 ? { nom: 'Déphasage', valeur: vie.dephasage.chance, max: DEPHASAGE_MAX } : { nom: '', valeur: 0, max: 8 },
       ]
       return jauges.filter((j) => j.nom !== '')
@@ -6437,7 +6446,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // (les plaques des humains, en acier gris, comme leur barre en vol — NOMMÉES « SURBLINDAGE », Keko, 18/11 : « pour la
     // technologie humaine, le mot plaque est un peu flou ; un terme plus évocateur d'un blindage renforcé »)
     const acier = j.nom === 'Surblindage'
-    const vert = j.nom === 'Vie' || j.nom === 'Régénération'
+    const vert = j.nom === 'Vie' || j.nom === 'Carapace' || j.nom === 'Régénération'
     const violet = j.nom === 'Déphasage'
     const teinte = j.nom === 'Bouclier' ? VERRIERE[2] : acier ? ACIER_DES_PLAQUES[1] : vert ? VERT_DE_LA_VIE[1] : violet ? CORRUPTION[2] : rouge ? ROUGE[3] : PEPITE[2]
     const clair = j.nom === 'Bouclier' ? VERRIERE[3] : acier ? ACIER_DES_PLAQUES[0] : vert ? VERT_DE_LA_VIE[0] : violet ? CORRUPTION[1] : rouge ? ROUGE[5] : N.hex('#ffe68a')
