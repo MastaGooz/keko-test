@@ -7397,3 +7397,27 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     POUSSIÈRE de petits éclats s'y ajoute (aucun sous 12, R² ÷ 75 au-delà : quinze sur une de 34), jusqu'à un peu plus
     du tiers de la roche ; et LES GRANDS ÉCLATS SCINTILLENT, une petite étoile qui s'ouvre de temps en temps, à
     contretemps. Vu à la planche, sur trois graines.
+
+- **21/11, LES INSECTES ET LA TEMPÊTE ; LES GÉANTES.**
+  - Keko : « quand je meurs, les ennemis se dispersent et vont dans le vortex ; on veut absolument éviter ça ; il faut
+    toujours que les ennemis évitent le vortex ; s'ils y vont, ils doivent subir les mêmes dégâts que le joueur ; un
+    ennemi qui meurt dans le vortex ne lâche aucune pépite ». À moins de `invasion.eviteTempete` (90) du bord, l'insecte
+    est repoussé vers le centre, d'autant plus fort qu'il en est près, plus fort que sa chasse — qu'il erre ou qu'il
+    chasse. Dans la tempête, il perd `arene.dps` unités de vie par seconde, comme le joueur, et y meurt SANS BUTIN, sans
+    compter comme abattu (`abattreLEnnemi(…, sansButin)`). Et UN ENNEMI DÉJÀ PARTI NE MEURT PAS DEUX FOIS : mort dans la
+    tempête, un coup de la même image le retrouvait à zéro et lui faisait lâcher son butin — mesuré. Testés : vingt
+    insectes errant une minute au bord, le joueur abattu — le plus loin à 940 (la tempête à 1 000) ; un insecte dans la
+    tempête perd ce que perd le joueur, y meurt, ne lâche rien.
+  - Keko : « des espèces de traits noirs dessinés sur l'astéroïde, des courbes noires de 1 pixel, c'est moche,
+    enlève-les ». Les fissures sont retirées.
+  - Keko : « rendre les gros astéroïdes un peu plus rares ; on en fait vraiment de toutes les tailles ; plus on avance,
+    plus les gros deviennent un peu plus fréquents, mais pas tout le temps ; les gros vraiment durs à détruire et qui
+    donnent vraiment beaucoup de pépites ; le plus gros, encore plus gros ». `derive.tailles` : une GÉANTE (36 à 46 de
+    rayon — 34 était le plus gros) naît à 4 % au départ, 10 % après dix minutes de vol (mesuré sur 4 000 tirages) ;
+    sinon une roche COURANTE de 8 à 32, toutes tailles. Les points vont au CARRÉ du rayon (1,5 avant) : la plus grosse a
+    10 580 points et rend 176 d'expérience. `&geante` : rien que des géantes. *Les chiffres sont de moi.*
+  - LA ROCHE SE CALCULE UNE FOIS, SE TOURNE À CHAQUE IMAGE : redessinée pixel par pixel, une géante coûtait la moitié
+    de l'image (59 images par seconde, mesuré). Ce qui ne dépend pas de l'angle — ce qu'est chaque pixel, la normale du
+    dôme, le bruit, les cratères, les éclats — est calculé une fois par roche sur une grille propre (`champsDe`, gardée) ;
+    à chaque image, on la tourne et on applique la lumière ; le cerne se trace à l'écran. Même dessin, 135 images par
+    seconde avec des géantes (16 % de l'image pour les roches).

@@ -1042,7 +1042,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // toutes les quatre, `&roche=0` les éteint)
       // (L'ARÈNE ET SA TEMPÊTE, au vortex — voir `arene`)
       if (VORTEX) conf = { ...conf, arene: { ...conf.arene, active: true } }
-      if (VORTEX) conf = { ...conf, derive: { ...conf.derive, active: parametres.get('roche') !== '0', ...(parametres.has('roche') && parametres.get('roche') !== '0' ? { premier: 2, tousMin: 4, tousMax: 4 } : {}) } }
+      if (VORTEX) conf = { ...conf, derive: { ...conf.derive, active: parametres.get('roche') !== '0', ...(parametres.has('roche') && parametres.get('roche') !== '0' ? { premier: 2, tousMin: 4, tousMax: 4 } : {}), ...(parametres.has('geante') ? { tailles: { ...conf.derive.tailles, partDebut: 1, partFin: 1 } } : {}) /* (`&geante` : rien que des géantes) */ } }
       // (`&festin=P` : la nuée part nourrie à P de son maximum — pour voir son nuage grand sans mordre longtemps)
       if (parametres.has('festin')) conf = { ...conf, armes: conf.armes.map((a) => (a.nuee?.festin === undefined ? a : { ...a, nuee: { ...a.nuee, festin: { ...a.nuee.festin, depart: a.nuee.festin.max * Math.max(0, Math.min(1, Number(parametres.get('festin')) || 0)) } } })) }
       // (LA VIE DU VAISSEAU, FOIS `ECHELLE_DE_LA_VIE` — en dernier : tous les points posés plus haut, `&bouclier=N` compris)

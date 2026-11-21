@@ -338,6 +338,13 @@ export const VAISSEAU = {
     // naissance jusqu'à `etalement` de plus — sous `recycle`, sinon il repartirait aussitôt)
     continu: { actif: false as boolean, debut: 0.5, montee: 0.5, max: 6, vivantsMax: 120, devant: 0.6, cone: 0.9, recycle: 460, etalement: 0.2 },
     eviteRoche: 24,
+    /**
+     * LES INSECTES ÉVITENT LA TEMPÊTE, TOUJOURS (Keko, 21/11 : « quand je meurs, les ennemis se dispersent et vont dans le
+     * vortex ; on veut absolument éviter ça ; il faut toujours que les ennemis évitent le vortex ») : à moins de
+     * `eviteTempete` de son bord, l'insecte est repoussé vers le centre, d'autant plus qu'il en est près — en chasse comme
+     * quand il erre. *De moi.*
+     */
+    eviteTempete: 90,
     heurteRoche: 0.6,
   },
   /** Le manche, en pixels CSS : son rayon (au bord, la pleine poussée), sa zone morte. */
@@ -420,12 +427,22 @@ export const VAISSEAU = {
    * moins de `visee` du portail, à `vitesseMin`–`vitesseMax` ; elle quitte le monde une fois repassée à `marge` au-delà.
    * C'EST UN ENNEMI D'UN GENRE À PART (`Ennemi.asteroide`) : toutes les armes la frappent, elle ne mord ni ne marche au
    * portail, et LES ARMES NE LA VOIENT PAS tant qu'un insecte est à portée du vaisseau (voir `rochesMasquees`), sauf
-   * verrouillée. Elle a `pvA10` points à 10 de rayon, à la puissance `exposant` du rayon (un rayon tiré de 8 à 34 —
+   * verrouillée. Elle a `pvA10` points à 10 de rayon, à la puissance `exposant` du rayon (un rayon tiré de 8 à 46, voir `tailles` —
    * Keko, 20/11 : « varie davantage la taille des astéroïdes, ils sont trop petits et tous d'une taille trop similaire » ;
    * c'était 6 à 13, et 5 × rayon² : une grosse roche aurait demandé une minute) ; détruite, elle lâche `pepitesParPv` pépite par point de vie (un
    * insecte, une pour 120) ; elle heurte le vaisseau de `choc` unités de vie. *Les chiffres sont de moi, à rejuger.*
    */
-  derive: { active: false as boolean, /** Ce que garde un choc entre deux roches qui dérivent (voir `heurterLesDerives`). */ rebond: 0.6, premier: 12, tousMin: 8, tousMax: 16, max: 3, marge: 60, visee: 200, rayonMin: 8, rayonMax: 34, vitesseMin: 10, vitesseMax: 42, pvA10: 500, exposant: 1.5, pepitesParPv: 1 / 60, choc: 2, chocInsecte: 60 },
+  derive: { active: false as boolean, /** Ce que garde un choc entre deux roches qui dérivent (voir `heurterLesDerives`). */ rebond: 0.6, premier: 12, tousMin: 8, tousMax: 16, max: 3, marge: 60, visee: 200, rayonMin: 8, rayonMax: 46, vitesseMin: 10, vitesseMax: 42, pvA10: 500, exposant: 2, pepitesParPv: 1 / 60, choc: 2, chocInsecte: 60,
+    /**
+     * LES TAILLES (Keko, 21/11 : « rendre les gros astéroïdes un peu plus rares ; on en fait vraiment de toutes les
+     * tailles ; plus on avance dans la partie, plus les gros deviennent un peu plus fréquents, mais pas tout le temps ;
+     * les gros vraiment durs à détruire et qui donnent vraiment beaucoup de pépites ; le plus gros, encore plus gros ») :
+     * une GÉANTE (de `geante` à `rayonMax`) naît à `partDebut`, cette part montant jusqu'à `partFin` en `montee` secondes
+     * de vol ; sinon une roche COURANTE, de `rayonMin` à `courante`, toutes tailles (u^`k`). Et les points à la puissance 2
+     * du rayon (1,5 avant), le butin suivant : la plus grosse, 46 de rayon (34 avant), 10 580 points et 176 d'expérience
+     * (3 135 et 52 pour celle de 34 avant). *Les chiffres sont de moi.*
+     */
+    tailles: { courante: 32, geante: 36, k: 1.3, partDebut: 0.04, partFin: 0.1, montee: 600 } },
   ennemi: { apparait: 10, revient: 5, distance: 320, pv: 36, poussee: 120, vitesseMax: 85, rotation: 5, rayon: 4, cherche: 260, rode: 450, voit: 130, accourt: 420, tient: 80, fuit: 10, lache: 260, cadence: 1.8, vitesseTir: 130, dispersion: 0.16, vieTir: 2, butinRendu: 3,
     /**
      * LE RIVAL PEUT PORTER DE VRAIES ARMES (Keko, 14/11 : « deux canons, le reste en mitraillette, et deux missiles dans
@@ -1666,11 +1683,15 @@ export function purger(c: ConfigVaisseau, m: Monde, x: number, y: number, ev: Ev
   m.corruption = Math.max(0, m.corruption - c.corruption.purge)
   ev.push({ type: 'purge', x, y })
 }
-function abattreLEnnemi(c: ConfigVaisseau, m: Monde, e: Ennemi, ev: Evenement[]): void {
+/** (`sansButin` : il meurt sans rien lâcher — dans la tempête, voir `conduireLInsecte` ; et il ne compte pas comme abattu) */
+function abattreLEnnemi(c: ConfigVaisseau, m: Monde, e: Ennemi, ev: Evenement[], sansButin = false): void {
+  // (DÉJÀ PARTI, il ne meurt pas deux fois : mort dans la tempête, un coup de la même image le retrouvait à zéro et lui
+  // faisait lâcher son butin — mesuré)
+  if (!m.ennemis.includes(e)) return
   m.ennemis = m.ennemis.filter((x) => x !== e)
   m.prochainEnnemiA = m.t + c.ennemi.revient
   const ro = e.asteroide
-  if (c.invasion.active && ro === undefined) m.invasion.abattus += 1
+  if (c.invasion.active && ro === undefined && !sansButin) m.invasion.abattus += 1
   purger(c, m, e.corps.x, e.corps.y, ev)
   // (UNE ROCHE QUI DÉRIVE éclate comme une roche, et rend ses pépites — voir `derive`)
   if (ro !== undefined) ev.push({ type: 'eclat', x: e.corps.x, y: e.corps.y, rayon: ro.rayon, graine: ro.graine, minerai: 'fer' })
@@ -1678,6 +1699,7 @@ function abattreLEnnemi(c: ConfigVaisseau, m: Monde, e: Ennemi, ev: Evenement[])
   // il rend sa cargaison, minerai par minerai, plus tant de pépites de fer
   const rendues: Minerai[] = []
   for (const k of MINERAIS) for (let i = 0; i < e.cargaison[k]; i++) rendues.push(k)
+  if (sansButin) return
   const total = ro !== undefined ? butinDeLaRoche(c, ro.pvMax) : butinDe(c, e)
   // (AU VORTEX, LE BUTIN EN GEMMES — voir `invasion.gemmes` ; et l'aimant, rarement — voir `invasion.aimant`)
   const valeurs: number[] = []
@@ -1919,7 +1941,10 @@ function menerLesDerives(c: ConfigVaisseau, m: Monde): void {
   const dv = D.visee * Math.sqrt(tire(m.graine, id, 44))
   const cap = Math.atan2(o.y + Math.sin(av) * dv - y, o.x + Math.cos(av) * dv - x)
   const vit = D.vitesseMin + (D.vitesseMax - D.vitesseMin) * tire(m.graine, id, 45)
-  const rayon = D.rayonMin + (D.rayonMax - D.rayonMin) * tire(m.graine, id, 46) ** 1.2
+  // (une géante, de plus en plus souvent ; sinon une courante — voir `derive.tailles`)
+  const Tl = D.tailles
+  const partGeante = Tl.partDebut + (Tl.partFin - Tl.partDebut) * Math.min(1, m.t / Tl.montee)
+  const rayon = tire(m.graine, id, 49) < partGeante ? Tl.geante + (D.rayonMax - Tl.geante) * tire(m.graine, id, 46) : D.rayonMin + (Tl.courante - D.rayonMin) * tire(m.graine, id, 46) ** Tl.k
   const pv = Math.round(D.pvA10 * (rayon / 10) ** D.exposant)
   m.ennemis.push({ id, corps: { ...nouveauVaisseau(), x, y, vx: Math.cos(cap) * vit, vy: Math.sin(cap) * vit, cap }, pv, fait: 'marche', roche: null, forage: null, tirA: 0, butin: 0, cargaison: cargaisonVide(), grand: true, asteroide: { rayon, graine: hache(m.graine, id), angle0: tire(m.graine, id, 47) * Math.PI * 2, vitesseAngulaire: (tire(m.graine, id, 48) - 0.5) * 1.2, pvMax: pv } })
 }
@@ -2374,6 +2399,16 @@ function conduireLInsecte(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number, ev
     }
     return []
   }
+  // DANS LA TEMPÊTE, IL SUBIT CE QUE SUBIT LE JOUEUR (Keko, 21/11 : « si les ennemis vont dans le vortex, ils doivent subir
+  // les mêmes dégâts que le joueur ; un ennemi qui meurt dans le vortex ne lâche aucune pépite ») : `arene.dps` unités de
+  // vie par seconde ; il y meurt sans butin
+  if (c.arene.active && Math.hypot(b.x, b.y) > c.arene.rayon) {
+    e.pv -= c.arene.dps * c.uniteDeVie * dt
+    if (e.pv <= 0) {
+      abattreLEnnemi(c, m, e, ev, true)
+      return []
+    }
+  }
   // (CE QUE LE VAISSEAU A POSÉ L'ATTIRE SUR LUI — voir `aPorteeDUnePose`)
   const attire = m.phase === 'vol' && aPorteeDUnePose(c, m, e)
   // (LE TRAÎNARD REVIENT DEVANT — voir `continu.recycle` : resté trop loin derrière, il réapparaît hors de vue, dans l'axe
@@ -2437,6 +2472,19 @@ function conduireLInsecte(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number, ev
     if (ex !== 0 || ey !== 0) {
       const sx = direction.x + ex
       const sy = direction.y + ey
+      const n = Math.hypot(sx, sy) || 1
+      direction = { x: sx / n, y: sy / n }
+    }
+  }
+  // (IL ÉVITE LA TEMPÊTE — voir `eviteTempete` : repoussé vers le centre, d'autant plus fort qu'il en est près, plus fort que
+  // sa chasse au bord même)
+  if (c.arene.active) {
+    const dc = Math.hypot(b.x, b.y) || 1
+    const seuil = c.arene.rayon - I.eviteTempete
+    if (dc > seuil) {
+      const k = 3 * Math.min(1.5, (dc - seuil) / I.eviteTempete)
+      const sx = direction.x - (b.x / dc) * k
+      const sy = direction.y - (b.y / dc) * k
       const n = Math.hypot(sx, sy) || 1
       direction = { x: sx / n, y: sy / n }
     }

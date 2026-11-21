@@ -3410,5 +3410,57 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   verifier(`l'aimant tombe une fois sur 300 environ : ${aimants} sur 3000`, aimants >= 4 && aimants <= 20)
 }
 
+// LES INSECTES ET LA TEMPÊTE (Keko, 21/11 : « il faut toujours que les ennemis évitent le vortex ; s'ils y vont, ils
+// subissent les mêmes dégâts que le joueur ; un ennemi qui meurt dans le vortex ne lâche aucune pépite »)
+{
+  const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, arene: { ...VAISSEAU.arene, active: true, roches: 0 }, ennemi: { ...VAISSEAU.ennemi, pv: 120, butinRendu: 1, apparait: 1e9, poussee: 90, vitesseMax: 40, rotation: 6, rayon: 5 }, derive: { ...VAISSEAU.derive, active: false } }
+  // (le joueur abattu, vingt insectes errent une minute près du bord : aucun n'entre dans la tempête)
+  const w = nouveauMonde(cfg, 3)
+  w.invasion.prochainA = 1e9
+  w.phase = 'perdu'
+  w.coque = 0
+  w.invasion.retourA = 1e9
+  for (let k = 0; k < 20; k++) {
+    const a = (k / 20) * Math.PI * 2
+    w.ennemis.push({ id: 100 + k, corps: { ...nouveauVaisseau(), x: Math.cos(a) * (cfg.arene.rayon - 60), y: Math.sin(a) * (cfg.arene.rayon - 60) }, pv: 120, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 } })
+  }
+  let plusLoin = 0
+  for (let i = 0; i < 60 * 60; i++) {
+    avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+    for (const e of w.ennemis) plusLoin = Math.max(plusLoin, Math.hypot(e.corps.x, e.corps.y))
+  }
+  verifier(`le joueur abattu, vingt insectes errent une minute au bord de l'arène (${cfg.arene.rayon}) : le plus loin à ${Math.round(plusLoin)}, ${w.ennemis.length} restent`, plusLoin < cfg.arene.rayon && w.ennemis.length === 20)
+  // (un insecte posé dans la tempête y perd ce que perd le joueur, et y meurt sans rien lâcher)
+  const z = nouveauMonde(cfg, 3)
+  z.invasion.prochainA = 1e9
+  z.vaisseau = { ...z.vaisseau, x: 0, y: 0 }
+  z.ennemis.push({ id: 200, corps: { ...nouveauVaisseau(), x: cfg.arene.rayon + 100, y: 0 }, pv: 120, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 } })
+  avancerLeMonde(cfg, z, 1, { x: 0, y: 0 })
+  const perdu = 120 - (z.ennemis[0]?.pv ?? 0)
+  // (il ressort de lui-même : on ne lui laisse qu'un point, au fond de la tempête, pour le voir y mourir avant)
+  if (z.ennemis[0] !== undefined) (z.ennemis[0].pv = 1), (z.ennemis[0].corps = { ...z.ennemis[0].corps, x: cfg.arene.rayon + 180, y: 0, vx: 0, vy: 0 })
+  let mort = false
+  for (let i = 0; i < 60 * 5 && !mort; i++) {
+    avancerLeMonde(cfg, z, 1 / 60, { x: 0, y: 0 })
+    mort = z.ennemis.length === 0
+  }
+  verifier(`dans la tempête, l'insecte perd ${perdu.toFixed(2)} par seconde (le joueur ${cfg.arene.dps * cfg.uniteDeVie}), y meurt (${mort}) et ne lâche rien (${z.pepites.length} pépites)`, Math.abs(perdu - cfg.arene.dps * cfg.uniteDeVie) < 0.05 && mort && z.pepites.length === 0 && z.invasion.abattus === 0)
+}
+
+// LES TAILLES DES ROCHES (Keko, 21/11 : « de toutes les tailles ; les gros plus rares, un peu plus fréquents avec la partie,
+// mais pas tout le temps ; le plus gros, encore plus gros, très dur, beaucoup de pépites »)
+{
+  const D = VAISSEAU.derive
+  const Tl = D.tailles
+  const part = (t: number): number => {
+    const pg = Tl.partDebut + (Tl.partFin - Tl.partDebut) * Math.min(1, t / Tl.montee)
+    let geantes = 0
+    for (let id = 1; id <= 4000; id++) if (tire(77, id, 49) < pg) geantes++
+    return geantes / 4000
+  }
+  const pvMax = Math.round(D.pvA10 * (D.rayonMax / 10) ** D.exposant)
+  verifier(`les géantes (36 à ${D.rayonMax}) : ${Math.round(part(0) * 100)} % au départ, ${Math.round(part(600) * 100)} % après dix minutes ; la plus grosse a ${pvMax} points et rend ${gemmesDuButin(VAISSEAU, Math.round(pvMax * D.pepitesParPv)).reduce((a, b) => a + b, 0)} d'expérience`, part(0) < 0.07 && part(600) > 0.08 && part(600) < 0.13 && pvMax > 10000)
+}
+
 // (TOUJOURS EN DERNIER : des blocs ajoutés après cette ligne échouaient sans faire échouer `npm run verif` — 17/11)
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)
