@@ -29,7 +29,7 @@ import { dessinerLAireDuHangar, dessinerLeSolDuHangar, dessinerLesLampesDuHangar
 import { dessinerLeBouclier } from './bouclier.ts'
 import { sauvegardeDe, chargerArme, sauverArme, chargerConnues, chargerHangar, chargerLivree, chargerReglages, sauverConnues, sauverHangar, sauverLivree, sauverReglages } from './hangar.ts'
 import { estTerminee, etapesFaites, modeleDe, noter, ongletOuvert, quetesNeuves, quetesSansTutoriel, reclamer, tutorielFini, TUTORIEL, type Activite, type Compteur, type Modele, type Quete } from '../../logic/vaisseau/quetes.ts'
-import { ajouterLeVaisseau, avecLeHangar, choisirLeVaisseau, coutEnMinerai, estDuModele, flotteNeuve, hangarActif, missionDe, aLeVaisseau, modeleDeVaisseau, MODELES, NOMS_CLASSE, noterEnVol, pieceOuverteSur, RACES, reclamerLaMission, talentsHorsDeLaRace, vaisseauxDe, vieSelonLaRace, type Race } from '../../logic/vaisseau/flotte.ts'
+import { ajouterLeVaisseau, avecLeHangar, choisirLeVaisseau, coutEnMinerai, estDuModele, flotteNeuve, hangarActif, missionDe, aLeVaisseau, modeleDeVaisseau, MODELES, NOMS_CLASSE, noterEnVol, pieceOuverteSur, RACES, reclamerLaMission, vaisseauxDe, vieSelonLaRace, type Race } from '../../logic/vaisseau/flotte.ts'
 import { annulerLOrdre, coursA, gainDe, historiqueDe, marcheNeuf, ordreNumero, ordresDe, poserUnOrdre, previsionDe, prixPlafond, reglerLeMarche, tendanceDe, vendreAuCours } from '../../logic/vaisseau/marche.ts'
 import { aLaMecanique, BRANCHES, configDuLabo, coutDe, debloquer, estDebloque, laboNeuf, noeudDe, noeudsDe, NOMS_BRANCHE, passifsDe, peutDebloquer, rangOuvert, RANGS, type Branche, type Mecanique, type Noeud } from '../../logic/vaisseau/labo.ts'
 import { ECLOSION_DE_L_ARRIVEE, jouer as jouerLeSon, latenceMs, regler, reveiller, type GenreDePropulsion, type Son } from './sons.ts'
@@ -44,7 +44,7 @@ import { RASSEMBLE as TELEPORTE_A } from '../pixelfx/fx/keko/teleportation.js'
 import * as MATERIALISATION from '../pixelfx/fx/keko/materialisation.js'
 import * as QUETE_TERMINEE from '../pixelfx/fx/keko/quete-terminee.js'
 import * as VORTEX_FX from '../pixelfx/fx/keko/vortex.js'
-import { apresUnChoix, DUREE_DU_CHOIX, ouvrirLeChoix, proposer, reserveApresLeDelai, type Choix, type FamilleDeTalent, type Talent } from '../../logic/vaisseau/talents.ts'
+import { apresUnChoix, carte, DUREE_DU_CHOIX, ouvrirLeChoix, proposer, rareteDe, RARETES, reserveApresLeDelai, type Choix, type Rarete, type Talent } from '../../logic/vaisseau/talents.ts'
 import { APPARAIT as ARRIVE_A, REFROIDI as REFROIDI_A } from '../pixelfx/fx/keko/materialisation.js'
 import { Grains } from '../pixelfx/fx/keko/_espace.js'
 
@@ -1438,6 +1438,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   let choixDeTalent: Choix | null = null
   let reserveDeTalents = 0
   let talentFinA = 0
+  /** (`&choix` : le choix d'essai est-il déjà ouvert) */
+  let choixDEssaiOuvert = false
   /** L'horloge de l'interface : elle ne s'arrête jamais, même quand le monde est figé (voir `image`). */
   let tReel = 0
   let talentA = -10
@@ -1755,17 +1757,38 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * qui reste, et trois cartes — une tape en prend une.
    */
   /** La carte d'un talent : sa taille, fixe, et l'écart entre deux. */
-  const CARTE_DE_TALENT = { w: 84, h: 116, ecart: 6 }
+  const CARTE_DE_TALENT = { w: 84, h: 120, ecart: 6 }
   /** Le temps de l'éclat d'une carte prise, avant que le talent s'applique et que le jeu reprenne. */
   const DUREE_DE_LA_PRISE = 0.42
   /** La carte prise, en train d'éclater (voir `dessinerLeChoixDeTalent`). */
   let talentPris: { i: number; ta: Talent; t0: number } | null = null
-  /** LES FAMILLES DE TALENT : leur nom, et les cinq tons de leur métal, du plus sombre au plus clair. */
-  const FAMILLES_DE_TALENT: Record<FamilleDeTalent, { nom: string; c: number[] }> = {
-    arme: { nom: 'Arme', c: ['#3a0f0a', '#8a2a14', '#d8542a', '#ff9a5a', '#ffe0c0'].map((c) => N.hex(c)) },
-    defense: { nom: 'Défense', c: ['#0c1a3a', '#1f4a8a', '#3a86d8', '#7cc4ff', '#e0f4ff'].map((c) => N.hex(c)) },
-    vol: { nom: 'Vol', c: ['#0a2a1e', '#16704c', '#2fbf7a', '#7cf0b0', '#e0ffec'].map((c) => N.hex(c)) },
-    butin: { nom: 'Butin', c: ['#3a2406', '#8a5a10', '#e0a020', '#ffd75a', '#fff6c8'].map((c) => N.hex(c)) },
+  /**
+   * LES COULEURS DES RARETÉS (Keko, 21/11 : « commune (blanc), uncommon (vert), rare (bleu), épique (violet) et
+   * légendaire (orange) ») : les cinq tons du métal de la carte, du plus sombre au plus clair ; et la force de ses rayons.
+   */
+  const COULEURS_DE_RARETE: Record<Rarete, { c: number[]; rayons: number }> = {
+    commune: { c: ['#26262e', '#55556a', '#9c9cb0', '#dcdce8', '#ffffff'].map((c) => N.hex(c)), rayons: 0.6 },
+    peuCommune: { c: ['#0a2a14', '#1c6e30', '#3fbf4f', '#8af08a', '#e4ffe4'].map((c) => N.hex(c)), rayons: 0.8 },
+    rare: { c: ['#0c1a3a', '#1f4a8a', '#3a86d8', '#7cc4ff', '#e0f4ff'].map((c) => N.hex(c)), rayons: 1 },
+    epique: { c: ['#1e0a3a', '#4e1f8a', '#8a3ad8', '#c08aff', '#f2e4ff'].map((c) => N.hex(c)), rayons: 1.35 },
+    legendaire: { c: ['#3a1a06', '#8a4410', '#e07a20', '#ffb85a', '#fff2d6'].map((c) => N.hex(c)), rayons: 1.8 },
+  }
+  /** LES STATS : leur nom sur la carte, et ce que le bonus change (« +12 % » puis ces mots). */
+  const STATS_DES_CARTES: Record<Talent['stat'], { nom: string; effet: string }> = {
+    degats: { nom: 'Dégâts', effet: 'de dégâts' },
+    cadence: { nom: 'Cadence', effet: 'de cadence' },
+    portee: { nom: 'Portée', effet: 'de portée' },
+    zone: { nom: 'Zone', effet: 'de zone d’effet' },
+    duree: { nom: 'Durée', effet: 'de durée des effets' },
+    blindage: { nom: 'Blindage', effet: 'de points de vie' },
+    moteur: { nom: 'Moteur', effet: 'de vitesse' },
+    aimant: { nom: 'Aimant', effet: 'de portée de l’aimant' },
+    repit: { nom: 'Répit', effet: 'd’invulnérabilité après un coup' },
+    regeneration: { nom: 'Régénération', effet: 'de régénération' },
+    bouclier: { nom: 'Bouclier', effet: 'de bouclier' },
+    recharge: { nom: 'Recharge', effet: 'de recharge du bouclier' },
+    dephasage: { nom: 'Déphasage', effet: 'de chance de déphasage' },
+    phase: { nom: 'Phase', effet: 'de durée du déphasage' },
   }
   /** Deux couleurs mêlées (t de 0 à 1), opaques. */
   const meler = (a: number, b: number, t: number): number => {
@@ -1775,23 +1798,26 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /**
    * UNE CARTE DE TALENT, « CARTE DE RARETÉ » (Keko, 21/11 : « retravailler les boutons : même taille chacun, taille fixe
    * toujours, style, juice, texture ; je veux un truc vraiment beau » — les cartes de talent, « cartes de rareté »,
-   * choisis parmi trois) : un cadre de métal à la teinte de sa FAMILLE (arme, défense, vol, butin), biseauté, aux coins
-   * ouvragés ; un fond sombre teinté, plus clair en haut, grenu, des rayons de sa teinte qui tournent derrière un
-   * MÉDAILLON où est son icône ; son nom, un filet orné, ce qu'il fait ; sa famille en pied ; un REFLET qui la traverse de
-   * temps en temps. `tient` : la part de l'appui (-1 : pas tenue) — elle s'emplit de lumière par le bas, une barre
-   * court ; `blanc` : son éclat blanc (0 à 1) ; `eteinte` : elle tombe, assombrie.
+   * choisis parmi trois ; puis, le même jour, des cartes par arme et par faction, en pour cent, de cinq raretés) : un
+   * cadre de métal à la couleur de sa RARETÉ, biseauté, aux coins ouvragés ; un fond sombre teinté, plus clair en haut,
+   * grenu ; des rayons de sa couleur qui tournent derrière un MÉDAILLON où est SA CIBLE — l'icône de l'arme, ou l'emblème
+   * de la faction ; le nom de la stat, un filet orné, le bonus en grand, ce qu'il change, la cible en clair ; la rareté
+   * en pied ; un REFLET qui la traverse de temps en temps ; une légendaire scintille sur son cadre. `tient` : la part de
+   * l'appui (-1 : pas tenue) — elle s'emplit de lumière par le bas, une barre court ; `blanc` : son éclat blanc (0 à 1) ;
+   * `eteinte` : elle tombe, assombrie.
    */
   function dessinerUneCarteDeTalent(p: Peintre, ta: Talent, x: number, y: number, i: number, o: { survole: boolean; tient: number; blanc: number; eteinte: boolean }): void {
     const { w: CW, h: CH } = CARTE_DE_TALENT
-    const F = FAMILLES_DE_TALENT[ta.famille].c
+    const R_ = COULEURS_DE_RARETE[ta.rarete]
+    const F = R_.c
     const ENCRE = N.hex('#07050d')
     const NUIT_C = N.hex('#0d0b16')
     const cx = x + CW / 2
-    const cy = y + 24
+    const cy = y + 23
     const vif = o.survole || o.tient >= 0
     // l'ombre portée
     p.rect(x + 2, y + 3, CW, CH, N.hex('#020208'), 0.55)
-    // LE FOND : sombre, teinté de la famille, plus clair en haut
+    // LE FOND : sombre, teinté de la rareté, plus clair en haut
     for (let j = 0; j < CH; j++) p.rect(x, y + j, CW, 1, meler(meler(NUIT_C, F[0], 0.9), NUIT_C, Math.min(1, j / (CH * 0.9))))
     // (le grain : des points plus clairs et plus sombres, tirés de la carte)
     for (let k = 0; k < 70; k++) {
@@ -1799,15 +1825,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const gy = y + 3 + Math.floor(tire(i + 1, k, 82) * (CH - 6))
       p.px(gx, gy, k % 3 === 0 ? meler(F[0], F[1], 0.6) : ENCRE)
     }
-    // LES RAYONS derrière le médaillon : de la lumière de la famille qui tourne doucement
+    // LES RAYONS derrière le médaillon : de la lumière de la rareté qui tourne doucement, plus forte plus elle est rare
     for (let j = 2; j < 64; j++)
       for (let xx = 2; xx < CW - 2; xx++) {
         const dx = x + xx - cx
         const dy = y + j - cy
         const d = Math.hypot(dx, dy)
-        if (d < 12 || d > 46) continue
+        if (d < 15 || d > 48) continue
         const an = Math.atan2(dy, dx)
-        if (Math.sin(an * 8 + tReel * 0.6) > 0.35) p.light(x + xx, y + j, F[2], 0.11 * (1 - d / 46) * (vif ? 1.6 : 1))
+        if (Math.sin(an * 8 + tReel * 0.6) > 0.35) p.light(x + xx, y + j, F[2], 0.11 * R_.rayons * (1 - d / 48) * (vif ? 1.5 : 1))
       }
     // LE CADRE : un cerne d'encre, deux pixels de métal biseauté (clair en haut et à gauche), un filet sombre dedans
     const haut = vif ? F[4] : F[3]
@@ -1829,40 +1855,63 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.poly([[kx + 0.5, ky - 2], [kx + 3, ky + 0.5], [kx + 0.5, ky + 3], [kx - 2, ky + 0.5]], F[3])
       p.px(kx, ky, F[4])
     }
-    // LE MÉDAILLON : un anneau de métal, son creux sombre où luit la famille, l'icône
-    p.circle(cx, cy, 14, ENCRE)
-    p.circle(cx, cy, 13, F[2])
-    p.arc(cx, cy, 13, 2, Math.PI, Math.PI * 1.75, haut)
-    p.arc(cx, cy, 13, 2, 0, Math.PI * 0.75, F[1])
-    p.circle(cx, cy, 10.5, ENCRE)
-    p.circle(cx, cy, 10, NUIT_C)
-    p.disc(cx, cy, 10, F[1], (d) => 0.7 * (1 - d))
-    dessinerLeGlyphe(p, ta.icone, Math.round(cx), cy, [F[1], F[3], F[4]])
-    // le nom, sur une ou deux lignes
-    const replie = (t: string, l: number, f: Police): string[] => replier(t.replace(/ %/g, '\u00a0%'), l, f).map((li) => li.replace(/\u00a0/g, ' '))
-    const nom = replie(ta.nom, CW - 14, GRAS).slice(0, 2)
-    let ly = y + 44
-    for (const li of nom) {
-      ecrire(p, li, cx, ly, F[4], { align: 'center', police: GRAS, ombre: ENCRE })
-      ly += 9
+    // (UNE LÉGENDAIRE SCINTILLE : des étoiles courent sur son cadre)
+    if (ta.rarete === 'legendaire' || ta.rarete === 'epique') {
+      const tour = 2 * (CW + CH)
+      const n = ta.rarete === 'legendaire' ? 5 : 2
+      for (let k = 0; k < n; k++) {
+        const u = ((tReel * 34 + (k * tour) / n) % tour + tour) % tour
+        const [sx, sy] = u < CW ? [x + u, y] : u < CW + CH ? [x + CW - 1, y + u - CW] : u < 2 * CW + CH ? [x + CW - 1 - (u - CW - CH), y + CH - 1] : [x, y + CH - 1 - (u - 2 * CW - CH)]
+        const bat = 0.5 + 0.5 * Math.sin(tReel * 9 + k * 2)
+        p.px(Math.round(sx), Math.round(sy), N.WHITE)
+        for (const [ax, ay] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) p.px(Math.round(sx) + ax, Math.round(sy) + ay, F[4])
+        p.glow(Math.round(sx), Math.round(sy), 4, F[3], 0.4 + 0.3 * bat)
+      }
     }
+    // LE MÉDAILLON : un anneau de métal, son creux sombre où luit la rareté, et SA CIBLE — l'icône de l'arme en double,
+    // ou l'emblème de la faction
+    p.circle(cx, cy, 18, ENCRE)
+    p.circle(cx, cy, 17, F[2])
+    p.arc(cx, cy, 17, 2, Math.PI, Math.PI * 1.75, haut)
+    p.arc(cx, cy, 17, 2, 0, Math.PI * 0.75, F[1])
+    p.circle(cx, cy, 14.5, ENCRE)
+    p.circle(cx, cy, 14, NUIT_C)
+    p.disc(cx, cy, 14, F[1], (d) => 0.7 * (1 - d))
+    if (ta.cible.sorte === 'arme') {
+      const id = armeDuVortex()
+      for (const [px, py, c] of pixelsDeLIcone(id)) {
+        let nc = couleursDesIcones.get(c)
+        if (nc === undefined) couleursDesIcones.set(c, (nc = N.hex(c)))
+        p.rect(Math.round(cx) - 14 + px * 2, cy - 14 + py * 2, 2, 2, nc)
+      }
+    } else dessinerLEmblemeDeRace(p, ta.cible.race, cx, cy)
+    // le nom de la stat (en gras s'il tient, sinon en lettre fine)
+    const st = STATS_DES_CARTES[ta.stat]
+    let ly = y + 44
+    ecrire(p, st.nom, cx, ly, F[4], { align: 'center', police: largeurDe(st.nom, GRAS) <= CW - 12 ? GRAS : TEXTE, ombre: ENCRE })
     // un filet orné : deux traits, un losange au milieu
-    ly += 2
+    ly += 10
     p.rect(x + 12, ly, CW / 2 - 16, 1, F[2])
     p.rect(cx + 4, ly, CW / 2 - 16, 1, F[2])
     p.poly([[cx + 0.5, ly - 2.5], [cx + 3, ly + 0.5], [cx + 0.5, ly + 3.5], [cx - 2, ly + 0.5]], F[3])
-    ly += 6
-    // ce qu'il fait
-    for (const li of replie(ta.dit, CW - 14, TEXTE).slice(0, 4)) {
+    // LE BONUS, en grand : la lettre grasse au double (celle des titres faisait d'un 8 un 0)
+    ly += 5
+    p.text(`+${Math.round(ta.bonus * 100)} %`, Math.round(cx), ly - decalage(GRAS) * 2, F[4], { font: GRAS, scale: 2, align: 'center', shadow: ENCRE })
+    ly += 18
+    // ce qu'il change, puis sa cible
+    for (const li of replier(st.effet, CW - 12).slice(0, 2)) {
       ecrire(p, li, cx, ly, COQUE[5], { align: 'center' })
       ly += 8
     }
-    // sa famille, en pied, entre deux perles
-    const fam = FAMILLES_DE_TALENT[ta.famille].nom
-    const lf = largeurDe(fam)
-    ecrire(p, fam, cx, y + CH - 13, F[3], { align: 'center' })
-    p.px(Math.round(cx - lf / 2 - 5), y + CH - 9, F[2])
-    p.px(Math.round(cx + lf / 2 + 4), y + CH - 9, F[2])
+    const cible = ta.cible.sorte === 'arme' ? (pieceDe(armeDuVortex())?.nom ?? '') : (RACES.find((r) => r.id === (ta.cible as { race: Race }).race)?.nom ?? '')
+    const lc = replier(cible, CW - 12)
+    if (lc.length === 1) ecrire(p, lc[0], cx, y + CH - 24, F[2], { align: 'center' })
+    // sa rareté, en pied, entre deux perles
+    const nr = rareteDe(ta.rarete).nom
+    const lr = largeurDe(nr)
+    ecrire(p, nr, cx, y + CH - 13, F[3], { align: 'center' })
+    p.px(Math.round(cx - lr / 2 - 5), y + CH - 9, F[2])
+    p.px(Math.round(cx + lr / 2 + 4), y + CH - 9, F[2])
     // LE REFLET : une bande de lumière en biais qui la traverse, à contretemps des autres cartes
     const u = ((tReel * 0.45 + i * 0.37) % 1.5) / 1.5
     const bande = -30 + u * (CW + CH * 0.5 + 60)
@@ -1892,16 +1941,20 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const u0 = sortie((tReel - talentA) / 0.2)
     p.rect(0, 0, W, H, NUIT, 0.72 * u0)
     zones = []
-    const cartes = proposer(graineDuVol, m.invasion.niveau, ch.rang, talentsHorsDeLaRace(modeleDeVaisseau(flotte.actif).race))
+    const tirees = proposer(graineDuVol, m.invasion.niveau, ch.rang, CONF.armes[0], modeleDeVaisseau(flotte.actif).race)
+    // (`&rarete=R` : les trois cartes à cette rareté — commune, peuCommune, rare, epique, legendaire —, pour les juger)
+    const rareteForcee = RARETES.find((r) => r.id === parametres.get('rarete'))?.id
+    const cartes = rareteForcee === undefined ? tirees : tirees.map((ta) => carte(ta.cible, ta.stat, rareteForcee))
     // (LA PRISE MENÉE À SON TERME : le talent s'applique quand l'éclat est fini — voir `talentPris`)
     const pris = talentPris
     if (pris !== null && tReel - pris.t0 >= DUREE_DE_LA_PRISE) {
       const ta = pris.ta
       talentPris = null
+      const avant = CONF
       CONF = ta.appliquer(CONF)
-      // (un point de blindage ou de bouclier gagné est donné tout de suite)
-      if (ta.id === 'blindage') m.coque = Math.min(CONF.coque, m.coque + CONF.uniteDeVie)
-      if (ta.id === 'bouclier') m.bouclier = Math.min(CONF.bouclier.points, m.bouclier + CONF.uniteDeVie)
+      // (ce qu'on gagne de vie ou de bouclier est donné tout de suite)
+      if (CONF.coque > avant.coque) m.coque = Math.min(CONF.coque, m.coque + CONF.coque - avant.coque)
+      if (CONF.bouclier.points > avant.bouclier.points) m.bouclier = Math.min(CONF.bouclier.points, m.bouclier + CONF.bouclier.points - avant.bouclier.points)
       jouer('equipe')
       choixDeTalent = apresUnChoix(ch)
       talentFinA = tReel + DUREE_DU_CHOIX
@@ -1963,9 +2016,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // L'ÉCLAT DE LA PRISE : un anneau, une gerbe d'étincelles aux teintes de la famille, qui partent du médaillon
       if (pris !== null && pris.i === i) {
         const ap = (tReel - pris.t0) / DUREE_DE_LA_PRISE
-        const F = FAMILLES_DE_TALENT[ta.famille].c
+        const F = COULEURS_DE_RARETE[ta.rarete].c
         const cx = x + CW / 2
-        const cy = y + dy + 24
+        const cy = y + dy + 23
         p.ring(cx, cy, 12 + 70 * sortie(ap), 2, F[3], Math.max(0, 1 - ap))
         p.glow(cx, cy, 40, F[3], 0.6 * (1 - ap))
         for (let k = 0; k < 28; k++) {
@@ -15459,6 +15512,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // insectes, la tempête, les étincelles, les effets ; L'HORLOGE DE L'INTERFACE `tReel` continue : les menus, les
     // boutons, le décompte du talent
     tReel += dtReel
+    // (`&choix` : un choix de talent s'ouvre une seconde et demie après le décollage, pour juger les cartes d'un lien)
+    if (VORTEX && parametres.has('choix') && !choixDEssaiOuvert && enJeu && t - arriveA > 1.5 && choixDeTalent === null) {
+      choixDEssaiOuvert = true
+      choixDeTalent = ouvrirLeChoix(0)
+      talentFinA = tReel + DUREE_DU_CHOIX
+      talentA = tReel
+    }
     // (l'appui tenu mené à son terme : la zone qu'il tient agit — retrouvée à sa place, les zones se refont à chaque image)
     if (tenue !== null && tReel - tenue.a >= tenue.tenir) {
       const tn = tenue

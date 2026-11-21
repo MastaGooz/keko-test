@@ -7477,3 +7477,30 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     partent du médaillon, les deux autres TOMBENT, assombries (un voile, pas un damier) ; le talent s'applique quand
     l'éclat est fini (`DUREE_DE_LA_PRISE`, 0,42 s), et le jeu reprend.
   - Vu à la capture : couché, debout, PC ; un appui court relâché ne prend rien ; la prise et sa gerbe.
+
+- **21/11, DES CARTES PAR ARME ET PAR FACTION, EN POUR CENT, DE CINQ RARETÉS.** Keko : « chaque arme a son propre pool
+  de cartes (cadence, zone, portée, dégâts… en fonction de la pertinence) ; quand le vaisseau level up on tire une carte
+  parmi ce pool ; on y ajoute aussi les cartes de la faction (ex. Xénoïdes : up régén, up PV) ; les upgrades en % (pas
+  absolu), de rareté commune (blanc), uncommon (vert), rare (bleu), épique (violet) et légendaire (orange) ; on signale
+  la catégorie par l'icône de l'arme ou le symbole de la faction » — « +5 / 8 / 12 / 18 / 25 % » (chances 55 / 25 / 13
+  / 6 / 1 %), et le moteur et l'aimant dans le pool de la faction, choisis parmi trois et deux.
+  - LA RÈGLE (`talents.ts`, réécrit) : une carte = une CIBLE (l'arme montée, ou la faction), une STAT, une RARETÉ. LE POOL
+    DE L'ARME SE LIT DANS L'ARME (`statsDeLArme`) : dégâts si elle en porte, cadence si elle a un délai, portée, ZONE si
+    une de ses branches d'effet a un rayon ou une largeur (l'orbite des drones n'en est pas une), DURÉE si elle en a une
+    — les 36 armes sans table (le canon : dégâts, cadence, portée ; le napalm : les cinq). Une carte d'arme change toutes
+    les valeurs de la stat dans ses branches d'effet (`armeAmelioree` : les dégâts restent entiers et montent d'un au
+    moins ; la cadence raccourcit aussi l'intervalle de ce qu'elle pose ; la portée allonge la vie des projectiles). LE
+    POOL DE LA FACTION (`STATS_DE_FACTION`) : blindage, moteur, aimant pour toutes ; l'Empire le RÉPIT (l'invulnérabilité
+    après un coup — ses plaques ne se comptent pas en pour cent), les Xénoïdes la RÉGÉNÉRATION, les Vectrans le BOUCLIER
+    et sa RECHARGE, les Yhg'tharr le DÉPHASAGE (sa chance) et la PHASE (sa durée). Trois stats différentes, chacune sa
+    rareté, tirées de la graine de la partie et du niveau. Ce qu'on gagne de vie ou de bouclier est donné tout de suite.
+    Testé (`talents.verif.ts`) : les chances (sur 9 000 cartes, 54,7 / 25,2 / 13,2 / 5,9 / 1,1 %), les pools, les
+    pour cent, qu'une carte ne touche que son arme et se cumule, qu'une carte hors du pool n'est jamais proposée.
+  - LA CARTE : sa couleur est sa RARETÉ (`COULEURS_DE_RARETE` : blanc, vert, bleu, violet, orange ; ses rayons d'autant
+    plus forts) ; dans le médaillon, agrandi, SA CIBLE — l'icône de l'arme au double, ou l'emblème de la faction ; le
+    nom de la stat, le bonus en grand (« +12 % », la lettre grasse au double : celle des titres faisait d'un 8 un 0), ce
+    qu'il change, la cible en clair (le nom de l'arme ou de la faction), la rareté en pied ; deux étoiles courent sur le
+    cadre d'une épique, cinq sur celui d'une légendaire. 84 × 120.
+  - `&choix` ouvre un choix une seconde et demie après le décollage ; `&rarete=R` (commune, peuCommune, rare, epique,
+    legendaire) met les trois cartes à cette rareté. Vu à la capture, sur quatre vaisseaux des quatre factions.
+  - *Les noms des stats (Répit, Phase…), les pools de faction et la règle de pertinence sont de moi.*
