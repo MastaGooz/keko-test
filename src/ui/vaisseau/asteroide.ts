@@ -306,20 +306,54 @@ export function dessinerPepite(p: PeintreRoche, pe: Pepite, t: number, refusee =
  * l'astéroïde ; et un petit symbole d'aimant, de la couleur des pépites, qui attire toutes les pépites de la carte » —
  * « un éclat qui scintille et un léger flottement », choisi parmi trois.)
  *
- * LES GEMMES SONT DESSINÉES PIXEL PAR PIXEL, en trois tailles d'une même taille de pierre (une table claire en haut,
- * la culasse en pointe dessous, le pan gauche éclairé, le droit dans l'ombre, cernées du ton le plus sombre) : à cette
- * taille, un polygone calculé n'était qu'une tache. Chiffres : 0 le cerne, 1 à 3 la teinte de l'ombre au clair, 4 le
- * blanc ; « . » rien.
+ * (PAS EN DIAMANT — Keko, 21/11, à la première version : « la forme des pépites en diamant, je ne suis pas fan ; je
+ * préfère la forme plus naturelle des pépites » : des gemmes taillées, dessinées pixel par pixel, essayées et retirées.)
  */
-const GEMMES: Record<number, string[]> = {
-  1: ['.ooo.', 'o342o', 'o221o', '.o1o.', '..o..'],
-  3: ['.ooooo.', 'o34432o', 'o32221o', 'o22221o', '.o221o.', '..o1o..', '...o...'],
-  10: ['..ooooooo..', '.o3344432o.', 'o333444322o', 'o322222211o', 'o222222211o', '.o2222211o.', '..o22211o..', '...o221o...', '....o1o....', '.....o.....'],
+/** Le rayon d'une pépite libre selon sa valeur : la petite (1), la moyenne (3), la grosse (10). */
+const rayonDePepite = (valeur: number): number => (valeur >= 10 ? 4.6 : valeur >= 3 ? 3.4 : 2.4)
+/**
+ * UNE PÉPITE DU VORTEX, LIBRE : UN MORCEAU DE MINERAI — un caillou irrégulier tiré de sa graine (plus de pans sur une
+ * grosse), cerné du sombre de sa teinte, son pan vers la lampe clair et l'opposé dans l'ombre, un reflet blanc sur la
+ * grosse et la moyenne —, à la taille de sa valeur, qui culbute doucement et FLOTTE d'un pixel, dans un halo qui
+ * respire, et UN ÉCLAT EN ÉTOILE qui s'ouvre sur elle de temps en temps, à contretemps des autres.
+ */
+export function dessinerPepiteDuVortex(p: PeintreRoche, pe: Pepite, t: number, T: number[]): void {
+  const v = pe.valeur ?? 1
+  const R = rayonDePepite(v)
+  const flotte = Math.round(Math.sin(t * 2.6 + tire(pe.graine, 70) * 6.28))
+  const x = Math.round(pe.x)
+  const y = Math.round(pe.y) + flotte
+  const bat = 0.5 + 0.5 * Math.sin(t * 3.5 + tire(pe.graine, 63) * 6.28)
+  const angle = tire(pe.graine, 60) * 6.28 + t * (0.5 + 0.7 * tire(pe.graine, 61)) * (tire(pe.graine, 62) < 0.5 ? -1 : 1)
+  const n = v >= 10 ? 8 : v >= 3 ? 6 : 5
+  const forme = (plus: number): number[][] => {
+    const pts: number[][] = []
+    for (let k = 0; k < n; k++) {
+      const th = angle + ((k + (tire(pe.graine, 64, k) - 0.5) * 0.55) / n) * Math.PI * 2
+      const r = R * (0.72 + 0.32 * tire(pe.graine, 65, k)) + plus
+      pts.push([x + 0.5 + Math.cos(th) * r, y + 0.5 + Math.sin(th) * r])
+    }
+    return pts
+  }
+  p.glow(x, y, 4 + R * 2, T[2], 0.2 + 0.15 * bat)
+  p.poly(forme(1.1), T[0])
+  p.poly(forme(0), (px, py) => {
+    const k = ((px - x - 0.5) * LUMIERE.x + (py - y - 0.5) * LUMIERE.y) / R
+    return k > 0.45 ? T[3] : k < -0.4 ? T[1] : T[2]
+  })
+  if (v >= 3) p.dot(x - Math.round(R * 0.35), y - Math.round(R * 0.4), 0xffffffff)
+  // (l'éclat : une étoile à quatre branches qui s'ouvre et se referme, plus grande sur une grosse)
+  const u = (t * 0.5 + tire(pe.graine, 66)) % 1
+  if (u < 0.16) {
+    const k = Math.sin((u / 0.16) * Math.PI)
+    const gx = x - Math.round(R * 0.35)
+    const gy = y - Math.round(R * 0.4)
+    const L = Math.round((v >= 10 ? 4 : v >= 3 ? 3 : 2) * k)
+    p.dot(gx, gy, 0xffffffff)
+    for (let e = 1; e <= L; e++) for (const [ax, ay] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) p.dot(gx + ax * e, gy + ay * e, e === L ? T[3] : 0xffffffff, 1 - e / (L + 1))
+    p.glow(gx, gy, 3 + R, 0xffffffff, 0.4 * k)
+  }
 }
-/** La gemme d'une valeur (1, 3 ou 10 — la plus proche par en dessous). */
-const gemmeDe = (valeur: number): string[] => GEMMES[valeur >= 10 ? 10 : valeur >= 3 ? 3 : 1]
-/** La demi-largeur d'une gemme, en pixels (pour la place qu'elle prend). */
-export const rayonDeGemme = (valeur: number): number => (gemmeDe(valeur)[0].length + 1) / 2
 const AIMANT = [
   'oooo...oooo',
   'o44o...o44o',
@@ -333,47 +367,16 @@ const AIMANT = [
   '..o22211o..',
   '...ooooo...',
 ]
-/** Pose un dessin en chiffres, son centre en (x, y), aux tons de `T` (le cerne : `cerne`, sinon le plus sombre de `T`). */
-function poserLeDessin(p: PeintreRoche, d: string[], x: number, y: number, T: number[], cerne = T[0]): void {
+/** Pose un dessin en chiffres, son centre en (x, y), aux tons de `T` (« o » le plus sombre, « 4 » le blanc). */
+function poserLeDessin(p: PeintreRoche, d: string[], x: number, y: number, T: number[]): void {
   const x0 = x - Math.floor(d[0].length / 2)
   const y0 = y - Math.floor(d.length / 2)
   for (let j = 0; j < d.length; j++)
     for (let i = 0; i < d[j].length; i++) {
       const ch = d[j][i]
       if (ch === '.') continue
-      p.dot(x0 + i, y0 + j, ch === 'o' ? cerne : ch === '4' ? 0xffffffff : T[Number(ch)])
+      p.dot(x0 + i, y0 + j, ch === 'o' ? T[0] : ch === '4' ? 0xffffffff : T[Number(ch)])
     }
-}
-/** UNE GEMME de la valeur `valeur`, son centre en (x, y) — libre, ou sertie dans une roche. */
-export function dessinerGemme(p: PeintreRoche, x: number, y: number, valeur: number, T: number[], cerne?: number): void {
-  poserLeDessin(p, gemmeDe(valeur), x, y, T, cerne)
-}
-/**
- * UNE PÉPITE DU VORTEX, LIBRE : sa gemme à la taille de sa valeur, qui FLOTTE doucement (un pixel, à son rythme), dans
- * un halo de sa teinte qui respire, et UN ÉCLAT EN ÉTOILE qui s'ouvre sur sa table de temps en temps, à contretemps
- * des autres (une étoile du fond ne bouge pas, n'a ni bord ni facettes).
- */
-export function dessinerPepiteDuVortex(p: PeintreRoche, pe: Pepite, t: number, T: number[]): void {
-  const v = pe.valeur ?? 1
-  const d = gemmeDe(v)
-  const flotte = Math.round(Math.sin(t * 2.6 + tire(pe.graine, 70) * 6.28))
-  const x = Math.round(pe.x)
-  const y = Math.round(pe.y) + flotte
-  const bat = 0.5 + 0.5 * Math.sin(t * 3.5 + tire(pe.graine, 63) * 6.28)
-  const r = d[0].length / 2
-  p.glow(x, y, 4 + r * 2, T[2], 0.2 + 0.15 * bat)
-  poserLeDessin(p, d, x, y, T)
-  // (l'éclat : une étoile à quatre branches qui s'ouvre et se referme sur la table, plus grande sur une grosse)
-  const u = (t * 0.5 + tire(pe.graine, 66)) % 1
-  if (u < 0.16) {
-    const k = Math.sin((u / 0.16) * Math.PI)
-    const gx = x - Math.floor(d[0].length / 2) + (v >= 10 ? 4 : v >= 3 ? 2 : 1)
-    const gy = y - Math.floor(d.length / 2) + 1
-    const L = Math.round((v >= 10 ? 4 : v >= 3 ? 3 : 2) * k)
-    p.dot(gx, gy, 0xffffffff)
-    for (let e = 1; e <= L; e++) for (const [ax, ay] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) p.dot(gx + ax * e, gy + ay * e, e === L ? T[3] : 0xffffffff, 1 - e / (L + 1))
-    p.glow(gx, gy, 3 + r, 0xffffffff, 0.4 * k)
-  }
 }
 /**
  * L'AIMANT (Keko, 21/11 : « un petit symbole de la couleur des pépites, un symbole d'aimant ; quand on le prend, ça
@@ -393,10 +396,17 @@ export function dessinerAimant(p: PeintreRoche, x0: number, y0: number, t: numbe
  * de plus naturel ») : un polygone de dix à dix-sept sommets à des angles inégaux, ses rayons tirés de la graine sur
  * une forme allongée (deux ondes larges : un côté long, un côté creux) — des arêtes de caillou, pas une patate. OMBRÉE
  * comme un volume : la normale d'un dôme qui suit la silhouette (le rayon du bord à cet angle), la lumière d'en haut à
- * gauche, CINQ APLATS dont les frontières ondulent (un bruit large, pas de grain ni de trame), un bord vif côté lampe et
- * sombre en face, un cerne d'un pixel ; des cratères et des fissures sur les grosses. ET SES PÉPITES SERTIES : chaque
- * gemme de `gemmes` (la plus grosse d'abord, vers le cœur) dans un creux sombre, écartées l'une de l'autre ; celles qui
- * n'ont pas de place ne se dessinent pas (elles tombent quand même). Sans gemmes : une roche nue (la tempête).
+ * gauche, CINQ APLATS SOMBRES (Keko, 21/11 : « trop clairs » — un ton plus bas qu'à la première version) dont les
+ * frontières ondulent (un bruit large, pas de grain ni de trame), un bord vif côté lampe et sombre en face, un cerne
+ * d'un pixel ; des cratères et des fissures sur les grosses.
+ *
+ * SES PÉPITES SONT PRISES DANS LA PIERRE, COMME LES PÉPITES D'UN COOKIE (Keko, 21/11 : « intégrées comme ça, c'est très
+ * moche, on dirait qu'elles sont plaquées dessus ; que ce soit l'astéroïde qui dise : j'ai des petites pépites qui
+ * dépassent de ma surface ; des parties de pépites incrustées, un peu comme les pépites d'un cookie ») : un ÉCLAT
+ * irrégulier par gemme qu'elle rend (`gemmes`, plus gros pour une plus grosse), sans cerne, ÉCLAIRÉ COMME LA ROCHE À SA
+ * PLACE (dans l'ombre de la roche, l'éclat est sombre), logé dans un creux — un pixel d'ombre du côté opposé à la
+ * lampe, une lèvre de pierre claire du côté de la lampe ; un sur trois est au bord, et DÉPASSE de la silhouette.
+ * Sans gemmes : une roche nue (la tempête).
  */
 export function dessinerRocheDuVortex(p: PeintreRoche, a: Asteroide, t: number, cx: number, cy: number, gemmes: number[] = [], T: number[] = TEINTES_MINERAI.cristal): void {
   const C = rocheDe(a.minerai)
@@ -417,7 +427,7 @@ export function dessinerRocheDuVortex(p: PeintreRoche, a: Asteroide, t: number, 
     angles.push(th)
     rayons.push(R * Math.max(0.55, Math.min(1, (onde + allonge * 0.6) * (0.86 + 0.14 * tire(a.graine, 84, k)))))
   }
-  // (le rayon du bord à un angle propre : entre ses deux sommets, en ligne droite)
+  // (le rayon du bord à un angle propre : sur le segment de ses deux sommets)
   const bordA = (th: number): number => {
     const u = ((th % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2)
     for (let k = 0; k < n; k++) {
@@ -425,7 +435,6 @@ export function dessinerRocheDuVortex(p: PeintreRoche, a: Asteroide, t: number, 
       const a1 = k + 1 < n ? angles[k + 1] : angles[0] + Math.PI * 2
       const uu = u < a0 ? u + Math.PI * 2 : u
       if (uu >= a0 && uu <= a1) {
-        // (l'intersection du rayon avec le segment des deux sommets)
         const x0 = Math.cos(a0) * rayons[k]
         const y0 = Math.sin(a0) * rayons[k]
         const k1 = (k + 1) % n
@@ -440,50 +449,106 @@ export function dessinerRocheDuVortex(p: PeintreRoche, a: Asteroide, t: number, 
     return rayons[0]
   }
   const tourne = (lx: number, ly: number): number[] => [cx + 0.5 + lx * cosA - ly * sinA, cy + 0.5 + lx * sinA + ly * cosA]
+  const propre = (px: number, py: number): number[] => {
+    const dx = px - cx - 0.5
+    const dy = py - cy - 0.5
+    return [dx * cosA + dy * sinA, -dx * sinA + dy * cosA]
+  }
+  // la lumière, en coordonnées propres
+  const lxp = LUMIERE.x * cosA + LUMIERE.y * sinA
+  const lyp = -LUMIERE.x * sinA + LUMIERE.y * cosA
+  const ll = Math.hypot(lxp, lyp)
   const pts = angles.map((th, k) => tourne(Math.cos(th) * rayons[k], Math.sin(th) * rayons[k]))
-  // les cratères et les fissures (les grosses seules)
+  // les cratères (les grosses seules)
   const crateres: { x: number; y: number; r: number }[] = []
   for (let i = 0; i < (R >= 20 ? 3 : R >= 13 ? 2 : R >= 9 ? 1 : 0); i++) {
     const th = tire(a.graine, 15, i) * Math.PI * 2
     const d = bordA(th) * (0.3 + 0.4 * tire(a.graine, 16, i))
     crateres.push({ x: Math.cos(th) * d, y: Math.sin(th) * d, r: Math.max(1.6, R * (0.09 + 0.06 * tire(a.graine, 17, i))) })
   }
-  // le cerne : la silhouette un pixel plus large
-  p.poly(pts.map(([x, y]) => [cx + 0.5 + (x - cx - 0.5) * (1 + 1.2 / R), cy + 0.5 + (y - cy - 0.5) * (1 + 1.2 / R)]), C[0])
-  p.poly(pts, (px, py) => {
-    const dx = px + 0.5 - cx - 0.5
-    const dy = py + 0.5 - cy - 0.5
-    const lx = dx * cosA + dy * sinA
-    const ly = -dx * sinA + dy * cosA
+  // LES ÉCLATS DE PÉPITE : un par gemme, la plus grosse d'abord, écartés ; un sur trois au bord (il dépasse)
+  type Eclat = { x: number; y: number; r: number; g: number; bord: boolean }
+  const eclats: Eclat[] = []
+  let place = 0.26 * Math.PI * R * R
+  for (const [i, val] of [...gemmes].sort((u, v) => v - u).entries()) {
+    const r = val >= 10 ? 3.2 : val >= 3 ? 2.3 : 1.5
+    if (Math.PI * r * r > place) continue
+    const auBord = tire(a.graine, 92, i) < 0.34
+    for (let essai = 0; essai < 24; essai++) {
+      const th = tire(a.graine, 90, i, essai) * Math.PI * 2
+      const b = bordA(th)
+      const d = auBord ? b - r * 0.25 : (b - r - 1.5) * (0.1 + 0.8 * tire(a.graine, 91, i, essai))
+      if (d < 0) continue
+      const x = Math.cos(th) * d
+      const y = Math.sin(th) * d
+      if (eclats.some((o) => Math.hypot(o.x - x, o.y - y) < o.r + r + 1.5)) continue
+      eclats.push({ x, y, r, g: hacheDe(a.graine, i), bord: auBord })
+      place -= Math.PI * r * r
+      break
+    }
+  }
+  // (la forme d'un éclat : un rayon irrégulier selon l'angle, en coordonnées propres)
+  const rayonDeLEclat = (e: Eclat, th: number): number => e.r * Math.max(0.6, 1 + 0.24 * Math.cos(2 * th + tire(e.g, 1) * 6.28) + 0.14 * Math.cos(3 * th + tire(e.g, 2) * 6.28))
+  const dansLEclat = (lx: number, ly: number): Eclat | null => {
+    for (const e of eclats) {
+      const ox = lx - e.x
+      const oy = ly - e.y
+      if (Math.hypot(ox, oy) <= rayonDeLEclat(e, Math.atan2(oy, ox))) return e
+    }
+    return null
+  }
+  // L'ÉCLAIRAGE DE LA PIERRE en un point propre : celui du dôme qui suit la silhouette, au-delà du bord celui du bord
+  const eclairage = (lx: number, ly: number): { e: number; q: number; sx: number; sy: number } => {
     const bord = bordA(Math.atan2(ly, lx))
     const q = Math.min(0.999, Math.hypot(lx, ly) / bord)
-    const l = Math.hypot(dx, dy) || 1
-    const nx = (dx / l) * q
-    const ny = (dy / l) * q
+    const l = Math.hypot(lx, ly) || 1
+    const nx = (lx / l) * q
+    const ny = (ly / l) * q
     const nz = Math.sqrt(1 - q * q)
-    let e = nx * LUMIERE.x + ny * LUMIERE.y + nz * LUMIERE.z
-    // (des frontières qui ondulent : un bruit large)
+    let e = (nx * lxp + ny * lyp) + nz * LUMIERE.z
     e += 0.16 * N.fbm(lx / (R * 0.5) + (a.graine % 97), ly / (R * 0.5), a.graine & 0xffff, 2)
+    return { e, q, sx: nx, sy: ny }
+  }
+  // (la couleur d'un éclat : ses quatre tons selon la lumière de la roche à sa place, plus son propre volume)
+  const couleurDeLEclat = (e: Eclat, lx: number, ly: number, lumiere: number): number => {
+    const k = ((lx - e.x) * lxp + (ly - e.y) * lyp) / (ll * e.r)
+    const v = lumiere * 2.6 + k * 1.1 + 0.6
+    if (k > 0.55 && lumiere > 0.25 && e.r >= 2) return 0xffffffff
+    return T[Math.max(0, Math.min(3, Math.floor(v)))]
+  }
+  // le cerne : la silhouette un pixel plus large
+  p.poly(pts.map(([x, y]) => [cx + 0.5 + (x - cx - 0.5) * (1 + 1.2 / R), cy + 0.5 + (y - cy - 0.5) * (1 + 1.2 / R)]), C[0])
+  // (le pas d'un pixel vers la lampe, en coordonnées propres)
+  const vx = (lxp / ll) * 1.2
+  const vy = (lyp / ll) * 1.2
+  p.poly(pts, (px, py) => {
+    const [lx, ly] = propre(px, py)
+    const { e: e0, q, sx, sy } = eclairage(lx, ly)
+    let e = e0
     for (const k of crateres) {
       const ox = lx - k.x
       const oy = ly - k.y
       const dc = Math.hypot(ox, oy)
       if (dc > k.r + 1) continue
-      // (en propre : la lumière tournée à l'envers)
-      const lxp = LUMIERE.x * cosA + LUMIERE.y * sinA
-      const lyp = -LUMIERE.x * sinA + LUMIERE.y * cosA
-      const cote = (ox * lxp + oy * lyp) / (dc || 1)
+      const cote = (ox * lxp + oy * lyp) / ((dc || 1) * ll)
       e = dc <= k.r ? (cote > 0.1 ? e - 0.5 : e - 0.18) : cote < -0.2 ? e + 0.3 : e
     }
+    // l'éclat de pépite, s'il est là
+    const ec = dansLEclat(lx, ly)
+    if (ec !== null) return couleurDeLEclat(ec, lx, ly, e)
+    // son creux : le pixel juste après lui en s'éloignant de la lampe est dans l'ombre, le pixel juste avant est la
+    // lèvre de pierre qui prend la lumière
+    if (dansLEclat(lx + vx, ly + vy) !== null) e -= 0.45
+    else if (dansLEclat(lx - vx, ly - vy) !== null) e += 0.3
     // (le bord, sur un pixel : vif côté lampe, sombre en face)
-    if (Math.hypot(lx, ly) > bord - 1.4) e += (nx * LUMIERE.x + ny * LUMIERE.y) > 0.15 ? 0.35 : -0.25
-    const ton = e > 0.72 ? 6 : e > 0.48 ? 5 : e > 0.24 ? 4 : e > 0.02 ? 3 : 2
+    if (q > 1 - 1.4 / R) e += (sx * lxp + sy * lyp) > 0.15 ? 0.3 : -0.25
+    const ton = e > 0.95 ? 5 : e > 0.7 ? 4 : e > 0.4 ? 3 : e > 0.1 ? 2 : 1
     return C[ton]
   })
-  // les fissures : deux ou trois traits sombres brisés, partis d'un bord
+  // les fissures : deux ou trois traits sombres brisés, partis d'un bord, qui restent dans la pierre
   for (let i = 0; i < (R >= 16 ? 2 : R >= 11 ? 1 : 0); i++) {
     let th = tire(a.graine, 18, i) * Math.PI * 2
-    let d = bordA(th) * 0.92
+    const d = bordA(th) * 0.92
     let [x, y] = [Math.cos(th) * d, Math.sin(th) * d]
     const pas = 2 + Math.floor(R / 10)
     for (let k = 0; k < pas; k++) {
@@ -496,31 +561,31 @@ export function dessinerRocheDuVortex(p: PeintreRoche, a: Asteroide, t: number, 
       const [bx, by] = tourne(nx2, ny2)
       p.line(Math.floor(ax), Math.floor(ay), Math.floor(bx), Math.floor(by), C[1])
       ;[x, y] = [nx2, ny2]
-      d = Math.hypot(x, y)
     }
   }
-  // LES PÉPITES SERTIES : la plus grosse d'abord, au plus près du cœur ; chacune à sa place, écartée des autres
-  const posees: { x: number; y: number; r: number }[] = []
-  // (pas plus du tiers de la roche en gemmes : au-delà, un écrin, plus une roche)
-  let place = 0.34 * Math.PI * R * R
-  for (const [i, val] of [...gemmes].sort((u, v) => v - u).entries()) {
-    const r = rayonDeGemme(val)
-    if (Math.PI * r * r > place) continue
-    for (let essai = 0; essai < 24; essai++) {
-      const th = tire(a.graine, 90, i, essai) * Math.PI * 2
-      const loin = Math.min(1, 0.2 + essai * 0.04 + 0.5 * tire(a.graine, 91, i, essai))
-      const d = Math.max(0, (bordA(th) - r - 1.5) * loin)
-      const lx = Math.cos(th) * d
-      const ly = Math.sin(th) * d
-      if (bordA(th) - d < r + 1) continue
-      if (posees.some((o) => Math.hypot(o.x - lx, o.y - ly) < o.r + r + 1)) continue
-      posees.push({ x: lx, y: ly, r })
-      place -= Math.PI * r * r
-      const [gx, gy] = tourne(lx, ly)
-      // (ENFONCÉE : son ombre portée d'un pixel en bas à droite, son cerne au plus sombre de la roche)
-      poserLeDessin(p, gemmeDe(val).map((l) => l.replace(/[1-4]/g, 'o')), Math.floor(gx) + 1, Math.floor(gy) + 1, T, C[1])
-      dessinerGemme(p, Math.floor(gx), Math.floor(gy), val, T, C[1])
-      break
+  // LES ÉCLATS QUI DÉPASSENT : leur part hors de la pierre, cernée comme elle, éclairée comme son bord
+  for (const ec of eclats) {
+    if (!ec.bord) continue
+    const contour = (plus: number): number[][] => {
+      const q: number[][] = []
+      for (let k = 0; k < 14; k++) {
+        const th = (k / 14) * Math.PI * 2
+        const r = rayonDeLEclat(ec, th) + plus
+        q.push(tourne(ec.x + Math.cos(th) * r, ec.y + Math.sin(th) * r))
+      }
+      return q
     }
+    const dehors = (px: number, py: number): boolean => {
+      const [lx, ly] = propre(px, py)
+      return Math.hypot(lx, ly) > bordA(Math.atan2(ly, lx)) + 0.2
+    }
+    p.poly(contour(1.1), (px, py) => (dehors(px, py) && dansLEclat(...(propre(px, py) as [number, number])) === null ? C[0] : 0))
+    p.poly(contour(0), (px, py) => {
+      if (!dehors(px, py)) return 0
+      const [lx, ly] = propre(px, py)
+      return couleurDeLEclat(ec, lx, ly, eclairage(lx, ly).e)
+    })
   }
 }
+/** Une graine dérivée (pour la forme de chaque éclat). */
+const hacheDe = (g: number, i: number): number => Math.floor(tire(g, 93, i) * 0x7fffffff)

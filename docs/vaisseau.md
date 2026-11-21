@@ -7369,3 +7369,19 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     image par pose, gardée, comme celles de la tempête. Les roches de la tempête sont nues ; une roche prise garde ses
     gemmes (`RochePrise.butin`).
   - `&vitrine` : les trois gemmes trois fois et l'aimant en couronne autour du vaisseau, au décollage. Vu à la capture.
+
+- **21/11, LES PÉPITES ET LES ROCHES, REPRISES.** Keko, à la première version : « les astéroïdes trop clairs, de manière
+  générale ; la forme des pépites en diamant, je ne suis pas fan, je préfère la forme plus naturelle ; et la manière dont
+  les pépites sont intégrées aux astéroïdes, c'est très moche, on dirait qu'elles sont plaquées dessus ; que ce soit
+  l'astéroïde qui dise : j'ai des petites pépites qui dépassent de ma surface ; des parties de pépites incrustées, un peu
+  comme les pépites d'un cookie ».
+  - LES PÉPITES LIBRES redeviennent DES MORCEAUX DE MINERAI (un caillou irrégulier tiré de leur graine, cerné, son pan
+    vers la lampe clair), à trois tailles (rayons 2,4 / 3,4 / 4,6, cinq, six ou huit pans), qui culbutent doucement ; le
+    flottement, le halo et l'éclat en étoile restent. Les gemmes taillées sont retirées.
+  - LA ROCHE UN CRAN PLUS SOMBRE, puis un second : le corps entre #2c2c38 et #5c5c6b de la pierre, le clair
+    (#7d7d8c) seulement sur l'arête éclairée.
+  - SES PÉPITES SONT PRISES DANS LA PIERRE, COMME LES PÉPITES D'UN COOKIE : un éclat irrégulier par gemme rendue (plus
+    gros pour une plus grosse), SANS CERNE, ÉCLAIRÉ COMME LA ROCHE À SA PLACE (sombre dans son ombre, un pixel blanc sur
+    les grands éclats au soleil), logé dans un creux — un pixel d'ombre du côté opposé à la lampe, une lèvre de pierre
+    claire du côté de la lampe ; un sur trois est au bord et DÉPASSE de la silhouette (sa part dehors cernée comme elle).
+    Un quart de la roche au plus. Vu à la planche, sur trois graines, et en jeu (`&vitrine&roche`).
