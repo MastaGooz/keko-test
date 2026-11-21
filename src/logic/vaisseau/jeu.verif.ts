@@ -1,7 +1,7 @@
 /**
  * Vérifications du vaisseau, sans navigateur : le temps est injecté.
  */
-import { vieMultipliee, cadenceDeLaVague, asteroideDeLaCase, coupeDUnCube, asteroidesAutour, avancer, avancerLeMonde, encaisser, purger, impactDuRayon, lancerLaBombe, larguer, porteeDeLaBombe, MINERAIS, nouveauMonde, nouveauVaisseau, solidite, voler, totalDe, stationDeLaCase, stationLaPlusProche, VAISSEAU, verrouiller, ennemiLePlusProche, type ConfigVaisseau, type Ennemi, type Evenement, type Vaisseau, xpDuNiveau } from './jeu.ts'
+import { rocheDeLaTempete, vieMultipliee, cadenceDeLaVague, asteroideDeLaCase, coupeDUnCube, asteroidesAutour, avancer, avancerLeMonde, encaisser, purger, impactDuRayon, lancerLaBombe, larguer, porteeDeLaBombe, MINERAIS, nouveauMonde, nouveauVaisseau, solidite, voler, totalDe, stationDeLaCase, stationLaPlusProche, VAISSEAU, verrouiller, ennemiLePlusProche, type ConfigVaisseau, type Ennemi, type Evenement, type Vaisseau, xpDuNiveau } from './jeu.ts'
 import { acheter, configDuHangar, hangarNeuf, monter, pieceDe } from './hangar.ts'
 
 /** Les règles sont vérifiées SANS la zone calme de la base (le rival naît où que soit le joueur) et AVEC les extracteurs par case (éteints en jeu pour l'instant) ; la base et la station seule ont leurs propres vérifications, plus bas. */
@@ -3201,6 +3201,52 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   const fait = w.vaisseau.x - 100
   for (let i = 0; i < 60; i++) avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
   verifier(`abattu, le manche déplace la zone : ${Math.round(fait)} en deux secondes (${2 * cfg.invasion.retour.vitesse} attendus) ; il revient là (${Math.round(w.vaisseau.x)})`, Math.abs(fait - 2 * cfg.invasion.retour.vitesse) < 2 && (w.phase as string) === 'vol' && Math.abs(w.vaisseau.x - (100 + fait)) < 1)
+}
+
+// RIEN NE SE SUPERPOSE (Keko, 21/11 : « quand un astéroïde entre dans le vortex, des astéroïdes se superposent alors
+// qu'ils ne devraient pas ») : les roches de la tempête ne se recouvrent jamais ; une roche prise ne recouvre aucune
+// d'elles ; deux roches qui dérivent l'une vers l'autre rebondissent sans se traverser
+{
+  const cfg = { ...VAISSEAU, coque: 1e9, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, arene: { ...VAISSEAU.arene, active: true, dps: 0 }, derive: { ...VAISSEAU.derive, active: true, premier: 1e9 } }
+  // (la tempête : toutes ses paires, à trois instants)
+  let recouvrements = 0
+  for (const t of [0, 13.7, 61.2]) {
+    const l = Array.from({ length: cfg.arene.roches }, (_, k) => rocheDeLaTempete(cfg, k, t))
+    for (let i = 0; i < l.length; i++) for (let j = i + 1; j < l.length; j++) if (Math.hypot(l[i].x - l[j].x, l[i].y - l[j].y) < l[i].rayon + l[j].rayon) recouvrements++
+  }
+  // (une roche prise : sa plus forte pénétration dans une roche de la tempête, sur six secondes)
+  const roche = (id: number, x: number, y: number, vx: number, vy: number, rayon: number): Ennemi => ({ id, corps: { ...nouveauVaisseau(), x, y, vx, vy }, pv: 500, fait: 'marche', roche: null, forage: null, tirA: 0, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, grand: true, asteroide: { rayon, graine: 1, angle0: 0, vitesseAngulaire: 0, pvMax: 500 } })
+  const w = nouveauMonde(cfg, 5)
+  w.invasion.prochainA = 1e9
+  w.prochaineDeriveA = 1e9
+  w.vaisseau = { ...w.vaisseau, x: 600, y: 600 }
+  w.ennemis.push(roche(300, 990 * Math.cos(0.7), 990 * Math.sin(0.7), 40 * Math.cos(0.7), 40 * Math.sin(0.7), 20))
+  let penetration = 0
+  let prise = false
+  for (let i = 0; i < 60 * 6; i++) {
+    avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+    w.vaisseau = { ...w.vaisseau, x: 600, y: 600, vx: 0, vy: 0 }
+    const r = w.rochesPrises.find((x) => x.id === 300)
+    if (r === undefined) continue
+    prise = true
+    for (let k = 0; k < cfg.arene.roches; k++) {
+      const q = rocheDeLaTempete(cfg, k, w.t)
+      penetration = Math.max(penetration, r.rayon + q.rayon - Math.hypot(r.x - q.x, r.y - q.y))
+    }
+  }
+  // (deux roches qui dérivent l'une vers l'autre)
+  const w2 = nouveauMonde(cfg, 5)
+  w2.invasion.prochainA = 1e9
+  w2.prochaineDeriveA = 1e9
+  const a = roche(400, -60, 0, 40, 0, 15)
+  const b = roche(401, 60, 0, -40, 0, 15)
+  w2.ennemis.push(a, b)
+  let dMin = Infinity
+  for (let i = 0; i < 60 * 3; i++) {
+    avancerLeMonde(cfg, w2, 1 / 60, { x: 0, y: 0 })
+    if (w2.ennemis.includes(a) && w2.ennemis.includes(b)) dMin = Math.min(dMin, Math.hypot(a.corps.x - b.corps.x, a.corps.y - b.corps.y))
+  }
+  verifier(`rien ne se superpose : la tempête, ${recouvrements} recouvrement(s) entre ses roches ; une roche prise (${prise}) s'enfonce au plus de ${penetration.toFixed(1)} dans les siennes ; deux roches face à face, au plus près à ${dMin.toFixed(1)} (contact à 30), et elles repartent (${a.corps.vx.toFixed(0)}, ${b.corps.vx.toFixed(0)})`, recouvrements === 0 && prise && penetration <= 0.01 && dMin >= 29.5 && a.corps.vx < 0 && b.corps.vx > 0)
 }
 
 // (TOUJOURS EN DERNIER : des blocs ajoutés après cette ligne échouaient sans faire échouer `npm run verif` — 17/11)

@@ -7221,3 +7221,17 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   une roche prise est figée à l'angle où la tempête la prend. La page n'en garde plus qu'UNE IMAGE PAR ROCHE (400 au plus,
   contre 110 × 48, ~25 Mo). Mesuré dézoomé au plus, au bord, cent vingt insectes : 47 images par seconde. Ce qui reste
   du dessin des roches (10 %) : les quelques roches qui dérivent, qui tournent et se repeignent à chaque image.
+
+- **21/11, plus aucune roche ne se superpose** (Keko : « quand un astéroïde entre dans le vortex, ou même dans la zone,
+  des astéroïdes se superposent alors qu'ils ne devraient pas »). MESURÉ : les roches de la tempête tournaient chacune à
+  sa vitesse et se traversaient — au moins un recouvrement à 119 instants sur 120 ; une roche prise s'y posait sans rien
+  voir ; deux roches qui dérivaient se traversaient.
+  - LA TEMPÊTE TOURNE D'UN BLOC : toutes ses roches à la même vitesse angulaire (`vitesseDeLaTempete`, `arene.vitesse`
+    au milieu de l'anneau), PLACÉES UNE FOIS SANS SE RECOUVRIR (`placementDeLaTempete` : leur place tirée de leur rang,
+    retirée tant qu'elle recouvre une de celles d'avant) — elles ne se rencontrent plus.
+  - UNE ROCHE PRISE tourne avec elles, et se pousse hors de celles qu'elle touche en glissant vers le milieu ; deux
+    roches prises s'écartent.
+  - DEUX ROCHES QUI DÉRIVENT SE HEURTENT (`heurterLesDerives`) : écartées, elles rebondissent, chacune pesant le carré
+    de son rayon, le choc gardant `derive.rebond` (0,6, de moi) de leur vitesse relative.
+  Testé : aucun recouvrement dans la tempête à trois instants ; une roche prise ne s'enfonce jamais dans les siennes ;
+  deux roches face à face se touchent à 30 (contact à 30) et repartent. Vu à la capture.

@@ -391,7 +391,7 @@ export const VAISSEAU = {
    * c'était 6 à 13, et 5 × rayon² : une grosse roche aurait demandé une minute) ; détruite, elle lâche `pepitesParPv` pépite par point de vie (un
    * insecte, une pour 120) ; elle heurte le vaisseau de `choc` unités de vie. *Les chiffres sont de moi, à rejuger.*
    */
-  derive: { active: false as boolean, premier: 12, tousMin: 8, tousMax: 16, max: 3, marge: 60, visee: 200, rayonMin: 8, rayonMax: 34, vitesseMin: 10, vitesseMax: 42, pvA10: 500, exposant: 1.5, pepitesParPv: 1 / 60, choc: 2, chocInsecte: 60 },
+  derive: { active: false as boolean, /** Ce que garde un choc entre deux roches qui dérivent (voir `heurterLesDerives`). */ rebond: 0.6, premier: 12, tousMin: 8, tousMax: 16, max: 3, marge: 60, visee: 200, rayonMin: 8, rayonMax: 34, vitesseMin: 10, vitesseMax: 42, pvA10: 500, exposant: 1.5, pepitesParPv: 1 / 60, choc: 2, chocInsecte: 60 },
   ennemi: { apparait: 10, revient: 5, distance: 320, pv: 36, poussee: 120, vitesseMax: 85, rotation: 5, rayon: 4, cherche: 260, rode: 450, voit: 130, accourt: 420, tient: 80, fuit: 10, lache: 260, cadence: 1.8, vitesseTir: 130, dispersion: 0.16, vieTir: 2, butinRendu: 3,
     /**
      * LE RIVAL PEUT PORTER DE VRAIES ARMES (Keko, 14/11 : « deux canons, le reste en mitraillette, et deux missiles dans
@@ -1682,12 +1682,43 @@ export const rayonDe = (c: ConfigVaisseau, e: Ennemi): number => e.asteroide?.ra
  * TOURNE PAS SUR ELLE-MÊME (Keko, 21/11 : « pas obligé de faire tourner les astéroïdes dans le vortex ») : elle tourne
  * autour du centre, c'est tout — et la page n'en garde qu'une image.
  */
+// (… ET ELLE TOURNE D'UN BLOC — Keko, 21/11 : « des astéroïdes se superposent alors qu'ils ne devraient pas » : chacune
+// tournait à sa vitesse, elles se dépassaient et se traversaient. TOUTES TOURNENT À LA MÊME VITESSE ANGULAIRE
+// (`vitesseDeLaTempete` : `arene.vitesse` le long du milieu de l'anneau), et elles sont PLACÉES UNE FOIS SANS SE
+// RECOUVRIR (`placementDeLaTempete`) : elles ne se rencontrent jamais)
 export function rocheDeLaTempete(c: ConfigVaisseau, k: number, t: number): { x: number; y: number; vx: number; vy: number; rayon: number; graine: number; angle0: number; vitesseAngulaire: number } {
+  const pl = placementDeLaTempete(c)[k]
+  const w = vitesseDeLaTempete(c)
+  const a = pl.a0 + w * t
+  return { x: Math.cos(a) * pl.r, y: Math.sin(a) * pl.r, vx: -Math.sin(a) * w * pl.r, vy: Math.cos(a) * w * pl.r, rayon: pl.rayon, graine: hache(7, k), angle0: tire(7, k, 5) * 6.28, vitesseAngulaire: 0 }
+}
+/** La vitesse angulaire de la tempête, la même pour toutes ses roches (voir `rocheDeLaTempete`). */
+export const vitesseDeLaTempete = (c: ConfigVaisseau): number => c.arene.vitesse / (c.arene.rayon + c.arene.largeur / 2)
+/**
+ * OÙ SONT LES ROCHES DE LA TEMPÊTE À L'INSTANT ZÉRO : la k-ième, son rayon et son angle tirés de son rang — et, si elle
+ * recouvre une de celles d'avant, retirés (quarante fois au plus) jusqu'à ce qu'elle ne recouvre plus rien. Calculé une
+ * fois par réglage de l'arène, gardé.
+ */
+const placements = new Map<string, { r: number; a0: number; rayon: number }[]>()
+function placementDeLaTempete(c: ConfigVaisseau): { r: number; a0: number; rayon: number }[] {
   const A = c.arene
-  const r = A.rayon + A.largeur * (0.15 + 0.7 * tire(7, k, 1))
-  const w = (A.vitesse * (0.8 + 0.4 * tire(7, k, 2))) / r
-  const a = ((k + tire(7, k, 3) * 0.8) / A.roches) * Math.PI * 2 + w * t
-  return { x: Math.cos(a) * r, y: Math.sin(a) * r, vx: -Math.sin(a) * w * r, vy: Math.cos(a) * w * r, rayon: A.rocheMin + (A.rocheMax - A.rocheMin) * tire(7, k, 4) ** 1.5, graine: hache(7, k), angle0: tire(7, k, 5) * 6.28, vitesseAngulaire: 0 }
+  const cle = `${A.rayon}:${A.largeur}:${A.roches}:${A.rocheMin}:${A.rocheMax}`
+  const deja = placements.get(cle)
+  if (deja !== undefined) return deja
+  const l: { r: number; a0: number; rayon: number }[] = []
+  for (let k = 0; k < A.roches; k++) {
+    const rayon = A.rocheMin + (A.rocheMax - A.rocheMin) * tire(7, k, 4) ** 1.5
+    let pl = { r: 0, a0: 0, rayon }
+    for (let essai = 0; essai < 40; essai++) {
+      const r = A.rayon + A.largeur * (0.15 + 0.7 * tire(7, k, 1, essai))
+      const a0 = ((k + tire(7, k, 3, essai) * 0.8) / A.roches) * Math.PI * 2
+      pl = { r, a0, rayon }
+      if (l.every((q) => Math.hypot(Math.cos(a0) * r - Math.cos(q.a0) * q.r, Math.sin(a0) * r - Math.sin(q.a0) * q.r) >= rayon + q.rayon + 2)) break
+    }
+    l.push(pl)
+  }
+  placements.set(cle, l)
+  return l
 }
 
 /** UN POINT DE NAISSANCE DANS L'ARÈNE (voir `arene`) : à `d` du vaisseau dans la direction `a` — tourné, ou ramené, s'il tombait dans la tempête. */
@@ -1767,9 +1798,11 @@ function subirLArene(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[], a
   }
   // (LES ROCHES DE LA TEMPÊTE : celle qui le touche le repousse et l'emporte ; un choc lui coûte `choc` — et celles qu'elle a
   // prises, pareil)
+  const wt = vitesseDeLaTempete(c)
   const prises = m.rochesPrises.map((r) => {
     const a = Math.atan2(r.y, r.x)
-    return { x: r.x, y: r.y, vx: -Math.sin(a) * A.vitesse, vy: Math.cos(a) * A.vitesse, rayon: r.rayon }
+    const rr = Math.hypot(r.x, r.y)
+    return { x: r.x, y: r.y, vx: -Math.sin(a) * wt * rr, vy: Math.cos(a) * wt * rr, rayon: r.rayon }
   })
   for (let k = 0; k < A.roches + prises.length; k++) {
     const r = k < A.roches ? rocheDeLaTempete(c, k, m.t) : prises[k - A.roches]
@@ -1902,14 +1935,75 @@ function menerLesRochesPrises(c: ConfigVaisseau, m: Monde, dt: number): void {
   if (m.rochesPrises.length === 0) return
   const A = c.arene
   const o = centreDesRoches(c, m)
+  const w = vitesseDeLaTempete(c)
   m.rochesPrises = m.rochesPrises.filter((r) => {
+    // (elle tourne avec la tempête, d'un bloc, en glissant vers le milieu de l'anneau)
     const rr = Math.hypot(r.x, r.y) || 1
     const vers = rr + (A.rayon + A.largeur / 2 - rr) * Math.min(1, dt * 0.8)
-    const a = Math.atan2(r.y, r.x) + (A.vitesse / rr) * dt
+    const a = Math.atan2(r.y, r.x) + w * dt
     r.x = Math.cos(a) * vers
     r.y = Math.sin(a) * vers
     return Math.hypot(r.x - o.x, r.y - o.y) <= c.invasion.naissance + c.derive.marge
   })
+  // (ELLE NE RECOUVRE RIEN — Keko, 21/11 : « des astéroïdes se superposent » : elle se pousse hors des roches de la
+  // tempête qu'elle touche, et deux roches prises s'écartent l'une de l'autre ; tournant toutes d'un bloc, elles
+  // restent ensuite à leur place)
+  for (const r of m.rochesPrises) {
+    for (let k = 0; k < A.roches; k++) {
+      const q = rocheDeLaTempete(c, k, m.t)
+      const dx = r.x - q.x
+      const dy = r.y - q.y
+      const d = Math.hypot(dx, dy) || 0.001
+      const min = r.rayon + q.rayon + 1
+      if (d < min) (r.x = q.x + (dx / d) * min), (r.y = q.y + (dy / d) * min)
+    }
+  }
+  for (let i = 0; i < m.rochesPrises.length; i++)
+    for (let j = i + 1; j < m.rochesPrises.length; j++) {
+      const a = m.rochesPrises[i]
+      const b = m.rochesPrises[j]
+      const dx = b.x - a.x
+      const dy = b.y - a.y
+      const d = Math.hypot(dx, dy) || 0.001
+      const min = a.rayon + b.rayon + 1
+      if (d >= min) continue
+      const e = (min - d) / 2
+      a.x -= (dx / d) * e
+      a.y -= (dy / d) * e
+      b.x += (dx / d) * e
+      b.y += (dy / d) * e
+    }
+}
+
+/**
+ * LES ROCHES QUI DÉRIVENT SE HEURTENT (Keko, 21/11 : « des astéroïdes se superposent alors qu'ils ne devraient pas ») :
+ * deux roches qui se recouvrent sont écartées, et rebondissent l'une sur l'autre — chacune pèse le carré de son rayon,
+ * le choc garde `derive.rebond` de leur vitesse relative.
+ */
+function heurterLesDerives(c: ConfigVaisseau, m: Monde): void {
+  const roches = m.ennemis.filter((e) => e.asteroide !== undefined)
+  for (let i = 0; i < roches.length; i++)
+    for (let j = i + 1; j < roches.length; j++) {
+      const a = roches[i]
+      const b = roches[j]
+      const ra = a.asteroide!.rayon
+      const rb = b.asteroide!.rayon
+      const dx = b.corps.x - a.corps.x
+      const dy = b.corps.y - a.corps.y
+      const d = Math.hypot(dx, dy) || 0.001
+      const min = ra + rb
+      if (d >= min) continue
+      const nx = dx / d
+      const ny = dy / d
+      const ma = ra * ra
+      const mb = rb * rb
+      const ia = mb / (ma + mb)
+      const ib = ma / (ma + mb)
+      const vn = (b.corps.vx - a.corps.vx) * nx + (b.corps.vy - a.corps.vy) * ny
+      const j_ = vn < 0 ? -(1 + c.derive.rebond) * vn : 0
+      a.corps = { ...a.corps, x: a.corps.x - nx * (min - d) * ia, y: a.corps.y - ny * (min - d) * ia, vx: a.corps.vx - nx * j_ * ia, vy: a.corps.vy - ny * j_ * ia }
+      b.corps = { ...b.corps, x: b.corps.x + nx * (min - d) * ib, y: b.corps.y + ny * (min - d) * ib, vx: b.corps.vx + nx * j_ * ib, vy: b.corps.vy + ny * j_ * ib }
+    }
 }
 
 /** LE CENTRE DU CHAMP : le portail, au centre du monde ; sans portail, le vaisseau (voir `sansPortail`). */
@@ -4824,6 +4918,7 @@ function avancerSansLeJoueur(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenem
   for (const e of [...m.ennemis]) conduireLEnnemi(c, m, e, dt, ev)
   m.ennemis = m.ennemis.filter((e) => !e.parti)
   ecarterLesInsectes(c, m)
+  heurterLesDerives(c, m)
   if (c.invasion.sansPortail) heurterLesRoches(c, m, ev)
   // (SANS PORTAIL, L'ÉPAVE GLISSE VERS SON POINT DE RETOUR — voir `invasion.retour` : les insectes y convergent, les roches
   // s'y comptent, la caméra y va)
@@ -4998,6 +5093,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   // (les insectes passés par le portail ont quitté le monde)
   if (c.invasion.active) m.ennemis = m.ennemis.filter((e) => !e.parti)
   if (c.invasion.active) ecarterLesInsectes(c, m)
+  heurterLesDerives(c, m)
   if (c.invasion.sansPortail) heurterLesRoches(c, m, ev)
   // (L'INVINCIBILITÉ DU RETOUR FINIE : ce qui le recouvre est écarté — voir `degager`)
   if (m.renaitJusque > -100 && m.t >= m.renaitJusque) {
