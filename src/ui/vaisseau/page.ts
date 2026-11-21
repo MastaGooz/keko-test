@@ -19,6 +19,7 @@ import { firePuff, hotFirst, smokePuff } from 'pixelfx/fx/fire/_lib'
 import { VOLT, bowed, crackle, stroke, zigzag } from 'pixelfx/fx/lightning/_lib'
 import { Panes, snowflake } from 'pixelfx/fx/ice/_lib'
 import { textWidth } from 'pixelfx'
+import { pixelsDeLIcone } from './icones-armes.ts'
 import { HAUT_ACCENTS } from './police.ts'
 import { RACINES_DU_KRAKEN, POINTE_DU_CROCHET, contourDuCrochet, cordesDuKraken } from './rendu-vaisseau.ts'
 import { boucheMontee, gabaritDe, tailleDe, placeDOutil, queueDe, tuyeresOmni, formesDuSocleDeTourelle, formesDeLaTeteDeTourelle, formesDeLaCapsule, formesDuCristalPose, formesDeLaScie, formesDeLaBalise, formesDuBecDeBalise, canonDeLaForeuse, formesDeLAimant, formesDuChassis, formesDeLaForeuse, formesDeLArme, formesDuPropulseur, formesDuRadar, formesDuVaisseau, formesDuVer, CRISTAL_DU_PRISME, sommetsDUnHypercube, ARETES_DE_L_HYPERCUBE, rampeDeLaMatiere, LIVREES, COULEURS_DE_JOUEUR, ovale, peindreDansUneCase, peindreFormes, rampesDeLaLivree, tonsDeLaLivree, tonsDeLaMatiere, ANCRES_DU_KRAKEN, type Habit } from './rendu-vaisseau.ts'
@@ -4198,6 +4199,31 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    */
   let armesOuvertes = false
   let armeChoisie = ''
+  /**
+   * LA CASE D'UNE ARME (Keko, 21/11 : « associer à chaque arme du jeu une icône » — voir `icones-armes.ts`) : `TAILLE_DE_LA_CASE`
+   * pixels de côté, cernée d'encre, le fond et le halo des portraits de la race du vaisseau, un liseré de ses teintes en
+   * haut ; dedans, l'icône de l'arme et son contour. `vive` : la case de l'arme équipée, son liseré d'or.
+   */
+  const TAILLE_DE_LA_CASE = 18
+  const couleursDesIcones = new Map<string, number>()
+  function dessinerLaCaseDArme(p: Peintre, id: string, x0: number, y0: number, race: Race, vive = false): void {
+    const x = Math.round(x0)
+    const y = Math.round(y0)
+    const T = TAILLE_DE_LA_CASE
+    const moyen = TEINTES_DES_RACES[race][1]
+    const [haut, bas, halo] = FONDS_DES_RACES[race]
+    p.rect(x, y, T, T, MATIERES.encre.contour)
+    p.rect(x + 1, y + 1, T - 2, T - 2, bas)
+    p.rect(x + 1, y + 1, T - 2, Math.floor((T - 2) * 0.45), haut)
+    p.glow(x + T / 2, y + T / 2, T * 0.45, halo, 0.5)
+    p.rect(x + 1, y + 1, T - 2, 1, vive ? PEPITE[2] : moyen)
+    if (vive) p.rect(x + 1, y + T - 2, T - 2, 1, PEPITE[1])
+    for (const [px, py, c] of pixelsDeLIcone(id)) {
+      let n = couleursDesIcones.get(c)
+      if (n === undefined) couleursDesIcones.set(c, (n = N.hex(c)))
+      p.rect(x + 2 + px, y + 2 + py, 1, 1, n)
+    }
+  }
   function dessinerLesArmesEnListe(p: Peintre, voile: boolean, partie: 'tout' | 'liste' | 'fiche'): void {
     const u0 = sortie((t - vaisseauxA) / 0.18)
     p.rect(0, HAUT_BARRE, W, H - HAUT_BARRE, NUIT, voile || partie !== 'tout' ? 1 : 0)
@@ -4214,23 +4240,28 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (partie !== 'fiche') {
       enTete(p, y, 'Armes', () => ((armesOuvertes = false), (etapeA = t)))
       y += HT + 3
+      // (UNE ICÔNE À CÔTÉ DE CHAQUE ARME — Keko, 21/11 : la rangée grandit à sa case, `RANG_D_ARME`)
+      const RANG_D_ARME = TAILLE_DE_LA_CASE + 4
       const iSel = toutes.indexOf(choisie)
-      const hl = toutes.length * RANG_LISTE + 4
+      const hl = toutes.length * RANG_D_ARME + 4
       plaque(p, 4, y, W - 8, hl, 'creux')
       const yl = y + 2
-      const cibleY = yl + iSel * RANG_LISTE
+      const cibleY = yl + iSel * RANG_D_ARME
       surligneVaisseau = surligneVaisseau < 0 ? cibleY : ressort(surligneVaisseau, cibleY, 24)
-      p.rect(7, Math.round(surligneVaisseau), W - 14, RANG_LISTE, N.hex('#2a2440'))
-      p.rect(7, Math.round(surligneVaisseau) + 1, 2, RANG_LISTE - 2, PEPITE[2])
+      p.rect(7, Math.round(surligneVaisseau), W - 14, RANG_D_ARME, N.hex('#2a2440'))
+      p.rect(7, Math.round(surligneVaisseau) + 1, 2, RANG_D_ARME - 2, PEPITE[2])
+      const race = modeleDeVaisseau(flotte.actif).race
       toutes.forEach((pc, i) => {
-        const ly = yl + i * RANG_LISTE
+        const ly = yl + i * RANG_D_ARME
         const equipee = pc.id === armeDuVortex()
         const a = armesDuVortex().includes(pc.id)
         const ici = i === iSel
-        ecrire(p, pc.nom, 14, ly + 3, !a ? (ici ? COQUE[4] : COQUE[3]) : ici ? N.hex('#f6ecd2') : COQUE[5])
-        if (equipee) p.text('EQUIPE', W - 10, ly + 4, PEPITE[2], { align: 'right' })
-        else if (!a) p.text('VERROUILLE', W - 10, ly + 4, COQUE[3], { align: 'right' })
-        zone(4, ly, W - 8, RANG_LISTE, () => (armeChoisie = pc.id), ici ? null : 'clic')
+        dessinerLaCaseDArme(p, pc.id, 12, ly + 2, race, equipee)
+        const ym = ly + Math.round(RANG_D_ARME / 2) - 4
+        ecrire(p, pc.nom, 12 + TAILLE_DE_LA_CASE + 6, ym, !a ? (ici ? COQUE[4] : COQUE[3]) : ici ? N.hex('#f6ecd2') : COQUE[5])
+        if (equipee) p.text('EQUIPE', W - 10, ym + 1, PEPITE[2], { align: 'right' })
+        else if (!a) p.text('VERROUILLE', W - 10, ym + 1, COQUE[3], { align: 'right' })
+        zone(4, ly, W - 8, RANG_D_ARME, () => (armeChoisie = pc.id), ici ? null : 'clic')
       })
       y += hl + 4
       if (choisie.id === armeDuVortex()) motEnRelief(p, 'Équipé', W / 2, y + 4, true)
@@ -5253,13 +5284,18 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // statistiques ») : les jauges du canon au catalogue, sans le poids
       // (UNE LIGNE : « Arme », le nom de l'arme, et « Changer » — Keko, 15/11 : ni « un sur chaque aile », ni les chiffres)
       const nomArme = pieceDe(armeDuVortex())?.nom ?? ''
-      const ha = 20
+      // (… SON ICÔNE À GAUCHE DU NOM, la ligne un peu plus haute — Keko, 21/11 : « un petit symbole à côté de l'arme ; on a
+      // la place en dessous pour augmenter un peu la hauteur de la ligne »)
+      const ha = TAILLE_DE_LA_CASE + 6
       plaque(p, 4, y, W - 8, ha, 'encre')
+      dessinerLaCaseDArme(p, armeDuVortex(), 8, y + 3, modeleDeVaisseau(flotte.actif).race, true)
       // (le nom seul, sans « Arme » devant — Keko, 15/11)
-      motEnRelief(p, nomArme, 10 + largeurDe(nomArme, GRAS) / 2, y + 6, true)
+      const xa = 8 + TAILLE_DE_LA_CASE + 6
+      motEnRelief(p, nomArme, xa + largeurDe(nomArme, GRAS) / 2, y + Math.round(ha / 2) - 4, true)
       const bwa = largeurDe('Changer', GRAS) + 16
       const bxa = W - 7 - bwa
-      boutonBase(p, bxa, y + 2, bwa, 16, true, () => ((armesOuvertes = true), (vaisseauxA = t), (armeChoisie = armeDuVortex()), (surligneVaisseau = -1)), (dx, dy) => ecrire(p, 'Changer', bxa + bwa / 2 + dx, y + 2 + dy + 4, COQUE[5], { align: 'center' }), 'ouvre', { matiere: 'acier' })
+      const yb = y + Math.round((ha - 16) / 2)
+      boutonBase(p, bxa, yb, bwa, 16, true, () => ((armesOuvertes = true), (vaisseauxA = t), (armeChoisie = armeDuVortex()), (surligneVaisseau = -1)), (dx, dy) => ecrire(p, 'Changer', bxa + bwa / 2 + dx, yb + dy + 4, COQUE[5], { align: 'center' }), 'ouvre', { matiere: 'acier' })
       // (UN BOUTON SECONDAIRE — Keko, 15/11 : « pas le même graphisme que changer de vaisseau, un peu moins visible » :
       // l'acier sombre, la lettre courante en gris clair, au lieu de l'acier clair et du gras)
       return

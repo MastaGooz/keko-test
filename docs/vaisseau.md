@@ -7035,3 +7035,23 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
 - **21/11, le déphasage redit** (Keko : « va pour : annule parfois les dégâts et devient invincible ») : « Déphasage :
   Annule parfois les dégâts et devient invincible. » — mesuré à la police du jeu, deux lignes (137 et 126 pixels sur
   145) ; « Chance d’annuler les dégâts et de devenir invincible » en prenait trois.
+
+- **21/11, une icône par arme** (Keko : « dans le hangar, un petit symbole à côté de l'arme — on a la place en dessous
+  pour augmenter un peu la hauteur de la ligne ; et dans la sélection d'armes, une icône à côté de chaque arme ;
+  l'intérêt : associer à chaque arme du jeu une icône » — « pixel dessinée » choisie parmi trois styles, et « les 36
+  d'un coup »).
+  - LES DESSINS (`src/ui/vaisseau/icones-armes.ts`) : une grille de 12 × 12 par arme, une lettre par pixel dans une
+    palette commune (`PALETTE`), dessinées à la main ; LE CONTOUR D'ENCRE SE CALCULE autour du dessin
+    (`pixelsDeLIcone`, 14 × 14). Le Chasseur : deux traits laser, trois balles, un missile ; la Salamandre : une
+    flamme, un rayon qui brûle le sol, une boule de napalm et sa flaque ; la Sentinelle : un drone à trois pics, un
+    éclair, une tempête ; l'Ingénieur : une tourelle, une scie, un fléau ; le Frimas : un flocon, des échardes, un
+    blizzard ; le Pulsar : un orbe, une volée de missiles, une étoile filante ; le Kraken : une tentacule à crochet,
+    une nuée, un rejeton ; la Vouivre : un crachat, une mine, une goutte de poison ; le Prisme : un faisceau, trois
+    cristaux reliés, un trait d'énergie ; le Néant : une singularité, deux âmes liées, des vrilles ; le Dévoreur : un
+    parasite, trois œufs, une épine d'os ; le Tesseract : un hypercube, un dé, une coupe. Jugées sur une planche
+    agrandie avant d'entrer au jeu.
+  - LA CASE (`dessinerLaCaseDArme`, 18 de côté) : cernée d'encre, le fond et le halo des portraits de la race, un
+    liseré de ses teintes en haut — d'or pour l'arme équipée.
+  - AU HANGAR, la ligne de l'arme passe de 20 à 24 de haut, la case à gauche du nom ; À LA SÉLECTION, chaque rangée
+    grandit à sa case (22), la case à gauche du nom.
+  Vu à la capture, debout et couché.
