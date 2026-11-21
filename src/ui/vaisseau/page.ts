@@ -44,7 +44,7 @@ import { RASSEMBLE as TELEPORTE_A } from '../pixelfx/fx/keko/teleportation.js'
 import * as MATERIALISATION from '../pixelfx/fx/keko/materialisation.js'
 import * as QUETE_TERMINEE from '../pixelfx/fx/keko/quete-terminee.js'
 import * as VORTEX_FX from '../pixelfx/fx/keko/vortex.js'
-import { apresUnChoix, carte, DUREE_DU_CHOIX, ouvrirLeChoix, proposer, rareteDe, RARETES, reserveApresLeDelai, type Choix, type Rarete, type Talent } from '../../logic/vaisseau/talents.ts'
+import { apresUnChoix, carte, DUREE_DU_CHOIX, ouvrirLeChoix, proposer, RARETES, reserveApresLeDelai, type Choix, type Rarete, type Talent } from '../../logic/vaisseau/talents.ts'
 import { APPARAIT as ARRIVE_A, REFROIDI as REFROIDI_A } from '../pixelfx/fx/keko/materialisation.js'
 import { Grains } from '../pixelfx/fx/keko/_espace.js'
 
@@ -1910,16 +1910,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // marque pas textuellement le type, l'icône suffit ; par contre pour l'arme précise : cadence de "nom de l'arme" »)
     const nomDeLArme = ta.cible.sorte === 'arme' ? (pieceDe(armeDuVortex())?.nom ?? '') : ''
     const effet = nomDeLArme === '' ? st.effet : `${st.effet} ${/^[aeiouyàâéèêëîïôœûüh]/i.test(nomDeLArme) ? 'd’' : 'de '}${nomDeLArme}`
+    // (DEUX LIGNES NE SE TOUCHENT PAS — Keko, 21/11 : dix pixels d'une ligne à l'autre, huit d'abord : les accents de
+    // l'une touchaient les jambages de l'autre)
     for (const li of replier(effet, CW - 12).slice(0, 3)) {
       ecrire(p, li, cx, ly, COQUE[5], { align: 'center' })
-      ly += 8
+      ly += 10
     }
-    // sa rareté, en pied, entre deux perles
-    const nr = rareteDe(ta.rarete).nom
-    const lr = largeurDe(nr)
-    ecrire(p, nr, cx, y + CH - 13, F[3], { align: 'center' })
-    p.px(Math.round(cx - lr / 2 - 5), y + CH - 9, F[2])
-    p.px(Math.round(cx + lr / 2 + 4), y + CH - 9, F[2])
+    // (SA RARETÉ NE S'ÉCRIT PAS, SA COULEUR LA DIT — Keko, 21/11 : « ne marque pas la rareté textuellement, la couleur
+    // suffit »)
     // LE REFLET : une bande de lumière en biais qui la traverse, à contretemps des autres cartes
     const u = ((tReel * 0.45 + i * 0.37) % 1.5) / 1.5
     const bande = -30 + u * (CW + CH * 0.5 + 60)

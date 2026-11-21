@@ -7511,3 +7511,6 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     (`drawWord`, comme les titres : un dégradé, un dessus éclairé, un dessous ombré, un contour) aux tons de la rareté,
     un éclat qui le traverse de temps en temps. Les lettres des titres et des en-têtes ont été essayées : leur « 8 » se
     lit « 0 ». Vu à la capture.
+  - Keko : « ne marque pas la rareté textuellement, la couleur suffit ; dans la description, attention à ce que deux
+    lignes ne se touchent pas ». Le nom de la rareté en pied est retiré ; les lignes de la description sont à dix
+    pixels l'une de l'autre (huit : les accents de l'une touchaient les jambages de l'autre). Vu à la capture.
