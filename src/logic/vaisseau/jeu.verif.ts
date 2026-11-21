@@ -3120,5 +3120,57 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   verifier(`le retour : tombé à 1 100, il revient à ${Math.round(ou.x)} (en deçà de la tempête, ${ici}) ; l'explosion (${deflagration}) abat les trois proches (${abattus}), épargne le lointain et la roche (${epargnes}), ${pepites} pépites tombent ; invincible deux secondes, rien ne le mord (${!mordu}) ; à la fin, rien ne le recouvre (${libre})`, Math.abs(ou.x - ici) < 1 && Math.abs(ou.y) < 1 && deflagration && abattus && epargnes && pepites >= 3 && !mordu && libre && (w.phase as string) === 'vol')
 }
 
+// ABATTU, LES INSECTES ERRENT (Keko, 21/11 : « pour éviter qu'ils se regroupent tous comme des idiots à l'endroit où on va
+// respawn ») : trente insectes autour de l'épave ne s'y entassent pas en huit secondes
+{
+  const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, pv: 120, apparait: 1e9, poussee: 90, vitesseMax: 40, rotation: 6, rayon: 5 } }
+  const compter = (errance: number): number => {
+    const c2 = { ...cfg, invasion: { ...cfg.invasion, errance } }
+    const w = nouveauMonde(c2, 5)
+    w.invasion.prochainA = 1e9
+    w.phase = 'perdu'
+    w.invasion.retourA = 1e9
+    for (let k = 0; k < 30; k++) {
+      const a = (k / 30) * Math.PI * 2
+      const d = 120 + 150 * ((k * 0.618) % 1)
+      w.ennemis.push({ id: 100 + k, corps: { ...nouveauVaisseau(), x: Math.cos(a) * d, y: Math.sin(a) * d }, pv: 120, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 } })
+    }
+    for (let i = 0; i < 60 * 8; i++) avancerLeMonde(c2, w, 1 / 60, { x: 0, y: 0 })
+    return w.ennemis.filter((e) => Math.hypot(e.corps.x - w.vaisseau.x, e.corps.y - w.vaisseau.y) < 50).length
+  }
+  const errent = compter(cfg.invasion.errance)
+  verifier(`abattu, les insectes errent : au bout de 8 s, ${errent} sur 30 à moins de 50 de l'épave`, errent <= 3)
+}
+
+// LA ROCHE PRISE PAR LA TEMPÊTE (Keko, 21/11 : « qu'il soit pris dans la tempête et se déplace comme les autres astéroïdes ;
+// on le fait disparaître hors du champ de vision ») : entrée dans la tempête, elle tourne autour du centre, au milieu de
+// l'anneau ; hors de vue, elle quitte le monde
+{
+  const cfg = { ...VAISSEAU, coque: 1e9, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, arene: { ...VAISSEAU.arene, active: true, dps: 0, roches: 0 }, derive: { ...VAISSEAU.derive, active: true, premier: 1e9 } }
+  const w = nouveauMonde(cfg, 5)
+  w.invasion.prochainA = 1e9
+  w.prochaineDeriveA = 1e9
+  w.vaisseau = { ...w.vaisseau, x: 900, y: 0 }
+  const roche: Ennemi = { id: 300, corps: { ...nouveauVaisseau(), x: 980, y: 0, vx: 40, vy: 0 }, pv: 500, fait: 'marche', roche: null, forage: null, tirA: 0, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, grand: true, asteroide: { rayon: 10, graine: 1, angle0: 0, vitesseAngulaire: 0, pvMax: 500 } }
+  w.ennemis.push(roche)
+  let rMin = Infinity
+  let rMax = 0
+  let tourne = false
+  let partieA = -1
+  for (let i = 0; i < 60 * 12; i++) {
+    avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+    w.vaisseau = { ...w.vaisseau, x: 900, y: 0, vx: 0, vy: 0 }
+    if (!w.ennemis.includes(roche)) {
+      partieA = w.t
+      break
+    }
+    const r = Math.hypot(roche.corps.x, roche.corps.y)
+    if (w.t > 2) (rMin = Math.min(rMin, r)), (rMax = Math.max(rMax, r))
+    if (roche.corps.y > 50) tourne = true
+  }
+  const milieu = cfg.arene.rayon + cfg.arene.largeur / 2
+  verifier(`la roche prise par la tempête : elle tourne (${tourne}), dans la tempête, vers le milieu de l'anneau (${Math.round(rMin)}–${Math.round(rMax)}, milieu ${milieu}), et quitte le monde hors de vue (à ${partieA.toFixed(1)} s)`, tourne && rMin > cfg.arene.rayon && rMax <= milieu + 1 && partieA > 0 && partieA < 12)
+}
+
 // (TOUJOURS EN DERNIER : des blocs ajoutés après cette ligne échouaient sans faire échouer `npm run verif` — 17/11)
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)

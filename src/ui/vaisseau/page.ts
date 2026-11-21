@@ -540,6 +540,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** Le champ du tampon QU'ON PEINT : celui du monde pendant qu'on peint le monde, 1 pour l'interface. */
   let champDeLaVue = 1
   const CHAMP_MAX = 2
+  /** `&flot=N` : N insectes par seconde dès le départ, au vortex (un banc : la foule tout de suite, jusqu'au plafond des vivants). */
+  const FLOT = Number(parametres.get('flot')) || 0
   /** `&zoom=boutons` : les boutons « + » et « − » d'avant, à la place du zoom automatique. */
   const ZOOM_A_LA_MAIN = parametres.get('zoom') === 'boutons'
   /** Le zoom automatique : sous cette vitesse (px/s) la vue de près, à celle-là et au-delà le champ le plus large, `CHAMP_AUTO`. `&champ=N` l'essaie (1 à 2). */
@@ -987,7 +989,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // (L'ÉCHELLE DES DÉGÂTS DU VORTEX : les armes et la collision contre les insectes, fois `ECHELLE_DU_VORTEX` — voir
       // `INSECTE`)
       if (VORTEX) conf = { ...conf, armes: conf.armes.map((a) => degatsMultiplies(a, ECHELLE_DU_VORTEX)), collision: { ...conf.collision, degatsEnnemi: conf.collision.degatsEnnemi * ECHELLE_DU_VORTEX } }
-      if (VORTEX) conf = { ...conf, champ: { ...conf.champ, densite: 0 }, station: { ...conf.station, portee: -1 }, invasion: { ...conf.invasion, active: true, sansPortail: true /* (PLUS DE PORTAIL — Keko, 20/11 : voir `sansPortail`) */, continu: { ...conf.invasion.continu, actif: true } /* (ET PLUS DE VAGUES : voir `continu`) */, viePortail: Math.max(1, Number(parametres.get('portail')) || conf.invasion.viePortail) /* (`&portail=N` : la vie du portail au départ, pour voir la fin d'un lien) */ }, ennemi: { ...conf.ennemi, ...INSECTE }, bouclier: { ...conf.bouclier, points: Math.max(conf.bouclier.points, BOUCLIER_DU_VORTEX) }, passifs: { ...conf.passifs, critique: conf.passifs.critique + CRITIQUE_DU_VORTEX, critiqueFacteur: FACTEUR_CRITIQUE_DU_VORTEX } }
+      if (VORTEX) conf = { ...conf, champ: { ...conf.champ, densite: 0 }, station: { ...conf.station, portee: -1 }, invasion: { ...conf.invasion, active: true, sansPortail: true /* (PLUS DE PORTAIL — Keko, 20/11 : voir `sansPortail`) */, continu: { ...conf.invasion.continu, actif: true, ...(FLOT > 0 ? { debut: FLOT, max: FLOT } : {}) } /* (ET PLUS DE VAGUES : voir `continu`) */, viePortail: Math.max(1, Number(parametres.get('portail')) || conf.invasion.viePortail) /* (`&portail=N` : la vie du portail au départ, pour voir la fin d'un lien) */ }, ennemi: { ...conf.ennemi, ...INSECTE }, bouclier: { ...conf.bouclier, points: Math.max(conf.bouclier.points, BOUCLIER_DU_VORTEX) }, passifs: { ...conf.passifs, critique: conf.passifs.critique + CRITIQUE_DU_VORTEX, critiqueFacteur: FACTEUR_CRITIQUE_DU_VORTEX } }
       // LE RIVAL EST UN CUIRASSÉ LOURDEMENT ARMÉ (Keko, 14/11, à l'essai : « pour voir si je peux arriver à le tuer avec mon
       // chasseur ») : gros, lent, qui vire mal, très solide, et qui tire trois fois plus souvent, de plus loin ; il ne
       // fuit plus. `&rival=serie` rend le petit rival d'avant. *Chiffres au jugé.*
@@ -8298,6 +8300,38 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * l'axe `axe` (vers le centre du vortex), resserré de `large` en travers, ses teintes passées au violet, `part` de 0 à 1.)
    */
   function dessinerUnInsecte(p: Peintre, x: number, y: number, cap: number, phase: number, blanchi: boolean, aggro: boolean, deforme?: { axe: number; long: number; large: number; part: number }): void {
+    const marche = t * (aggro ? 22 : 13) + phase
+    const morsure = t * 18 + phase
+    // (UNE IMAGE PAR POSE — Keko, 21/11, les FPS dézoomé au plus : MESURÉ, cent vingt insectes peints polygone par polygone
+    // prenaient un quart de l'image. Un insecte ni blanchi ni pris par le portail est peint une fois par pose — son cap
+    // en `POSES_DU_CAP`, le pas de ses pattes en `POSES_DE_LA_MARCHE`, ses mandibules en `POSES_DE_LA_MORSURE` —, gardé,
+    // et recopié ; sa lueur de chasse reste dessinée à part)
+    if (!blanchi && deforme === undefined) {
+      const tour = Math.PI * 2
+      const q = (a: number, n: number): number => ((Math.round((a / tour) * n) % n) + n) % n
+      const ic = q(cap, POSES_DU_CAP)
+      const im = q(marche, POSES_DE_LA_MARCHE)
+      const io = aggro ? q(morsure, POSES_DE_LA_MORSURE) : 0
+      const cle = ((ic * POSES_DE_LA_MARCHE + im) * POSES_DE_LA_MORSURE + io) * 2 + (aggro ? 1 : 0)
+      let im_ = imagesDesInsectes.get(cle)
+      if (im_ === undefined) {
+        im_ = imageDe(TAILLE_DE_L_INSECTE, (p2, c) => peindreUnInsecte(p2, c, c, (ic / POSES_DU_CAP) * tour, (im / POSES_DE_LA_MARCHE) * tour, (io / POSES_DE_LA_MORSURE) * tour, false, aggro, undefined))
+        imagesDesInsectes.set(cle, im_)
+      }
+      poserLImage(p, im_, x, y)
+      if (aggro) p.glow(x, y, 9, N.hex('#ff3a4a'), 0.25 + 0.1 * Math.sin(t * 9 + phase))
+      return
+    }
+    peindreUnInsecte(p, x, y, cap, marche, morsure, blanchi, aggro, deforme)
+    if (aggro && !blanchi) p.glow(x, y, 9, N.hex('#ff3a4a'), 0.25 + 0.1 * Math.sin(t * 9 + phase))
+  }
+  const POSES_DU_CAP = 48
+  const POSES_DE_LA_MARCHE = 8
+  const POSES_DE_LA_MORSURE = 6
+  const TAILLE_DE_L_INSECTE = 26
+  const imagesDesInsectes = new Map<number, ImageGardee>()
+  /** L'insecte peint pour de bon : `marche` et `morsure`, les phases de ses pattes et de ses mandibules (voir `dessinerUnInsecte`). */
+  function peindreUnInsecte(p: Peintre, x: number, y: number, cap: number, marche: number, morsure: number, blanchi: boolean, aggro: boolean, deforme?: { axe: number; long: number; large: number; part: number }): void {
     const ca = Math.cos(cap)
     const sa = Math.sin(cap)
     const da = deforme === undefined ? 0 : deforme.axe
@@ -8322,7 +8356,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // les pattes : trois par flanc, qui vont et viennent en opposition
     for (const s of [-1, 1])
       for (let k = 0; k < 3; k++) {
-        const pas = Math.sin(t * (aggro ? 22 : 13) + phase + k * 2.1 + (s > 0 ? Math.PI : 0)) * 1.3
+        const pas = Math.sin(marche + k * 2.1 + (s > 0 ? Math.PI : 0)) * 1.3
         const [ax, ay] = P(-1.2 + k * 1.5, s * 1.4)
         const [gx, gy] = P(-1.8 + k * 2 + pas * 0.5, s * 4.6)
         const [fx, fy] = P(-2.6 + k * 2.6 + pas, s * 7.2)
@@ -8341,7 +8375,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     p.poly(ovaleTourne(3.7, 0, 2.5, 2.3), ENCRE)
     p.poly(ovaleTourne(3.7, 0, 1.7, 1.5), CORPS)
     // les mandibules, qui claquent en chasse
-    const ouvre = aggro ? 0.9 + 0.7 * Math.sin(t * 18 + phase) : 0.5
+    const ouvre = aggro ? 0.9 + 0.7 * Math.sin(morsure) : 0.5
     for (const s of [-1, 1]) {
       const [x0, y0] = P(5.2, s * 0.9)
       const [x1, y1] = P(7.6, s * (0.6 + ouvre))
@@ -8351,7 +8385,40 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const [ex, ey] = P(4.4, s * 0.9)
       p.px(ex, ey, blanchi ? N.WHITE : aggro ? N.hex('#ff4a4a') : N.hex('#ffd24a'))
     }
-    if (aggro && !blanchi) p.glow(x, y, 9, N.hex('#ff3a4a'), 0.25 + 0.1 * Math.sin(t * 9 + phase))
+  }
+  /**
+   * UNE IMAGE GARDÉE : ce qu'une fonction de peinture a posé dans un petit tampon carré de `taille`, autour de son centre —
+   * ses pixels de couleur et de lumière, en listes (seuls ceux qui ont été peints). `poserLImage` la recopie centrée sur
+   * un point, pixel pour pixel.
+   */
+  type ImageGardee = { n: number; xy: Int16Array; c: Uint32Array; nl: number; xyl: Int16Array; l: Uint32Array }
+  function imageDe(taille: number, peindre: (p: Peintre, centre: number) => void): ImageGardee {
+    const f = N.createFrame(taille, taille)
+    peindre(N.painterFor(f) as Peintre, taille / 2)
+    const centre = Math.floor(taille / 2)
+    const liste = (tampon: Uint32Array): { n: number; xy: Int16Array; c: Uint32Array } => {
+      let n = 0
+      for (let i = 0; i < tampon.length; i++) if (tampon[i] !== 0) n++
+      const xy = new Int16Array(n * 2)
+      const c = new Uint32Array(n)
+      let k = 0
+      for (let i = 0; i < tampon.length; i++)
+        if (tampon[i] !== 0) {
+          xy[k * 2] = (i % taille) - centre
+          xy[k * 2 + 1] = Math.floor(i / taille) - centre
+          c[k++] = tampon[i]
+        }
+      return { n, xy, c }
+    }
+    const co = liste(f.color)
+    const li = liste(f.light)
+    return { n: co.n, xy: co.xy, c: co.c, nl: li.n, xyl: li.xy, l: li.c }
+  }
+  function poserLImage(p: Peintre, im: ImageGardee, x: number, y: number): void {
+    const X = Math.floor(x)
+    const Y = Math.floor(y)
+    for (let k = 0; k < im.n; k++) p.px(X + im.xy[k * 2], Y + im.xy[k * 2 + 1], im.c[k])
+    for (let k = 0; k < im.nl; k++) p.light(X + im.xyl[k * 2], Y + im.xyl[k * 2 + 1], im.l[k], 1)
   }
   /**
    * LES INSECTES PRIS PAR LE PORTAIL (Keko, 14/11 : « quand un ennemi entre dans le vortex, une petite animation
@@ -11650,6 +11717,26 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    */
   /** Les particules de la tempête : une pour 250 unités carrées de son anneau, environ. */
   const PARTICULES_DE_LA_TEMPETE = 6000
+  const POSES_DES_ROCHES = 48
+  const IMAGES_DES_ROCHES_MAX = 6000
+  const imagesDesRoches = new Map<number, ImageGardee>()
+  /** La lumière du voile au milieu de l'anneau : ce que donnaient les lueurs d'avant, sommées (0,16 chacune, sept l'une sur l'autre). */
+  const VOILE = 0.38
+  let particulesDeLaTempete_: { r: Float32Array; w: Float32Array; a0: Float32Array } | null = null
+  /** Le rayon, la vitesse angulaire et l'angle de départ de chaque particule de la tempête, tirés une fois. */
+  function particulesDeLaTempete(): { r: Float32Array; w: Float32Array; a0: Float32Array } {
+    if (particulesDeLaTempete_ !== null) return particulesDeLaTempete_
+    const A = CONF.arene
+    const r = new Float32Array(PARTICULES_DE_LA_TEMPETE)
+    const w = new Float32Array(PARTICULES_DE_LA_TEMPETE)
+    const a0 = new Float32Array(PARTICULES_DE_LA_TEMPETE)
+    for (let k = 0; k < PARTICULES_DE_LA_TEMPETE; k++) {
+      r[k] = A.rayon + A.largeur * (0.02 + 0.96 * ((alea(k, 1, 81) + alea(k, 1, 82)) / 2))
+      w[k] = (220 * (1 + alea(k, 1, 83))) / r[k]
+      a0[k] = alea(k, 1, 84) * Math.PI * 2
+    }
+    return (particulesDeLaTempete_ = { r, w, a0 })
+  }
   /** L'écart entre deux angles, ramené entre −π et π. */
   const ecartAngulaire = (a: number, b: number): number => Math.atan2(Math.sin(a - b), Math.cos(a - b))
   const TEMPETE = [N.hex('#2a0f4d'), N.hex('#6a2fc0'), N.hex('#a35cff'), N.hex('#cf9bff'), N.hex('#7fe3ff'), N.hex('#f1dcff')]
@@ -11663,14 +11750,32 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // (rien de la tempête n'est dans la vue : on s'arrête là)
     if (dc + vue < A.rayon) return
     const dedans = (x: number, y: number, marge: number): boolean => x + ox > -marge && x + ox < W + marge && y + oy > -marge && y + oy < H + marge
-    // LE VOILE ET LE MUR : le long des angles en vue
+    // LE VOILE, EN UN SEUL PASSAGE (Keko, 21/11 : « quand je dézoome au maximum, qu'il y a beaucoup d'ennemis et que je suis
+    // près du vortex, on perd un peu en FPS » — MESURÉ : la tempête prenait 36 % de l'image, et ses trente et une lueurs
+    // de 99 de rayon, posées tous les 28 le long du cercle, parcouraient chacune tout leur carré, hors de l'écran compris :
+    // 1,2 million de pixels par image, chacun recouvert sept fois) : rangée par rangée, seuls les pixels de l'anneau EN VUE
+    // reçoivent leur lumière, qui suit le même profil — `VOILE` au milieu de l'anneau, rien à 99 de lui
     const phi = Math.atan2(camera.y, camera.x)
     const span = Math.min(Math.PI, (vue + 40) / Math.max(1, A.rayon))
-    for (let a = phi - span; a <= phi + span; a += 28 / (A.rayon + A.largeur / 2)) {
-      const r = A.rayon + A.largeur / 2
-      const x = Math.cos(a) * r
-      const y = Math.sin(a) * r
-      if (dedans(x, y, 80)) p.glow(x + ox, y + oy, A.largeur * 0.45, TEMPETE[1], 0.16)
+    {
+      const rm = A.rayon + A.largeur / 2
+      const demi = A.largeur * 0.45
+      const r1 = rm - demi
+      const r2 = rm + demi
+      const voile = (s0: number, s1: number, sy: number, wy: number): void => {
+        for (let sx = Math.max(0, s0); sx <= Math.min(W - 1, s1); sx++) {
+          const f = 1 - Math.abs(Math.hypot(sx + 0.5 - ox, wy) - rm) / demi
+          if (f > 0) p.light(sx, sy, TEMPETE[1], VOILE * f * f)
+        }
+      }
+      for (let sy = 0; sy < H; sy++) {
+        const wy = sy + 0.5 - oy
+        if (Math.abs(wy) >= r2) continue
+        const xo = Math.sqrt(r2 * r2 - wy * wy)
+        const xi = Math.abs(wy) < r1 ? Math.sqrt(r1 * r1 - wy * wy) : 0
+        voile(Math.floor(ox - xo), Math.ceil(ox - xi), sy, wy)
+        voile(Math.floor(ox + xi), Math.ceil(ox + xo), sy, wy)
+      }
     }
     for (let a = phi - span; a <= phi + span; a += 1.2 / A.rayon) {
       const fremit = Math.sin(t * 31 + a * 173) + Math.sin(t * 17 - a * 311)
@@ -11684,10 +11789,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
     // LES PARTICULES : elles filent autour du centre, chacune à son rayon et à sa vitesse (seules celles de l'arc en vue
     // se dessinent)
+    // (leur rayon, leur vitesse angulaire et leur angle de départ sont tirés une fois — `particulesDeLaTempete` : quatre
+    // hachages par particule et par image, vingt-quatre mille, pour des nombres qui ne changent jamais)
+    const pt = particulesDeLaTempete()
     for (let k = 0; k < PARTICULES_DE_LA_TEMPETE; k++) {
-      const r = A.rayon + A.largeur * (0.02 + 0.96 * ((alea(k, 1, 81) + alea(k, 1, 82)) / 2))
-      const w = (220 * (1 + alea(k, 1, 83))) / r
-      const a = alea(k, 1, 84) * Math.PI * 2 + w * m.t
+      const r = pt.r[k]
+      const a = pt.a0[k] + pt.w[k] * m.t
       if (Math.abs(ecartAngulaire(a, phi)) > span) continue
       const x = Math.cos(a) * r
       const y = Math.sin(a) * r
@@ -11697,11 +11804,23 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const teinte = k % 9 === 0 ? TEMPETE[5] : k % 3 === 0 ? TEMPETE[4] : TEMPETE[3]
       for (let q = 0; q < 5; q++) p.rect(Math.round(x + ox - tx * q * 1.5), Math.round(y + oy - ty * q * 1.5), 1, 1, teinte, 0.85 - q * 0.17)
     }
-    // LES ROCHES DE LA TEMPÊTE
+    // LES ROCHES DE LA TEMPÊTE (… UNE IMAGE PAR ANGLE — les FPS, 21/11 : chacune était peinte pixel par pixel, facettes,
+    // grain et cratères, à chaque image ; elle l'est une fois par angle, en `POSES_DES_ROCHES` angles, et gardée — les
+    // `IMAGES_DES_ROCHES_MAX` dernières)
     for (let k = 0; k < A.roches; k++) {
       const r = rocheDeLaTempete(CONF, k, m.t)
       if (!dedans(r.x, r.y, r.rayon + 4)) continue
-      dessinerAsteroide(p, { id: 90000 + k, x: r.x, y: r.y, rayon: r.rayon, graine: r.graine, angle0: r.angle0, vitesseAngulaire: r.vitesseAngulaire, minerai: 'fer', richesse: 0.2 }, t, Math.round(r.x + ox), Math.round(r.y + oy))
+      const tour = Math.PI * 2
+      const ia = ((Math.round(((r.angle0 + r.vitesseAngulaire * t) / tour) * POSES_DES_ROCHES) % POSES_DES_ROCHES) + POSES_DES_ROCHES) % POSES_DES_ROCHES
+      const cle = k * POSES_DES_ROCHES + ia
+      let im = imagesDesRoches.get(cle)
+      if (im === undefined) {
+        const taille = Math.ceil(r.rayon * 2.4) + 6
+        im = imageDe(taille, (p2, c) => dessinerAsteroide(p2, { id: 90000 + k, x: 0, y: 0, rayon: r.rayon, graine: r.graine, angle0: (ia / POSES_DES_ROCHES) * tour, vitesseAngulaire: 0, minerai: 'fer', richesse: 0.2 }, 0, Math.floor(c), Math.floor(c)))
+        if (imagesDesRoches.size >= IMAGES_DES_ROCHES_MAX) imagesDesRoches.delete(imagesDesRoches.keys().next().value as number)
+      } else imagesDesRoches.delete(cle)
+      imagesDesRoches.set(cle, im)
+      poserLImage(p, im, Math.round(r.x + ox), Math.round(r.y + oy))
     }
   }
   function dessinerLesEnnemis(p: Peintre): void {

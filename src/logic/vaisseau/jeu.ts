@@ -258,6 +258,8 @@ export const VAISSEAU = {
      * tout ; à leur fin, ce qui le recouvre est écarté (`degager`). Le rayon (110) choisi par Keko parmi trois.
      */
     retour: { rayon: 110, invincible: 2, marge: 60 },
+    /** La part de leur poussée avec laquelle les insectes errent, le joueur abattu (voir `conduireLInsecte`). *De moi.* */
+    errance: 0.45,
     /**
      * LA VIE DU PORTAIL (Keko, 14/11 : « elle s'exprime en pourcentage : il commence à 100 %, et s'il atteint 0 c'est
      * la fin de la partie ; pour l'instant les ennemis lui enlèvent 1 % à chaque fois qu'ils passent ») : `viePortail`
@@ -1027,7 +1029,7 @@ export type Ennemi = {
   /** Son dernier choc contre une roche qui dérive (voir `sansPortail`). */
   heurteA?: number
   /** UN ASTÉROÏDE QUI DÉRIVE (voir `derive`) : sa taille, son dessin (graine, angle, rotation), ses points au départ. */
-  asteroide?: { rayon: number; graine: number; angle0: number; vitesseAngulaire: number; pvMax: number }
+  asteroide?: { rayon: number; graine: number; angle0: number; vitesseAngulaire: number; pvMax: number; /** Prise par la tempête : elle tourne avec ses roches (voir `deriver`). */ prise?: boolean }
   butin: number
   cargaison: Cargaison
 }
@@ -1840,6 +1842,24 @@ function degager(c: ConfigVaisseau, m: Monde): void {
 /** Une roche dérive tout droit, sans rien voir ; repassée au-delà de son cercle de naissance, elle quitte le monde. */
 function deriver(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number): void {
   const b = e.corps
+  // PRISE PAR LA TEMPÊTE (Keko, 21/11 : « quand un astéroïde arrive dans le vortex, qu'il soit pris dans la tempête et se
+  // déplace comme les autres astéroïdes ; et dès qu'on a l'occasion, on le fait disparaître — hors du champ de vision du
+  // joueur ») : entrée dans la tempête, elle tourne autour du centre comme ses roches, à `arene.vitesse` le long du cercle,
+  // en glissant vers le milieu de l'anneau ; elle quitte le monde dès qu'elle est aussi loin du centre des roches que là
+  // où elles naissent (la naissance des insectes et `derive.marge` : 420, hors de vue même dézoomé au plus — la demi-
+  // diagonale de la vue y fait 367)
+  const A = c.arene
+  const ro = e.asteroide!
+  if (A.active && ro.prise !== true && Math.hypot(b.x, b.y) > A.rayon) ro.prise = true
+  if (ro.prise === true) {
+    const r = Math.hypot(b.x, b.y) || 1
+    const vers = r + (A.rayon + A.largeur / 2 - r) * Math.min(1, dt * 0.8)
+    const a = Math.atan2(b.y, b.x) + (A.vitesse / r) * dt
+    e.corps = { ...b, x: Math.cos(a) * vers, y: Math.sin(a) * vers, vx: -Math.sin(a) * A.vitesse, vy: Math.cos(a) * A.vitesse }
+    const o = centreDesRoches(c, m)
+    if (Math.hypot(e.corps.x - o.x, e.corps.y - o.y) > c.invasion.naissance + c.derive.marge) e.parti = true
+    return
+  }
   e.corps = { ...b, x: b.x + b.vx * dt, y: b.y + b.vy * dt }
   const o = centreDesRoches(c, m)
   const dx = e.corps.x - o.x
@@ -2142,7 +2162,7 @@ function conduireLInsecte(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number, ev
     e.corps = { ...b, x, y, vx: 0, vy: 0, cap: Math.atan2(v.y - y, v.x - x) }
     return []
   }
-  // (SANS PORTAIL, il chasse toujours le vaisseau, même abattu : il va là où il est tombé)
+  // (SANS PORTAIL, il chasse toujours le vaisseau — abattu, il erre : voir plus bas)
   if (I.sansPortail) e.fait = 'aggro'
   else if (e.fait === 'aggro') {
     // (IL LÂCHE QUAND LE JOUEUR S'ÉLOIGNE TROP DE LUI — Keko, 16/11 : « qu'ils poursuivent le joueur beaucoup plus loin dans
@@ -2156,7 +2176,14 @@ function conduireLInsecte(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number, ev
   } else if (attire || (m.phase === 'vol' && dj <= I.aggro && m.t >= (e.calmeA ?? 0))) e.fait = 'aggro'
   else e.fait = 'marche'
   let direction: Vecteur
-  if (e.fait === 'aggro') {
+  if (I.sansPortail && m.phase === 'perdu') {
+    // LE JOUEUR ABATTU, ILS ERRENT (Keko, 21/11 : « à partir du moment où un ennemi réussit à nous tuer, on laisse les
+    // ennemis se déplacer un peu au hasard — à plusieurs joueurs, ils iraient vers les autres ; seul, ils déambulent, pour
+    // éviter qu'ils se regroupent tous comme des idiots à l'endroit où on va respawn ») : chacun suit son cap, tiré de son
+    // identité, qui tourne doucement au fil du temps (deux sinus lents : rien n'est gardé), à `errance` de sa poussée
+    const a = tire(m.graine, e.id, 61) * Math.PI * 2 + 1.3 * Math.sin(m.t * 0.23 + e.id * 1.7) + 0.8 * Math.sin(m.t * 0.51 + e.id * 0.37)
+    direction = { x: Math.cos(a) * I.errance, y: Math.sin(a) * I.errance }
+  } else if (e.fait === 'aggro') {
     direction = { x: (v.x - b.x) / dj, y: (v.y - b.y) / dj }
     if (m.phase === 'vol' && dj <= c.rayon + c.ennemi.rayon + 2 && m.t >= (e.mordA ?? 0)) {
       e.mordA = m.t + I.cadenceMorsure

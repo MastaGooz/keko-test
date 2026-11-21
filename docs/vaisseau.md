@@ -7152,3 +7152,29 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     salle. MESURÉ : 3,2 s, 69 % de son énergie sous 200 Hz (le son de la mort : 45 %), une puissance moyenne voisine
     de lui (0,097 contre 0,093) ; 164 ms de calcul, dans le Worker. Il remplace « extrait » et « ennemiDetruit ».
   Vu à la capture, image par image. Le son n'est mesuré qu'au calcul : à juger à l'oreille.
+
+- **21/11, abattu, les insectes errent ; la roche prise par la tempête ; les images par seconde.**
+  - Keko : « quand un vaisseau meurt, je ne voudrais pas que les ennemis s'agglutinent là où il est mort ; à plusieurs
+    joueurs, ils vont vers les autres ; seul, ils déambulent au hasard, pour éviter qu'ils se regroupent tous comme des
+    idiots à l'endroit où on va respawn ». Le joueur abattu, chaque insecte suit un cap tiré de son identité, qui tourne
+    doucement (deux sinus lents, rien n'est gardé), à 45 % de sa poussée (`invasion.errance`, de moi) ; au retour, la
+    chasse reprend. (À plusieurs joueurs, ils iront vers les autres : rien encore, il n'y a pas de coop.) Testé : trente
+    insectes autour de l'épave, un seul à moins de 50 d'elle au bout de huit secondes.
+  - Keko : « quand un astéroïde rentre dans la zone du vortex, qu'il soit pris dans la tempête et se déplace comme les
+    autres astéroïdes ; et dès qu'on a l'occasion, on le fait disparaître, hors du champ de vision du joueur ». Entrée
+    dans la tempête, une roche qui dérive y est PRISE (`asteroide.prise`) : elle tourne autour du centre à la vitesse de
+    ses roches, en glissant vers le milieu de l'anneau, et quitte le monde dès qu'elle est à 420 du centre des roches
+    (là où elles naissent : hors de vue même dézoomé au plus, la demi-diagonale de la vue y fait 367). Testé.
+  - Keko : « quand je dézoome au maximum, qu'il y a beaucoup d'ennemis et que je suis près du vortex, on commence à
+    perdre en FPS ». MESURÉ au profileur (CDP, dans Chrome sans carte graphique : seuls les rapports comptent), au bord
+    de l'arène, dézoomé au plus, cent vingt insectes (`&flot=12`) : 21 images par seconde — la tempête 36 % de l'image
+    (ses 31 lueurs de voile, 1,2 million de pixels), les insectes 26 %, les rochers 16 %, la composition 18 %. Trois
+    changements, et 48 images par seconde (×2,2) :
+    - LE VOILE EN UN PASSAGE, rangée par rangée, seuls les pixels de l'anneau en vue (`VOILE`, le même profil — vu à
+      la capture, avant et après) ; LES PARTICULES tirées une fois (`particulesDeLaTempete`) ;
+    - LES INSECTES, UNE IMAGE PAR POSE (`imageDe`, `poserLImage`) : leur cap en 48, le pas de leurs pattes en 8, leurs
+      mandibules en 6 ; peints une fois, gardés, recopiés ; blanchis ou pris par le portail, peints comme avant ;
+    - LES ROCHES DE LA TEMPÊTE, UNE IMAGE PAR ANGLE (48), toutes gardées (110 × 48, ~25 Mo) : à 64 angles et 1 500
+      images, elles se repeignaient sans cesse (mesuré : 16 % encore).
+    Reste la composition de l'image (40 %), un coût fixe de pixelfx. `&flot=N` (N insectes par seconde dès le départ)
+    est le banc de la foule.
