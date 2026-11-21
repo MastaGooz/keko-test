@@ -282,6 +282,20 @@ export const VAISSEAU = {
      */
     cuirassier: { vie: 10, taille: 2.2, vitesse: 28 / 40, morsure: 2.5, butin: 10, debut: 180, montee: 300, part: 0.04 },
     /**
+     * LES TROIS PÉPITES (Keko, 21/11 : « différentes pépites, une petite, une moyenne et une grosse, afin que les ennemis
+     * lootent des ensembles un peu plus variés » — « 1 / 3 / 10 », « chaque ennemi a son butin propre ») : leurs valeurs
+     * en points d'expérience, de la plus grosse à la plus petite. Un butin se paie avec les plus grosses d'abord
+     * (`gemmesDuButin`) : le moucheron et le petit, une petite ; le cornu, une moyenne ; le cuirassier, une grosse ; une
+     * roche qui dérive, selon sa taille — et ce qu'elle rend, on le voit serti dans sa pierre.
+     */
+    gemmes: [10, 3, 1],
+    /**
+     * L'AIMANT (Keko, 21/11 : « que les ennemis aient une faible chance de looter un petit symbole de la couleur des
+     * pépites, un symbole d'aimant ; quand on le prend, ça attire toutes les pépites de la map » — « 1 sur 300 ») : la
+     * chance qu'un insecte abattu le lâche ; ramassé, toutes les pépites du monde sont aimantées vers le joueur.
+     */
+    aimant: 1 / 300,
+    /**
      * LA VIE DU PORTAIL (Keko, 14/11 : « elle s'exprime en pourcentage : il commence à 100 %, et s'il atteint 0 c'est
      * la fin de la partie ; pour l'instant les ennemis lui enlèvent 1 % à chaque fois qu'ils passent ») : `viePortail`
      * au départ, `degatsAuPortail` par insecte qui le traverse. À zéro, la partie est FINIE (`fin`) : plus rien n'avance.
@@ -999,7 +1013,7 @@ export const totalDe = (c: Cargaison): number => c.fer + c.or + c.cristal
 export type Asteroide = { id: number; x: number; y: number; rayon: number; graine: number; angle0: number; vitesseAngulaire: number; minerai: Minerai; richesse: number }
 /** Un laser posé sur sa roche : laquelle, le point d'impact, la part déjà creusée (0 à 1). *Il a visé le rival un temps ; la foreuse ne sert plus qu'aux roches (Keko).* */
 export type Forage = { sorte: 'roche'; cible: number; x: number; y: number; part: number }
-export type Pepite = { id: number; x: number; y: number; vx: number; vy: number; graine: number; minerai: Minerai; /** L'instant où l'aimant du JOUEUR l'a prise : elle ne le lâche plus (voir plus bas, « une pépite aimantée »). */ aimanteeA?: number }
+export type Pepite = { id: number; x: number; y: number; vx: number; vy: number; graine: number; minerai: Minerai; /** Sa valeur (au vortex, en points d'expérience) : 1, 3 ou 10 — une petite, une moyenne, une grosse ; 1 si absente. */ valeur?: number; /** L'AIMANT (voir `invasion.aimant`) : pris, il attire toutes les pépites. */ aimant?: boolean; /** L'instant où l'aimant du JOUEUR l'a prise : elle ne le lâche plus (voir plus bas, « une pépite aimantée »). */ aimanteeA?: number }
 /** Un choc contre un astéroïde : où, et avec quelle vitesse normale (pour l'étincelle et la vibration). */
 export type Choc = { x: number; y: number; force: number; asteroide: number; /** Le vaisseau a TRAVERSÉ la roche, trop légère pour lui : la part de sa vitesse qu'il y a laissée (roche ÷ vaisseau). */ perce?: number }
 /** Un trait tiré par l'ennemi. */
@@ -1232,6 +1246,7 @@ export type Drone = { x: number; y: number; vx: number; vy: number; cible: numbe
 
 /** Ce qui s'est passé pendant un pas, pour le dessin et le son. */
 export type Evenement =
+  | { type: 'aimant'; x: number; y: number }
   | { type: 'eclat'; x: number; y: number; rayon: number; graine: number; minerai: Minerai }
   | { type: 'ramasse'; x: number; y: number; par: 'joueur' | 'ennemi'; minerai: Minerai }
   /** Une pépite déposée à la station. */
@@ -1663,12 +1678,20 @@ function abattreLEnnemi(c: ConfigVaisseau, m: Monde, e: Ennemi, ev: Evenement[])
   // il rend sa cargaison, minerai par minerai, plus tant de pépites de fer
   const rendues: Minerai[] = []
   for (const k of MINERAIS) for (let i = 0; i < e.cargaison[k]; i++) rendues.push(k)
-  for (let i = 0; i < (ro !== undefined ? Math.max(1, Math.round(ro.pvMax * c.derive.pepitesParPv)) : butinDe(c, e)); i++) rendues.push('fer')
+  const total = ro !== undefined ? butinDeLaRoche(c, ro.pvMax) : butinDe(c, e)
+  // (AU VORTEX, LE BUTIN EN GEMMES — voir `invasion.gemmes` ; et l'aimant, rarement — voir `invasion.aimant`)
+  const valeurs: number[] = []
+  if (c.invasion.active) for (const v of gemmesDuButin(c, total)) (rendues.push('fer'), valeurs.push(v))
+  else for (let i = 0; i < total; i++) rendues.push('fer')
+  const aimant = c.invasion.active && ro === undefined && tire(e.id, 35) < c.invasion.aimant
+  if (aimant) (rendues.push('fer'), valeurs.push(0))
   const n = rendues.length
+  const dec = n - valeurs.length
   for (let i = 0; i < n; i++) {
     const an = (i / n) * Math.PI * 2 + tire(e.id, 30, i)
     const vit = 20 + 40 * tire(e.id, 31, i)
-    m.pepites.push({ id: m.prochainId++, x: e.corps.x, y: e.corps.y, vx: Math.cos(an) * vit + e.corps.vx * 0.3, vy: Math.sin(an) * vit + e.corps.vy * 0.3, graine: hache(e.id, i), minerai: rendues[i] })
+    const val = i >= dec ? valeurs[i - dec] : undefined
+    m.pepites.push({ id: m.prochainId++, x: e.corps.x, y: e.corps.y, vx: Math.cos(an) * vit + e.corps.vx * 0.3, vy: Math.sin(an) * vit + e.corps.vy * 0.3, graine: hache(e.id, i), minerai: rendues[i], ...(val === undefined ? {} : val === 0 ? { aimant: true, valeur: 0 } : { valeur: val }) })
   }
 }
 
@@ -1701,6 +1724,19 @@ export const rayonDe = (c: ConfigVaisseau, e: Ennemi): number => e.asteroide?.ra
 /** Les sortes d'insectes autres que le petit : le moucheron (le menu fretin), le cornu (milieu de gamme), le cuirassier (blindé). */
 export type SorteDInsecte = 'moucheron' | 'cornu' | 'cuirassier'
 export const SORTES_D_INSECTES: SorteDInsecte[] = ['moucheron', 'cornu', 'cuirassier']
+/** Un butin de `total` points en gemmes (voir `invasion.gemmes`) : les plus grosses d'abord. */
+export function gemmesDuButin(c: ConfigVaisseau, total: number): number[] {
+  const g: number[] = []
+  let reste = Math.max(0, Math.round(total))
+  for (const v of c.invasion.gemmes)
+    while (reste >= v) {
+      g.push(v)
+      reste -= v
+    }
+  return g
+}
+/** Ce qu'une roche qui dérive rend, en points (voir `derive.pepitesParPv`). */
+export const butinDeLaRoche = (c: ConfigVaisseau, pvMax: number): number => Math.max(1, Math.round(pvMax * c.derive.pepitesParPv))
 /** Ce qu'un insecte rend de pépites : son butin, et sa part fractionnaire tirée de son identité (le moucheron : une fois sur deux). */
 function butinDe(c: ConfigVaisseau, e: Ennemi): number {
   const b = gabaritDInsecte(c, e).butin
@@ -1939,7 +1975,7 @@ function deriver(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number): void {
   const ro = e.asteroide!
   if (A.active && Math.hypot(b.x, b.y) > A.rayon) {
     // (… et, comme elles, elle cesse de tourner sur elle-même : figée à l'angle où elle est prise)
-    m.rochesPrises.push({ id: e.id, x: b.x, y: b.y, rayon: ro.rayon, graine: ro.graine, angle0: ro.angle0 + ro.vitesseAngulaire * m.t, vitesseAngulaire: 0 })
+    m.rochesPrises.push({ id: e.id, x: b.x, y: b.y, rayon: ro.rayon, graine: ro.graine, angle0: ro.angle0 + ro.vitesseAngulaire * m.t, vitesseAngulaire: 0, butin: butinDeLaRoche(c, ro.pvMax) })
     if (m.verrou === e.id) m.verrou = null
     e.parti = true
     return
@@ -1965,7 +2001,7 @@ function centreDesRoches(c: ConfigVaisseau, m: Monde): Vecteur {
 }
 
 /** Une roche prise par la tempête (voir `deriver`) : où elle est, et de quoi la peindre. */
-export type RochePrise = { id: number; x: number; y: number; rayon: number; graine: number; angle0: number; vitesseAngulaire: number }
+export type RochePrise = { id: number; x: number; y: number; rayon: number; graine: number; angle0: number; vitesseAngulaire: number; /** Ce qu'elle portait de points (voir `butinDeLaRoche`) : on voit encore ses gemmes. */ butin?: number }
 
 /**
  * LES ROCHES PRISES PAR LA TEMPÊTE (voir `deriver`) : elles tournent autour du centre comme les siennes, à `arene.vitesse`
@@ -4966,6 +5002,23 @@ export function ennemiLePlusProche(m: Monde, portee: number): Vecteur | null {
 }
 
 /** Ce qu'il faut d'expérience pour passer du niveau `n` au suivant. */
+/**
+ * LA PÉPITE RAMASSÉE AU VORTEX : sa valeur en expérience (1, 3 ou 10 — voir `invasion.gemmes`) ; la barre pleine, un
+ * niveau, autant de fois qu'il le faut. L'AIMANT (voir `invasion.aimant`) : toutes les pépites du monde sont aimantées.
+ */
+function gagnerLaPepite(c: ConfigVaisseau, m: Monde, p: Pepite, ev: Evenement[]): void {
+  if (p.aimant === true) {
+    for (const q of m.pepites) if (q.aimant !== true) q.aimanteeA = m.t
+    ev.push({ type: 'aimant', x: p.x, y: p.y })
+    return
+  }
+  m.invasion.xp += p.valeur ?? 1
+  while (m.invasion.xp >= xpDuNiveau(c, m.invasion.niveau)) {
+    m.invasion.xp -= xpDuNiveau(c, m.invasion.niveau)
+    m.invasion.niveau += 1
+    ev.push({ type: 'niveau', niveau: m.invasion.niveau })
+  }
+}
 export const xpDuNiveau = (c: ConfigVaisseau, n: number): number => c.invasion.xpBase + (Math.max(1, n) - 1) * c.invasion.xpPas
 
 /**
@@ -5487,15 +5540,8 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
     const attend = c.invasion.active && m.t < m.renaitJusque
     if (d <= c.forage.ramassage && !soutePleine && !attend) {
       m.pepites.splice(i, 1)
-      if (c.invasion.active) {
-        // (L'EXPÉRIENCE : une pépite, un point ; la barre pleine, un niveau)
-        m.invasion.xp += 1
-        if (m.invasion.xp >= xpDuNiveau(c, m.invasion.niveau)) {
-          m.invasion.xp -= xpDuNiveau(c, m.invasion.niveau)
-          m.invasion.niveau += 1
-          ev.push({ type: 'niveau', niveau: m.invasion.niveau })
-        }
-      } else if (plusProche.e === null) {
+      if (c.invasion.active) gagnerLaPepite(c, m, p, ev)
+      else if (plusProche.e === null) {
         m.minerai += 1
         m.cargaison[p.minerai] += 1
       } else {
@@ -5518,14 +5564,8 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
       if (dj <= c.forage.ramassage + Math.hypot(v.vx, v.vy) * dt * 2) {
         // (à bord : la même chose que plus haut, pour le joueur)
         m.pepites.splice(i, 1)
-        if (c.invasion.active) {
-          m.invasion.xp += 1
-          if (m.invasion.xp >= xpDuNiveau(c, m.invasion.niveau)) {
-            m.invasion.xp -= xpDuNiveau(c, m.invasion.niveau)
-            m.invasion.niveau += 1
-            ev.push({ type: 'niveau', niveau: m.invasion.niveau })
-          }
-        } else {
+        if (c.invasion.active) gagnerLaPepite(c, m, p, ev)
+        else {
           m.minerai += 1
           m.cargaison[p.minerai] += 1
         }

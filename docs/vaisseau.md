@@ -7339,3 +7339,33 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     revenu est invincible (deux secondes), aucune pépite n'est aimantée ni ramassée. Testé : huit semées par l'explosion,
     aucune ramassée pendant, puis un niveau — deux, semées en gerbe, ont dérivé hors de l'aimant le temps d'attendre :
     il faut aller les chercher.
+
+- **21/11, LES PÉPITES, LES ROCHES, L'AIMANT.** Keko : « rework les pépites et les astéroïdes : des pépites vraiment plus
+  remarquables, moins proches des étoiles — la couleur est bien —, un petit effet d'animation ; une petite, une moyenne,
+  une grosse, afin que les ennemis lootent des ensembles plus variés ; sur les astéroïdes, qu'on voie les pépites
+  incrustées, bien dessinées, pas juste des filons ; des formes plus variées, moins rondes, quelque chose de plus
+  naturel, des pépites plus ou moins grosses selon la taille de l'astéroïde ; et une faible chance de looter un symbole
+  d'aimant de la couleur des pépites, qui attire toutes les pépites de la map ». Choisis parmi trois : « 1 / 3 / 10 »,
+  « 1 sur 300 », « un éclat qui scintille et un léger flottement » ; et, de lui, « chaque ennemi a son butin propre ».
+  - LA RÈGLE : `invasion.gemmes` [10, 3, 1] ; un butin se paie avec les plus grosses d'abord (`gemmesDuButin`) — le
+    moucheron (une fois sur deux) et le petit une petite, le cornu une moyenne, le cuirassier une grosse, une roche selon
+    ses points (`butinDeLaRoche` : une roche de 500 points en rend 8, 3 + 3 + 1 + 1). La pépite porte sa
+    `valeur` ; ramassée, elle donne autant d'expérience, et autant de niveaux qu'il en faut (`gagnerLaPepite`). Hors du
+    vortex (le Nova Drifter), rien ne change. L'AIMANT (`invasion.aimant`, 1 sur 300, tiré de l'identité de l'insecte ;
+    `&aimant=P` le règle) : une pépite `aimant` ; ramassé, toutes les pépites du monde sont aimantées (elles ne lâchent
+    plus le joueur, où qu'elles soient), l'événement `aimant` (le son « aspire », deux anneaux qui se referment sur le
+    vaisseau, une secousse). Testés : la décomposition, une grosse qui fait passer un niveau, l'aimant qui ramène quatre
+    pépites jusqu'à 700 de lui, sa chance (sur 3 000 identités).
+  - LES GEMMES (`dessinerPepiteDuVortex`, `asteroide.ts`) : DESSINÉES PIXEL PAR PIXEL, trois tailles d'une même taille de
+    pierre (5, 7 et 11 pixels de large : une table claire, la culasse en pointe, le pan gauche éclairé, cernées) — à la
+    première planche, des polygones calculés : à cette taille, une tache. Elles FLOTTENT d'un pixel, leur halo respire,
+    un ÉCLAT en étoile s'ouvre sur leur table à contretemps. L'AIMANT : un fer à cheval à leur teinte, pôles blancs.
+  - LA ROCHE DU VORTEX (`dessinerRocheDuVortex`, les roches qui dérivent, celles de la tempête et celles qu'elle a
+    prises) : un polygone de dix à dix-sept sommets inégaux sur une forme allongée — des arêtes de caillou ; ombrée
+    pixel par pixel comme un dôme qui suit sa silhouette, en CINQ APLATS aux frontières qui ondulent (la première
+    planche, tramée et grenue, faisait une patate floue), un bord vif côté lampe, des cratères et des fissures sur les
+    grosses ; SES GEMMES SERTIES, celles qu'elle rend, la plus grosse d'abord, écartées, un tiers de la roche au plus
+    (une roche de 34 : cinq grosses et deux petites, un écrin sinon), chacune enfoncée (son ombre d'un pixel). Une
+    image par pose, gardée, comme celles de la tempête. Les roches de la tempête sont nues ; une roche prise garde ses
+    gemmes (`RochePrise.butin`).
+  - `&vitrine` : les trois gemmes trois fois et l'aimant en couronne autour du vaisseau, au décollage. Vu à la capture.

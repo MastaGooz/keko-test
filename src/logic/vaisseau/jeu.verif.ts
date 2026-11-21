@@ -1,7 +1,7 @@
 /**
  * Vérifications du vaisseau, sans navigateur : le temps est injecté.
  */
-import { partDe, gabaritDInsecte, rayonDe, rocheDeLaTempete, vieMultipliee, cadenceDeLaVague, asteroideDeLaCase, coupeDUnCube, asteroidesAutour, avancer, avancerLeMonde, encaisser, purger, impactDuRayon, lancerLaBombe, larguer, porteeDeLaBombe, MINERAIS, nouveauMonde, nouveauVaisseau, solidite, voler, totalDe, stationDeLaCase, stationLaPlusProche, VAISSEAU, verrouiller, ennemiLePlusProche, type ConfigVaisseau, type Ennemi, type Evenement, type Vaisseau, xpDuNiveau } from './jeu.ts'
+import { partDe, gabaritDInsecte, rayonDe, rocheDeLaTempete, vieMultipliee, cadenceDeLaVague, asteroideDeLaCase, coupeDUnCube, asteroidesAutour, avancer, avancerLeMonde, encaisser, purger, impactDuRayon, lancerLaBombe, larguer, porteeDeLaBombe, MINERAIS, nouveauMonde, nouveauVaisseau, solidite, voler, totalDe, stationDeLaCase, stationLaPlusProche, VAISSEAU, verrouiller, ennemiLePlusProche, type ConfigVaisseau, type Ennemi, type Evenement, type Vaisseau, xpDuNiveau, gemmesDuButin, tire, type Pepite } from './jeu.ts'
 import { acheter, configDuHangar, hangarNeuf, monter, pieceDe } from './hangar.ts'
 
 /** Les règles sont vérifiées SANS la zone calme de la base (le rival naît où que soit le joueur) et AVEC les extracteurs par case (éteints en jeu pour l'instant) ; la base et la station seule ont leurs propres vérifications, plus bas. */
@@ -15,6 +15,8 @@ function verifier(quoi: string, vrai: boolean): void {
 
 console.log('vaisseau')
 const immobile = avancer(C, nouveauVaisseau(), 1, { x: 0, y: 0 }).vaisseau
+/** La valeur d'un tas de pépites (au vortex, une gemme vaut 1, 3 ou 10 — voir `invasion.gemmes`). */
+const valeurDes = (ps: Pepite[]): number => ps.reduce((n, p) => n + (p.valeur ?? 1), 0)
 verifier('sans manche, il ne bouge pas', immobile.x === 0 && immobile.y === 0 && immobile.poussee === 0)
 
 let v: Vaisseau = nouveauVaisseau()
@@ -2846,9 +2848,9 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
     for (let i = 0; i < 60 * 2 && !eclat; i++) {
       w.vaisseau = { ...w.vaisseau, x: 0, y: 200, vx: 0, vy: 0 }
       const ev = avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements
-      if (ev.some((e) => e.type === 'eclat')) (eclat = true), (pepites = w.pepites.length)
+      if (ev.some((e) => e.type === 'eclat')) (eclat = true), (pepites = valeurDes(w.pepites))
     }
-    verifier(`abattue, la roche éclate et rend ${pepites} pépites (500 points : une par 60) — un insecte de 120 points en rend une`, eclat && pepites === Math.round(500 / 60))
+    verifier(`abattue, la roche éclate et rend ${pepites} points de pépites (500 points : un par 60) — un insecte de 120 points en rend une`, eclat && pepites === Math.round(500 / 60))
   }
   // (elle heurte le vaisseau : il rebondit et perd `choc` unités de vie, une fois ; elle ne dévie pas)
   {
@@ -3284,7 +3286,7 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   w3.ennemis.push({ ...gros, id: 600, corps: { ...nouveauVaisseau(), x: 300, y: 300 }, pv: 1 })
   w3.ennemis[0].pv = -1
   for (let i = 0; i < 2; i++) avancerLeMonde({ ...cfg, armes: [{ id: 'canon', cadence: 0.01, degats: 10, portee: 1000, vitesse: 4000, vie: 1, dispersion: 0, guide: false, infaillible: true }] }, w3, 1 / 60, { x: 0, y: 0 })
-  verifier(`le cornu : ${part(0) * 100}% la première minute, ${Math.round(part(2) * 100)}% la troisième, ${Math.round(part(5) * 100)}% la sixième ; ${cornu?.pv} points de vie (le petit 120), rayon ${rayonDe(cfg, cornu!)} (5), ${Math.round(vGros)} contre ${Math.round(vPetit)} de vitesse ; ${w3.pepites.length} pépites`, part(0) === 0 && part(2) > 0.03 && part(2) < 0.12 && part(5) > 0.14 && part(5) < 0.27 && cornu?.pv === 360 && rayonDe(cfg, cornu!) === 7.5 && vGros < vPetit * 0.92 && w3.pepites.length === 3)
+  verifier(`le cornu : ${part(0) * 100}% la première minute, ${Math.round(part(2) * 100)}% la troisième, ${Math.round(part(5) * 100)}% la sixième ; ${cornu?.pv} points de vie (le petit 120), rayon ${rayonDe(cfg, cornu!)} (5), ${Math.round(vGros)} contre ${Math.round(vPetit)} de vitesse ; ${valeurDes(w3.pepites)} points de pépites`, part(0) === 0 && part(2) > 0.03 && part(2) < 0.12 && part(5) > 0.14 && part(5) < 0.27 && cornu?.pv === 360 && rayonDe(cfg, cornu!) === 7.5 && vGros < vPetit * 0.92 && valeurDes(w3.pepites) === 3)
 }
 
 // LE CUIRASSIER, L'INSECTE BLINDÉ (Keko, 21/11) : aucun avant trois minutes, puis une part qui monte jusqu'au vingt-
@@ -3380,6 +3382,32 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
     if (pendant < 0 && w.renaitJusque > -100 && w.t > w.renaitJusque - 0.1) pendant = w.invasion.xp
   }
   verifier(`au retour, les pépites attendent : ${semees} semées, ${pendant} ramassées pendant l'invincibilité, ${w.pepites.length} restées après, hors de l'aimant (niveau ${w.invasion.niveau}) — semées en gerbe, elles ont dérivé le temps d'attendre`, semees >= 8 && pendant === 0 && w.pepites.length <= 3 && w.invasion.niveau >= 2)
+}
+
+// LES TROIS PÉPITES ET L'AIMANT (Keko, 21/11 : « une petite, une moyenne, une grosse » — 1 / 3 / 10 ; « chaque ennemi a son
+// butin propre » ; « un symbole d'aimant ; quand on le prend, ça attire toutes les pépites de la map » — 1 sur 300)
+{
+  const g = (n: number): string => gemmesDuButin(VAISSEAU, n).join('+')
+  verifier(`le butin en gemmes, les plus grosses d'abord : 1 → ${g(1)}, 3 → ${g(3)}, 10 → ${g(10)}, 17 → ${g(17)}`, g(1) === '1' && g(3) === '3' && g(10) === '10' && g(17) === '10+3+3+1')
+  const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9 }, derive: { ...VAISSEAU.derive, active: false } }
+  const w = nouveauMonde(cfg, 5)
+  w.invasion.prochainA = 1e9
+  w.pepites.push({ id: 900, x: 0, y: 0, vx: 0, vy: 0, graine: 1, minerai: 'fer', valeur: 10 })
+  avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+  verifier(`une grosse vaut 10 : ${w.invasion.xp} points au niveau ${w.invasion.niveau} (5 pour le niveau 2)`, w.invasion.niveau === 2 && w.invasion.xp === 5)
+  const loin = [[600, 0], [-500, 300], [0, -700], [350, 450]]
+  for (const [i, [x, y]] of loin.entries()) w.pepites.push({ id: 910 + i, x, y, vx: 0, vy: 0, graine: i, minerai: 'fer', valeur: 1 })
+  w.pepites.push({ id: 920, x: 0, y: 0, vx: 0, vy: 0, graine: 9, minerai: 'fer', valeur: 0, aimant: true })
+  let pris = false
+  for (let i = 0; i < 60 * 8; i++) {
+    const r = avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+    if (r.evenements.some((e) => e.type === 'aimant')) pris = true
+  }
+  verifier(`l'aimant pris, les pépites lointaines (jusqu'à 700) arrivent : ${w.pepites.length} restent, ${w.invasion.xp} points au niveau ${w.invasion.niveau} (9 depuis le niveau 2 à 5 : le 3 coûte 8)`, pris && w.pepites.length === 0 && w.invasion.niveau === 3 && w.invasion.xp === 1)
+  // (la chance de l'aimant : sur mille insectes abattus, mesurée par le tirage de la règle)
+  let aimants = 0
+  for (let id = 1; id <= 3000; id++) if (tire(id, 35) < cfg.invasion.aimant) aimants++
+  verifier(`l'aimant tombe une fois sur 300 environ : ${aimants} sur 3000`, aimants >= 4 && aimants <= 20)
 }
 
 // (TOUJOURS EN DERNIER : des blocs ajoutés après cette ligne échouaient sans faire échouer `npm run verif` — 17/11)

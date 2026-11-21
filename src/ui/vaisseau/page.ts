@@ -12,7 +12,7 @@
  */
 import './vaisseau.css'
 import * as noyau from 'pixelfx'
-import { type SorteDInsecte, SORTES_D_INSECTES, gabaritDInsecte, pointDeRetour, rayonDe, rocheDeLaTempete, vieMultipliee, degatsMultiplies, placeDeLEcharde, frontDeLaNova, ancreDansLeMonde, zoneDuDe, coupeDUnCube, formeDeLaCoupe, liesAuDrain, encaisser, type Ennemi, type Evenement, type Monde, impactDuRayon, asteroidesVisibles, avancerLeMonde, finDuTrio, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur, xpDuNiveau, ennemiLePlusProche, ennemiVerrouille, verrouiller, angleDuBalayage } from '../../logic/vaisseau/jeu.ts'
+import { type SorteDInsecte, SORTES_D_INSECTES, gabaritDInsecte, gemmesDuButin, butinDeLaRoche, pointDeRetour, rayonDe, rocheDeLaTempete, vieMultipliee, degatsMultiplies, placeDeLEcharde, frontDeLaNova, ancreDansLeMonde, zoneDuDe, coupeDUnCube, formeDeLaCoupe, liesAuDrain, encaisser, type Ennemi, type Evenement, type Monde, impactDuRayon, asteroidesVisibles, avancerLeMonde, finDuTrio, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur, xpDuNiveau, ennemiLePlusProche, ennemiVerrouille, verrouiller, angleDuBalayage } from '../../logic/vaisseau/jeu.ts'
 import { ETALONS as ETALONS_DU_BANC, acheter, ajouterLesPiecesDEssai, capacite, poidsTotal, POIDS_SERIE, configDuHangar, demonter, demonterA, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, montantCourt, monteeA, monter, monterA, peutAcheter, peutMonter, perdreLesMontees, estDeBase, exemplaires, libres, pieceDe, piecesDe, placeLourde, possede, aimantMonte, radarMonte, type Jauge, type Piece, type Sorte } from '../../logic/vaisseau/hangar.ts'
 import { drawWord, spell } from 'pixelfx/fx/ui/_lib'
 import { firePuff, hotFirst, smokePuff } from 'pixelfx/fx/fire/_lib'
@@ -33,7 +33,7 @@ import { ajouterLeVaisseau, avecLeHangar, choisirLeVaisseau, coutEnMinerai, estD
 import { annulerLOrdre, coursA, gainDe, historiqueDe, marcheNeuf, ordreNumero, ordresDe, poserUnOrdre, previsionDe, prixPlafond, reglerLeMarche, tendanceDe, vendreAuCours } from '../../logic/vaisseau/marche.ts'
 import { aLaMecanique, BRANCHES, configDuLabo, coutDe, debloquer, estDebloque, laboNeuf, noeudDe, noeudsDe, NOMS_BRANCHE, passifsDe, peutDebloquer, rangOuvert, RANGS, type Branche, type Mecanique, type Noeud } from '../../logic/vaisseau/labo.ts'
 import { ECLOSION_DE_L_ARRIVEE, jouer as jouerLeSon, latenceMs, regler, reveiller, type GenreDePropulsion, type Son } from './sons.ts'
-import { dessinerAsteroide, dessinerPepite, LUMIERE, rocheDe, TEINTES_MINERAI } from './asteroide.ts'
+import { dessinerAimant, dessinerAsteroide, dessinerPepite, dessinerPepiteDuVortex, dessinerRocheDuVortex, LUMIERE, rocheDe, TEINTES_MINERAI } from './asteroide.ts'
 import { dessinerBase, dessinerStation, ENVERGURE_BASE, RECUL_DE_LA_BASE } from './station.ts'
 import { animerAstre, astresVisibles, demiTailleDeLAstre, peindreAstre, rayonQuiCache, voilerLAstre, type Astre, type PeintreCeleste } from './celeste.ts'
 import * as EXPLOSION from '../pixelfx/fx/keko/explosion-espace.js'
@@ -482,6 +482,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (parametres.has('bord') && CONF.arene.active) monde.vaisseau = { ...monde.vaisseau, x: CONF.arene.rayon - 90 }
     // (le jeu du vortex : les deux canons tirent À TOUR DE RÔLE — le second part une demi-cadence après le premier)
     if (parametres.has('vortex') && CONF.armes.length === 2) monde.armesA = [0, CONF.armes[0].cadence / 2]
+    // (`&vitrine` : les trois gemmes, trois fois, et l'aimant, posés en couronne autour de lui, hors de son aimant — pour
+    // les juger d'un lien ; l'aimant est au nord, la couronne s'ouvre de la petite à la grosse)
+    if (parametres.has('vitrine') && CONF.invasion.active)
+      [1, 3, 10, 1, 3, 10, 1, 3, 10, 0].forEach((val, i) => {
+        const a = -Math.PI / 2 + (i / 10) * Math.PI * 2
+        const d = 62 + (i % 3) * 10
+        monde.pepites.push({ id: 1e6 + i, x: monde.vaisseau.x + Math.cos(a) * d, y: monde.vaisseau.y + Math.sin(a) * d, vx: 0, vy: 0, graine: 77 + i, minerai: 'fer', ...(val === 0 ? { valeur: 0, aimant: true } : { valeur: val }) })
+      })
     return monde
   }
   let m = monterLeMonde()
@@ -1012,7 +1020,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // (L'ÉCHELLE DES DÉGÂTS DU VORTEX : les armes et la collision contre les insectes, fois `ECHELLE_DU_VORTEX` — voir
       // `INSECTE`)
       if (VORTEX) conf = { ...conf, armes: conf.armes.map((a) => degatsMultiplies(a, ECHELLE_DU_VORTEX)), collision: { ...conf.collision, degatsEnnemi: conf.collision.degatsEnnemi * ECHELLE_DU_VORTEX } }
-      if (VORTEX) conf = { ...conf, champ: { ...conf.champ, densite: 0 }, station: { ...conf.station, portee: -1 }, invasion: { ...conf.invasion, active: true, sansPortail: true /* (PLUS DE PORTAIL — Keko, 20/11 : voir `sansPortail`) */, continu: { ...conf.invasion.continu, actif: true, ...(FLOT > 0 ? { debut: FLOT, max: FLOT } : {}) }, ...(parametres.has('cornus') ? { cornu: { ...conf.invasion.cornu, debut: 0, montee: 1e-6, part: Number(parametres.get('cornus')) || 0.5 } } : {}), ...(parametres.has('cuirassiers') ? { cuirassier: { ...conf.invasion.cuirassier, debut: 0, montee: 1e-6, part: Number(parametres.get('cuirassiers')) || 0.3 } } : {}), ...(parametres.has('moucherons') ? { moucheron: { ...conf.invasion.moucheron, part: Number(parametres.get('moucherons')) || 0 } } : {}) /* (`&cornus=P`, `&cuirassiers=P`, `&moucherons=P` : cette part de cornus, de cuirassiers, de moucherons, dès le départ) */ /* (ET PLUS DE VAGUES : voir `continu`) */, viePortail: Math.max(1, Number(parametres.get('portail')) || conf.invasion.viePortail) /* (`&portail=N` : la vie du portail au départ, pour voir la fin d'un lien) */ }, ennemi: { ...conf.ennemi, ...INSECTE }, bouclier: { ...conf.bouclier, points: Math.max(conf.bouclier.points, BOUCLIER_DU_VORTEX) }, passifs: { ...conf.passifs, critique: conf.passifs.critique + CRITIQUE_DU_VORTEX, critiqueFacteur: FACTEUR_CRITIQUE_DU_VORTEX } }
+      if (VORTEX) conf = { ...conf, champ: { ...conf.champ, densite: 0 }, station: { ...conf.station, portee: -1 }, invasion: { ...conf.invasion, active: true, sansPortail: true /* (PLUS DE PORTAIL — Keko, 20/11 : voir `sansPortail`) */, continu: { ...conf.invasion.continu, actif: true, ...(FLOT > 0 ? { debut: FLOT, max: FLOT } : {}) }, ...(parametres.has('cornus') ? { cornu: { ...conf.invasion.cornu, debut: 0, montee: 1e-6, part: Number(parametres.get('cornus')) || 0.5 } } : {}), ...(parametres.has('cuirassiers') ? { cuirassier: { ...conf.invasion.cuirassier, debut: 0, montee: 1e-6, part: Number(parametres.get('cuirassiers')) || 0.3 } } : {}), ...(parametres.has('moucherons') ? { moucheron: { ...conf.invasion.moucheron, part: Number(parametres.get('moucherons')) || 0 } } : {}) /* (`&cornus=P`, `&cuirassiers=P`, `&moucherons=P` : cette part de cornus, de cuirassiers, de moucherons, dès le départ) */, ...(parametres.has('aimant') ? { aimant: Number(parametres.get('aimant')) || 0.2 } : {}) /* (`&aimant=P` : la chance qu'un insecte lâche l'aimant — 0,2 sans nombre) */ /* (ET PLUS DE VAGUES : voir `continu`) */, viePortail: Math.max(1, Number(parametres.get('portail')) || conf.invasion.viePortail) /* (`&portail=N` : la vie du portail au départ, pour voir la fin d'un lien) */ }, ennemi: { ...conf.ennemi, ...INSECTE }, bouclier: { ...conf.bouclier, points: Math.max(conf.bouclier.points, BOUCLIER_DU_VORTEX) }, passifs: { ...conf.passifs, critique: conf.passifs.critique + CRITIQUE_DU_VORTEX, critiqueFacteur: FACTEUR_CRITIQUE_DU_VORTEX } }
       // LE RIVAL EST UN CUIRASSÉ LOURDEMENT ARMÉ (Keko, 14/11, à l'essai : « pour voir si je peux arriver à le tuer avec mon
       // chasseur ») : gros, lent, qui vire mal, très solide, et qui tire trois fois plus souvent, de plus loin ; il ne
       // fuit plus. `&rival=serie` rend le petit rival d'avant. *Chiffres au jugé.*
@@ -11974,22 +11982,30 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // `IMAGES_DES_ROCHES_MAX` dernières)
     // (… ET LES ROCHES QU'ELLE A PRISES — voir `menerLesRochesPrises` : peintes comme les siennes, sans barre de vie ; leur clé
     // d'image est négative, celles de la tempête vont de 0 à `roches` × `POSES_DES_ROCHES`)
-    const poser = (n: number, id: number, r: { x: number; y: number; rayon: number; graine: number; angle0: number; vitesseAngulaire: number }): void => {
+    const poser = (n: number, id: number, r: { x: number; y: number; rayon: number; graine: number; angle0: number; vitesseAngulaire: number; butin?: number }): void => {
       if (!dedans(r.x, r.y, r.rayon + 4)) return
-      const tour = Math.PI * 2
-      const ia = ((Math.round(((r.angle0 + r.vitesseAngulaire * t) / tour) * POSES_DES_ROCHES) % POSES_DES_ROCHES) + POSES_DES_ROCHES) % POSES_DES_ROCHES
-      const cle = n >= 0 ? n * POSES_DES_ROCHES + ia : -(id * POSES_DES_ROCHES + ia) - 1
-      let im = imagesDesRoches.get(cle)
-      if (im === undefined) {
-        const taille = Math.ceil(r.rayon * 2.4) + 6
-        im = imageDe(taille, (p2, c) => dessinerAsteroide(p2, { id, x: 0, y: 0, rayon: r.rayon, graine: r.graine, angle0: (ia / POSES_DES_ROCHES) * tour, vitesseAngulaire: 0, minerai: 'fer', richesse: 0.2 }, 0, Math.floor(c), Math.floor(c)))
-        if (imagesDesRoches.size >= IMAGES_DES_ROCHES_MAX) imagesDesRoches.delete(imagesDesRoches.keys().next().value as number)
-      } else imagesDesRoches.delete(cle)
-      imagesDesRoches.set(cle, im)
-      poserLImage(p, im, Math.round(r.x + ox), Math.round(r.y + oy))
+      poserUneRoche(p, n, id, r, Math.round(r.x + ox), Math.round(r.y + oy), r.butin === undefined ? [] : gemmesDuButin(CONF, r.butin))
     }
     for (let k = 0; k < A.roches; k++) poser(k, 90000 + k, rocheDeLaTempete(CONF, k, m.t))
     for (const r of m.rochesPrises) poser(-1, r.id, r)
+  }
+  /**
+   * UNE ROCHE DU VORTEX POSÉE EN (sx, sy) DE L'ÉCRAN : son image à la pose la plus proche de son angle (voir
+   * `POSES_DES_ROCHES`), peinte une fois et gardée. `n` : le rang d'une roche de la tempête (sa clé), sinon négatif —
+   * la clé suit l'identité.
+   */
+  function poserUneRoche(p: Peintre, n: number, id: number, r: { rayon: number; graine: number; angle0: number; vitesseAngulaire: number }, sx: number, sy: number, gemmes: number[]): void {
+    const tour = Math.PI * 2
+    const ia = ((Math.round(((r.angle0 + r.vitesseAngulaire * t) / tour) * POSES_DES_ROCHES) % POSES_DES_ROCHES) + POSES_DES_ROCHES) % POSES_DES_ROCHES
+    const cle = n >= 0 ? n * POSES_DES_ROCHES + ia : -(id * POSES_DES_ROCHES + ia) - 1
+    let im = imagesDesRoches.get(cle)
+    if (im === undefined) {
+      const taille = Math.ceil(r.rayon * 2.4) + 6
+      im = imageDe(taille, (p2, c) => dessinerRocheDuVortex(p2, { id, x: 0, y: 0, rayon: r.rayon, graine: r.graine, angle0: (ia / POSES_DES_ROCHES) * tour, vitesseAngulaire: 0, minerai: 'fer', richesse: 0.2 }, 0, Math.floor(c), Math.floor(c), gemmes, XP))
+      if (imagesDesRoches.size >= IMAGES_DES_ROCHES_MAX) imagesDesRoches.delete(imagesDesRoches.keys().next().value as number)
+    } else imagesDesRoches.delete(cle)
+    imagesDesRoches.set(cle, im)
+    poserLImage(p, im, sx, sy)
   }
   function dessinerLesEnnemis(p: Peintre): void {
     if (VORTEX) {
@@ -12005,7 +12021,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         const ro = e.asteroide
         if (ro !== undefined) {
           const tremble = blanchi ? 1 : 0
-          dessinerAsteroide(p, { id: e.id, x: b.x, y: b.y, rayon: ro.rayon, graine: ro.graine, angle0: ro.angle0, vitesseAngulaire: ro.vitesseAngulaire, minerai: 'fer', richesse: 0.7 }, t, Math.round(sx + tremble * (alea(e.id, Math.floor(t * 30), 3) - 0.5) * 2), Math.round(sy))
+          // (… UNE ROCHE NATURELLE, SES PÉPITES SERTIES — Keko, 21/11 : voir `dessinerRocheDuVortex` ; une image par pose,
+          // comme celles de la tempête : elle est ombrée pixel par pixel)
+          poserUneRoche(p, -1, e.id, { rayon: ro.rayon, graine: ro.graine, angle0: ro.angle0, vitesseAngulaire: ro.vitesseAngulaire }, Math.round(sx + tremble * (alea(e.id, Math.floor(t * 30), 3) - 0.5) * 2), Math.round(sy), gemmesDuButin(CONF, butinDeLaRoche(CONF, ro.pvMax)))
           if (e.pv < ro.pvMax) dessinerUneJauge(p, sx, sy + ro.rayon + 4, Math.round(ro.rayon * 1.6), e.pv / ro.pvMax, ROUGE[4], ROUGE[5], blanchi)
           continue
         }
@@ -13719,8 +13737,23 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** Les pépites libres, aux teintes de leur minerai. */
   function dessinerLesPepites(p: Peintre): void {
     // (VIOLETTES dans le jeu du vortex — Keko, 14/11 : en gris-blanc, « on les voit mal parmi les étoiles »)
-    for (const pe of m.pepites) dessinerPepite(p, pe, t, m.refuses[pe.minerai], VORTEX ? XP : undefined)
+    // (… EN GEMMES AU VORTEX, trois tailles, et l'aimant — Keko, 21/11 : voir `dessinerPepiteDuVortex`)
+    for (const pe of m.pepites)
+      if (!VORTEX) dessinerPepite(p, pe, t, m.refuses[pe.minerai])
+      else if (pe.aimant === true) dessinerAimant(p, pe.x, pe.y, t, XP, pe.graine)
+      else dessinerPepiteDuVortex(p, pe, t, XP)
+    // (L'AIMANT PRIS : deux anneaux de la teinte des pépites se referment sur le vaisseau, le temps qu'elles arrivent)
+    const ua = (t - aimantA) / 0.9
+    if (VORTEX && ua >= 0 && ua < 1)
+      for (const k of [0, 0.35]) {
+        const u = ua - k
+        if (u < 0 || u > 0.65) continue
+        const w = u / 0.65
+        p.ring(Math.round(m.vaisseau.x), Math.round(m.vaisseau.y), Math.round(70 * (1 - w) + 8), 2, XP[2], 0.7 * Math.sin(w * Math.PI))
+      }
   }
+  /** L'instant où l'aimant a été ramassé (voir `dessinerLesPepites`). */
+  let aimantA = -10
 
   /**
    * L'ÉCRAN S'ALLUME COMME UN TUBE (Keko : « pour l'ouverture de l'écran titre, au lieu d'apparaître comme ça, une
@@ -14291,6 +14324,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           if (typeof navigator.vibrate === 'function') vibrer(30)
           break
         }
+        case 'aimant':
+          aimantA = t
+          jouer('aspire')
+          secousse = Math.max(secousse, 0.4)
+          if (typeof navigator.vibrate === 'function') vibrer([20, 30, 20])
+          break
         case 'ramasse':
           flashs.push({ x: ev.x, y: ev.y, t0: t, r: 0, c: TEINTES_MINERAI[ev.minerai] })
           if (ev.par === 'joueur') {
