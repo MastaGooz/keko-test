@@ -44,7 +44,7 @@ import { RASSEMBLE as TELEPORTE_A } from '../pixelfx/fx/keko/teleportation.js'
 import * as MATERIALISATION from '../pixelfx/fx/keko/materialisation.js'
 import * as QUETE_TERMINEE from '../pixelfx/fx/keko/quete-terminee.js'
 import * as VORTEX_FX from '../pixelfx/fx/keko/vortex.js'
-import { apresUnChoix, carte, DUREE_DU_CHOIX, ouvrirLeChoix, proposer, RARETES, reserveApresLeDelai, type Choix, type Rarete, type Talent } from '../../logic/vaisseau/talents.ts'
+import { ajouterLeBonus, apresUnChoix, avecLesBonus, carte, DUREE_DU_CHOIX, type Bonus, ouvrirLeChoix, proposer, RARETES, reserveApresLeDelai, type Choix, type Rarete, type Talent } from '../../logic/vaisseau/talents.ts'
 import { APPARAIT as ARRIVE_A, REFROIDI as REFROIDI_A } from '../pixelfx/fx/keko/materialisation.js'
 import { Grains } from '../pixelfx/fx/keko/_espace.js'
 
@@ -1088,6 +1088,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     souris = null // (la souris ne vise qu'une fois bougée pendant ce vol)
     graineDuVol = parametres.has('graine') ? Math.max(0, Math.floor(Number(parametres.get('graine')) || 0)) : 1 + Math.floor(Math.random() * 1e6)
     CONF = configDuVol(armeDuVortex(), graineDuVol)
+    // (un vol neuf : plus aucun bonus de talent)
+    confSansTalents = null
+    bonusDuVol = []
     // `&zero` (Keko, 13/11 : « la coque et le propulseur de base avec un poids de 0 et toutes ces statistiques à 0 : voir,
     // avec aucune statistique, comment se déplace le vaisseau ») : un banc d'essai — le châssis et le propulseur ne
     // pèsent plus rien, et le propulseur ne donne ni poussée, ni pointe, ni rotation. Le reste (outils, armes) ne change pas.
@@ -1437,6 +1440,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** LE CHOIX D'UN TALENT en cours (null : on joue), ceux gardés en réserve, la fin du délai, l'instant de l'ouverture. */
   let choixDeTalent: Choix | null = null
   let reserveDeTalents = 0
+  /** La configuration d'avant le premier talent du vol, et les bonus pris depuis (voir `avecLesBonus`). */
+  let confSansTalents: ConfigVaisseau | null = null
+  let bonusDuVol: Bonus = []
   let talentFinA = 0
   /** (`&choix` : le choix d'essai est-il déjà ouvert) */
   let choixDEssaiOuvert = false
@@ -1956,8 +1962,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (pris !== null && tReel - pris.t0 >= DUREE_DE_LA_PRISE) {
       const ta = pris.ta
       talentPris = null
+      // (LES BONUS S'ADDITIONNENT — voir `avecLesBonus` : la configuration se recalcule de celle d'avant le premier talent)
+      if (confSansTalents === null) confSansTalents = CONF
+      bonusDuVol = ajouterLeBonus(bonusDuVol, ta)
       const avant = CONF
-      CONF = ta.appliquer(CONF)
+      CONF = avecLesBonus(confSansTalents, bonusDuVol)
       // (ce qu'on gagne de vie ou de bouclier est donné tout de suite)
       if (CONF.coque > avant.coque) m.coque = Math.min(CONF.coque, m.coque + CONF.coque - avant.coque)
       if (CONF.bouclier.points > avant.bouclier.points) m.bouclier = Math.min(CONF.bouclier.points, m.bouclier + CONF.bouclier.points - avant.bouclier.points)

@@ -1,7 +1,7 @@
 /**
  * Vérifications des talents du jeu du vortex, sans navigateur.
  */
-import { apresUnChoix, armeAmelioree, carte, factionAmelioree, ouvrirLeChoix, proposer, RARETES, rareteTiree, reserveApresLeDelai, STATS_DE_FACTION, statsDeLArme } from './talents.ts'
+import { ajouterLeBonus, apresUnChoix, armeAmelioree, avecLesBonus, carte, factionAmelioree, type Bonus, ouvrirLeChoix, proposer, RARETES, rareteTiree, reserveApresLeDelai, STATS_DE_FACTION, statsDeLArme } from './talents.ts'
 import { VAISSEAU as C, type Arme, type ConfigVaisseau } from './jeu.ts'
 
 let echecs = 0
@@ -35,7 +35,11 @@ verifier('en pour cent : PV, régénération, bouclier, recharge, déphasage, mo
 // UNE CARTE : elle ne touche que son arme ; elle se cumule
 const deux: ConfigVaisseau = { ...base, armes: [canon, { ...canon, id: 'autre' }] }
 const c1 = carte({ sorte: 'arme', arme: 'canon' }, 'degats', 'rare')
-verifier(`une carte d'arme ne change que son arme (${c1.appliquer(deux).armes.map((a) => a.degats).join(', ')}) ; reprise, elle se cumule (${c1.appliquer(c1.appliquer(base)).armes[0].degats})`, c1.appliquer(deux).armes[0].degats === 67 && c1.appliquer(deux).armes[1].degats === 60 && c1.appliquer(c1.appliquer(base)).armes[0].degats === 75)
+const un: Bonus = ajouterLeBonus([], c1)
+const dix = Array.from({ length: 10 }).reduce<Bonus>((b) => ajouterLeBonus(b, c1), [])
+const cad = Array.from({ length: 10 }).reduce<Bonus>((b) => ajouterLeBonus(b, carte({ sorte: 'arme', arme: 'canon' }, 'cadence', 'rare')), [])
+const pv = ajouterLeBonus(ajouterLeBonus([], carte({ sorte: 'faction', race: 'essaim' }, 'blindage', 'rare')), carte({ sorte: 'faction', race: 'essaim' }, 'blindage', 'commune'))
+verifier(`une carte d'arme ne change que son arme (${avecLesBonus(deux, un).armes.map((a) => a.degats).join(', ')}) ; LES BONUS S'ADDITIONNENT : dix « +12 % » de dégâts font +120 % (${avecLesBonus(base, dix).armes[0].degats} sur 60), de cadence un délai ÷ 2,2 (${avecLesBonus(base, cad).armes[0].cadence.toFixed(3)} sur 1,1), +12 % puis +5 % de PV font +17 % (${avecLesBonus(base, pv).coque} sur ${base.coque})`, avecLesBonus(deux, un).armes[0].degats === 67 && avecLesBonus(deux, un).armes[1].degats === 60 && avecLesBonus(base, dix).armes[0].degats === 132 && Math.abs(avecLesBonus(base, cad).armes[0].cadence - 0.5) < 1e-9 && Math.abs(avecLesBonus(base, pv).coque - base.coque * 1.17) < 1e-9 && dix.length === 1 && Math.abs(dix[0].somme - 1.2) < 1e-9)
 
 // LE TIRAGE DES TROIS CARTES
 const p1 = proposer(7, 2, 0, canon, 'essaim')

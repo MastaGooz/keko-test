@@ -7516,3 +7516,11 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     pixels l'une de l'autre (huit : les accents de l'une touchaient les jambages de l'autre). Vu à la capture.
   - Keko : « on ne voit pas le total de la jauge du timer, le fond est noir quand elle se vide ». La barre du temps a
     sa PISTE : un creux d'acier sombre liseré d'un ton plus clair, dans un cerne d'encre, sous la part qui reste. Vu.
+  - LES BONUS S'ADDITIONNENT. Keko : « c'est standard, la multiplication au lieu de l'addition ? » — non : dans le genre
+    (Vampire Survivors, Brotato, les « increased » de Path of Exile), les pour cent d'une même stat s'additionnent et
+    s'appliquent une fois à la base ; « passe à l'addition ». Chaque stat de chaque cible garde LA SOMME de ses bonus
+    (`Bonus`, `ajouterLeBonus`), et la configuration se recalcule de celle d'avant le premier talent du vol
+    (`avecLesBonus` : `base × (1 + somme)` ; la cadence, `délai ÷ (1 + somme)`, des tirs par seconde qui montent de la
+    somme ; la recharge du bouclier, pareil). Un vol neuf repart sans bonus. Testé : dix « +12 % » de dégâts font +120 %
+    (132 sur 60 — ils faisaient ×3,1 en se multipliant), dix de cadence un délai divisé par 2,2, +12 % puis +5 % de PV
+    font +17 %. Vu en jeu : une carte prise, la partie reprend.

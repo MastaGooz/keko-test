@@ -14,6 +14,10 @@
  * rayon, une durée) — les trente-six armes, sans table à tenir. Le pool de la faction est écrit (`STATS_DE_FACTION`).
  * Le même niveau de la même partie propose les mêmes cartes. *Les chances et les bonus des raretés sont de Keko ; le
  * reste est de moi.* PUR : pas de hasard non seedé.
+ *
+ * LES BONUS S'ADDITIONNENT (Keko, 21/11 : « passe à l'addition » — d'abord ils se multipliaient, carte après carte) :
+ * chaque stat de chaque cible garde LA SOMME de ses bonus (`Bonus`), et la configuration se recalcule de celle du
+ * décollage, `base × (1 + somme)` — deux « +12 % » font +24 %, dix font +120 % ; la cadence, `délai ÷ (1 + somme)`.
  */
 import { CHAMPS_DE_DEGATS, hache, type Arme, type ConfigVaisseau } from './jeu.ts'
 import type { Race } from './flotte.ts'
@@ -62,7 +66,19 @@ export type Talent = {
   rarete: Rarete
   /** Le bonus, en part (0,12 = +12 %). */
   bonus: number
-  appliquer: (c: ConfigVaisseau) => ConfigVaisseau
+}
+/** LES BONUS DU VOL : par cible et par stat, la somme des bonus pris (en part). */
+export type Bonus = { id: string; cible: Cible; stat: StatDArme | StatDeFaction; somme: number }[]
+/** Les bonus, une carte de plus : sa somme grossit de son bonus. */
+export function ajouterLeBonus(b: Bonus, ta: Talent): Bonus {
+  const deja = b.find((x) => x.id === ta.id)
+  return deja === undefined ? [...b, { id: ta.id, cible: ta.cible, stat: ta.stat, somme: ta.bonus }] : b.map((x) => (x === deja ? { ...x, somme: x.somme + ta.bonus } : x))
+}
+/** LA CONFIGURATION AVEC SES BONUS : celle du décollage, chaque stat à `base × (1 + somme)`. */
+export function avecLesBonus(base: ConfigVaisseau, b: Bonus): ConfigVaisseau {
+  let c = base
+  for (const x of b) c = x.cible.sorte === 'arme' ? { ...c, armes: c.armes.map((a) => (a.id === (x.cible as { arme: string }).arme ? armeAmelioree(a, x.stat as StatDArme, x.somme) : a)) } : factionAmelioree(c, x.stat as StatDeFaction, x.somme)
+  return c
 }
 
 // ---------------------------------------------------------------- les armes : ce qu'elles portent, ce qu'on y change
@@ -147,13 +163,7 @@ export function factionAmelioree(c: ConfigVaisseau, stat: StatDeFaction, k: numb
 
 /** Une carte : sa cible, sa stat, sa rareté. */
 export function carte(cible: Cible, stat: StatDArme | StatDeFaction, rarete: Rarete): Talent {
-  const bonus = rareteDe(rarete).bonus
-  const id = `${cible.sorte === 'arme' ? cible.arme : cible.race}:${stat}`
-  const appliquer =
-    cible.sorte === 'arme'
-      ? (c: ConfigVaisseau): ConfigVaisseau => ({ ...c, armes: c.armes.map((a) => (a.id === cible.arme ? armeAmelioree(a, stat as StatDArme, bonus) : a)) })
-      : (c: ConfigVaisseau): ConfigVaisseau => factionAmelioree(c, stat as StatDeFaction, bonus)
-  return { id, cible, stat, rarete, bonus, appliquer }
+  return { id: `${cible.sorte === 'arme' ? `arme-${cible.arme}` : cible.race}:${stat}`, cible, stat, rarete, bonus: rareteDe(rarete).bonus }
 }
 
 /**
