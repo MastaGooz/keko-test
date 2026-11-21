@@ -7133,3 +7133,22 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   tombent), épargne un lointain et une roche ; un insecte posé sur lui ne le mord pas deux secondes ; à la fin, rien ne
   le recouvre. Vu à la capture (`&crash=2`). Premier essai : l'onde était dessinée hors de l'écran (le peintre des
   gerbes est déjà sur la caméra).
+
+- **21/11, la déflagration du retour, plus riche et plus profonde** (Keko : « plus d'effets visuels au moment du
+  respawn, une onde de choc lumineuse circulaire qui s'étend rapidement en même temps que les rayons » ; « avec des
+  particules et tout ça » ; « et un bruit un peu plus travaillé, un peu plus profond, qui renvoie bien à une
+  désintégration globale »).
+  - L'IMAGE (une seconde, `DUREE_DE_LA_DEFLAGRATION`) : tout l'écran blanchit un dixième de seconde ; au cœur, un disque
+    blanc qui se referme et la lumière d'or qui retombe ; L'ONDE DE CHOC — un front blanc de deux pixels et sa bande
+    d'or de six anneaux, qui passe le bord de la zone et va jusqu'à 1,6 fois son rayon en un tiers de seconde
+    (`ONDE_DE_CHOC`), en s'éteignant ; son ÉCHO, plus lent, jusqu'au bord ; vingt RAYONS qui jaillissent avec elle,
+    les longs avec une pointe qui scintille.
+  - LES PARTICULES : quarante étincelles d'or ; cinquante-six plus vives, lancées à la vitesse de l'onde, qui
+    CHEVAUCHENT SON FRONT ; une COURONNE de trente-six qui éclate au bord de la zone quand l'onde le passe ; trente
+    BRAISES de lumière qui flottent ensuite, jusqu'à deux secondes.
+  - LE SON (`deflagration`, `synthe.ts`) : un coup de sous-sol (110 → 30 Hz, saturé ; et 55 → 26 Hz qui tient), l'onde
+    qui déferle (un souffle large de 6 000 à 180 Hz, un grondement en bande dessous), LA DÉSINTÉGRATION — soixante-dix
+    grains qui crépitent tout autour, de plus en plus graves et rares —, une poussière de notes de verre ; une grande
+    salle. MESURÉ : 3,2 s, 69 % de son énergie sous 200 Hz (le son de la mort : 45 %), une puissance moyenne voisine
+    de lui (0,097 contre 0,093) ; 164 ms de calcul, dans le Worker. Il remplace « extrait » et « ennemiDetruit ».
+  Vu à la capture, image par image. Le son n'est mesuré qu'au calcul : à juger à l'oreille.

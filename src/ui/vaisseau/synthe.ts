@@ -1310,6 +1310,30 @@ const RECETTES = {
    * note qui montent d'une octave en s'enflant ; à l'éclosion, une quinte de clochettes (la, ré) sur un appui rond, une
    * étincelle de verre au-dessus — la même famille que l'extraction, en plus court : on arrive comme on repart
    */
+  /**
+   * LA DÉFLAGRATION DU RETOUR (Keko, 21/11 : « un bruit de son un peu plus travaillé, un peu plus profond, qui renvoie bien
+   * à une désintégration globale ») : UN COUP DE SOUS-SOL — une fondamentale très grave qui s'enfonce, saturée pour qu'un
+   * petit haut-parleur en entende les harmoniques, et une seconde, plus basse encore, qui tient — ; L'ONDE QUI DÉFERLE —
+   * un souffle large dont la coupure tombe de l'aigu au grave, et un grondement en bande dessous — ; LA DÉSINTÉGRATION —
+   * soixante-dix grains en bande qui crépitent tout autour, de plus en plus graves et de plus en plus rares, comme ce qui
+   * se défait — ; et UNE POUSSIÈRE DE LUMIÈRE, des notes de verre très aiguës et ténues qui retombent. Une grande salle.
+   */
+  deflagration: {
+    duree: 3.2, niveau: 1, salle: [0.9, 0.4],
+    faire: (m, h) => {
+      note(m, 0, 1, 0, { f: 110, glisse: { vers: 30, en: 0.5 }, a: 0.004, d: 1.6, partiels: CORPS, sature: 2.6 })
+      note(m, 0, 0.6, 0, { f: 55, glisse: { vers: 26, en: 0.8 }, a: 0.01, d: 2 })
+      souffle(m, h, 0, 1, 0, { f: 6000, glisse: { vers: 180, en: 0.45 }, a: 0.003, d: 1.4, large: true })
+      souffle(m, h, 0.02, 0.5, 0, { f: 900, glisse: { vers: 120, en: 0.7 }, q: 1.2, bande: true, a: 0.05, d: 1.1, large: true })
+      for (let i = 0; i < 70; i++) {
+        // (plus serrés au début, plus graves et plus faibles à mesure)
+        const u = h.next() ** 1.6
+        const f = 3800 * (1 - 0.8 * u) * (0.7 + 0.6 * h.next())
+        souffle(m, h, 0.03 + 1.6 * u, 0.35 * (1 - 0.7 * u) * (0.5 + 0.5 * h.next()), h.next() * 1.6 - 0.8, { f, q: 3, bande: true, a: 0.001, d: 0.015 + 0.04 * h.next() })
+      }
+      for (let i = 0; i < 9; i++) note(m, 0.15 + 0.12 * i + 0.05 * h.next(), 0.12 * (1 - i / 12), h.next() * 1.4 - 0.7, { f: [LA6, SI6, MI7, FAD6][i % 4] * (1 + 0.01 * h.next()), d: 0.5, partiels: VERRE })
+    },
+  },
   arrive: {
     duree: 2, niveau: 0.5, salle: [0.7, 0.3],
     faire: (m, h) => {

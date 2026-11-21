@@ -1389,7 +1389,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   let versLePortail = 0
   /** Les explosions de lumière du retour en cours (voir `invasion.retour`), et leur durée. */
   const deflagrations: { x: number; y: number; r: number; t0: number }[] = []
-  const DUREE_DE_LA_DEFLAGRATION = 0.8
+  const DUREE_DE_LA_DEFLAGRATION = 1
+  /** La part de la déflagration que prend son onde de choc pour s'étendre (au-delà de la zone) et s'éteindre. */
+  const ONDE_DE_CHOC = 0.36
   let crashFait = false
   /** LE CHOIX D'UN TALENT en cours (null : on joue), ceux gardés en réserve, la fin du délai, l'instant de l'ouverture. */
   let choixDeTalent: Choix | null = null
@@ -13907,8 +13909,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.ring(f.x, f.y, 3 + 9 * sortie(u), Math.max(1, 2 * (1 - u)), u < 0.3 ? N.WHITE : f.c[3], 1.2 - u)
       p.glow(f.x, f.y, 12, f.c[2], 0.7 * (1 - u))
     }
-    // L'EXPLOSION DE LUMIÈRE DU RETOUR : un éclair blanc, une onde d'or qui court au bord de la zone en 0,45 s, seize rayons
-    // qui s'allongent puis s'éteignent
+    // L'EXPLOSION DE LUMIÈRE DU RETOUR : un éclair sur tout l'écran ; L'ONDE DE CHOC (Keko, 21/11 : « une onde de choc
+    // lumineuse circulaire qui s'étend rapidement en même temps que les rayons ») — un front blanc et sa bande d'or, qui
+    // passe le bord de la zone en un tiers de seconde et s'éteint au-delà —, puis son écho, plus lent ; les vingt RAYONS
+    // jaillissent avec elle, leur pointe qui scintille ; au cœur, la lumière qui retombe. (Ses particules — Keko : « avec
+    // des particules et tout ça » — partent avec l'événement : voir `deflagration`.)
     for (let i = deflagrations.length - 1; i >= 0; i--) {
       const d = deflagrations[i]
       const u = (t - d.t0) / DUREE_DE_LA_DEFLAGRATION
@@ -13919,15 +13924,33 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // (le peintre est déjà sur la caméra : les coordonnées du monde)
       const sx = d.x
       const sy = d.y
-      const onde = d.r * sortie(Math.min(1, u / 0.45))
-      if (u < 0.25) p.glow(sx, sy, d.r * 0.9, N.WHITE, 0.9 * (1 - u / 0.25))
-      p.glow(sx, sy, onde, PEPITE[2], 0.45 * (1 - u))
-      p.ring(sx, sy, onde, 2, N.WHITE, 1 - u)
-      p.ring(sx, sy, Math.max(1, onde - 3), 1, PEPITE[3], 0.8 * (1 - u))
-      for (let k = 0; k < 16; k++) {
-        const a = (k / 16) * Math.PI * 2 + d.t0
-        const l = onde * (k % 2 === 0 ? 1 : 0.7)
-        p.line(sx + Math.cos(a) * l * 0.3, sy + Math.sin(a) * l * 0.3, sx + Math.cos(a) * l, sy + Math.sin(a) * l, k % 2 === 0 ? PEPITE[3] : PEPITE[2], 0.7 * (1 - u))
+      // (l'éclair : tout l'écran blanchit un instant)
+      if (u < 0.1) p.rect(camera.x - W / 2, camera.y - centreY(), W, H, N.WHITE, 0.4 * (1 - u / 0.1))
+      // (le cœur : un disque blanc qui se referme, la lumière d'or qui retombe)
+      if (u < 0.18) p.circle(sx, sy, 10 * (1 - u / 0.18) + 2, N.WHITE)
+      p.glow(sx, sy, d.r * 0.9, N.WHITE, 0.9 * Math.max(0, 1 - u / 0.3))
+      p.glow(sx, sy, d.r * 0.6, PEPITE[2], 0.5 * (1 - u))
+      // L'ONDE DE CHOC
+      const uc = Math.min(1, u / ONDE_DE_CHOC)
+      const choc = d.r * 1.6 * sortie(uc)
+      const forceDuChoc = 1 - uc
+      if (forceDuChoc > 0) {
+        p.glow(sx, sy, choc + 8, PEPITE[2], 0.25 * forceDuChoc)
+        for (let k = 1; k <= 6; k++) p.ring(sx, sy, Math.max(1, choc - k * 1.5), 1, k <= 2 ? PEPITE[3] : PEPITE[2], forceDuChoc * (1 - k / 7))
+        p.ring(sx, sy, choc, 2, N.WHITE, Math.min(1, 1.4 * forceDuChoc))
+      }
+      // SON ÉCHO, plus lent, jusqu'au bord de la zone
+      const echo = d.r * sortie(Math.min(1, u / 0.75))
+      p.ring(sx, sy, echo, 1, PEPITE[3], 0.7 * (1 - u))
+      // LES RAYONS, avec l'onde
+      for (let k = 0; k < 20; k++) {
+        const a = (k / 20) * Math.PI * 2 + d.t0 + u * 0.4
+        const long = k % 2 === 0
+        const l = choc * (long ? 0.95 : 0.6) * (0.85 + 0.15 * Math.sin(k * 7.3))
+        const fond = Math.max(0, 1 - u / 0.7)
+        if (fond <= 0) break
+        p.line(sx + Math.cos(a) * l * 0.12, sy + Math.sin(a) * l * 0.12, sx + Math.cos(a) * l, sy + Math.sin(a) * l, long ? PEPITE[3] : PEPITE[2], 0.8 * fond)
+        if (long && u < 0.5) N.sparkle(p, sx + Math.cos(a) * l, sy + Math.sin(a) * l, 2, N.WHITE, PEPITE[3], 0.9 * fond)
       }
     }
     for (const f of flashs) {
@@ -14243,12 +14266,33 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           // L'EXPLOSION DE LUMIÈRE DU RETOUR (voir `invasion.retour`) : un éclair, une onde qui court jusqu'au bord de la zone,
           // des rayons, une gerbe d'étincelles d'or, une secousse
           deflagrations.push({ x: ev.x, y: ev.y, r: ev.rayon, t0: t })
-          jouer('extrait')
-          jouer('ennemiDetruit')
+          jouer('deflagration')
+          // LES PARTICULES (Keko, 21/11 : « avec des particules et tout ça ») : une gerbe d'étincelles d'or ; d'autres,
+          // plus vives, qui CHEVAUCHENT LE FRONT DE L'ONDE ; une COURONNE qui éclate quand l'onde passe le bord de la zone ;
+          // et des BRAISES de lumière qui flottent après, longtemps
           for (let k = 0; k < 40; k++) {
             const a = (k / 40) * Math.PI * 2 + R.range(-0.05, 0.05)
             const vit = R.range(90, 220)
             etincelles.ajouter('etincelle', ev.x + Math.cos(a) * 6, ev.y + Math.sin(a) * 6, Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.35, 0.7), R.next() < 0.35 ? N.WHITE : PEPITE[R.next() < 0.5 ? 2 : 3], 1, 1)
+          }
+          const vague = (ev.rayon * 1.6) / (ONDE_DE_CHOC * DUREE_DE_LA_DEFLAGRATION)
+          for (let k = 0; k < 56; k++) {
+            const a = (k / 56) * Math.PI * 2 + R.range(-0.03, 0.03)
+            const vit = vague * R.range(0.75, 1)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.22, 0.34), R.next() < 0.5 ? N.WHITE : PEPITE[3], 1, 2.2)
+          }
+          // (l'onde passe le bord de la zone à peu près au tiers de sa course)
+          const passeLeBord = DUREE_DE_LA_DEFLAGRATION * ONDE_DE_CHOC * 0.3
+          for (let k = 0; k < 36; k++) {
+            const a = (k / 36) * Math.PI * 2 + R.range(-0.08, 0.08)
+            const vit = R.range(25, 70)
+            etincelles.ajouter('etincelle', ev.x + Math.cos(a) * ev.rayon, ev.y + Math.sin(a) * ev.rayon, Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.3, 0.6), R.next() < 0.3 ? N.WHITE : PEPITE[2], 1, 1.5, passeLeBord)
+          }
+          for (let k = 0; k < 30; k++) {
+            const a = R.range(0, Math.PI * 2)
+            const d = R.range(0.1, 0.9) * ev.rayon
+            const vit = R.range(6, 22)
+            etincelles.ajouter('braise', ev.x + Math.cos(a) * d, ev.y + Math.sin(a) * d, Math.cos(a) * vit, Math.sin(a) * vit - 8, R.range(0.9, 1.8), [N.WHITE, PEPITE[3], PEPITE[2], PEPITE[1]], 1, 0.6, R.range(0.1, 0.4))
           }
           secousse = Math.max(secousse, 1.2)
           if (typeof navigator.vibrate === 'function') vibrer([40, 30, 80])
