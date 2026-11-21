@@ -4732,11 +4732,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * de ses portraits et un halo —, puis son nom à sa couleur, centré sous lui. `cx` : le centre, `y` : le haut. Grisée
    * quand le vaisseau n'est pas à soi.
    */
-  function dessinerLIdentiteDeRace(p: Peintre, race: Race, cx: number, y: number, aSoi: boolean): void {
+  function dessinerLIdentiteDeRace(p: Peintre, race: Race, cx: number, y: number, aSoi: boolean, avecNom = true, R = RAYON_DU_MEDAILLON): void {
     const [sombre, moyen, clair] = TEINTES_DES_RACES[race]
     const [, bas, halo] = race === 'humains' ? FOND_DU_MEDAILLON_HUMAIN : FONDS_DES_RACES[race]
     const encre = MATIERES.encre.contour
-    const R = RAYON_DU_MEDAILLON
     const cy = y + R
     p.circle(cx, cy + 1, R, encre)
     p.circle(cx, cy, R, encre)
@@ -4748,7 +4747,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     p.arc(cx, cy, R - 1, 1, -Math.PI * 0.1, Math.PI * 0.65, sombre)
     dessinerLEmblemeDeRace(p, race, cx, cy)
     if (!aSoi) p.disc(cx, cy, R, N.hex('#12161f'), 0.55)
-    lignesDuNomDeRace(race).forEach((li, i) => ecrire(p, li, cx, y + 2 * R + 4 + i * 8, aSoi ? clair : COQUE[3], { align: 'center' }))
+    if (avecNom) lignesDuNomDeRace(race).forEach((li, i) => ecrire(p, li, cx, y + 2 * R + 4 + i * 8, aSoi ? clair : COQUE[3], { align: 'center' }))
   }
   /**
    * Le fond d'un portrait, aux teintes de la race : le haut, le bas, le halo derrière le vaisseau.
@@ -4824,7 +4823,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * de vol sur les étalons du jeu (sans sa classe), son blindage et son bouclier — celui de base du jeu du vortex compris —, et, `avecDit`,
    * ce qu'il est. Au panneau des vaisseaux, et sous le nom au hangar (Keko, 15/11). Rend sa hauteur.
    */
-  function dessinerLaFicheDuVaisseau(p: Peintre, y: number, mo: ReturnType<typeof modeleDeVaisseau>, aSoi: boolean, depuis: number, avecDit: boolean, avecNom = true): number {
+  function dessinerLaFicheDuVaisseau(p: Peintre, y: number, mo: ReturnType<typeof modeleDeVaisseau>, aSoi: boolean, depuis: number, avecDit: boolean, avecNom = true, action: ((xd: number, yc: number) => void) | null = null): number {
     const jaugesDuModele = (de: ReturnType<typeof modeleDeVaisseau>): Jauge[] => {
       const cf = regleAuVortex(configDuHangar(BASE, de.serie), de.id)
       // (… ET LE MEILLEUR NE VA QU'À 75 % — Keko, 18/11 : « avec des améliorations, plus tard, on pourra améliorer les
@@ -4861,10 +4860,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // qui est équipé à celui qu'on est en train de regarder » ; comme les jauges des pièces)
     const pilote = mo.id === flotte.actif || cache ? null : jaugesDuModele(modeleDeVaisseau(flotte.actif))
     const dit = avecDit ? (cache ? ['???'] : replier(mo.dit, W - 22).slice(0, 3)) : []
-    // (CE QUI DÉFEND SA RACE, au panneau des vaisseaux — Keko, 20/11 : « une petite ligne qui précise le fonctionnement de
-    // chaque race » : sous l'identité et les jauges, à la couleur de la race, sur une hauteur fixe — `lignesDeLaDefense`)
-    const defense = avecNom && avecDit ? replier(RACES.find((r) => r.id === mo.race)?.defense ?? '', W - 22) : []
-    const hr = defense.length > 0 ? lignesDeLaDefense() * INTERLIGNE + 4 : 0
+    if (avecNom) return dessinerLaFicheEnBandeau(p, y, mo, aSoi, cache, jauges, pilote === null ? null : (j) => repereDe(pilote, j), depuis, dit, action)
     // (sans le nom — au hangar, il est juste au-dessus —, les jauges montent et la fiche raccourcit)
     // (plus de « Classe légère / lourde » sous le nom — Keko, 15/11 : les jauges remontent sous lui)
     // LA FICHE EN DEUX ÉTAGES (Keko, 17/11 : « l'emplacement du symbole fait encore un côté portrait rectangulaire, c'est
@@ -4873,7 +4869,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // droite les JAUGES ; puis ce qu'il est
     const yj = avecNom ? 21 : 6
     const hh = avecNom ? Math.max(yj + hauteurDeLIdentite(mo.race) + 3, yj + jauges.length * 10 + 2) : yj + jauges.length * 10 + 2
-    const hd = hh + hr + (dit.length > 0 ? dit.length * INTERLIGNE + 6 : 0)
+    const hd = hh + (dit.length > 0 ? dit.length * INTERLIGNE + 6 : 0)
     // (sans le nom, sans l'image non plus — Keko, 15/11 : « on a déjà l'image juste à côté » : les jauges prennent toute la largeur)
     // (la colonne de l'identité tient le plus long nom de race sur une ligne)
     const gx = avecNom ? Math.max(62, 8 + 2 + Math.max(...RACES.map((r) => largeurDe(lignesDuNomDeRace(r.id)[0]))) + 2 + 5) : 10
@@ -4892,15 +4888,72 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const k = sortie((t - depuis - 0.05 - i * 0.045) / 0.32)
       dessinerUneJaugeDePiece(p, y + yj + i * 10, { ...j, valeur: j.cellules ? j.valeur : j.valeur * k }, repereDe(pilote, j), false, gx, k, colonne)
     })
-    if (defense.length > 0) {
-      p.rect(10, y + hh - 1, W - 20, 1, MATIERES.encre.ombre)
-      const y0 = y + hh + 3 + Math.round(((lignesDeLaDefense() - defense.length) * INTERLIGNE) / 2)
-      defense.forEach((li, i) => ecrire(p, li, W / 2, y0 + i * INTERLIGNE, TEINTES_DES_RACES[mo.race][2], { align: 'center' }))
-    }
     if (dit.length > 0) {
-      p.rect(10, y + hh + hr - 1, W - 20, 1, MATIERES.encre.ombre)
-      dit.forEach((li, i) => ecrire(p, li, W / 2, y + hh + hr + 3 + i * INTERLIGNE, COQUE[4], { align: 'center' }))
+      p.rect(10, y + hh - 1, W - 20, 1, MATIERES.encre.ombre)
+      dit.forEach((li, i) => ecrire(p, li, W / 2, y + hh + 3 + i * INTERLIGNE, COQUE[4], { align: 'center' }))
     }
+    return hd
+  }
+  /**
+   * LA FICHE DU PANNEAU DES VAISSEAUX, EN BANDEAU (Keko, 21/11 : « l'organisation du panneau, entre le logo, le nom de la
+   * race, les stats, le nom du vaisseau, on pourrait la retravailler ; c'est séparé par des petits traits noirs, ça fait
+   * pas professionnel, pas fini » — choisi parmi trois maquettes) : PLUS UN FILET. En tête, UN BANDEAU AUX COULEURS DE LA
+   * RACE — le fond de ses portraits, un halo derrière le médaillon, un liseré clair dessus, sombre dessous —, le
+   * médaillon à gauche, le nom du vaisseau en relief et celui de la race dessous, à sa couleur ; puis les jauges sur
+   * toute la largeur ; puis CE QUI DÉFEND SA RACE dans un encart creux — le mot en gras à la couleur de la race, deux
+   * points, ce qu'il fait ; et ce qu'est le vaisseau pour finir. Toujours de la même hauteur
+   * (`hauteurDeLaFicheDuVaisseau`) : la grille ne bouge pas d'un vaisseau à l'autre. Rend sa hauteur.
+   * (`action` : COUCHÉ, « Piloter » se pose à droite du bandeau — la fiche prend toute la colonne, il n'y a plus de
+   * place dessous.)
+   */
+  function dessinerLaFicheEnBandeau(p: Peintre, y: number, mo: ReturnType<typeof modeleDeVaisseau>, aSoi: boolean, cache: boolean, jauges: Jauge[], repere: ((j: Jauge) => number | null) | null, depuis: number, dit: string[], action: ((xd: number, yc: number) => void) | null): number {
+    const hd = hauteurDeLaFicheDuVaisseau(mo)
+    const [sombre, moyen, clair] = TEINTES_DES_RACES[mo.race]
+    const [haut, bas, halo] = FONDS_DES_RACES[mo.race]
+    const R = RAYON_DU_BANDEAU
+    plaque(p, 4, y, W - 8, hd, 'encre')
+    // LE BANDEAU
+    const bx = 6
+    const bw = W - 12
+    const by = y + 2
+    for (let j = 0; j < HAUT_DU_BANDEAU; j++) p.rect(bx, by + j, bw, 1, j < HAUT_DU_BANDEAU * 0.5 ? haut : bas)
+    const mx = bx + 5 + R
+    const my = by + HAUT_DU_BANDEAU / 2
+    p.glow(mx, my, R + 14, halo, 0.55)
+    p.rect(bx, by, bw, 1, moyen)
+    p.rect(bx, by + HAUT_DU_BANDEAU - 1, bw, 1, sombre)
+    dessinerLIdentiteDeRace(p, mo.race, mx, Math.round(my - R), aSoi, false, R)
+    const tx = mx + R + 8
+    const nom = cache ? '???' : mo.nom
+    motEnRelief(p, nom, tx + largeurDe(nom, GRAS) / 2, my - 9, aSoi && !cache)
+    ecrire(p, lignesDuNomDeRace(mo.race)[0], tx, my + 4, aSoi ? clair : COQUE[3])
+    if (action !== null) action(bx + bw - 5, Math.round(my))
+    // LES JAUGES, sur toute la largeur
+    let yy = by + HAUT_DU_BANDEAU + 4
+    const colonne = Math.max(...jauges.map((j) => largeurDe(j.nom)), largeurDe('Maniabilité')) + 6
+    jauges.forEach((j, i) => {
+      const k = sortie((t - depuis - 0.05 - i * 0.045) / 0.32)
+      dessinerUneJaugeDePiece(p, yy + i * 10, { ...j, valeur: j.cellules ? j.valeur : j.valeur * k }, repere === null ? null : repere(j), false, 10, k, colonne)
+    })
+    yy += jauges.length * 10 + 3
+    // CE QUI DÉFEND SA RACE : l'encart
+    const de = RACES.find((r) => r.id === mo.race)?.defense
+    if (de !== undefined) {
+      const lignes = lignesDeLaDefense(de)
+      const he = lignesDeLaDefense() * INTERLIGNE + 5
+      plaque(p, 8, yy, W - 16, he, 'creux')
+      const y0 = yy + 3 + Math.round(((lignesDeLaDefense() - lignes.length) * INTERLIGNE) / 2)
+      lignes.forEach((li, i) => {
+        // (la première ligne commence par le mot : en gras, à la couleur de la race)
+        if (i === 0 && li.startsWith(de.nom)) {
+          ecrire(p, de.nom, 13, y0, clair, { police: GRAS })
+          ecrire(p, li.slice(de.nom.length), 13 + largeurDe(de.nom, GRAS), y0, COQUE[5])
+        } else ecrire(p, li, 13, y0 + i * INTERLIGNE, COQUE[5])
+      })
+      yy += he + 3
+    }
+    // CE QU'EST LE VAISSEAU
+    dit.forEach((li, i) => ecrire(p, li, 10, yy + i * INTERLIGNE, COQUE[4]))
     return hd
   }
   // (LE CUIRASSÉ EST MIS DE CÔTÉ — Keko, 15/11 : la Salamandre a sa place)
@@ -4937,9 +4990,19 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   // (LA GRILLE A UNE HAUTEUR FIXE — Keko, 17/11 : « la hauteur du grid varie en fonction du texte en dessous ; je voudrais
   // que le grid ait une hauteur fixe, la description limitée à trois lignes » : la fiche réserve toujours trois lignes)
   // (la plus haute des fiches : cinq jauges, ou l'identité d'une race au nom sur deux lignes — voir `dessinerLaFicheDuVaisseau`)
-  // (… ET LA LIGNE DE SA RACE, sur la hauteur de la plus longue)
-  const lignesDeLaDefense = (): number => Math.max(...RACES.map((r) => replier(r.defense, W - 22).length))
-  const hauteurDeLaFicheDuVaisseau = (_mo: ReturnType<typeof modeleDeVaisseau>): number => 21 + Math.max(5 * 10 + 2, ...RACES.map((r) => hauteurDeLIdentite(r.id) + 3)) + lignesDeLaDefense() * INTERLIGNE + 4 + 3 * INTERLIGNE + 6
+  // (… EN BANDEAU depuis le 21/11 — voir `dessinerLaFicheEnBandeau` : le bandeau, quatre jauges au plus, l'encart de la
+  // race sur la hauteur de la plus longue, trois lignes de description)
+  // (… UN MÉDAILLON PLUS PETIT QUE CELUI D'AVANT, 15 au lieu de 19 : couché, la fiche tient juste dans sa colonne)
+  const RAYON_DU_BANDEAU = 15
+  const HAUT_DU_BANDEAU = 2 * RAYON_DU_BANDEAU + 4
+  /** Ce qui défend une race, replié pour son encart (le mot compté en gras) ; sans race, le plus grand nombre de lignes. */
+  function lignesDeLaDefense(de: { nom: string; dit: string }): string[]
+  function lignesDeLaDefense(): number
+  function lignesDeLaDefense(de?: { nom: string; dit: string }): string[] | number {
+    const replie = (d: { nom: string; dit: string }): string[] => replier(`${d.nom} : ${d.dit}`, W - 26 - (largeurDe(d.nom, GRAS) - largeurDe(d.nom)))
+    return de === undefined ? Math.max(...RACES.map((r) => replie(r.defense).length)) : replie(de)
+  }
+  const hauteurDeLaFicheDuVaisseau = (_mo: ReturnType<typeof modeleDeVaisseau>): number => 2 + HAUT_DU_BANDEAU + 4 + (VORTEX ? 4 : 5) * 10 + 3 + lignesDeLaDefense() * INTERLIGNE + 5 + 3 + 3 * INTERLIGNE + 1
   function dessinerLesVaisseauxEnListe(p: Peintre, voile: boolean, partie: 'tout' | 'liste' | 'fiche'): void {
     const u0 = sortie((t - vaisseauxA) / 0.18)
     p.rect(0, HAUT_BARRE, W, H - HAUT_BARRE, NUIT, voile || partie !== 'tout' ? 1 : 0)
@@ -4958,21 +5021,22 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // LE BOUTON « PILOTER » (ou « Piloté », ou « Pas encore disponible ») — Keko, 17/11 : DEBOUT, ENTRE LA GRILLE ET LA FICHE
     // (« on remonte le grid un peu pour placer le bouton dessous ») ; COUCHÉ, SOUS LA FICHE, dans la colonne de droite (« on
     // a un espace vide ; ainsi le grid peut être un peu plus gros à gauche »). Il prend `HAUT_DU_PILOTER` de haut.
+    const piloter = (): void => {
+      sauver()
+      flotte = choisirLeVaisseau(flotte, choisi.id)
+      hangar = hangarActif(flotte)
+      livree = livreeDuVaisseau()
+      sauver()
+      etapeA = t
+      vaisseauxOuverts = false
+      feterLEquipement()
+    }
     const boutonPiloter = (yb: number): void => {
       if (choisi.id === flotte.actif) {
         motEnRelief(p, 'Piloté', W / 2, yb + 4, true)
       } else if (a) {
         const bw = largeurDe('Piloter', GRAS) + 22
-        bouton(p, Math.round(W / 2 - bw / 2), yb, bw, 15, 'Piloter', true, () => {
-          sauver()
-          flotte = choisirLeVaisseau(flotte, choisi.id)
-          hangar = hangarActif(flotte)
-          livree = livreeDuVaisseau()
-          sauver()
-          etapeA = t
-          vaisseauxOuverts = false
-          feterLEquipement()
-        }, 'equipe')
+        bouton(p, Math.round(W / 2 - bw / 2), yb, bw, 15, 'Piloter', true, piloter, 'equipe')
       } else ecrire(p, 'Pas encore disponible', W / 2, yb + 4, COQUE[4], { align: 'center' }) // (comme les armes — Keko, 15/11)
     }
     const HAUT_DU_PILOTER = 19
@@ -5048,8 +5112,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       boutonPiloter(y)
       y += HAUT_DU_PILOTER
     }
-    const hd = dessinerLaFicheDuVaisseau(p, y, choisi, a, vaisseauxA, true)
-    if (partie === 'fiche') boutonPiloter(y + hd + 5)
+    // (COUCHÉ, « Piloter » est dans le bandeau de la fiche : voir `dessinerLaFicheEnBandeau`)
+    dessinerLaFicheDuVaisseau(p, y, choisi, a, vaisseauxA, true, true, partie === 'fiche' ? (xd, yc) => {
+      if (choisi.id === flotte.actif) ecrire(p, 'Piloté', xd, yc - 4, PEPITE[2], { align: 'right', police: GRAS })
+      else if (a) {
+        const bw = largeurDe('Piloter', GRAS) + 16
+        bouton(p, xd - bw, yc - 8, bw, 15, 'Piloter', true, piloter, 'equipe')
+      }
+    } : null)
     if (u0 < 1) p.rect(0, HAUT_BARRE, W, H - HAUT_BARRE, NUIT, 1 - u0)
     zone(0, 0, W, H, () => {}, null)
   }

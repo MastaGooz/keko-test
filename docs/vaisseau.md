@@ -6984,3 +6984,22 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   la couleur claire de la race ; sur la hauteur de la plus longue (deux lignes, `lignesDeLaDefense`), la grille
   rétrécit d'autant pour garder sa hauteur fixe. Un vaisseau verrouillé la montre aussi : sa race est déjà dite par
   le médaillon. Pas au hangar (la fiche sans nom). Vu à la capture, debout et couché.
+
+- **21/11, la fiche du panneau des vaisseaux en bandeau** (Keko : « l'organisation du panneau, entre le logo, le nom
+  de la race, les stats, le nom du vaisseau, on pourrait la retravailler ; c'est séparé par des petits traits noirs, ça
+  fait pas professionnel, ça fait pas fini » ; et pour les races, « un petit mot avec deux points et la définition »).
+  - LES MOTS DES RACES, les siens (`RACES.defense`, le mot et ce qu'il fait) : « Surblindage : Des plaques protègent
+    des dégâts subis. » ; « Carapace : Les points de vie se régénèrent lentement. » ; « Bouclier : Un bouclier
+    protecteur qui se recharge et absorbe les dégâts. » ; « Déphasage : Annule parfois les dégâts subis et devient
+    brièvement invincible. »
+  - LA FICHE, choisie parmi trois maquettes (bandeau de race, blason centré, sections titrées) : PLUS UN FILET
+    (`dessinerLaFicheEnBandeau`). En tête, un BANDEAU aux couleurs de la race (le fond de ses portraits, un halo, un
+    liseré clair dessus et sombre dessous) : le médaillon à gauche — réduit, rayon 15 au lieu de 19
+    (`RAYON_DU_BANDEAU`) —, le nom du vaisseau en relief, la race dessous à sa couleur ; puis les jauges sur toute la
+    largeur ; puis la défense de la race dans un ENCART CREUX, le mot en gras à la couleur de la race ; puis la
+    description, calée à gauche. Hauteur fixe (`hauteurDeLaFicheDuVaisseau`), l'encart sur la hauteur de la plus
+    longue (trois lignes).
+  - COUCHÉ, « PILOTER » PASSE DANS LE BANDEAU, à droite (« Piloté » en or ; rien pour un vaisseau fermé) : la fiche
+    prend toute la colonne, il ne restait plus de place dessous — c'est le seul écart avec le 17/11 (« couché, sous la
+    fiche »). Debout, il reste entre la grille et la fiche. Au hangar, la fiche sans nom n'a pas changé.
+  Vu à la capture, debout et couché, sur les quatre races et un vaisseau fermé.

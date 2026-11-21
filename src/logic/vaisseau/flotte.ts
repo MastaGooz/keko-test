@@ -38,16 +38,17 @@ export type Race = 'humains' | 'essaim' | 'etheres' | 'innommes'
 // Tyranides ; et renommer les humains par un nom de faction humaine, du style l'Empire » : L'EMPIRE, LES XÉNOÏDES ; les
 // identifiants du code restent)
 // (… ET CE QUI LES DÉFEND, EN UNE LIGNE — Keko, 20/11 : « dans l'écran de sélection des vaisseaux, une ligne sur le
-// fonctionnement des différentes races » ; ses mots : `defense`)
-export const RACES: { id: Race; nom: string; defense: string }[] = [
-  { id: 'humains', nom: 'L’Empire', defense: 'Des plaques de blindage protègent des dégâts subis.' },
-  { id: 'essaim', nom: 'Les Xénoïdes', defense: 'Les points de vie se régénèrent sur la durée.' },
+// fonctionnement des différentes races » ; puis, le 21/11 : « un petit mot avec deux points et la définition » — ses
+// mots : `defense`, le mot et ce qu'il fait)
+export const RACES: { id: Race; nom: string; defense: { nom: string; dit: string } }[] = [
+  { id: 'humains', nom: 'L’Empire', defense: { nom: 'Surblindage', dit: 'Des plaques protègent des dégâts subis.' } },
+  { id: 'essaim', nom: 'Les Xénoïdes', defense: { nom: 'Carapace', dit: 'Les points de vie se régénèrent lentement.' } },
   // (… PUIS LES VECTRANS ET LES XL'QOTH, PUIS YHG'THARR — Keko, 19/11 : « pour les Éthérés, un nom qui sonne vraiment technologie avancée ;
   // pour les Innommés, un nom eldritch qui sonne presque imprononçable » ; puis, la Convergence essayée : « je veux
   // vraiment un nom de race, un peu comme les Xénoïdes » — choisis par Keko parmi mes propositions)
-  { id: 'etheres', nom: 'Les Vectrans', defense: 'Un bouclier absorbe des dégâts.' },
+  { id: 'etheres', nom: 'Les Vectrans', defense: { nom: 'Bouclier', dit: 'Un bouclier protecteur qui se recharge et absorbe les dégâts.' } },
   // (… PUIS LES YHG'THARR — Keko, 19/11 : « Xl'qoth commence par un X, comme les Xénoïdes, c'est dommage »)
-  { id: 'innommes', nom: 'Les Yhg’tharr', defense: 'Une chance d’annuler les dégâts subis.' },
+  { id: 'innommes', nom: 'Les Yhg’tharr', defense: { nom: 'Déphasage', dit: 'Annule parfois les dégâts subis et devient brièvement invincible.' } },
 ]
 
 /**
