@@ -7917,3 +7917,34 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     une verte ou une orange) ; dessus, son nom, « Arsenal » ou « Évolution » en relief, ce qu'elle fait. VU.
   - `&speciale` : une spéciale due à chaque premier choix ; avec `&choix`, dès le décollage.
   - À VENIR : les armes ajoutées ne se voient pas encore sur le vaisseau (sauf les drones) ; les 33 autres armes.
+- **22/11, LES CARTES SPÉCIALES, LE SYSTÈME (et l'Empire).** Keko : « des cartes spéciales qui ajoutent une nouvelle
+  arme, qui peut ensuite avoir son propre pool d'amélioration, et d'autres qui modifient l'arme principale dans son
+  gameplay ; au niveau 10, puis 20 et 30, au moins une nouvelle arme et une amélioration de gameplay de l'arme
+  principale, la troisième au hasard ; ensuite, tous les 10 niveaux, des améliorations de gameplay des armes
+  possédées ; jusqu'à 4 armes, ou une seule boostée à fond ; 6 nouvelles armes par faction (chaque vaisseau de la
+  faction peut les avoir), et 6 variations pour chaque arme — 3 armes de base par vaisseau + 6 de faction, 15 par
+  faction ». Tranché : aux niveaux 40 et plus, trois variations au choix ; les cartes du premier prototype deviennent
+  des variations ; le système et l'Empire d'abord.
+  - LA RÈGLE (`talents.ts`) : une spéciale due tous les `NIVEAU_SPECIAL` (10) niveaux ; au premier choix d'un niveau, si
+    elle est due (manquée au délai, elle revient), trois spéciales — pour les `NIVEAUX_MIXTES` (3) premières, au moins
+    UNE NOUVELLE ARME de la faction et UNE VARIATION DE L'ARME PRINCIPALE, la troisième de l'un ou l'autre ; ensuite,
+    trois variations des armes portées. `ARMES_MAX` (4) armes au plus : à quatre, plus de nouvelle arme. CHAQUE ARME
+    PORTÉE A SON POOL de cartes ordinaires, réunis (`proposer(…, armes)`, `armesPortees`). Le premier prototype (« tous
+    les 5 niveaux », Arsenal/Évolution) est remplacé.
+  - LES 6 ARMES DE L'EMPIRE (`ARMES_DE_FACTION`, aux chiffres du vortex ; toutes tirent tout autour, chacune à son pas) :
+    RAILGUN (un trait qui transperce une ligne, 110), OBUSIER (gros obus, explosion de 26), ESSAIM DE ROQUETTES (quatre
+    roquettes de 30), ARC TESLA (un éclair qui saute sur trois ennemis, 55), LANCE-GRENADES (deux grenades de 32, explosion
+    de 15), DRONES D'ESCORTE (deux drones qui mitraillent, 12). Les icônes sont empruntées au catalogue (`icone`) ;
+    l'obus, la grenade et la balle d'escorte ont leur dessin, les roquettes celui du missile.
+  - LES 54 VARIATIONS (6 × les 3 armes du Chasseur et les 6 de l'Empire ; `MUTATIONS`, un outillage commun `V` :
+    tourelle, drones, perforant, ricochet, gerbe, incendiaire, cryogénique — le gel des éclats du Frimas —,
+    fragmentation, explosif, gros calibre ; et des propres : rail large, surcharge, nuée de roquettes, arc en chaîne,
+    surtension, champ tesla, escadrille…). Le rail et l'arc emportent le feu, le gel et les éclats (`effetsDuCoup`), les
+    roquettes leurs effets (`effetsDuTir`). Vérifié : six variations par arme, aucune sans effet ; le calendrier ; le
+    pool d'une nouvelle arme ; quatre armes au plus.
+  - LA CARTE : la même carte prismatique ; « Nouvelle arme » ou « Variation » ; l'icône et le nom de l'arme visée
+    (`armeDeLaCarte`) — aussi sur les cartes ordinaires d'une nouvelle arme.
+  - `&spe=id,id` décolle avec ces spéciales (`arme-railgun`, `railgun-large`…) ; `&speciale` en doit une à chaque premier
+    choix (avec `&choix`, dès le décollage). VU : les cartes, et les six armes qui tirent en vol.
+  - À VENIR : les Vectrans, les Xénoïdes, les Yhg'tharr (6 armes chacun) ; les variations des armes de la Salamandre et de
+    l'Ingénieur ; les nouvelles armes dessinées sur le vaisseau.

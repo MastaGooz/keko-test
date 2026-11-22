@@ -2996,6 +2996,7 @@ function mener_L_Electricite(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenem
     ev.push({ type: 'chaine', points: [{ x: v.x, y: v.y }, ...touches.map((e) => ({ x: e.corps.x, y: e.corps.y }))], ids: touches.map((e) => e.id) })
     touches.forEach((e, k) => {
       const critique = critiqueTire(c, m)
+      effetsDuCoup(m, a, e, ev)
       e.pv -= (a.degats * Math.pow(ch.attenuation, k)) * (critique ? c.passifs.critiqueFacteur : 1)
       ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })
       if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
@@ -3356,7 +3357,7 @@ function tirerLesEssaims(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
       // (il part dans une direction tirée au hasard, à ±`eventail` de sa cible)
       const an = Math.atan2(cible.corps.y - y0, cible.corps.x - x0) + (tire(m.graine, id, 23) - 0.5) * 2 * es.eventail
       const critique = c.passifs.critique > 0 && tire(m.graine, id, 12) < c.passifs.critique
-      m.obus.push({ id, x: x0, y: y0, vx: Math.cos(an) * a.vitesse, vy: Math.sin(an) * a.vitesse, vie: a.vie, degats: a.degats * (critique ? c.passifs.critiqueFacteur : 1), guide: false, arme: a.id, critique, traque: { cible: cible.id, nee: m.t, v0: a.vitesse, acces: es.acces, pointe: es.pointe, braquage: es.braquage, chaos: es.chaos, pas: es.pas * (0.7 + 0.6 * tire(m.graine, id, 24)), calme: es.calme, reprise: es.reprise } })
+      m.obus.push({ id, x: x0, y: y0, vx: Math.cos(an) * a.vitesse, vy: Math.sin(an) * a.vitesse, vie: a.vie, degats: a.degats * (critique ? c.passifs.critiqueFacteur : 1), guide: false, arme: a.id, critique, ...effetsDuTir(a), traque: { cible: cible.id, nee: m.t, v0: a.vitesse, acces: es.acces, pointe: es.pointe, braquage: es.braquage, chaos: es.chaos, pas: es.pas * (0.7 + 0.6 * tire(m.graine, id, 24)), calme: es.calme, reprise: es.reprise } })
     }
     ev.push({ type: 'essaim', x: x0, y: y0, arme: a.id })
   })
@@ -3568,6 +3569,7 @@ function tirerLesRails(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
     ev.push({ type: 'rail', x0: b.x, y0: b.y, x1: b.x + Math.cos(an) * a.portee, y1: b.y + Math.sin(an) * a.portee, arme: a.id })
     for (const e of touches) {
       const critique = c.passifs.critique > 0 && tire(m.graine, m.prochainId++, 12) < c.passifs.critique
+      effetsDuCoup(m, a, e, ev)
       e.pv -= a.degats * (critique ? c.passifs.critiqueFacteur : 1)
       ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })
       if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
@@ -5008,7 +5010,14 @@ function effetsDuTir(a: Arme): Partial<Obus> {
     ...(a.ricochet === undefined ? {} : { rebonds: { n: a.ricochet.rebonds, portee: a.ricochet.portee, part: a.ricochet.part } }),
     ...(a.incendiaire === undefined ? {} : { brule: { ...a.incendiaire } }),
     ...(a.fragments === undefined ? {} : { fragments: { ...a.fragments } }),
+    ...(a.gel === undefined ? {} : { gel: { ...a.gel } }),
   }
+}
+/** CE QU'UN COUP SANS OBUS FAIT EN PLUS (le rail, l'arc) : le feu, le gel, les éclats — voir les cartes spéciales. */
+function effetsDuCoup(m: Monde, a: Arme, e: Ennemi, ev: Evenement[]): void {
+  if (a.incendiaire !== undefined) enflammer(m, e, a.incendiaire)
+  if (a.gel !== undefined) geler(m, e, a.gel.duree, a.gel.ralenti, ev)
+  if (a.fragments !== undefined) fragmenter(m, e.corps.x, e.corps.y, a.fragments, e)
 }
 /** Un ennemi touché par un tir qui enflamme (voir `Arme.incendiaire`) : il brûle, le plus fort l'emporte. */
 function enflammer(m: Monde, e: Ennemi, b: { duree: number; dps: number }): void {

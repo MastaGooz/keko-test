@@ -13,7 +13,7 @@
 import './vaisseau.css'
 import * as noyau from 'pixelfx'
 import { ajouterUnPilote, avancerLEquipage, prendreLaMain, type SorteDInsecte, SORTES_D_INSECTES, gabaritDInsecte, gemmesDuButin, butinDeLaRoche, pointDeRetour, rayonDe, rocheDeLaTempete, vieMultipliee, degatsMultiplies, placeDeLEcharde, frontDeLaNova, ancreDansLeMonde, zoneDuDe, coupeDUnCube, formeDeLaCoupe, liesAuDrain, encaisser, type Ennemi, type Evenement, type Monde, impactDuRayon, asteroidesVisibles, avancerLeMonde, finDuTrio, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur, xpDuNiveau, ennemiLePlusProche, ennemiVerrouille, verrouiller, angleDuBalayage, aPlusieurs, alliesAuRetour, recompenseDeFin, type LigneDeRecompense } from '../../logic/vaisseau/jeu.ts'
-import { ETALONS as ETALONS_DU_BANC, acheter, ajouterLesPiecesDEssai, capacite, poidsTotal, POIDS_SERIE, configDuHangar, demonter, demonterA, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, montantCourt, monteeA, monter, monterA, peutAcheter, peutMonter, perdreLesMontees, estDeBase, exemplaires, libres, pieceDe, piecesDe, placeLourde, possede, aimantMonte, radarMonte, type Jauge, type Piece, type Sorte } from '../../logic/vaisseau/hangar.ts'
+import { PIECES, ETALONS as ETALONS_DU_BANC, acheter, ajouterLesPiecesDEssai, capacite, poidsTotal, POIDS_SERIE, configDuHangar, demonter, demonterA, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, montantCourt, monteeA, monter, monterA, peutAcheter, peutMonter, perdreLesMontees, estDeBase, exemplaires, libres, pieceDe, piecesDe, placeLourde, possede, aimantMonte, radarMonte, type Jauge, type Piece, type Sorte } from '../../logic/vaisseau/hangar.ts'
 import { drawWord, spell } from 'pixelfx/fx/ui/_lib'
 import { firePuff, hotFirst, smokePuff } from 'pixelfx/fx/fire/_lib'
 import { VOLT, bowed, crackle, stroke, zigzag } from 'pixelfx/fx/lightning/_lib'
@@ -44,7 +44,7 @@ import { RASSEMBLE as TELEPORTE_A } from '../pixelfx/fx/keko/teleportation.js'
 import * as MATERIALISATION from '../pixelfx/fx/keko/materialisation.js'
 import * as QUETE_TERMINEE from '../pixelfx/fx/keko/quete-terminee.js'
 import * as VORTEX_FX from '../pixelfx/fx/keko/vortex.js'
-import { MUTATIONS, mutationsPrises, ajouterLeBonus, apresUnChoix, avecLesBonus, carte, DUREE_DU_CHOIX, type Bonus, ouvrirLeChoix, proposer, RARETES, reserveApresLeDelai, type Choix, type Rarete, type Talent } from '../../logic/vaisseau/talents.ts'
+import { carteSpeciale, armeDeFaction, NIVEAU_SPECIAL, MUTATIONS, mutationsPrises, ajouterLeBonus, apresUnChoix, avecLesBonus, carte, DUREE_DU_CHOIX, type Bonus, ouvrirLeChoix, proposer, RARETES, reserveApresLeDelai, type Choix, type Rarete, type Talent } from '../../logic/vaisseau/talents.ts'
 import { depuisTexte, ordreVuDu, retirerLesPilotes, retirerUnPilote, versTexte, vuDu } from '../../logic/vaisseau/reseau.ts'
 import { compresser, decompresser, ouvrirLeSalon, rejoindreLeSalon, type EtatDeLaLiaison, type Liaison } from './reseau.ts'
 import { APPARAIT as ARRIVE_A, REFROIDI as REFROIDI_A } from '../pixelfx/fx/keko/materialisation.js'
@@ -1148,6 +1148,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       bonusDuVol = [{ id: `arme-${a.id}:zone`, cible: { sorte: 'arme', arme: a.id }, stat: 'zone', somme: (Number(parametres.get('zone')) || 100) / 100 }]
       CONF = avecLesBonus(CONF, bonusDuVol)
     }
+    // (`&spe=id,id` : décoller avec ces cartes spéciales déjà prises — une nouvelle arme, `arme-railgun`, une variation,
+    // `railgun-large` — voir `MUTATIONS` — pour les juger d'un lien)
+    if (parametres.has('spe')) {
+      if (confSansTalents === null) confSansTalents = CONF
+      for (const id of (parametres.get('spe') ?? '').split(',')) {
+        const mu = MUTATIONS.find((x) => x.id === id.trim())
+        if (mu !== undefined) bonusDuVol = ajouterLeBonus(bonusDuVol, carteSpeciale(mu))
+      }
+      CONF = avecLesBonus(confSansTalents, bonusDuVol)
+    }
     m = monterLeMonde()
     // (ce que le hangar a semé ne suit pas le vaisseau dans l'espace : les fumées et les étincelles du décollage, les
     // nombres qui montent — Keko, 13/11 : deux points de fumée du décollage restaient à l'écran à l'arrivée en vol)
@@ -2018,6 +2028,17 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     dephasage: { nom: 'Déphasage', effet: 'de chance de déphasage' },
     mutation: { nom: '', effet: '' },
   }
+  /**
+   * L'ARME D'UNE CARTE, DE L'ARME QU'ELLE VISE (Keko, 22/11 : une nouvelle arme a ses propres cartes) : la pièce dont on
+   * prend l'icône, et son nom — l'arme montée, une autre du catalogue, ou une arme de faction (son icône d'emprunt).
+   */
+  const armeDeLaCarte = (id: string): { icone: string; nom: string } => {
+    const fac = armeDeFaction(id)
+    if (fac !== undefined) return { icone: fac.icone, nom: fac.nom }
+    const montee = pieceDe(armeDuVortex())
+    const pc = montee?.arme?.id === id ? montee : PIECES.find((x) => x.arme?.id === id)
+    return { icone: pc?.id ?? armeDuVortex(), nom: pc?.nom ?? '' }
+  }
   /** Deux couleurs mêlées (t de 0 à 1), opaques. */
   const meler = (a: number, b: number, t: number): number => {
     const c = (k: number): number => Math.round(((a >>> k) & 255) + ((((b >>> k) & 255) - ((a >>> k) & 255)) * t))
@@ -2128,7 +2149,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     p.circle(cx, cy, 14, NUIT_C)
     p.disc(cx, cy, 14, F[1], (d) => 0.7 * (1 - d))
     if (ta.cible.sorte === 'arme') {
-      const id = armeDuVortex()
+      const id = armeDeLaCarte(ta.cible.arme).icone
       for (const [px, py, c] of pixelsDeLIcone(id)) {
         let nc = couleursDesIcones.get(c)
         if (nc === undefined) couleursDesIcones.set(c, (nc = N.hex(c)))
@@ -2149,7 +2170,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.poly([[cx + 0.5, sy - 2.5], [cx + 3, sy + 0.5], [cx + 0.5, sy + 3.5], [cx - 2, sy + 0.5]], F[3])
       sy += 6
       {
-        const mot = spell(mu.sorte === 'arsenal' ? 'Arsenal' : 'Évolution', GRAS) as { letters: { g: unknown; x: number }[]; w: number }
+        const mot = spell(mu.sorte === 'arme' ? 'Nouvelle arme' : 'Variation', GRAS) as { letters: { g: unknown; x: number }[]; w: number }
         const x0 = Math.round(cx - mot.w / 2)
         const items = mot.letters.filter((L) => L.g).map((L) => ({ g: L.g, x: x0 + L.x, y: sy - decalage(GRAS), sx: 1, sy: 1 }))
         const eclat = ((tReel * 0.5 + i * 0.29) % 2.2) * 40 - 12
@@ -2186,7 +2207,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     ly += 14
     // ce qu'il change — LA CATÉGORIE NE S'ÉCRIT PAS, L'ICÔNE SUFFIT ; une carte d'arme nomme son arme (Keko, 21/11 : « ne
     // marque pas textuellement le type, l'icône suffit ; par contre pour l'arme précise : cadence de "nom de l'arme" »)
-    const nomDeLArme = ta.cible.sorte === 'arme' ? (pieceDe(armeDuVortex())?.nom ?? '') : ''
+    const nomDeLArme = ta.cible.sorte === 'arme' ? armeDeLaCarte(ta.cible.arme).nom : ''
     const effet = nomDeLArme === '' ? st.effet : `${st.effet} ${/^[aeiouyàâéèêëîïôœûüh]/i.test(nomDeLArme) ? 'd’' : 'de '}${nomDeLArme}`
     // (DEUX LIGNES NE SE TOUCHENT PAS — Keko, 21/11 : dix pixels d'une ligne à l'autre, huit d'abord : les accents de
     // l'une touchaient les jambages de l'autre)
@@ -2249,8 +2270,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const modele = autre !== null ? autre.modele : flotte.actif
     // (LES SPÉCIALES DÉJÀ PRISES par ce pilote — voir `MUTATIONS` ; `&speciale` : une spéciale due à chaque premier choix, pour les juger)
     const prises = mutationsPrises(autre !== null ? autre.ecran.bonus : bonusDuVol)
-    const niveau = parametres.has('speciale') ? Math.max(m.invasion.niveau, 5 * (prises.length + 1)) : m.invasion.niveau
-    const tirees = proposer(graineDuVol + 7919 * (autre?.k ?? 0), niveau, ch.rang, conf.armes[0], modeleDeVaisseau(modele).race, prises)
+    const niveau = parametres.has('speciale') ? Math.max(m.invasion.niveau, NIVEAU_SPECIAL * (prises.length + 1)) : m.invasion.niveau
+    // (toutes les armes portées : chaque nouvelle arme a ses cartes)
+    const tirees = proposer(graineDuVol + 7919 * (autre?.k ?? 0), niveau, ch.rang, conf.armes[0], modeleDeVaisseau(modele).race, prises, conf.armes)
     // (`&rarete=R` : les trois cartes à cette rareté — commune, peuCommune, rare, epique, legendaire —, pour les juger)
     const rareteForcee = RARETES.find((r) => r.id === parametres.get('rarete'))?.id
     return rareteForcee === undefined ? tirees : tirees.map((ta) => (ta.stat === 'mutation' ? ta : carte(ta.cible, ta.stat, rareteForcee)))
@@ -14004,7 +14026,23 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         p.circle(o.x - 0.5, o.y - hauteur - 0.5, 1.7, FEU[5])
         p.px(Math.round(o.x - 1), Math.round(o.y - hauteur - 1), N.hex('#fff2a8'))
         p.glow(o.x, o.y - hauteur, 6, FEU[4], 0.6)
-      } else if (o.arme === 'minimissile') {
+      } else if (o.arme === 'obusier') {
+        // (UN OBUS — l'Obusier de l'Empire : une ogive d'acier sombre, sa pointe claire, une traîne de feu)
+        p.glow(o.x - ux * 3, o.y - uy * 3, 7, FEU[4], 0.5)
+        p.line(o.x - ux * 7, o.y - uy * 7, o.x - ux * 3, o.y - uy * 3, FEU[4])
+        p.circle(o.x, o.y, 2.4, COQUE[1])
+        p.circle(o.x - 0.5, o.y - 0.5, 1.4, COQUE[4])
+        p.px(Math.round(o.x + ux), Math.round(o.y + uy), N.WHITE)
+      } else if (o.arme === 'grenades') {
+        // (UNE GRENADE — le Lance-grenades de l'Empire : une petite boule kaki qui tourne, son voyant qui clignote)
+        p.circle(o.x, o.y, 1.9, N.hex('#3d4a22'))
+        p.circle(o.x - 0.4, o.y - 0.4, 1.1, N.hex('#7a8a44'))
+        if (Math.floor(t * 12 + o.id) % 2 === 0) p.px(Math.round(o.x + 1), Math.round(o.y - 1), N.hex('#ff4a3a'))
+      } else if (o.arme === 'escorte') {
+        // (une balle des drones d'escorte : un court trait clair)
+        p.line(o.x - ux * 3, o.y - uy * 3, o.x, o.y, MITRAILLE[2])
+        p.px(o.x, o.y, N.WHITE)
+      } else if (o.arme === 'minimissile' || o.arme === 'roquettes') {
         // UN MISSILE (Keko, 15/11 : « il ressemble trop à une balle ») : un corps de six pixels sur deux, clair d'un côté,
         // ombré de l'autre, l'ogive rouge, deux ailerons à la queue, une flamme longue et sa lueur
         const nx = -uy
@@ -17333,7 +17371,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           flammesDesBrules.push({ x: o.x, y: o.y - Math.sin(Math.PI * Math.max(0, Math.min(1, u))) * 12, vx: -o.vx * 0.1, vy: -o.vy * 0.1 - 6, t0: t, vie: R.range(0.15, 0.3) })
         }
         // les mini-missiles laissent une traînée de fumée
-        for (const o of m.obus) if (o.arme === 'minimissile' && R.next() < 0.6) feuDesConsumes.spawn(N.P.SMOKE, o.x - o.vx * 0.03, o.y - o.vy * 0.03, R.range(-3, 3), R.range(-3, 3), R.range(0.3, 0.5), FUMEE_DU_FEU, R.range(0.9, 1.4))
+        for (const o of m.obus) if ((o.arme === 'minimissile' || o.arme === 'roquettes') && R.next() < 0.6) feuDesConsumes.spawn(N.P.SMOKE, o.x - o.vx * 0.03, o.y - o.vy * 0.03, R.range(-3, 3), R.range(-3, 3), R.range(0.3, 0.5), FUMEE_DU_FEU, R.range(0.9, 1.4))
         // les insectes qui brûlent : de petites flammes naissent sur eux et montent
         for (const e of m.ennemis) {
           if ((e.bruleA ?? -1) <= m.t || R.next() > 0.5) continue

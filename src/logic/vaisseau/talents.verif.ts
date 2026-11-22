@@ -1,7 +1,7 @@
 /**
  * Vérifications des talents du jeu du vortex, sans navigateur.
  */
-import { carteSpeciale, MUTATIONS, mutationsPrises, SPECIALE_TOUS, ajouterLeBonus, apresUnChoix, armeAmelioree, avecLesBonus, carte, factionAmelioree, type Bonus, ouvrirLeChoix, proposer, RARETES, rareteTiree, reserveApresLeDelai, STATS_DE_FACTION, statsDeLArme } from './talents.ts'
+import { armeDeFaction, ARMES_DE_FACTION, type Mutation, NIVEAU_SPECIAL, carteSpeciale, MUTATIONS, mutationsPrises, ajouterLeBonus, apresUnChoix, armeAmelioree, avecLesBonus, carte, factionAmelioree, type Bonus, ouvrirLeChoix, proposer, RARETES, rareteTiree, reserveApresLeDelai, STATS_DE_FACTION, statsDeLArme } from './talents.ts'
 import { VAISSEAU as C, type Arme, type ConfigVaisseau } from './jeu.ts'
 
 let echecs = 0
@@ -61,7 +61,7 @@ verifier(`sur 9 000 cartes tirées : ${RARETES.map((r) => `${r.nom} ${Math.round
 
 verifier('un choix à faire, plus la réserve ; le dernier choisi, c’est fini', ouvrirLeChoix(0).aFaire === 1 && ouvrirLeChoix(1).aFaire === 2 && apresUnChoix(ouvrirLeChoix(0)) === null && apresUnChoix(ouvrirLeChoix(1))?.aFaire === 1 && apresUnChoix(ouvrirLeChoix(1))?.rang === 1)
 const recup = new Map<string, number>()
-for (let n = 1; n <= 4000; n++) for (const x of proposer(5, n, 0, canon, 'humains')) if (x.stat === 'recuperation') recup.set(x.rarete, (recup.get(x.rarete) ?? 0) + 1)
+for (let n = 1; n <= 4000; n++) for (const x of proposer(5, n, 1, canon, 'humains')) if (x.stat === 'recuperation') recup.set(x.rarete, (recup.get(x.rarete) ?? 0) + 1)
 verifier(`la Récupération de l'Empire paraît à toutes les raretés (${TIREES.map((r) => `${r.nom} ${recup.get(r.id) ?? 0}`).join(', ')}), son bonus celui de la rareté`, TIREES.every((r) => (recup.get(r.id) ?? 0) > 0) && carte({ sorte: 'faction', race: 'humains' }, 'recuperation', 'rare').bonus === 0.12)
 verifier('le délai passé, ce qui restait à choisir part en réserve', reserveApresLeDelai(ouvrirLeChoix(0)) === 1 && reserveApresLeDelai(ouvrirLeChoix(1)) === 2 && reserveApresLeDelai(apresUnChoix(ouvrirLeChoix(1))!) === 1)
 
@@ -72,26 +72,41 @@ verifier('le délai passé, ce qui restait à choisir part en réserve', reserve
   verifier(`une carte « Zone » de +25 % : la Singularité attire à ${z.puits!.rayon} (45), s'effondre à ${z.puits!.eclat} (28) ; sa force ne bouge pas (${z.puits!.force})`, z.puits!.rayon === 56.25 && z.puits!.eclat === 35 && z.puits!.force === 70)
 }
 {
-  // LES CARTES SPÉCIALES (Keko, 22/11 : tous les 5 niveaux, des armes dérivées de l'arme de départ — prototype : le Chasseur)
+  // LES CARTES SPÉCIALES (Keko, 22/11 : aux niveaux 10, 20, 30, une nouvelle arme et une variation de l'arme principale au
+  // moins ; ensuite, des variations des armes portées ; 4 armes au plus ; 6 armes par faction, 6 variations par arme)
   const laser = { id: 'laser', cadence: 2.2, degats: 90, portee: 120, vitesse: 420, vie: 0.7, dispersion: 0, guide: false, infaillible: true } as Arme
   const base: ConfigVaisseau = { ...C, armes: [{ ...laser, place: 0 }, { ...laser, place: 1 }] }
-  const a4 = proposer(9, 4, 0, laser, 'humains')
-  const a5 = proposer(9, 5, 0, laser, 'humains')
-  const a5b = proposer(9, 5, 1, laser, 'humains')
-  const a6 = proposer(9, 6, 0, laser, 'humains', ['laser-tourelle'])
-  const a6manque = proposer(9, 6, 0, laser, 'humains')
-  const a10 = proposer(9, 10, 0, laser, 'humains', ['laser-tourelle'])
-  const tous = proposer(9, 100, 0, laser, 'humains', MUTATIONS.filter((mu) => mu.arme === 'laser').map((mu) => mu.id))
-  verifier(`tous les ${SPECIALE_TOUS} niveaux, trois spéciales de l'arme (niveau 5 : ${a5.map((x) => x.mutation).join(', ')}) ; pas au 4 ni au second choix ; au 6 si on l'a prise, rien ; manquée, elle revient ; au 10, sans celle qu'on a ; toutes prises, les cartes ordinaires`, a4.every((x) => x.rarete !== 'speciale') && a5.length === 3 && a5.every((x) => x.rarete === 'speciale' && MUTATIONS.find((mu) => mu.id === x.mutation)?.arme === 'laser') && a5b.every((x) => x.rarete !== 'speciale') && a6.every((x) => x.rarete !== 'speciale') && a6manque.every((x) => x.rarete === 'speciale') && a10.length === 3 && a10.every((x) => x.rarete === 'speciale' && x.mutation !== 'laser-tourelle') && tous.every((x) => x.rarete !== 'speciale'))
-  let b = ajouterLeBonus([], carteSpeciale(MUTATIONS.find((mu) => mu.id === 'laser-tourelle')!))
+  const mu = (id: string): Mutation => MUTATIONS.find((x) => x.id === id)!
+  const sortes = (cs: { mutation?: string }[]): string[] => cs.map((x) => mu(x.mutation!).sorte)
+  const n9 = proposer(9, 9, 0, laser, 'humains')
+  const n10 = proposer(9, 10, 0, laser, 'humains')
+  const n10b = proposer(9, 10, 1, laser, 'humains')
+  const n15 = proposer(9, 15, 0, laser, 'humains', ['arme-railgun'])
+  const n15manque = proposer(9, 15, 0, laser, 'humains')
+  verifier(`au niveau ${NIVEAU_SPECIAL}, trois spéciales, au moins une nouvelle arme et une variation du laser (${n10.map((x) => x.mutation).join(', ')}) ; pas au 9, ni au second choix, ni au 15 si on l'a prise ; manquée, elle revient`, n9.every((x) => x.rarete !== 'speciale') && n10.length === 3 && sortes(n10).includes('arme') && n10.some((x) => mu(x.mutation!).sorte === 'variation' && mu(x.mutation!).arme === 'laser') && n10b.every((x) => x.rarete !== 'speciale') && n15.every((x) => x.rarete !== 'speciale') && n15manque.every((x) => x.rarete === 'speciale'))
+  // (quatre armes : plus de nouvelle arme ; après le niveau 30, des variations des armes portées)
+  const armesDe = (ids: string[]): Arme[] => [laser, ...ids.flatMap((id) => armeDeFaction(id)!.armes())]
+  const quatre = proposer(9, 30, 0, laser, 'humains', ['arme-railgun', 'arme-tesla'], armesDe(['railgun', 'tesla', 'obusier']))
+  const n40 = proposer(9, 40, 0, laser, 'humains', ['arme-railgun', 'laser-cryo', 'laser-ricochet'], armesDe(['railgun']))
+  verifier(`quatre armes portées : plus que des variations (${sortes(quatre).join(', ')}) ; au 40, trois variations des armes portées (${n40.map((x) => x.mutation).join(', ')})`, quatre.length > 0 && sortes(quatre).every((x) => x === 'variation') && n40.length === 3 && n40.every((x) => mu(x.mutation!).sorte === 'variation' && ['laser', 'railgun'].includes(mu(x.mutation!).arme) && !['laser-cryo', 'laser-ricochet'].includes(x.mutation!)))
+  // (une nouvelle arme a SON pool : ses cartes ordinaires reviennent avec celles du laser)
+  let cartesDuRail = 0
+  for (let n = 41; n < 300; n++) for (const x of proposer(5, n, 1, laser, 'humains', [], armesDe(['railgun']))) if (x.cible.sorte === 'arme' && x.cible.arme === 'railgun') cartesDuRail++
+  // (prendre une nouvelle arme l'ajoute ; ses variations la changent)
+  let b = ajouterLeBonus([], carteSpeciale(mu('arme-railgun')))
+  b = ajouterLeBonus(b, carteSpeciale(mu('railgun-large')))
+  b = ajouterLeBonus(b, carteSpeciale(mu('laser-tourelle')))
   const c1 = avecLesBonus(base, b)
-  b = ajouterLeBonus(b, carte({ sorte: 'arme', arme: 'laser' }, 'degats', 'legendaire'))
-  b = ajouterLeBonus(b, carteSpeciale(MUTATIONS.find((mu) => mu.id === 'laser-drones')!))
-  b = ajouterLeBonus(b, carteSpeciale(MUTATIONS.find((mu) => mu.id === 'laser-perforant')!))
-  const c2 = avecLesBonus(base, b)
-  const tourelle = c2.armes.find((a) => a.ajoutee === true && a.orbite === undefined)!
-  verifier(`l'Arsenal ajoute des armes de la famille : la tourelle (${c1.armes.length} armes, tout autour : ${c1.armes[2].tousSens}), puis deux drones (${c2.armes.filter((a) => a.orbite !== undefined).length}) ; les cartes de l'arme les grandissent aussi (la tourelle ${tourelle.degats} = 54 × 1,25) ; l'Évolution les change toutes (perforant : ${c2.armes.every((a) => a.perforant === true)}) ; prises : ${mutationsPrises(b).join(', ')}`, c1.armes.length === 3 && c1.armes[2].tousSens === true && c1.armes[2].bouche === undefined && c2.armes.filter((a) => a.orbite !== undefined).length === 2 && tourelle.degats === Math.round(54 * 1.25) && c2.armes.every((a) => a.perforant === true) && mutationsPrises(b).join() === 'laser-tourelle,laser-drones,laser-perforant')
-  verifier(`chaque arme du Chasseur a ses quatre spéciales (${['laser', 'mitraille', 'minimissile'].map((id) => `${id} ${MUTATIONS.filter((mu) => mu.arme === id).length}`).join(', ')}), deux Arsenal et deux Évolutions`, ['laser', 'mitraille', 'minimissile'].every((id) => MUTATIONS.filter((mu) => mu.arme === id && mu.sorte === 'arsenal').length === 2 && MUTATIONS.filter((mu) => mu.arme === id && mu.sorte === 'evolution').length === 2))
+  verifier(`une nouvelle arme a ses cartes (${cartesDuRail} pour le railgun) ; prise, elle s'ajoute (${c1.armes.map((a) => a.id).join(', ')}), sa variation la change (largeur ${c1.armes.find((a) => a.id === 'railgun')?.rail?.largeur}) ; prises : ${mutationsPrises(b).join(', ')}`, cartesDuRail > 20 && c1.armes.filter((a) => a.id === 'railgun').length === 1 && c1.armes.find((a) => a.id === 'railgun')!.rail!.largeur === 7.5 && c1.armes.filter((a) => a.id === 'laser').length === 3 && mutationsPrises(b).join() === 'arme-railgun,railgun-large,laser-tourelle')
+  // (le compte : six armes pour l'Empire, six variations pour chacune des neuf armes en jeu ; chaque variation change bien sa config)
+  const ids = ['laser', 'mitraille', 'minimissile', ...ARMES_DE_FACTION.filter((x) => x.race === 'humains').map((x) => x.id)]
+  let sansEffet = ''
+  for (const id of ids)
+    for (const v of MUTATIONS.filter((x) => x.sorte === 'variation' && x.arme === id)) {
+      const depart = id === 'laser' ? base : id === 'mitraille' || id === 'minimissile' ? { ...C, armes: [{ ...laser, id, place: 0 }] } : avecLesBonus(base, ajouterLeBonus([], carteSpeciale(mu(`arme-${id}`))))
+      if (JSON.stringify(v.appliquer(depart)) === JSON.stringify(depart)) sansEffet += ` ${v.id}`
+    }
+  verifier(`l'Empire a ${ARMES_DE_FACTION.filter((x) => x.race === 'humains').length} nouvelles armes ; six variations par arme (${ids.map((id) => `${id} ${MUTATIONS.filter((x) => x.sorte === 'variation' && x.arme === id).length}`).join(', ')}) ; aucune sans effet (${sansEffet || 'aucune'})`, ARMES_DE_FACTION.filter((x) => x.race === 'humains').length === 6 && ids.every((id) => MUTATIONS.filter((x) => x.sorte === 'variation' && x.arme === id).length === 6) && sansEffet === '')
 }
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)
 console.log('Tout passe.')

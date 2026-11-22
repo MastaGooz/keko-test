@@ -239,25 +239,30 @@ export function carte(cible: Cible, stat: StatDArme | StatDeFaction, rarete: Rar
 
 // ---------------------------------------------------------------- les cartes spéciales
 /**
- * LES CARTES SPÉCIALES (Keko, 22/11 : « un nouveau type de carte d'amélioration, d'une nouvelle couleur — je te laisse
- * choisir —, qui concerne une réelle modification de gameplay : une modification fondamentale du fonctionnement de
- * l'arme en cours, voire un rajout d'effets ou de tirs ; dans les survivors, tu accumules plusieurs armes, c'est ce qui en
- * fait l'intérêt, et pour l'instant on n'a qu'une seule arme, c'est notre plus gros défaut » ; tranché : tous les 5
- * niveaux, des armes DÉRIVÉES DE L'ARME DE DÉPART, un prototype sur le Chasseur). À chaque niveau multiple de
- * `SPECIALE_TOUS`, le premier choix est fait de trois d'entre elles (celles de l'arme montée qu'on n'a pas encore) ; une
- * spéciale manquée (un choix laissé au délai) revient au choix suivant. Deux sortes : L'ARSENAL ajoute une arme — de la
- * même famille, son nom, ses dessins et ses cartes —, L'ÉVOLUTION change l'arme (toutes celles de son nom). Chacune se
- * prend une fois. *Leurs chiffres sont de moi, à rejuger.*
+ * LES CARTES SPÉCIALES (Keko, 22/11 : « des cartes spéciales qui ajoutent une nouvelle arme, qui peut ensuite avoir son
+ * propre pool d'amélioration, et d'autres qui modifient l'arme principale dans son gameplay ; au niveau 10, puis 20 et
+ * 30, au moins une nouvelle arme et une amélioration de gameplay de l'arme principale — la troisième, un des deux types
+ * au hasard ; ensuite, tous les 10 niveaux, des améliorations de gameplay des armes possédées ; le joueur peut avoir
+ * jusqu'à 4 armes, ou miser sur une seule arme boostée à fond ; 6 nouvelles armes par faction — chaque vaisseau de la
+ * faction peut les avoir — et 6 variations pour chaque arme » ; « 3 variations au choix » après le niveau 30 ; les cartes
+ * du premier prototype deviennent des variations). Une carte spéciale est due tous les `NIVEAU_SPECIAL` niveaux ; au
+ * premier choix d'un niveau, s'il en est dû une (manquée au délai, elle revient au choix suivant), trois spéciales :
+ * pour les `NIVEAUX_MIXTES` premières, des NOUVELLES ARMES (la faction, jusqu'à `ARMES_MAX` armes) et des VARIATIONS DE
+ * L'ARME PRINCIPALE, au moins une de chaque ; ensuite, des variations des armes possédées. Chacune se prend une fois.
+ * Une nouvelle arme est À PART : son nom, ses dessins, SES CARTES ordinaires (voir `proposer`). Une variation change
+ * toutes les armes de son nom (celles qu'elle ajoute comprises : une tourelle, des drones). *Les chiffres sont de moi.*
  */
-export const SPECIALE_TOUS = 5
-export type Mutation = { id: string; arme: string; sorte: 'arsenal' | 'evolution'; nom: string; dit: string; appliquer: (c: ConfigVaisseau) => ConfigVaisseau }
-/** L'arme de départ de ce nom (pas une ajoutée). */
-const principale = (c: ConfigVaisseau, id: string): Arme | undefined => c.armes.find((a) => a.id === id && a.ajoutee !== true)
+export const NIVEAU_SPECIAL = 10
+export const NIVEAUX_MIXTES = 3
+export const ARMES_MAX = 4
+export type Mutation = { id: string; arme: string; sorte: 'arme' | 'variation'; nom: string; dit: string; race?: Race; appliquer: (c: ConfigVaisseau) => ConfigVaisseau }
+/** L'arme de départ de ce nom (pas une ajoutée par une variation). */
+const principale = (c: ConfigVaisseau, id: string): Arme | undefined => c.armes.find((a) => a.id === id && a.ajoutee !== true) ?? c.armes.find((a) => a.id === id)
 /** Toutes les armes de ce nom, changées. */
 const changerLes = (c: ConfigVaisseau, id: string, f: (a: Arme) => Arme): ConfigVaisseau => ({ ...c, armes: c.armes.map((a) => (a.id === id ? f(a) : a)) })
-/** Une arme ajoutée, tirée de l'arme de départ : elle tire tout autour, du centre du vaisseau. */
+/** Une arme ajoutée, tirée d'une autre : elle tire tout autour, du centre du vaisseau. */
 const ajoutee = (a: Arme, place: number, f: Partial<Arme>): Arme => {
-  const { bouche: _b, ...reste } = a
+  const { bouche: _b, orbite: _o, ...reste } = a
   return { ...reste, ...f, ajoutee: true, tousSens: true, place }
 }
 const ajouter = (c: ConfigVaisseau, id: string, f: (a: Arme) => Arme[]): ConfigVaisseau => {
@@ -266,45 +271,158 @@ const ajouter = (c: ConfigVaisseau, id: string, f: (a: Arme) => Arme[]): ConfigV
 }
 /** (l'orbite des drones de la Sentinelle) */
 const ORBITE_DES_DRONES = { rayon: 20, vitesse: 1.7, laisse: 120, vol: 170, braquage: 7, autour: 26, tour: 2 }
-/** Deux drones de l'arme, en orbite, qui partent tirer ses obus sur l'ennemi proche. */
-const deuxDrones = (a: Arme, f: Partial<Arme>): Arme[] => [0, 1].map((k) => ajoutee(a, 10 + k, { ...f, infaillible: false, orbite: { ...ORBITE_DES_DRONES, phase: k * Math.PI } }))
+/** `n` drones de l'arme, en orbite, qui partent tirer ses obus sur l'ennemi proche (`decale` : leur place sur l'orbite). */
+const drones = (a: Arme, f: Partial<Arme>, n = 2, decale = 0): Arme[] => Array.from({ length: n }, (_, k) => ajoutee(a, 10 + k, { ...f, infaillible: false, orbite: { ...ORBITE_DES_DRONES, phase: decale + (k * 2 * Math.PI) / n } }))
+const fois = (a: Arme, k: number): number => Math.max(1, Math.round(a.degats * k))
+// (les variations qu'on retrouve d'une arme à l'autre)
+const V = {
+  tourelle: (a: Arme): Arme[] => [ajoutee(a, 9, { cadence: a.cadence * 0.75, degats: fois(a, 0.6) })],
+  incendiaire: (a: Arme): Arme => ({ ...a, incendiaire: { duree: 3, dps: fois(a, 0.6) } }),
+  cryo: (a: Arme): Arme => ({ ...a, gel: { duree: 1.5, ralenti: 0.5 } }),
+  fragments: (a: Arme): Arme => ({ ...a, fragments: { nombre: 6, degats: fois(a, 0.25), vitesse: 160, vie: 0.25 } }),
+  perforant: (a: Arme): Arme => ({ ...a, perforant: true, vie: a.vie * 1.5 }),
+  ricochet: (a: Arme): Arme => ({ ...a, ricochet: { rebonds: 2, portee: 80, part: 0.7 } }),
+  explosif: (a: Arme): Arme => ({ ...a, zone: { rayon: 12 } }),
+  gerbe: (n: number, ecart: number, part: number) => (a: Arme): Arme => ({ ...a, gerbe: { nombre: n, ecart }, degats: fois(a, part) }),
+  lourd: (a: Arme): Arme => ({ ...a, zone: a.zone === undefined ? undefined : { rayon: a.zone.rayon * 1.6 }, degats: fois(a, 1.3), cadence: a.cadence * 1.4 }),
+}
+const variation = (id: string, arme: string, nom: string, dit: string, appliquer: (c: ConfigVaisseau) => ConfigVaisseau): Mutation => ({ id, arme, sorte: 'variation', nom, dit, appliquer })
+const changerA = (arme: string, f: (a: Arme) => Arme) => (c: ConfigVaisseau): ConfigVaisseau => changerLes(c, arme, f)
+const ajouterA = (arme: string, f: (a: Arme) => Arme[]) => (c: ConfigVaisseau): ConfigVaisseau => ajouter(c, arme, f)
+
+/** LES NOUVELLES ARMES D'UNE FACTION (aux chiffres du vortex, ses dégâts fois dix) : la (ou les) arme(s) qu'elle ajoute. */
+export type ArmeDeFaction = { id: string; nom: string; dit: string; race: Race; icone: string; armes: () => Arme[] }
+const nouvelle = (a: Omit<Arme, 'dispersion' | 'guide' | 'vitesse' | 'vie'> & Partial<Arme>): Arme => ({ dispersion: 0, guide: false, vitesse: 0, vie: 0, ...a, ajoutee: true, tousSens: true, place: 20 })
+export const ARMES_DE_FACTION: ArmeDeFaction[] = [
+  // L'EMPIRE : de l'artillerie, de l'électricité, des escortes
+  { id: 'railgun', nom: 'Railgun', dit: 'Un trait de métal qui transperce toute une ligne d’ennemis.', race: 'humains', icone: 'arme-rail', armes: () => [nouvelle({ id: 'railgun', cadence: 2.6, degats: 110, portee: 190, rail: { largeur: 3 } })] },
+  { id: 'obusier', nom: 'Obusier', dit: 'De lourds obus qui explosent sur une large zone.', race: 'humains', icone: 'arme-napalm', armes: () => [nouvelle({ id: 'obusier', cadence: 2.4, degats: 70, portee: 150, vitesse: 140, vie: 1.3, dispersion: 0.05, zone: { rayon: 26 } })] },
+  { id: 'roquettes', nom: 'Essaim de roquettes', dit: 'Quatre roquettes qui fondent sur les ennemis proches.', race: 'humains', icone: 'arme-essaim', armes: () => [nouvelle({ id: 'roquettes', cadence: 2.8, degats: 30, portee: 130, vitesse: 150, vie: 1.6, essaim: { nombre: 4, eventail: 2.4, acces: 120, pointe: 230, braquage: 8, chaos: 2.4, pas: 0.25, calme: 1.3, reprise: 45 } })] },
+  { id: 'tesla', nom: 'Arc tesla', dit: 'Un éclair qui saute d’un ennemi à l’autre.', race: 'humains', icone: 'arme-chaine', armes: () => [nouvelle({ id: 'tesla', cadence: 1.6, degats: 55, portee: 95, chaine: { rebonds: 3, saut: 45, attenuation: 0.75 } })] },
+  { id: 'grenades', nom: 'Lance-grenades', dit: 'Deux grenades à chaque tir, qui explosent à l’impact.', race: 'humains', icone: 'arme-minimissiles', armes: () => [nouvelle({ id: 'grenades', cadence: 1.5, degats: 32, portee: 110, vitesse: 150, vie: 0.9, dispersion: 0.08, zone: { rayon: 15 }, gerbe: { nombre: 2, ecart: 0.3 } })] },
+  { id: 'escorte', nom: 'Drones d’escorte', dit: 'Deux drones qui mitraillent les ennemis autour du vaisseau.', race: 'humains', icone: 'arme-drones', armes: () => [0, 1].map((k) => ({ ...nouvelle({ id: 'escorte', cadence: 0.45, degats: 12, portee: 70, vitesse: 320, vie: 0.5, dispersion: 0.05 }), place: 20 + k, orbite: { ...ORBITE_DES_DRONES, phase: k * Math.PI } })) },
+]
+export const armeDeFaction = (id: string): ArmeDeFaction | undefined => ARMES_DE_FACTION.find((x) => x.id === id)
+
 export const MUTATIONS: Mutation[] = [
+  // LES NOUVELLES ARMES (une carte chacune)
+  ...ARMES_DE_FACTION.map((af): Mutation => ({ id: `arme-${af.id}`, arme: af.id, sorte: 'arme', nom: af.nom, dit: af.dit, race: af.race, appliquer: (c) => (c.armes.some((a) => a.id === af.id) ? c : { ...c, armes: [...c.armes, ...af.armes()] }) })),
   // LE CANON LASER
-  { id: 'laser-tourelle', arme: 'laser', sorte: 'arsenal', nom: 'Tourelle laser', dit: 'Une tourelle tire des lasers tout autour du vaisseau.', appliquer: (c) => ajouter(c, 'laser', (a) => [ajoutee(a, 9, { cadence: a.cadence * 0.75, degats: Math.round(a.degats * 0.6) })]) },
-  { id: 'laser-drones', arme: 'laser', sorte: 'arsenal', nom: 'Drones laser', dit: 'Deux drones en orbite tirent des lasers sur les ennemis proches.', appliquer: (c) => ajouter(c, 'laser', (a) => deuxDrones(a, { cadence: 1.4, degats: Math.round(a.degats * 0.45), portee: 70, vie: 0.5 })) },
-  { id: 'laser-perforant', arme: 'laser', sorte: 'evolution', nom: 'Laser perforant', dit: 'Les lasers traversent les ennemis et touchent toute leur ligne.', appliquer: (c) => changerLes(c, 'laser', (a) => ({ ...a, perforant: true, vie: a.vie * 1.5 })) },
-  { id: 'laser-ricochet', arme: 'laser', sorte: 'evolution', nom: 'Ricochet', dit: 'Chaque laser rebondit sur deux autres ennemis proches.', appliquer: (c) => changerLes(c, 'laser', (a) => ({ ...a, ricochet: { rebonds: 2, portee: 80, part: 0.7 } })) },
+  variation('laser-tourelle', 'laser', 'Tourelle laser', 'Une tourelle tire des lasers tout autour du vaisseau.', ajouterA('laser', V.tourelle)),
+  variation('laser-drones', 'laser', 'Drones laser', 'Deux drones en orbite tirent des lasers sur les ennemis proches.', ajouterA('laser', (a) => drones(a, { cadence: 1.4, degats: fois(a, 0.45), portee: 70, vie: 0.5 }))),
+  variation('laser-perforant', 'laser', 'Laser perforant', 'Les lasers traversent les ennemis et touchent toute leur ligne.', changerA('laser', V.perforant)),
+  variation('laser-ricochet', 'laser', 'Ricochet', 'Chaque laser rebondit sur deux autres ennemis proches.', changerA('laser', V.ricochet)),
+  variation('laser-rafale', 'laser', 'Rafale', 'Chaque tir part en trois lasers, en éventail.', changerA('laser', V.gerbe(3, 0.22, 0.5))),
+  variation('laser-cryo', 'laser', 'Laser cryogénique', 'Les lasers gèlent ce qu’ils touchent et le ralentissent.', changerA('laser', V.cryo)),
   // LA MITRAILLEUSE
-  { id: 'mitraille-jumelee', arme: 'mitraille', sorte: 'evolution', nom: 'Canons jumelés', dit: 'Chaque tir part en double : deux balles côte à côte.', appliquer: (c) => changerLes(c, 'mitraille', (a) => ({ ...a, gerbe: { nombre: 2, ecart: 0.12 }, degats: Math.round(a.degats * 0.7) })) },
-  { id: 'mitraille-tourelle', arme: 'mitraille', sorte: 'arsenal', nom: 'Tourelle de queue', dit: 'Une mitrailleuse arrose tout autour du vaisseau.', appliquer: (c) => ajouter(c, 'mitraille', (a) => [ajoutee(a, 9, { cadence: a.cadence * 0.9, degats: Math.round(a.degats * 0.6), portee: a.portee * 0.9 })]) },
-  { id: 'mitraille-incendiaire', arme: 'mitraille', sorte: 'evolution', nom: 'Balles incendiaires', dit: 'Les balles enflamment les ennemis : ils brûlent trois secondes.', appliquer: (c) => changerLes(c, 'mitraille', (a) => ({ ...a, incendiaire: { duree: 3, dps: Math.round(a.degats * 0.8) } })) },
-  { id: 'mitraille-drones', arme: 'mitraille', sorte: 'arsenal', nom: 'Drones mitrailleurs', dit: 'Deux drones en orbite mitraillent les ennemis proches.', appliquer: (c) => ajouter(c, 'mitraille', (a) => deuxDrones(a, { cadence: 0.3, degats: Math.round(a.degats * 0.6), portee: 70 })) },
+  variation('mitraille-jumelee', 'mitraille', 'Canons jumelés', 'Chaque tir part en double : deux balles côte à côte.', changerA('mitraille', V.gerbe(2, 0.12, 0.7))),
+  variation('mitraille-tourelle', 'mitraille', 'Tourelle de queue', 'Une mitrailleuse arrose tout autour du vaisseau.', ajouterA('mitraille', (a) => [ajoutee(a, 9, { cadence: a.cadence * 0.9, degats: fois(a, 0.6), portee: a.portee * 0.9 })])),
+  variation('mitraille-incendiaire', 'mitraille', 'Balles incendiaires', 'Les balles enflamment les ennemis : ils brûlent trois secondes.', changerA('mitraille', V.incendiaire)),
+  variation('mitraille-drones', 'mitraille', 'Drones mitrailleurs', 'Deux drones en orbite mitraillent les ennemis proches.', ajouterA('mitraille', (a) => drones(a, { cadence: 0.3, degats: fois(a, 0.6), portee: 70 }))),
+  variation('mitraille-perforante', 'mitraille', 'Balles perforantes', 'Les balles traversent les ennemis.', changerA('mitraille', V.perforant)),
+  variation('mitraille-explosive', 'mitraille', 'Balles explosives', 'Chaque balle explose à l’impact.', changerA('mitraille', V.explosif)),
   // LES MISSILES
-  { id: 'missile-salve', arme: 'minimissile', sorte: 'evolution', nom: 'Salve', dit: 'Chaque tir lâche trois missiles en éventail.', appliquer: (c) => changerLes(c, 'minimissile', (a) => ({ ...a, gerbe: { nombre: 3, ecart: 0.35 }, degats: Math.round(a.degats * 0.6) })) },
-  { id: 'missile-fragmentation', arme: 'minimissile', sorte: 'evolution', nom: 'Fragmentation', dit: 'Chaque explosion projette six éclats brûlants tout autour.', appliquer: (c) => changerLes(c, 'minimissile', (a) => ({ ...a, fragments: { nombre: 6, degats: Math.round(a.degats * 0.25), vitesse: 160, vie: 0.25 } })) },
-  { id: 'missile-lanceur', arme: 'minimissile', sorte: 'arsenal', nom: 'Lance-missiles', dit: 'Un lanceur tire des missiles tout autour du vaisseau.', appliquer: (c) => ajouter(c, 'minimissile', (a) => [ajoutee(a, 9, { cadence: a.cadence * 0.75, degats: Math.round(a.degats * 0.7) })]) },
-  { id: 'missile-drones', arme: 'minimissile', sorte: 'arsenal', nom: 'Drones lance-missiles', dit: 'Deux drones en orbite tirent des missiles sur les ennemis proches.', appliquer: (c) => ajouter(c, 'minimissile', (a) => deuxDrones(a, { cadence: 2.5, degats: Math.round(a.degats * 0.5), portee: 80, vie: 1.2 })) },
+  variation('missile-salve', 'minimissile', 'Salve', 'Chaque tir lâche trois missiles en éventail.', changerA('minimissile', V.gerbe(3, 0.35, 0.6))),
+  variation('missile-fragmentation', 'minimissile', 'Fragmentation', 'Chaque explosion projette six éclats brûlants tout autour.', changerA('minimissile', V.fragments)),
+  variation('missile-lanceur', 'minimissile', 'Lance-missiles', 'Un lanceur tire des missiles tout autour du vaisseau.', ajouterA('minimissile', (a) => [ajoutee(a, 9, { cadence: a.cadence * 0.75, degats: fois(a, 0.7) })])),
+  variation('missile-drones', 'minimissile', 'Drones lance-missiles', 'Deux drones en orbite tirent des missiles sur les ennemis proches.', ajouterA('minimissile', (a) => drones(a, { cadence: 2.5, degats: fois(a, 0.5), portee: 80, vie: 1.2 }))),
+  variation('missile-incendiaire', 'minimissile', 'Ogives incendiaires', 'Les missiles enflamment ce qu’ils touchent.', changerA('minimissile', V.incendiaire)),
+  variation('missile-cryo', 'minimissile', 'Missiles cryogéniques', 'Les missiles gèlent ce qu’ils touchent et le ralentissent.', changerA('minimissile', V.cryo)),
+  // LE RAILGUN
+  variation('railgun-incendiaire', 'railgun', 'Rail incendiaire', 'Tout ce que le trait traverse s’enflamme.', changerA('railgun', V.incendiaire)),
+  variation('railgun-cryo', 'railgun', 'Rail cryogénique', 'Tout ce que le trait traverse gèle.', changerA('railgun', V.cryo)),
+  variation('railgun-large', 'railgun', 'Rail large', 'Un trait deux fois et demie plus large.', changerA('railgun', (a) => ({ ...a, rail: { largeur: (a.rail?.largeur ?? 3) * 2.5 } }))),
+  variation('railgun-jumeau', 'railgun', 'Rail jumeau', 'Un second rail, un peu moins fort, tire aussi.', ajouterA('railgun', (a) => [ajoutee(a, 21, { degats: fois(a, 0.6) })])),
+  variation('railgun-eclats', 'railgun', 'Rail à éclats', 'Chaque ennemi traversé projette des éclats autour de lui.', changerA('railgun', (a) => ({ ...V.fragments(a), fragments: { nombre: 4, degats: fois(a, 0.2), vitesse: 160, vie: 0.2 } }))),
+  variation('railgun-surcharge', 'railgun', 'Surcharge', 'Deux fois plus de traits, un peu moins forts.', changerA('railgun', (a) => ({ ...a, cadence: a.cadence * 0.5, degats: fois(a, 0.6) }))),
+  // L'OBUSIER
+  variation('obusier-fragmentation', 'obusier', 'Obus à fragmentation', 'Chaque explosion projette six éclats brûlants tout autour.', changerA('obusier', V.fragments)),
+  variation('obusier-incendiaire', 'obusier', 'Obus incendiaires', 'Les obus enflamment ce qu’ils touchent.', changerA('obusier', V.incendiaire)),
+  variation('obusier-cryo', 'obusier', 'Obus cryogéniques', 'Les obus gèlent ce qu’ils touchent.', changerA('obusier', V.cryo)),
+  variation('obusier-salve', 'obusier', 'Salve d’obus', 'Chaque tir lâche trois obus en éventail.', changerA('obusier', V.gerbe(3, 0.3, 0.55))),
+  variation('obusier-drones', 'obusier', 'Drones artilleurs', 'Deux drones en orbite tirent des obus sur les ennemis proches.', ajouterA('obusier', (a) => drones(a, { cadence: 2.2, degats: fois(a, 0.5), portee: 90, vie: 1 }))),
+  variation('obusier-lourd', 'obusier', 'Gros calibre', 'Des obus plus lents à venir, plus forts, qui explosent plus large.', changerA('obusier', V.lourd)),
+  // L'ESSAIM DE ROQUETTES
+  variation('roquettes-nuee', 'roquettes', 'Nuée de roquettes', 'Deux fois plus de roquettes, un peu moins fortes.', changerA('roquettes', (a) => ({ ...a, essaim: a.essaim === undefined ? undefined : { ...a.essaim, nombre: a.essaim.nombre * 2 }, degats: fois(a, 0.6) }))),
+  variation('roquettes-explosives', 'roquettes', 'Têtes explosives', 'Les roquettes explosent à l’impact.', changerA('roquettes', (a) => ({ ...a, zone: { rayon: 14 } }))),
+  variation('roquettes-incendiaires', 'roquettes', 'Roquettes incendiaires', 'Les roquettes enflamment ce qu’elles touchent.', changerA('roquettes', V.incendiaire)),
+  variation('roquettes-cryo', 'roquettes', 'Roquettes cryogéniques', 'Les roquettes gèlent ce qu’elles touchent.', changerA('roquettes', V.cryo)),
+  variation('roquettes-perforantes', 'roquettes', 'Roquettes perforantes', 'Les roquettes traversent les ennemis.', changerA('roquettes', V.perforant)),
+  variation('roquettes-ricochet', 'roquettes', 'Roquettes à ricochet', 'Chaque roquette rebondit sur deux autres ennemis.', changerA('roquettes', V.ricochet)),
+  // L'ARC TESLA
+  variation('tesla-rebonds', 'tesla', 'Arc en chaîne', 'L’éclair saute sur trois ennemis de plus.', changerA('tesla', (a) => ({ ...a, chaine: a.chaine === undefined ? undefined : { ...a.chaine, rebonds: a.chaine.rebonds + 3 } }))),
+  variation('tesla-incendiaire', 'tesla', 'Arc incendiaire', 'Ce que l’éclair touche s’enflamme.', changerA('tesla', V.incendiaire)),
+  variation('tesla-cryo', 'tesla', 'Arc cryogénique', 'Ce que l’éclair touche gèle.', changerA('tesla', V.cryo)),
+  variation('tesla-surtension', 'tesla', 'Surtension', 'L’éclair ne faiblit plus d’un ennemi à l’autre.', changerA('tesla', (a) => ({ ...a, chaine: a.chaine === undefined ? undefined : { ...a.chaine, attenuation: 1 } }))),
+  variation('tesla-champ', 'tesla', 'Champ tesla', 'Un champ électrique blesse les ennemis tout près du vaisseau.', changerA('tesla', (a) => ({ ...a, aura: { rayon: 34, dps: fois(a, 0.4) } }))),
+  variation('tesla-jumeau', 'tesla', 'Arc jumeau', 'Un second arc, un peu moins fort, frappe aussi.', ajouterA('tesla', (a) => [ajoutee(a, 21, { degats: fois(a, 0.6) })])),
+  // LE LANCE-GRENADES
+  variation('grenades-fragmentation', 'grenades', 'Grenades à fragmentation', 'Chaque explosion projette six éclats brûlants tout autour.', changerA('grenades', V.fragments)),
+  variation('grenades-incendiaires', 'grenades', 'Grenades incendiaires', 'Les grenades enflamment ce qu’elles touchent.', changerA('grenades', V.incendiaire)),
+  variation('grenades-cryo', 'grenades', 'Grenades cryogéniques', 'Les grenades gèlent ce qu’elles touchent.', changerA('grenades', V.cryo)),
+  variation('grenades-rafale', 'grenades', 'Rafale de grenades', 'Quatre grenades à chaque tir.', changerA('grenades', (a) => ({ ...a, gerbe: { nombre: 4, ecart: 0.25 }, degats: fois(a, 0.7) }))),
+  variation('grenades-drones', 'grenades', 'Drones grenadiers', 'Deux drones en orbite lancent des grenades sur les ennemis proches.', ajouterA('grenades', (a) => drones(a, { cadence: 1.8, degats: fois(a, 0.6), portee: 80, gerbe: undefined }))),
+  variation('grenades-lourdes', 'grenades', 'Grosses grenades', 'Des grenades plus lentes à venir, plus fortes, qui explosent plus large.', changerA('grenades', V.lourd)),
+  // LES DRONES D'ESCORTE
+  variation('escorte-plus', 'escorte', 'Escadrille', 'Deux drones d’escorte de plus.', ajouterA('escorte', (a) => drones(a, { cadence: a.cadence, degats: a.degats, portee: a.portee }, 2, Math.PI / 2).map((d, k) => ({ ...d, place: 22 + k })))),
+  variation('escorte-perforantes', 'escorte', 'Balles perforantes', 'Les balles des drones traversent les ennemis.', changerA('escorte', V.perforant)),
+  variation('escorte-incendiaires', 'escorte', 'Balles incendiaires', 'Les balles des drones enflamment les ennemis.', changerA('escorte', V.incendiaire)),
+  variation('escorte-cryo', 'escorte', 'Balles cryogéniques', 'Les balles des drones gèlent les ennemis.', changerA('escorte', V.cryo)),
+  variation('escorte-ricochet', 'escorte', 'Ricochet', 'Chaque balle des drones rebondit sur deux autres ennemis.', changerA('escorte', V.ricochet)),
+  variation('escorte-roquettes', 'escorte', 'Drones lance-roquettes', 'Les drones tirent des roquettes qui explosent.', changerA('escorte', (a) => ({ ...V.explosif(a), cadence: a.cadence * 2.5, degats: fois(a, 2) }))),
 ]
 /** La carte d'une spéciale. */
 export const carteSpeciale = (mu: Mutation): Talent => ({ id: `mutation:${mu.id}`, cible: { sorte: 'arme', arme: mu.arme }, stat: 'mutation', rarete: 'speciale', bonus: 0, mutation: mu.id })
 /** Les spéciales déjà prises, d'après les bonus du vol. */
 export const mutationsPrises = (b: Bonus): string[] => b.filter((x) => x.stat === 'mutation').map((x) => x.id.slice('mutation:'.length))
+/** Les noms des armes portées, une fois chacun, l'arme principale d'abord. */
+export const armesPortees = (armes: Arme[]): Arme[] => armes.filter((a, i) => armes.findIndex((b) => b.id === a.id) === i)
+
+/** LES TROIS SPÉCIALES d'un choix (voir `MUTATIONS`), ou rien : `k`, la combientième spéciale (1 au niveau 10). */
+function proposerLesSpeciales(graine: number, niveau: number, k: number, principaleId: string, portees: string[], race: Race, prises: string[]): Talent[] {
+  const variationsDe = (ids: string[]): Mutation[] => MUTATIONS.filter((mu) => mu.sorte === 'variation' && ids.includes(mu.arme) && !prises.includes(mu.id))
+  const nouvelles = portees.length < ARMES_MAX ? MUTATIONS.filter((mu) => mu.sorte === 'arme' && mu.race === race && !portees.includes(mu.arme) && !prises.includes(mu.id)) : []
+  let cle = 0
+  const tirer = (liste: Mutation[]): Mutation | undefined => (liste.length === 0 ? undefined : liste.splice(hache(hache(graine, niveau, 41), cle++) % liste.length, 1)[0])
+  const choisies: Mutation[] = []
+  if (k <= NIVEAUX_MIXTES) {
+    const v = variationsDe([principaleId])
+    const a = [...nouvelles]
+    const une = tirer(a)
+    const deux = tirer(v)
+    if (une !== undefined) choisies.push(une)
+    if (deux !== undefined) choisies.push(deux)
+    const reste = [...a, ...v]
+    while (choisies.length < 3) {
+      const t = tirer(reste)
+      if (t === undefined) break
+      choisies.push(t)
+    }
+  } else {
+    const v = variationsDe(portees)
+    for (let j = 0; j < 3; j++) {
+      const t = tirer(v)
+      if (t !== undefined) choisies.push(t)
+    }
+  }
+  return choisies.map(carteSpeciale)
+}
 
 /**
  * LES TROIS CARTES proposées : le pool de l'arme montée et celui de la faction, réunis, trois stats différentes tirées de
  * la graine de la partie, du niveau et du rang du choix (un joueur qui en a deux à faire voit deux tirages) ; chacune sa
- * rareté. LES SPÉCIALES D'ABORD (voir `MUTATIONS`) : au premier choix, s'il en est dû une — une par `SPECIALE_TOUS`
- * niveaux — et qu'il en reste à l'arme, trois spéciales.
+ * rareté. LES SPÉCIALES D'ABORD (voir `MUTATIONS`) : au premier choix, s'il en est dû une — une par `NIVEAU_SPECIAL`
+ * niveaux — et qu'il en reste, trois spéciales.
  */
-export function proposer(graine: number, niveau: number, rang: number, arme: Arme | undefined, race: Race, prises: string[] = []): Talent[] {
-  if (arme !== undefined && rang === 0 && Math.floor(niveau / SPECIALE_TOUS) > prises.length) {
-    const libres = MUTATIONS.filter((mu) => mu.arme === arme.id && !prises.includes(mu.id))
-    const choisies: Mutation[] = []
-    for (let k = 0; k < 3 && libres.length > 0; k++) choisies.push(libres.splice(hache(hache(graine, niveau, 41), k) % libres.length, 1)[0])
-    if (choisies.length > 0) return choisies.map(carteSpeciale)
+// (`armes` : toutes celles que porte le vaisseau — CHAQUE NOUVELLE ARME A SON POOL, réuni à celui de l'arme principale)
+export function proposer(graine: number, niveau: number, rang: number, arme: Arme | undefined, race: Race, prises: string[] = [], armes: Arme[] = arme === undefined ? [] : [arme]): Talent[] {
+  const portees = armesPortees(armes.length > 0 ? armes : arme === undefined ? [] : [arme])
+  if (arme !== undefined && rang === 0 && Math.floor(niveau / NIVEAU_SPECIAL) > prises.length) {
+    const speciales = proposerLesSpeciales(graine, niveau, prises.length + 1, arme.id, portees.map((a) => a.id), race, prises)
+    if (speciales.length > 0) return speciales
   }
   const pool: { cible: Cible; stat: StatDArme | StatDeFaction }[] = [
-    ...(arme === undefined ? [] : statsDeLArme(arme).map((stat) => ({ cible: { sorte: 'arme', arme: arme.id } as Cible, stat }))),
+    ...portees.flatMap((a) => statsDeLArme(a).map((stat) => ({ cible: { sorte: 'arme', arme: a.id } as Cible, stat }))),
     ...STATS_DE_FACTION[race].map((stat) => ({ cible: { sorte: 'faction', race } as Cible, stat })),
   ]
   const choisies: Talent[] = []
