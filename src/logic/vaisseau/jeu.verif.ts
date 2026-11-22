@@ -3618,5 +3618,22 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   verifier('à trois, ils avancent', q.vaisseau.x > 0 && etatDuPilote(q, 1).vaisseau.y > 50 && etatDuPilote(q, 2).vaisseau.x < -50)
 }
 
+// À DISTANCE, SANS LAISSE (Keko, 22/11 : « qu'ils puissent partir dans des directions complètement différentes ») : ils
+// s'éloignent, et les insectes naissent autour de chacun
+{
+  const cfg: ConfigVaisseau = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 0, continu: { ...VAISSEAU.invasion.continu, actif: true, debut: 6, max: 6 } }, derive: { ...VAISSEAU.derive, active: false }, coque: 1e9, armes: [] }
+  const w = nouveauMonde(cfg, 4)
+  ajouterUnPilote(cfg, w, 50, 0)
+  for (let i = 0; i < 60 * 8; i++) {
+    avancerLEquipage([cfg, cfg], w, 1 / 60, [{ x: -1, y: 0 }, { x: 1, y: 0 }], undefined, false)
+    w.coque = 1e9
+    w.equipage!.pilotes[1].coque = 1e9
+  }
+  const b = etatDuPilote(w, 1).vaisseau
+  const d = Math.hypot(b.x - w.vaisseau.x, b.y - w.vaisseau.y)
+  const pres = (v: { x: number; y: number }): number => w.ennemis.filter((e) => Math.hypot(e.corps.x - v.x, e.corps.y - v.y) < 500).length
+  verifier(`sans laisse, tirés à l’opposé huit secondes, ils sont à ${Math.round(d)} l’un de l’autre ; des insectes autour de chacun (${pres(w.vaisseau)} et ${pres(b)})`, d > 600 && pres(w.vaisseau) > 3 && pres(b) > 3)
+}
+
 // (TOUJOURS EN DERNIER : des blocs ajoutés après cette ligne échouaient sans faire échouer `npm run verif` — 17/11)
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)

@@ -2418,7 +2418,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (predit !== null && !s.fige) {
       const k = Math.max(0, Math.min(12, Math.round((tLocal - m.t) / PAS)))
       const confs = [CONF, ...autres.map((a) => a.ecran.CONF)]
-      for (let i = 0; i < k; i++) avancerLEquipage(confs, m, PAS, [directionVoulue(), ...distant.dirs.slice(1)])
+      for (let i = 0; i < k; i++) avancerLEquipage(confs, m, PAS, [directionVoulue(), ...distant.dirs.slice(1)], undefined, false)
       m.vaisseau = { ...m.vaisseau, x: predit.x, y: predit.y, vx: predit.vx, vy: predit.vy, cap: predit.cap, poussee: predit.poussee }
     }
     v = m.vaisseau
@@ -9467,7 +9467,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const lieuxDeLEquipage = (): Vecteur[] => (m.equipage === undefined ? [m.vaisseau] : m.equipage.pilotes.map((_, k) => lieuDuPilote(k)))
   /** LE MILIEU DE L'ÉQUIPAGE, que la caméra regarde — celui de la boîte qui les tient tous (null : on vole seul). */
   function milieuDeLEquipage(): Vecteur | null {
-    if (!enJeu || autres.length === 0 || m.equipage === undefined) return null
+    // (à l'écran partagé seulement : à distance, chacun a sa caméra, sur son vaisseau)
+    if (!COOP || !enJeu || autres.length === 0 || m.equipage === undefined) return null
     const ls = lieuxDeLEquipage()
     const xs = ls.map((l) => l.x)
     const ys = ls.map((l) => l.y)
@@ -14333,6 +14334,23 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     dessinerUneFleche(p, ou.x, ou.y, Math.atan2(dy, dx), PEPITE[2], PEPITE[3], 0.4)
   }
 
+  /**
+   * LES ALLIÉS HORS DE L'ÉCRAN (Keko, 22/11 : « une petite flèche, comme on avait avant, la petite flèche jaune, qui
+   * indique où sont les alliés, sans le nom ; plusieurs flèches qui pointent vers les alliés hors écran ») : la flèche
+   * d'or de la base, au bord, vers chacun — en vol, ou son épave qui attend son retour.
+   */
+  function dessinerLesAllies(p: Peintre): void {
+    if (!enJeu || autres.length === 0 || m.equipage === undefined) return
+    p.place(0, 0)
+    for (let k = 1; k < m.equipage.pilotes.length; k++) {
+      const l = lieuDuPilote(k)
+      const dx = l.x - camera.x
+      const dy = l.y - camera.y
+      const ou = auBord(dx / champApplique, dy / champApplique) // (à l'écran : le monde y est réduit du champ)
+      if (ou === null) continue
+      dessinerUneFleche(p, ou.x, ou.y, Math.atan2(dy, dx), PEPITE[2], PEPITE[3], 0.4)
+    }
+  }
   /** LE RADAR (un outil du hangar) : le rival le plus proche à sa portée, hors de l'écran, est désigné par une flèche rouge au bord, qui bat. */
   function dessinerLeRadar(p: Peintre): void {
     if (CONF.radar.portee <= 0) return
@@ -16781,7 +16799,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         let r: ReturnType<typeof avancerLeMonde>
         let rs: ReturnType<typeof avancerLeMonde>[] = []
         if (autres.length > 0 && m.equipage !== undefined && m.equipage.pilotes.length === autres.length + 1) {
-          const rr = avancerLEquipage([CONF, ...autres.map((a) => a.ecran.CONF)], m, PAS, [direction, ...directions], (k) => (k === 0 ? ouRegarder : regardDeLAutre(k - 1)))
+          // (LA LAISSE NE TIENT QU'À L'ÉCRAN PARTAGÉ — Keko, 22/11 : « je voudrais qu'il puisse partir dans des directions
+          // complètement différentes » ; à distance, chacun va où il veut)
+          const rr = avancerLEquipage([CONF, ...autres.map((a) => a.ecran.CONF)], m, PAS, [direction, ...directions], (k) => (k === 0 ? ouRegarder : regardDeLAutre(k - 1)), COOP)
           // (CHEZ L'INVITÉ, rien de ce pas ne se célèbre : ce sont les événements de l'hôte qui comptent — voir `recevoirUnEtat`)
           r = { chocs: rr.chocs[0], evenements: estInvite ? [] : rr.evenements[0] }
           rs = autres.map((_, j) => ({ chocs: rr.chocs[j + 1] ?? [], evenements: estInvite ? [] : (rr.evenements[j + 1] ?? []) }))
@@ -17246,6 +17266,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     dessinerLeScore(p)
     if (VORTEX) dessinerLInvasion(p)
     dessinerLeSalon(p)
+    dessinerLesAllies(p)
     // (le second abattu : son compte du retour, sur son épave)
     chacunDesAutres(() => dessinerLeRetour(p))
     if (VORTEX && !CONF.invasion.sansPortail) dessinerLAnnonceDeLaVague(p)

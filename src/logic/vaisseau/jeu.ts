@@ -1863,9 +1863,10 @@ function blesserParLaTempete(c: ConfigVaisseau, m: Monde, x: number, y: number, 
 }
 
 /** UN POINT DE NAISSANCE DANS L'ARÈNE (voir `arene`) : à `d` du vaisseau dans la direction `a` — tourné, ou ramené, s'il tombait dans la tempête. */
-function dansLArene(c: ConfigVaisseau, m: Monde, a: number, d: number): Vecteur {
-  // (à plusieurs, depuis le milieu de l'équipage — voir `centreDeLEquipage`)
-  const v = centreDeLEquipage(m)
+// (`centre` : d'où compter — à plusieurs, le pilote pour qui il naît, ou celui qu'il chasse ; par défaut le milieu de
+// l'équipage, seul le vaisseau)
+function dansLArene(c: ConfigVaisseau, m: Monde, a: number, d: number, centre: Vecteur = centreDeLEquipage(m)): Vecteur {
+  const v = centre
   const limite = c.arene.rayon - c.arene.marge
   for (let essai = 0; essai < 12; essai++) {
     const an = a + (essai % 2 === 0 ? 1 : -1) * Math.ceil(essai / 2) * 0.5
@@ -1965,7 +1966,8 @@ function menerLesDerives(c: ConfigVaisseau, m: Monde): void {
   if (m.ennemis.filter((e) => e.asteroide !== undefined).length >= D.max) return
   const a = tire(m.graine, id, 42) * Math.PI * 2
   const loin = c.invasion.naissance + D.marge
-  const o = centreDesRoches(c, m)
+  // (à plusieurs, autour de l'un d'eux, à tour de rôle)
+  const o = m.equipage === undefined ? centreDesRoches(c, m) : pilotePourNaitre(m, id)
   const x = o.x + Math.cos(a) * loin
   const y = o.y + Math.sin(a) * loin
   // (vers un point tiré près du centre du champ — le portail, ou le vaisseau : elle traverse le champ)
@@ -2039,10 +2041,13 @@ function deriver(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number): void {
     return
   }
   e.corps = { ...b, x: b.x + b.vx * dt, y: b.y + b.vy * dt }
-  const o = centreDesRoches(c, m)
-  const dx = e.corps.x - o.x
-  const dy = e.corps.y - o.y
-  if (Math.hypot(dx, dy) > c.invasion.naissance + c.derive.marge + 1 && dx * b.vx + dy * b.vy > 0) e.parti = true
+  // (à plusieurs : elle ne part que loin de tous, en s'éloignant de chacun)
+  const parti = lieuxDesRoches(c, m).every((o) => {
+    const dx = e.corps.x - o.x
+    const dy = e.corps.y - o.y
+    return Math.hypot(dx, dy) > c.invasion.naissance + c.derive.marge + 1 && dx * b.vx + dy * b.vy > 0
+  })
+  if (parti) e.parti = true
 }
 
 /**
@@ -2070,7 +2075,7 @@ export type RochePrise = { id: number; x: number; y: number; rayon: number; grai
 function menerLesRochesPrises(c: ConfigVaisseau, m: Monde, dt: number): void {
   if (m.rochesPrises.length === 0) return
   const A = c.arene
-  const o = centreDesRoches(c, m)
+  const lieux = lieuxDesRoches(c, m)
   const w = vitesseDeLaTempete(c)
   m.rochesPrises = m.rochesPrises.filter((r) => {
     // (elle tourne avec la tempête, d'un bloc, en glissant vers le milieu de l'anneau)
@@ -2079,7 +2084,7 @@ function menerLesRochesPrises(c: ConfigVaisseau, m: Monde, dt: number): void {
     const a = Math.atan2(r.y, r.x) + w * dt
     r.x = Math.cos(a) * vers
     r.y = Math.sin(a) * vers
-    return Math.hypot(r.x - o.x, r.y - o.y) <= c.invasion.naissance + c.derive.marge
+    return lieux.some((o) => Math.hypot(r.x - o.x, r.y - o.y) <= c.invasion.naissance + c.derive.marge)
   })
   // (ELLE NE RECOUVRE RIEN — Keko, 21/11 : « des astéroïdes se superposent » : elle se pousse hors des roches de la
   // tempête qu'elle touche, et deux roches prises s'écartent l'une de l'autre ; tournant toutes d'un bloc, elles
@@ -2194,9 +2199,8 @@ function rochesMasquees(c: ConfigVaisseau, m: Monde): Ennemi[] {
  * OÙ NAÎT UN INSECTE DU FLOT CONTINU (voir `continu`) : tout autour du vaisseau ; mais quand il file, `devant` des
  * naissances se font dans son axe de vol, à ±`cone`. `k` : une clé du tirage.
  */
-function angleDeNaissance(c: ConfigVaisseau, m: Monde, k: number): number {
+function angleDeNaissance(c: ConfigVaisseau, m: Monde, k: number, v: Vaisseau = m.vaisseau): number {
   const fl = c.invasion.continu
-  const v = m.vaisseau
   if (Math.hypot(v.vx, v.vy) > 20 && tire(m.graine, k, 51) < fl.devant) return Math.atan2(v.vy, v.vx) + (tire(m.graine, k, 52) * 2 - 1) * fl.cone
   return tire(m.graine, k, 3) * Math.PI * 2
 }
@@ -2213,13 +2217,15 @@ function faireNaitreUnInsecte(c: ConfigVaisseau, m: Monde, ev: Evenement[]): voi
   // continu, tout autour)
   const cadrans = m.invasion.cadrans.length > 0 ? m.invasion.cadrans : [0]
   const q = cadrans[m.invasion.nes % cadrans.length]
+  // (À PLUSIEURS, AUTOUR DE CHACUN À TOUR DE RÔLE — voir `pilotePourNaitre` : ils peuvent être loin l'un de l'autre)
+  const nait = m.equipage === undefined ? null : pilotePourNaitre(m, m.invasion.nes)
   m.invasion.nes += 1
-  const a = c.invasion.continu.actif ? angleDeNaissance(c, m, m.prochainId) : (q + 0.1 + 0.8 * tire(m.graine, m.prochainId, 3)) * (Math.PI / 2)
+  const a = c.invasion.continu.actif ? angleDeNaissance(c, m, m.prochainId, nait ?? m.vaisseau) : (q + 0.1 + 0.8 * tire(m.graine, m.prochainId, 3)) * (Math.PI / 2)
   m.graine = hache(m.graine, 7)
   // (SANS PORTAIL : autour du vaisseau, hors de sa vue, et il le chasse dès sa naissance)
-  const o = centreDuChamp(c, m)
+  const o = nait ?? centreDuChamp(c, m)
   // (DANS L'ARÈNE : un point de naissance tombé dans la tempête est tourné, ou ramené dedans)
-  const { x, y } = c.invasion.sansPortail ? dansLArene(c, m, a, c.invasion.naissance) : { x: o.x + Math.cos(a) * c.invasion.naissance, y: o.y + Math.sin(a) * c.invasion.naissance }
+  const { x, y } = c.invasion.sansPortail ? dansLArene(c, m, a, c.invasion.naissance, nait ?? undefined) : { x: o.x + Math.cos(a) * c.invasion.naissance, y: o.y + Math.sin(a) * c.invasion.naissance }
   // (UN CORNU, UN CUIRASSIER, selon leurs parts du moment — voir `invasion.cornu`, `invasion.cuirassier`)
   let u = tire(m.graine, m.prochainId, 71)
   let sorte: SorteDInsecte | undefined
@@ -2452,8 +2458,9 @@ function conduireLInsecte(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number, ev
   // de vol du vaisseau)
   if (I.continu.actif && enVol && dj > I.continu.recycle) {
     const cle = Math.floor(m.t * 10)
-    const a = Math.hypot(v.vx, v.vy) > 20 ? angleDeNaissance(c, m, e.id * 7919 + cle) : Math.atan2(b.y - v.y, b.x - v.x) + (tire(m.graine, e.id, 53, cle) * 2 - 1) * I.continu.cone
-    const { x, y } = dansLArene(c, m, a, I.naissance * (1 + I.continu.etalement * tire(m.graine, e.id, 54, cle)))
+    // (à plusieurs : devant celui qu'il chasse)
+    const a = Math.hypot(v.vx, v.vy) > 20 ? angleDeNaissance(c, m, e.id * 7919 + cle, v) : Math.atan2(b.y - v.y, b.x - v.x) + (tire(m.graine, e.id, 53, cle) * 2 - 1) * I.continu.cone
+    const { x, y } = dansLArene(c, m, a, I.naissance * (1 + I.continu.etalement * tire(m.graine, e.id, 54, cle)), v)
     e.corps = { ...b, x, y, vx: 0, vy: 0, cap: Math.atan2(v.y - y, v.x - x) }
     return []
   }
@@ -5779,6 +5786,22 @@ export function vaisseauxEnVol(m: Monde): { k: number; v: Vaisseau }[] {
 }
 
 /** LE MILIEU DE L'ÉQUIPAGE : celui des vaisseaux en vol — personne : le vaisseau dont c'est le tour (seul : le sien). */
+/**
+ * À PLUSIEURS, POUR QUI NAÎT CE QUI NAÎT (Keko, 22/11 : « je voudrais qu'ils puissent partir dans des directions
+ * complètement différentes ») : un des vaisseaux en vol, à tour de rôle (`cle`) — personne : celui dont c'est le tour.
+ */
+function pilotePourNaitre(m: Monde, cle: number): Vaisseau {
+  const vs = vaisseauxEnVol(m)
+  return vs.length === 0 ? m.vaisseau : vs[((cle % vs.length) + vs.length) % vs.length].v
+}
+
+/** D'OÙ SE COMPTENT LES ROCHES QUI DÉRIVENT : seul, le centre des roches ; à plusieurs, chaque vaisseau en vol. */
+function lieuxDesRoches(c: ConfigVaisseau, m: Monde): Vecteur[] {
+  if (m.equipage === undefined) return [centreDesRoches(c, m)]
+  const vs = vaisseauxEnVol(m)
+  return vs.length === 0 ? [centreDesRoches(c, m)] : vs.map((x) => x.v)
+}
+
 function centreDeLEquipage(m: Monde): Vecteur {
   const vs = m.equipage === undefined ? [] : vaisseauxEnVol(m)
   if (vs.length === 0) return { x: m.vaisseau.x, y: m.vaisseau.y }
@@ -5805,7 +5828,8 @@ function cibleDeLInsecte(m: Monde, b: Vecteur): { k: number; v: Vaisseau } | nul
  * `seul`). Ensuite la laisse (voir `equipage.laisse`) ; le premier pilote reprend le monde. Rend les chocs et les
  * événements de chacun. `regardDe(k)` : où regarde le pilote `k` — demandé quand il est dans le monde.
  */
-export function avancerLEquipage(cs: ConfigVaisseau[], m: Monde, dt: number, directions: Vecteur[], regardDe?: (k: number) => Vecteur | undefined): { chocs: Choc[][]; evenements: Evenement[][] } {
+// (`laisse` : la laisse les garde ensemble — à l'écran partagé ; à distance, chacun va où il veut)
+export function avancerLEquipage(cs: ConfigVaisseau[], m: Monde, dt: number, directions: Vecteur[], regardDe?: (k: number) => Vecteur | undefined, laisse = true): { chocs: Choc[][]; evenements: Evenement[][] } {
   const eq = m.equipage
   if (eq === undefined) {
     const r = avancerLeMonde(cs[0], m, dt, directions[0] ?? { x: 0, y: 0 }, regardDe?.(0))
@@ -5830,7 +5854,7 @@ export function avancerLEquipage(cs: ConfigVaisseau[], m: Monde, dt: number, dir
   tour(chef, false)
   for (let k = 0; k < n; k++) if (k !== chef) tour(k, true)
   prendreLaMain(m, 0)
-  retenirLEquipage(cs[0], m, dt)
+  if (laisse) retenirLEquipage(cs[0], m, dt)
   return { chocs, evenements }
 }
 

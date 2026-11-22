@@ -7713,3 +7713,15 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   en trop ; il faudrait l'empêcher d'en taper plus ». Le clavier d'un téléphone qui compose un mot passe outre
   `maxLength` : chaque frappe (`input`) coupe maintenant le champ à huit, et le dessin n'en montre jamais plus. Vérifié :
   quinze lettres collées d'un coup, puis trois de plus, il reste huit.
+- **22/11, À DISTANCE, CHACUN VA OÙ IL VEUT.** Keko : « quand je joue à deux et qu'un joueur bouge, l'autre le suit ; je
+  voudrais qu'ils puissent partir dans des directions complètement différentes, avec la petite flèche jaune d'avant qui
+  indique où sont les alliés, sans le nom » ; « la barre de vie et le nom des alliés en jaune, pour toutes les races ».
+  - LA LAISSE NE TIENT QU'À L'ÉCRAN PARTAGÉ (`avancerLEquipage(…, laisse)`) ; à distance, LA CAMÉRA EST SUR SON VAISSEAU,
+    comme seul (elle regarde devant), le champ est le sien.
+  - LA RÈGLE, LOIN LES UNS DES AUTRES : un insecte naît autour d'un des vaisseaux en vol, À TOUR DE RÔLE
+    (`pilotePourNaitre`), une roche aussi ; une roche ne quitte le monde que loin de TOUS (`lieuxDesRoches`) ; le traînard
+    revient devant celui qu'il chasse. Seul, rien ne change. Testé : tirés à l'opposé huit secondes, 1 669 l'un de
+    l'autre, 23 et 22 insectes autour de chacun.
+  - LES ALLIÉS HORS DE L'ÉCRAN : la flèche d'or de la base (`dessinerUneFleche`, celle de l'ancien pointeur), au bord,
+    vers chacun, sans nom. VU à deux Chrome.
+  - La barre de vie et le pseudo des alliés étaient déjà d'or pour toutes les races (le bouclier, au-dessus, reste bleu).
