@@ -7662,3 +7662,22 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   posé sur le canevas lui donnait le focus, le relâchement, sur le canevas, le lui reprenait. IL EST MAINTENANT POSÉ SUR
   SON DESSIN, transparent, à chaque image (`placerLeChampDuPseudo`) : le doigt touche le champ lui-même. Vérifié :
   l'élément sous le doigt est le champ, il garde le focus après la tape. *Pas encore vu sur un vrai téléphone.*
+- **22/11, LE SALON PLUS JOLI ; PLEIN ; L'HÔTE QUI PART.** Keko : « la police de "prêts 1 sur 2" n'est pas très belle
+  comparée au reste de l'interface ; pareil sur la liste des joueurs dans le hangar ; le fond du rectangle se mélange
+  au décor » ; « enlève "3 amis au plus" » ; « quand un cinquième joueur essaie de rejoindre un salon déjà plein, mets-lui
+  un message » ; « quand l'hôte quitte un salon, plutôt que le petit validé en vert, mets une croix rouge » ; « dès que
+  l'hôte quitte le salon, remets le joueur dans une partie en mode un joueur ; là il reste bloqué dans l'ancien salon,
+  et il ne peut pas créer de nouveaux salons ».
+  - LA LISTE DU HANGAR et LE PANNEAU : une plaque pleine, comme les panneaux de la base ; le titre en relief d'or ; chaque
+    joueur, une case cernée (verte, éclairée, cochée de blanc s'il est prêt ; un creux sombre sinon) et son pseudo en
+    relief — d'or pour soi, d'ivoire pour les autres. AU-DESSUS DE « DÉCOLLER » : une plaque, « Prêts N / M » en relief
+    (cristal quand tous le sont), une case par joueur.
+  - « Partagez le lien du salon », sans le nombre.
+  - LE SALON PLEIN : l'hôte répond au quatrième invité qu'il est plein, puis ferme ; lui voit « Salon CODE — Ce salon est
+    déjà plein », une croix rouge, et redevient un joueur seul.
+  - LA CROIX ROUGE (`quete-terminee.js`, l'emblème `cross`, une palette rouge) : qui part, salon plein, introuvable,
+    connexion impossible.
+  - L'HÔTE PARTI (`quitterLeSalonDistant`) : l'invité n'est plus invité ; EN VOL, LA PARTIE CONTINUE, SEUL (les autres
+    vaisseaux sortent du monde) ; au hangar, il est seul, « Inviter » est à lui ; le lien ne rejoint plus au rechargement.
+  - VU à cinq Chrome : la liste et « Prêts 0 / 4 » ; le cinquième, sa croix, seul ; l'hôte fermé en vol, l'invité qui
+    continue et passe un niveau ; l'hôte fermé au hangar, l'invité seul.

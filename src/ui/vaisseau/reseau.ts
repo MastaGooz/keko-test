@@ -25,7 +25,7 @@ const SILENCE = 8000
 const SIGNE = { '@vie': 1 }
 const estUnSigne = (d: unknown): boolean => typeof d === 'object' && d !== null && '@vie' in d
 
-export type EtatDeLaLiaison = 'ouverture' | 'attente' | 'connecte' | 'perdu' | 'introuvable' | 'erreur'
+export type EtatDeLaLiaison = 'ouverture' | 'attente' | 'connecte' | 'perdu' | 'introuvable' | 'plein' | 'erreur'
 export type Rappels = {
   /** Un message du canal fiable (déjà relu du JSON), et de qui (chez l'invité : 'hote'). */
   message: (m: unknown, de: string) => void
@@ -132,9 +132,13 @@ export function ouvrirLeSalon(r: Rappels, voulu = ''): Liaison {
     })
     peer.on('connection', (c) => {
       const id = c.peer
-      // (TROIS INVITÉS AU PLUS : le quatrième est refusé)
+      // (TROIS INVITÉS AU PLUS : le quatrième est refusé — on le lui dit, puis on ferme ; Keko, 22/11 : « quand un
+      // cinquième joueur essaie de rejoindre un salon déjà plein, mets-lui un message »)
       if (!invites.has(id) && invites.size >= INVITES_MAX) {
-        c.on('open', () => c.close())
+        c.on('open', () => {
+          if (c.label === 'ctrl') void c.send({ '@plein': 1 })
+          setTimeout(() => c.close(), 1500)
+        })
         return
       }
       const i = invites.get(id) ?? { ctrl: null, vite: null, suivi: suiviNeuf(), annonce: false, vu: performance.now() }
@@ -207,7 +211,7 @@ export function rejoindreLeSalon(code: string, r: Rappels): Liaison {
     ctrl = c1
     vite = c2
     const verifier = (): void => {
-      if (ctrl !== c1 || !c1.open || !c2.open) return
+      if (ctrl !== c1 || !c1.open || !c2.open || etat === 'plein') return
       vu = performance.now()
       poser('connecte')
     }
@@ -216,9 +220,14 @@ export function rejoindreLeSalon(code: string, r: Rappels): Liaison {
       c.on('open', verifier)
       c.on('close', () => ctrl === c1 && etat === 'connecte' && poser('perdu'))
       c.on('error', () => ctrl === c1 && etat === 'connecte' && poser('perdu'))
+
     }
     c1.on('data', (d) => {
       vu = performance.now()
+      if (typeof d === 'object' && d !== null && '@plein' in d) {
+        poser('plein')
+        return
+      }
       if (!estUnSigne(d)) r.message(d, 'hote')
     })
     c2.on('data', (d) => {
@@ -226,7 +235,7 @@ export function rejoindreLeSalon(code: string, r: Rappels): Liaison {
       r.vite(d as string | ArrayBuffer, 'hote')
     })
     setTimeout(() => {
-      if (ctrl !== c1 || etat === 'connecte' || etat === 'introuvable') return
+      if (ctrl !== c1 || etat === 'connecte' || etat === 'introuvable' || etat === 'plein') return
       if (essais < 3) essayer()
       else poser('erreur')
     }, 15000)

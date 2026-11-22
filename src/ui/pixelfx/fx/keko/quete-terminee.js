@@ -89,6 +89,25 @@ function check(p, G, x, y, s, white) {
     }
 }
 
+// the cancel emblem: a box with a white cross and its shadow (Keko, 22/11 : « quand l'hôte quitte un salon, plutôt que
+// le petit validé en vert, mets une croix rouge, en mode il y a eu une annulation » — the page passes a red palette)
+function cross(p, G, x, y, s, white) {
+  const r = Math.round(8 * s);
+  p.rect(x - r - 1, y - r - 1, 2 * r + 2, 2 * r + 3, G[0]);
+  p.rect(x - r, y - r, 2 * r, 2 * r, white ? WHITE : G[3]);
+  if (white) return;
+  p.rect(x - r, y - r, 2 * r, 1, G[5]);
+  p.rect(x - r, y - r, 1, 2 * r, G[4]);
+  p.rect(x - r, y + r - 1, 2 * r, 1, G[2]);
+  p.rect(x + r - 1, y - r, 1, 2 * r, G[2]);
+  const k = s * 1.5;
+  for (const [o, c] of [[1, G[1]], [0, WHITE]])
+    for (let e = 0; e < 2; e++) {
+      p.line(x - 3 * k + e, y - 3 * k + o, x + 3 * k + e, y + 3 * k + o, c);
+      p.line(x + 3 * k + e, y - 3 * k + o, x - 3 * k + e, y + 3 * k + o, c);
+    }
+}
+
 export function create(o) {
   const G = fit(o.palette, 8), B = fit(o.ribbon, 5), R = new Rng(o.seed);
   const ps = new Particles({ rng: R, sparks: [G[7], G[6], G[5], G[3]] }), lights = new Lights();
@@ -108,13 +127,13 @@ export function create(o) {
       if (!popped && t >= MEDAL + 0.06) {
         popped = true;
         lights.add(mx, MY, 36, G[5], 0.7, 0.4);
-        const n = o.emblem === "check" ? 7 : 12;
+        const n = o.emblem === "check" || o.emblem === "cross" ? 7 : 12;
         for (let i = 0; i < n; i++) {
           const an = (i / n) * TAU + R.range(-0.2, 0.2), sp = R.range(40, 90);
           ps.spawn(P.STAR, mx + Math.cos(an) * 9, MY + Math.sin(an) * 9, Math.cos(an) * sp, Math.sin(an) * sp * 0.6, R.range(0.25, 0.45), R.pick([G[7], G[6], G[5]]), i % 3 ? 0.6 : R.range(1.2, 1.8));
         }
       }
-      if (o.emblem !== "check" && t > 0.5 && t < OUT && R.chance(0.05)) ps.spawn(P.STAR, mx + R.range(-11, 11), MY + R.range(-11, 9), 0, -R.range(4, 10), Math.min(R.range(0.3, 0.5), end - t), G[6], R.chance(0.3) ? 1.4 : 0.6);
+      if (o.emblem === "medal" && t > 0.5 && t < OUT && R.chance(0.05)) ps.spawn(P.STAR, mx + R.range(-11, 11), MY + R.range(-11, 9), 0, -R.range(4, 10), Math.min(R.range(0.3, 0.5), end - t), G[6], R.chance(0.3) ? 1.4 : 0.6);
       ps.update(dt);
       lights.update(dt);
     },
@@ -144,10 +163,11 @@ export function create(o) {
       if (mk > 0) {
         const s = mk < 0.035 ? 1.5 : 1 + 0.35 * Math.exp(-mk * 16) * Math.cos(mk * 28);
         if (o.emblem === "check") check(p, G, Math.round(mx + x), MY, s, mk < 0.07);
+        else if (o.emblem === "cross") cross(p, G, Math.round(mx + x), MY, s, mk < 0.07);
         else medal(p, G, B, mx + x, MY, s, mk < 0.07, shine === null ? null : shine - mx + 4);
         p.glow(mx + x, MY, 20, G[5], 0.3 * a + (mk < 0.15 ? 0.5 * (1 - mk / 0.15) : 0));
         const g = ((t - 1.5) % 0.9) / 0.9;
-        if (o.emblem !== "check" && t > 1.5 && g < 0.25) sparkle(p, mx + x - 4, MY - 4, 4 * Math.sin((g / 0.25) * Math.PI), G[7], G[6], 0.5);
+        if (o.emblem === "medal" && t > 1.5 && g < 0.25) sparkle(p, mx + x - 4, MY - 4, 4 * Math.sin((g / 0.25) * Math.PI), G[7], G[6], 0.5);
       }
       ps.draw(p);
       lights.draw(p);

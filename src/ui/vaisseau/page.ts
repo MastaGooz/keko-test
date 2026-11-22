@@ -45,7 +45,7 @@ import * as MATERIALISATION from '../pixelfx/fx/keko/materialisation.js'
 import * as QUETE_TERMINEE from '../pixelfx/fx/keko/quete-terminee.js'
 import * as VORTEX_FX from '../pixelfx/fx/keko/vortex.js'
 import { ajouterLeBonus, apresUnChoix, avecLesBonus, carte, DUREE_DU_CHOIX, type Bonus, ouvrirLeChoix, proposer, RARETES, reserveApresLeDelai, type Choix, type Rarete, type Talent } from '../../logic/vaisseau/talents.ts'
-import { depuisTexte, ordreVuDu, retirerUnPilote, versTexte, vuDu } from '../../logic/vaisseau/reseau.ts'
+import { depuisTexte, ordreVuDu, retirerLesPilotes, retirerUnPilote, versTexte, vuDu } from '../../logic/vaisseau/reseau.ts'
 import { compresser, decompresser, ouvrirLeSalon, rejoindreLeSalon, type EtatDeLaLiaison, type Liaison } from './reseau.ts'
 import { APPARAIT as ARRIVE_A, REFROIDI as REFROIDI_A } from '../pixelfx/fx/keko/materialisation.js'
 import { Grains } from '../pixelfx/fx/keko/_espace.js'
@@ -1173,7 +1173,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
 
     // (`&coop` : LE SECOND se matérialise à côté, dans l'apparence qui suit celle du premier — voir `COOP`)
     // (chez l'invité, l'équipage est celui que l'hôte a dit — voir `appliquerLesPilotes`, plus bas)
-    if (!INVITE) autres = []
+    if (!estInvite) autres = []
     choixDuSecond = false
     if (COOP) {
       ajouterUnPilote(CONF, m, 40, 0)
@@ -1192,7 +1192,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       for (const mb of membres.values()) mb.pret = false
       diffuserLeSalon()
     }
-    if (INVITE) {
+    if (estInvite) {
       distant.recu = false
       distant.choix = null
       // (l'hôte a pu le dire avant qu'on ait fini de décoller : sa graine et notre configuration reviennent)
@@ -1507,7 +1507,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * fois par seconde, et l'invité le fait avancer entre deux.
    */
   const REJOINDRE = VORTEX ? (parametres.get('rejoindre') ?? '').toUpperCase().replace(/[^A-Z0-9]/g, '') : ''
-  const INVITE = REJOINDRE !== '' && !parametres.has('salon')
+  /** On est l'invité d'un salon (le lien) — jusqu'à ce que l'hôte parte : voir `quitterLeSalonDistant`. */
+  let estInvite = REJOINDRE !== '' && !parametres.has('salon')
   /** Un salon est ouvert ici : on en est l'hôte. */
   let estHote = false
   let liaison: Liaison | null = null
@@ -2074,7 +2075,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * le premier) ; chez l'invité, celles que l'hôte a tirées pour lui.
    */
   function cartesDuChoix(ch: Choix, autre: Autre | null): Talent[] {
-    if (INVITE) return distant.choix?.enCours.find((x) => x.k === maPlace)?.cartes ?? []
+    if (estInvite) return distant.choix?.enCours.find((x) => x.k === maPlace)?.cartes ?? []
     const conf = autre !== null ? autre.ecran.CONF : CONF
     const modele = autre !== null ? autre.modele : flotte.actif
     const tirees = proposer(graineDuVol + 7919 * (autre?.k ?? 0), m.invasion.niveau, ch.rang, conf.armes[0], modeleDeVaisseau(modele).race)
@@ -2083,10 +2084,42 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     return rareteForcee === undefined ? tirees : tirees.map((ta) => carte(ta.cible, ta.stat, rareteForcee))
   }
 
-  // ---------------------------------------------------------------- le jeu à distance (voir `estHote`, `INVITE`)
+  // ---------------------------------------------------------------- le jeu à distance (voir `estHote`, `estInvite`)
   /** Un mot en haut de l'écran (le salon, qui arrive, qui part). */
-  function annoncer(titre: string, texte: string): void {
-    toasts.push(N.createFx(QUETE_TERMINEE as Module, { x: W / 2, y: 0, title: titre, titleFont: GRAS, text: texte, font: TEXTE, seed: 9 + toasts.length, emblem: 'check', palette: PALETTE_D_ETAPE }))
+  /** (`annule` : UNE ANNULATION — qui part, un salon plein, introuvable — une croix rouge au lieu de la coche verte) */
+  function annoncer(titre: string, texte: string, annule = false): void {
+    toasts.push(N.createFx(QUETE_TERMINEE as Module, { x: W / 2, y: 0, title: titre, titleFont: GRAS, text: texte, font: TEXTE, seed: 9 + toasts.length, emblem: annule ? 'cross' : 'check', palette: annule ? PALETTE_D_ANNULATION : PALETTE_D_ETAPE }))
+  }
+  const PALETTE_D_ANNULATION = ['#2a0608', '#4a0c10', '#7a141a', '#b02028', '#e03a40', '#ff6a66', '#ffc4bc', '#ffffff']
+  /**
+   * (l'invité) L'HÔTE EST PARTI, OU LE SALON N'EST PAS JOIGNABLE (Keko, 22/11 : « dès que l'hôte quitte le salon, remets
+   * le joueur dans une partie en mode un joueur ; là il reste bloqué dans l'ancien salon, et il ne peut pas créer de
+   * nouveaux salons ») : il n'est plus invité ; en vol, LA PARTIE CONTINUE, SEUL (les autres vaisseaux sortent du monde) ;
+   * au hangar, il est seul, et peut ouvrir son propre salon. Le lien ne rejoint plus au rechargement.
+   */
+  function quitterLeSalonDistant(): void {
+    const l = liaison
+    liaison = null
+    l?.fermer()
+    estInvite = false
+    salonDistant = null
+    dernierPilotes = null
+    pretIci = false
+    distant.choix = null
+    if (choixDeTalent !== null) choixDeTalent = null
+    if (panneauSalon !== 'ferme') panneauSalon = 'ferme'
+    if (enJeu && distant.recu && m.equipage !== undefined) retirerLesPilotes(m)
+    else if (enJeu) enJeu = false
+    autres = []
+    distant.recu = false
+    distant.enVol = false
+    try {
+      const u = new URL(location.href)
+      u.searchParams.delete('rejoindre')
+      history.replaceState(null, '', u.toString())
+    } catch {
+      // (sans l'histoire du navigateur : le lien reste ; rien de grave)
+    }
   }
   /** Un pseudo propre : des lettres, des chiffres, l'espace, le tiret ; douze au plus. */
   const pseudoPropre = (x: string): string => x.replace(/[^\p{L}\p{N} _-]/gu, '').trim().slice(0, 12)
@@ -2111,7 +2144,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (VORTEX && parametres.has('salon')) {
       if (pseudo === '') pseudo = 'Hôte'
       ouvrirLeSalonIci()
-    } else if (INVITE) {
+    } else if (estInvite) {
       // (L'INVITÉ DONNE SON PSEUDO avant d'entrer — Keko : « quand quelqu'un se connecte, il doit rentrer son pseudo » ;
       // `&pseudo=X` le donne d'un lien)
       if (parametres.has('pseudo') && pseudo !== '') rejoindreIci()
@@ -2120,7 +2153,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   }
   /** (l'hôte) LE SALON S'OUVRE. */
   function ouvrirLeSalonIci(): void {
-    if (liaison !== null || INVITE) return
+    if (liaison !== null || estInvite) return
     estHote = true
     liaison = ouvrirLeSalon(
       {
@@ -2135,7 +2168,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           const mb = membres.get(id)
           membres.delete(id)
           laisserPartir(id)
-          if (mb !== undefined) annoncer('Salon', `${mb.pseudo} est parti`)
+          if (mb !== undefined) annoncer('Salon', `${mb.pseudo} est parti`, true)
           diffuserLeSalon()
           verifierLeDepart()
         },
@@ -2145,7 +2178,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   }
   /** (l'invité) IL REJOINT LE SALON du lien. */
   function rejoindreIci(): void {
-    if (!INVITE || liaison !== null) return
+    if (!estInvite || liaison !== null) return
     liaison = rejoindreLeSalon(REJOINDRE, {
       message: recevoirDeLHote,
       vite: (d) => void recevoirUnEtat(d),
@@ -2156,14 +2189,22 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           // (`&direct` : prêt d'emblée, pour les essais)
           if (pretIci || parametres.has('direct')) direPret(true)
         }
-        if (e === 'perdu' || e === 'erreur') {
-          annoncer('Salon', 'L’hôte est parti')
-          salonDistant = null
-          distant.recu = false
-          distant.enVol = false
-          if (enJeu) enJeu = false
+        if (e === 'perdu') {
+          annoncer(`Salon ${REJOINDRE}`, 'L’hôte a quitté le salon', true)
+          quitterLeSalonDistant()
         }
-        if (e === 'introuvable') annoncer(`Salon ${REJOINDRE}`, 'Introuvable')
+        if (e === 'erreur') {
+          annoncer(`Salon ${REJOINDRE}`, 'Connexion impossible', true)
+          quitterLeSalonDistant()
+        }
+        if (e === 'introuvable') {
+          annoncer(`Salon ${REJOINDRE}`, 'Introuvable', true)
+          quitterLeSalonDistant()
+        }
+        if (e === 'plein') {
+          annoncer(`Salon ${REJOINDRE}`, 'Ce salon est déjà plein', true)
+          quitterLeSalonDistant()
+        }
       },
     })
   }
@@ -2191,7 +2232,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   }
   /** « DÉCOLLER », dans un salon : on est prêt — ou plus (Keko : « si on reclique dessus, ça annule »). */
   function basculerPret(): void {
-    if (INVITE) {
+    if (estInvite) {
       if (liaison === null || pseudo === '') {
         ouvrirLePanneauDuSalon()
         return
@@ -2348,7 +2389,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * célébrés, chacun chez son vaisseau ; le choix de talent en cours.
    */
   async function recevoirUnEtat(d: string | ArrayBuffer): Promise<void> {
-    if (!INVITE || !enJeu) return
+    if (!estInvite || !enJeu) return
     const s = depuisTexte<{ n: number; monde: Monde; ev: Evenement[][]; dirs: Vecteur[]; fige: boolean; choix: ChoixDistant | null; enVol: boolean }>(await decompresser(d))
     if (s.n <= distant.n && distant.recu) return
     distant.n = s.n
@@ -2394,7 +2435,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   }
   /** On rentre du vol : l'invité quitte la partie de l'hôte ; l'hôte fait rentrer tout le monde. */
   function quitterLeVol(): void {
-    if (INVITE) {
+    if (estInvite) {
       liaison?.envoyer({ quitte: true })
       distant.recu = false
       distant.choix = null
@@ -2413,7 +2454,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   let enJeuVu = false
   /** EN VOL, chez l'invité : ce qu'il attend (l'hôte pas encore là, parti…), et où en est la connexion. */
   function dessinerLeSalon(p: Peintre): void {
-    if (liaison === null || !enJeu || !INVITE) return
+    if (liaison === null || !enJeu || !estInvite) return
     p.place(0, 0)
     if (distant.recu && distant.enVol) return
     const dit = etatDuSalon === 'introuvable' ? `Salon ${REJOINDRE} introuvable` : etatDuSalon === 'perdu' ? 'L’hôte est parti' : etatDuSalon === 'erreur' ? 'Connexion impossible' : etatDuSalon === 'connecte' ? 'En attente de l’hôte…' : `Connexion au salon ${REJOINDRE}…`
@@ -2502,7 +2543,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     pseudo = p
     garderLePseudo()
     champDuPseudo.blur()
-    if (INVITE) {
+    if (estInvite) {
       if (liaison === null) rejoindreIci()
       else liaison.envoyer({ bonjour: { pseudo } })
     } else if (liaison === null) ouvrirLeSalonIci()
@@ -2513,11 +2554,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** Qui est dans le salon, dans l'ordre : l'hôte d'abord ; `soi`, cet appareil. */
   function joueursDuSalon(): { pseudo: string; pret: boolean; soi: boolean }[] {
     if (estHote) return [{ pseudo, pret: pretIci, soi: true }, ...[...membres.values()].map((mb) => ({ pseudo: mb.pseudo, pret: mb.pret, soi: false }))]
-    if (INVITE && salonDistant !== null) return [{ pseudo: salonDistant.hote, pret: salonDistant.hotePret, soi: false }, ...salonDistant.joueurs.map((j) => ({ pseudo: j.pseudo, pret: j.id === monId ? pretIci : j.pret, soi: j.id === monId }))]
+    if (estInvite && salonDistant !== null) return [{ pseudo: salonDistant.hote, pret: salonDistant.hotePret, soi: false }, ...salonDistant.joueurs.map((j) => ({ pseudo: j.pseudo, pret: j.id === monId ? pretIci : j.pret, soi: j.id === monId }))]
     return []
   }
   /** On est dans un salon (hôte, ou invité qui a donné son pseudo). */
-  const enSalon = (): boolean => liaison !== null && (estHote || INVITE)
+  const enSalon = (): boolean => liaison !== null && (estHote || estInvite)
   function dessinerLePanneauDuSalon(p: Peintre): void {
     if (panneauSalon === 'ferme') return
     p.place(0, 0)
@@ -2560,12 +2601,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       bouton(p, x0 + lw - 10 - bw, y0 + h - 26, bw, 16, 'Valider', pseudoPropre(champDuPseudo.value) !== '', validerLePseudo, 'achat')
     } else {
       const joueurs = joueursDuSalon()
-      const h = 92 + 11 * Math.max(1, joueurs.length)
+      const h = 92 + 12 * Math.max(1, joueurs.length)
       const y0 = Math.round(H / 2 - h / 2) + Math.round((1 - u) * 8)
       plaque(p, x0, y0, lw, h, 'encre')
       const code = liaison?.code() ?? REJOINDRE
       motEnRelief(p, `Salon ${code}`, W / 2, y0 + 7, true)
-      const etatDit = estHote ? (etatDuSalon === 'erreur' ? 'Serveur injoignable' : 'Partagez le lien (3 amis au plus)') : etatDuSalon === 'connecte' ? 'Connecté : choisissez un vaisseau' : etatDuSalon === 'introuvable' ? 'Salon introuvable' : etatDuSalon === 'erreur' || etatDuSalon === 'perdu' ? 'Connexion impossible' : 'Connexion…'
+      const etatDit = estHote ? (etatDuSalon === 'erreur' ? 'Serveur injoignable' : 'Partagez le lien du salon') : etatDuSalon === 'connecte' ? 'Connecté : choisissez un vaisseau' : etatDuSalon === 'introuvable' ? 'Salon introuvable' : etatDuSalon === 'plein' ? 'Ce salon est déjà plein' : etatDuSalon === 'erreur' || etatDuSalon === 'perdu' ? 'Connexion impossible' : 'Connexion…'
       ecrire(p, etatDit, W / 2, y0 + 22, COQUE[5], { align: 'center' })
       let y = y0 + 36
       if (estHote) {
@@ -2582,36 +2623,69 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       }
       // qui est là
       for (const j of joueurs) {
-        p.rect(x0 + 14, y + 2, 4, 4, j.pret ? PALETTE_ETAPE_CLAIRE : COQUE[2])
-        ecrire(p, j.pseudo + (j.soi ? ' (vous)' : ''), x0 + 22, y, j.soi ? N.WHITE : COQUE[5])
-        if (j.pret) ecrire(p, 'prêt', x0 + lw - 14, y, PALETTE_ETAPE_CLAIRE, { align: 'right' })
-        y += 11
+        dessinerUnJoueur(p, x0 + 14, y, j)
+        if (j.pret) motEnRelief(p, 'prêt', x0 + lw - 14 - largeurDe('prêt', GRAS) / 2, y, 'cristal')
+        y += 12
       }
       const bf = largeurDe('Fermer', GRAS) + 24
       bouton(p, Math.round(W / 2 - bf / 2), y0 + h - 24, bf, 16, 'Fermer', true, () => (panneauSalon = 'ferme'), 'retour', 'acier')
     }
     zone(0, 0, W, H, () => {}, null)
   }
-  const PALETTE_ETAPE_CLAIRE = N.hex('#35c878')
   /** LES JOUEURS DU SALON, AU HANGAR, à gauche du vaisseau (Keko : « on affiche les pseudos des gens connectés ») : le code, puis chacun, prêt ou non. */
+  /**
+   * LA MARQUE D'UN JOUEUR (Keko, 22/11 : « la police n'est pas très belle comparée au reste de l'interface ; le fond se
+   * mélange au décor ; rends-moi tout ça plus joli ») : une case cernée d'encre — prêt, verte, éclairée en haut, cochée de
+   * blanc ; sinon, un creux d'acier sombre.
+   */
+  const VERT_PRET = [N.hex('#0c3a1c'), N.hex('#1f8a40'), N.hex('#35c878'), N.hex('#8af0b0')]
+  function dessinerUneMarque(p: Peintre, x: number, y: number, pret: boolean): void {
+    p.rect(x - 1, y - 1, 9, 9, MATIERES.encre.contour)
+    if (!pret) {
+      p.rect(x, y, 7, 7, COQUE[1])
+      p.rect(x, y, 7, 1, N.hex('#06050a'))
+      return
+    }
+    p.rect(x, y, 7, 7, VERT_PRET[1])
+    p.rect(x, y, 7, 2, VERT_PRET[2])
+    p.rect(x, y, 1, 7, VERT_PRET[2])
+    p.rect(x, y + 6, 7, 1, VERT_PRET[0])
+    for (const [o, c] of [[1, VERT_PRET[0]], [0, N.WHITE]] as [number, number][]) {
+      p.line(x + 1, y + 3 + o, x + 2, y + 4 + o, c)
+      p.line(x + 2, y + 4 + o, x + 5, y + 1 + o, c)
+    }
+  }
+  /** Un joueur sur une ligne : sa marque, puis son pseudo en relief — d'or pour soi, d'ivoire pour les autres. */
+  function dessinerUnJoueur(p: Peintre, x: number, y: number, j: { pseudo: string; pret: boolean; soi: boolean }): void {
+    dessinerUneMarque(p, x, y + 1, j.pret)
+    motEnRelief(p, j.pseudo, x + 13 + largeurDe(j.pseudo, GRAS) / 2, y, j.soi ? true : 'ivoire')
+  }
   function dessinerLesJoueursDuSalon(p: Peintre, y0: number): void {
     if (!enSalon() || vue !== 'hangar') return
     const joueurs = joueursDuSalon()
     if (joueurs.length === 0) return
+    const titre = `Salon ${liaison?.code() ?? ''}`
     const x = 5
-    let y = y0 + 5
-    const lw = Math.max(largeurDe(`Salon ${liaison?.code() ?? ''}`), ...joueurs.map((j) => largeurDe(j.pseudo) + 8)) + 8
-    p.rect(x - 1, y - 1, lw + 2, 13 + 10 * joueurs.length + 2, MATIERES.encre.contour, 0.85)
-    p.rect(x, y, lw, 13 + 10 * joueurs.length, NUIT, 0.8)
-    ecrire(p, `Salon ${liaison?.code() ?? ''}`, x + 3, y + 2, PEPITE[3])
-    y += 13
-    for (const j of joueurs) {
-      p.rect(x + 3, y + 3, 3, 3, j.pret ? PALETTE_ETAPE_CLAIRE : COQUE[2])
-      ecrire(p, j.pseudo, x + 9, y + 1, j.soi ? N.WHITE : COQUE[5])
-      y += 10
-    }
+    const y = y0 + 5
+    const lw = Math.max(largeurDe(titre, GRAS), ...joueurs.map((j) => largeurDe(j.pseudo, GRAS) + 13)) + 14
+    const h = 19 + 12 * joueurs.length
+    // (UNE PLAQUE PLEINE, comme les panneaux de la base : le décor ne passe plus au travers)
+    plaque(p, x, y, lw, h, 'encre')
+    motEnRelief(p, titre, x + lw / 2, y + 5, true)
+    joueurs.forEach((j, i) => dessinerUnJoueur(p, x + 7, y + 18 + 12 * i, j))
     // (une tape ouvre le salon)
-    zone(x, y0 + 5, lw, 13 + 10 * joueurs.length, ouvrirLePanneauDuSalon)
+    zone(x, y, lw, h, ouvrirLePanneauDuSalon)
+  }
+  /** COMBIEN SONT PRÊTS, au-dessus de « Décoller » : une plaque, « Prêts N / M » en relief, une case par joueur. */
+  function dessinerLesPrets(p: Peintre, cx: number, y: number, joueurs: { pret: boolean }[]): void {
+    const prets = joueurs.filter((j) => j.pret).length
+    const texte = `Prêts ${prets} / ${joueurs.length}`
+    const lt = largeurDe(texte, GRAS)
+    const w = lt + joueurs.length * 10 + 20
+    const x = Math.round(cx - w / 2)
+    plaque(p, x, y, w, 15, 'encre')
+    motEnRelief(p, texte, x + 8 + lt / 2, y + 4, prets === joueurs.length ? 'cristal' : true)
+    joueurs.forEach((j, i) => dessinerUneMarque(p, x + 13 + lt + i * 10, y + 4, j.pret))
   }
   function passerAuSecond(): void {
     if (choixDuSecond) {
@@ -2638,7 +2712,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const y0 = Math.round(H / 2) - 24 + Math.round((1 - u0) * 8)
       motEnRelief(p, `Niveau ${m.invasion.niveau}`, W / 2, y0, true, TITRE)
       // (qui on attend, par leur pseudo)
-      const noms = INVITE ? (distant.choix?.enCours ?? []).filter((x) => x.k !== maPlace && x.aFaire > 0).map((x) => x.pseudo) : autres.filter((a) => (a.choix?.aFaire ?? 0) > 0).map((a) => a.pseudo)
+      const noms = estInvite ? (distant.choix?.enCours ?? []).filter((x) => x.k !== maPlace && x.aFaire > 0).map((x) => x.pseudo) : autres.filter((a) => (a.choix?.aFaire ?? 0) > 0).map((a) => a.pseudo)
       ecrire(p, noms.length === 1 ? `${noms[0]} choisit un talent…` : `En attente de ${noms.join(', ')}…`, W / 2, y0 + 18, COQUE[5], { align: 'center' })
       const reste = Math.max(0, talentFinA - tReel)
       ecrire(p, String(Math.ceil(reste)), W / 2, y0 + 32, reste < 5 ? ROUGE[5] : COQUE[5], { align: 'center', police: GRAS })
@@ -2652,7 +2726,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const ta = pris.ta
       talentPris = null
       // (L'INVITÉ ENVOIE SON TALENT : c'est l'hôte qui le donne, et dit la suite)
-      if (INVITE) {
+      if (estInvite) {
         liaison?.envoyer({ talent: ta })
         distant.envoye = { aFaire: ch.aFaire, a: tReel }
         // (le suivant, s'il y en a, ou l'attente : c'est l'état de l'hôte qui le dira)
@@ -4820,7 +4894,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       if (!e.enfonce) ombrePortee(p, x, y, tw, th)
       plaque(p, x, y + e.dy, tw, th, actif ? 'or' : 'encre', { enfonce: e.enfonce, survole: e.survole, flash: e.flash })
       dessinerLIconeDeVue(p, vv === 'inviter' ? 'equipage' : vv, x + tw / 2, y + 13 + e.dy, actif)
-      const nomV = vv === 'inviter' ? (INVITE ? 'Salon' : 'Inviter') : NOMS_VUE[vv]
+      const nomV = vv === 'inviter' ? (estInvite ? 'Salon' : 'Inviter') : NOMS_VUE[vv]
       // (un nom plus large que la tuile — « Paramètres » — passe en petites capitales)
       if (largeurDe(nomV) <= tw - 2) ecrire(p, nomV, x + tw / 2, y + th - 12 + e.dy, actif ? N.WHITE : COQUE[5], { align: 'center' })
       else p.text(texteNu(nomV), x + tw / 2, y + th - 10 + e.dy, actif ? N.WHITE : COQUE[5], { align: 'center' })
@@ -6552,8 +6626,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // pour tout le monde » ; au-dessus, combien sont prêts)
     if (enSalon() && decollageA === null) {
       const js = joueursDuSalon()
-      const prets = js.filter((j) => j.pret).length
-      ecrire(p, `Prêts : ${prets} / ${Math.max(1, js.length)}`, W / 2, by - 10, prets === js.length && js.length > 0 ? PALETTE_ETAPE_CLAIRE : COQUE[5], { align: 'center' })
+      if (js.length > 0) dessinerLesPrets(p, W / 2, by - 19, js)
       if (pretIci) {
         plaque(p, bx, by + 1, bw, bh, 'or', { enfonce: true })
         motEnRelief(p, 'PRÊT', W / 2 + 6, by + 10, true, TITRE)
@@ -6568,7 +6641,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         zone(bx, by, bw, bh + 1, basculerPret, 'retour')
         return
       }
-      boutonBase(p, bx, by, bw, bh, true, basculerPret, (dx, dy) => motEnRelief(p, INVITE && salonDistant?.enVol === true ? 'REJOINDRE' : 'DÉCOLLER', W / 2 + dx, by + 9 + dy, true, TITRE), 'achat')
+      boutonBase(p, bx, by, bw, bh, true, basculerPret, (dx, dy) => motEnRelief(p, estInvite && salonDistant?.enVol === true ? 'REJOINDRE' : 'DÉCOLLER', W / 2 + dx, by + 9 + dy, true, TITRE), 'achat')
       return
     }
     const coeur = Math.pow(Math.max(0, Math.sin(t * 3.2)), 6)
@@ -15836,7 +15909,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           // UN NIVEAU : le jeu se met en pause, on choisit un talent (un de plus s'il y en avait déjà un à choisir)
           niveauA = t
           // (chez l'invité, c'est l'hôte qui ouvre le choix — voir `recevoirUnEtat`)
-          if (INVITE) {
+          if (estInvite) {
             jouer('achat')
             break
           }
@@ -16477,7 +16550,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     tReel += dtReel
     // (`&choix` : un choix de talent s'ouvre une seconde et demie après le décollage, pour juger les cartes d'un lien)
     // (à deux, quand le second est là : son choix suit celui du premier)
-    if (VORTEX && parametres.has('choix') && !choixDEssaiOuvert && enJeu && t - arriveA > 1.5 && choixDeTalent === null && !INVITE && (!(COOP || estHote) || autres.length > 0)) {
+    if (VORTEX && parametres.has('choix') && !choixDEssaiOuvert && enJeu && t - arriveA > 1.5 && choixDeTalent === null && !estInvite && (!(COOP || estHote) || autres.length > 0)) {
       choixDEssaiOuvert = true
       choixDeTalent = ouvrirLeChoix(0)
       if (estHote) for (const a of autres) a.choix = ouvrirLeChoix(0)
@@ -16495,7 +16568,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       if (z !== undefined) appuyer(z)
     }
     // (chez l'invité, c'est l'hôte qui fige le monde — et rien ne bouge avant son premier état)
-    const figee = enJeu && (INVITE ? !distant.recu || !distant.enVol || distant.fige || choixDeTalent !== null : pauseOuverte || choixDeTalent !== null || souteOuverte)
+    const figee = enJeu && (estInvite ? !distant.recu || !distant.enVol || distant.fige || choixDeTalent !== null : pauseOuverte || choixDeTalent !== null || souteOuverte)
     if (enJeu !== enJeuVu) {
       enJeuVu = enJeu
       if (!enJeu) quitterLeVol()
@@ -16559,7 +16632,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // (la soute ouverte : le monde est en pause, ses sons continus se taisent)
     if (souteOuverte && (!enJeu || m.phase !== 'vol')) souteOuverte = false
     // LE CHOIX D'UN TALENT : le jeu est en pause pour tout le monde ; le délai passé, ce qui reste à choisir part en réserve
-    if (!INVITE && choixDeTalent !== null && tReel >= talentFinA) {
+    if (!estInvite && choixDeTalent !== null && tReel >= talentFinA) {
       if (choixDuSecond && autres.length > 0) autres[0].reserve += reserveApresLeDelai(choixDeTalent)
       else reserveDeTalents += reserveApresLeDelai(choixDeTalent)
       // (à distance, ceux des invités aussi : le compte est à tous)
@@ -16571,11 +16644,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       passerAuSecond()
     }
     if (enJeu && (souteOuverte || choixDeTalent !== null || pauseOuverte)) regler(0, false, 0, false)
-    if (enJeu && !souteOuverte && choixDeTalent === null && (INVITE ? distant.recu && distant.enVol && !distant.fige : !pauseOuverte)) {
+    if (enJeu && !souteOuverte && choixDeTalent === null && (estInvite ? distant.recu && distant.enVol && !distant.fige : !pauseOuverte)) {
       accumule += dt
       const direction = t - arriveA < ARRIVE_A ? { x: 0, y: 0 } : directionVoulue() // (pas encore arrivé : il ne répond pas)
       // (le second : à distance, son manche reçu — l'hôte chez l'invité, l'invité chez l'hôte)
-      const directions = autres.map((a, j) => (INVITE ? (distant.dirs[j + 1] ?? { x: 0, y: 0 }) : estHote ? (a.manche?.d ?? { x: 0, y: 0 }) : t - a.ecran.arriveA >= ARRIVE_A ? directionDuSecond() : { x: 0, y: 0 }))
+      const directions = autres.map((a, j) => (estInvite ? (distant.dirs[j + 1] ?? { x: 0, y: 0 }) : estHote ? (a.manche?.d ?? { x: 0, y: 0 }) : t - a.ecran.arriveA >= ARRIVE_A ? directionDuSecond() : { x: 0, y: 0 }))
       const suivreLaPoussee = (direction: Vecteur): void => {
         // (où l'on pousse, vu du vaisseau : devant / derrière, d'un flanc / de l'autre)
         const n = Math.hypot(direction.x, direction.y)
@@ -16603,8 +16676,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         if (autres.length > 0 && m.equipage !== undefined && m.equipage.pilotes.length === autres.length + 1) {
           const rr = avancerLEquipage([CONF, ...autres.map((a) => a.ecran.CONF)], m, PAS, [direction, ...directions], (k) => (k === 0 ? ouRegarder : regardDeLAutre(k - 1)))
           // (CHEZ L'INVITÉ, rien de ce pas ne se célèbre : ce sont les événements de l'hôte qui comptent — voir `recevoirUnEtat`)
-          r = { chocs: rr.chocs[0], evenements: INVITE ? [] : rr.evenements[0] }
-          rs = autres.map((_, j) => ({ chocs: rr.chocs[j + 1] ?? [], evenements: INVITE ? [] : (rr.evenements[j + 1] ?? []) }))
+          r = { chocs: rr.chocs[0], evenements: estInvite ? [] : rr.evenements[0] }
+          rs = autres.map((_, j) => ({ chocs: rr.chocs[j + 1] ?? [], evenements: estInvite ? [] : (rr.evenements[j + 1] ?? []) }))
           if (estHote) {
             // (chez l'hôte : ils partiront avec le prochain état ; et LE VAISSEAU DE CHAQUE INVITÉ EST OÙ SON MANCHE L'A MENÉ,
             // avancé du temps que son message a mis)
@@ -16620,7 +16693,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
               pj.vaisseau = { ...pj.vaisseau, x: md.v.x + md.v.vx * age, y: md.v.y + md.v.vy * age, vx: md.v.vx, vy: md.v.vy, cap: md.v.cap, poussee: md.v.poussee }
             })
           }
-        } else if (INVITE) r = { chocs: [], evenements: [] }
+        } else if (estInvite) r = { chocs: [], evenements: [] }
         else r = avancerLeMonde(CONF, m, PAS, direction, ouRegarder, false)
         // (`&crash=N` : le vaisseau est détruit N secondes après le décollage, pour essayer la perte des pièces d'un lien)
         if (parametres.has('crash') && !crashFait && m.phase === 'vol' && m.t > (Number(parametres.get('crash')) || 3)) {
@@ -16839,7 +16912,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
     // (À DISTANCE : l'hôte envoie l'état du monde ; l'invité, son manche et son vaisseau, trente fois par seconde)
     if (estHote && enJeu) envoyerUnEtat()
-    if (INVITE && enJeu && distant.recu && tReel - envoyeA >= 1 / 30) {
+    if (estInvite && enJeu && distant.recu && tReel - envoyeA >= 1 / 30) {
       envoyeA = tReel
       const dir = t - arriveA < ARRIVE_A ? { x: 0, y: 0 } : directionVoulue()
       liaison?.envoyerVite(JSON.stringify({ n: ++envois, d: dir, v: m.phase === 'vol' ? { x: v.x, y: v.y, vx: v.vx, vy: v.vy, cap: v.cap, poussee: v.poussee } : null }))
