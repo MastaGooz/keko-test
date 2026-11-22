@@ -2159,20 +2159,21 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // UNE SPÉCIALE (voir `MUTATIONS`) : son nom, un filet, sa sorte en relief — « Arsenal », « Évolution » —, ce qu'elle fait
     if (speciale && mu !== undefined) {
       let sy = y + 44
-      const police = largeurDe(mu.nom, GRAS) <= CW - 10 ? GRAS : TEXTE
-      for (const li of police === GRAS ? [mu.nom] : replier(mu.nom, CW - 10).slice(0, 2)) {
-        ecrire(p, li, cx, sy, F[4], { align: 'center', police, ombre: ENCRE })
-        sy += 9
-      }
-      sy += 1
+      // (SON NOM SUR UNE SEULE LIGNE, TOUJOURS — Keko, 22/11 : « ça change la carte quand il y a une ou deux lignes » : en gras
+      // s'il tient, en lettre fine sinon ; les noms sont courts, l'icône dit l'arme)
+      ecrire(p, mu.nom, cx, sy, F[4], { align: 'center', police: largeurDe(mu.nom, GRAS) <= CW - 10 ? GRAS : TEXTE, ombre: ENCRE })
+      sy += 10
       p.rect(x + 12, sy, CW / 2 - 16, 1, F[2])
       p.rect(cx + 4, sy, CW / 2 - 16, 1, F[2])
       p.poly([[cx + 0.5, sy - 2.5], [cx + 3, sy + 0.5], [cx + 0.5, sy + 3.5], [cx - 2, sy + 0.5]], F[3])
       sy += 6
       {
-        const mot = spell(mu.sorte === 'arme' ? 'Nouvelle arme' : 'Variation', GRAS) as { letters: { g: unknown; x: number }[]; w: number }
+        // (en gras s'il tient, en lettre fine sinon — « Nouvelle arme » touchait le bord de la carte)
+        const sorte = mu.sorte === 'arme' ? 'Nouvelle arme' : 'Variation'
+        const fonte = largeurDe(sorte, GRAS) <= CW - 10 ? GRAS : TEXTE
+        const mot = spell(sorte, fonte) as { letters: { g: unknown; x: number }[]; w: number }
         const x0 = Math.round(cx - mot.w / 2)
-        const items = mot.letters.filter((L) => L.g).map((L) => ({ g: L.g, x: x0 + L.x, y: sy - decalage(GRAS), sx: 1, sy: 1 }))
+        const items = mot.letters.filter((L) => L.g).map((L) => ({ g: L.g, x: x0 + L.x, y: sy - decalage(fonte), sx: 1, sy: 1 }))
         const eclat = ((tReel * 0.5 + i * 0.29) % 2.2) * 40 - 12
         drawWord(p, items, { fill: [F[3], F[4], N.WHITE], edge: N.WHITE, under: F[2], outline: ENCRE, shadow: 0, ...(eclat < mot.w + 12 ? { shine: x0 + eclat } : {}) })
       }

@@ -7948,3 +7948,8 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     choix (avec `&choix`, dès le décollage). VU : les cartes, et les six armes qui tirent en vol.
   - À VENIR : les Vectrans, les Xénoïdes, les Yhg'tharr (6 armes chacun) ; les variations des armes de la Salamandre et de
     l'Ingénieur ; les nouvelles armes dessinées sur le vaisseau.
+  - Puis Keko : « le nom de la carte toujours sur une seule ligne, ça change la carte quand il y a une ou deux lignes ».
+    MESURÉ (`textWidth`, 74 pixels de place) : 40 noms sur 60 dépassaient, jusqu'à 140. Les noms ne disent plus que
+    l'effet — l'icône du médaillon dit l'arme — : « Cryogéniques », « Drones », « Perforantes », « Gros calibre »… ; les
+    nouvelles armes « Roquettes » et « Escorte ». Tous tiennent sur une ligne (54 en gras, 6 en lettre fine) ; le nom
+    s'écrit sur une ligne, toujours ; « Nouvelle arme », trop large en gras, passe en lettre fine. VU debout.
