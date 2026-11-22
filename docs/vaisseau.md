@@ -8019,3 +8019,7 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   seconde et demie après le décollage, N choix d'affilée, au niveau N (sauf `&niveau=` qui le dit) — les spéciales dues
   d'abord (cinq au 50), puis les ordinaires ; trente secondes par choix, le temps repart à chaque carte prise. VU :
   « 50 à choisir », puis « 44 à choisir » après six cartes.
+- **22/11, AUX NIVEAUX 10, 20, 30 : DEUX ARMEMENTS ET UNE VARIATION.** Keko : « deux armements et une variation plutôt
+  qu'un armement, une variation et l'autre au hasard » (`proposerLesSpeciales`). Ce qui manque — quatre armes déjà
+  portées, ou plus d'armement à prendre — est complété par ce qui reste (armements, variations de l'arme principale).
+  Vérifié.

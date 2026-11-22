@@ -415,12 +415,11 @@ function proposerLesSpeciales(graine: number, niveau: number, k: number, princip
   const tirer = (liste: Mutation[]): Mutation | undefined => (liste.length === 0 ? undefined : liste.splice(hache(hache(graine, niveau, 41), cle++) % liste.length, 1)[0])
   const choisies: Mutation[] = []
   if (k <= NIVEAUX_MIXTES) {
+    // (DEUX ARMEMENTS ET UNE VARIATION de l'arme principale — Keko, 22/11 : « plutôt qu'un armement, une variation et
+    // l'autre au hasard » ; ce qui manque, le reste le complète)
     const v = variationsDe([principaleId])
     const a = [...nouvelles]
-    const une = tirer(a)
-    const deux = tirer(v)
-    if (une !== undefined) choisies.push(une)
-    if (deux !== undefined) choisies.push(deux)
+    for (const t of [tirer(a), tirer(a), tirer(v)]) if (t !== undefined) choisies.push(t)
     const reste = [...a, ...v]
     while (choisies.length < 3) {
       const t = tirer(reste)
