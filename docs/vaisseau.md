@@ -7631,3 +7631,29 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     (`choixDeTalent` à `aFaire: 0`) ; le monde repart quand les deux ont fini, ou au bout du compte — ce qui reste à
     chacun part dans SA réserve. VU entre deux Chrome : les deux cartes en même temps, l'invité qui attend l'hôte, puis
     on repart. L'ÉCRAN PARTAGÉ (`&coop`) garde son choix l'un après l'autre : un seul écran.
+- **22/11, LE SALON, AU HANGAR, JUSQU'À QUATRE.** Keko : « dans autres onglets, une option inviter ; quand on clique,
+  on obtient le lien de la partie à partager ; c'est mieux que pendant le vol » ; « quand un ami rejoint, dans le
+  hangar, sur la gauche, on indique le nombre de joueurs connectés, de 1 à 3 joueurs supplémentaires, avec leur
+  pseudo » ; « quand on clique sur inviter, on propose de rentrer notre pseudo, et quand quelqu'un se connecte, il doit
+  rentrer son pseudo » ; « quand tu cliques sur décoller, le bouton est enfoncé et validé ; si on reclique, ça annule ;
+  une fois que tout le monde est prêt, la partie se lance pour tout le monde ».
+  - « INVITER » : la seule tuile des autres onglets au vortex (« Salon » chez l'invité). LE PANNEAU DU SALON : d'abord
+    « Votre pseudo » (un vrai champ, invisible, appelle le clavier ; le jeu le peint en pixels ; douze lettres, gardé sur
+    l'appareil), puis « Salon CODE » — « Partager » (le partage du téléphone, et du PC s'il sait), « Copier le lien »,
+    qui est là, prêt ou non. L'invité arrivé par le lien voit « Votre pseudo » en arrivant au hangar, puis son salon.
+    La plaque du salon en vol est partie.
+  - AU HANGAR, À GAUCHE : « Salon CODE », puis chaque joueur, un point vert s'il est prêt (une tape ouvre le salon).
+    « DÉCOLLER » DIT PRÊT : enfoncé, « ✓ PRÊT » ; une seconde tape l'annule ; au-dessus, « Prêts : N / M ». Tous prêts,
+    l'hôte part et dit aux invités de partir : chacun s'envole de son hangar. L'INVITÉ QUI SE DIT PRÊT PENDANT UNE PARTIE
+    la rejoint tout de suite (« REJOINDRE »). L'hôte qui rentre fait rentrer tout le monde ; l'invité qui rentre quitte la
+    partie. *Ces deux règles sont de moi.*
+  - JUSQU'À QUATRE (le transport : trois invités, chacun ses deux canaux ; la règle : `vuDu(m, k)`, le monde vu de
+    n'importe quel pilote, `retirerUnPilote`, ceux d'après remontent) ; un seul état du monde pour tous, chacun le voit
+    depuis sa place ; LES PSEUDOS sous les vaisseaux des autres ; le choix de talent attend « Bob » ou « En attente de
+    Bob, Zoé… » ; la caméra tient tout l'équipage.
+  - LE SIGNE DE VIE (mesuré : un onglet fermé net laissait son vaisseau figé dans la partie) : toutes les deux secondes,
+    dans les deux sens ; huit secondes sans nouvelles, il est parti (« Bob est parti »).
+  - Testés (`jeu.verif.ts`) : à quatre, vu du troisième ; le deuxième parti, le troisième remonte ; à trois, ils
+    avancent. VUS entre trois Chrome à travers le serveur de PeerJS : un Chasseur, un Kraken et une Sentinelle, chacun
+    les deux autres avec leur pseudo ; le pseudo tapé, le salon des deux côtés, « Prêts : 1 / 2 », « ✓ PRÊT », le départ
+    ensemble ; un invité fermé net qui part de la partie.

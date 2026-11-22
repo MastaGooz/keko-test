@@ -45,7 +45,7 @@ import * as MATERIALISATION from '../pixelfx/fx/keko/materialisation.js'
 import * as QUETE_TERMINEE from '../pixelfx/fx/keko/quete-terminee.js'
 import * as VORTEX_FX from '../pixelfx/fx/keko/vortex.js'
 import { ajouterLeBonus, apresUnChoix, avecLesBonus, carte, DUREE_DU_CHOIX, type Bonus, ouvrirLeChoix, proposer, RARETES, reserveApresLeDelai, type Choix, type Rarete, type Talent } from '../../logic/vaisseau/talents.ts'
-import { depuisTexte, retirerLesPilotes, versTexte, vuDuSecond } from '../../logic/vaisseau/reseau.ts'
+import { depuisTexte, ordreVuDu, retirerUnPilote, versTexte, vuDu } from '../../logic/vaisseau/reseau.ts'
 import { compresser, decompresser, ouvrirLeSalon, rejoindreLeSalon, type EtatDeLaLiaison, type Liaison } from './reseau.ts'
 import { APPARAIT as ARRIVE_A, REFROIDI as REFROIDI_A } from '../pixelfx/fx/keko/materialisation.js'
 import { Grains } from '../pixelfx/fx/keko/_espace.js'
@@ -1172,23 +1172,31 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     effets.push({ fx: N.createFx(MATERIALISATION as Module, { x: v.x - camera.x + W / 2, y: v.y - camera.y + centreY(), rayon: CONF.rayon, seed: 4 }), x: v.x, y: v.y })
 
     // (`&coop` : LE SECOND se matérialise à côté, dans l'apparence qui suit celle du premier — voir `COOP`)
-    second = null
+    // (chez l'invité, l'équipage est celui que l'hôte a dit — voir `appliquerLesPilotes`, plus bas)
+    if (!INVITE) autres = []
     choixDuSecond = false
     if (COOP) {
       ajouterUnPilote(CONF, m, 40, 0)
       const ps = peauxDe(flotte.actif)
       const i = ps.findIndex((x) => x.id === peauCourante().id)
       const w = m.equipage!.pilotes[1].vaisseau
-      second = { ecran: ecranNeuf(w, CONF), peau: ps[(i + 1) % ps.length]?.id ?? '', modele: flotte.actif, arme: armeDuVortex(), aFaire: 0, reserve: 0 }
+      autres = [{ id: 'local', pseudo: '2', ecran: ecranNeuf(w, CONF), peau: ps[(i + 1) % ps.length]?.id ?? '', modele: flotte.actif, arme: armeDuVortex(), aFaire: 0, reserve: 0, choix: null, manche: null, k: 1 }]
       effets.push({ fx: N.createFx(MATERIALISATION as Module, { x: w.x - camera.x + W / 2, y: w.y - camera.y + centreY(), rayon: CONF.rayon, seed: 5 }), x: w.x, y: w.y })
     }
-    // (À DISTANCE : l'hôte prend l'invité qui attend ; l'invité se présente, et attend le premier état de l'hôte)
-    evenementsAEnvoyer = [[], []]
-    if (SALON) ajouterLInvite()
+    // (À DISTANCE : l'hôte prend ses invités prêts, et tous redeviennent « pas prêts » pour la prochaine fois ; l'invité
+    // attend le premier état de l'hôte)
+    evenementsAEnvoyer = []
+    pretIci = false
+    if (estHote) {
+      for (const mb of membres.values()) if (mb.pret) ajouterLInvite(mb.id)
+      for (const mb of membres.values()) mb.pret = false
+      diffuserLeSalon()
+    }
     if (INVITE) {
       distant.recu = false
       distant.choix = null
-      direBonjour()
+      // (l'hôte a pu le dire avant qu'on ait fini de décoller : sa graine et notre configuration reviennent)
+      appliquerLesPilotes()
     }
   }
 
@@ -1474,46 +1482,61 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * réseau) : un second vaisseau, du même modèle et de la même arme que le premier, dans l'apparence suivante ; LA MOITIÉ
    * DROITE DE L'ÉCRAN LE PILOTE (la gauche, le premier) — au clavier, les flèches (ZQSD, le premier). Le monde est
    * commun, chacun a sa vie, ses armes, sa mort et son retour (voir `avancerLEquipage`), et SES TALENTS : à chaque niveau,
-   * le premier choisit, puis le second. `ecran` : ce que l'écran garde de lui (voir `avecLeSecond`) ; `aFaire`, ses choix
+   * le premier choisit, puis le second. `ecran` : ce que l'écran garde de lui (voir `avecLAutre`) ; `aFaire`, ses choix
    * qui attendent ; `reserve`, ceux que le délai a mis de côté.
    */
   const COOP = VORTEX && parametres.has('coop')
-  /** (`modele`, `arme` : le second peut piloter un autre vaisseau que le premier — à distance, chacun le sien) */
-  let second: { ecran: EcranDuPilote; peau: string; modele: string; arme: string; aFaire: number; reserve: number } | null = null
+  /**
+   * LES AUTRES PILOTES DE L'ÉQUIPAGE, tels que l'écran les connaît : `autres[j]` est le pilote `j + 1` du monde d'ici (le
+   * premier, c'est soi). Leur pseudo, ce que l'écran garde d'eux (`ecran`, voir `avecLAutre`), leur vaisseau, leur arme,
+   * leur apparence ; leurs choix de talent (`aFaire`, `reserve` à l'écran partagé ; `choix`, à distance, chez l'hôte) ;
+   * chez l'hôte, leur dernier manche ; `k`, leur place dans l'équipage DE L'HÔTE.
+   */
+  type MancheDistant = { n: number; d: Vecteur; v: { x: number; y: number; vx: number; vy: number; cap: number; poussee: number } | null; a: number }
+  type Autre = { id: string; pseudo: string; ecran: EcranDuPilote; peau: string; modele: string; arme: string; aFaire: number; reserve: number; choix: Choix | null; manche: MancheDistant | null; k: number }
+  let autres: Autre[] = []
+  /** L'autre dont l'écran est prêté (voir `avecLAutre`), ou null. */
+  let autreEnCours: Autre | null = null
   /**
    * LE JEU À DISTANCE (Keko, 22/11 : « je veux pouvoir jouer à distance avec mon ami, moi sur le téléphone et lui sur le
-   * sien » — voir `reseau.ts`) : `&salon`, on ouvre une partie, on est L'HÔTE — le monde tourne chez soi ; en vol, le code
-   * du salon s'affiche, une tape le partage. `&rejoindre=CODE`, on est L'INVITÉ : on choisit son vaisseau dans son hangar,
-   * on décolle, et on vole dans la partie de l'hôte. SON VAISSEAU EST PILOTÉ CHEZ LUI (le manche répond sans retard) et
-   * l'hôte le reprend tel quel ; le reste vient de l'hôte, quinze fois par seconde, et l'invité le fait avancer entre deux.
+   * sien » — voir `reseau.ts`) : L'HÔTE ouvre un salon par « Inviter », dans les autres onglets du hangar (`&salon`,
+   * `&salon=CODE` d'un lien) — le monde tourne chez lui ; LES INVITÉS (trois au plus) le rejoignent par le lien
+   * (`&rejoindre=CODE`), leur pseudo donné. Chacun choisit son vaisseau dans son hangar ; « Décoller » dit qu'on est
+   * PRÊT (Keko : « quand tout le monde a cliqué sur décoller, la partie se lance pour tout le monde »). SON VAISSEAU EST
+   * PILOTÉ CHEZ CHACUN (le manche répond sans retard) et l'hôte le reprend tel quel ; le reste vient de l'hôte, quinze
+   * fois par seconde, et l'invité le fait avancer entre deux.
    */
-  const SALON = VORTEX && parametres.has('salon')
   const REJOINDRE = VORTEX ? (parametres.get('rejoindre') ?? '').toUpperCase().replace(/[^A-Z0-9]/g, '') : ''
-  const INVITE = REJOINDRE !== '' && !SALON
-  /** On joue à deux, d'une façon ou d'une autre. */
-  const A_DEUX = COOP || SALON || INVITE
+  const INVITE = REJOINDRE !== '' && !parametres.has('salon')
+  /** Un salon est ouvert ici : on en est l'hôte. */
+  let estHote = false
   let liaison: Liaison | null = null
   let etatDuSalon: EtatDeLaLiaison = 'ouverture'
-  /** Chez l'hôte : l'invité (son vaisseau, son arme, son apparence, sa configuration ; `pret` : il a décollé), et son dernier manche. */
-  let invite: { modele: string; arme: string; peau: string; conf: ConfigVaisseau; pret: boolean } | null = null
-  let mancheDistant: { n: number; d: Vecteur; v: { x: number; y: number; vx: number; vy: number; cap: number; poussee: number } | null; a: number } | null = null
-  /** Chez l'hôte : les événements de chacun depuis le dernier état envoyé ; chez les deux, le numéro du dernier envoi et son instant. */
-  let evenementsAEnvoyer: [Evenement[], Evenement[]] = [[], []]
+  /** Chez l'hôte, LES INVITÉS DU SALON : leur pseudo, s'ils sont prêts, le vaisseau qu'ils ont choisi. */
+  type Membre = { id: string; pseudo: string; pret: boolean; vaisseau: { modele: string; arme: string; peau: string; conf: ConfigVaisseau } | null }
+  const membres = new Map<string, Membre>()
+  /** Le pseudo de cet appareil ; s'il est prêt à décoller. */
+  let pseudo = ''
+  let pretIci = false
+  /** Chez l'invité : LE SALON tel que l'hôte le dit (lui, ses invités, en vol ou non), son identifiant dedans, sa place dans l'équipage de l'hôte. */
+  let salonDistant: { hote: string; hotePret: boolean; enVol: boolean; joueurs: { id: string; pseudo: string; pret: boolean }[] } | null = null
+  let monId = ''
+  let maPlace = 0
+  /** Chez l'hôte : les événements de chaque pilote depuis le dernier état envoyé ; chez les deux, le numéro du dernier envoi et son instant. */
+  let evenementsAEnvoyer: Evenement[][] = []
   let envois = 0
   let envoyeA = -10
-  /** Chez l'invité : la partie de l'hôte — un état reçu, en vol, sa direction, figée, son choix de talent ; le talent envoyé. */
   /**
    * LE CHOIX DE TALENT, À DISTANCE (Keko, 22/11 : « quand on level up, il faudrait que les deux joueurs choisissent leur
    * talent en même temps, étant donné que le compteur des 30 secondes s'applique à tout le monde ») : chacun le sien,
-   * EN MÊME TEMPS, sous un seul compte ; le monde repart quand les deux ont choisi, ou au bout du compte. Chez l'hôte,
-   * `choixDistant` est celui de l'invité ; chez l'invité, `distant.choix` ce que l'hôte en dit — ses cartes, ce qu'il lui
-   * reste à prendre, si l'hôte choisit encore, le temps qui reste. Qui a fini attend l'autre : `choixDeTalent` vaut
-   * alors `{ aFaire: 0 }` (le monde reste figé, l'écran dit « Le joueur N choisit… »).
+   * EN MÊME TEMPS, sous un seul compte ; le monde repart quand tous ont choisi, ou au bout du compte. Chez l'hôte, celui
+   * de chaque invité est `autres[j].choix` ; chez l'invité, `distant.choix` ce que l'hôte en dit — le temps qui reste, et
+   * pour chacun ce qu'il lui reste à prendre (et ses cartes). Qui a fini attend les autres : `choixDeTalent` vaut alors
+   * `{ aFaire: 0 }` (le monde reste figé, l'écran dit qui on attend).
    */
-  type ChoixDistant = { cartes: Talent[]; aFaire: number; rang: number; autre: boolean; reste: number }
-  let choixDistant: Choix | null = null
-  const distant: { recu: boolean; enVol: boolean; n: number; dir: Vecteur; fige: boolean; choix: ChoixDistant | null; envoye: { aFaire: number; a: number } | null } = { recu: false, enVol: false, n: 0, dir: { x: 0, y: 0 }, fige: false, choix: null, envoye: null }
-  /** Le choix de talent en cours est celui du second. */
+  type ChoixDistant = { reste: number; enCours: { k: number; pseudo: string; aFaire: number; cartes: Talent[]; rang: number }[] }
+  const distant: { recu: boolean; enVol: boolean; n: number; dirs: Vecteur[]; fige: boolean; choix: ChoixDistant | null; envoye: { aFaire: number; a: number } | null } = { recu: false, enVol: false, n: 0, dirs: [], fige: false, choix: null, envoye: null }
+  /** Le choix de talent en cours est celui du second (à l'écran partagé). */
   let choixDuSecond = false
   let talentFinA = 0
   /** (`&choix` : le choix d'essai est-il déjà ouvert) */
@@ -2032,7 +2055,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * côté ; le sien fini, on rejoue.
    */
   /**
-   * LE TALENT `ta`, PRIS par le pilote dont l'écran est en place (le premier, ou le second prêté — voir `avecLeSecond`) :
+   * LE TALENT `ta`, PRIS par le pilote dont l'écran est en place (le premier, ou le second prêté — voir `avecLAutre`) :
    * LES BONUS S'ADDITIONNENT (voir `avecLesBonus` : la configuration se recalcule de celle d'avant le premier talent).
    */
   function prendreLeTalent(ta: Talent): void {
@@ -2050,126 +2073,274 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * LES TROIS CARTES D'UN CHOIX : de l'arme et de la race du pilote — le second, sur une autre graine (pas les mêmes que
    * le premier) ; chez l'invité, celles que l'hôte a tirées pour lui.
    */
-  function cartesDuChoix(ch: Choix, pourLeSecond: boolean): Talent[] {
-    if (INVITE) return distant.choix?.cartes ?? []
-    const conf = pourLeSecond && second !== null ? second.ecran.CONF : CONF
-    const modele = pourLeSecond && second !== null ? second.modele : flotte.actif
-    const tirees = proposer(graineDuVol + (pourLeSecond ? 7919 : 0), m.invasion.niveau, ch.rang, conf.armes[0], modeleDeVaisseau(modele).race)
+  function cartesDuChoix(ch: Choix, autre: Autre | null): Talent[] {
+    if (INVITE) return distant.choix?.enCours.find((x) => x.k === maPlace)?.cartes ?? []
+    const conf = autre !== null ? autre.ecran.CONF : CONF
+    const modele = autre !== null ? autre.modele : flotte.actif
+    const tirees = proposer(graineDuVol + 7919 * (autre?.k ?? 0), m.invasion.niveau, ch.rang, conf.armes[0], modeleDeVaisseau(modele).race)
     // (`&rarete=R` : les trois cartes à cette rareté — commune, peuCommune, rare, epique, legendaire —, pour les juger)
     const rareteForcee = RARETES.find((r) => r.id === parametres.get('rarete'))?.id
     return rareteForcee === undefined ? tirees : tirees.map((ta) => carte(ta.cible, ta.stat, rareteForcee))
   }
 
-  // ---------------------------------------------------------------- le jeu à distance (voir `SALON`, `INVITE`)
+  // ---------------------------------------------------------------- le jeu à distance (voir `estHote`, `INVITE`)
   /** Un mot en haut de l'écran (le salon, qui arrive, qui part). */
   function annoncer(titre: string, texte: string): void {
     toasts.push(N.createFx(QUETE_TERMINEE as Module, { x: W / 2, y: 0, title: titre, titleFont: GRAS, text: texte, font: TEXTE, seed: 9 + toasts.length, emblem: 'check', palette: PALETTE_D_ETAPE }))
   }
+  /** Un pseudo propre : des lettres, des chiffres, l'espace, le tiret ; douze au plus. */
+  const pseudoPropre = (x: string): string => x.replace(/[^\p{L}\p{N} _-]/gu, '').trim().slice(0, 12)
+  /** LE PSEUDO GARDÉ sur l'appareil (une commodité : sans stockage, on le redemande). */
+  function lirePseudo(): string {
+    try {
+      return pseudoPropre(localStorage.getItem('nova-pseudo') ?? '')
+    } catch {
+      return ''
+    }
+  }
+  function garderLePseudo(): void {
+    try {
+      localStorage.setItem('nova-pseudo', pseudo)
+    } catch {
+      // (sans stockage : on le redemandera)
+    }
+  }
+  /** Au chargement : `&pseudo=X` (pour les essais d'un lien) ou celui de l'appareil ; `&salon` ouvre le salon tout de suite. */
   function ouvrirLeJeuADistance(): void {
-    // (`&salon=CODE` : ce code-là, s'il est libre — le même lien d'une fois sur l'autre)
-    if (SALON) liaison = ouvrirLeSalon({ message: recevoirDeLInvite, vite: recevoirLeManche, etat: changerDEtat }, (parametres.get('salon') ?? '').toUpperCase())
-    else if (INVITE) liaison = rejoindreLeSalon(REJOINDRE, { message: recevoirDeLHote, vite: (d) => void recevoirUnEtat(d), etat: changerDEtat })
-  }
-  function changerDEtat(e: EtatDeLaLiaison): void {
-    etatDuSalon = e
-    if (SALON && e === 'attente' && invite !== null) {
-      invite = null
-      laisserPartirLInvite()
-      annoncer('Salon', 'Le joueur 2 est parti')
-    }
-    if (INVITE && e === 'connecte') {
-      annoncer(`Salon ${REJOINDRE}`, enJeu ? 'Connecté' : 'Connecté : décollez pour rejoindre')
-      if (enJeu) direBonjour()
-    }
-    if (INVITE && (e === 'perdu' || e === 'erreur')) {
-      annoncer('Salon', 'Le joueur 1 est parti')
-      distant.recu = false
-      distant.enVol = false
-    }
-    if (INVITE && e === 'introuvable') annoncer(`Salon ${REJOINDRE}`, 'Introuvable')
-  }
-  /** (l'hôte) L'invité a décollé : son vaisseau entre dans le monde, et il reçoit les configurations. */
-  function ajouterLInvite(): void {
-    if (!SALON || !enJeu || invite === null || !invite.pret || second !== null) return
-    ajouterUnPilote(invite.conf, m, 40, 0)
-    const w = m.equipage!.pilotes[1].vaisseau
-    second = { ecran: ecranNeuf(w, invite.conf), peau: invite.peau, modele: invite.modele, arme: invite.arme, aFaire: 0, reserve: 0 }
-    effets.push({ fx: N.createFx(MATERIALISATION as Module, { x: w.x - camera.x + W / 2, y: w.y - camera.y + centreY(), rayon: invite.conf.rayon, seed: 5 }), x: w.x, y: w.y })
-    envoyerLesConfigs()
-  }
-  /** (l'hôte) L'invité est parti : son vaisseau quitte le monde ; son choix de talent en cours est fermé. */
-  function laisserPartirLInvite(): void {
-    if (second === null || COOP) return
-    retirerLesPilotes(m)
-    second = null
-    mancheDistant = null
-    choixDistant = null
-    if (choixDeTalent?.aFaire === 0) choixDeTalent = null
-  }
-  /** (l'hôte) Les deux configurations, et de quoi peindre son vaisseau, à l'invité — au départ, et à chaque talent. */
-  function envoyerLesConfigs(): void {
-    if (!SALON || second === null) return
-    liaison?.envoyer({ confs: versTexte([CONF, second.ecran.CONF]), modele: flotte.actif, arme: armeDuVortex(), peau: peauCourante().id })
-  }
-  function recevoirDeLInvite(msg: unknown): void {
-    const o = msg as { bonjour?: { modele: string; arme: string; peau: string; conf: string }; talent?: Talent; quitte?: boolean }
-    if (o.bonjour !== undefined) {
-      laisserPartirLInvite()
-      invite = { modele: o.bonjour.modele, arme: o.bonjour.arme, peau: o.bonjour.peau, conf: depuisTexte<ConfigVaisseau>(o.bonjour.conf), pret: true }
-      annoncer('Salon', 'Le joueur 2 a rejoint')
-      if (enJeu) ajouterLInvite()
-      else liaison?.envoyer({ attente: true })
-    }
-    if (o.talent !== undefined && choixDistant !== null) {
-      const ta = o.talent
-      avecLeSecond(() => prendreLeTalent(ta))
-      choixDistant = apresUnChoix(choixDistant)
-      // (les deux ont fini : on rejoue)
-      if (choixDistant === null && choixDeTalent?.aFaire === 0) choixDeTalent = null
-      envoyerLesConfigs()
-    }
-    if (o.quitte === true) {
-      if (invite !== null) invite.pret = false
-      laisserPartirLInvite()
-      annoncer('Salon', 'Le joueur 2 est rentré')
+    pseudo = pseudoPropre(parametres.get('pseudo') ?? '') || lirePseudo()
+    if (VORTEX && parametres.has('salon')) {
+      if (pseudo === '') pseudo = 'Hôte'
+      ouvrirLeSalonIci()
+    } else if (INVITE) {
+      // (L'INVITÉ DONNE SON PSEUDO avant d'entrer — Keko : « quand quelqu'un se connecte, il doit rentrer son pseudo » ;
+      // `&pseudo=X` le donne d'un lien)
+      if (parametres.has('pseudo') && pseudo !== '') rejoindreIci()
+      else panneauSalon = 'pseudo'
     }
   }
-  function recevoirLeManche(d: string | ArrayBuffer): void {
-    if (typeof d !== 'string') return
-    const o = JSON.parse(d) as { n: number; d: Vecteur; v: { x: number; y: number; vx: number; vy: number; cap: number; poussee: number } | null }
-    if (mancheDistant !== null && o.n <= mancheDistant.n) return
-    mancheDistant = { ...o, a: performance.now() }
+  /** (l'hôte) LE SALON S'OUVRE. */
+  function ouvrirLeSalonIci(): void {
+    if (liaison !== null || INVITE) return
+    estHote = true
+    liaison = ouvrirLeSalon(
+      {
+        message: recevoirDeLInvite,
+        vite: recevoirLeManche,
+        etat: (e) => (etatDuSalon = e),
+        arrivee: (id) => {
+          membres.set(id, { id, pseudo: '…', pret: false, vaisseau: null })
+          diffuserLeSalon()
+        },
+        depart: (id) => {
+          const mb = membres.get(id)
+          membres.delete(id)
+          laisserPartir(id)
+          if (mb !== undefined) annoncer('Salon', `${mb.pseudo} est parti`)
+          diffuserLeSalon()
+          verifierLeDepart()
+        },
+      },
+      (parametres.get('salon') ?? '').toUpperCase(),
+    )
   }
-  /** (l'hôte) L'ÉTAT DU MONDE, quinze fois par seconde : le monde, les événements de chacun, sa direction, figé, le choix. */
-  function envoyerUnEtat(): void {
-    if (!SALON || second === null || liaison?.etat() !== 'connecte' || tReel - envoyeA < 1 / 15) return
-    envoyeA = tReel
-    const ch = choixDeTalent
-    const cd = choixDistant
-    const choix: ChoixDistant | null = ch === null && cd === null ? null : { cartes: cd === null ? [] : cartesDuChoix(cd, true), aFaire: cd?.aFaire ?? 0, rang: cd?.rang ?? 0, autre: (ch?.aFaire ?? 0) > 0, reste: talentFinA - tReel }
-    const etat = { n: ++envois, monde: m, ev: evenementsAEnvoyer, dir: t - arriveA < ARRIVE_A ? { x: 0, y: 0 } : directionVoulue(), fige: pauseOuverte || souteOuverte || ch !== null || cd !== null, choix, enVol: enJeu }
-    evenementsAEnvoyer = [[], []]
-    void compresser(versTexte(etat)).then((d) => liaison?.envoyerVite(d))
+  /** (l'invité) IL REJOINT LE SALON du lien. */
+  function rejoindreIci(): void {
+    if (!INVITE || liaison !== null) return
+    liaison = rejoindreLeSalon(REJOINDRE, {
+      message: recevoirDeLHote,
+      vite: (d) => void recevoirUnEtat(d),
+      etat: (e) => {
+        etatDuSalon = e
+        if (e === 'connecte') {
+          liaison?.envoyer({ bonjour: { pseudo } })
+          // (`&direct` : prêt d'emblée, pour les essais)
+          if (pretIci || parametres.has('direct')) direPret(true)
+        }
+        if (e === 'perdu' || e === 'erreur') {
+          annoncer('Salon', 'L’hôte est parti')
+          salonDistant = null
+          distant.recu = false
+          distant.enVol = false
+          if (enJeu) enJeu = false
+        }
+        if (e === 'introuvable') annoncer(`Salon ${REJOINDRE}`, 'Introuvable')
+      },
+    })
   }
-  /** (l'invité) Il se présente : son vaisseau, son arme, son apparence, sa configuration. */
-  function direBonjour(): void {
-    liaison?.envoyer({ bonjour: { modele: flotte.actif, arme: armeDuVortex(), peau: peauCourante().id, conf: versTexte(CONF) } })
+  /** (l'hôte) Le salon, à chaque invité : l'hôte, les invités, prêts ou non, en vol ou non — et qui il est, lui. */
+  function diffuserLeSalon(): void {
+    if (!estHote || liaison === null) return
+    const salon = { hote: pseudo, hotePret: pretIci, enVol: enJeu, joueurs: [...membres.values()].map((mb) => ({ id: mb.id, pseudo: mb.pseudo, pret: mb.pret })) }
+    for (const id of membres.keys()) liaison.envoyer({ salon, toi: id }, id)
   }
-  function recevoirDeLHote(msg: unknown): void {
-    const o = msg as { confs?: string; modele?: string; arme?: string; peau?: string; attente?: boolean }
-    if (o.attente === true) {
-      distant.enVol = false
-      distant.recu = false
+  /** (l'hôte) TOUT LE MONDE EST PRÊT : on part, tous ensemble. */
+  function verifierLeDepart(): void {
+    if (!estHote || enJeu || decollageA !== null || !pretIci || ![...membres.values()].every((mb) => mb.pret && mb.vaisseau !== null)) return
+    liaison?.envoyer({ depart: true })
+    partir()
+  }
+  /** LE DÉCOLLAGE : l'envol du hangar s'il est à l'écran, sinon tout de suite. */
+  function partir(): void {
+    feuille = false
+    panneauSalon = 'ferme'
+    if (ecranVisible() && vue === 'hangar' && etape === 'vaisseau') {
+      decollageA = t
+      secouer(1.5)
+      gerbe(W / 2, H - HAUT_NAV - 24, 22, [PEPITE[2], PEPITE[3], N.WHITE], 80)
+    } else demarrer()
+  }
+  /** « DÉCOLLER », dans un salon : on est prêt — ou plus (Keko : « si on reclique dessus, ça annule »). */
+  function basculerPret(): void {
+    if (INVITE) {
+      if (liaison === null || pseudo === '') {
+        ouvrirLePanneauDuSalon()
+        return
+      }
+      if (etatDuSalon !== 'connecte') {
+        annoncer(`Salon ${REJOINDRE}`, 'Pas encore connecté')
+        return
+      }
+      direPret(!pretIci)
       return
     }
-    if (o.confs !== undefined) {
-      const [hote, moi] = depuisTexte<ConfigVaisseau[]>(o.confs)
-      // (LE CIEL DE L'HÔTE : sa graine — les nuées, les astres, les étoiles sont les siens)
-      graineDuVol = hote.champ.graine
-      CONF = { ...moi, champ: { ...moi.champ, graine: hote.champ.graine } }
-      second = { ecran: second?.ecran ?? ecranNeuf(m.vaisseau, hote), peau: o.peau ?? '', modele: o.modele ?? flotte.actif, arme: o.arme ?? '', aFaire: 0, reserve: 0 }
-      second.ecran = { ...second.ecran, CONF: hote }
+    pretIci = !pretIci
+    diffuserLeSalon()
+    verifierLeDepart()
+  }
+  /** (l'invité) Prêt ou non — prêt, avec le vaisseau qu'il a choisi. */
+  function direPret(pret: boolean): void {
+    pretIci = pret
+    liaison?.envoyer({ pret, ...(pret ? { vaisseau: { modele: flotte.actif, arme: armeDuVortex(), peau: peauCourante().id, conf: versTexte(configDuVol(armeDuVortex(), 1)) } } : {}) })
+  }
+  /** (l'hôte) Un invité prêt entre dans la partie en cours : son vaisseau paraît à côté de l'hôte. */
+  function ajouterLInvite(id: string): void {
+    const mb = membres.get(id)
+    if (!estHote || !enJeu || mb === undefined || mb.vaisseau === null || autres.some((a) => a.id === id)) return
+    const k = m.equipage?.pilotes.length ?? 1
+    const an = k * 2.1
+    ajouterUnPilote(mb.vaisseau.conf, m, Math.round(40 * Math.cos(an)), Math.round(40 * Math.sin(an)))
+    const w = m.equipage!.pilotes[k].vaisseau
+    autres.push({ id, pseudo: mb.pseudo, ecran: ecranNeuf(w, mb.vaisseau.conf), peau: mb.vaisseau.peau, modele: mb.vaisseau.modele, arme: mb.vaisseau.arme, aFaire: 0, reserve: 0, choix: null, manche: null, k })
+    effets.push({ fx: N.createFx(MATERIALISATION as Module, { x: w.x - camera.x + W / 2, y: w.y - camera.y + centreY(), rayon: mb.vaisseau.conf.rayon, seed: 5 + k }), x: w.x, y: w.y })
+    envoyerLesPilotes()
+  }
+  /** (l'hôte) Un invité quitte la partie : son vaisseau sort du monde ; ceux d'après remontent d'une place. */
+  function laisserPartir(id: string): void {
+    const j = autres.findIndex((a) => a.id === id)
+    if (j < 0) return
+    retirerUnPilote(m, j + 1)
+    autres.splice(j, 1)
+    autres.forEach((a, i) => (a.k = i + 1))
+    if (choixDeTalent?.aFaire === 0 && !autres.some((a) => a.choix !== null)) choixDeTalent = null
+    envoyerLesPilotes()
+  }
+  /** (l'hôte) L'ÉQUIPAGE, à chaque invité : qui pilote quoi (pseudo, vaisseau, arme, apparence, configuration), et sa place. */
+  function envoyerLesPilotes(): void {
+    if (!estHote || liaison === null) return
+    const liste = versTexte([{ k: 0, pseudo, modele: flotte.actif, arme: armeDuVortex(), peau: peauCourante().id, conf: CONF }, ...autres.map((a) => ({ k: a.k, pseudo: a.pseudo, modele: a.modele, arme: a.arme, peau: a.peau, conf: a.ecran.CONF }))])
+    for (const a of autres) liaison.envoyer({ pilotes: liste, toi: a.k }, a.id)
+  }
+  function recevoirDeLInvite(msg: unknown, de: string): void {
+    const mb = membres.get(de)
+    if (mb === undefined) return
+    const o = msg as { bonjour?: { pseudo: string }; pret?: boolean; vaisseau?: { modele: string; arme: string; peau: string; conf: string }; talent?: Talent; quitte?: boolean }
+    if (o.bonjour !== undefined) {
+      mb.pseudo = pseudoPropre(o.bonjour.pseudo) || 'Invité'
+      annoncer('Salon', `${mb.pseudo} a rejoint`)
+      diffuserLeSalon()
     }
+    if (o.pret !== undefined) {
+      mb.pret = o.pret
+      if (o.vaisseau !== undefined) mb.vaisseau = { modele: o.vaisseau.modele, arme: o.vaisseau.arme, peau: o.vaisseau.peau, conf: depuisTexte<ConfigVaisseau>(o.vaisseau.conf) }
+      // (LA PARTIE EST EN COURS : il la rejoint tout de suite)
+      if (mb.pret && enJeu) {
+        ajouterLInvite(de)
+        mb.pret = false
+        liaison?.envoyer({ depart: true }, de)
+      }
+      diffuserLeSalon()
+      verifierLeDepart()
+    }
+    if (o.talent !== undefined) {
+      const j = autres.findIndex((a) => a.id === de)
+      const a = autres[j]
+      if (a !== undefined && a.choix !== null) {
+        const ta = o.talent
+        avecLAutre(j, () => prendreLeTalent(ta))
+        a.choix = apresUnChoix(a.choix)
+        // (tous ont fini : on rejoue)
+        if (choixDeTalent?.aFaire === 0 && !autres.some((x) => x.choix !== null)) choixDeTalent = null
+        envoyerLesPilotes()
+      }
+    }
+    if (o.quitte === true) {
+      mb.pret = false
+      if (autres.some((a) => a.id === de)) annoncer('Salon', `${mb.pseudo} est rentré`)
+      laisserPartir(de)
+      diffuserLeSalon()
+    }
+  }
+  function recevoirLeManche(d: string | ArrayBuffer, de: string): void {
+    if (typeof d !== 'string') return
+    const a = autres.find((x) => x.id === de)
+    if (a === undefined) return
+    const o = JSON.parse(d) as { n: number; d: Vecteur; v: MancheDistant['v'] }
+    if (a.manche !== null && o.n <= a.manche.n) return
+    a.manche = { ...o, a: performance.now() }
+  }
+  /** (l'hôte) L'ÉTAT DU MONDE, quinze fois par seconde, à tous : le monde, les événements et la direction de chacun, figé, les choix. */
+  function envoyerUnEtat(): void {
+    if (!estHote || autres.length === 0 || liaison?.etat() !== 'connecte' || tReel - envoyeA < 1 / 15) return
+    envoyeA = tReel
+    const ch = choixDeTalent
+    const choisit = ch !== null || autres.some((a) => a.choix !== null)
+    const choix: ChoixDistant | null = !choisit ? null : { reste: talentFinA - tReel, enCours: [{ k: 0, pseudo, aFaire: ch?.aFaire ?? 0, cartes: [], rang: 0 }, ...autres.map((a) => ({ k: a.k, pseudo: a.pseudo, aFaire: a.choix?.aFaire ?? 0, cartes: a.choix === null ? [] : cartesDuChoix(a.choix, a), rang: a.choix?.rang ?? 0 }))] }
+    const dirs = [t - arriveA < ARRIVE_A ? { x: 0, y: 0 } : directionVoulue(), ...autres.map((a) => a.manche?.d ?? { x: 0, y: 0 })]
+    const etat = { n: ++envois, monde: m, ev: evenementsAEnvoyer, dirs, fige: pauseOuverte || souteOuverte || choisit, choix, enVol: enJeu }
+    evenementsAEnvoyer = []
+    void compresser(versTexte(etat)).then((d) => liaison?.envoyerVite(d))
+  }
+  function recevoirDeLHote(msg: unknown): void {
+    const o = msg as { salon?: NonNullable<typeof salonDistant>; toi?: string | number; depart?: boolean; retour?: boolean; pilotes?: string }
+    if (o.salon !== undefined) {
+      salonDistant = o.salon
+      if (typeof o.toi === 'string') monId = o.toi
+    }
+    // (L'HÔTE PART : on part aussi)
+    if (o.depart === true && !enJeu) {
+      pretIci = false
+      partir()
+    }
+    // (L'HÔTE RENTRE : on rentre aussi)
+    if (o.retour === true) {
+      distant.recu = false
+      distant.enVol = false
+      if (enJeu) enJeu = false
+    }
+    if (o.pilotes !== undefined && typeof o.toi === 'number') {
+      dernierPilotes = { liste: depuisTexte<PiloteDit[]>(o.pilotes), toi: o.toi }
+      appliquerLesPilotes()
+    }
+  }
+  /** (l'invité) Ce que l'hôte a dit de l'équipage — gardé : le décollage le relit. */
+  type PiloteDit = { k: number; pseudo: string; modele: string; arme: string; peau: string; conf: ConfigVaisseau }
+  let dernierPilotes: { liste: PiloteDit[]; toi: number } | null = null
+  function appliquerLesPilotes(): void {
+    if (dernierPilotes === null) return
+    const liste = dernierPilotes.liste
+    maPlace = dernierPilotes.toi
+    const moi = liste.find((x) => x.k === maPlace)
+    const hote = liste.find((x) => x.k === 0)
+    if (moi === undefined || hote === undefined) return
+    // (LE CIEL DE L'HÔTE : sa graine — les nuées, les astres, les étoiles sont les siens)
+    graineDuVol = hote.conf.champ.graine
+    CONF = { ...moi.conf, champ: { ...moi.conf.champ, graine: hote.conf.champ.graine } }
+    const ordre = ordreVuDu(liste.length, maPlace)
+    autres = ordre.slice(1).map((k) => {
+      const e = liste.find((x) => x.k === k)!
+      const ancien = autres.find((a) => a.k === k && a.pseudo === e.pseudo)
+      return { id: `p${k}`, pseudo: e.pseudo, ecran: { ...(ancien?.ecran ?? ecranNeuf(m.vaisseau, e.conf)), CONF: e.conf }, peau: e.peau, modele: e.modele, arme: e.arme, aFaire: 0, reserve: 0, choix: null, manche: null, k }
+    })
   }
   /**
    * (l'invité) UN ÉTAT DE L'HÔTE : le monde, vu depuis soi ; RATTRAPÉ jusqu'à l'instant où on en était (sans rien en
@@ -2178,15 +2349,17 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    */
   async function recevoirUnEtat(d: string | ArrayBuffer): Promise<void> {
     if (!INVITE || !enJeu) return
-    const s = depuisTexte<{ n: number; monde: Monde; ev: [Evenement[], Evenement[]]; dir: Vecteur; fige: boolean; choix: ChoixDistant | null; enVol: boolean }>(await decompresser(d))
+    const s = depuisTexte<{ n: number; monde: Monde; ev: Evenement[][]; dirs: Vecteur[]; fige: boolean; choix: ChoixDistant | null; enVol: boolean }>(await decompresser(d))
     if (s.n <= distant.n && distant.recu) return
     distant.n = s.n
     distant.enVol = s.enVol
-    distant.dir = s.dir
     distant.fige = s.fige
     const W2 = s.monde
-    if (second === null || !enJeu || W2.equipage === undefined || W2.equipage.pilotes.length < 2) return
-    vuDuSecond(W2)
+    // (l'équipage de l'hôte et celui qu'on connaît doivent être les mêmes : sinon, on attend qu'il nous le dise)
+    if (!enJeu || W2.equipage === undefined || maPlace <= 0 || W2.equipage.pilotes.length !== autres.length + 1) return
+    const ordre = ordreVuDu(W2.equipage.pilotes.length, maPlace)
+    distant.dirs = ordre.map((k) => s.dirs[k] ?? { x: 0, y: 0 })
+    vuDu(W2, maPlace)
     const predit = distant.recu && m.phase === 'vol' && W2.phase === 'vol' ? m.vaisseau : null
     const tLocal = m.t
     W2.refuses = m.refuses
@@ -2194,89 +2367,237 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     distant.recu = true
     if (predit !== null && !s.fige) {
       const k = Math.max(0, Math.min(12, Math.round((tLocal - m.t) / PAS)))
-      for (let i = 0; i < k; i++) avancerLEquipage([CONF, second.ecran.CONF], m, PAS, [directionVoulue(), s.dir])
+      const confs = [CONF, ...autres.map((a) => a.ecran.CONF)]
+      for (let i = 0; i < k; i++) avancerLEquipage(confs, m, PAS, [directionVoulue(), ...distant.dirs.slice(1)])
       m.vaisseau = { ...m.vaisseau, x: predit.x, y: predit.y, vx: predit.vx, vy: predit.vy, cap: predit.cap, poussee: predit.poussee }
     }
     v = m.vaisseau
-    celebrer({ chocs: [], evenements: s.ev[1] })
-    const evHote = s.ev[0]
-    avecLeSecond(() => celebrer({ chocs: [], evenements: evHote }))
-    // (le talent qu'on vient d'envoyer : son choix attend la réponse de l'hôte, il ne se rouvre pas)
+    celebrer({ chocs: [], evenements: s.ev[maPlace] ?? [] })
+    autres.forEach((a, j) => {
+      const ev = s.ev[a.k] ?? []
+      if (ev.length > 0) avecLAutre(j, () => celebrer({ chocs: [], evenements: ev }))
+    })
     // (le talent qu'on vient d'envoyer, pas encore reçu par l'hôte : on attend, ses cartes ne reviennent pas)
     const ch = s.choix
     const avant = choixDeTalent?.aFaire ?? -1
     distant.choix = ch
     if (ch === null) choixDeTalent = null
     else {
-      const envoye = distant.envoye !== null && ch.aFaire === distant.envoye.aFaire && tReel - distant.envoye.a < 2
-      const aFaire = envoye ? 0 : ch.aFaire
+      const mien = ch.enCours.find((x) => x.k === maPlace)
+      const envoye = distant.envoye !== null && mien !== undefined && mien.aFaire === distant.envoye.aFaire && tReel - distant.envoye.a < 2
+      const aFaire = envoye ? 0 : (mien?.aFaire ?? 0)
       if (aFaire > 0 && aFaire !== avant) talentA = tReel
       if (avant < 0) talentA = tReel
-      choixDeTalent = { aFaire, rang: ch.rang }
+      choixDeTalent = { aFaire, rang: mien?.rang ?? 0 }
       talentFinA = tReel + ch.reste
     }
   }
-  /** On rentre du vol : l'invité le dit à l'hôte, l'hôte à l'invité. */
+  /** On rentre du vol : l'invité quitte la partie de l'hôte ; l'hôte fait rentrer tout le monde. */
   function quitterLeVol(): void {
     if (INVITE) {
       liaison?.envoyer({ quitte: true })
       distant.recu = false
       distant.choix = null
-      second = null
+      autres = []
+      dernierPilotes = null
+      pretIci = false
     }
-    if (SALON) {
-      liaison?.envoyer({ attente: true })
-      second = null
-      mancheDistant = null
+    if (estHote) {
+      liaison?.envoyer({ retour: true })
+      autres = []
+      for (const mb of membres.values()) mb.pret = false
+      pretIci = false
+      diffuserLeSalon()
     }
   }
   let enJeuVu = false
-  /** LE SALON, EN VOL, chez l'hôte : son code — une tape partage le lien ; l'invité, ce qu'il attend. */
+  /** EN VOL, chez l'invité : ce qu'il attend (l'hôte pas encore là, parti…), et où en est la connexion. */
   function dessinerLeSalon(p: Peintre): void {
-    if (liaison === null || !enJeu) return
+    if (liaison === null || !enJeu || !INVITE) return
     p.place(0, 0)
-    if (INVITE) {
-      if (distant.recu && distant.enVol) return
-      const dit = etatDuSalon === 'introuvable' ? `Salon ${REJOINDRE} introuvable` : etatDuSalon === 'perdu' ? 'Le joueur 1 est parti' : etatDuSalon === 'erreur' ? 'Connexion impossible' : etatDuSalon === 'connecte' ? 'En attente du joueur 1…' : `Connexion au salon ${REJOINDRE}…`
-      p.rect(0, 0, W, H, NUIT, 0.6)
-      motEnRelief(p, dit, W / 2, Math.round(H / 2) - 6, true, GRAS)
-      // (OÙ ÇA EN EST, en clair : le serveur, la connexion directe, les chemins trouvés — voir `Liaison.detail`)
-      if (etatDuSalon !== 'connecte') liaison.detail().split('\n').forEach((l, i) => ecrire(p, l, W / 2, Math.round(H / 2) + 12 + 10 * i, COQUE[5], { align: 'center' }))
-      return
-    }
-    const code = liaison.code()
-    const dit = etatDuSalon === 'erreur' ? `Salon ${code} : hors ligne` : second !== null ? `Salon ${code} : à deux` : `Salon ${code} : inviter`
-    const w = largeurDe(dit) + 12
-    const x = Math.round(W / 2 - w / 2)
-    const y = basDuHud() + 3
-    p.rect(x - 1, y - 1, w + 2, 13, MATIERES.encre.contour)
-    p.rect(x, y, w, 11, NUIT, 0.85)
-    p.rect(x, y, w, 1, second !== null ? PALETTE_ETAPE_CLAIRE : PEPITE[2])
-    ecrire(p, dit, W / 2, y + 2, second !== null ? N.WHITE : PEPITE[3], { align: 'center' })
-    zone(x, y - 4, w, 19, partagerLeSalon)
-    // (sans invité : où en est le salon, en petit dessous)
-    if (second === null) liaison.detail().split('\n').forEach((l, i) => ecrire(p, l, W / 2, y + 14 + 10 * i, COQUE[5], { align: 'center' }))
+    if (distant.recu && distant.enVol) return
+    const dit = etatDuSalon === 'introuvable' ? `Salon ${REJOINDRE} introuvable` : etatDuSalon === 'perdu' ? 'L’hôte est parti' : etatDuSalon === 'erreur' ? 'Connexion impossible' : etatDuSalon === 'connecte' ? 'En attente de l’hôte…' : `Connexion au salon ${REJOINDRE}…`
+    p.rect(0, 0, W, H, NUIT, 0.6)
+    motEnRelief(p, dit, W / 2, Math.round(H / 2) - 6, true, GRAS)
+    // (OÙ ÇA EN EST, en clair : le serveur, la connexion directe, les chemins trouvés — voir `Liaison.detail`)
+    if (etatDuSalon !== 'connecte') liaison.detail().split('\n').forEach((l, i) => ecrire(p, l, W / 2, Math.round(H / 2) + 12 + 10 * i, COQUE[5], { align: 'center' }))
   }
-  const PALETTE_ETAPE_CLAIRE = N.hex('#35c878')
-  /** Le lien du salon : partagé (au téléphone), ou copié. */
+  /** Le lien du salon. */
+  const lienDuSalon = (): string => `${location.origin}${location.pathname}?vortex&rejoindre=${liaison?.code() ?? ''}`
+  /** Le lien du salon : partagé (au téléphone — et sur PC, si le navigateur sait). */
   function partagerLeSalon(): void {
     if (liaison === null) return
     const code = liaison.code()
-    const url = `${location.origin}${location.pathname}?vortex&rejoindre=${code}`
     const nav = navigator as Navigator & { share?: (d: ShareData) => Promise<void> }
-    if (typeof nav.share === 'function') void nav.share({ title: 'Nova Drifter', text: `Rejoignez ma partie : salon ${code}`, url }).catch(() => {})
-    else if (navigator.clipboard !== undefined) void navigator.clipboard.writeText(url).then(() => annoncer('Lien copié', `Salon ${code}`)).catch(() => annoncer(`Salon ${code}`, url))
-    else annoncer(`Salon ${code}`, url)
+    if (typeof nav.share === 'function') void nav.share({ title: 'Nova Drifter', text: `Rejoignez ma partie : salon ${code}`, url: lienDuSalon() }).catch(() => {})
+    else copierLeLien()
+  }
+  function copierLeLien(): void {
+    if (liaison === null) return
+    const code = liaison.code()
+    if (navigator.clipboard !== undefined) void navigator.clipboard.writeText(lienDuSalon()).then(() => annoncer('Lien copié', `Salon ${code}`)).catch(() => annoncer(`Salon ${code}`, lienDuSalon()))
+    else annoncer(`Salon ${code}`, lienDuSalon())
+  }
+
+  // ---------------------------------------------------------------- le salon, au hangar
+  /**
+   * LE PANNEAU DU SALON (Keko, 22/11 : « dans autres onglets, une option inviter ; quand on clique sur cette option, on
+   * obtient le lien de la partie à partager ; on propose de rentrer notre pseudo ») : d'abord LE PSEUDO, puis LE SALON —
+   * son code, le lien à partager ou à copier, qui est là. L'invité arrivé par le lien y donne son pseudo avant d'entrer.
+   */
+  let panneauSalon: 'ferme' | 'pseudo' | 'salon' = 'ferme'
+  let panneauA = -10
+  /** LE CHAMP DU PSEUDO : un vrai champ, invisible — il appelle le clavier ; le jeu le peint en pixels. */
+  const champDuPseudo = document.createElement('input')
+  champDuPseudo.type = 'text'
+  champDuPseudo.maxLength = 12
+  champDuPseudo.autocomplete = 'off'
+  champDuPseudo.setAttribute('autocapitalize', 'words')
+  champDuPseudo.setAttribute('aria-label', 'Pseudo')
+  // (16 px : en dessous, l'iPhone zoome sur le champ)
+  champDuPseudo.style.cssText = 'position:fixed;left:0;top:0;width:1px;height:1px;opacity:0;border:0;padding:0;font-size:16px;pointer-events:none'
+  racine.append(champDuPseudo)
+  champDuPseudo.addEventListener('keydown', (ev) => {
+    ev.stopPropagation()
+    if (ev.key === 'Enter') validerLePseudo()
+  })
+  /** Le champ à prendre au relâchement du doigt (le clavier d'un téléphone ne s'ouvre que sur un geste). */
+  let focusVoulu = false
+  function ouvrirLePanneauDuSalon(): void {
+    feuille = false
+    panneauSalon = liaison === null ? 'pseudo' : 'salon'
+    champDuPseudo.value = pseudo
+    panneauA = tReel
+  }
+  function validerLePseudo(): void {
+    const p = pseudoPropre(champDuPseudo.value)
+    if (p === '') return
+    pseudo = p
+    garderLePseudo()
+    champDuPseudo.blur()
+    if (INVITE) {
+      if (liaison === null) rejoindreIci()
+      else liaison.envoyer({ bonjour: { pseudo } })
+    } else if (liaison === null) ouvrirLeSalonIci()
+    else diffuserLeSalon()
+    panneauSalon = 'salon'
+    panneauA = tReel
+  }
+  /** Qui est dans le salon, dans l'ordre : l'hôte d'abord ; `soi`, cet appareil. */
+  function joueursDuSalon(): { pseudo: string; pret: boolean; soi: boolean }[] {
+    if (estHote) return [{ pseudo, pret: pretIci, soi: true }, ...[...membres.values()].map((mb) => ({ pseudo: mb.pseudo, pret: mb.pret, soi: false }))]
+    if (INVITE && salonDistant !== null) return [{ pseudo: salonDistant.hote, pret: salonDistant.hotePret, soi: false }, ...salonDistant.joueurs.map((j) => ({ pseudo: j.pseudo, pret: j.id === monId ? pretIci : j.pret, soi: j.id === monId }))]
+    return []
+  }
+  /** On est dans un salon (hôte, ou invité qui a donné son pseudo). */
+  const enSalon = (): boolean => liaison !== null && (estHote || INVITE)
+  function dessinerLePanneauDuSalon(p: Peintre): void {
+    if (panneauSalon === 'ferme') return
+    p.place(0, 0)
+    // (rien d'autre ne répond sous le panneau)
+    zones = []
+    zoneGlissante = null
+    zoneDesOnglets = null
+    zoneDesCases = null
+    zoneDesMissions = null
+    zoneDeLInventaire = null
+    zoneDesOrdres = null
+    zoneDeLArbre = null
+    curseurs = []
+    const u = sortie((tReel - panneauA) / 0.2)
+    p.rect(0, 0, W, H, NUIT, 0.78 * u)
+    const lw = Math.min(W - 16, 210)
+    const x0 = Math.round(W / 2 - lw / 2)
+    if (panneauSalon === 'pseudo') {
+      const h = 84
+      const y0 = Math.round(H / 2 - h / 2) + Math.round((1 - u) * 8)
+      plaque(p, x0, y0, lw, h, 'encre')
+      motEnRelief(p, 'Votre pseudo', W / 2, y0 + 7, true)
+      // le champ : un creux sombre, le pseudo, le curseur qui bat
+      const fx = x0 + 12
+      const fy = y0 + 24
+      const fw = lw - 24
+      const actif = document.activeElement === champDuPseudo
+      p.rect(fx - 1, fy - 1, fw + 2, 17, actif ? PEPITE[2] : MATIERES.encre.contour)
+      p.rect(fx, fy, fw, 15, N.hex('#0b0912'))
+      const dit = champDuPseudo.value
+      ecrire(p, dit === '' && !actif ? 'Toucher pour écrire' : dit, fx + 4, fy + 4, dit === '' ? COQUE[3] : N.WHITE)
+      if (actif && Math.floor(tReel * 2.5) % 2 === 0) p.rect(fx + 5 + largeurDe(dit), fy + 3, 1, 9, N.WHITE)
+      zone(fx, fy, fw, 15, () => {
+        focusVoulu = true
+        champDuPseudo.focus()
+      }, null)
+      const bw = Math.round((lw - 30) / 2)
+      bouton(p, x0 + 10, y0 + h - 26, bw, 16, 'Annuler', true, () => {
+        champDuPseudo.blur()
+        panneauSalon = 'ferme'
+      }, 'retour', 'acier')
+      bouton(p, x0 + lw - 10 - bw, y0 + h - 26, bw, 16, 'Valider', pseudoPropre(champDuPseudo.value) !== '', validerLePseudo, 'achat')
+    } else {
+      const joueurs = joueursDuSalon()
+      const h = 92 + 11 * Math.max(1, joueurs.length)
+      const y0 = Math.round(H / 2 - h / 2) + Math.round((1 - u) * 8)
+      plaque(p, x0, y0, lw, h, 'encre')
+      const code = liaison?.code() ?? REJOINDRE
+      motEnRelief(p, `Salon ${code}`, W / 2, y0 + 7, true)
+      const etatDit = estHote ? (etatDuSalon === 'erreur' ? 'Serveur injoignable' : 'Partagez le lien (3 amis au plus)') : etatDuSalon === 'connecte' ? 'Connecté : choisissez un vaisseau' : etatDuSalon === 'introuvable' ? 'Salon introuvable' : etatDuSalon === 'erreur' || etatDuSalon === 'perdu' ? 'Connexion impossible' : 'Connexion…'
+      ecrire(p, etatDit, W / 2, y0 + 22, COQUE[5], { align: 'center' })
+      let y = y0 + 36
+      if (estHote) {
+        const bw = Math.round((lw - 30) / 2)
+        const nav = navigator as Navigator & { share?: unknown }
+        if (typeof nav.share === 'function') {
+          bouton(p, x0 + 10, y, bw, 16, 'Partager', true, partagerLeSalon, 'achat')
+          bouton(p, x0 + lw - 10 - bw, y, bw, 16, 'Copier le lien', true, copierLeLien, 'clic', 'acier')
+        } else bouton(p, Math.round(W / 2 - bw), y, bw * 2, 16, 'Copier le lien', true, copierLeLien, 'achat')
+        y += 22
+      } else if (etatDuSalon !== 'connecte') {
+        liaison?.detail().split('\n').forEach((l, i) => ecrire(p, l, W / 2, y + 10 * i, COQUE[3], { align: 'center' }))
+        y += 22
+      }
+      // qui est là
+      for (const j of joueurs) {
+        p.rect(x0 + 14, y + 2, 4, 4, j.pret ? PALETTE_ETAPE_CLAIRE : COQUE[2])
+        ecrire(p, j.pseudo + (j.soi ? ' (vous)' : ''), x0 + 22, y, j.soi ? N.WHITE : COQUE[5])
+        if (j.pret) ecrire(p, 'prêt', x0 + lw - 14, y, PALETTE_ETAPE_CLAIRE, { align: 'right' })
+        y += 11
+      }
+      const bf = largeurDe('Fermer', GRAS) + 24
+      bouton(p, Math.round(W / 2 - bf / 2), y0 + h - 24, bf, 16, 'Fermer', true, () => (panneauSalon = 'ferme'), 'retour', 'acier')
+    }
+    zone(0, 0, W, H, () => {}, null)
+  }
+  const PALETTE_ETAPE_CLAIRE = N.hex('#35c878')
+  /** LES JOUEURS DU SALON, AU HANGAR, à gauche du vaisseau (Keko : « on affiche les pseudos des gens connectés ») : le code, puis chacun, prêt ou non. */
+  function dessinerLesJoueursDuSalon(p: Peintre, y0: number): void {
+    if (!enSalon() || vue !== 'hangar') return
+    const joueurs = joueursDuSalon()
+    if (joueurs.length === 0) return
+    const x = 5
+    let y = y0 + 5
+    const lw = Math.max(largeurDe(`Salon ${liaison?.code() ?? ''}`), ...joueurs.map((j) => largeurDe(j.pseudo) + 8)) + 8
+    p.rect(x - 1, y - 1, lw + 2, 13 + 10 * joueurs.length + 2, MATIERES.encre.contour, 0.85)
+    p.rect(x, y, lw, 13 + 10 * joueurs.length, NUIT, 0.8)
+    ecrire(p, `Salon ${liaison?.code() ?? ''}`, x + 3, y + 2, PEPITE[3])
+    y += 13
+    for (const j of joueurs) {
+      p.rect(x + 3, y + 3, 3, 3, j.pret ? PALETTE_ETAPE_CLAIRE : COQUE[2])
+      ecrire(p, j.pseudo, x + 9, y + 1, j.soi ? N.WHITE : COQUE[5])
+      y += 10
+    }
+    // (une tape ouvre le salon)
+    zone(x, y0 + 5, lw, 13 + 10 * joueurs.length, ouvrirLePanneauDuSalon)
   }
   function passerAuSecond(): void {
     if (choixDuSecond) {
       choixDuSecond = false
       return
     }
-    if (second === null || second.aFaire + second.reserve <= 0) return
-    choixDeTalent = ouvrirLeChoix(second.aFaire - 1 + second.reserve)
-    second.aFaire = 0
-    second.reserve = 0
+    const a = autres[0]
+    if (a === undefined || a.aFaire + a.reserve <= 0) return
+    choixDeTalent = ouvrirLeChoix(a.aFaire - 1 + a.reserve)
+    a.aFaire = 0
+    a.reserve = 0
     choixDuSecond = true
     talentFinA = tReel + DUREE_DU_CHOIX
     talentA = tReel
@@ -2291,13 +2612,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (ch.aFaire === 0) {
       const y0 = Math.round(H / 2) - 24 + Math.round((1 - u0) * 8)
       motEnRelief(p, `Niveau ${m.invasion.niveau}`, W / 2, y0, true, TITRE)
-      ecrire(p, `Le joueur ${INVITE ? 1 : 2} choisit un talent…`, W / 2, y0 + 18, COQUE[5], { align: 'center' })
+      // (qui on attend, par leur pseudo)
+      const noms = INVITE ? (distant.choix?.enCours ?? []).filter((x) => x.k !== maPlace && x.aFaire > 0).map((x) => x.pseudo) : autres.filter((a) => (a.choix?.aFaire ?? 0) > 0).map((a) => a.pseudo)
+      ecrire(p, noms.length === 1 ? `${noms[0]} choisit un talent…` : `En attente de ${noms.join(', ')}…`, W / 2, y0 + 18, COQUE[5], { align: 'center' })
       const reste = Math.max(0, talentFinA - tReel)
       ecrire(p, String(Math.ceil(reste)), W / 2, y0 + 32, reste < 5 ? ROUGE[5] : COQUE[5], { align: 'center', police: GRAS })
       zone(0, 0, W, H, () => {}, null)
       return
     }
-    const cartes = cartesDuChoix(ch, choixDuSecond)
+    const cartes = cartesDuChoix(ch, choixDuSecond ? (autres[0] ?? null) : null)
     // (LA PRISE MENÉE À SON TERME : le talent s'applique quand l'éclat est fini — voir `talentPris`)
     const pris = talentPris
     if (pris !== null && tReel - pris.t0 >= DUREE_DE_LA_PRISE) {
@@ -2313,15 +2636,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         zone(0, 0, W, H, () => {}, null)
         return
       }
-      // (LE TALENT DU SECOND EST À LUI : sa configuration, son vaisseau — voir `avecLeSecond`)
-      if (choixDuSecond) avecLeSecond(() => prendreLeTalent(ta))
+      // (LE TALENT DU SECOND EST À LUI : sa configuration, son vaisseau — voir `avecLAutre`)
+      if (choixDuSecond) avecLAutre(0, () => prendreLeTalent(ta))
       else prendreLeTalent(ta)
       jouer('equipe')
       choixDeTalent = apresUnChoix(ch)
       // (À DISTANCE, le compte est à tous : il ne repart pas ; fini, on attend l'invité s'il choisit encore)
-      if (SALON && second !== null) {
-        if (choixDeTalent === null && choixDistant !== null) choixDeTalent = { aFaire: 0, rang: ch.rang }
-        envoyerLesConfigs()
+      if (estHote && autres.length > 0) {
+        if (choixDeTalent === null && autres.some((a) => a.choix !== null)) choixDeTalent = { aFaire: 0, rang: ch.rang }
+        envoyerLesPilotes()
         talentA = tReel
         zone(0, 0, W, H, () => {}, null)
         return
@@ -2340,7 +2663,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     motEnRelief(p, `Niveau ${m.invasion.niveau}`, W / 2, y0, true, TITRE)
     const reste = Math.max(0, talentFinA - tReel)
     // (à l'équipage, à qui est le choix)
-    const consigne = A_DEUX ? `Joueur ${choixDuSecond || INVITE ? 2 : 1} : maintenez un talent${ch.aFaire > 1 ? ` (${ch.aFaire})` : ''}` : ch.aFaire > 1 ? `Maintenez pour choisir (${ch.aFaire} à choisir)` : 'Maintenez un talent pour le choisir'
+    // (à l'écran partagé, à qui est le choix ; à distance, chacun le sien chez lui)
+    const consigne = COOP ? `Joueur ${choixDuSecond ? 2 : 1} : maintenez un talent${ch.aFaire > 1 ? ` (${ch.aFaire})` : ''}` : ch.aFaire > 1 ? `Maintenez pour choisir (${ch.aFaire} à choisir)` : 'Maintenez un talent pour le choisir'
     ecrire(p, consigne, W / 2, y0 + 16, COQUE[5], { align: 'center' })
     // le temps qui reste : une barre qui se vide, et les secondes
     const lb = Math.min(140, W - 60)
@@ -2860,7 +3184,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
     zone(0, 0, W, H, () => {}, null)
   }
-  let accueil = !parametres.has('direct')
+  // (`&hangar` : droit au hangar, sans l'accueil — pour juger le salon d'un lien)
+  let accueil = !parametres.has('direct') && !parametres.has('hangar')
   let accueilQuitteA: number | null = null
   /**
    * L'ÉCRAN EST D'ABORD ÉTEINT (Keko, 11/11 : « c'est possible de mettre du son à l'apparition du titre avant le tap ? »
@@ -4000,6 +4325,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         if (Math.sin(t * 2 + i) > -0.2) p.rect(px, py, 1, 1, i % 3 === 0 ? N.hex('#fff0c8') : N.hex('#8a7a60'), 0.8)
       }
       dessinerLeHangarEnScene(p, cx, cy, y0, y1)
+      dessinerLesJoueursDuSalon(p, y0)
       // (l'aire dépasse la scène : ce qui en sort par le bas est recouvert, et sa lumière éteinte hors de la scène)
       p.rect(0, y1, W, H - y1, NUIT)
       eteindre(-1000, -1000, 2000, y0)
@@ -4429,7 +4755,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (k <= 0.01) return
     // (couchée, il n'y a pas de barre du bas derrière laquelle finir : la feuille s'arrête au-dessus du bord)
     const bas = H - HAUT_NAV - (paysage ? 4 : 0)
-    const autres = VORTEX ? [] : VUES.slice(4)
+    // (AU VORTEX, UNE SEULE : « INVITER » — Keko, 22/11 : « dans autres onglets, une option inviter » ; l'invité y retrouve son salon)
+    const autres = VORTEX ? ['inviter'] : VUES.slice(4)
     const tw = 42
     // (couchée, elle est au milieu de l'écran et plus large : autant de tuiles par rangée que sa fenêtre en loge)
     const COL = paysage ? Math.max(4, Math.floor((W - 14) / (tw + 2))) : 4
@@ -4467,11 +4794,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const e = etatDuBouton(x, y, tw, th)
       if (!e.enfonce) ombrePortee(p, x, y, tw, th)
       plaque(p, x, y + e.dy, tw, th, actif ? 'or' : 'encre', { enfonce: e.enfonce, survole: e.survole, flash: e.flash })
-      dessinerLIconeDeVue(p, vv, x + tw / 2, y + 13 + e.dy, actif)
+      dessinerLIconeDeVue(p, vv === 'inviter' ? 'equipage' : vv, x + tw / 2, y + 13 + e.dy, actif)
+      const nomV = vv === 'inviter' ? (INVITE ? 'Salon' : 'Inviter') : NOMS_VUE[vv]
       // (un nom plus large que la tuile — « Paramètres » — passe en petites capitales)
-      if (largeurDe(NOMS_VUE[vv]) <= tw - 2) ecrire(p, NOMS_VUE[vv], x + tw / 2, y + th - 12 + e.dy, actif ? N.WHITE : COQUE[5], { align: 'center' })
-      else p.text(texteNu(NOMS_VUE[vv]), x + tw / 2, y + th - 10 + e.dy, actif ? N.WHITE : COQUE[5], { align: 'center' })
-      if (feuille) zone(x, y, tw, th, () => allerA(vv), 'onglet')
+      if (largeurDe(nomV) <= tw - 2) ecrire(p, nomV, x + tw / 2, y + th - 12 + e.dy, actif ? N.WHITE : COQUE[5], { align: 'center' })
+      else p.text(texteNu(nomV), x + tw / 2, y + th - 10 + e.dy, actif ? N.WHITE : COQUE[5], { align: 'center' })
+      if (feuille) zone(x, y, tw, th, () => (vv === 'inviter' ? ouvrirLePanneauDuSalon() : allerA(vv)), 'onglet')
     })
     if (maxD > 0) {
       const hg = visibles * pas - 3
@@ -6194,6 +6522,30 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const bh = 28
     const bx = 12
     const by = H - HAUT_NAV - 38
+    // (DANS UN SALON, « DÉCOLLER » DIT QU'ON EST PRÊT — Keko, 22/11 : « quand tu cliques sur décoller, on voit que le bouton
+    // est enfoncé et validé ; si on reclique dessus, ça annule ; une fois que tout le monde est prêt, la partie se lance
+    // pour tout le monde » ; au-dessus, combien sont prêts)
+    if (enSalon() && decollageA === null) {
+      const js = joueursDuSalon()
+      const prets = js.filter((j) => j.pret).length
+      ecrire(p, `Prêts : ${prets} / ${Math.max(1, js.length)}`, W / 2, by - 10, prets === js.length && js.length > 0 ? PALETTE_ETAPE_CLAIRE : COQUE[5], { align: 'center' })
+      if (pretIci) {
+        plaque(p, bx, by + 1, bw, bh, 'or', { enfonce: true })
+        motEnRelief(p, 'PRÊT', W / 2 + 6, by + 10, true, TITRE)
+        // la coche
+        const cx = Math.round(W / 2 - largeurDe('PRÊT', TITRE) / 2 - 8)
+        const cy = by + 15
+        for (const [o, c] of [[1, MATIERES.encre.contour], [0, N.WHITE]] as [number, number][])
+          for (let e = 0; e < 2; e++) {
+            p.line(cx - 4, cy + e + o, cx - 1, cy + 3 + e + o, c)
+            p.line(cx - 1, cy + 3 + e + o, cx + 5, cy - 4 + e + o, c)
+          }
+        zone(bx, by, bw, bh + 1, basculerPret, 'retour')
+        return
+      }
+      boutonBase(p, bx, by, bw, bh, true, basculerPret, (dx, dy) => motEnRelief(p, INVITE && salonDistant?.enVol === true ? 'REJOINDRE' : 'DÉCOLLER', W / 2 + dx, by + 9 + dy, true, TITRE), 'achat')
+      return
+    }
     const coeur = Math.pow(Math.max(0, Math.sin(t * 3.2)), 6)
     p.glow(W / 2, by + bh / 2, 56, PEPITE[2], 0.08 + 0.14 * coeur)
     if (R.next() < 0.08) eclats.push({ x: bx + 6 + R.next() * (bw - 12), y: by + 2, vx: (R.next() - 0.5) * 8, vy: -14 - R.next() * 14, t0: t, vie: 0.5 + 0.4 * R.next(), c: R.next() < 0.5 ? PEPITE[3] : N.hex('#fff2a8') })
@@ -8210,6 +8562,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   }
   const lever = (ev: PointerEvent) => {
     reveiller() // (au doigt, c'est le relâchement qui rend le son à la page)
+    // (le champ du pseudo : au relâchement aussi — le clavier d'un téléphone s'ouvre sur un geste)
+    if (focusVoulu) {
+      focusVoulu = false
+      champDuPseudo.focus()
+    }
     // (l'appui tenu relâché avant son terme : rien)
     if (tenue !== null && ev.pointerId === tenue.id) tenue = null
     if (tapeVerrou !== null && ev.pointerId === tapeVerrou.id) {
@@ -8442,15 +8799,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (manche2 !== null) return directionDuManche(MANCHE, manche2.doigt.x - manche2.centre.x, manche2.doigt.y - manche2.centre.y)
     return { x: (touches.has('arrowright') ? 1 : 0) - (touches.has('arrowleft') ? 1 : 0), y: (touches.has('arrowdown') ? 1 : 0) - (touches.has('arrowup') ? 1 : 0) }
   }
-  /** Où regarde le second — demandé par la règle quand il a le monde (voir `avancerLEquipage`) : comme le premier, l'insecte le plus proche. */
-  function regardDuSecond(): Vecteur | undefined {
-    if (second === null) return undefined
+  /** Où regarde l'autre `j` — demandé par la règle quand il a le monde (voir `avancerLEquipage`) : comme le premier, l'insecte le plus proche. */
+  function regardDeLAutre(j: number): Vecteur | undefined {
+    const a = autres[j]
+    if (a === undefined) return undefined
     const gv = v
     const gc = CONF
     v = m.vaisseau
-    CONF = second.ecran.CONF
+    CONF = a.ecran.CONF
     try {
-      return t - second.ecran.arriveA < ARRIVE_A ? undefined : regardVoulu()
+      return t - a.ecran.arriveA < ARRIVE_A ? undefined : regardVoulu()
     } finally {
       v = gv
       CONF = gc
@@ -8834,7 +9192,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /**
    * CE QUE L'ÉCRAN GARDE D'UN VAISSEAU (l'équipage, `&coop`) : son vaisseau, sa configuration et ses talents, ses instants
    * (touché, arrivé, abattu, bouclier, déphasage, plaques), sa flamme, sa poussée vue, le chemin du ver. LE SECOND A LES
-   * SIENS : `avecLeSecond` les lui prête — le monde aussi, par `prendreLaMain` — le temps d'avancer, de célébrer et de
+   * SIENS : `avecLAutre` les lui prête — le monde aussi, par `prendreLaMain` — le temps d'avancer, de célébrer et de
    * peindre ce qui est à lui, puis les rend au premier. (Le même prêt que l'aperçu des armes, au hangar.)
    */
   type EcranDuPilote = { v: Vaisseau; CONF: ConfigVaisseau; sansTalents: ConfigVaisseau | null; bonus: Bonus; toucheA: number; arriveA: number; perduA: number; bouclierA: number; purgeA: number; capVu: number; devieDeLaFlamme: number; virageVu: number; flamme: number; plaques: number[]; coups: typeof coupsAuBouclier; poussee: typeof pousseeVue; ver: [number, number][]; queue: { x: number; y: number; cap: number } | null }
@@ -8861,10 +9219,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   }
   /** L'écran d'un pilote qui arrive : son vaisseau, sa configuration, rien encore de touché ni de pris ; il se matérialise. */
   const ecranNeuf = (w: Vaisseau, conf: ConfigVaisseau): EcranDuPilote => ({ ...lireLEcran(), v: w, CONF: conf, sansTalents: null, bonus: [], toucheA: -10, arriveA: t, perduA: -10, bouclierA: -10, purgeA: -10, plaques: [], coups: [], poussee: { avant: 0, retro: 0, cote: 0 }, ver: [], queue: null })
-  /** On peint, on avance ou on célèbre le second (voir `avecLeSecond`) : ce qui est à tous ne se repeint pas. */
+  /** On peint, on avance ou on célèbre un autre (voir `avecLAutre`) : ce qui est à tous ne se repeint pas. */
   let dessinDuSecond = false
-  function avecLeSecond(f: () => void): void {
-    if (second === null || m.equipage === undefined || dessinDuSecond) return
+  function avecLAutre(j: number, f: () => void): void {
+    const second = autres[j]
+    if (second === undefined || m.equipage === undefined || j + 1 >= m.equipage.pilotes.length || dessinDuSecond) return
     const premier = lireLEcran()
     // (SON VAISSEAU : son modèle — le hangar du modèle, que le dessin lit —, son arme, son apparence)
     const flotteAvant = flotte
@@ -8877,13 +9236,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
     if (second.arme !== '') armesChoisies[second.modele] = second.arme
     peauxChoisies.set(second.modele, second.peau)
-    prendreLaMain(m, 1)
+    prendreLaMain(m, j + 1)
     poserLEcran({ ...second.ecran, v: m.vaisseau })
     dessinDuSecond = true
+    autreEnCours = second
     try {
       f()
     } finally {
       dessinDuSecond = false
+      autreEnCours = null
       second.ecran = lireLEcran()
       if (peau === undefined) peauxChoisies.delete(second.modele)
       else peauxChoisies.set(second.modele, peau)
@@ -8898,23 +9259,29 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   }
   /** Où est un vaisseau de l'équipage (en vol, ou son épave), dans le monde. */
   const lieuDuPilote = (k: number): Vecteur => (k === 0 || m.equipage === undefined ? m.vaisseau : m.equipage.pilotes[k].vaisseau)
-  /** LE MILIEU DE L'ÉQUIPAGE, que la caméra regarde (null : on vole seul). */
+  /** Chacun des autres, son écran prêté, dans l'ordre. */
+  const chacunDesAutres = (f: (a: Autre, j: number) => void): void => autres.forEach((a, j) => avecLAutre(j, () => f(a, j)))
+  /** Où est chaque vaisseau de l'équipage. */
+  const lieuxDeLEquipage = (): Vecteur[] => (m.equipage === undefined ? [m.vaisseau] : m.equipage.pilotes.map((_, k) => lieuDuPilote(k)))
+  /** LE MILIEU DE L'ÉQUIPAGE, que la caméra regarde — celui de la boîte qui les tient tous (null : on vole seul). */
   function milieuDeLEquipage(): Vecteur | null {
-    if (!enJeu || second === null || m.equipage === undefined) return null
-    const a = lieuDuPilote(0)
-    const b = lieuDuPilote(1)
-    return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }
+    if (!enJeu || autres.length === 0 || m.equipage === undefined) return null
+    const ls = lieuxDeLEquipage()
+    const xs = ls.map((l) => l.x)
+    const ys = ls.map((l) => l.y)
+    return { x: (Math.min(...xs) + Math.max(...xs)) / 2, y: (Math.min(...ys) + Math.max(...ys)) / 2 }
   }
   /** LE CHAMP QU'IL FAUT POUR VOIR L'ÉQUIPAGE ENTIER, avec `MARGE_DE_L_EQUIPAGE` autour de chacun (la vue de référence : 320 × 180, debout 180 × 320). */
   const MARGE_DE_L_EQUIPAGE = 40
   function champDeLEquipage(): number {
-    const a = lieuDuPilote(0)
-    const b = lieuDuPilote(1)
+    const ls = lieuxDeLEquipage()
+    const xs = ls.map((l) => l.x)
+    const ys = ls.map((l) => l.y)
     const VW = paysage ? 320 : 180
     const VH = paysage ? 180 : 320
-    return Math.min(CHAMP_MAX, Math.max((Math.abs(a.x - b.x) + 2 * MARGE_DE_L_EQUIPAGE) / VW, (Math.abs(a.y - b.y) + 2 * MARGE_DE_L_EQUIPAGE) / VH))
+    return Math.min(CHAMP_MAX, Math.max((Math.max(...xs) - Math.min(...xs) + 2 * MARGE_DE_L_EQUIPAGE) / VW, (Math.max(...ys) - Math.min(...ys) + 2 * MARGE_DE_L_EQUIPAGE) / VH))
   }
-  /** Ce qui est au sol, à lui (le second, prêté — voir `avecLeSecond`). */
+  /** Ce qui est au sol, à lui (le second, prêté — voir `avecLAutre`). */
   function dessinerLeSolDuSecond(p: Peintre): void {
     dessinerLeGivre(p)
     dessinerLesFlaques(p)
@@ -8966,8 +9333,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const L = 22
     dessinerUneJauge(p, sx, sy, L, m.coque / Math.max(1, CONF.coque), PEPITE[2], PEPITE[3], t - toucheA < 0.1)
     if (CONF.bouclier.points > 0) dessinerUneJauge(p, sx, sy - 4, L, m.bouclier / CONF.bouclier.points, VERRIERE[1], VERRIERE[2], t - bouclierA < 0.1)
-    // (chez l'invité, l'autre est l'hôte : le « 1 »)
-    ecrire(p, INVITE ? '1' : '2', sx - L / 2 - 6, sy - 4, PEPITE[3], { police: GRAS })
+    // (SON PSEUDO, sous sa vie — Keko, 22/11 ; à l'écran partagé, le « 2 »)
+    const nom = autreEnCours?.pseudo ?? '2'
+    if (COOP) ecrire(p, nom, sx - L / 2 - 6, sy - 4, PEPITE[3], { police: GRAS })
+    else ecrire(p, nom, sx, sy + 4, PEPITE[3], { align: 'center' })
   }
   /**
    * LES JETS D'UNE SOUCOUPE (Keko, 15/11 : « des propulseurs plus petits, comme les propulseurs avant du chasseur : de
@@ -15451,10 +15820,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           }
           // (à l'équipage, le second aussi : son choix vient après celui du premier — voir `passerAuSecond` ; À DISTANCE, EN
           // MÊME TEMPS — voir `choixDistant`)
-          if (SALON && second !== null) {
-            choixDistant = choixDistant === null ? ouvrirLeChoix(second.reserve) : { aFaire: choixDistant.aFaire + 1, rang: choixDistant.rang }
-            second.reserve = 0
-          } else if (second !== null) second.aFaire += 1
+          if (estHote)
+            for (const a of autres) {
+              a.choix = a.choix === null ? ouvrirLeChoix(a.reserve) : { aFaire: a.choix.aFaire + 1, rang: a.choix.rang }
+              a.reserve = 0
+            }
+          else if (autres.length > 0) autres[0].aFaire += 1
           jouer('achat')
           const enCours = choixDeTalent as Choix | null
           if (enCours === null) {
@@ -16084,11 +16455,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     tReel += dtReel
     // (`&choix` : un choix de talent s'ouvre une seconde et demie après le décollage, pour juger les cartes d'un lien)
     // (à deux, quand le second est là : son choix suit celui du premier)
-    if (VORTEX && parametres.has('choix') && !choixDEssaiOuvert && enJeu && t - arriveA > 1.5 && choixDeTalent === null && !INVITE && (!A_DEUX || second !== null)) {
+    if (VORTEX && parametres.has('choix') && !choixDEssaiOuvert && enJeu && t - arriveA > 1.5 && choixDeTalent === null && !INVITE && (!(COOP || estHote) || autres.length > 0)) {
       choixDEssaiOuvert = true
       choixDeTalent = ouvrirLeChoix(0)
-      if (SALON && second !== null) choixDistant = ouvrirLeChoix(0)
-      else if (second !== null) second.aFaire += 1
+      if (estHote) for (const a of autres) a.choix = ouvrirLeChoix(0)
+      else if (autres.length > 0) autres[0].aFaire += 1
       talentFinA = tReel + DUREE_DU_CHOIX
       talentA = tReel
     }
@@ -16167,11 +16538,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (souteOuverte && (!enJeu || m.phase !== 'vol')) souteOuverte = false
     // LE CHOIX D'UN TALENT : le jeu est en pause pour tout le monde ; le délai passé, ce qui reste à choisir part en réserve
     if (!INVITE && choixDeTalent !== null && tReel >= talentFinA) {
-      if (choixDuSecond && second !== null) second.reserve += reserveApresLeDelai(choixDeTalent)
+      if (choixDuSecond && autres.length > 0) autres[0].reserve += reserveApresLeDelai(choixDeTalent)
       else reserveDeTalents += reserveApresLeDelai(choixDeTalent)
-      // (à distance, celui de l'invité aussi : le compte est à tous)
-      if (choixDistant !== null && second !== null) second.reserve += reserveApresLeDelai(choixDistant)
-      choixDistant = null
+      // (à distance, ceux des invités aussi : le compte est à tous)
+      for (const a of autres) {
+        if (a.choix !== null) a.reserve += reserveApresLeDelai(a.choix)
+        a.choix = null
+      }
       choixDeTalent = null
       passerAuSecond()
     }
@@ -16180,7 +16553,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       accumule += dt
       const direction = t - arriveA < ARRIVE_A ? { x: 0, y: 0 } : directionVoulue() // (pas encore arrivé : il ne répond pas)
       // (le second : à distance, son manche reçu — l'hôte chez l'invité, l'invité chez l'hôte)
-      const direction2 = INVITE ? distant.dir : SALON ? (mancheDistant?.d ?? { x: 0, y: 0 }) : second !== null && t - second.ecran.arriveA >= ARRIVE_A ? directionDuSecond() : { x: 0, y: 0 }
+      const directions = autres.map((a, j) => (INVITE ? (distant.dirs[j + 1] ?? { x: 0, y: 0 }) : estHote ? (a.manche?.d ?? { x: 0, y: 0 }) : t - a.ecran.arriveA >= ARRIVE_A ? directionDuSecond() : { x: 0, y: 0 }))
       const suivreLaPoussee = (direction: Vecteur): void => {
         // (où l'on pousse, vu du vaisseau : devant / derrière, d'un flanc / de l'autre)
         const n = Math.hypot(direction.x, direction.y)
@@ -16195,7 +16568,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         pousseeVue.cote += (f * deCote - pousseeVue.cote) * k
       }
       suivreLaPoussee(direction)
-      if (second !== null) avecLeSecond(() => suivreLaPoussee(direction2))
+      chacunDesAutres((_, j) => suivreLaPoussee(directions[j]))
       const ouRegarder = t - arriveA < ARRIVE_A ? undefined : regardVoulu()
       while (accumule >= PAS) {
         accumule -= PAS
@@ -16204,23 +16577,26 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         // seule pour un vaisseau à tourelles. La règle du tir à la main reste dans `jeu.ts`, plus appelée.)
         // (L'ÉQUIPAGE AVANCE ENSEMBLE — voir `avancerLEquipage` : le monde une fois, puis chacun son tour)
         let r: ReturnType<typeof avancerLeMonde>
-        let r2: ReturnType<typeof avancerLeMonde> | null = null
-        if (second !== null && m.equipage !== undefined) {
-          const rr = avancerLEquipage([CONF, second.ecran.CONF], m, PAS, [direction, direction2], (k) => (k === 0 ? ouRegarder : regardDuSecond()))
+        let rs: ReturnType<typeof avancerLeMonde>[] = []
+        if (autres.length > 0 && m.equipage !== undefined && m.equipage.pilotes.length === autres.length + 1) {
+          const rr = avancerLEquipage([CONF, ...autres.map((a) => a.ecran.CONF)], m, PAS, [direction, ...directions], (k) => (k === 0 ? ouRegarder : regardDeLAutre(k - 1)))
           // (CHEZ L'INVITÉ, rien de ce pas ne se célèbre : ce sont les événements de l'hôte qui comptent — voir `recevoirUnEtat`)
           r = { chocs: rr.chocs[0], evenements: INVITE ? [] : rr.evenements[0] }
-          r2 = { chocs: rr.chocs[1], evenements: INVITE ? [] : rr.evenements[1] }
-          if (SALON) {
-            // (chez l'hôte : ils partiront avec le prochain état ; et LE VAISSEAU DE L'INVITÉ EST OÙ SON MANCHE L'A MENÉ, avancé
-            // du temps que son message a mis)
-            if (evenementsAEnvoyer[0].length < 300) evenementsAEnvoyer[0].push(...rr.evenements[0])
-            if (evenementsAEnvoyer[1].length < 300) evenementsAEnvoyer[1].push(...rr.evenements[1])
-            const p2 = m.equipage.pilotes[1]
-            const md = mancheDistant
-            if (md !== null && md.v !== null && p2.phase === 'vol') {
+          rs = autres.map((_, j) => ({ chocs: rr.chocs[j + 1] ?? [], evenements: INVITE ? [] : (rr.evenements[j + 1] ?? []) }))
+          if (estHote) {
+            // (chez l'hôte : ils partiront avec le prochain état ; et LE VAISSEAU DE CHAQUE INVITÉ EST OÙ SON MANCHE L'A MENÉ,
+            // avancé du temps que son message a mis)
+            rr.evenements.forEach((evs, k) => {
+              const l = (evenementsAEnvoyer[k] ??= [])
+              if (l.length < 300) l.push(...evs)
+            })
+            autres.forEach((a, j) => {
+              const pj = m.equipage!.pilotes[j + 1]
+              const md = a.manche
+              if (md === null || md.v === null || pj === undefined || pj.phase !== 'vol') return
               const age = Math.min(0.25, (performance.now() - md.a) / 1000)
-              p2.vaisseau = { ...p2.vaisseau, x: md.v.x + md.v.vx * age, y: md.v.y + md.v.vy * age, vx: md.v.vx, vy: md.v.vy, cap: md.v.cap, poussee: md.v.poussee }
-            }
+              pj.vaisseau = { ...pj.vaisseau, x: md.v.x + md.v.vx * age, y: md.v.y + md.v.vy * age, vx: md.v.vx, vy: md.v.vy, cap: md.v.cap, poussee: md.v.poussee }
+            })
           }
         } else if (INVITE) r = { chocs: [], evenements: [] }
         else r = avancerLeMonde(CONF, m, PAS, direction, ouRegarder, false)
@@ -16412,16 +16788,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         }
         }
         apresLePas(r)
-        if (r2 !== null) {
-          const r2_ = r2
-          avecLeSecond(() => apresLePas(r2_))
-        }
+        const rs_ = rs
+        if (rs_.length > 0) chacunDesAutres((_, j) => rs_[j] !== undefined && apresLePas(rs_[j]))
       }
       flamme += (pousseeVue.avant - flamme) * Math.min(1, dt * 14)
-      if (second !== null)
-        avecLeSecond(() => {
-          flamme += (pousseeVue.avant - flamme) * Math.min(1, dt * 14)
-        })
+      chacunDesAutres(() => {
+        flamme += (pousseeVue.avant - flamme) * Math.min(1, dt * 14)
+      })
       // les sons continus : le souffle du propulseur suit la flamme, la foreuse bourdonne quand elle creuse, la charge
       // de l'extraction monte avec l'arc d'or (et se tait quand le compte est au bout : le son de l'extraction la relève)
       if (m.extraction !== compteVu) compteMonte = m.extraction > compteVu
@@ -16443,7 +16816,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       }
     }
     // (À DISTANCE : l'hôte envoie l'état du monde ; l'invité, son manche et son vaisseau, trente fois par seconde)
-    if (SALON && enJeu) envoyerUnEtat()
+    if (estHote && enJeu) envoyerUnEtat()
     if (INVITE && enJeu && distant.recu && tReel - envoyeA >= 1 / 30) {
       envoyeA = tReel
       const dir = t - arriveA < ARRIVE_A ? { x: 0, y: 0 } : directionVoulue()
@@ -16543,6 +16916,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       regler(0, false, 0, false) // (au hangar, plus de souffle, de foreuse ni de charge)
       // LE HANGAR à la place du monde (Keko : « je ne veux pas voir l'extracteur ni le niveau derrière ») : la scène, puis l'interface
       dessinerLaBase(p)
+      dessinerLePanneauDuSalon(p)
       dessinerLesToasts(dt)
       N.composite(frame, img.data, FOND)
       g.putImageData(img, 0, 0)
@@ -16608,7 +16982,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     dessinerLesCoupes(p)
     dessinerLesTourelles(p)
     dessinerLesBalises(p)
-    if (second !== null) avecLeSecond(() => dessinerLeSolDuSecond(p))
+    chacunDesAutres(() => dessinerLeSolDuSecond(p))
     dessinerLesEnnemis(p)
     dessinerLesBulles(p)
     dessinerLesOndes(p)
@@ -16639,7 +17013,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     dessinerLElectricite(p)
     dessinerLesBombes(p)
     dessinerLesLasers(p)
-    if (second !== null) avecLeSecond(() => dessinerLeHautDuSecond(p))
+    chacunDesAutres(() => dessinerLeHautDuSecond(p))
     // (les effets sont dans le monde : ils passent SOUS les bandeaux et l'interface)
     for (const e of effets) e.fx.draw(frame)
     // (un effet laisse le peintre du tampon PLACÉ sur lui, avec son fondu et sa lumière : sans cette remise à neuf — le
@@ -16671,7 +17045,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (VORTEX) dessinerLInvasion(p)
     dessinerLeSalon(p)
     // (le second abattu : son compte du retour, sur son épave)
-    if (second !== null) avecLeSecond(() => dessinerLeRetour(p))
+    chacunDesAutres(() => dessinerLeRetour(p))
     if (VORTEX && !CONF.invasion.sansPortail) dessinerLAnnonceDeLaVague(p)
     dessinerLeBanc(p)
     dessinerLaPlaqueDeLaPostcombustion(p)

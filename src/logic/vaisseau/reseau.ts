@@ -37,16 +37,38 @@ export function depuisTexte<T>(s: string): T {
 }
 
 /**
- * LE MONDE VU DEPUIS LE SECOND PILOTE (l'invité) : il prend le monde, et l'équipage est retourné — il devient le premier,
- * l'hôte le second ; les pépites aimantées par l'un vont toujours au même vaisseau.
+ * L'ORDRE DE L'ÉQUIPAGE VU DU PILOTE `k` : lui d'abord, puis les autres dans leur ordre (l'hôte, le 0, en tête) — la
+ * place `j` de cette vue est celle du pilote `ordre[j]` chez l'hôte.
  */
-export function vuDuSecond(m: Monde): void {
+export const ordreVuDu = (n: number, k: number): number[] => [k, ...Array.from({ length: n }, (_, i) => i).filter((i) => i !== k)]
+
+/**
+ * LE MONDE VU DEPUIS LE PILOTE `k` (un invité) : il prend le monde et devient le premier, les autres suivent dans leur
+ * ordre (voir `ordreVuDu`) ; les pépites aimantées par l'un vont toujours au même vaisseau.
+ */
+export function vuDu(m: Monde, k: number): void {
   const eq = m.equipage
-  if (eq === undefined || eq.pilotes.length < 2) return
-  prendreLaMain(m, 1)
-  eq.pilotes = [eq.pilotes[1], eq.pilotes[0], ...eq.pilotes.slice(2)]
+  if (eq === undefined || k <= 0 || k >= eq.pilotes.length) return
+  prendreLaMain(m, k)
+  const ordre = ordreVuDu(eq.pilotes.length, k)
+  eq.pilotes = ordre.map((i) => eq.pilotes[i])
   eq.actif = 0
-  for (const p of m.pepites) if (p.par === 0 || p.par === 1) p.par = 1 - p.par
+  for (const p of m.pepites) if (p.par !== undefined) p.par = ordre.indexOf(p.par)
+}
+/** Le monde vu du second pilote (voir `vuDu`). */
+export const vuDuSecond = (m: Monde): void => vuDu(m, 1)
+
+/** LE PILOTE `k` QUITTE L'ÉQUIPAGE (un invité parti) : ceux d'après remontent d'une place ; seul, le premier garde le monde. */
+export function retirerUnPilote(m: Monde, k: number): void {
+  const eq = m.equipage
+  if (eq === undefined || k <= 0 || k >= eq.pilotes.length) return
+  prendreLaMain(m, 0)
+  eq.pilotes.splice(k, 1)
+  for (const p of m.pepites) {
+    if (p.par === k) delete p.par
+    else if (p.par !== undefined && p.par > k) p.par -= 1
+  }
+  if (eq.pilotes.length <= 1) retirerLesPilotes(m)
 }
 
 /** L'ÉQUIPAGE DÉFAIT (l'invité est parti) : le premier pilote garde le monde, seul. */

@@ -3,7 +3,7 @@
  */
 import { ajouterUnPilote, avancerLEquipage, etatDuPilote, partDe, gabaritDInsecte, rayonDe, rocheDeLaTempete, vieMultipliee, cadenceDeLaVague, asteroideDeLaCase, coupeDUnCube, asteroidesAutour, avancer, avancerLeMonde, encaisser, purger, impactDuRayon, lancerLaBombe, larguer, porteeDeLaBombe, MINERAIS, nouveauMonde, nouveauVaisseau, solidite, voler, totalDe, stationDeLaCase, stationLaPlusProche, VAISSEAU, verrouiller, ennemiLePlusProche, type ConfigVaisseau, type Ennemi, type Evenement, type Vaisseau, xpDuNiveau, gemmesDuButin, tire, type Pepite } from './jeu.ts'
 import { acheter, configDuHangar, hangarNeuf, monter, pieceDe } from './hangar.ts'
-import { depuisTexte, retirerLesPilotes, versTexte, vuDuSecond } from './reseau.ts'
+import { depuisTexte, retirerLesPilotes, retirerUnPilote, versTexte, vuDu, vuDuSecond } from './reseau.ts'
 
 /** Les règles sont vérifiées SANS la zone calme de la base (le rival naît où que soit le joueur) et AVEC les extracteurs par case (éteints en jeu pour l'instant) ; la base et la station seule ont leurs propres vérifications, plus bas. */
 const C: ConfigVaisseau = { ...VAISSEAU, base: { ...VAISSEAU.base, calme: 0 }, station: { ...VAISSEAU.station, seule: false } }
@@ -3604,6 +3604,18 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   verifier(`vu du second, il est le premier (${Math.round(v2.vaisseau.x)}, ${Math.round(v2.vaisseau.y)}) et l’hôte le second (${Math.round(etatDuPilote(v2, 1).vaisseau.x)})`, Math.abs(v2.vaisseau.x - invite.x) < 0.01 && Math.abs(v2.vaisseau.y - invite.y) < 0.01 && Math.abs(etatDuPilote(v2, 1).vaisseau.x - hote.x) < 0.01 && v2.equipage?.actif === 0)
   retirerLesPilotes(v2)
   verifier('l’équipage défait, il reste un monde seul', v2.equipage === undefined && Math.abs(v2.vaisseau.x - invite.x) < 0.01)
+  // (À QUATRE : vu du troisième, il est le premier, l'hôte le second, puis les autres ; le deuxième parti, le troisième remonte)
+  const q = nouveauMonde(cfg, 9)
+  ajouterUnPilote(cfg, q, 50, 0)
+  ajouterUnPilote(cfg, q, 0, 50)
+  ajouterUnPilote(cfg, q, -50, 0)
+  const vu3 = depuisTexte<typeof q>(versTexte(q))
+  vuDu(vu3, 2)
+  verifier(`à quatre, vu du troisième : lui (${Math.round(vu3.vaisseau.x)}, ${Math.round(vu3.vaisseau.y)}), l’hôte, le deuxième, le quatrième`, Math.abs(vu3.vaisseau.y - 50) < 0.01 && Math.abs(etatDuPilote(vu3, 1).vaisseau.x) < 0.01 && Math.abs(etatDuPilote(vu3, 2).vaisseau.x - 50) < 0.01 && Math.abs(etatDuPilote(vu3, 3).vaisseau.x + 50) < 0.01)
+  retirerUnPilote(q, 1)
+  verifier(`le deuxième parti, ils sont ${q.equipage?.pilotes.length} : le troisième est remonté (${Math.round(etatDuPilote(q, 1).vaisseau.y)})`, q.equipage?.pilotes.length === 3 && Math.abs(etatDuPilote(q, 1).vaisseau.y - 50) < 0.01)
+  for (let i = 0; i < 30; i++) avancerLEquipage([cfg, cfg, cfg], q, 1 / 60, [{ x: 1, y: 0 }, { x: 0, y: 1 }, { x: -1, y: 0 }])
+  verifier('à trois, ils avancent', q.vaisseau.x > 0 && etatDuPilote(q, 1).vaisseau.y > 50 && etatDuPilote(q, 2).vaisseau.x < -50)
 }
 
 // (TOUJOURS EN DERNIER : des blocs ajoutés après cette ligne échouaient sans faire échouer `npm run verif` — 17/11)
