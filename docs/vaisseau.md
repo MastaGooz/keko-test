@@ -7815,3 +7815,8 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     bouclier et une petite vibration à la prise. `&vitrine` en pose un.
   - Vérifié : 3 000 insectes, 17 soins (15 attendus) ; à 50 %, 75 % ; à 95 %, le plein ; plein, il reste ; à deux, celui
     posé sous le premier (plein) va au second, blessé.
+- **22/11, MOINS DE SOINS ET DE PLAQUES.** Keko : « les taux de loot des soins et des plaques sont trop élevés ; le soin
+  doit tomber moins souvent que l'aimant : 1 pour 500 ; il soigne 25 % du blindage total de celui qui le ramasse ; sur le
+  plus gros astéroïde, 5 % de chance » — de 1 à 5 %, géantes comprises (tranché). `invasion.soin.chance` : 1/200 → 1/500
+  (l'aimant reste à 1/300) ; `derive.plaque` : 10–60 % → 1–5 % (3 % pour une roche de 27). Vérifié : 10 000 insectes, 27
+  soins (20 attendus) ; 2 000 roches de 27, 73 plaques (60 attendues).

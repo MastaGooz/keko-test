@@ -334,9 +334,10 @@ export const VAISSEAU = {
      * LE SOIN (Keko, 22/11 : « un dernier drop des ennemis : une petite chance, un peu comme l'aimant, de looter un truc
      * qu'on peut ramasser et qui soigne du blindage — ou de la carapace pour les Xénoïdes ; comme une potion de soin ») :
      * la chance qu'un insecte abattu le lâche, et la part du blindage qu'il rend. Il ne va qu'à qui est blessé ; personne,
-     * il attend. *Les chiffres sont de moi, à rejuger.*
+     * il attend. (1 SUR 500 — Keko, 22/11 : « trop élevé ; il faut que le soin tombe moins souvent que l'aimant » ; 1 sur 200
+     * avant ; le quart du blindage plein de qui le ramasse, confirmé.)
      */
-    soin: { chance: 1 / 200, part: 0.25 },
+    soin: { chance: 1 / 500, part: 0.25 },
     /**
      * LA VIE DU PORTAIL (Keko, 14/11 : « elle s'exprime en pourcentage : il commence à 100 %, et s'il atteint 0 c'est
      * la fin de la partie ; pour l'instant les ennemis lui enlèvent 1 % à chaque fois qu'ils passent ») : `viePortail`
@@ -495,8 +496,9 @@ export const VAISSEAU = {
      */
     tailles: { courante: 32, geante: 36, kDebut: 2.6, k: 1.3, montee: 420, apres: 480, partDebut: 0.03, partFin: 0.1 },
     // LA PLAQUE QU'UNE ROCHE FAIT TOMBER (voir `recuperation`) : sa chance, de `petite` pour la plus petite roche
-    // (`rayonMin`) à `grosse` pour la plus grosse (`rayonMax`), en ligne droite entre les deux. *De moi, à rejuger.*
-    plaque: { petite: 0.1, grosse: 0.6 } },
+    // (`rayonMin`) à `grosse` pour la plus grosse (`rayonMax`), en ligne droite entre les deux. (DE 1 À 5 % — Keko, 22/11 :
+    // « trop élevé ; sur le plus gros astéroïde, 5 % », géantes comprises ; de 10 à 60 % avant.)
+    plaque: { petite: 0.01, grosse: 0.05 } },
   ennemi: { apparait: 10, revient: 5, distance: 320, pv: 36, poussee: 120, vitesseMax: 85, rotation: 5, rayon: 4, cherche: 260, rode: 450, voit: 130, accourt: 420, tient: 80, fuit: 10, lache: 260, cadence: 1.8, vitesseTir: 130, dispersion: 0.16, vieTir: 2, butinRendu: 3,
     /**
      * LE RIVAL PEUT PORTER DE VRAIES ARMES (Keko, 14/11 : « deux canons, le reste en mitraillette, et deux missiles dans

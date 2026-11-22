@@ -3713,7 +3713,7 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   const roche = (id: number): Ennemi => ({ id, corps: { ...nouveauVaisseau(), x: 300, y: 0 }, pv: 0, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, asteroide: { rayon: 27, pvMax: 1000, graine: id, angle0: 0, vitesseAngulaire: 0 } } as Ennemi)
   let tombees = 0
   let sansPlaques = 0
-  for (let id = 1000; id < 1400; id++) {
+  for (let id = 1000; id < 3000; id++) {
     const w = nouveauMonde(cfg, 3)
     w.ennemis.push(roche(id))
     avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
@@ -3723,7 +3723,7 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
     avancerLeMonde({ ...cfg, plaques: 0 }, w2, 1 / 60, { x: 0, y: 0 })
     sansPlaques += w2.pepites.filter((p) => p.plaque === true).length
   }
-  verifier(`400 roches de 27 : ${tombees} plaques tombées (${Math.round(milieu * 400)} attendues) ; sans plaques au vaisseau, ${sansPlaques}`, Math.abs(tombees - milieu * 400) < 40 && sansPlaques === 0)
+  verifier(`2 000 roches de 27 : ${tombees} plaques tombées (${Math.round(milieu * 2000)} attendues) ; sans plaques au vaisseau, ${sansPlaques}`, Math.abs(tombees - milieu * 2000) < Math.max(8, milieu * 2000 * 0.4) && sansPlaques === 0)
   // (ramassée : la dernière plaque cassée revient ; rien ne manque, elle reste là)
   const w = nouveauMonde(cfg, 4)
   w.plaques = [false, false, true]
@@ -3748,14 +3748,14 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   const cfg: ConfigVaisseau = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9 }, derive: { ...VAISSEAU.derive, active: false }, armes: [] }
   const insecte = (id: number): Ennemi => ({ id, corps: { ...nouveauVaisseau(), x: 400, y: 0 }, pv: 0, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 } })
   let soins = 0
-  const N = 3000
+  const N = 10000
   for (let id = 5000; id < 5000 + N; id++) {
     const w = nouveauMonde(cfg, 3)
     w.ennemis.push(insecte(id))
     avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
     soins += w.pepites.filter((p) => p.soin === true).length
   }
-  verifier(`${N} insectes abattus : ${soins} soins (${Math.round(N * cfg.invasion.soin.chance)} attendus, ${Math.round(cfg.invasion.soin.chance * 1000) / 10} %)`, Math.abs(soins - N * cfg.invasion.soin.chance) < 8)
+  verifier(`${N} insectes abattus : ${soins} soins (${Math.round(N * cfg.invasion.soin.chance)} attendus, ${Math.round(cfg.invasion.soin.chance * 1000) / 10} %)`, Math.abs(soins - N * cfg.invasion.soin.chance) < Math.max(6, N * cfg.invasion.soin.chance * 0.4) && cfg.invasion.soin.chance < cfg.invasion.aimant)
   // (ramassé blessé : un quart du blindage revient, pas plus que le plein ; sans blessure, il reste ; l'aimant ne l'attire pas)
   const w = nouveauMonde(cfg, 4)
   w.coque = cfg.coque * 0.5
