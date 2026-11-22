@@ -2682,10 +2682,21 @@ function conduireLInsecte(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number, ev
     const dc = Math.hypot(b.x, b.y) || 1
     const seuil = c.arene.rayon - I.eviteTempete
     if (dc > seuil) {
-      const k = 3 * Math.min(1.5, (dc - seuil) / I.eviteTempete)
-      const sx = direction.x - (b.x / dc) * k
-      const sy = direction.y - (b.y / dc) * k
-      const n = Math.hypot(sx, sy) || 1
+      // (SA COURSE Y EST RENVOYÉE, pas contrée — Keko, 22/11 : « quand je meurs, les ennemis tournent parfois sur place dans
+      // une rotation bizarre par à-coups » : repoussé d'une force qui grandissait vers le bord, l'insecte qui errait vers la
+      // tempête s'arrêtait là où elle égalait sa course, et ce qui restait de leur somme, presque rien, basculait d'un côté à
+      // l'autre — douze demi-tours en huit secondes, en bande le long du bord. Désormais la part de sa course qui va vers la
+      // tempête se renverse, d'autant plus qu'il en est près : il glisse et repart vers le milieu, sans jamais s'arrêter ;
+      // DANS la tempête, il en est chassé comme avant)
+      const w = (dc - seuil) / I.eviteTempete
+      const ux = b.x / dc
+      const uy = b.y / dc
+      const sort = direction.x * ux + direction.y * uy
+      // (de rien au seuil — sinon il cassait sa course en y entrant — à tout renversée au bord)
+      const r = Math.max(0, sort) * 2 * Math.min(1, w) + (w > 1 ? 3 * Math.min(1.5, w - 1) : 0)
+      const sx = direction.x - ux * r
+      const sy = direction.y - uy * r
+      const n = Math.max(1, Math.hypot(sx, sy))
       direction = { x: sx / n, y: sy / n }
     }
   }

@@ -8059,3 +8059,11 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   blindage), le vaisseau clignote et ne prend rien. Désormais, pendant ce temps, il passe aussi au travers des insectes
   (`heurterLesVaisseaux`, au vortex) — ni il ne les pousse, ni ils ne l'écartent ; les roches l'arrêtent toujours. La
   morsure qui le touche l'ouvre aussitôt : un insecte qui mord ne le bouscule plus. Un test le garde.
+- **22/11, ABATTU, LES INSECTES N'ONT PLUS D'À-COUPS PRÈS DE LA TEMPÊTE.** Keko : « quand je meurs les ennemis tournent
+  parfois sur place dans une rotation bizarre par à-coups ». Mesuré (quarante insectes serrés autour d'une épave à cent
+  du bord, huit secondes) : au centre de l'arène, rien ; près de la tempête, jusqu'à douze ou treize changements de sens
+  de rotation par insecte. L'insecte qui errait vers elle en était repoussé d'une force qui grandissait vers le bord : il
+  s'arrêtait là où elle égalait sa course, et le peu qui restait de leur somme basculait d'un côté à l'autre. Désormais
+  la part de sa course qui va vers la tempête SE RENVERSE, de rien au seuil (`eviteTempete`) à tout au bord : il glisse
+  et repart vers le milieu sans s'arrêter ; dans la tempête, il en est chassé comme avant. Rejoué : trois changements au
+  plus (de vrais demi-tours). Un test le garde (quatre au plus).

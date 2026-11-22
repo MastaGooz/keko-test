@@ -3190,6 +3190,43 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   verifier(`au bord de la tempête (${R}), le vaisseau est mordu : ${cas.map((x) => `à ${x.d}${x.vit > 0 ? ` en le suivant à ${x.vit}` : ''}, ${x.mordu} morsures, au plus ${x.dedans.toFixed(1)} dans la tempête`).join(' ; ')}`, cas.every((x) => x.mordu >= 3) && cas.every((x) => x.dedans < 12))
 }
 
+// ABATTU PRÈS DE LA TEMPÊTE, ILS ERRENT SANS À-COUPS (Keko, 22/11 : « quand je meurs, les ennemis tournent parfois sur
+// place dans une rotation bizarre par à-coups ») : quarante insectes serrés autour d'une épave à cent du bord ; en huit
+// secondes, aucun ne change de sens de rotation plus de quatre fois (douze ou treize avant)
+{
+  const I = VAISSEAU.invasion
+  const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...I, active: true, sansPortail: true, continu: { ...I.continu, actif: true } }, arene: { ...VAISSEAU.arene, active: true }, derive: { ...VAISSEAU.derive, active: false }, ennemi: { ...VAISSEAU.ennemi, pv: 120, poussee: 90, vitesseMax: 40, rotation: 6, rayon: 5 }, armes: [] }
+  const x0 = cfg.arene.rayon - 100
+  const w = nouveauMonde(cfg, 5)
+  w.vaisseau = { ...w.vaisseau, x: x0, y: 0 }
+  for (let k = 0; k < 40; k++) {
+    const a = k * 2.399
+    const d = 8 + 50 * ((k * 0.618) % 1)
+    w.ennemis.push({ id: 100 + k, corps: { ...nouveauVaisseau(), x: x0 + Math.cos(a) * d, y: Math.sin(a) * d, cap: a + Math.PI }, pv: 120, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 } })
+  }
+  w.phase = 'perdu'
+  w.coque = 0
+  w.invasion.retourA = 1e9
+  const avant = new Map<number, number>()
+  const sens = new Map<number, number>()
+  const demiTours = new Map<number, number>()
+  for (let i = 0; i < 60 * 8; i++) {
+    w.invasion.prochainA = 1e9
+    avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+    for (const e of w.ennemis) {
+      const p = avant.get(e.id)
+      avant.set(e.id, e.corps.cap)
+      if (p === undefined) continue
+      const d = Math.atan2(Math.sin(e.corps.cap - p), Math.cos(e.corps.cap - p))
+      if (Math.abs(d) <= 0.01) continue
+      if ((sens.get(e.id) ?? 0) !== 0 && Math.sign(d) !== sens.get(e.id)) demiTours.set(e.id, (demiTours.get(e.id) ?? 0) + 1)
+      sens.set(e.id, Math.sign(d))
+    }
+  }
+  const pire = Math.max(0, ...demiTours.values())
+  verifier(`abattu à 100 de la tempête, 40 insectes errent sans à-coups : au plus ${pire} changements de sens de rotation en 8 s`, pire <= 4)
+}
+
 // ABATTU, LES INSECTES ERRENT (Keko, 21/11 : « pour éviter qu'ils se regroupent tous comme des idiots à l'endroit où on va
 // respawn ») : trente insectes autour de l'épave ne s'y entassent pas en huit secondes
 {
