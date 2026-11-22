@@ -417,10 +417,14 @@ function proposerLesSpeciales(graine: number, niveau: number, k: number, princip
 // (`armes` : toutes celles que porte le vaisseau — CHAQUE NOUVELLE ARME A SON POOL, réuni à celui de l'arme principale)
 export function proposer(graine: number, niveau: number, rang: number, arme: Arme | undefined, race: Race, prises: string[] = [], armes: Arme[] = arme === undefined ? [] : [arme]): Talent[] {
   const portees = armesPortees(armes.length > 0 ? armes : arme === undefined ? [] : [arme])
-  if (arme !== undefined && rang === 0 && Math.floor(niveau / NIVEAU_SPECIAL) > prises.length) {
-    const speciales = proposerLesSpeciales(graine, niveau, prises.length + 1, arme.id, portees.map((a) => a.id), race, prises)
-    if (speciales.length > 0) return speciales
+  // (AU CHOIX OÙ ELLE EST DUE, quel que soit son rang : plusieurs dues à la fois — un banc au niveau 60 —, elles se suivent ;
+  // prise, la suivante n'est plus due et le choix d'après est ordinaire)
+  let speciales: Talent[] = []
+  if (arme !== undefined && Math.floor(niveau / NIVEAU_SPECIAL) > prises.length) {
+    speciales = proposerLesSpeciales(graine, niveau, prises.length + 1, arme.id, portees.map((a) => a.id), race, prises)
+    if (speciales.length >= 3) return speciales
   }
+  // (MOINS DE TROIS SPÉCIALES QUI RESTENT — toutes les variations d'une arme seule prises — : des cartes ordinaires complètent)
   const pool: { cible: Cible; stat: StatDArme | StatDeFaction }[] = [
     ...portees.flatMap((a) => statsDeLArme(a).map((stat) => ({ cible: { sorte: 'arme', arme: a.id } as Cible, stat }))),
     ...STATS_DE_FACTION[race].map((stat) => ({ cible: { sorte: 'faction', race } as Cible, stat })),
@@ -436,7 +440,7 @@ export function proposer(graine: number, niveau: number, rang: number, arme: Arm
     pool.splice(pool.indexOf(choisie), 1)
     choisies.push(carte(choisie.cible, choisie.stat, rarete))
   }
-  return choisies
+  return speciales.length > 0 ? [...speciales, ...choisies].slice(0, 3) : choisies
 }
 
 /**

@@ -17132,6 +17132,18 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     tReel += dtReel
     // (`&choix` : un choix de talent s'ouvre une seconde et demie après le décollage, pour juger les cartes d'un lien)
     // (à deux, quand le second est là : son choix suit celui du premier)
+    // (`&niveau=N` : le vol part au niveau N, et toutes les cartes spéciales dues jusque-là sont à choisir d'emblée, l'une
+    // après l'autre — un banc à pleine puissance ; avec `&flot=N`, beaucoup d'ennemis)
+    if (VORTEX && parametres.has('niveau') && !choixDEssaiOuvert && enJeu && t - arriveA > 1.5 && choixDeTalent === null && !estInvite) {
+      choixDEssaiOuvert = true
+      m.invasion.niveau = Math.max(1, Math.floor(Number(parametres.get('niveau')) || 60))
+      const dues = Math.floor(m.invasion.niveau / NIVEAU_SPECIAL)
+      if (dues > 0) {
+        choixDeTalent = ouvrirLeChoix(dues - 1)
+        talentFinA = tReel + DUREE_DU_CHOIX
+        talentA = tReel
+      }
+    }
     if (VORTEX && parametres.has('choix') && !choixDEssaiOuvert && enJeu && t - arriveA > 1.5 && choixDeTalent === null && !estInvite && (!(COOP || estHote) || autres.length > 0)) {
       choixDEssaiOuvert = true
       choixDeTalent = ouvrirLeChoix(0)

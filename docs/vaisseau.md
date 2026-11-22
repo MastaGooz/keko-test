@@ -7960,3 +7960,11 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   met à zéro les insectes qu'elle abat (le chiffre montrait TOUTE LA VIE QUI LEUR RESTAIT, des milliers au niveau 60), et
   LA TEMPÊTE, qui ronge ceux qui s'y aventurent. Elles marquent l'insecte (`Ennemi.horsArmeA`, l'instant) ; la page n'en
   fait plus de chiffre. Les coups des armes, le surplus (« overkill ») compris, s'écrivent comme avant.
+- **22/11, LE BANC À PLEINE PUISSANCE (`&niveau=N`).** Keko : « propulse-moi au niveau 60, laisse-moi choisir toutes les
+  améliorations de type armement ou variation, et mets plein d'ennemis ». `&niveau=N` : une seconde et demie après le
+  décollage, le niveau passe à N et TOUTES LES SPÉCIALES DUES (une par 10 niveaux : six au 60) sont à choisir l'une après
+  l'autre ; avec `&flot=N` (insectes par seconde dès le départ) et `&cornus=P`, `&cuirassiers=P`, la foule.
+  - LA RÈGLE, pour ça : une spéciale due l'est À N'IMPORTE QUEL RANG du choix (plus seulement le premier) — prise, la
+    suivante n'est plus due, rien ne change en jeu ordinaire ; et s'il reste MOINS DE TROIS SPÉCIALES (une arme seule
+    dont cinq variations sont prises), des CARTES ORDINAIRES COMPLÈTENT jusqu'à trois (on n'en voyait plus qu'une).
+    Vérifié ; VU au niveau 60.
