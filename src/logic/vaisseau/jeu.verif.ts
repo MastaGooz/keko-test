@@ -3141,6 +3141,34 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   verifier(`le retour : tombé à 1 100, il revient à ${Math.round(ou.x)} (en deçà de la tempête, ${ici}) ; l'explosion (${deflagration}) abat les trois proches (${abattus}), épargne le lointain et la roche (${epargnes}), ${pepites} pépites tombent ; invincible deux secondes, rien ne le mord (${!mordu}) ; à la fin, rien ne le recouvre (${libre})`, Math.abs(ou.x - ici) < 1 && Math.abs(ou.y) < 1 && deflagration && abattus && epargnes && pepites >= 3 && !mordu && libre && (w.phase as string) === 'vol')
 }
 
+// LONGER LA TEMPÊTE NE MET PAS À L'ABRI (Keko, 22/11 : « si je longe le vortex, les ennemis ne me touchent jamais ») : un
+// vaisseau collé au bord de l'arène, arrêté ou qui le suit, est mordu ; les insectes n'entrent pas dans la tempête pour
+// autant — d'à peine quelques unités, quand le vaisseau tout au bord les y pousse au contact
+{
+  const cfg = { ...VAISSEAU, coque: 1e9, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, arene: { ...VAISSEAU.arene, active: true, dps: 0, roches: 0 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9 }, derive: { ...VAISSEAU.derive, active: false }, armes: [] }
+  const R = cfg.arene.rayon
+  const longer = (d: number, vitesse: number): { mordu: number; dedans: number } => {
+    const w = nouveauMonde(cfg, 5)
+    w.invasion.prochainA = 1e9
+    w.vaisseau = { ...w.vaisseau, x: d, y: 0 }
+    for (let k = 0; k < 8; k++) w.ennemis.push({ id: 100 + k, corps: { ...nouveauVaisseau(), x: d - 150 - 20 * k, y: (k - 4) * 40 }, pv: 1e9, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 } })
+    let mordu = 0
+    let dedans = 0
+    let a = 0
+    for (let i = 0; i < 60 * 10; i++) {
+      a += (vitesse / d) / 60
+      w.vaisseau = { ...w.vaisseau, x: Math.cos(a) * d, y: Math.sin(a) * d, vx: -Math.sin(a) * vitesse, vy: Math.cos(a) * vitesse }
+      const c0 = w.coque
+      avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+      if (w.coque < c0) mordu++
+      for (const e of w.ennemis) dedans = Math.max(dedans, Math.hypot(e.corps.x, e.corps.y) - R)
+    }
+    return { mordu, dedans }
+  }
+  const cas = [[R - 60, 0], [R - 20, 0], [R - 5, 0], [R - 20, 40], [R - 5, 40]].map(([d, vit]) => ({ d, vit, ...longer(d, vit) }))
+  verifier(`au bord de la tempête (${R}), le vaisseau est mordu : ${cas.map((x) => `à ${x.d}${x.vit > 0 ? ` en le suivant à ${x.vit}` : ''}, ${x.mordu} morsures, au plus ${x.dedans.toFixed(1)} dans la tempête`).join(' ; ')}`, cas.every((x) => x.mordu >= 3) && cas.every((x) => x.dedans < 12))
+}
+
 // ABATTU, LES INSECTES ERRENT (Keko, 21/11 : « pour éviter qu'ils se regroupent tous comme des idiots à l'endroit où on va
 // respawn ») : trente insectes autour de l'épave ne s'y entassent pas en huit secondes
 {

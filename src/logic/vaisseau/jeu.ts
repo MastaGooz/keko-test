@@ -405,6 +405,8 @@ export const VAISSEAU = {
      * quand il erre. *De moi.*
      */
     eviteTempete: 90,
+    /** EN CHASSE, l'insecte va jusqu'au bord de la tempête : sur cette distance avant lui, il perd la part de sa course qui y entre (Keko, 22/11 — voir `conduireLInsecte`). *De moi.* */
+    approcheDuBord: 30,
     heurteRoche: 0.6,
   },
   /** Le manche, en pixels CSS : son rayon (au bord, la pleine poussée), sa zone morte. */
@@ -2658,7 +2660,25 @@ function conduireLInsecte(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number, ev
   }
   // (IL ÉVITE LA TEMPÊTE — voir `eviteTempete` : repoussé vers le centre, d'autant plus fort qu'il en est près, plus fort que
   // sa chasse au bord même)
-  if (c.arene.active) {
+  // (EN CHASSE, IL VA JUSQU'AU BORD — Keko, 22/11 : « si je longe le vortex, les ennemis ne me touchent jamais » : repoussé
+  // dès `eviteTempete` du bord, il s'arrêtait à soixante de lui, et un vaisseau qui le longeait était hors d'atteinte. Il
+  // perd seulement, sur `approcheDuBord`, la part de sa course qui va vers la tempête, et n'est repoussé qu'au bord même)
+  const chasse = e.fait === 'aggro' && !(I.sansPortail && abattu)
+  if (c.arene.active && chasse) {
+    const dc = Math.hypot(b.x, b.y) || 1
+    const bord = c.arene.rayon - rayonDe(c, e)
+    const ux = b.x / dc
+    const uy = b.y / dc
+    const sort = direction.x * ux + direction.y * uy
+    const u = (dc - (bord - I.approcheDuBord)) / I.approcheDuBord
+    if (u > 0) {
+      const r = (sort > 0 ? sort * Math.min(1, u) : 0) + (dc > bord ? 3 * Math.min(1.5, (dc - bord) / I.approcheDuBord) : 0)
+      const sx = direction.x - ux * r
+      const sy = direction.y - uy * r
+      const n = Math.hypot(sx, sy) || 1
+      direction = { x: sx / n, y: sy / n }
+    }
+  } else if (c.arene.active) {
     const dc = Math.hypot(b.x, b.y) || 1
     const seuil = c.arene.rayon - I.eviteTempete
     if (dc > seuil) {
@@ -2676,6 +2696,19 @@ function conduireLInsecte(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number, ev
   e.corps = voler(c, k !== 1 ? { ...c.ennemi, poussee: c.ennemi.poussee * k, vitesseMax: c.ennemi.vitesseMax * k } : c.ennemi, b, dt, direction, m.detruits).vaisseau
   const vit = Math.hypot(e.corps.vx, e.corps.vy)
   if (gele && vit > c.ennemi.vitesseMax * k) e.corps = { ...e.corps, vx: (e.corps.vx * c.ennemi.vitesseMax * k) / vit, vy: (e.corps.vy * c.ennemi.vitesseMax * k) / vit }
+  // (… ET N'Y ENTRE PAS : son élan l'y aurait porté ; au bord, il est retenu, sa vitesse vers la tempête perdue — il glisse
+  // le long d'elle)
+  if (c.arene.active && chasse) {
+    const dc = Math.hypot(e.corps.x, e.corps.y) || 1
+    const bord = c.arene.rayon - rayonDe(c, e)
+    // (seulement s'il était en deçà : un insecte que la tempête tient déjà — projeté par un coup — en est repoussé, plus haut)
+    if (dc > bord && Math.hypot(b.x, b.y) <= bord + 0.5) {
+      const ux = e.corps.x / dc
+      const uy = e.corps.y / dc
+      const sort = Math.max(0, e.corps.vx * ux + e.corps.vy * uy)
+      e.corps = { ...e.corps, x: ux * bord, y: uy * bord, vx: e.corps.vx - ux * sort, vy: e.corps.vy - uy * sort }
+    }
+  }
   return []
 }
 

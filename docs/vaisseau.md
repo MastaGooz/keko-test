@@ -8046,3 +8046,11 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   avant. Un test le garde (à 25, dans la portée d'aimant, soin et plaque restent immobiles).
 - **22/11, L'AIMANT NE S'AIMANTE PLUS NON PLUS.** Keko : « je veux pas que l'aimant soit lui-même aimanté non plus » :
   comme le soin et la plaque, on le prend en passant dessus (`aPasser`). Le test d'immobilité le compte.
+- **22/11, LONGER LA TEMPÊTE NE MET PLUS À L'ABRI.** Keko : « si je longe le vortex, les ennemis ne me touchent jamais ».
+  Mesuré : l'insecte était repoussé vers le centre dès `eviteTempete` (90) du bord, et s'arrêtait à une soixantaine de
+  lui ; un vaisseau à 20 du bord ou plus près n'était jamais mordu (0 morsure en 10 s, arrêté ou en le suivant). EN
+  CHASSE, l'insecte va désormais jusqu'au bord : sur `approcheDuBord` (30) avant lui, il perd la part de sa course qui va
+  vers la tempête, et au bord même il est retenu, sa vitesse vers elle perdue — il glisse le long. Rejoué : 6 à 8 morsures
+  en 10 s à 940, 980 et 995, arrêté ou en le suivant ; il ne déborde que de 8 unités au plus, quand le vaisseau tout au
+  bord le pousse au contact. L'errance (le joueur abattu) garde l'ancien évitement, large. Un vaisseau enfoncé DANS la
+  tempête reste hors d'atteinte : elle le ronge, et ses roches le frappent. Un test le garde.
