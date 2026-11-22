@@ -3795,9 +3795,11 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   a.plaques = [false, true, true]
   a.pepites.push({ id: 904, x: 25, y: 0, vx: 0, vy: 0, graine: 1, minerai: 'fer', valeur: 0, soin: true })
   a.pepites.push({ id: 905, x: -25, y: 0, vx: 0, vy: 0, graine: 1, minerai: 'fer', valeur: 0, plaque: true })
+  // (… ni l'aimant lui-même — Keko, 22/11 : « je veux pas que l'aimant soit lui-même aimanté non plus »)
+  a.pepites.push({ id: 906, x: 0, y: 25, vx: 0, vy: 0, graine: 1, minerai: 'fer', valeur: 0, aimant: true })
   for (let i = 0; i < 60 * 3; i++) avancerLeMonde(cfg, a, 1 / 60, { x: 0, y: 0 })
-  const immobiles = a.pepites.filter((p) => (p.soin === true && p.x === 25) || (p.plaque === true && p.x === -25)).length
-  verifier(`à 25 (portée d'aimant ${cfg.forage.aimant}), le soin et la plaque ne viennent pas : ${immobiles} / 2 immobiles, blindage ${Math.round((a.coque / cfg.coque) * 100)} %`, immobiles === 2 && a.coque === cfg.coque * 0.5 && a.plaques[0] === false)
+  const immobiles = a.pepites.filter((p) => (p.soin === true && p.x === 25) || (p.plaque === true && p.x === -25) || (p.aimant === true && p.y === 25)).length
+  verifier(`à 25 (portée d'aimant ${cfg.forage.aimant}), le soin, la plaque et l'aimant ne viennent pas : ${immobiles} / 3 immobiles, blindage ${Math.round((a.coque / cfg.coque) * 100)} %`, immobiles === 3 && a.coque === cfg.coque * 0.5 && a.plaques[0] === false)
   // (à deux : le second blessé, le premier plein et posé dessus — il le laisse ; le second passe dessus, il le prend)
   const q = nouveauMonde(cfg, 6)
   ajouterUnPilote(cfg, q, 40, 0)

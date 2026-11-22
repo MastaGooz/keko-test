@@ -5931,7 +5931,9 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
     const attend = c.invasion.active && m.t < m.renaitJusque
     // (UNE PLAQUE, UN SOIN NE S'AIMANTENT PAS — Keko, 22/11 : « je veux pas que les soins soient attirés par l'aimant, ni le
     // surblindage » : on les prend en passant dessus, le vaisseau les touche)
-    const ramassage = reserve ? Math.max(c.forage.ramassage, c.rayon + 3) : c.forage.ramassage
+    // (… NI L'AIMANT LUI-MÊME — Keko, 22/11 : « je veux pas que l'aimant soit lui-même aimanté non plus »)
+    const aPasser = reserve || p.aimant === true
+    const ramassage = aPasser ? Math.max(c.forage.ramassage, c.rayon + 3) : c.forage.ramassage
     if (d <= ramassage && !soutePleine && !attend) {
       m.pepites.splice(i, 1)
       if (c.invasion.active) gagnerLaPepite(c, m, p, ev)
@@ -5979,11 +5981,11 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
     p.vx *= frein
     p.vy *= frein
     const aimant = c.forage.aimant * (plusProche.e === null ? c.foreuse.aimant : 1) // (l'aimant du joueur suit sa foreuse)
-    if (d <= aimant && !soutePleine && !attend && !reserve && plusProche.e === null && c.forage.accelerationAimantee > 0) {
+    if (d <= aimant && !soutePleine && !attend && !aPasser && plusProche.e === null && c.forage.accelerationAimantee > 0) {
       p.aimanteeA = m.t
       if (m.equipage !== undefined) p.par = ici
     }
-    if (d <= aimant && !soutePleine && !attend && !reserve) {
+    if (d <= aimant && !soutePleine && !attend && !aPasser) {
       const tirage = c.forage.vitessePepite * (1 - d / aimant) + 40
       p.vx += (dx / d) * tirage * dt * 6
       p.vy += (dy / d) * tirage * dt * 6

@@ -8044,3 +8044,5 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   le surblindage » : ni la portée d'aimant ni l'aimant ramassé ne les tirent ; on les prend en passant dessus (le vaisseau
   les touche, `c.rayon + 3`), et toujours seulement si l'on en manque. Les pépites et l'aimant lui-même s'aimantent comme
   avant. Un test le garde (à 25, dans la portée d'aimant, soin et plaque restent immobiles).
+- **22/11, L'AIMANT NE S'AIMANTE PLUS NON PLUS.** Keko : « je veux pas que l'aimant soit lui-même aimanté non plus » :
+  comme le soin et la plaque, on le prend en passant dessus (`aPasser`). Le test d'immobilité le compte.
