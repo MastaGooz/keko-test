@@ -12,7 +12,7 @@
  */
 import './vaisseau.css'
 import * as noyau from 'pixelfx'
-import { ajouterUnPilote, avancerLEquipage, prendreLaMain, type SorteDInsecte, SORTES_D_INSECTES, gabaritDInsecte, gemmesDuButin, butinDeLaRoche, pointDeRetour, rayonDe, rocheDeLaTempete, vieMultipliee, degatsMultiplies, placeDeLEcharde, frontDeLaNova, ancreDansLeMonde, zoneDuDe, coupeDUnCube, formeDeLaCoupe, liesAuDrain, encaisser, type Ennemi, type Evenement, type Monde, impactDuRayon, asteroidesVisibles, avancerLeMonde, finDuTrio, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur, xpDuNiveau, ennemiLePlusProche, ennemiVerrouille, verrouiller, angleDuBalayage, aPlusieurs, alliesAuRetour } from '../../logic/vaisseau/jeu.ts'
+import { ajouterUnPilote, avancerLEquipage, prendreLaMain, type SorteDInsecte, SORTES_D_INSECTES, gabaritDInsecte, gemmesDuButin, butinDeLaRoche, pointDeRetour, rayonDe, rocheDeLaTempete, vieMultipliee, degatsMultiplies, placeDeLEcharde, frontDeLaNova, ancreDansLeMonde, zoneDuDe, coupeDUnCube, formeDeLaCoupe, liesAuDrain, encaisser, type Ennemi, type Evenement, type Monde, impactDuRayon, asteroidesVisibles, avancerLeMonde, finDuTrio, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur, xpDuNiveau, ennemiLePlusProche, ennemiVerrouille, verrouiller, angleDuBalayage, aPlusieurs, alliesAuRetour, recompenseDeFin, type LigneDeRecompense } from '../../logic/vaisseau/jeu.ts'
 import { ETALONS as ETALONS_DU_BANC, acheter, ajouterLesPiecesDEssai, capacite, poidsTotal, POIDS_SERIE, configDuHangar, demonter, demonterA, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, montantCourt, monteeA, monter, monterA, peutAcheter, peutMonter, perdreLesMontees, estDeBase, exemplaires, libres, pieceDe, piecesDe, placeLourde, possede, aimantMonte, radarMonte, type Jauge, type Piece, type Sorte } from '../../logic/vaisseau/hangar.ts'
 import { drawWord, spell } from 'pixelfx/fx/ui/_lib'
 import { firePuff, hotFirst, smokePuff } from 'pixelfx/fx/fire/_lib'
@@ -1107,9 +1107,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     souris = null // (la souris ne vise qu'une fois bougée pendant ce vol)
     graineDuVol = parametres.has('graine') ? Math.max(0, Math.floor(Number(parametres.get('graine')) || 0)) : 1 + Math.floor(Math.random() * 1e6)
     CONF = configDuVol(armeDuVortex(), graineDuVol)
-    // (un vol neuf : plus aucun bonus de talent)
+    // (un vol neuf : plus aucun bonus de talent, pas encore de récompense)
     confSansTalents = null
     bonusDuVol = []
+    recompense = null
+    finDEssaiFaite = false
     // `&zero` (Keko, 13/11 : « la coque et le propulseur de base avec un poids de 0 et toutes ces statistiques à 0 : voir,
     // avec aucune statistique, comment se déplace le vaisseau ») : un banc d'essai — le châssis et le propulseur ne
     // pèsent plus rien, et le propulseur ne donne ni poussée, ni pointe, ni rotation. Le reste (outils, armes) ne change pas.
@@ -1497,6 +1499,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** La configuration d'avant le premier talent du vol, et les bonus pris depuis (voir `avecLesBonus`). */
   let confSansTalents: ConfigVaisseau | null = null
   let bonusDuVol: Bonus = []
+  /** La récompense de ce vol, une fois la partie finie (null avant) — versée au trésor quand elle est calculée (voir `dessinerLaFin`). */
+  let recompense: { lignes: LigneDeRecompense[]; total: number } | null = null
+  /** `&fin` : la fin d'essai déjà jouée pour ce vol. */
+  let finDEssaiFaite = false
   /**
    * L'ÉCHELLE DE ZONE DU VOL (Keko, 22/11 : « quand on augmente la zone d'une attaque, que la totalité de l'animation
    * prenne ça en compte, pour un rendu visuel très cohérent ») : 1 + la somme des cartes « Zone » prises (une seule arme
@@ -3447,22 +3453,182 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.rect(px + w - 1, py, 1, h, ACIER_DES_PLAQUES[2])
     }
   }
-  /** LA FIN DE LA PARTIE : le portail est tombé — un voile, la vague atteinte, « Rejouer ». */
+  /**
+   * LA FIN DE LA PARTIE (Keko, 22/11 : « retravailler l'écran de Game Over, et une récompense en crédits à la fin d'une
+   * partie ; un écran fin de partie, avec l'argent qui apparaît, le calcul qui est rapidement fait, un truc bien juicy,
+   * bien animé, joli ») — voir `recompenseDeFin` : LE TITRE TOMBE ET FRAPPE (secousse, gerbe) ; dessous, le niveau ; puis
+   * LES LIGNES DU CALCUL, une à une — elles glissent en place, leur nombre et leurs crédits COMPTENT jusqu'au bout ; un trait
+   * s'ouvre ; LE TOTAL compte en crépitant, puis FRAPPE en grand — il bondit, une pluie de crédits jaillit, la caisse
+   * sonne ; enfin les boutons. Une tape avant la fin saute au bout. LES CRÉDITS SONT VERSÉS DÈS L'ÉCRAN : quitter avant ne
+   * fait rien perdre.
+   */
   let finA = -10
+  /** Les crédits qui jaillissent du total quand il frappe, et les étincelles du titre (en pixels de l'interface). */
+  const piecesDeLaFin: { x: number; y: number; vx: number; vy: number; t0: number; vie: number; c: number; piece: boolean }[] = []
+  /** Les heures de l'écran, depuis `finA` : le titre frappe, la première ligne, l'écart entre deux, le total, sa frappe, les boutons. */
+  const HEURES_DE_LA_FIN = { titre: 0.35, lignes: 0.85, ecart: 0.38, compte: 0.32, total: 0.35, compteTotal: 0.9, boutons: 0.5 }
+  /** Ce que l'écran a déjà fait sonner ou jaillir (une fois chacun). */
+  let finSonnee = { titre: false, lignes: 0, frappe: false, tic: 0 }
+  /** Les lignes montrées : la prime, le niveau, les insectes, les roches ; les grands de l'équipe, s'il y en a eu. */
+  const lignesMontrees = (r: { lignes: LigneDeRecompense[] }): LigneDeRecompense[] => r.lignes.filter((l) => l.quoi === 'base' || l.quoi === 'niveau' || l.quoi === 'insectes' || l.quoi === 'roches' || l.nombre > 0)
+  const NOMS_DES_LIGNES: Record<LigneDeRecompense['quoi'], string> = { base: 'Prime de partie', niveau: 'Niveau', insectes: 'Insectes', roches: 'Astéroïdes', miniBoss: 'Mini-boss (équipe)', boss: 'Boss (équipe)' }
+  /** Le moment de l'écran : la fin des lignes, l'instant du total, de sa frappe, des boutons. */
+  const tempsDeLaFin = (n: number): { total: number; frappe: number; boutons: number } => {
+    const H0 = HEURES_DE_LA_FIN
+    const total = H0.lignes + (n - 1) * H0.ecart + H0.compte + H0.total
+    return { total, frappe: total + H0.compteTotal, boutons: total + H0.compteTotal + H0.boutons }
+  }
+  /** Le symbole des crédits en grand (`e` pixels par pixel), son cerne, sa lueur. */
+  function dessinerUnGrandCredit(p: Peintre, x0: number, y0: number, e: number): void {
+    const x = Math.round(x0)
+    const y = Math.round(y0)
+    p.glow(x, y, 6 * e, RUNE[2], 0.4)
+    for (const [dx, dy] of CERNE_DU_CREDIT) p.rect(x + dx * e, y + dy * e, e, e, ENCRE_DU_CREDIT)
+    for (const [dx, dy, c] of PIXELS_DU_CREDIT) p.rect(x + dx * e, y + dy * e, e, e, c)
+  }
   function dessinerLaFin(p: Peintre): void {
     if (!m.invasion.finie) return
-    const u0 = sortie((t - finA) / 0.4)
-    p.rect(0, 0, W, H, NUIT, 0.78 * u0)
+    // (LA RÉCOMPENSE : calculée une fois, versée tout de suite — ce pilote, son niveau commun, son tableau, les grands de l'équipe)
+    if (recompense === null) {
+      recompense = recompenseDeFin(CONF, m.invasion.niveau, m.tableau, { miniBoss: m.invasion.miniBoss, boss: m.invasion.boss })
+      credits += recompense.total
+      sauver()
+      finSonnee = { titre: false, lignes: 0, frappe: false, tic: 0 }
+      piecesDeLaFin.length = 0
+    }
+    const rc = recompense
+    const lignes = lignesMontrees(rc)
+    const T = tempsDeLaFin(lignes.length)
+    const H0 = HEURES_DE_LA_FIN
+    const tau = t - finA
+    const u0 = sortie(tau / 0.4)
+    p.rect(0, 0, W, H, NUIT, 0.84 * u0)
     zones = []
-    const cy = Math.round(H / 2)
-    // (SANS PORTAIL, LES VIES ÉPUISÉES, ou tous abattus à la fois — voir `invasion.vies`)
-    motEnRelief(p, CONF.invasion.sansPortail ? 'Partie terminée' : 'Portail perdu', W / 2, cy - 30 + Math.round((1 - u0) * 8), true, TITRE)
-    ecrire(p, CONF.invasion.sansPortail ? `Niveau ${m.invasion.niveau}` : `Vague ${Math.max(1, m.invasion.vague)} / Niveau ${m.invasion.niveau}`, W / 2, cy - 8, COQUE[6], { align: 'center', police: GRAS })
-    // (à distance, pas de « Rejouer » : on rentre ensemble au hangar, et on repart de là)
+    // (LA PLACE DE CHAQUE CHOSE : tout centré, le bloc au milieu de l'écran)
+    const L = 11
+    const pw = Math.min(W - 12, 210)
+    const x0 = Math.round((W - pw) / 2)
+    const hauteur = 22 + 14 + lignes.length * L + 8 + 42 + 8 + 17
+    const yTitre = Math.max(4, Math.round((H - hauteur) / 2)) + 4
+    // LE TITRE : il tombe d'en haut, frappe, tremble un instant
+    const ut = Math.min(1, tau / H0.titre)
+    const chute = Math.round(-(1 - ut) * (1 - ut) * 40)
+    const apres = tau - H0.titre
+    const tremble = apres >= 0 && apres < 0.25 ? Math.round(Math.sin(apres * 70) * 2 * (1 - apres / 0.25)) : 0
+    if (tau >= 0.05) motEnRelief(p, CONF.invasion.sansPortail ? 'Partie terminée' : 'Portail perdu', W / 2 + tremble, yTitre + chute, true, TITRE)
+    if (!finSonnee.titre && tau >= H0.titre) {
+      finSonnee.titre = true
+      jouer('frappe')
+      secousse = Math.max(secousse, 0.5)
+      for (let i = 0; i < 26; i++) {
+        const a = R.range(Math.PI, Math.PI * 2)
+        const vit = R.range(30, 110)
+        piecesDeLaFin.push({ x: W / 2 + R.range(-40, 40), y: yTitre + 10, vx: Math.cos(a) * vit, vy: Math.sin(a) * vit, t0: t, vie: R.range(0.3, 0.7), c: i % 3 === 0 ? N.WHITE : PEPITE[2 + (i % 2)], piece: false })
+      }
+    }
+    // le niveau
+    const yNiv = yTitre + 22
+    const un = sortie((tau - H0.titre - 0.05) / 0.3)
+    if (un > 0) ecrire(p, `Niveau ${m.invasion.niveau}`, W / 2, yNiv + Math.round((1 - un) * 4), COQUE[6], { align: 'center', police: GRAS })
+    // LE PANNEAU DU CALCUL : une plaque sombre, cernée d'or, qui s'ouvre
+    const yP = yNiv + 14
+    const hp = lignes.length * L + 8 + 42
+    const up = sortie((tau - H0.lignes + 0.25) / 0.25)
+    if (up > 0) {
+      const hv = Math.round(hp * up)
+      p.rect(x0, yP, pw, hv, N.hex('#0e0b16'), 0.9)
+      p.rect(x0, yP, pw, 1, PEPITE[1], 0.8 * up)
+      p.rect(x0, yP + hv - 1, pw, 1, PEPITE[1], 0.8 * up)
+      p.rect(x0, yP, 1, hv, PEPITE[1], 0.5 * up)
+      p.rect(x0 + pw - 1, yP, 1, hv, PEPITE[1], 0.5 * up)
+    }
+    // LES LIGNES : chacune glisse depuis la gauche, son nombre et ses crédits comptent jusqu'au bout
+    const compte = (u: number, n: number): number => Math.round(n * (1 - Math.pow(1 - Math.max(0, Math.min(1, u)), 3)))
+    lignes.forEach((l, i) => {
+      const ti = H0.lignes + i * H0.ecart
+      const ul = (tau - ti) / 0.15
+      if (ul < 0) return
+      if (finSonnee.lignes <= i) {
+        finSonnee.lignes = i + 1
+        jouer('clic')
+      }
+      const glisse = Math.round((1 - sortie(Math.min(1, ul))) * -14)
+      const uc = (tau - ti) / H0.compte
+      const y = yP + 6 + i * L
+      const nom = l.quoi === 'base' ? NOMS_DES_LIGNES.base : `${NOMS_DES_LIGNES[l.quoi]} ${compte(uc, l.nombre)}`
+      // (trop longue pour le panneau, comptée jusqu'au bout — un mini-boss sur un téléphone debout : la lettre fine)
+      const police = largeurDe(`${NOMS_DES_LIGNES[l.quoi]} ${l.nombre}`, GRAS) + largeurDe(`+${l.credits}`, GRAS) + 30 > pw ? TEXTE : GRAS
+      ecrire(p, nom, x0 + 8 + glisse, y, COQUE[6], { police })
+      const cr = compte(uc, l.credits)
+      const fini = uc >= 1
+      const dit = `+${cr}`
+      const xc = x0 + pw - 16
+      ecrire(p, dit, xc + glisse, y, fini ? RUNE[3] : RUNE[2], { align: 'right', police: GRAS })
+      dessinerUnCredit(p, xc + 7 + glisse, y + 3)
+      // (son compte fini, un éclat sur ses crédits)
+      const ue = (tau - ti - H0.compte) / 0.25
+      if (ue >= 0 && ue < 1) p.glow(xc - largeurDe(dit, GRAS) / 2, y + 3, 10, RUNE[2], 0.5 * (1 - ue))
+    })
+    // LE TOTAL : un trait s'ouvre, le total compte en crépitant, puis frappe
+    const yT = yP + 6 + lignes.length * L + 4
+    const us = sortie((tau - T.total + 0.15) / 0.2)
+    if (us > 0) p.rect(Math.round(W / 2 - (pw / 2 - 8) * us), yT, Math.round((pw - 16) * us), 1, PEPITE[2], 0.8)
+    if (tau >= T.total) {
+      const uc = (tau - T.total) / H0.compteTotal
+      const n = compte(uc, rc.total)
+      // (le crépitement du compte : un tic toutes les six centièmes)
+      if (uc < 1 && tau - finSonnee.tic > 0.06) {
+        finSonnee.tic = tau
+        jouer('ramasse')
+      }
+      // (la frappe : il bondit, une pluie de crédits jaillit, la caisse sonne)
+      const uf = tau - T.frappe
+      if (!finSonnee.frappe && uf >= 0) {
+        finSonnee.frappe = true
+        jouer('vente')
+        secousse = Math.max(secousse, 0.6)
+        if (typeof navigator.vibrate === 'function') vibrer([25, 40, 25])
+        for (let i = 0; i < 40; i++) {
+          const a = R.range(0, Math.PI * 2)
+          const vit = R.range(40, 150)
+          piecesDeLaFin.push({ x: W / 2, y: yT + 14, vx: Math.cos(a) * vit, vy: Math.sin(a) * vit - 40, t0: t, vie: R.range(0.5, 1.1), c: i % 4 === 0 ? N.WHITE : RUNE[1 + (i % 3)], piece: i % 3 === 0 })
+        }
+      }
+      const bond = uf >= 0 && uf < 0.4 ? 1 + 0.5 * Math.exp(-uf * 12) * Math.cos(uf * 30) : 1
+      const e = Math.max(1, Math.round(2 * bond))
+      const dit = `+${n}`
+      const wn = largeurDe(dit, GRAS) * e
+      const xg = Math.round(W / 2 - (wn + 4 + 7 * e) / 2)
+      if (uf >= 0 && uf < 0.6) p.glow(W / 2, yT + 14, 40, RUNE[2], 0.6 * (1 - uf / 0.6))
+      motEnRelief(p, dit, xg + wn / 2, yT + 14 - 4 * e + 2, 'cristal', GRAS, null, e)
+      dessinerUnGrandCredit(p, xg + wn + 4 + 3.5 * e, yT + 14, e)
+      if (uf >= 0) ecrire(p, 'crédits gagnés', W / 2, yT + 14 + 6 * e + 2, COQUE[4], { align: 'center', police: TEXTE })
+    }
+    // les étincelles et les crédits qui jaillissent
+    for (let i = piecesDeLaFin.length - 1; i >= 0; i--) {
+      const q = piecesDeLaFin[i]
+      const age = t - q.t0
+      if (age > q.vie) {
+        piecesDeLaFin.splice(i, 1)
+        continue
+      }
+      const x = q.x + q.vx * age
+      const y = q.y + q.vy * age + 140 * age * age
+      const a = 1 - age / q.vie
+      if (q.piece) dessinerUnCredit(p, x, y)
+      else p.rect(Math.round(x), Math.round(y), 1, 1, q.c, a)
+    }
+    // LES BOUTONS, l'un à côté de l'autre (à distance, pas de « Rejouer » : on rentre ensemble au hangar, et on repart de là)
     const ensemble = estHote || estInvite
-    if (t - finA > 0.8) {
-      const bw = largeurDe('Rejouer', GRAS) + 30
-      if (!ensemble) bouton(p, Math.round(W / 2 - bw / 2), cy + 10, bw, 17, 'Rejouer', true, () => {
+    const yB = Math.min(H - 21, yP + hp + 8)
+    if (tau >= T.boutons) {
+      const ub = sortie((tau - T.boutons) / 0.25)
+      const dy = Math.round((1 - ub) * 6)
+      const bw = largeurDe('Rejouer', GRAS) + 26
+      const bh = largeurDe('Hangar', GRAS) + 26
+      const tout = ensemble ? bh : bw + 6 + bh
+      const xb = Math.round(W / 2 - tout / 2)
+      if (!ensemble) bouton(p, xb, yB + dy, bw, 17, 'Rejouer', true, () => {
         choixDeTalent = null
         reserveDeTalents = 0
         taches = []
@@ -3470,15 +3636,20 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         demarrer()
       }, 'achat')
       // (… ou retour au hangar)
-      const bh = largeurDe('Hangar', GRAS) + 30
-      bouton(p, Math.round(W / 2 - bh / 2), ensemble ? cy + 10 : cy + 32, bh, 17, 'Hangar', true, () => {
+      bouton(p, ensemble ? xb : xb + bw + 6, yB + dy, bh, 17, 'Hangar', true, () => {
         choixDeTalent = null
         reserveDeTalents = 0
         taches = []
         enJeu = false
       }, 'retour', 'acier')
-    }
-    zone(0, 0, W, H, () => {}, null)
+      zone(0, 0, W, H, () => {}, null)
+    } else zone(0, 0, W, H, () => {
+      // (UNE TAPE SAUTE AU BOUT : les lignes comptées, le total frappé, les boutons là)
+      if (tau > 0.3) {
+        finA = t - T.boutons
+        finSonnee = { ...finSonnee, titre: true, lignes: 99 }
+      }
+    }, null)
   }
   // (`&hangar` : droit au hangar, sans l'accueil — pour juger le salon d'un lien)
   let accueil = !parametres.has('direct') && !parametres.has('hangar')
@@ -16998,6 +17169,18 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           }
         } else if (estInvite) r = { chocs: [], evenements: [] }
         else r = avancerLeMonde(CONF, m, PAS, direction, ouRegarder, false)
+        // (`&fin=N` : la partie finit une seconde après le décollage, au niveau N — 20 sans nombre —, avec un tableau fait
+        // pour lui : pour juger l'écran de fin et sa récompense d'un lien ; les crédits gagnés vont au trésor)
+        if (VORTEX && parametres.has('fin') && !finDEssaiFaite && m.t > 1 && !m.invasion.finie) {
+          finDEssaiFaite = true
+          const n = Math.max(1, Math.floor(Number(parametres.get('fin')) || 20))
+          m.invasion.niveau = n
+          m.tableau = { insectes: n * 70, points: n * 130, roches: Math.round(n * 1.5), pointsDeRoches: Math.round(n * 8) }
+          m.invasion.miniBoss = Math.floor(n / 25)
+          m.invasion.boss = Math.floor(n / 60)
+          m.invasion.finie = true
+          r.evenements.push({ type: 'fin', vague: 0 })
+        }
         // (`&crash=N` : le vaisseau est détruit N secondes après le décollage, pour essayer la perte des pièces d'un lien)
         if (parametres.has('crash') && !crashFait && m.phase === 'vol' && m.t > (Number(parametres.get('crash')) || 3)) {
           crashFait = true // (une fois : dans le jeu du vortex on revient, et on ne remeurt pas aussitôt)

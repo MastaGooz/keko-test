@@ -1,7 +1,7 @@
 /**
  * Vérifications du vaisseau, sans navigateur : le temps est injecté.
  */
-import { chanceDePlaque, ajouterUnPilote, avancerLEquipage, etatDuPilote, partDe, gabaritDInsecte, rayonDe, rocheDeLaTempete, vieMultipliee, cadenceDeLaVague, asteroideDeLaCase, coupeDUnCube, asteroidesAutour, avancer, avancerLeMonde, encaisser, purger, impactDuRayon, lancerLaBombe, larguer, porteeDeLaBombe, MINERAIS, nouveauMonde, nouveauVaisseau, solidite, voler, totalDe, stationDeLaCase, stationLaPlusProche, VAISSEAU, verrouiller, ennemiLePlusProche, type ConfigVaisseau, type Ennemi, type Evenement, type Vaisseau, xpDuNiveau, gemmesDuButin, tire, type Pepite } from './jeu.ts'
+import { recompenseDeFin, tableauVide, chanceDePlaque, ajouterUnPilote, avancerLEquipage, etatDuPilote, partDe, gabaritDInsecte, rayonDe, rocheDeLaTempete, vieMultipliee, cadenceDeLaVague, asteroideDeLaCase, coupeDUnCube, asteroidesAutour, avancer, avancerLeMonde, encaisser, purger, impactDuRayon, lancerLaBombe, larguer, porteeDeLaBombe, MINERAIS, nouveauMonde, nouveauVaisseau, solidite, voler, totalDe, stationDeLaCase, stationLaPlusProche, VAISSEAU, verrouiller, ennemiLePlusProche, type ConfigVaisseau, type Ennemi, type Evenement, type Vaisseau, xpDuNiveau, gemmesDuButin, tire, type Pepite } from './jeu.ts'
 import { acheter, configDuHangar, hangarNeuf, monter, pieceDe } from './hangar.ts'
 import { depuisTexte, retirerLesPilotes, retirerUnPilote, versTexte, vuDu, vuDuSecond } from './reseau.ts'
 
@@ -3777,6 +3777,26 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   q.pepites.push({ id: 903, x: 0, y: 0, vx: 0, vy: 0, graine: 1, minerai: 'fer', valeur: 0, soin: true })
   for (let i = 0; i < 60 * 4; i++) avancerLEquipage([cfg, cfg], q, 1 / 60, [{ x: 0, y: 0 }, { x: 0, y: 0 }], undefined, false)
   verifier(`à deux, le soin sous le premier (plein) va au second, blessé : ${Math.round((etatDuPilote(q, 1).coque / cfg.coque) * 100)} %, le premier ${Math.round((q.coque / cfg.coque) * 100)} %`, etatDuPilote(q, 1).coque > cfg.coque * 0.5 && q.coque === cfg.coque && !q.pepites.some((p) => p.soin === true))
+}
+
+// LA RÉCOMPENSE DE FIN (Keko, 22/11 : « au minimum une centaine de crédits ; à un niveau 100 où on a fait pas mal de
+// choses, plusieurs milliers » ; le coup fatal au pilote qui le porte ; les mini-boss et les boss à l'équipe)
+{
+  const cfg: ConfigVaisseau = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9 }, derive: { ...VAISSEAU.derive, active: false }, armes: [] }
+  const rien = recompenseDeFin(cfg, 1, tableauVide(), { miniBoss: 0, boss: 0 })
+  // (une partie de niveau 100 bien remplie : 6 000 insectes, un sur six cornu, un sur trente cuirassier, 150 roches, 4 mini-boss, 1 boss)
+  const pts = 6000 * (0.5 * 2 + 0.3 * 1) + 1000 * 5 + 200 * 15
+  const gros = recompenseDeFin(cfg, 100, { insectes: 7200, points: pts, roches: 150, pointsDeRoches: 150 * 6 }, { miniBoss: 4, boss: 1 })
+  const dix = recompenseDeFin(cfg, 10, { insectes: 250, points: 450, roches: 6, pointsDeRoches: 30 }, { miniBoss: 0, boss: 0 })
+  verifier(`la récompense : niveau 1 sans rien, ${rien.total} ; niveau 10 ordinaire, ${dix.total} ; niveau 100 bien rempli, ${gros.total} (${gros.lignes.map((l) => `${l.quoi} ${l.credits}`).join(', ')})`, rien.total === 100 && dix.total > 150 && dix.total < 600 && gros.total > 3000 && gros.total < 12000)
+  // (le coup fatal : à deux, une roche et un insecte abattus au tour du second sont à lui ; un grand, à l'équipe)
+  const w = nouveauMonde(cfg, 3)
+  ajouterUnPilote(cfg, w, 60, 0)
+  const insecte = (id: number, x: number, extra: Partial<Ennemi> = {}): Ennemi => ({ id, corps: { ...nouveauVaisseau(), x, y: 0 }, pv: 0, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, ...extra })
+  w.ennemis.push(insecte(700, 400, { sorte: 'cornu' }), insecte(701, 420, { asteroide: { rayon: 20, pvMax: 100, graine: 1, angle0: 0, vitesseAngulaire: 0 } }), insecte(702, 440, { grand: true }))
+  avancerLEquipage([cfg, cfg], w, 1 / 60, [{ x: 0, y: 0 }, { x: 0, y: 0 }], undefined, false)
+  const t0 = w.tableau
+  verifier(`le tableau compte au tour de celui qui abat (le premier : ${t0.insectes} insecte, ${t0.points} points, ${t0.roches} roche, ${t0.pointsDeRoches} points) ; le grand à l'équipe (${w.invasion.miniBoss} mini-boss) ; le second, rien (${etatDuPilote(w, 1).tableau.insectes})`, t0.insectes === 1 && t0.points === 5 && t0.roches === 1 && t0.pointsDeRoches === 5 && w.invasion.miniBoss === 1 && etatDuPilote(w, 1).tableau.insectes === 0)
 }
 
 // (TOUJOURS EN DERNIER : des blocs ajoutés après cette ligne échouaient sans faire échouer `npm run verif` — 17/11)

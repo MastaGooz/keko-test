@@ -339,6 +339,21 @@ export const VAISSEAU = {
      */
     soin: { chance: 1 / 500, part: 0.25 },
     /**
+     * LES POINTS D'UN ABATTU (Keko, 22/11 : « chaque monstre aura un score en points ») : le petit insecte, le moucheron,
+     * le cornu, le cuirassier ; une roche, `roche` points par unité de rayon (au moins `rocheMin`). Ne compte que LE COUP
+     * FATAL, au pilote qui le porte (voir `Monde.tableau`). *De moi, à rejuger.*
+     */
+    points: { insecte: 2, moucheron: 1, cornu: 5, cuirassier: 15, roche: 0.25, rocheMin: 2 },
+    /**
+     * LA RÉCOMPENSE DE FIN DE PARTIE, EN CRÉDITS (Keko, 22/11 : « une récompense qui dépend du niveau, commun, mais unique
+     * pour chaque joueur, car elle prend en compte ses kills — chaque monstre un score en points — et les astéroïdes qu'il a
+     * détruits ; les mini-boss et les boss au nom de l'équipe ; au minimum une centaine de crédits ; à un niveau 100 où on
+     * a fait pas mal de choses, plusieurs milliers ») — voir `recompenseDeFin` : `base` pour toute partie ; le niveau,
+     * `parNiveau` et `carreNiveau` × (niveau − 1)² (il compte de plus en plus) ; `parPoint` crédit par point d'insecte ;
+     * `parPointDeRoche` par point de roche ; `miniBoss` et `boss` chacun, à toute l'équipe. *De moi, à rejuger.*
+     */
+    recompense: { base: 100, parNiveau: 10, carreNiveau: 0.25, parPoint: 0.1, parPointDeRoche: 0.5, miniBoss: 100, boss: 400 },
+    /**
      * LA VIE DU PORTAIL (Keko, 14/11 : « elle s'exprime en pourcentage : il commence à 100 %, et s'il atteint 0 c'est
      * la fin de la partie ; pour l'instant les ennemis lui enlèvent 1 % à chaque fois qu'ils passent ») : `viePortail`
      * au départ, `degatsAuPortail` par insecte qui le traverse. À zéro, la partie est FINIE (`fin`) : plus rien n'avance.
@@ -1136,6 +1151,8 @@ export type Ennemi = {
   sorte?: SorteDInsecte
   /** UN GRAND : un mini-boss, un boss (aucun encore) — une vrille le saisit sans l'immobiliser. */
   grand?: boolean
+  /** Un grand qui est UN BOSS (sinon, un mini-boss) — voir `invasion.recompense`. */
+  boss?: boolean
   /** Son dernier choc contre une roche qui dérive (voir `sansPortail`). */
   heurteA?: number
   /** UN ASTÉROÏDE QUI DÉRIVE (voir `derive`) : sa taille, son dessin (graine, angle, rotation), ses points au départ. */
@@ -1157,6 +1174,8 @@ export type Monde = {
   plaques: boolean[]
   /** Le blindage plein de ce pilote (sa configuration, posée à chaque pas) : à plusieurs, les autres savent s'il est blessé — voir `invasion.soin`. */
   coqueMax?: number
+  /** LE TABLEAU DE CE PILOTE (voir `invasion.points`) : ses insectes abattus et leurs points, ses roches détruites et les leurs — le coup fatal seul. */
+  tableau: Tableau
   /** Jusqu'à quel instant (`t` du monde) le joueur ne prend plus de coup — voir `invulnerabilite`. */
   intouchableJusque: number
   /** La part de la coque qui est corrompue (en points, jamais plus que la coque) — voir la configuration. */
@@ -1178,7 +1197,7 @@ export type Monde = {
   /** La prochaine roche qui dérive (voir `derive`). */
   prochaineDeriveA: number
   /** L'invasion : la vague en cours, ce qu'il lui reste à faire naître, l'instant de la prochaine naissance, ceux qui ont traversé le portail, ceux qu'on a abattus. */
-  invasion: { vague: number; aNaitre: number; prochainA: number; passes: number; abattus: number; /** L'expérience du niveau en cours, le niveau (1 au départ), l'instant du retour d'un joueur abattu. */ xp: number; niveau: number; retourA: number; /** La vie du portail, en pour cent ; à zéro, la partie est finie. */ vie: number; /** Les vies de l'équipage (voir `invasion.vies`). */ vies: number; finie: boolean; /** Les cadrans d'où vient la vague en cours (0 : est-sud, puis en tournant), et combien de ses insectes sont nés. */ cadrans: number[]; nes: number }
+  invasion: { vague: number; aNaitre: number; prochainA: number; passes: number; abattus: number; /** L'expérience du niveau en cours, le niveau (1 au départ), l'instant du retour d'un joueur abattu. */ xp: number; niveau: number; retourA: number; /** La vie du portail, en pour cent ; à zéro, la partie est finie. */ vie: number; /** Les vies de l'équipage (voir `invasion.vies`). */ vies: number; /** Les mini-boss et les boss abattus, par toute l'équipe (voir `invasion.recompense`). */ miniBoss: number; boss: number; finie: boolean; /** Les cadrans d'où vient la vague en cours (0 : est-sud, puis en tournant), et combien de ses insectes sont nés. */ cadrans: number[]; nes: number }
   tirs: Tir[]
   /** Les obus du joueur, et l'instant où chaque arme montée peut tirer à nouveau. */
   obus: Obus[]
@@ -1472,7 +1491,7 @@ export function nouveauVaisseau(): Vaisseau {
 }
 
 export function nouveauMonde(c: ConfigVaisseau = VAISSEAU, graine = 1): Monde {
-  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, coqueMax: c.coque, bouclier: c.bouclier.points, plaques: Array.from({ length: c.plaques }, () => true), intouchableJusque: -1, corruption: 0, dephaseJusque: -100, plaqueCasseeA: 0, renaitJusque: -100, rochesPrises: [], toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, prochaineDeriveA: c.derive.premier, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, vies: c.invasion.vies, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, scies: [], balises: [], givres: [], tornades: [], novas: [], echardes: [], spheres: [], puits: [], meteores: [], tentacules: [], nuees: [], rejetons: [], flaquesAcides: [], mines: [], fleaux: [], parasites: [], vrilles: [], liens: [], oeufs: [], brochettes: [], miniVers: [], hypercubes: [], des: [], coupes: [], rayonVu: null }
+  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, coqueMax: c.coque, tableau: tableauVide(), bouclier: c.bouclier.points, plaques: Array.from({ length: c.plaques }, () => true), intouchableJusque: -1, corruption: 0, dephaseJusque: -100, plaqueCasseeA: 0, renaitJusque: -100, rochesPrises: [], toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, prochaineDeriveA: c.derive.premier, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, vies: c.invasion.vies, miniBoss: 0, boss: 0, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, scies: [], balises: [], givres: [], tornades: [], novas: [], echardes: [], spheres: [], puits: [], meteores: [], tentacules: [], nuees: [], rejetons: [], flaquesAcides: [], mines: [], fleaux: [], parasites: [], vrilles: [], liens: [], oeufs: [], brochettes: [], miniVers: [], hypercubes: [], des: [], coupes: [], rayonVu: null }
 }
 
 /** Un hachage entier déterministe (celui de pixelfx), et un réel dans [0, 1) qui en sort. */
@@ -1757,6 +1776,14 @@ function abattreLEnnemi(c: ConfigVaisseau, m: Monde, e: Ennemi, ev: Evenement[],
   m.prochainEnnemiA = m.t + c.ennemi.revient
   const ro = e.asteroide
   if (c.invasion.active && ro === undefined && !sansButin) m.invasion.abattus += 1
+  // (LE TABLEAU : au pilote dont c'est le tour — celui qui porte le coup fatal ; les grands, à l'équipe — voir `invasion.points`)
+  if (c.invasion.active && !sansButin) {
+    if (ro !== undefined) m.tableau = { ...m.tableau, roches: m.tableau.roches + 1, pointsDeRoches: m.tableau.pointsDeRoches + pointsDeLaRoche(c, ro.rayon) }
+    else if (e.grand === true) {
+      if (e.boss === true) m.invasion.boss += 1
+      else m.invasion.miniBoss += 1
+    } else m.tableau = { ...m.tableau, insectes: m.tableau.insectes + 1, points: m.tableau.points + pointsDeLInsecte(c, e) }
+  }
   purger(c, m, e.corps.x, e.corps.y, ev)
   // (UNE ROCHE QUI DÉRIVE éclate comme une roche, et rend ses pépites — voir `derive`)
   if (ro !== undefined) ev.push({ type: 'eclat', x: e.corps.x, y: e.corps.y, rayon: ro.rayon, graine: ro.graine, minerai: 'fer' })
@@ -1784,6 +1811,33 @@ function abattreLEnnemi(c: ConfigVaisseau, m: Monde, e: Ennemi, ev: Evenement[],
     const val = i >= dec ? valeurs[i - dec] : undefined
     m.pepites.push({ id: m.prochainId++, x: e.corps.x, y: e.corps.y, vx: Math.cos(an) * vit + e.corps.vx * 0.3, vy: Math.sin(an) * vit + e.corps.vy * 0.3, graine: hache(e.id, i), minerai: rendues[i], ...(val === undefined ? {} : val === 0 ? { aimant: true, valeur: 0 } : val === -1 ? { plaque: true, valeur: 0 } : val === -2 ? { soin: true, valeur: 0 } : { valeur: val }) })
   }
+}
+
+/** Le tableau d'un pilote (voir `Monde.tableau`). */
+export type Tableau = { insectes: number; points: number; roches: number; pointsDeRoches: number }
+export const tableauVide = (): Tableau => ({ insectes: 0, points: 0, roches: 0, pointsDeRoches: 0 })
+/** Les points d'un insecte abattu (voir `invasion.points`). */
+export const pointsDeLInsecte = (c: ConfigVaisseau, e: Ennemi): number => c.invasion.points[e.sorte ?? 'insecte']
+/** Les points d'une roche détruite (voir `invasion.points`) : d'autant plus qu'elle est grosse. */
+export const pointsDeLaRoche = (c: ConfigVaisseau, rayon: number): number => Math.max(c.invasion.points.rocheMin, Math.round(rayon * c.invasion.points.roche))
+/**
+ * LA RÉCOMPENSE DE FIN DE PARTIE (voir `invasion.recompense`) : ce que gagne un pilote, ligne par ligne — la prime de
+ * la partie, le niveau (commun), ses insectes et ses roches (à lui), les mini-boss et les boss (à l'équipe) — et le
+ * total, en crédits entiers. Jamais moins que la prime.
+ */
+export type LigneDeRecompense = { quoi: 'base' | 'niveau' | 'insectes' | 'roches' | 'miniBoss' | 'boss'; nombre: number; credits: number }
+export function recompenseDeFin(c: ConfigVaisseau, niveau: number, tableau: Tableau, equipe: { miniBoss: number; boss: number }): { lignes: LigneDeRecompense[]; total: number } {
+  const R = c.invasion.recompense
+  const n = Math.max(0, niveau - 1)
+  const lignes: LigneDeRecompense[] = [
+    { quoi: 'base', nombre: 1, credits: R.base },
+    { quoi: 'niveau', nombre: niveau, credits: Math.round(R.parNiveau * n + R.carreNiveau * n * n) },
+    { quoi: 'insectes', nombre: tableau.insectes, credits: Math.round(tableau.points * R.parPoint) },
+    { quoi: 'roches', nombre: tableau.roches, credits: Math.round(tableau.pointsDeRoches * R.parPointDeRoche) },
+    { quoi: 'miniBoss', nombre: equipe.miniBoss, credits: equipe.miniBoss * R.miniBoss },
+    { quoi: 'boss', nombre: equipe.boss, credits: equipe.boss * R.boss },
+  ]
+  return { lignes, total: lignes.reduce((s, l) => s + l.credits, 0) }
 }
 
 /** La chance qu'une roche de `rayon` fasse tomber une plaque (voir `derive.plaque`, `recuperation`). */
@@ -5822,7 +5876,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
  * La règle d'un vaisseau ne change pas : le pilote dont c'est le tour est DANS le monde — ses champs sont ceux de
  * `Monde` —, les autres attendent dans `equipage.pilotes` ; `prendreLaMain` les échange.
  */
-export const CHAMPS_DU_PILOTE = ['phase', 'vaisseau', 'coque', 'coqueMax', 'bouclier', 'plaques', 'intouchableJusque', 'corruption', 'dephaseJusque', 'plaqueCasseeA', 'renaitJusque', 'toucheA', 'forage', 'forages', 'tirs', 'obus', 'armesA', 'extraction', 'sorti', 'boostA', 'bombes', 'charges', 'verrou', 'crache', 'drones', 'tourelles', 'flaques', 'balayage', 'rayonVu', 'canal', 'scies', 'balises', 'givres', 'tornades', 'novas', 'echardes', 'spheres', 'puits', 'meteores', 'tentacules', 'nuees', 'rejetons', 'flaquesAcides', 'mines', 'fleaux', 'parasites', 'brochettes', 'hypercubes', 'coupes', 'des', 'oeufs', 'miniVers', 'liens', 'vrilles'] as const
+export const CHAMPS_DU_PILOTE = ['phase', 'vaisseau', 'coque', 'coqueMax', 'tableau', 'bouclier', 'plaques', 'intouchableJusque', 'corruption', 'dephaseJusque', 'plaqueCasseeA', 'renaitJusque', 'toucheA', 'forage', 'forages', 'tirs', 'obus', 'armesA', 'extraction', 'sorti', 'boostA', 'bombes', 'charges', 'verrou', 'crache', 'drones', 'tourelles', 'flaques', 'balayage', 'rayonVu', 'canal', 'scies', 'balises', 'givres', 'tornades', 'novas', 'echardes', 'spheres', 'puits', 'meteores', 'tentacules', 'nuees', 'rejetons', 'flaquesAcides', 'mines', 'fleaux', 'parasites', 'brochettes', 'hypercubes', 'coupes', 'des', 'oeufs', 'miniVers', 'liens', 'vrilles'] as const
 /** Un pilote qui attend son tour : ses champs du monde, l'instant de son retour s'il est abattu, les morsures qu'il doit encaisser. */
 export type Pilote = Pick<Monde, (typeof CHAMPS_DU_PILOTE)[number]> & { retourA: number; morsures: { x: number; y: number; degats: number }[] }
 /** Les pilotes (celui dont c'est le tour, `actif`, a sa place gardée mais périmée : il est dans le monde). */

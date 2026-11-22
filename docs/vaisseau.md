@@ -7849,3 +7849,29 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     rejoint `rayon` et `largeur` dans `CLES_DE_ZONE` (vérifié : +25 %, 45 → 56,25, 28 → 35, la force ne bouge pas).
   - `&zone=N` décolle avec N % de zone sur l'arme montée. VU : la nova du Frimas à +100 %, son verglas et ses éclats deux
     fois plus grands. Les éclats de glace (le Frimas) : la carte grandit le cercle où ils attendent, pas un coup de zone.
+- **22/11, LA FIN DE PARTIE ET SA RÉCOMPENSE EN CRÉDITS.** Keko : « retravailler l'écran de Game Over et donner une
+  récompense en crédits à la fin d'une partie ; elle dépend du niveau, commun, mais elle est unique pour chaque joueur :
+  ses kills de monstres — chaque monstre un score en points —, les astéroïdes qu'il a détruits — le coup fatal
+  seulement — ; les mini-boss et les boss tués, au nom de l'équipe ; une petite formule sympa ; au minimum une centaine
+  de crédits, plusieurs milliers à un niveau 100 où on a fait pas mal de choses ; un écran juicy, l'argent qui apparaît,
+  le calcul rapidement fait ».
+  - LE TABLEAU (`Monde.tableau`, un par pilote, dans `CHAMPS_DU_PILOTE`) : au COUP FATAL (`abattreLEnnemi`, au tour du
+    pilote qui l'abat), ses insectes et leurs points, ses roches et les leurs ; un GRAND (mini-boss, boss — `Ennemi.boss`
+    à venir : il n'y en a pas encore) va à `invasion.miniBoss` / `invasion.boss`, à l'équipe. Les morts dans la tempête ne
+    comptent pas. Points (`invasion.points`) : moucheron 1, insecte 2, cornu 5, cuirassier 15 ; une roche, rayon ÷ 4
+    (2 au moins).
+  - LA FORMULE (`recompenseDeFin`, `invasion.recompense`, de moi, à rejuger) : PRIME DE PARTIE 100 ; NIVEAU, 10 × (N − 1)
+    + 0,25 × (N − 1)² (il compte de plus en plus : 0 au niveau 1, 225 au 10, 3 440 au 100) ; INSECTES, 0,1 crédit par
+    point ; ASTÉROÏDES, 0,5 par point ; MINI-BOSS 100 et BOSS 400 chacun, à toute l'équipe. Mesuré : niveau 1 sans
+    rien, 100 ; niveau 10 ordinaire, 270 ; niveau 100 bien rempli (7 200 insectes, 150 roches, 4 mini-boss, 1 boss), 6 370.
+  - L'ÉCRAN (`dessinerLaFin`) : le titre « Partie terminée » TOMBE ET FRAPPE (secousse, gerbe d'or, le son de la frappe) ;
+    le niveau ; une plaque cernée d'or s'ouvre ; LES LIGNES une à une (un clic chacune), qui glissent en place, leur
+    nombre et leurs crédits COMPTENT jusqu'au bout ; un trait ; LE TOTAL compte en crépitant, puis FRAPPE en grand — il
+    bondit, une pluie de crédits jaillit, la caisse sonne, le téléphone vibre — ; « crédits gagnés » ; puis « Rejouer »
+    et « Hangar » côte à côte (à distance, « Hangar » seul). Une tape avant la fin saute au bout. Les mini-boss et les
+    boss n'ont leur ligne que s'il y en a eu ; une ligne trop longue (« Mini-boss (équipe) » debout) prend la lettre fine.
+  - LES CRÉDITS SONT VERSÉS DÈS L'ÉCRAN, au trésor de l'appareil, chacun les siens (à distance, chacun son tableau) :
+    quitter avant la fin de l'animation ne fait rien perdre. La partie abandonnée par le menu ne rapporte rien (pas
+    d'écran de fin).
+  - `&fin=N` : la partie finit une seconde après le décollage, au niveau N (20 sans nombre), avec un tableau fait pour
+    lui — les crédits vont vraiment au trésor. VU debout et couché ; vérifié (`npm run verif`).
