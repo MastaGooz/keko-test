@@ -8015,3 +8015,7 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
 - **22/11, LE DÉPHASAGE COMME LE CRITIQUE.** Keko : « passe le déphasage en 2, 4, 6, 8, 10 comme les chances de
   critique » : une seule table, `POINTS_DE_CHANCE` (+2 à +10 points de la commune à la légendaire), pour les deux ;
   `POINTS_DE_CRITIQUE` disparaît. La carte « toutes les armes » Critique garde la moitié (+1 à +5).
+- **22/11, `&cartes=N`.** Keko : « 50 cartes à choisir dès le début de la partie, comme si j'étais niveau 50 » : une
+  seconde et demie après le décollage, N choix d'affilée, au niveau N (sauf `&niveau=` qui le dit) — les spéciales dues
+  d'abord (cinq au 50), puis les ordinaires ; trente secondes par choix, le temps repart à chaque carte prise. VU :
+  « 50 à choisir », puis « 44 à choisir » après six cartes.
