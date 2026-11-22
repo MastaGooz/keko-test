@@ -8089,3 +8089,8 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   Cryogénique ne changent pas. LA TRAÎNÉE est à la page (`dessinerLesTrainesDuRailgun`) : du départ à la balle, le fil
   blanc-bleu et ses anneaux de bobine, qui s'efface en 0,35 s la balle partie. Le son reste celui du rail. VU (traînée
   allongée pour la capture, puis remise) ; un test garde la balle (trois insectes alignés, 110 / 83 / 62, dans l'ordre).
+- **22/11, CORRIGÉ : LE COMPTE DE RÉANIMATION D'UN ALLIÉ COMMENÇAIT À 11.** Keko : « j'ai un pote qui est mort devant
+  moi et qui avait un timer de réanimation qui commence à 11 ». Retenu (aucun allié dans le cercle), le compte garde ses
+  dix secondes en avançant du même pas que le temps (`retourA += dt`) ; la somme des pas le laissait à 10 plus quelques
+  millionièmes de milliardième — mesuré : 4 × 10⁻¹², dix secondes durant — et le chiffre, arrondi au-dessus, disait 11.
+  Il s'arrondit désormais au-dessus à un millionième près (`dessinerLeRetour`).

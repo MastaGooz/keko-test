@@ -1961,10 +1961,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       motEnRelief(p, 'Plus de vie', sx, sy - 6, true, GRAS)
       return
     }
-    const ub = retenu ? 0.5 : Math.ceil(reste) - reste
+    // (LE CHIFFRE, ARRONDI AU-DESSUS À UN MILLIONIÈME PRÈS — Keko, 22/11 : « un pote mort devant moi avait un timer de
+    // réanimation qui commence à 11 » : retenu, le compte garde ses dix secondes en avançant avec le temps, et la somme des
+    // pas le laissait à 10,000000000004 — arrondi au-dessus, 11)
+    const chiffre = Math.max(1, Math.ceil(reste - 1e-6))
+    const ub = retenu ? 0.5 : Math.max(0, chiffre - reste)
     const tremble = ub < 0.22 ? 3 * (1 - ub / 0.22) : 0
     p.glow(sx, sy, 30, PEPITE[2], 0.25 + (ub < 0.12 ? 0.6 * (1 - ub / 0.12) : 0))
-    motFrappe(p, String(Math.max(1, Math.ceil(reste))), sx + Math.round(Math.sin(t * 90) * tremble), sy - 6 + Math.round(Math.cos(t * 77) * tremble), 2 + 1.1 * Math.exp(-ub * 26) * Math.cos(ub * 38), ub < 0.035 ? 1 : ub < 0.07 ? 0.4 : 0)
+    motFrappe(p, String(chiffre), sx + Math.round(Math.sin(t * 90) * tremble), sy - 6 + Math.round(Math.cos(t * 77) * tremble), 2 + 1.1 * Math.exp(-ub * 26) * Math.cos(ub * 38), ub < 0.035 ? 1 : ub < 0.07 ? 0.4 : 0)
     // (chez soi : ce qu'on attend)
     if (retenu && !dessinDuSecond) ecrire(p, 'En attente d’un allié', sx, sy + 12, PEPITE[3], { align: 'center', police: GRAS, contour: N.hex('#1e0e03') })
   }
