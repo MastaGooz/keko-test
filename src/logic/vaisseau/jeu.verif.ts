@@ -3779,8 +3779,9 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   verifier(`à deux, le soin sous le premier (plein) va au second, blessé : ${Math.round((etatDuPilote(q, 1).coque / cfg.coque) * 100)} %, le premier ${Math.round((q.coque / cfg.coque) * 100)} %`, etatDuPilote(q, 1).coque > cfg.coque * 0.5 && q.coque === cfg.coque && !q.pepites.some((p) => p.soin === true))
 }
 
-// LA RÉCOMPENSE DE FIN (Keko, 22/11 : « au minimum une centaine de crédits ; à un niveau 100 où on a fait pas mal de
-// choses, plusieurs milliers » ; le coup fatal au pilote qui le porte ; les mini-boss et les boss à l'équipe)
+// LA RÉCOMPENSE DE FIN (Keko, 22/11 : « à un niveau 100 où on a fait pas mal de choses, plusieurs milliers » ; le coup
+// fatal au pilote qui le porte ; les mini-boss et les boss à l'équipe ; plus de prime : une partie vide ne vaut que son
+// niveau 1 — « on n'a pas envie que les joueurs créent des parties et les arrêtent à l'infini pour gagner la prime »)
 {
   const cfg: ConfigVaisseau = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9 }, derive: { ...VAISSEAU.derive, active: false }, armes: [] }
   const rien = recompenseDeFin(cfg, 1, tableauVide(), { miniBoss: 0, boss: 0 })
@@ -3788,7 +3789,7 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   const pts = 6000 * (0.5 * 2 + 0.3 * 1) + 1000 * 5 + 200 * 15
   const gros = recompenseDeFin(cfg, 100, { insectes: 7200, points: pts, roches: 150, pointsDeRoches: 150 * 6 }, { miniBoss: 4, boss: 1 })
   const dix = recompenseDeFin(cfg, 10, { insectes: 250, points: 450, roches: 6, pointsDeRoches: 30 }, { miniBoss: 0, boss: 0 })
-  verifier(`la récompense : niveau 1 sans rien, ${rien.total} ; niveau 10 ordinaire, ${dix.total} ; niveau 100 bien rempli, ${gros.total} (${gros.lignes.map((l) => `${l.quoi} ${l.credits}`).join(', ')})`, rien.total === 100 && dix.total > 150 && dix.total < 600 && gros.total > 3000 && gros.total < 12000)
+  verifier(`la récompense : niveau 1 sans rien, ${rien.total} ; niveau 10 ordinaire, ${dix.total} ; niveau 100 bien rempli, ${gros.total} (${gros.lignes.map((l) => `${l.quoi} ${l.credits}`).join(', ')})`, rien.total === 10 && rien.lignes.every((l) => l.quoi !== ('base' as string)) && dix.total > 150 && dix.total < 600 && gros.total > 3000 && gros.total < 12000)
   // (le coup fatal : à deux, une roche et un insecte abattus au tour du second sont à lui ; un grand, à l'équipe)
   const w = nouveauMonde(cfg, 3)
   ajouterUnPilote(cfg, w, 60, 0)

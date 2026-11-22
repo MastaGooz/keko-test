@@ -3470,8 +3470,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** Ce que l'écran a déjà fait sonner ou jaillir (une fois chacun). */
   let finSonnee = { titre: false, lignes: 0, frappe: false, tic: 0 }
   /** Les lignes montrées : la prime, le niveau, les insectes, les roches ; les grands de l'équipe, s'il y en a eu. */
-  const lignesMontrees = (r: { lignes: LigneDeRecompense[] }): LigneDeRecompense[] => r.lignes.filter((l) => l.quoi === 'base' || l.quoi === 'niveau' || l.quoi === 'insectes' || l.quoi === 'roches' || l.nombre > 0)
-  const NOMS_DES_LIGNES: Record<LigneDeRecompense['quoi'], string> = { base: 'Prime de partie', niveau: 'Niveau', insectes: 'Ennemis', roches: 'Astéroïdes', miniBoss: 'Mini-boss', boss: 'Boss' } // (sans « (équipe) » — Keko, 22/11)
+  const lignesMontrees = (r: { lignes: LigneDeRecompense[] }): LigneDeRecompense[] => r.lignes.filter((l) => l.quoi === 'niveau' || l.quoi === 'insectes' || l.quoi === 'roches' || l.nombre > 0)
+  const NOMS_DES_LIGNES: Record<LigneDeRecompense['quoi'], string> = { niveau: 'Niveau', insectes: 'Ennemis', roches: 'Astéroïdes', miniBoss: 'Mini-boss', boss: 'Boss' } // (sans « (équipe) » — Keko, 22/11)
   /** Le moment de l'écran : la fin des lignes, l'instant du total, de sa frappe, des boutons. */
   const tempsDeLaFin = (n: number): { total: number; frappe: number; boutons: number } => {
     const H0 = HEURES_DE_LA_FIN
@@ -3508,7 +3508,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const L = 11
     const pw = Math.min(W - 12, 210)
     const x0 = Math.round((W - pw) / 2)
-    const hauteur = 22 + 14 + lignes.length * L + 8 + 42 + 8 + 17
+    const hauteur = 26 + lignes.length * L + 8 + 32 + 8 + 17
     const yTitre = Math.max(4, Math.round((H - hauteur) / 2)) + 4
     // LE TITRE : il tombe d'en haut, frappe, tremble un instant
     const ut = Math.min(1, tau / H0.titre)
@@ -3526,22 +3526,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         piecesDeLaFin.push({ x: W / 2 + R.range(-40, 40), y: yTitre + 10, vx: Math.cos(a) * vit, vy: Math.sin(a) * vit, t0: t, vie: R.range(0.3, 0.7), c: i % 3 === 0 ? N.WHITE : PEPITE[2 + (i % 2)], piece: false })
       }
     }
-    // le niveau
-    const yNiv = yTitre + 22
-    const un = sortie((tau - H0.titre - 0.05) / 0.3)
+    // (PLUS DE NIVEAU SOUS LE TITRE — Keko, 22/11 : « il est déjà dans l'encadré »)
     // (LA LETTRE EN RELIEF — Keko, 22/11 : « un peu de texture au texte, et différencie la couleur des textes et des
     // numéros » : les mots à l'ivoire des plaques, les nombres à l'or, les crédits au cristal)
-    if (un > 0) {
-      const nv = String(m.invasion.niveau)
-      const wl = largeurDe('Niveau', GRAS) + 4 + largeurDe(nv, GRAS)
-      const xl = Math.round(W / 2 - wl / 2)
-      const yl = yNiv + Math.round((1 - un) * 4)
-      motEnRelief(p, 'Niveau', xl + largeurDe('Niveau', GRAS) / 2, yl, 'ivoire', GRAS)
-      motEnRelief(p, nv, xl + wl - largeurDe(nv, GRAS) / 2, yl, true, GRAS)
-    }
     // LE PANNEAU DU CALCUL : une plaque sombre, cernée d'or, qui s'ouvre
-    const yP = yNiv + 14
-    const hp = lignes.length * L + 8 + 42
+    const yP = yTitre + 26
+    const hp = lignes.length * L + 8 + 32
     const up = sortie((tau - H0.lignes + 0.25) / 0.25)
     if (up > 0) {
       const hv = Math.round(hp * up)
@@ -3570,10 +3560,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const xl = x0 + 8 + glisse
       const wNom = largeurDe(NOMS_DES_LIGNES[l.quoi], police)
       motEnRelief(p, NOMS_DES_LIGNES[l.quoi], xl + wNom / 2, y, 'ivoire', police)
-      if (l.quoi !== 'base') {
-        const nb = String(compte(uc, l.nombre))
-        motEnRelief(p, nb, xl + wNom + 4 + largeurDe(nb, police) / 2, y, true, police)
-      }
+      const nb = String(compte(uc, l.nombre))
+      motEnRelief(p, nb, xl + wNom + 4 + largeurDe(nb, police) / 2, y, true, police)
       const cr = compte(uc, l.credits)
       const dit = `+${cr}`
       const xc = x0 + pw - 16
@@ -3616,7 +3604,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       if (uf >= 0 && uf < 0.6) p.glow(W / 2, yT + 14, 40, RUNE[2], 0.6 * (1 - uf / 0.6))
       motEnRelief(p, dit, xg + wn / 2, yT + 14 - 4 * e + 2, 'cristal', GRAS, null, e)
       dessinerUnGrandCredit(p, xg + wn + 4 + 3.5 * e, yT + 14, e)
-      if (uf >= 0) motEnRelief(p, 'crédits gagnés', W / 2, yT + 14 + 6 * e + 2, 'ivoire', TEXTE)
+      // (plus de « crédits gagnés » — Keko, 22/11 : « de toute évidence, on comprend que les crédits obtenus sont gagnés »)
     }
     // les étincelles et les crédits qui jaillissent
     for (let i = piecesDeLaFin.length - 1; i >= 0; i--) {

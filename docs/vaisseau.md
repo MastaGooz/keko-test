@@ -7880,3 +7880,8 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     textes et des numéros à côté, comme le nombre d'ennemis, le niveau » : « Ennemis » ; LA LETTRE EN RELIEF partout
     (`motEnRelief`) — les mots à l'IVOIRE des plaques, les nombres à l'OR, les crédits au CRISTAL ; « Niveau » et son
     nombre de même sous le titre ; « crédits gagnés » en ivoire. VU debout et couché.
+  - Puis Keko : « enlève le niveau tout en haut, il est déjà dans l'encadré ; enlève "crédits gagnés", on comprend ;
+    enlève la prime de partie : avec le niveau 1, très facilement atteignable, on a déjà un peu de crédit » — et « on n'a
+    pas envie que les joueurs créent des parties et les arrêtent à l'infini pour gagner la prime ». PLUS DE PRIME : la
+    ligne du niveau vaut 10 × N + 0,25 × (N − 1)² — une partie vide, 10 crédits ; niveau 10 ordinaire, 180 ; niveau 100
+    bien rempli, 6 280. Le titre, puis l'encadré, puis le total ; plus rien sous le titre ni sous le total.

@@ -348,11 +348,13 @@ export const VAISSEAU = {
      * LA RÉCOMPENSE DE FIN DE PARTIE, EN CRÉDITS (Keko, 22/11 : « une récompense qui dépend du niveau, commun, mais unique
      * pour chaque joueur, car elle prend en compte ses kills — chaque monstre un score en points — et les astéroïdes qu'il a
      * détruits ; les mini-boss et les boss au nom de l'équipe ; au minimum une centaine de crédits ; à un niveau 100 où on
-     * a fait pas mal de choses, plusieurs milliers ») — voir `recompenseDeFin` : `base` pour toute partie ; le niveau,
-     * `parNiveau` et `carreNiveau` × (niveau − 1)² (il compte de plus en plus) ; `parPoint` crédit par point d'insecte ;
+     * a fait pas mal de choses, plusieurs milliers ») — voir `recompenseDeFin` : le niveau, `parNiveau` × niveau et
+     * `carreNiveau` × (niveau − 1)² (il compte de plus en plus). PLUS DE PRIME DE PARTIE (Keko, 22/11 : « avec le niveau 1,
+     * très facilement atteignable, on a déjà un peu de crédit » ; « on n'a pas envie que les joueurs créent des parties et
+     * les arrêtent à l'infini pour gagner la prime ») : une partie vide ne rapporte que son niveau 1 ; `parPoint` crédit par point d'insecte ;
      * `parPointDeRoche` par point de roche ; `miniBoss` et `boss` chacun, à toute l'équipe. *De moi, à rejuger.*
      */
-    recompense: { base: 100, parNiveau: 10, carreNiveau: 0.25, parPoint: 0.1, parPointDeRoche: 0.5, miniBoss: 100, boss: 400 },
+    recompense: { parNiveau: 10, carreNiveau: 0.25, parPoint: 0.1, parPointDeRoche: 0.5, miniBoss: 100, boss: 400 },
     /**
      * LA VIE DU PORTAIL (Keko, 14/11 : « elle s'exprime en pourcentage : il commence à 100 %, et s'il atteint 0 c'est
      * la fin de la partie ; pour l'instant les ennemis lui enlèvent 1 % à chaque fois qu'ils passent ») : `viePortail`
@@ -1821,17 +1823,16 @@ export const pointsDeLInsecte = (c: ConfigVaisseau, e: Ennemi): number => c.inva
 /** Les points d'une roche détruite (voir `invasion.points`) : d'autant plus qu'elle est grosse. */
 export const pointsDeLaRoche = (c: ConfigVaisseau, rayon: number): number => Math.max(c.invasion.points.rocheMin, Math.round(rayon * c.invasion.points.roche))
 /**
- * LA RÉCOMPENSE DE FIN DE PARTIE (voir `invasion.recompense`) : ce que gagne un pilote, ligne par ligne — la prime de
- * la partie, le niveau (commun), ses insectes et ses roches (à lui), les mini-boss et les boss (à l'équipe) — et le
- * total, en crédits entiers. Jamais moins que la prime.
+ * LA RÉCOMPENSE DE FIN DE PARTIE (voir `invasion.recompense`) : ce que gagne un pilote, ligne par ligne — le niveau
+ * (commun), ses insectes et ses roches (à lui), les mini-boss et les boss (à l'équipe) — et le total, en crédits
+ * entiers. Pas de prime : une partie vide ne vaut que son niveau.
  */
-export type LigneDeRecompense = { quoi: 'base' | 'niveau' | 'insectes' | 'roches' | 'miniBoss' | 'boss'; nombre: number; credits: number }
+export type LigneDeRecompense = { quoi: 'niveau' | 'insectes' | 'roches' | 'miniBoss' | 'boss'; nombre: number; credits: number }
 export function recompenseDeFin(c: ConfigVaisseau, niveau: number, tableau: Tableau, equipe: { miniBoss: number; boss: number }): { lignes: LigneDeRecompense[]; total: number } {
   const R = c.invasion.recompense
   const n = Math.max(0, niveau - 1)
   const lignes: LigneDeRecompense[] = [
-    { quoi: 'base', nombre: 1, credits: R.base },
-    { quoi: 'niveau', nombre: niveau, credits: Math.round(R.parNiveau * n + R.carreNiveau * n * n) },
+    { quoi: 'niveau', nombre: niveau, credits: Math.round(R.parNiveau * niveau + R.carreNiveau * n * n) },
     { quoi: 'insectes', nombre: tableau.insectes, credits: Math.round(tableau.points * R.parPoint) },
     { quoi: 'roches', nombre: tableau.roches, credits: Math.round(tableau.pointsDeRoches * R.parPointDeRoche) },
     { quoi: 'miniBoss', nombre: equipe.miniBoss, credits: equipe.miniBoss * R.miniBoss },
