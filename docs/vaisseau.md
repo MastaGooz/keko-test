@@ -7826,3 +7826,6 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   « Surblindage : Les astéroïdes donnent des plaques. » tient sur deux lignes (`RACES`, `flotte.ts`).
   - Puis Keko : « on va plutôt dire : les astéroïdes peuvent lâcher du surblindage ». « Surblindage : Les astéroïdes
     peuvent lâcher du surblindage. » — MESURÉ, deux lignes, debout et couché.
+- **22/11, LE HANGAR SEUL.** Keko : « masquer les onglets recherche et missions pour l'instant, vu qu'elles ne sont pas
+  encore retravaillées ». `VUES` du vortex : `['hangar']` ; la barre ne montre plus que « Hangar » et « Plus » (Inviter).
+  Leur code reste, il suffit de les remettre dans `VUES`. VU debout et couché.

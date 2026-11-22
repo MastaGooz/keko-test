@@ -3614,7 +3614,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * hangar, recherche et les quêtes ; pour l'instant on ne met pas l'onglet commerce ; et le bouton paramètres, on
    * peut l'enlever carrément, il n'y a plus rien dedans ») : trois onglets, pas de commerce, pas de paramètres.
    */
-  const VUES: string[] = parametres.has('vortex') ? ['hangar', 'labo', 'quetes'] : ['hangar', 'labo', 'entrepot', 'quetes', 'reglages', ...ESSAIS.slice(0, Math.max(0, Math.min(ESSAIS.length, Number(parametres.get('onglets') ?? 0) - 4)))]
+  // (… PUIS LE HANGAR SEUL, la recherche et les missions masquées — Keko, 22/11 : « masquer les onglets recherche et
+  // missions pour l'instant, vu qu'elles ne sont pas encore retravaillées » ; leur code reste, il suffit de les remettre ici)
+  const VUES: string[] = parametres.has('vortex') ? ['hangar'] : ['hangar', 'labo', 'entrepot', 'quetes', 'reglages', ...ESSAIS.slice(0, Math.max(0, Math.min(ESSAIS.length, Number(parametres.get('onglets') ?? 0) - 4)))]
   const estEssai = (vv: string): boolean => ESSAIS.includes(vv)
   const NOMS_VUE: Record<string, string> = { hangar: 'Hangar', labo: 'Recherche', entrepot: 'Commerce', quetes: 'Missions', reglages: 'Paramètres', carte: 'Carte', atelier: 'Atelier', marche: 'Marché', equipage: 'Équipage', missions: 'Missions', journal: 'Journal', trophees: 'Trophées', radio: 'Radio', forge: 'Forge', ...Object.fromEntries(Array.from({ length: 10 }, (_, i) => [`essai-${i + 1}`, `Essai ${i + 1}`])) }
   /** LE BOUTON DE TEST en haut à droite (Keko : « reset toute progression ») : une première tape le fait demander « SUR ? » deux secondes, la seconde efface le hangar et le trésor de l'appareil. */
