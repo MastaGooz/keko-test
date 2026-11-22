@@ -33,7 +33,7 @@ import { ajouterLeVaisseau, avecLeHangar, choisirLeVaisseau, coutEnMinerai, estD
 import { annulerLOrdre, coursA, gainDe, historiqueDe, marcheNeuf, ordreNumero, ordresDe, poserUnOrdre, previsionDe, prixPlafond, reglerLeMarche, tendanceDe, vendreAuCours } from '../../logic/vaisseau/marche.ts'
 import { aLaMecanique, BRANCHES, configDuLabo, coutDe, debloquer, estDebloque, laboNeuf, noeudDe, noeudsDe, NOMS_BRANCHE, passifsDe, peutDebloquer, rangOuvert, RANGS, type Branche, type Mecanique, type Noeud } from '../../logic/vaisseau/labo.ts'
 import { ECLOSION_DE_L_ARRIVEE, jouer as jouerLeSon, latenceMs, regler, reveiller, type GenreDePropulsion, type Son } from './sons.ts'
-import { dessinerAimant, dessinerAsteroide, dessinerPepite, dessinerPepiteDuVortex, dessinerRocheDuVortex, LUMIERE, rocheDe, TEINTES_MINERAI } from './asteroide.ts'
+import { dessinerAimant, dessinerPlaqueTombee, dessinerAsteroide, dessinerPepite, dessinerPepiteDuVortex, dessinerRocheDuVortex, LUMIERE, rocheDe, TEINTES_MINERAI } from './asteroide.ts'
 import { dessinerBase, dessinerStation, ENVERGURE_BASE, RECUL_DE_LA_BASE } from './station.ts'
 import { animerAstre, astresVisibles, demiTailleDeLAstre, peindreAstre, rayonQuiCache, voilerLAstre, type Astre, type PeintreCeleste } from './celeste.ts'
 import * as EXPLOSION from '../pixelfx/fx/keko/explosion-espace.js'
@@ -102,6 +102,8 @@ let W = 180
 let H = 320
 const PAS = 1 / 60
 const COQUE = N.fit(['#141a2a', '#2a3550', '#46587a', '#6f87ab', '#9fb4d2', '#d6e4f5', '#ffffff'], 7)
+/** L'acier gris d'une plaque tombée d'une roche (voir `dessinerPlaqueTombee`) : le cerne, puis trois gris du sombre au clair. */
+const ACIER_DE_LA_PLAQUE = [N.hex('#14161d'), N.hex('#5b6272'), N.hex('#8a92a3'), N.hex('#c3c9d5')]
 const VERRIERE = N.fit(['#0a3a4a', '#19a0c0', '#8ff0ff', '#ffffff'], 4)
 /** La rune des crédits : du vert. */
 const RUNE = N.fit(['#0a3a1e', '#1f8a4a', '#4ee08a', '#b8ffd0', '#ffffff'], 5)
@@ -500,13 +502,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (parametres.has('bord') && CONF.arene.active) monde.vaisseau = { ...monde.vaisseau, x: CONF.arene.rayon - 90 }
     // (le jeu du vortex : les deux canons tirent À TOUR DE RÔLE — le second part une demi-cadence après le premier)
     if (parametres.has('vortex') && CONF.armes.length === 2) monde.armesA = [0, CONF.armes[0].cadence / 2]
-    // (`&vitrine` : les trois gemmes, trois fois, et l'aimant, posés en couronne autour de lui, hors de son aimant — pour
-    // les juger d'un lien ; l'aimant est au nord, la couronne s'ouvre de la petite à la grosse)
+    // (`&vitrine` : les trois gemmes, trois fois, l'aimant et une plaque, posés en couronne autour de lui, hors de son
+    // aimant — pour les juger d'un lien ; l'aimant est au nord, la plaque juste après, la couronne s'ouvre de la petite à
+    // la grosse)
     if (parametres.has('vitrine') && CONF.invasion.active)
-      [1, 3, 10, 1, 3, 10, 1, 3, 10, 0].forEach((val, i) => {
-        const a = -Math.PI / 2 + (i / 10) * Math.PI * 2
+      [1, 3, 10, 1, 3, 10, 1, 3, 10, 0, -1].forEach((val, i) => {
+        const a = -Math.PI / 2 + (i / 11) * Math.PI * 2
         const d = 62 + (i % 3) * 10
-        monde.pepites.push({ id: 1e6 + i, x: monde.vaisseau.x + Math.cos(a) * d, y: monde.vaisseau.y + Math.sin(a) * d, vx: 0, vy: 0, graine: 77 + i, minerai: 'fer', ...(val === 0 ? { valeur: 0, aimant: true } : { valeur: val }) })
+        monde.pepites.push({ id: 1e6 + i, x: monde.vaisseau.x + Math.cos(a) * d, y: monde.vaisseau.y + Math.sin(a) * d, vx: 0, vy: 0, graine: 77 + i, minerai: 'fer', ...(val === 0 ? { valeur: 0, aimant: true } : val < 0 ? { valeur: 0, plaque: true } : { valeur: val }) })
       })
     return monde
   }
@@ -1055,8 +1058,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       }
       // LA VIE SELON LA RACE (Keko, 17/11 — voir `vieSelonLaRace`) : les Éthérés, un gros bouclier sur un blindage fragile ;
       // l'Essaim, pas de bouclier, une coque qui se régénère
-      // (LES PLAQUES DE L'EMPIRE SE RÉPARENT — Keko, 21/11 : voir `reparation` ; 20 s, de moi)
-      if (VORTEX && modeleDeVaisseau(flotte.actif).race === 'humains') conf = { ...conf, reparation: 20 }
+      // (LES PLAQUES DE L'EMPIRE NE SE RÉPARENT PLUS AVEC LE TEMPS — Keko, 22/11 : elles tombent des roches, voir `recuperation`)
       if (VORTEX) conf = { ...conf, ...blindageAuVortex(vieSelonLaRace(modeleDeVaisseau(flotte.actif).race, { coque: conf.coque, bouclier: conf.bouclier, regeneration: conf.regeneration, plaques: conf.plaques, corruption: conf.corruption, dephasage: conf.dephasage }, modeleDeVaisseau(flotte.actif).plaques, modeleDeVaisseau(flotte.actif).dephasage), flotte.actif) }
       if (bouclierDEssai > 0) conf = { ...conf, bouclier: { ...conf.bouclier, points: bouclierDEssai } }
       if (dephasageDEssai !== null) conf = { ...conf, dephasage: { ...conf.dephasage, chance: dephasageDEssai } }
@@ -1965,8 +1967,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     maniabilite: { nom: 'Maniabilité', effet: 'de maniabilité' },
     aimant: { nom: 'Aimant', effet: 'de portée de l’aimant' },
     experience: { nom: 'Expérience', effet: 'd’expérience par pépite' },
-    reparation: { nom: 'Réparation', effet: 'de vitesse de réparation' },
-    plaque: { nom: 'Plaque', effet: 'plaque de blindage' },
+    recuperation: { nom: 'Récupération', effet: 'de chance de plaque aux astéroïdes' },
     regeneration: { nom: 'Régénération', effet: 'de régénération' },
     bouclier: { nom: 'Bouclier', effet: 'de capacité du bouclier' },
     dephasage: { nom: 'Déphasage', effet: 'de chance de déphasage' },
@@ -2082,7 +2083,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // texture » ; la lettre des titres, et celle des en-têtes, faisaient d'un 8 un 0)
     ly += 6
     {
-      const mot = spell(ta.stat === 'plaque' ? '+1' : `+${Math.round(ta.bonus * 100)} %`, GRAS) as { letters: { g: unknown; x: number }[]; w: number }
+      const mot = spell(`+${Math.round(ta.bonus * 100)} %`, GRAS) as { letters: { g: unknown; x: number }[]; w: number }
       const x0 = Math.round(cx - mot.w / 2)
       const items = mot.letters.filter((L) => L.g).map((L) => ({ g: L.g, x: x0 + L.x, y: ly - decalage(GRAS), sx: 1, sy: 1 }))
       const eclat = ((tReel * 0.5 + i * 0.29) % 2.2) * 40 - 12
@@ -15231,6 +15232,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     for (const pe of m.pepites)
       if (!VORTEX) dessinerPepite(p, pe, t, m.refuses[pe.minerai])
       else if (pe.aimant === true) dessinerAimant(p, pe.x, pe.y, t, XP, pe.graine)
+      // (UNE PLAQUE, tombée d'une roche — voir `recuperation` : un écu d'acier qui brille)
+      else if (pe.plaque === true) dessinerPlaqueTombee(p, pe.x, pe.y, t, ACIER_DE_LA_PLAQUE, pe.graine)
       else dessinerPepiteDuVortex(p, pe, t, XP)
     // (L'AIMANT PRIS : deux anneaux de la teinte des pépites se referment sur le vaisseau, le temps qu'elles arrivent)
     const ua = (t - aimantA) / 0.9
@@ -15817,7 +15820,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           break
         }
         case 'plaqueReparee':
-          // (UNE PLAQUE RÉPARÉE — voir `reparation`)
+          // (UNE PLAQUE RESTAURÉE — une plaque ramassée, voir `recuperation` : la case revient, blanche un instant)
           jouer('bouclier')
           break
         case 'aimant':

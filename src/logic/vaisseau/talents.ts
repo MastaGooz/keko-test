@@ -53,22 +53,26 @@ export function rareteTiree(u: number): Rarete {
 export type StatDArme = 'degats' | 'critique' | 'critiques' | 'cadence' | 'portee' | 'zone' | 'pose' | 'feu' | 'corrosion' | 'givre'
 /**
  * LES CARTES DE FACTION (Keko, 21/11) : pour toutes, le blindage (les points de vie des Xénoïdes), la vitesse, la
- * maniabilité, l'aimant (la distance) et l'expérience (+X % par pépite) ; l'Empire, la RÉPARATION de ses plaques (en
- * pour cent) et « +1 plaque », en légendaire seulement — « augmenter le nombre de plaques est extrêmement fort ; la
- * rareté ne peut pas en faire varier la puissance » : la rareté dit sa chance d'apparaître, pas sa force (choisi parmi
- * trois) ; les Xénoïdes, la régénération ; les Vectrans, LA CAPACITÉ du bouclier seule (« on ne touche pas au temps qu'il
+ * maniabilité, l'aimant (la distance) et l'expérience (+X % par pépite) ; l'Empire, la RÉCUPÉRATION (22/11 : la chance
+ * qu'une roche détruite fasse tomber une plaque — la réparation et « +1 plaque », du 21/11, sont parties) ; les
+ * Xénoïdes, la régénération ; les Vectrans, LA CAPACITÉ du bouclier seule (« on ne touche pas au temps qu'il
  * met à se régénérer ») ; les Yhg'tharr, la chance de déphasage, EN POINTS à l'échelle (+1 à +5 points selon la rareté,
  * choisi parmi trois : en relatif, une carte valait à peine +0,2 point), pas sa durée.
  */
-export type StatDeFaction = 'blindage' | 'moteur' | 'maniabilite' | 'aimant' | 'experience' | 'reparation' | 'plaque' | 'regeneration' | 'bouclier' | 'dephasage'
+//
+// (L'EMPIRE N'A PLUS QU'UNE CARTE À LUI, LA RÉCUPÉRATION — Keko, 22/11 : « il a deux cartes alors que les autres n'en ont
+// qu'une, et une des deux ne peut arriver qu'en légendaire ; on vire la carte qui augmente le nombre de plaques ; les
+// plaques ne se régénèrent plus avec le temps » ; la carte : « augmente les chances d'obtenir des plaques en détruisant
+// les astéroïdes » — voir `recuperation` dans `jeu.ts`. La réparation et « +1 plaque » sont parties.)
+export type StatDeFaction = 'blindage' | 'moteur' | 'maniabilite' | 'aimant' | 'experience' | 'recuperation' | 'regeneration' | 'bouclier' | 'dephasage'
 export const STATS_DE_FACTION: Record<Race, StatDeFaction[]> = {
-  humains: ['blindage', 'reparation', 'plaque', 'moteur', 'maniabilite', 'aimant', 'experience'],
+  humains: ['blindage', 'recuperation', 'moteur', 'maniabilite', 'aimant', 'experience'],
   essaim: ['blindage', 'regeneration', 'moteur', 'maniabilite', 'aimant', 'experience'],
   etheres: ['blindage', 'bouclier', 'moteur', 'maniabilite', 'aimant', 'experience'],
   innommes: ['blindage', 'dephasage', 'moteur', 'maniabilite', 'aimant', 'experience'],
 }
-/** Les cartes qui ne paraissent qu'à une rareté (« +1 plaque » : en légendaire seulement). */
-export const SEULEMENT_EN: Partial<Record<StatDArme | StatDeFaction, Rarete>> = { plaque: 'legendaire' }
+/** Les cartes qui ne paraissent qu'à une rareté (aucune depuis le départ de « +1 plaque », 22/11). */
+export const SEULEMENT_EN: Partial<Record<StatDArme | StatDeFaction, Rarete>> = {}
 /**
  * LES CHANCES SE COMPTENT EN POINTS, À L'ÉCHELLE DE LA RARETÉ (le déphasage — Keko ; le critique, pareil : en relatif,
  * « +12 % » d'1 % de chance n'en faisait que 1,12) : la commune +1 point, la légendaire +5.
@@ -192,7 +196,7 @@ export function armeAmelioree(a: Arme, stat: StatDArme, k: number): Arme {
       return a
   }
 }
-/** La configuration où la faction gagne `k` (la somme des bonus ; pour « +1 plaque », le nombre de cartes) sur `stat`. */
+/** La configuration où la faction gagne `k` (la somme des bonus) sur `stat`. */
 export function factionAmelioree(c: ConfigVaisseau, stat: StatDeFaction, k: number): ConfigVaisseau {
   const f = 1 + k
   switch (stat) {
@@ -206,11 +210,9 @@ export function factionAmelioree(c: ConfigVaisseau, stat: StatDeFaction, k: numb
       return { ...c, foreuse: { ...c.foreuse, aimant: c.foreuse.aimant * f } }
     case 'experience':
       return { ...c, invasion: { ...c.invasion, gainXp: (c.invasion.gainXp ?? 1) * f } }
-    case 'reparation':
-      // (un délai plus court : les plaques reviennent plus vite)
-      return { ...c, reparation: c.reparation / f }
-    case 'plaque':
-      return { ...c, plaques: c.plaques + Math.round(k) }
+    case 'recuperation':
+      // (la chance qu'une roche fasse tomber une plaque — voir `chanceDePlaque`)
+      return { ...c, recuperation: c.recuperation * f }
     case 'regeneration':
       return { ...c, regeneration: c.regeneration * f }
     case 'bouclier':
@@ -223,8 +225,8 @@ export function factionAmelioree(c: ConfigVaisseau, stat: StatDeFaction, k: numb
 
 /** Une carte : sa cible, sa stat, sa rareté. */
 export function carte(cible: Cible, stat: StatDArme | StatDeFaction, rarete: Rarete): Talent {
-  // (« +1 plaque » vaut une plaque ; une chance, des points à l'échelle ; le reste, le bonus de la rareté)
-  const bonus = stat === 'plaque' ? 1 : EN_POINTS.has(stat) ? POINTS_DE_CHANCE[rarete] : rareteDe(rarete).bonus
+  // (une chance, des points à l'échelle ; le reste, le bonus de la rareté)
+  const bonus = EN_POINTS.has(stat) ? POINTS_DE_CHANCE[rarete] : rareteDe(rarete).bonus
   return { id: `${cible.sorte === 'arme' ? `arme-${cible.arme}` : cible.race}:${stat}`, cible, stat, rarete, bonus }
 }
 
@@ -240,7 +242,7 @@ export function proposer(graine: number, niveau: number, rang: number, arme: Arm
   ]
   const choisies: Talent[] = []
   for (let k = 0; k < 3 && pool.length > 0; k++) {
-    // (la rareté d'abord : une carte qui n'est que d'une rareté — « +1 plaque » — n'est tirée qu'à elle)
+    // (la rareté d'abord : une carte qui n'est que d'une rareté n'est tirée qu'à elle — voir `SEULEMENT_EN`)
     const u = (hache(hache(graine, niveau, 17), hache(rang, k, 29)) % 1000000) / 1000000
     const rarete = rareteTiree(u)
     const permis = pool.filter((x) => SEULEMENT_EN[x.stat] === undefined || SEULEMENT_EN[x.stat] === rarete)

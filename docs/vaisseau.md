@@ -7774,3 +7774,24 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   restaient à un pixel. Ils prennent le même `G` (`dessinerLesDegats`) — leurs pixels, leur cerne (`petitsChiffres(…,
   trait)`), leur course, leur bond, la gerbe et la lueur du critique. Au téléphone, rien ne change (`G` = 1). VU sur PC : un
   critique est maintenant presque aussi haut que le chiffre des vies, comme au téléphone.
+- **22/11, LES PLAQUES DE L'EMPIRE TOMBENT DES ROCHES.** Keko : « l'Empire a deux cartes alors que les autres n'en ont
+  qu'une, et une ne peut arriver qu'en légendaire ; on vire la carte qui augmente le nombre de plaques, on ne touche pas
+  au nombre de plaques ; les plaques ne se régénèrent plus avec le temps ; en détruisant des astéroïdes, une chance de
+  faire tomber un petit objet en forme de bouclier gris, brillant, qui restaure une plaque ; plus l'astéroïde est gros,
+  plus la chance est importante ; la carte de l'Empire : augmente les chances d'obtenir des plaques en détruisant les
+  astéroïdes ».
+  - PLUS DE RÉPARATION AU VORTEX (les 20 s de l'Empire retirées ; `reparation` reste dans la règle, à zéro) ; « +1 plaque »
+    et « Réparation » quittent le pool. L'EMPIRE A SIX CARTES, comme les autres : Blindage, RÉCUPÉRATION, Vitesse,
+    Maniabilité, Aimant, Expérience.
+  - LA PLAQUE TOMBÉE (`Pepite.plaque`) : une roche abattue par un vaisseau À PLAQUES en lâche une avec la chance
+    `chanceDePlaque` — de 10 % (la plus petite, 8 de rayon) à 60 % (la plus grosse, 46), en ligne droite (`derive.plaque`,
+    de moi, à rejuger), multipliée par `recuperation` (1 au départ ; la carte « Récupération », +5 à +25 % selon la
+    rareté, la grandit). Ramassée, LA DERNIÈRE PLAQUE CASSÉE REVIENT (l'événement `plaqueReparee`, son son), sans
+    expérience. ELLE NE VA QU'À QUI EN MANQUE : plaques pleines, elle flotte et attend (ni ramassée, ni aimantée) ; à
+    plusieurs, au plus proche de ceux qui en manquent ; l'aimant des pépites ne l'attire pas. Au retour, les plaques
+    reviennent pleines, comme avant.
+  - À L'ÉCRAN (`dessinerPlaqueTombee`) : un petit écu d'acier gris cerné, clair en haut à gauche, qui flotte ; un reflet
+    blanc le traverse en biais toutes les deux secondes, une étoile scintille à son coin. `&vitrine` en pose une.
+  - Vérifié (`npm run verif`) : 10 % / 35 % / 60 % à 8 / 27 / 46 de rayon ; 400 roches de 27, 128 plaques (140 attendues),
+    aucune sans plaques au vaisseau ; ramassée, la dernière cassée revient ; plaques pleines, elle reste ; sans roche, rien
+    ne revient en trente secondes ; la Récupération paraît à toutes les raretés.

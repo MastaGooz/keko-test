@@ -106,6 +106,14 @@ export const VAISSEAU = {
    */
   plaques: 0,
   /**
+   * LA RÉCUPÉRATION DES PLAQUES (l'Empire, Keko, 22/11 : « les plaques ne vont pas se régénérer avec le temps ; en
+   * détruisant des astéroïdes, on a une chance de faire tomber un petit objet en forme de bouclier gris, brillant, qui
+   * restaure une plaque ; plus l'astéroïde est gros, plus la chance est importante ; ainsi, pour réparer ces plaques, ils
+   * devront miner des astéroïdes ») : ce qui multiplie la chance d'une roche (`derive.plaque`) — les cartes
+   * « Récupération » la grandissent. Seul un vaisseau à plaques en fait tomber.
+   */
+  recuperation: 1,
+  /**
    * LA CORRUPTION (les Innommés, Keko, 17/11 : les blessures différées, « quelque chose qui se voit sur la barre de vie
    * pour comprendre rapidement son fonctionnement ») : un coup ne vide pas la coque — LA PART TOUCHÉE DEVIENT CORROMPUE (la
    * vie en sursis), puis LA CORRUPTION RONGE la coque de `ronge` points par seconde ; chaque insecte abattu en PURGE `purge`
@@ -478,7 +486,10 @@ export const VAISSEAU = {
      * du rayon (1,5 avant), le butin suivant : la plus grosse, 46 de rayon (34 avant), 10 580 points et 176 d'expérience
      * (3 135 et 52 pour celle de 34 avant). *Les chiffres sont de moi.*
      */
-    tailles: { courante: 32, geante: 36, kDebut: 2.6, k: 1.3, montee: 420, apres: 480, partDebut: 0.03, partFin: 0.1 } },
+    tailles: { courante: 32, geante: 36, kDebut: 2.6, k: 1.3, montee: 420, apres: 480, partDebut: 0.03, partFin: 0.1 },
+    // LA PLAQUE QU'UNE ROCHE FAIT TOMBER (voir `recuperation`) : sa chance, de `petite` pour la plus petite roche
+    // (`rayonMin`) à `grosse` pour la plus grosse (`rayonMax`), en ligne droite entre les deux. *De moi, à rejuger.*
+    plaque: { petite: 0.1, grosse: 0.6 } },
   ennemi: { apparait: 10, revient: 5, distance: 320, pv: 36, poussee: 120, vitesseMax: 85, rotation: 5, rayon: 4, cherche: 260, rode: 450, voit: 130, accourt: 420, tient: 80, fuit: 10, lache: 260, cadence: 1.8, vitesseTir: 130, dispersion: 0.16, vieTir: 2, butinRendu: 3,
     /**
      * LE RIVAL PEUT PORTER DE VRAIES ARMES (Keko, 14/11 : « deux canons, le reste en mitraillette, et deux missiles dans
@@ -1066,7 +1077,7 @@ export const totalDe = (c: Cargaison): number => c.fer + c.or + c.cristal
 export type Asteroide = { id: number; x: number; y: number; rayon: number; graine: number; angle0: number; vitesseAngulaire: number; minerai: Minerai; richesse: number }
 /** Un laser posé sur sa roche : laquelle, le point d'impact, la part déjà creusée (0 à 1). *Il a visé le rival un temps ; la foreuse ne sert plus qu'aux roches (Keko).* */
 export type Forage = { sorte: 'roche'; cible: number; x: number; y: number; part: number }
-export type Pepite = { id: number; x: number; y: number; vx: number; vy: number; graine: number; minerai: Minerai; /** Sa valeur (au vortex, en points d'expérience) : 1, 3 ou 10 — une petite, une moyenne, une grosse ; 1 si absente. */ valeur?: number; /** L'AIMANT (voir `invasion.aimant`) : pris, il attire toutes les pépites. */ aimant?: boolean; /** L'instant où l'aimant du JOUEUR l'a prise : elle ne le lâche plus (voir plus bas, « une pépite aimantée »). */ aimanteeA?: number; /** À plusieurs : le pilote qui l'aimante (voir `avancerLEquipage`). */ par?: number }
+export type Pepite = { id: number; x: number; y: number; vx: number; vy: number; graine: number; minerai: Minerai; /** Sa valeur (au vortex, en points d'expérience) : 1, 3 ou 10 — une petite, une moyenne, une grosse ; 1 si absente. */ valeur?: number; /** L'AIMANT (voir `invasion.aimant`) : pris, il attire toutes les pépites. */ aimant?: boolean; /** UNE PLAQUE (voir `recuperation`) : prise, elle restaure une plaque cassée ; personne n'en manque, elle attend. */ plaque?: boolean; /** L'instant où l'aimant du JOUEUR l'a prise : elle ne le lâche plus (voir plus bas, « une pépite aimantée »). */ aimanteeA?: number; /** À plusieurs : le pilote qui l'aimante (voir `avancerLEquipage`). */ par?: number }
 /** Un choc contre un astéroïde : où, et avec quelle vitesse normale (pour l'étincelle et la vibration). */
 export type Choc = { x: number; y: number; force: number; asteroide: number; /** Le vaisseau a TRAVERSÉ la roche, trop légère pour lui : la part de sa vitesse qu'il y a laissée (roche ÷ vaisseau). */ perce?: number }
 /** Un trait tiré par l'ennemi. */
@@ -1748,14 +1759,23 @@ function abattreLEnnemi(c: ConfigVaisseau, m: Monde, e: Ennemi, ev: Evenement[],
   else for (let i = 0; i < total; i++) rendues.push('fer')
   const aimant = c.invasion.active && ro === undefined && tire(e.id, 35) < c.invasion.aimant
   if (aimant) (rendues.push('fer'), valeurs.push(0))
+  // (UNE ROCHE, SOUS LES ARMES D'UN VAISSEAU À PLAQUES : peut-être une plaque — voir `recuperation`)
+  if (ro !== undefined && c.plaques > 0 && tire(e.id, 37) < chanceDePlaque(c, ro.rayon)) (rendues.push('fer'), valeurs.push(-1))
   const n = rendues.length
   const dec = n - valeurs.length
   for (let i = 0; i < n; i++) {
     const an = (i / n) * Math.PI * 2 + tire(e.id, 30, i)
     const vit = 20 + 40 * tire(e.id, 31, i)
     const val = i >= dec ? valeurs[i - dec] : undefined
-    m.pepites.push({ id: m.prochainId++, x: e.corps.x, y: e.corps.y, vx: Math.cos(an) * vit + e.corps.vx * 0.3, vy: Math.sin(an) * vit + e.corps.vy * 0.3, graine: hache(e.id, i), minerai: rendues[i], ...(val === undefined ? {} : val === 0 ? { aimant: true, valeur: 0 } : { valeur: val }) })
+    m.pepites.push({ id: m.prochainId++, x: e.corps.x, y: e.corps.y, vx: Math.cos(an) * vit + e.corps.vx * 0.3, vy: Math.sin(an) * vit + e.corps.vy * 0.3, graine: hache(e.id, i), minerai: rendues[i], ...(val === undefined ? {} : val === 0 ? { aimant: true, valeur: 0 } : val < 0 ? { plaque: true, valeur: 0 } : { valeur: val }) })
   }
+}
+
+/** La chance qu'une roche de `rayon` fasse tomber une plaque (voir `derive.plaque`, `recuperation`). */
+export function chanceDePlaque(c: ConfigVaisseau, rayon: number): number {
+  const D = c.derive
+  const u = Math.max(0, Math.min(1, (rayon - D.rayonMin) / Math.max(1, D.rayonMax - D.rayonMin)))
+  return Math.min(1, (D.plaque.petite + (D.plaque.grosse - D.plaque.petite) * u) * c.recuperation)
 }
 
 /** L'ennemi naît au loin, dans une direction tirée de la graine du monde, et regarde le joueur. */
@@ -5117,9 +5137,19 @@ export function ennemiLePlusProche(m: Monde, portee: number): Vecteur | null {
  * niveau, autant de fois qu'il le faut. L'AIMANT (voir `invasion.aimant`) : toutes les pépites du monde sont aimantées.
  */
 function gagnerLaPepite(c: ConfigVaisseau, m: Monde, p: Pepite, ev: Evenement[]): void {
+  // (UNE PLAQUE : la dernière cassée revient — voir `recuperation`)
+  if (p.plaque === true) {
+    const k = m.plaques.lastIndexOf(false)
+    if (k >= 0) {
+      m.plaques[k] = true
+      ev.push({ type: 'plaqueReparee', k })
+    }
+    return
+  }
   if (p.aimant === true) {
     for (const q of m.pepites) {
-      if (q.aimant === true) continue
+      // (l'aimant n'attire pas les plaques : elles vont à qui en manque)
+      if (q.aimant === true || q.plaque === true) continue
       q.aimanteeA = m.t
       if (m.equipage !== undefined) q.par = m.equipage.actif
     }
@@ -5667,9 +5697,20 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   const autres = m.equipage === undefined ? [] : vaisseauxEnVol(m).filter((x) => x.k !== ici)
   for (let i = m.pepites.length - 1; i >= 0; i--) {
     const p = m.pepites[i]
-    if (autres.length > 0) {
-      if (p.aimanteeA !== undefined && (p.par ?? 0) !== ici && autres.some((x) => x.k === (p.par ?? 0))) continue
-      if (p.aimanteeA === undefined && autres.some((x) => Math.hypot(x.v.x - p.x, x.v.y - p.y) < Math.hypot(v.x - p.x, v.y - p.y))) continue
+    // (UNE PLAQUE NE VA QU'À QUI EN MANQUE — voir `recuperation` : à plusieurs, au plus proche de ceux-là ; personne n'en
+    // manque, elle flotte, au plus proche de tous)
+    const manqueIci = m.plaques.includes(false)
+    let rivaux = autres
+    if (p.plaque === true && m.equipage !== undefined) {
+      const enManquent = autres.filter((x) => m.equipage!.pilotes[x.k].plaques.includes(false))
+      if (manqueIci || enManquent.length > 0) {
+        if (!manqueIci) continue
+        rivaux = enManquent
+      }
+    }
+    if (rivaux.length > 0) {
+      if (p.aimanteeA !== undefined && (p.par ?? 0) !== ici && rivaux.some((x) => x.k === (p.par ?? 0))) continue
+      if (p.aimanteeA === undefined && rivaux.some((x) => Math.hypot(x.v.x - p.x, x.v.y - p.y) < Math.hypot(v.x - p.x, v.y - p.y))) continue
     }
     let plusProche = corps[0]
     let dmin = Infinity
@@ -5681,7 +5722,8 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
     const dy = plusProche.y - p.y
     const d = dmin || 1
     // LA SOUTE PLEINE (la capacité de la coque — Keko), ou LE MINERAI REFUSÉ : la pépite reste là, ni ramassée ni aimantée
-    const soutePleine = !c.invasion.active && plusProche.e === null && (m.minerai >= c.capacite || m.refuses[p.minerai])
+    // (… ET LA PLAQUE, pour qui n'en manque pas : elle reste là, elle aussi)
+    const soutePleine = (!c.invasion.active && plusProche.e === null && (m.minerai >= c.capacite || m.refuses[p.minerai])) || (p.plaque === true && !manqueIci)
     // (LE JOUEUR QUI REVIENT N'AIMANTE RIEN TANT QU'IL EST INVINCIBLE — Keko, 21/11 : « que les pépites ne soient pas attirées
     // immédiatement quand on respawn, qu'on attende la fin de l'animation : pile au retour, ça lance un gain de niveau la
     // plupart du temps » — l'explosion du retour en sème tout autour ; voir `invasion.retour`)
@@ -5704,7 +5746,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
     // toujours finir par être capturée ») : prise une fois, elle ne le lâche plus, où qu'il aille — elle fonce droit sur
     // lui, de plus en plus vite (`accelerationAimantee` par seconde, depuis `vitessePepite` au moins), et toujours plus
     // vite que lui ; la soute pleine ou le minerai refusé la relâchent
-    const aimanteParLui = !attend && p.aimanteeA !== undefined && !(!c.invasion.active && (m.minerai >= c.capacite || m.refuses[p.minerai]))
+    const aimanteParLui = !attend && p.aimanteeA !== undefined && !soutePleine
     if (aimanteParLui) {
       const jx = v.x - p.x
       const jy = v.y - p.y

@@ -1,7 +1,7 @@
 /**
  * Vérifications du vaisseau, sans navigateur : le temps est injecté.
  */
-import { ajouterUnPilote, avancerLEquipage, etatDuPilote, partDe, gabaritDInsecte, rayonDe, rocheDeLaTempete, vieMultipliee, cadenceDeLaVague, asteroideDeLaCase, coupeDUnCube, asteroidesAutour, avancer, avancerLeMonde, encaisser, purger, impactDuRayon, lancerLaBombe, larguer, porteeDeLaBombe, MINERAIS, nouveauMonde, nouveauVaisseau, solidite, voler, totalDe, stationDeLaCase, stationLaPlusProche, VAISSEAU, verrouiller, ennemiLePlusProche, type ConfigVaisseau, type Ennemi, type Evenement, type Vaisseau, xpDuNiveau, gemmesDuButin, tire, type Pepite } from './jeu.ts'
+import { chanceDePlaque, ajouterUnPilote, avancerLEquipage, etatDuPilote, partDe, gabaritDInsecte, rayonDe, rocheDeLaTempete, vieMultipliee, cadenceDeLaVague, asteroideDeLaCase, coupeDUnCube, asteroidesAutour, avancer, avancerLeMonde, encaisser, purger, impactDuRayon, lancerLaBombe, larguer, porteeDeLaBombe, MINERAIS, nouveauMonde, nouveauVaisseau, solidite, voler, totalDe, stationDeLaCase, stationLaPlusProche, VAISSEAU, verrouiller, ennemiLePlusProche, type ConfigVaisseau, type Ennemi, type Evenement, type Vaisseau, xpDuNiveau, gemmesDuButin, tire, type Pepite } from './jeu.ts'
 import { acheter, configDuHangar, hangarNeuf, monter, pieceDe } from './hangar.ts'
 import { depuisTexte, retirerLesPilotes, retirerUnPilote, versTexte, vuDu, vuDuSecond } from './reseau.ts'
 
@@ -3698,6 +3698,48 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   abattre(r)
   for (let i = 0; i < 30; i++) avancerLEquipage([cfg, cfg], r, 1 / 60, [{ x: 0, y: 0 }, { x: 0, y: 0 }], undefined, false)
   verifier(`à deux, tous abattus avec ${r.invasion.vies} vies : la partie est finie`, r.invasion.finie && r.invasion.vies === cfg.invasion.vies)
+}
+
+// LES PLAQUES TOMBENT DES ROCHES (Keko, 22/11 : « en détruisant des astéroïdes, on a une chance de faire tomber un petit
+// objet qui restaure une plaque ; plus l'astéroïde est gros, plus la chance est importante »)
+{
+  const cfg: ConfigVaisseau = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9 }, derive: { ...VAISSEAU.derive, active: false }, armes: [], plaques: 3 }
+  const petite = chanceDePlaque(cfg, cfg.derive.rayonMin)
+  const grosse = chanceDePlaque(cfg, cfg.derive.rayonMax)
+  const milieu = chanceDePlaque(cfg, 27)
+  const deux = chanceDePlaque({ ...cfg, recuperation: 1.25 }, 27)
+  verifier(`la chance d'une plaque grandit avec la roche : ${Math.round(petite * 100)} % à ${cfg.derive.rayonMin}, ${Math.round(milieu * 100)} % à 27, ${Math.round(grosse * 100)} % à ${cfg.derive.rayonMax} ; la Récupération la multiplie (+25 % : ${Math.round(deux * 100)} %)`, petite < milieu && milieu < grosse && Math.abs(deux - milieu * 1.25) < 1e-9)
+  // (cent roches de 27 abattues : autant de plaques que la chance le dit ; sans plaques au vaisseau, aucune)
+  const roche = (id: number): Ennemi => ({ id, corps: { ...nouveauVaisseau(), x: 300, y: 0 }, pv: 0, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, asteroide: { rayon: 27, pvMax: 1000, graine: id, angle0: 0, vitesseAngulaire: 0 } } as Ennemi)
+  let tombees = 0
+  let sansPlaques = 0
+  for (let id = 1000; id < 1400; id++) {
+    const w = nouveauMonde(cfg, 3)
+    w.ennemis.push(roche(id))
+    avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+    tombees += w.pepites.filter((p) => p.plaque === true).length
+    const w2 = nouveauMonde({ ...cfg, plaques: 0 }, 3)
+    w2.ennemis.push(roche(id))
+    avancerLeMonde({ ...cfg, plaques: 0 }, w2, 1 / 60, { x: 0, y: 0 })
+    sansPlaques += w2.pepites.filter((p) => p.plaque === true).length
+  }
+  verifier(`400 roches de 27 : ${tombees} plaques tombées (${Math.round(milieu * 400)} attendues) ; sans plaques au vaisseau, ${sansPlaques}`, Math.abs(tombees - milieu * 400) < 40 && sansPlaques === 0)
+  // (ramassée : la dernière plaque cassée revient ; rien ne manque, elle reste là)
+  const w = nouveauMonde(cfg, 4)
+  w.plaques = [false, false, true]
+  w.pepites.push({ id: 900, x: 0, y: 0, vx: 0, vy: 0, graine: 1, minerai: 'fer', valeur: 0, plaque: true })
+  avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+  const prise = w.plaques.join()
+  const xp = w.invasion.xp
+  w.pepites.push({ id: 901, x: 0, y: 0, vx: 0, vy: 0, graine: 1, minerai: 'fer', valeur: 0, plaque: true })
+  w.plaques = [true, true, true]
+  for (let i = 0; i < 60; i++) avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+  verifier(`une plaque ramassée restaure la dernière cassée (${prise}), sans expérience (${xp}) ; plaques pleines, elle reste là (${w.pepites.filter((p) => p.plaque === true).length})`, prise === 'false,true,true' && xp === 0 && w.pepites.some((p) => p.plaque === true))
+  // (sans plus de réparation : dix minutes, les plaques cassées le restent)
+  const r = nouveauMonde(cfg, 5)
+  r.plaques = [false, false, false]
+  for (let i = 0; i < 60 * 30; i++) avancerLeMonde(cfg, r, 1 / 60, { x: 0, y: 0 })
+  verifier(`sans roche, les plaques ne reviennent pas avec le temps (${r.plaques.join()})`, r.plaques.every((x) => !x))
 }
 
 // (TOUJOURS EN DERNIER : des blocs ajoutés après cette ligne échouaient sans faire échouer `npm run verif` — 17/11)

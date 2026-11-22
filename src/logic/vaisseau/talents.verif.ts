@@ -34,9 +34,9 @@ const crit = avecLesBonus(base, ajouterLeBonus(ajouterLeBonus([], carte({ sorte:
 verifier(`le critique : une commune +1 point de chance (${(crit.passifs.critique * 100).toFixed(0)} %), une rare +12 points de dégâts critiques (${(crit.passifs.critiqueFacteur * 100).toFixed(0)} %, ${(base.passifs.critiqueFacteur * 100).toFixed(0)} avant)`, Math.abs(crit.passifs.critique - base.passifs.critique - 0.01) < 1e-9 && Math.abs(crit.passifs.critiqueFacteur - base.passifs.critiqueFacteur - 0.12) < 1e-9)
 
 // LE POOL D'UNE FACTION
-verifier(`les factions : ${Object.entries(STATS_DE_FACTION).map(([r, s]) => `${r} ${s.join('/')}`).join(' ; ')}`, (Object.values(STATS_DE_FACTION) as string[][]).every((s) => ['blindage', 'moteur', 'maniabilite', 'aimant', 'experience'].every((x) => s.includes(x))) && STATS_DE_FACTION.essaim.includes('regeneration') && STATS_DE_FACTION.etheres.includes('bouclier') && STATS_DE_FACTION.innommes.includes('dephasage') && STATS_DE_FACTION.humains.includes('reparation') && STATS_DE_FACTION.humains.includes('plaque'))
-const f = (s: Parameters<typeof factionAmelioree>[1], k = 0.25): ConfigVaisseau => factionAmelioree({ ...base, reparation: 20, plaques: 3 }, s, k)
-verifier(`PV, régénération, bouclier, expérience (${f('experience').invasion.gainXp}), réparation (${f('reparation').reparation} s sur 20), maniabilité ; le déphasage EN POINTS (+3 : ${(f('dephasage', 0.03).dephasage.chance * 100).toFixed(0)} %) ; « +1 plaque » (${f('plaque', 1).plaques})`, f('blindage').coque === base.coque * 1.25 && f('regeneration').regeneration === 0.0125 && f('bouclier').bouclier.points === 3.75 && f('experience').invasion.gainXp === 1.25 && f('reparation').reparation === 16 && f('maniabilite').rotation === base.rotation * 1.25 && Math.abs(f('dephasage', 0.03).dephasage.chance - 0.08) < 1e-12 && f('plaque', 1).plaques === 4)
+verifier(`les factions : ${Object.entries(STATS_DE_FACTION).map(([r, s]) => `${r} ${s.join('/')}`).join(' ; ')}`, (Object.values(STATS_DE_FACTION) as string[][]).every((s) => ['blindage', 'moteur', 'maniabilite', 'aimant', 'experience'].every((x) => s.includes(x))) && STATS_DE_FACTION.essaim.includes('regeneration') && STATS_DE_FACTION.etheres.includes('bouclier') && STATS_DE_FACTION.innommes.includes('dephasage') && STATS_DE_FACTION.humains.includes('recuperation') && (Object.values(STATS_DE_FACTION) as string[][]).every((s) => s.length === 6))
+const f = (s: Parameters<typeof factionAmelioree>[1], k = 0.25): ConfigVaisseau => factionAmelioree({ ...base, plaques: 3 }, s, k)
+verifier(`PV, régénération, bouclier, expérience (${f('experience').invasion.gainXp}), récupération (×${f('recuperation').recuperation}), maniabilité ; le déphasage EN POINTS (+3 : ${(f('dephasage', 0.03).dephasage.chance * 100).toFixed(0)} %) ; les plaques ne bougent pas (${f('recuperation').plaques})`, f('blindage').coque === base.coque * 1.25 && f('regeneration').regeneration === 0.0125 && f('bouclier').bouclier.points === 3.75 && f('experience').invasion.gainXp === 1.25 && f('recuperation').recuperation === 1.25 && f('maniabilite').rotation === base.rotation * 1.25 && Math.abs(f('dephasage', 0.03).dephasage.chance - 0.08) < 1e-12 && f('recuperation').plaques === 3)
 
 // UNE CARTE : elle ne touche que son arme ; elle se cumule
 const deux: ConfigVaisseau = { ...base, armes: [canon, { ...canon, id: 'autre' }] }
@@ -58,10 +58,9 @@ for (let n = 1; n <= 3000; n++) for (const x of proposer(11, n, 0, canon, 'ether
 verifier(`sur 9 000 cartes tirées : ${RARETES.map((r) => `${r.nom} ${Math.round(((rar.get(r.id) ?? 0) / 9000) * 1000) / 10} %`).join(', ')}`, Math.abs((rar.get('commune') ?? 0) / 9000 - 0.55) < 0.03 && (rar.get('legendaire') ?? 0) > 30 && (rar.get('legendaire') ?? 0) < 160)
 
 verifier('un choix à faire, plus la réserve ; le dernier choisi, c’est fini', ouvrirLeChoix(0).aFaire === 1 && ouvrirLeChoix(1).aFaire === 2 && apresUnChoix(ouvrirLeChoix(0)) === null && apresUnChoix(ouvrirLeChoix(1))?.aFaire === 1 && apresUnChoix(ouvrirLeChoix(1))?.rang === 1)
-let plaques = 0
-let horsLegendaire = 0
-for (let n = 1; n <= 4000; n++) for (const x of proposer(5, n, 0, canon, 'humains')) if (x.stat === 'plaque') (plaques++, x.rarete !== 'legendaire' && horsLegendaire++)
-verifier(`« +1 plaque » ne paraît qu'en légendaire : ${plaques} sur 12 000 cartes, ${horsLegendaire} hors légendaire ; sa carte vaut une plaque`, plaques > 5 && horsLegendaire === 0 && carte({ sorte: 'faction', race: 'humains' }, 'plaque', 'legendaire').bonus === 1)
+const recup = new Map<string, number>()
+for (let n = 1; n <= 4000; n++) for (const x of proposer(5, n, 0, canon, 'humains')) if (x.stat === 'recuperation') recup.set(x.rarete, (recup.get(x.rarete) ?? 0) + 1)
+verifier(`la Récupération de l'Empire paraît à toutes les raretés (${RARETES.map((r) => `${r.nom} ${recup.get(r.id) ?? 0}`).join(', ')}), son bonus celui de la rareté`, RARETES.every((r) => (recup.get(r.id) ?? 0) > 0) && carte({ sorte: 'faction', race: 'humains' }, 'recuperation', 'rare').bonus === 0.12)
 verifier('le délai passé, ce qui restait à choisir part en réserve', reserveApresLeDelai(ouvrirLeChoix(0)) === 1 && reserveApresLeDelai(ouvrirLeChoix(1)) === 2 && reserveApresLeDelai(apresUnChoix(ouvrirLeChoix(1))!) === 1)
 
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)

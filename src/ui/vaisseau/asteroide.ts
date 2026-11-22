@@ -379,6 +379,52 @@ function poserLeDessin(p: PeintreRoche, d: string[], x: number, y: number, T: nu
     }
 }
 /**
+ * LA PLAQUE TOMBÉE D'UNE ROCHE (Keko, 22/11 : « un petit objet qui aurait la forme d'un bouclier gris, brillant, qui
+ * restaure une plaque ») : un écu d'acier cerné, clair en haut à gauche, qui flotte ; UN REFLET passe en biais toutes
+ * les deux secondes, et il scintille d'une étoile à son coin.
+ */
+const PLAQUE_TOMBEE = [
+  '.ooooooooo.',
+  'o432222211o',
+  'o322222111o',
+  'o322222111o',
+  'o222222111o',
+  'o222221111o',
+  '.o2222111o.',
+  '.o2221111o.',
+  '..o22111o..',
+  '...o211o...',
+  '....ooo....',
+]
+export function dessinerPlaqueTombee(p: PeintreRoche, x0: number, y0: number, t: number, T: number[], graine = 0): void {
+  const x = Math.round(x0)
+  const y = Math.round(y0) + Math.round(Math.sin(t * 2.2 + tire(graine, 71) * 6.28))
+  p.glow(x, y, 11, T[3], 0.14 + 0.08 * Math.sin(t * 4))
+  poserLeDessin(p, PLAQUE_TOMBEE, x, y, T)
+  // (le reflet : une diagonale blanche qui traverse l'écu, dedans seulement)
+  const u = ((t + tire(graine, 72) * 2) % 2) / 0.45
+  if (u < 1) {
+    const x1 = x - 5
+    const y1 = y - 5
+    const d = Math.round(-4 + u * 18)
+    for (let j = 0; j < PLAQUE_TOMBEE.length; j++)
+      for (let i = 0; i < PLAQUE_TOMBEE[j].length; i++) {
+        const ch = PLAQUE_TOMBEE[j][i]
+        if (ch === '.' || ch === 'o') continue
+        if (i + j === d || i + j === d + 1) p.dot(x1 + i, y1 + j, 0xffffffff)
+      }
+  }
+  // (une étoile au coin, qui bat)
+  const b = (Math.sin(t * 3 + tire(graine, 73) * 6.28) + 1) / 2
+  if (b > 0.75) {
+    p.dot(x + 5, y - 6, 0xffffffff)
+    p.dot(x + 4, y - 6, T[3])
+    p.dot(x + 6, y - 6, T[3])
+    p.dot(x + 5, y - 7, T[3])
+    p.dot(x + 5, y - 5, T[3])
+  }
+}
+/**
  * L'AIMANT (Keko, 21/11 : « un petit symbole de la couleur des pépites, un symbole d'aimant ; quand on le prend, ça
  * attire toutes les pépites de la carte ») : un fer à cheval à la teinte des pépites, ses deux pôles blancs, cerné,
  * qui flotte et bat sous son halo, plus vif que les pépites.
