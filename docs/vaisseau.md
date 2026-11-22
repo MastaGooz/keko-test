@@ -7709,3 +7709,7 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
 - **22/11, L'ICÔNE D'« INVITER », UN ESCADRON.** Keko : « rajoute un troisième vaisseau en mode escadron, et enlève le
   petit plus jaune, c'est bizarre ». Trois vaisseaux EN V : le chef devant, plus clair, ses deux ailiers en retrait ;
   l'onglet ouvert, leurs feux luisent. Plus de pastille.
+- **22/11, HUIT LETTRES DÈS LA FRAPPE.** Keko : « il peut taper plus de 8 caractères, et quand il valide, ça enlève ceux
+  en trop ; il faudrait l'empêcher d'en taper plus ». Le clavier d'un téléphone qui compose un mot passe outre
+  `maxLength` : chaque frappe (`input`) coupe maintenant le champ à huit, et le dessin n'en montre jamais plus. Vérifié :
+  quinze lettres collées d'un coup, puis trois de plus, il reste huit.

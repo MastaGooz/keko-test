@@ -2512,6 +2512,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   // (16 px : en dessous, l'iPhone zoome sur le champ)
   champDuPseudo.style.cssText = 'position:fixed;left:0;top:0;width:1px;height:1px;display:none;z-index:5;margin:0;border:0;padding:0;outline:none;background:transparent;color:transparent;caret-color:transparent;font-size:16px'
   racine.append(champDuPseudo)
+  // (HUIT, PAS UN DE PLUS, DÈS LA FRAPPE — Keko, 22/11 : « il peut taper plus de 8 caractères, et quand il valide, ça
+  // enlève ceux en trop ; il faudrait l'empêcher d'en taper plus » : le clavier d'un téléphone qui compose un mot passe
+  // outre `maxLength` ; chaque frappe coupe à huit)
+  champDuPseudo.addEventListener('input', () => {
+    const lettres = [...champDuPseudo.value]
+    if (lettres.length > PSEUDO_MAX) champDuPseudo.value = lettres.slice(0, PSEUDO_MAX).join('')
+  })
   champDuPseudo.addEventListener('keydown', (ev) => {
     ev.stopPropagation()
     if (ev.key === 'Enter') validerLePseudo()
@@ -2597,7 +2604,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const actif = document.activeElement === champDuPseudo
       p.rect(fx - 1, fy - 1, fw + 2, 17, actif ? PEPITE[2] : MATIERES.encre.contour)
       p.rect(fx, fy, fw, 15, N.hex('#0b0912'))
-      const dit = champDuPseudo.value
+      const dit = [...champDuPseudo.value].slice(0, PSEUDO_MAX).join('')
       ecrire(p, dit === '' && !actif ? 'Toucher pour écrire' : dit, fx + 4, fy + 4, dit === '' ? COQUE[3] : N.WHITE)
       if (actif && Math.floor(tReel * 2.5) % 2 === 0) p.rect(fx + 5 + largeurDe(dit), fy + 3, 1, 9, N.WHITE)
       // (le vrai champ est posé là — voir `placerLeChampDuPseudo` ; la souris aussi y tombe)
