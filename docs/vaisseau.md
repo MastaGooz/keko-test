@@ -7619,3 +7619,15 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   l'adresse publique, `relay` un relais) ; chez l'hôte, sous le code tant que personne n'est là. L'HÔTE REVENU AU PREMIER
   PLAN se reconnecte au serveur (on est allé envoyer le lien dans une autre appli) ; L'INVITÉ REFAIT UN ESSAI au bout de
   quinze secondes, trois en tout, puis « Connexion impossible ».
+- **22/11, À DISTANCE, LES DEUX CHOISISSENT EN MÊME TEMPS ; LE TOAST À LA TAILLE DE SES MOTS.** Keko, après un premier
+  essai qui marche (« c'est pas mal ») : « sur PC, le message qui indique qu'on est bien connecté et qu'on peut rejoindre
+  la partie, dans le hangar, a un conteneur qui ne correspond pas à la taille de son texte » ; « quand on level up, il
+  faudrait que les deux joueurs choisissent leur talent en même temps, étant donné que le compteur des 30 secondes
+  s'applique à tout le monde ».
+  - LE TOAST (`quete-terminee.js`) : sa plaque faisait toujours 164 ; elle fait 164 au moins, et autant qu'il faut pour
+    son titre et sa ligne (l'emblème à gauche, une marge à droite). Vu, rendu hors du navigateur avec une ligne longue.
+  - LE CHOIX À DISTANCE : à un niveau, l'hôte ouvre le sien ET celui de l'invité (`choixDistant`), sous UN SEUL compte de
+    30 s qui ne repart plus à chaque carte ; chacun choisit chez lui ; qui a fini voit « Le joueur N choisit un talent… »
+    (`choixDeTalent` à `aFaire: 0`) ; le monde repart quand les deux ont fini, ou au bout du compte — ce qui reste à
+    chacun part dans SA réserve. VU entre deux Chrome : les deux cartes en même temps, l'invité qui attend l'hôte, puis
+    on repart. L'ÉCRAN PARTAGÉ (`&coop`) garde son choix l'un après l'autre : un seul écran.

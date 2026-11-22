@@ -1502,7 +1502,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   let envois = 0
   let envoyeA = -10
   /** Chez l'invité : la partie de l'hôte — un état reçu, en vol, sa direction, figée, son choix de talent ; le talent envoyé. */
-  type ChoixDistant = { qui: 1 | 2; cartes: Talent[]; aFaire: number; reste: number }
+  /**
+   * LE CHOIX DE TALENT, À DISTANCE (Keko, 22/11 : « quand on level up, il faudrait que les deux joueurs choisissent leur
+   * talent en même temps, étant donné que le compteur des 30 secondes s'applique à tout le monde ») : chacun le sien,
+   * EN MÊME TEMPS, sous un seul compte ; le monde repart quand les deux ont choisi, ou au bout du compte. Chez l'hôte,
+   * `choixDistant` est celui de l'invité ; chez l'invité, `distant.choix` ce que l'hôte en dit — ses cartes, ce qu'il lui
+   * reste à prendre, si l'hôte choisit encore, le temps qui reste. Qui a fini attend l'autre : `choixDeTalent` vaut
+   * alors `{ aFaire: 0 }` (le monde reste figé, l'écran dit « Le joueur N choisit… »).
+   */
+  type ChoixDistant = { cartes: Talent[]; aFaire: number; rang: number; autre: boolean; reste: number }
+  let choixDistant: Choix | null = null
   const distant: { recu: boolean; enVol: boolean; n: number; dir: Vecteur; fige: boolean; choix: ChoixDistant | null; envoye: { aFaire: number; a: number } | null } = { recu: false, enVol: false, n: 0, dir: { x: 0, y: 0 }, fige: false, choix: null, envoye: null }
   /** Le choix de talent en cours est celui du second. */
   let choixDuSecond = false
@@ -2094,10 +2103,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     retirerLesPilotes(m)
     second = null
     mancheDistant = null
-    if (choixDuSecond) {
-      choixDuSecond = false
-      choixDeTalent = null
-    }
+    choixDistant = null
+    if (choixDeTalent?.aFaire === 0) choixDeTalent = null
   }
   /** (l'hôte) Les deux configurations, et de quoi peindre son vaisseau, à l'invité — au départ, et à chaque talent. */
   function envoyerLesConfigs(): void {
@@ -2113,15 +2120,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       if (enJeu) ajouterLInvite()
       else liaison?.envoyer({ attente: true })
     }
-    if (o.talent !== undefined && choixDuSecond && choixDeTalent !== null) {
-      const ch = choixDeTalent
+    if (o.talent !== undefined && choixDistant !== null) {
       const ta = o.talent
       avecLeSecond(() => prendreLeTalent(ta))
-      jouer('equipe')
-      choixDeTalent = apresUnChoix(ch)
-      if (choixDeTalent === null) passerAuSecond()
-      talentFinA = tReel + DUREE_DU_CHOIX
-      talentA = tReel
+      choixDistant = apresUnChoix(choixDistant)
+      // (les deux ont fini : on rejoue)
+      if (choixDistant === null && choixDeTalent?.aFaire === 0) choixDeTalent = null
       envoyerLesConfigs()
     }
     if (o.quitte === true) {
@@ -2141,8 +2145,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (!SALON || second === null || liaison?.etat() !== 'connecte' || tReel - envoyeA < 1 / 15) return
     envoyeA = tReel
     const ch = choixDeTalent
-    const choix: ChoixDistant | null = ch === null ? null : { qui: choixDuSecond ? 2 : 1, cartes: choixDuSecond ? cartesDuChoix(ch, true) : [], aFaire: ch.aFaire, reste: talentFinA - tReel }
-    const etat = { n: ++envois, monde: m, ev: evenementsAEnvoyer, dir: t - arriveA < ARRIVE_A ? { x: 0, y: 0 } : directionVoulue(), fige: pauseOuverte || souteOuverte || ch !== null, choix, enVol: enJeu }
+    const cd = choixDistant
+    const choix: ChoixDistant | null = ch === null && cd === null ? null : { cartes: cd === null ? [] : cartesDuChoix(cd, true), aFaire: cd?.aFaire ?? 0, rang: cd?.rang ?? 0, autre: (ch?.aFaire ?? 0) > 0, reste: talentFinA - tReel }
+    const etat = { n: ++envois, monde: m, ev: evenementsAEnvoyer, dir: t - arriveA < ARRIVE_A ? { x: 0, y: 0 } : directionVoulue(), fige: pauseOuverte || souteOuverte || ch !== null || cd !== null, choix, enVol: enJeu }
     evenementsAEnvoyer = [[], []]
     void compresser(versTexte(etat)).then((d) => liaison?.envoyerVite(d))
   }
@@ -2197,15 +2202,18 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const evHote = s.ev[0]
     avecLeSecond(() => celebrer({ chocs: [], evenements: evHote }))
     // (le talent qu'on vient d'envoyer : son choix attend la réponse de l'hôte, il ne se rouvre pas)
+    // (le talent qu'on vient d'envoyer, pas encore reçu par l'hôte : on attend, ses cartes ne reviennent pas)
     const ch = s.choix
-    const envoye = distant.envoye !== null && ch !== null && ch.qui === 2 && ch.aFaire === distant.envoye.aFaire && tReel - distant.envoye.a < 2
-    const avant = distant.choix
-    distant.choix = envoye ? null : ch
-    if (distant.choix === null) choixDeTalent = null
+    const avant = choixDeTalent?.aFaire ?? -1
+    distant.choix = ch
+    if (ch === null) choixDeTalent = null
     else {
-      if (avant === null || avant.qui !== distant.choix.qui || avant.aFaire !== distant.choix.aFaire) talentA = tReel
-      choixDeTalent = { aFaire: distant.choix.aFaire, rang: 0 }
-      talentFinA = tReel + distant.choix.reste
+      const envoye = distant.envoye !== null && ch.aFaire === distant.envoye.aFaire && tReel - distant.envoye.a < 2
+      const aFaire = envoye ? 0 : ch.aFaire
+      if (aFaire > 0 && aFaire !== avant) talentA = tReel
+      if (avant < 0) talentA = tReel
+      choixDeTalent = { aFaire, rang: ch.rang }
+      talentFinA = tReel + ch.reste
     }
   }
   /** On rentre du vol : l'invité le dit à l'hôte, l'hôte à l'invité. */
@@ -2280,10 +2288,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     p.rect(0, 0, W, H, NUIT, 0.72 * u0)
     zones = []
     // (À DISTANCE, L'AUTRE CHOISIT : on attend, le temps court)
-    if ((SALON && choixDuSecond) || (INVITE && distant.choix?.qui === 1)) {
+    if (ch.aFaire === 0) {
       const y0 = Math.round(H / 2) - 24 + Math.round((1 - u0) * 8)
       motEnRelief(p, `Niveau ${m.invasion.niveau}`, W / 2, y0, true, TITRE)
-      ecrire(p, `Le joueur ${SALON ? 2 : 1} choisit un talent…`, W / 2, y0 + 18, COQUE[5], { align: 'center' })
+      ecrire(p, `Le joueur ${INVITE ? 1 : 2} choisit un talent…`, W / 2, y0 + 18, COQUE[5], { align: 'center' })
       const reste = Math.max(0, talentFinA - tReel)
       ecrire(p, String(Math.ceil(reste)), W / 2, y0 + 32, reste < 5 ? ROUGE[5] : COQUE[5], { align: 'center', police: GRAS })
       zone(0, 0, W, H, () => {}, null)
@@ -2299,8 +2307,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       if (INVITE) {
         liaison?.envoyer({ talent: ta })
         distant.envoye = { aFaire: ch.aFaire, a: tReel }
-        distant.choix = null
-        choixDeTalent = null
+        // (le suivant, s'il y en a, ou l'attente : c'est l'état de l'hôte qui le dira)
+        choixDeTalent = { aFaire: 0, rang: ch.rang }
         jouer('equipe')
         zone(0, 0, W, H, () => {}, null)
         return
@@ -2310,8 +2318,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       else prendreLeTalent(ta)
       jouer('equipe')
       choixDeTalent = apresUnChoix(ch)
+      // (À DISTANCE, le compte est à tous : il ne repart pas ; fini, on attend l'invité s'il choisit encore)
+      if (SALON && second !== null) {
+        if (choixDeTalent === null && choixDistant !== null) choixDeTalent = { aFaire: 0, rang: ch.rang }
+        envoyerLesConfigs()
+        talentA = tReel
+        zone(0, 0, W, H, () => {}, null)
+        return
+      }
       if (choixDeTalent === null) passerAuSecond()
-      envoyerLesConfigs()
       talentFinA = tReel + DUREE_DU_CHOIX
       talentA = tReel
       zone(0, 0, W, H, () => {}, null)
@@ -15434,8 +15449,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
             jouer('achat')
             break
           }
-          // (à l'équipage, le second aussi : son choix vient après celui du premier — voir `passerAuSecond`)
-          if (second !== null) second.aFaire += 1
+          // (à l'équipage, le second aussi : son choix vient après celui du premier — voir `passerAuSecond` ; À DISTANCE, EN
+          // MÊME TEMPS — voir `choixDistant`)
+          if (SALON && second !== null) {
+            choixDistant = choixDistant === null ? ouvrirLeChoix(second.reserve) : { aFaire: choixDistant.aFaire + 1, rang: choixDistant.rang }
+            second.reserve = 0
+          } else if (second !== null) second.aFaire += 1
           jouer('achat')
           const enCours = choixDeTalent as Choix | null
           if (enCours === null) {
@@ -16068,7 +16087,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (VORTEX && parametres.has('choix') && !choixDEssaiOuvert && enJeu && t - arriveA > 1.5 && choixDeTalent === null && !INVITE && (!A_DEUX || second !== null)) {
       choixDEssaiOuvert = true
       choixDeTalent = ouvrirLeChoix(0)
-      if (second !== null) second.aFaire += 1
+      if (SALON && second !== null) choixDistant = ouvrirLeChoix(0)
+      else if (second !== null) second.aFaire += 1
       talentFinA = tReel + DUREE_DU_CHOIX
       talentA = tReel
     }
@@ -16149,6 +16169,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (!INVITE && choixDeTalent !== null && tReel >= talentFinA) {
       if (choixDuSecond && second !== null) second.reserve += reserveApresLeDelai(choixDeTalent)
       else reserveDeTalents += reserveApresLeDelai(choixDeTalent)
+      // (à distance, celui de l'invité aussi : le compte est à tous)
+      if (choixDistant !== null && second !== null) second.reserve += reserveApresLeDelai(choixDistant)
+      choixDistant = null
       choixDeTalent = null
       passerAuSecond()
     }

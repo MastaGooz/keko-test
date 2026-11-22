@@ -92,7 +92,12 @@ function check(p, G, x, y, s, white) {
 export function create(o) {
   const G = fit(o.palette, 8), B = fit(o.ribbon, 5), R = new Rng(o.seed);
   const ps = new Particles({ rng: R, sparks: [G[7], G[6], G[5], G[3]] }), lights = new Lights();
-  const TS = o.titleFont === "mini" ? 2 : 1, title = spell(o.title, o.titleFont), sub = spell(o.text, o.font), TX = PX + 34, SY = o.font === "mini" ? PY + 22 : PY + 18;
+  const TS = o.titleFont === "mini" ? 2 : 1, title = spell(o.title, o.titleFont), sub = spell(o.text, o.font);
+  // (LA PLAQUE À LA TAILLE DE SES MOTS — Keko, 22/11 : « le message qui indique qu'on est bien connecté a un conteneur qui
+  // ne correspond pas à la taille de son texte » : 164 au moins, et autant qu'il faut pour le titre et la ligne, plus la
+  // place de l'emblème à gauche et une marge à droite)
+  const pw = Math.max(PW, 34 + Math.max(title.w * TS, sub.w) + 9), px = PX + (PW - pw) / 2, mx = px + 17;
+  const TX = px + 34, SY = o.font === "mini" ? PY + 22 : PY + 18;
   let t = 0, popped = false;
   const end = meta.duration - 0.05;
   // the toast slides in from the right, overshoots and settles; at the end it eases back and slides off
@@ -102,14 +107,14 @@ export function create(o) {
       t += dt;
       if (!popped && t >= MEDAL + 0.06) {
         popped = true;
-        lights.add(MX, MY, 36, G[5], 0.7, 0.4);
+        lights.add(mx, MY, 36, G[5], 0.7, 0.4);
         const n = o.emblem === "check" ? 7 : 12;
         for (let i = 0; i < n; i++) {
           const an = (i / n) * TAU + R.range(-0.2, 0.2), sp = R.range(40, 90);
-          ps.spawn(P.STAR, MX + Math.cos(an) * 9, MY + Math.sin(an) * 9, Math.cos(an) * sp, Math.sin(an) * sp * 0.6, R.range(0.25, 0.45), R.pick([G[7], G[6], G[5]]), i % 3 ? 0.6 : R.range(1.2, 1.8));
+          ps.spawn(P.STAR, mx + Math.cos(an) * 9, MY + Math.sin(an) * 9, Math.cos(an) * sp, Math.sin(an) * sp * 0.6, R.range(0.25, 0.45), R.pick([G[7], G[6], G[5]]), i % 3 ? 0.6 : R.range(1.2, 1.8));
         }
       }
-      if (o.emblem !== "check" && t > 0.5 && t < OUT && R.chance(0.05)) ps.spawn(P.STAR, MX + R.range(-11, 11), MY + R.range(-11, 9), 0, -R.range(4, 10), Math.min(R.range(0.3, 0.5), end - t), G[6], R.chance(0.3) ? 1.4 : 0.6);
+      if (o.emblem !== "check" && t > 0.5 && t < OUT && R.chance(0.05)) ps.spawn(P.STAR, mx + R.range(-11, 11), MY + R.range(-11, 9), 0, -R.range(4, 10), Math.min(R.range(0.3, 0.5), end - t), G[6], R.chance(0.3) ? 1.4 : 0.6);
       ps.update(dt);
       lights.update(dt);
     },
@@ -121,14 +126,14 @@ export function create(o) {
       const moving = t < IN * 0.8 || out;
       if (moving)
         for (let i = 0; i < 8; i++) {
-          const y = PY + 3 + rand(Math.floor(t * 30), i, 1) * (PH - 6), L = 10 + rand(Math.floor(t * 30), i, 2) * 26, x0 = x + PW / 2 + 2 + rand(i, 3) * 6;
-          p.line(x0, y, Math.min(118, x0 + L), y, (u) => (u < 0.3 ? WHITE : u < 0.6 ? G[6] : G[4]), (u) => a * (1.1 - u));
+          const y = PY + 3 + rand(Math.floor(t * 30), i, 1) * (PH - 6), L = 10 + rand(Math.floor(t * 30), i, 2) * 26, x0 = x + pw / 2 + 2 + rand(i, 3) * 6;
+          p.line(x0, y, Math.min(pw / 2 + 36, x0 + L), y, (u) => (u < 0.3 ? WHITE : u < 0.6 ? G[6] : G[4]), (u) => a * (1.1 - u));
         }
       // the plate and its gold edge; a shine sweeps the whole toast
-      const sh = seg(t, SHINE, SHINE + 0.36), shine = sh > 0 && sh < 1 ? PX - 12 + (PW + 30) * ease.inOutSine(sh) : null;
-      panel(p, PX + x, PY, PW, PH, INK, { r: 4, a, shine: shine === null ? null : shine + x });
-      p.line(PX + x + 4, PY + 1, PX + x + PW - 5, PY + 1, G[4], a);
-      p.px(PX + x + 3, PY + 1, G[2]);
+      const sh = seg(t, SHINE, SHINE + 0.36), shine = sh > 0 && sh < 1 ? px - 12 + (pw + 30) * ease.inOutSine(sh) : null;
+      panel(p, px + x, PY, pw, PH, INK, { r: 4, a, shine: shine === null ? null : shine + x });
+      p.line(px + x + 4, PY + 1, px + x + pw - 5, PY + 1, G[4], a);
+      p.px(px + x + 3, PY + 1, G[2]);
       // the words: a gold title, a white line under it
       const ti = title.letters.filter((L) => L.g).map((L) => ({ g: L.g, x: TX + x + L.x * TS, y: PY + (TS === 2 ? 5 : 4), sx: TS, sy: TS, a }));
       drawWord(p, ti, { fill: [G[4], G[5], G[6]], edge: G[7], under: G[3], outline: INK.outline, shadow: 0, shine: shine === null ? null : shine + x, shineY: PY, glint: G[7] });
@@ -138,11 +143,11 @@ export function create(o) {
       const mk = t - MEDAL;
       if (mk > 0) {
         const s = mk < 0.035 ? 1.5 : 1 + 0.35 * Math.exp(-mk * 16) * Math.cos(mk * 28);
-        if (o.emblem === "check") check(p, G, Math.round(MX + x), MY, s, mk < 0.07);
-        else medal(p, G, B, MX + x, MY, s, mk < 0.07, shine === null ? null : shine - MX + 4);
-        p.glow(MX + x, MY, 20, G[5], 0.3 * a + (mk < 0.15 ? 0.5 * (1 - mk / 0.15) : 0));
+        if (o.emblem === "check") check(p, G, Math.round(mx + x), MY, s, mk < 0.07);
+        else medal(p, G, B, mx + x, MY, s, mk < 0.07, shine === null ? null : shine - mx + 4);
+        p.glow(mx + x, MY, 20, G[5], 0.3 * a + (mk < 0.15 ? 0.5 * (1 - mk / 0.15) : 0));
         const g = ((t - 1.5) % 0.9) / 0.9;
-        if (o.emblem !== "check" && t > 1.5 && g < 0.25) sparkle(p, MX + x - 4, MY - 4, 4 * Math.sin((g / 0.25) * Math.PI), G[7], G[6], 0.5);
+        if (o.emblem !== "check" && t > 1.5 && g < 0.25) sparkle(p, mx + x - 4, MY - 4, 4 * Math.sin((g / 0.25) * Math.PI), G[7], G[6], 0.5);
       }
       ps.draw(p);
       lights.draw(p);
