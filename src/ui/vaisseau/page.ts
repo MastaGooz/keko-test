@@ -12,7 +12,7 @@
  */
 import './vaisseau.css'
 import * as noyau from 'pixelfx'
-import { type SorteDInsecte, SORTES_D_INSECTES, gabaritDInsecte, gemmesDuButin, butinDeLaRoche, pointDeRetour, rayonDe, rocheDeLaTempete, vieMultipliee, degatsMultiplies, placeDeLEcharde, frontDeLaNova, ancreDansLeMonde, zoneDuDe, coupeDUnCube, formeDeLaCoupe, liesAuDrain, encaisser, type Ennemi, type Evenement, type Monde, impactDuRayon, asteroidesVisibles, avancerLeMonde, finDuTrio, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur, xpDuNiveau, ennemiLePlusProche, ennemiVerrouille, verrouiller, angleDuBalayage } from '../../logic/vaisseau/jeu.ts'
+import { ajouterUnPilote, avancerLEquipage, prendreLaMain, type SorteDInsecte, SORTES_D_INSECTES, gabaritDInsecte, gemmesDuButin, butinDeLaRoche, pointDeRetour, rayonDe, rocheDeLaTempete, vieMultipliee, degatsMultiplies, placeDeLEcharde, frontDeLaNova, ancreDansLeMonde, zoneDuDe, coupeDUnCube, formeDeLaCoupe, liesAuDrain, encaisser, type Ennemi, type Evenement, type Monde, impactDuRayon, asteroidesVisibles, avancerLeMonde, finDuTrio, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur, xpDuNiveau, ennemiLePlusProche, ennemiVerrouille, verrouiller, angleDuBalayage } from '../../logic/vaisseau/jeu.ts'
 import { ETALONS as ETALONS_DU_BANC, acheter, ajouterLesPiecesDEssai, capacite, poidsTotal, POIDS_SERIE, configDuHangar, demonter, demonterA, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, montantCourt, monteeA, monter, monterA, peutAcheter, peutMonter, perdreLesMontees, estDeBase, exemplaires, libres, pieceDe, piecesDe, placeLourde, possede, aimantMonte, radarMonte, type Jauge, type Piece, type Sorte } from '../../logic/vaisseau/hangar.ts'
 import { drawWord, spell } from 'pixelfx/fx/ui/_lib'
 import { firePuff, hotFirst, smokePuff } from 'pixelfx/fx/fire/_lib'
@@ -956,6 +956,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   // ---------------------------------------------------------------- le manche (celui du survivor)
   /** Le manche du vol : `t0` et `depart`, l'instant et le point de l'appui ; `vu`, s'il est déjà paru (voir `dessinerLeManche`). */
   let manche: { id: number; centre: Vecteur; doigt: Vecteur; t0?: number; depart?: Vecteur; vu?: boolean } | null = null
+  /** LE MANCHE DU SECOND VAISSEAU (l'équipage, `&coop`) : un doigt posé sur la moitié droite de l'écran. */
+  let manche2: { id: number; centre: Vecteur; doigt: Vecteur; t0?: number; depart?: Vecteur; vu?: boolean } | null = null
   /**
    * LE REGARD (Keko, 12/11 : « une fois le joystick enfoncé, si le joueur maintient un deuxième doigt et fait des
    * mouvements, on déplace l'orientation du vaisseau — maintien 1 = direction et orientation, maintien 2 = prend le pas
@@ -1166,6 +1168,18 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     jouer('arrive', undefined, Math.max(0, ARRIVE_A - ECLOSION_DE_L_ARRIVEE))
     compteVu = 0
     effets.push({ fx: N.createFx(MATERIALISATION as Module, { x: v.x - camera.x + W / 2, y: v.y - camera.y + centreY(), rayon: CONF.rayon, seed: 4 }), x: v.x, y: v.y })
+
+    // (`&coop` : LE SECOND se matérialise à côté, dans l'apparence qui suit celle du premier — voir `COOP`)
+    second = null
+    choixDuSecond = false
+    if (COOP) {
+      ajouterUnPilote(CONF, m, 40, 0)
+      const ps = peauxDe(flotte.actif)
+      const i = ps.findIndex((x) => x.id === peauCourante().id)
+      const w = m.equipage!.pilotes[1].vaisseau
+      second = { ecran: { ...lireLEcran(), v: w, sansTalents: null, bonus: [], plaques: [], coups: [], poussee: { avant: 0, retro: 0, cote: 0 }, ver: [], queue: null }, peau: ps[(i + 1) % ps.length]?.id ?? '', aFaire: 0, reserve: 0 }
+      effets.push({ fx: N.createFx(MATERIALISATION as Module, { x: w.x - camera.x + W / 2, y: w.y - camera.y + centreY(), rayon: CONF.rayon, seed: 5 }), x: w.x, y: w.y })
+    }
   }
 
   // ---------------------------------------------------------------- le hangar, en pixels
@@ -1445,6 +1459,18 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** La configuration d'avant le premier talent du vol, et les bonus pris depuis (voir `avecLesBonus`). */
   let confSansTalents: ConfigVaisseau | null = null
   let bonusDuVol: Bonus = []
+  /**
+   * L'ÉQUIPAGE, SUR UN MÊME ÉCRAN (`&coop` — Keko, 22/11 : « Tente l'étape 1 », deux vaisseaux dans le même monde avant le
+   * réseau) : un second vaisseau, du même modèle et de la même arme que le premier, dans l'apparence suivante ; LA MOITIÉ
+   * DROITE DE L'ÉCRAN LE PILOTE (la gauche, le premier) — au clavier, les flèches (ZQSD, le premier). Le monde est
+   * commun, chacun a sa vie, ses armes, sa mort et son retour (voir `avancerLEquipage`), et SES TALENTS : à chaque niveau,
+   * le premier choisit, puis le second. `ecran` : ce que l'écran garde de lui (voir `avecLeSecond`) ; `aFaire`, ses choix
+   * qui attendent ; `reserve`, ceux que le délai a mis de côté.
+   */
+  const COOP = VORTEX && parametres.has('coop')
+  let second: { ecran: EcranDuPilote; peau: string; aFaire: number; reserve: number } | null = null
+  /** Le choix de talent en cours est celui du second. */
+  let choixDuSecond = false
   let talentFinA = 0
   /** (`&choix` : le choix d'essai est-il déjà ouvert) */
   let choixDEssaiOuvert = false
@@ -1957,13 +1983,31 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   }
   /** Combien de secondes tenir une carte de talent pour la prendre (voir `tenue`). *De moi.* */
   const TENIR_LE_TALENT = 0.5
+  /**
+   * LE CHOIX DU PREMIER FINI, CELUI DU SECOND (l'équipage) : ses choix qui attendent, et ceux que le délai lui avait mis de
+   * côté ; le sien fini, on rejoue.
+   */
+  function passerAuSecond(): void {
+    if (choixDuSecond) {
+      choixDuSecond = false
+      return
+    }
+    if (second === null || second.aFaire + second.reserve <= 0) return
+    choixDeTalent = ouvrirLeChoix(second.aFaire - 1 + second.reserve)
+    second.aFaire = 0
+    second.reserve = 0
+    choixDuSecond = true
+    talentFinA = tReel + DUREE_DU_CHOIX
+    talentA = tReel
+  }
   function dessinerLeChoixDeTalent(p: Peintre): void {
     const ch = choixDeTalent
     if (ch === null) return
     const u0 = sortie((tReel - talentA) / 0.2)
     p.rect(0, 0, W, H, NUIT, 0.72 * u0)
     zones = []
-    const tirees = proposer(graineDuVol, m.invasion.niveau, ch.rang, CONF.armes[0], modeleDeVaisseau(flotte.actif).race)
+    // (le second tire ses cartes de son arme, sur une autre graine : pas les mêmes que le premier)
+    const tirees = proposer(graineDuVol + (choixDuSecond ? 7919 : 0), m.invasion.niveau, ch.rang, (choixDuSecond && second !== null ? second.ecran.CONF : CONF).armes[0], modeleDeVaisseau(flotte.actif).race)
     // (`&rarete=R` : les trois cartes à cette rareté — commune, peuCommune, rare, epique, legendaire —, pour les juger)
     const rareteForcee = RARETES.find((r) => r.id === parametres.get('rarete'))?.id
     const cartes = rareteForcee === undefined ? tirees : tirees.map((ta) => carte(ta.cible, ta.stat, rareteForcee))
@@ -1972,18 +2016,24 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (pris !== null && tReel - pris.t0 >= DUREE_DE_LA_PRISE) {
       const ta = pris.ta
       talentPris = null
-      // (LES BONUS S'ADDITIONNENT — voir `avecLesBonus` : la configuration se recalcule de celle d'avant le premier talent)
-      if (confSansTalents === null) confSansTalents = CONF
-      bonusDuVol = ajouterLeBonus(bonusDuVol, ta)
-      const avant = CONF
-      CONF = avecLesBonus(confSansTalents, bonusDuVol)
-      // (ce qu'on gagne de vie ou de bouclier est donné tout de suite)
-      if (CONF.coque > avant.coque) m.coque = Math.min(CONF.coque, m.coque + CONF.coque - avant.coque)
-      if (CONF.bouclier.points > avant.bouclier.points) m.bouclier = Math.min(CONF.bouclier.points, m.bouclier + CONF.bouclier.points - avant.bouclier.points)
-      // (une plaque gagnée paraît debout)
-      for (let k = avant.plaques; k < CONF.plaques; k++) m.plaques.push(true)
+      const prendre = (): void => {
+        // (LES BONUS S'ADDITIONNENT — voir `avecLesBonus` : la configuration se recalcule de celle d'avant le premier talent)
+        if (confSansTalents === null) confSansTalents = CONF
+        bonusDuVol = ajouterLeBonus(bonusDuVol, ta)
+        const avant = CONF
+        CONF = avecLesBonus(confSansTalents, bonusDuVol)
+        // (ce qu'on gagne de vie ou de bouclier est donné tout de suite)
+        if (CONF.coque > avant.coque) m.coque = Math.min(CONF.coque, m.coque + CONF.coque - avant.coque)
+        if (CONF.bouclier.points > avant.bouclier.points) m.bouclier = Math.min(CONF.bouclier.points, m.bouclier + CONF.bouclier.points - avant.bouclier.points)
+        // (une plaque gagnée paraît debout)
+        for (let k = avant.plaques; k < CONF.plaques; k++) m.plaques.push(true)
+      }
+      // (LE TALENT DU SECOND EST À LUI : sa configuration, son vaisseau — voir `avecLeSecond`)
+      if (choixDuSecond) avecLeSecond(prendre)
+      else prendre()
       jouer('equipe')
       choixDeTalent = apresUnChoix(ch)
+      if (choixDeTalent === null) passerAuSecond()
       talentFinA = tReel + DUREE_DU_CHOIX
       talentA = tReel
       zone(0, 0, W, H, () => {}, null)
@@ -1996,7 +2046,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const y0 = Math.max(4, Math.round((H - hautTotal) / 2)) + Math.round((1 - u0) * 8)
     motEnRelief(p, `Niveau ${m.invasion.niveau}`, W / 2, y0, true, TITRE)
     const reste = Math.max(0, talentFinA - tReel)
-    const consigne = ch.aFaire > 1 ? `Maintenez pour choisir (${ch.aFaire} à choisir)` : 'Maintenez un talent pour le choisir'
+    // (à l'équipage, à qui est le choix)
+    const consigne = COOP ? `Joueur ${choixDuSecond ? 2 : 1} : maintenez un talent${ch.aFaire > 1 ? ` (${ch.aFaire})` : ''}` : ch.aFaire > 1 ? `Maintenez pour choisir (${ch.aFaire} à choisir)` : 'Maintenez un talent pour le choisir'
     ecrire(p, consigne, W / 2, y0 + 16, COQUE[5], { align: 'center' })
     // le temps qui reste : une barre qui se vide, et les secondes
     const lb = Math.min(140, W - 60)
@@ -7727,16 +7778,22 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // (le côté du vol se choisit dans les paramètres : `aGauche` veut dire « du côté du vol »)
     // (dans le jeu du vortex, UN SEUL MANCHE : tout doigt posé, où que ce soit, est celui du vol ; la souris ne pilote pas)
     if (VORTEX && ev.pointerType === 'mouse') return
-    const aGauche = VORTEX || (ev.pointerType === 'mouse' ? !capaciteArmee : ev.clientX < cadre.left + cadre.width / 2 === (reglages.vol === 'gauche'))
+    // (L'ÉQUIPAGE, `&coop` : la moitié gauche pilote le premier, la droite le second)
+    const aGauche = COOP ? ev.clientX < cadre.left + cadre.width / 2 : VORTEX || (ev.pointerType === 'mouse' ? !capaciteArmee : ev.clientX < cadre.left + cadre.width / 2 === (reglages.vol === 'gauche'))
     // (un manche « tenu » par un doigt qui n'est plus posé — voir le filet, plus bas : il y a moins de doigts sur l'écran
     // que de manches pris ; le doigt qui arrive de son côté le reprend alors)
-    const fantome = ev.pointerType === 'touch' && doigtsPoses < (manche === null ? 0 : 1) + (regard === null ? 0 : 1)
+    const fantome = ev.pointerType === 'touch' && doigtsPoses < (manche === null ? 0 : 1) + (regard === null ? 0 : 1) + (manche2 === null ? 0 : 1)
     const q = { x: ev.clientX, y: ev.clientY }
     if (aGauche) {
       if (manche !== null && !fantome) return
       ev.preventDefault()
       racine.setPointerCapture(ev.pointerId)
       manche = { id: ev.pointerId, centre: q, doigt: q, t0: t, depart: q, vu: false }
+    } else if (COOP) {
+      if (manche2 !== null && !fantome) return
+      ev.preventDefault()
+      racine.setPointerCapture(ev.pointerId)
+      manche2 = { id: ev.pointerId, centre: q, doigt: q, t0: t, depart: q, vu: false }
     } else {
       if (regard !== null && !fantome) return
       ev.preventDefault()
@@ -7799,6 +7856,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (regard !== null && ev.pointerId === regard.id) {
       const d = { x: ev.clientX, y: ev.clientY }
       regard = { id: regard.id, centre: centreQuiSuit(MANCHE, regard.centre, d), doigt: d, tir: regard.tir, t0: regard.t0 }
+      return
+    }
+    if (manche2 !== null && ev.pointerId === manche2.id) {
+      const doigt = { x: ev.clientX, y: ev.clientY }
+      manche2 = { ...manche2, centre: suivre ? manche2.centre : centreQuiSuit(MANCHE, manche2.centre, doigt), doigt }
       return
     }
     if (manche === null || ev.pointerId !== manche.id) return
@@ -7884,6 +7946,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       glisse = null
     }
     if (manche !== null && ev.pointerId === manche.id) manche = null
+    if (manche2 !== null && ev.pointerId === manche2.id) manche2 = null
     if (pince !== null && ev.pointerId === pince.id) pince = null
     if (regletteTenue === ev.pointerId) regletteTenue = null
     if (regard !== null && ev.pointerId === regard.id) {
@@ -7959,6 +8022,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     journalDesDoigts = `${ev.type.slice(5)} ${doigtsPoses}`
     if (doigtsPoses === 0) {
       manche = null
+      manche2 = null
       regard = null
       pince = null
       regletteTenue = null
@@ -8017,6 +8081,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   window.addEventListener('blur', () => {
     touches.clear()
     manche = null
+    manche2 = null
   })
   /**
    * LA POSTCOMBUSTION (la première mécanique du labo) : une DOUBLE TAPE en vol — ou sa plaque, ou Espace / Maj au
@@ -8073,9 +8138,30 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       return directionDuManche(MANCHE, (manche.doigt.x - (r.left + r.width / 2)) * 0.5, (manche.doigt.y - (r.top + r.height / 2)) * 0.5)
     }
     // (A et Q à gauche, pour les deux claviers — et donc E et D à droite, Keko, 15/11)
-    const x = (touches.has('arrowright') || touches.has('d') || touches.has('e') ? 1 : 0) - (touches.has('arrowleft') || touches.has('q') || touches.has('a') ? 1 : 0)
-    const y = (touches.has('arrowdown') || touches.has('s') ? 1 : 0) - (touches.has('arrowup') || touches.has('z') || touches.has('w') ? 1 : 0)
+    // (à l'équipage, les flèches sont au second)
+    const f = !COOP
+    const x = ((f && touches.has('arrowright')) || touches.has('d') || touches.has('e') ? 1 : 0) - ((f && touches.has('arrowleft')) || touches.has('q') || touches.has('a') ? 1 : 0)
+    const y = ((f && touches.has('arrowdown')) || touches.has('s') ? 1 : 0) - ((f && touches.has('arrowup')) || touches.has('z') || touches.has('w') ? 1 : 0)
     return { x, y }
+  }
+  /** Où pousse le second (l'équipage) : son manche, ou les flèches. */
+  function directionDuSecond(): Vecteur {
+    if (manche2 !== null) return directionDuManche(MANCHE, manche2.doigt.x - manche2.centre.x, manche2.doigt.y - manche2.centre.y)
+    return { x: (touches.has('arrowright') ? 1 : 0) - (touches.has('arrowleft') ? 1 : 0), y: (touches.has('arrowdown') ? 1 : 0) - (touches.has('arrowup') ? 1 : 0) }
+  }
+  /** Où regarde le second — demandé par la règle quand il a le monde (voir `avancerLEquipage`) : comme le premier, l'insecte le plus proche. */
+  function regardDuSecond(): Vecteur | undefined {
+    if (second === null) return undefined
+    const gv = v
+    const gc = CONF
+    v = m.vaisseau
+    CONF = second.ecran.CONF
+    try {
+      return t - second.ecran.arriveA < ARRIVE_A ? undefined : regardVoulu()
+    } finally {
+      v = gv
+      CONF = gc
+    }
   }
 
   // ---------------------------------------------------------------- dessiner
@@ -8452,6 +8538,128 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   let devieDeLaFlamme = 0
   let capVu = 0
   let virageVu = 0
+  /**
+   * CE QUE L'ÉCRAN GARDE D'UN VAISSEAU (l'équipage, `&coop`) : son vaisseau, sa configuration et ses talents, ses instants
+   * (touché, arrivé, abattu, bouclier, déphasage, plaques), sa flamme, sa poussée vue, le chemin du ver. LE SECOND A LES
+   * SIENS : `avecLeSecond` les lui prête — le monde aussi, par `prendreLaMain` — le temps d'avancer, de célébrer et de
+   * peindre ce qui est à lui, puis les rend au premier. (Le même prêt que l'aperçu des armes, au hangar.)
+   */
+  type EcranDuPilote = { v: Vaisseau; CONF: ConfigVaisseau; sansTalents: ConfigVaisseau | null; bonus: Bonus; toucheA: number; arriveA: number; perduA: number; bouclierA: number; purgeA: number; capVu: number; devieDeLaFlamme: number; virageVu: number; flamme: number; plaques: number[]; coups: typeof coupsAuBouclier; poussee: typeof pousseeVue; ver: [number, number][]; queue: { x: number; y: number; cap: number } | null }
+  const lireLEcran = (): EcranDuPilote => ({ v, CONF, sansTalents: confSansTalents, bonus: bonusDuVol, toucheA, arriveA, perduA, bouclierA, purgeA, capVu, devieDeLaFlamme, virageVu, flamme, plaques: plaquesCasseesA.slice(), coups: coupsAuBouclier.slice(), poussee: { ...pousseeVue }, ver: tracesDuVer.vol.slice(), queue: queueDuVer })
+  function poserLEcran(e: EcranDuPilote): void {
+    v = e.v
+    CONF = e.CONF
+    confSansTalents = e.sansTalents
+    bonusDuVol = e.bonus
+    toucheA = e.toucheA
+    arriveA = e.arriveA
+    perduA = e.perduA
+    bouclierA = e.bouclierA
+    purgeA = e.purgeA
+    capVu = e.capVu
+    devieDeLaFlamme = e.devieDeLaFlamme
+    virageVu = e.virageVu
+    flamme = e.flamme
+    plaquesCasseesA.splice(0, plaquesCasseesA.length, ...e.plaques)
+    coupsAuBouclier.splice(0, coupsAuBouclier.length, ...e.coups)
+    Object.assign(pousseeVue, e.poussee)
+    tracesDuVer.vol.splice(0, tracesDuVer.vol.length, ...e.ver)
+    queueDuVer = e.queue
+  }
+  /** On peint, on avance ou on célèbre le second (voir `avecLeSecond`) : ce qui est à tous ne se repeint pas. */
+  let dessinDuSecond = false
+  function avecLeSecond(f: () => void): void {
+    if (second === null || m.equipage === undefined || dessinDuSecond) return
+    const premier = lireLEcran()
+    const peau = peauxChoisies.get(flotte.actif)
+    prendreLaMain(m, 1)
+    poserLEcran({ ...second.ecran, v: m.vaisseau })
+    peauxChoisies.set(flotte.actif, second.peau)
+    dessinDuSecond = true
+    try {
+      f()
+    } finally {
+      dessinDuSecond = false
+      second.ecran = lireLEcran()
+      if (peau === undefined) peauxChoisies.delete(flotte.actif)
+      else peauxChoisies.set(flotte.actif, peau)
+      prendreLaMain(m, 0)
+      poserLEcran(premier)
+      v = m.vaisseau
+    }
+  }
+  /** Où est un vaisseau de l'équipage (en vol, ou son épave), dans le monde. */
+  const lieuDuPilote = (k: number): Vecteur => (k === 0 || m.equipage === undefined ? m.vaisseau : m.equipage.pilotes[k].vaisseau)
+  /** LE MILIEU DE L'ÉQUIPAGE, que la caméra regarde (null : on vole seul). */
+  function milieuDeLEquipage(): Vecteur | null {
+    if (!enJeu || second === null || m.equipage === undefined) return null
+    const a = lieuDuPilote(0)
+    const b = lieuDuPilote(1)
+    return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }
+  }
+  /** LE CHAMP QU'IL FAUT POUR VOIR L'ÉQUIPAGE ENTIER, avec `MARGE_DE_L_EQUIPAGE` autour de chacun (la vue de référence : 320 × 180, debout 180 × 320). */
+  const MARGE_DE_L_EQUIPAGE = 40
+  function champDeLEquipage(): number {
+    const a = lieuDuPilote(0)
+    const b = lieuDuPilote(1)
+    const VW = paysage ? 320 : 180
+    const VH = paysage ? 180 : 320
+    return Math.min(CHAMP_MAX, Math.max((Math.abs(a.x - b.x) + 2 * MARGE_DE_L_EQUIPAGE) / VW, (Math.abs(a.y - b.y) + 2 * MARGE_DE_L_EQUIPAGE) / VH))
+  }
+  /** Ce qui est au sol, à lui (le second, prêté — voir `avecLeSecond`). */
+  function dessinerLeSolDuSecond(p: Peintre): void {
+    dessinerLeGivre(p)
+    dessinerLesFlaques(p)
+    dessinerLesMeteoresAuSol(p)
+    dessinerLesFlaquesAcides(p)
+    dessinerLesMines(p)
+    dessinerLesOmbresDesHypercubes(p)
+    dessinerLesDesAuSol(p)
+    dessinerLesCoupes(p)
+    dessinerLesTourelles(p)
+    dessinerLesBalises(p)
+  }
+  /** Lui, et ce qui vole de lui (le second, prêté). */
+  function dessinerLeHautDuSecond(p: Peintre): void {
+    dessinerLesTentacules(p)
+    dessinerLesVrilles(p)
+    dessinerLesOeufs(p)
+    dessinerLesMiniVers(p)
+    dessinerLesEpines(p)
+    dessinerLesFleaux(p)
+    if (m.phase === 'vol' && t - arriveA >= ARRIVE_A) {
+      dessinerLeVaisseau(p)
+      dessinerLaVieDuSecond(p)
+    }
+    dessinerLesEchardes(p)
+    dessinerLesTirs(p)
+    dessinerLesScies(p)
+    dessinerLesTornades(p)
+    dessinerLePlasma(p)
+    dessinerLesMeteores(p)
+    dessinerLesNuees(p)
+    dessinerLeDrain(p)
+    dessinerLesRejetons(p)
+    dessinerLesGaz(p)
+    dessinerLesHypercubes(p)
+    dessinerLesDes(p)
+    dessinerLesParasites(p)
+    dessinerLesBombes(p)
+    dessinerLesLasers(p)
+  }
+  /**
+   * SA VIE, SOUS LUI (le haut de l'écran est au premier) : un « 2 », son blindage en or, son bouclier en bleu au-dessus
+   * s'il en a un.
+   */
+  function dessinerLaVieDuSecond(p: Peintre): void {
+    p.place(0, 0)
+    const sx = Math.round(v.x - camera.x + W / 2)
+    const sy = Math.round(v.y - camera.y + centreY()) + 15
+    const L = 22
+    dessinerUneJauge(p, sx, sy, L, m.coque / Math.max(1, CONF.coque), PEPITE[2], PEPITE[3], t - toucheA < 0.1)
+    if (CONF.bouclier.points > 0) dessinerUneJauge(p, sx, sy - 4, L, m.bouclier / CONF.bouclier.points, VERRIERE[1], VERRIERE[2], t - bouclierA < 0.1)
+    ecrire(p, '2', sx - L / 2 - 6, sy - 4, PEPITE[3], { police: GRAS })
+  }
   /**
    * LES JETS D'UNE SOUCOUPE (Keko, 15/11 : « des propulseurs plus petits, comme les propulseurs avant du chasseur : de
    * petits jets, pas des propulseurs de feu ») : de courts jets froids, blancs au cœur et bleus au bout, aux tuyères
@@ -12675,6 +12883,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         if (reste > 0 && reste < 0.5) p.glow(v.x, v.y, 4 + 10 * (1 - reste / 0.5), C[4], 0.6 * (1 - reste / 0.5))
       }
     }
+    // (le second ne les repeint pas : elles sont à tous, déjà peintes)
+    if (!dessinDuSecond) {
     // les flammes du lance-flammes, en bouffées de la Fireball : la fumée d'abord, puis le feu, le plus vieux dessous
     const H_FEU = hotFirst(RAMPE_DU_FEU)
     flammesDuNez = flammesDuNez.filter((f) => t - f.t0 < f.fl + (f.sm ? f.sl : 0))
@@ -12706,6 +12916,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const age = t - f.t0
       const u = age / f.vie
       firePuff(p, f.x + f.vx * age, f.y + f.vy * age, 1 - u, 1.4, 0.3, H_FEU, 0.1, 0, -1)
+    }
     }
     if (m.crache && m.phase === 'vol') {
       const bo = CONF.armes[0]?.bouche ?? { x: 0, y: 0 }
@@ -14418,12 +14629,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   }
   /** Le manche, EN PIXELS dans le tampon (plus de surcouche) : l'anneau au centre posé, le pouce dans la direction du doigt. */
   const TENUE_DU_MANCHE = 0.35
-  function dessinerLeManche(p: Peintre): void {
-    if (parametres.has('doigts')) {
+  function dessinerLeManche(p: Peintre, seulLeManche = false): void {
+    if (!seulLeManche && parametres.has('doigts')) {
       p.place(0, 0)
       p.text(`M${manche === null ? '-' : manche.id} R${regard === null ? '-' : regard.id} ${journalDesDoigts}`.toUpperCase(), 4, H - 12, N.WHITE, { outline: COQUE[0] })
     }
-    if (regard !== null && regard.tir) {
+    if (seulLeManche) {
+      // (le manche du second : ni le regard, ni la réglette)
+    } else if (regard !== null && regard.tir) {
       // (LA VISÉE D'UNE CAPACITÉ N'EST PAS UN MANCHE — Keko : « il est associé à l'orientation » : rien sous le pouce ;
       // la flèche part du vaisseau, voir `dessinerLaCapacite`)
     } else if (regard !== null && (t - (regard.t0 ?? -1) > 0.16 || Math.hypot(regard.doigt.x - regard.centre.x, regard.doigt.y - regard.centre.y) > 6)) {
@@ -14456,7 +14669,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.circle(px - 2, py - 2, Math.max(1, rp - 4), RG[3])
       p.rect(px - Math.round(rp * 0.5), py - Math.round(rp * 0.55), 2, 1, N.WHITE)
     }
-    dessinerLaReglette(p)
+    if (!seulLeManche) dessinerLaReglette(p)
     if (manche === null) return
     // (IL NE PARAÎT PAS SUR UNE SIMPLE TAPE — Keko, 20/11 : « quand je clique sur le rocher, le joystick apparaît, ce qui
     // est assez bizarre ; qu'il n'apparaisse que quand on le laisse enfoncé suffisamment longtemps » : comme celui du
@@ -14922,6 +15135,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         case 'niveau': {
           // UN NIVEAU : le jeu se met en pause, on choisit un talent (un de plus s'il y en avait déjà un à choisir)
           niveauA = t
+          // (à l'équipage, le second aussi : son choix vient après celui du premier — voir `passerAuSecond`)
+          if (second !== null) second.aFaire += 1
           jouer('achat')
           const enCours = choixDeTalent as Choix | null
           if (enCours === null) {
@@ -15553,6 +15768,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (VORTEX && parametres.has('choix') && !choixDEssaiOuvert && enJeu && t - arriveA > 1.5 && choixDeTalent === null) {
       choixDEssaiOuvert = true
       choixDeTalent = ouvrirLeChoix(0)
+      if (second !== null) second.aFaire += 1
       talentFinA = tReel + DUREE_DU_CHOIX
       talentA = tReel
     }
@@ -15574,7 +15790,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (VORTEX) {
       // (le jeu du vortex était dézoomé au maximum, en permanence — Keko, 14/11 ; LE ZOOM Y EST MAINTENANT AU GESTE, voir
       // `champDuVortex` : il suit le doigt, sans glisser)
-      champCible = champDuVortex
+      // (… ET À L'ÉQUIPAGE, il s'ouvre autant qu'il faut pour les voir tous les deux — voir `champDeLEquipage`)
+      champCible = milieuDeLEquipage() === null ? champDuVortex : Math.max(champDuVortex, champDeLEquipage())
       champVoulu = champCible
     } else if (ZOOM_A_LA_MAIN) {
       if (champVoulu !== champCible) {
@@ -15625,14 +15842,17 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (souteOuverte && (!enJeu || m.phase !== 'vol')) souteOuverte = false
     // LE CHOIX D'UN TALENT : le jeu est en pause pour tout le monde ; le délai passé, ce qui reste à choisir part en réserve
     if (choixDeTalent !== null && tReel >= talentFinA) {
-      reserveDeTalents += reserveApresLeDelai(choixDeTalent)
+      if (choixDuSecond && second !== null) second.reserve += reserveApresLeDelai(choixDeTalent)
+      else reserveDeTalents += reserveApresLeDelai(choixDeTalent)
       choixDeTalent = null
+      passerAuSecond()
     }
     if (enJeu && (souteOuverte || choixDeTalent !== null || pauseOuverte)) regler(0, false, 0, false)
     if (enJeu && !souteOuverte && choixDeTalent === null && !pauseOuverte) {
       accumule += dt
       const direction = t - arriveA < ARRIVE_A ? { x: 0, y: 0 } : directionVoulue() // (pas encore arrivé : il ne répond pas)
-      {
+      const direction2 = second !== null && t - second.ecran.arriveA >= ARRIVE_A ? directionDuSecond() : { x: 0, y: 0 }
+      const suivreLaPoussee = (direction: Vecteur): void => {
         // (où l'on pousse, vu du vaisseau : devant / derrière, d'un flanc / de l'autre)
         const n = Math.hypot(direction.x, direction.y)
         const f = Math.min(1, n)
@@ -15645,13 +15865,22 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         pousseeVue.retro += (f * Math.max(0, -devant) - pousseeVue.retro) * k
         pousseeVue.cote += (f * deCote - pousseeVue.cote) * k
       }
+      suivreLaPoussee(direction)
+      if (second !== null) avecLeSecond(() => suivreLaPoussee(direction2))
       const ouRegarder = t - arriveA < ARRIVE_A ? undefined : regardVoulu()
       while (accumule >= PAS) {
         accumule -= PAS
         // (LE TIR RESTE AUTOMATIQUE, manche du regard tenu ou non — Keko, 14/11 : « pas hyper pratique » ; il passait à
         // la main quand on le tenait. Le second manche ne fait plus que tourner le nez et avancer la caméra — la caméra
         // seule pour un vaisseau à tourelles. La règle du tir à la main reste dans `jeu.ts`, plus appelée.)
-        const r = avancerLeMonde(CONF, m, PAS, direction, ouRegarder, false)
+        // (L'ÉQUIPAGE AVANCE ENSEMBLE — voir `avancerLEquipage` : le monde une fois, puis chacun son tour)
+        let r: ReturnType<typeof avancerLeMonde>
+        let r2: ReturnType<typeof avancerLeMonde> | null = null
+        if (second !== null && m.equipage !== undefined) {
+          const rr = avancerLEquipage([CONF, second.ecran.CONF], m, PAS, [direction, direction2], (k) => (k === 0 ? ouRegarder : regardDuSecond()))
+          r = { chocs: rr.chocs[0], evenements: rr.evenements[0] }
+          r2 = { chocs: rr.chocs[1], evenements: rr.evenements[1] }
+        } else r = avancerLeMonde(CONF, m, PAS, direction, ouRegarder, false)
         // (`&crash=N` : le vaisseau est détruit N secondes après le décollage, pour essayer la perte des pièces d'un lien)
         if (parametres.has('crash') && !crashFait && m.phase === 'vol' && m.t > (Number(parametres.get('crash')) || 3)) {
           crashFait = true // (une fois : dans le jeu du vortex on revient, et on ne remeurt pas aussitôt)
@@ -15660,6 +15889,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           m.invasion.retourA = m.t + CONF.invasion.penalite
           r.evenements.push({ type: 'perdu' })
         }
+        // (CE QUE FAIT LE PAS, À L'ÉCRAN, POUR UN VAISSEAU : ses flammes, ses étincelles, ses braises, ses événements, ses
+        // chocs — le second, prêté, a les siens)
+        const apresLePas = (r: ReturnType<typeof avancerLeMonde>): void => {
         v = m.vaisseau
         // le lance-flammes crache : des flammes dans le cône, depuis la buse ; son souffle
         if (m.crache) {
@@ -15835,8 +16067,18 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
             else braises.ajouter('braise', bx + R.range(-1, 1), by + R.range(-1, 1), v.vx * 0.3 - Math.cos(v.cap) * vitesse + R.range(-8, 8), v.vy * 0.3 - Math.sin(v.cap) * vitesse + R.range(-8, 8), R.range(0.25, 0.5), coque === 8 ? BRAISES_DE_GLACE : coque === 9 ? BRAISES_D_ARCANE : cran >= 3 ? BRAISES_D_ION : 0, 1, 2)
           }
         }
+        }
+        apresLePas(r)
+        if (r2 !== null) {
+          const r2_ = r2
+          avecLeSecond(() => apresLePas(r2_))
+        }
       }
       flamme += (pousseeVue.avant - flamme) * Math.min(1, dt * 14)
+      if (second !== null)
+        avecLeSecond(() => {
+          flamme += (pousseeVue.avant - flamme) * Math.min(1, dt * 14)
+        })
       // les sons continus : le souffle du propulseur suit la flamme, la foreuse bourdonne quand elle creuse, la charge
       // de l'extraction monte avec l'arc d'or (et se tait quand le compte est au bout : le son de l'extraction la relève)
       if (m.extraction !== compteVu) compteMonte = m.extraction > compteVu
@@ -15899,8 +16141,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const cibleY = (cy * (1 - partDuRegard) + versOu.y * partDuRegard) * avance.y
     decalageDeLaCamera.x += (cibleX - decalageDeLaCamera.x) * Math.min(1, dt * suivi)
     decalageDeLaCamera.y += (cibleY - decalageDeLaCamera.y) * Math.min(1, dt * suivi)
-    camera.x = v.x + decalageDeLaCamera.x
-    camera.y = v.y + decalageDeLaCamera.y
+    // (À L'ÉQUIPAGE, LA CAMÉRA EST ENTRE LES DEUX, sans regarder devant — voir `milieuDeLEquipage`)
+    const milieu = milieuDeLEquipage()
+    camera.x = milieu === null ? v.x + decalageDeLaCamera.x : milieu.x
+    camera.y = milieu === null ? v.y + decalageDeLaCamera.y : milieu.y
     // (abattu dans le jeu du vortex : la caméra glisse vers le portail, où le compte du retour s'affiche — SANS PORTAIL, elle
     // reste sur l'épave, qui glisse à son point de retour : voir `invasion.retour`)
     if (VORTEX && !CONF.invasion.sansPortail) {
@@ -16014,6 +16258,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     dessinerLesCoupes(p)
     dessinerLesTourelles(p)
     dessinerLesBalises(p)
+    if (second !== null) avecLeSecond(() => dessinerLeSolDuSecond(p))
     dessinerLesEnnemis(p)
     dessinerLesBulles(p)
     dessinerLesOndes(p)
@@ -16044,6 +16289,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     dessinerLElectricite(p)
     dessinerLesBombes(p)
     dessinerLesLasers(p)
+    if (second !== null) avecLeSecond(() => dessinerLeHautDuSecond(p))
     // (les effets sont dans le monde : ils passent SOUS les bandeaux et l'interface)
     for (const e of effets) e.fx.draw(frame)
     // (un effet laisse le peintre du tampon PLACÉ sur lui, avec son fondu et sa lumière : sans cette remise à neuf — le
@@ -16073,6 +16319,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     zones = []
     dessinerLeScore(p)
     if (VORTEX) dessinerLInvasion(p)
+    // (le second abattu : son compte du retour, sur son épave)
+    if (second !== null) avecLeSecond(() => dessinerLeRetour(p))
     if (VORTEX && !CONF.invasion.sansPortail) dessinerLAnnonceDeLaVague(p)
     dessinerLeBanc(p)
     dessinerLaPlaqueDeLaPostcombustion(p)
@@ -16082,6 +16330,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // `&latence` : la latence audio mesurée par l'appareil, en bas à gauche (ce qui se teste doit s'ouvrir d'un lien)
     if (parametres.has('latence')) p.text(`SON ${latenceMs()} MS`, 6, basDuHud() + 8, N.WHITE, { font: 'big', outline: COQUE[0] }) // (en haut à gauche, sous le porté, bien lisible)
     dessinerLeManche(p)
+    if (manche2 !== null) {
+      // (le manche du second : le même, prêté le temps de le peindre)
+      const m1 = manche
+      manche = manche2
+      dessinerLeManche(p, true)
+      manche2 = manche
+      manche = m1
+    }
     dessinerLesToasts(dt)
     if (VORTEX) dessinerLeChoixDeTalent(p)
     if (VORTEX) dessinerLaFin(p)

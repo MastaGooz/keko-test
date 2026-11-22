@@ -1,7 +1,7 @@
 /**
  * Vérifications du vaisseau, sans navigateur : le temps est injecté.
  */
-import { partDe, gabaritDInsecte, rayonDe, rocheDeLaTempete, vieMultipliee, cadenceDeLaVague, asteroideDeLaCase, coupeDUnCube, asteroidesAutour, avancer, avancerLeMonde, encaisser, purger, impactDuRayon, lancerLaBombe, larguer, porteeDeLaBombe, MINERAIS, nouveauMonde, nouveauVaisseau, solidite, voler, totalDe, stationDeLaCase, stationLaPlusProche, VAISSEAU, verrouiller, ennemiLePlusProche, type ConfigVaisseau, type Ennemi, type Evenement, type Vaisseau, xpDuNiveau, gemmesDuButin, tire, type Pepite } from './jeu.ts'
+import { ajouterUnPilote, avancerLEquipage, etatDuPilote, partDe, gabaritDInsecte, rayonDe, rocheDeLaTempete, vieMultipliee, cadenceDeLaVague, asteroideDeLaCase, coupeDUnCube, asteroidesAutour, avancer, avancerLeMonde, encaisser, purger, impactDuRayon, lancerLaBombe, larguer, porteeDeLaBombe, MINERAIS, nouveauMonde, nouveauVaisseau, solidite, voler, totalDe, stationDeLaCase, stationLaPlusProche, VAISSEAU, verrouiller, ennemiLePlusProche, type ConfigVaisseau, type Ennemi, type Evenement, type Vaisseau, xpDuNiveau, gemmesDuButin, tire, type Pepite } from './jeu.ts'
 import { acheter, configDuHangar, hangarNeuf, monter, pieceDe } from './hangar.ts'
 
 /** Les règles sont vérifiées SANS la zone calme de la base (le rival naît où que soit le joueur) et AVEC les extracteurs par case (éteints en jeu pour l'instant) ; la base et la station seule ont leurs propres vérifications, plus bas. */
@@ -3521,6 +3521,58 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   const apres = e?.pv ?? 0
   for (let i = 0; i < 60; i++) avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
   verifier(`une mine éclate sur un insecte : ${500 - apres} points, il est rongé (+${Math.round((e?.acide?.bonus ?? 0) * 100)} % de dégâts subis), et ne perd plus rien ensuite (${apres - (e?.pv ?? 0)} en une seconde)`, apres < 500 && (e?.acide?.bonus ?? 0) === 0.35 && (e?.pv ?? 0) === apres)
+}
+
+// L'ÉQUIPAGE (Keko, 22/11 : « Tente l'étape 1 » — deux vaisseaux dans le même monde) : le monde avance une fois par pas,
+// l'insecte chasse et mord le plus proche, abattu l'un, l'autre est chassé, la pépite va au plus proche et l'expérience
+// est commune, la laisse les garde ensemble
+{
+  const cfg: ConfigVaisseau = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9 }, derive: { ...VAISSEAU.derive, active: false }, armes: [] }
+  const insecte = (id: number, x: number, y: number): Ennemi => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv: 1e6, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 } })
+  const deux = (): ReturnType<typeof nouveauMonde> => {
+    const w = nouveauMonde(cfg, 5)
+    w.invasion.prochainA = 1e9
+    ajouterUnPilote(cfg, w, 100, 0)
+    return w
+  }
+  const pas = (w: ReturnType<typeof nouveauMonde>, n: number, d0 = { x: 0, y: 0 }, d1 = { x: 0, y: 0 }): void => {
+    for (let i = 0; i < n; i++) avancerLEquipage([cfg, cfg], w, 1 / 60, [d0, d1])
+  }
+  // (le temps : une fois par pas, pas une fois par pilote)
+  const w1 = deux()
+  pas(w1, 60)
+  verifier(`à deux, le temps du monde avance une fois par pas : ${w1.t.toFixed(3)} s après 60 pas de 1/60`, Math.abs(w1.t - 1) < 1e-9)
+  // (la chasse : l'insecte à 150 va au second, à 100, et le mord ; le premier n'a rien)
+  const w2 = deux()
+  w2.ennemis.push(insecte(300, 150, 0))
+  pas(w2, 60)
+  const e2 = w2.ennemis[0].corps
+  const p2 = etatDuPilote(w2, 1)
+  verifier(`l’insecte chasse le vaisseau le plus proche : à ${Math.round(Math.hypot(e2.x - p2.vaisseau.x, e2.y - p2.vaisseau.y))} du second ; le second mordu (${Math.round(p2.coque)} / ${cfg.coque}), le premier intact (${Math.round(w2.coque)})`, Math.hypot(e2.x - p2.vaisseau.x, e2.y - p2.vaisseau.y) < 30 && p2.coque < cfg.coque && w2.coque === cfg.coque)
+  // (abattu le premier : l'insecte chasse le second, il n'erre pas)
+  const w3 = deux()
+  w3.phase = 'perdu'
+  w3.invasion.retourA = 1e9
+  w3.ennemis.push(insecte(301, -200, 0))
+  pas(w3, 60)
+  verifier(`le premier abattu, l’insecte chasse le second : parti de −200, il est à ${Math.round(w3.ennemis[0].corps.x)} (le second à ${Math.round(etatDuPilote(w3, 1).vaisseau.x)}) ; le temps a avancé (${w3.t.toFixed(2)} s)`, w3.ennemis[0].corps.x > -150 && Math.abs(w3.t - 1) < 1e-9)
+  // (la pépite : au second, qui est sur elle ; l'expérience est celle de tous)
+  const w4 = deux()
+  const s4 = etatDuPilote(w4, 1).vaisseau
+  w4.pepites.push({ id: 901, x: s4.x, y: s4.y, vx: 0, vy: 0, graine: 1, minerai: 'fer', valeur: 3 })
+  pas(w4, 1)
+  verifier(`une pépite sous le second est ramassée, l’expérience est commune : ${w4.invasion.xp} points, ${w4.pepites.length} pépite restante`, w4.invasion.xp === 3 && w4.pepites.length === 0)
+  // (la laisse : l'un tire à gauche, l'autre à droite, cinq secondes)
+  const w5 = deux()
+  pas(w5, 60 * 5, { x: -1, y: 0 }, { x: 1, y: 0 })
+  const d5 = Math.hypot(etatDuPilote(w5, 1).vaisseau.x - w5.vaisseau.x, etatDuPilote(w5, 1).vaisseau.y - w5.vaisseau.y)
+  // (le second abattu : il revient après sa pénalité, là où il est tombé ; le premier vole pendant ce temps)
+  const w6 = deux()
+  w6.equipage!.pilotes[1].morsures.push({ x: 100, y: 0, degats: 1e6 })
+  const evs6: string[] = []
+  for (let i = 0; i < 60 * (cfg.invasion.penalite + 1); i++) for (const e of avancerLEquipage([cfg, cfg], w6, 1 / 60, [{ x: 1, y: 0 }, { x: 0, y: 0 }]).evenements[1]) if (e.type === 'perdu' || e.type === 'retour') evs6.push(e.type)
+  verifier(`le second abattu revient après ${cfg.invasion.penalite} s (${evs6.join(', ')}) ; le premier a volé pendant ce temps (${Math.round(w6.vaisseau.x)})`, evs6.join() === 'perdu,retour' && etatDuPilote(w6, 1).phase === 'vol' && w6.phase === 'vol' && w6.vaisseau.x > 100)
+  verifier(`la laisse : tirés à l’opposé cinq secondes, ils restent à ${Math.round(d5)} l’un de l’autre (laisse ${cfg.equipage.laisse})`, d5 <= cfg.equipage.laisse + 6 && d5 > cfg.equipage.laisse - 20)
 }
 
 // (TOUJOURS EN DERNIER : des blocs ajoutés après cette ligne échouaient sans faire échouer `npm run verif` — 17/11)

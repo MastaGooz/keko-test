@@ -431,6 +431,11 @@ export const VAISSEAU = {
   // la vitesse VERS L'EXTÉRIEUR est plafonnée à `vitesseMax` fois la part qui reste devant lui de la `retenue` de la
   // tempête (ses six dixièmes) — rien au-delà : on s'arrête en douceur dans la tempête, loin de son bord, au milieu de
   // ses roches ; tourner et revenir vers l'arène restent libres)
+  /**
+   * L'ÉQUIPAGE (à plusieurs dans un même monde — voir `avancerLEquipage`) : deux vaisseaux ne s'éloignent pas de plus de
+   * `laisse` l'un de l'autre — ils restent ensemble à l'écran, la caméra entre eux. *De moi.*
+   */
+  equipage: { laisse: 220 },
   arene: { active: false as boolean, rayon: 1000, largeur: 220, dps: 0.6, roches: 110, rocheMin: 7, rocheMax: 24, vitesse: 150, choc: 2, marge: 30, retenue: 0.6 },
   /**
    * LES ASTÉROÏDES QUI DÉRIVENT (le jeu du vortex — Keko, 20/11 : « un système d'astéroïdes un peu comme avant : chaque
@@ -1051,7 +1056,7 @@ export const totalDe = (c: Cargaison): number => c.fer + c.or + c.cristal
 export type Asteroide = { id: number; x: number; y: number; rayon: number; graine: number; angle0: number; vitesseAngulaire: number; minerai: Minerai; richesse: number }
 /** Un laser posé sur sa roche : laquelle, le point d'impact, la part déjà creusée (0 à 1). *Il a visé le rival un temps ; la foreuse ne sert plus qu'aux roches (Keko).* */
 export type Forage = { sorte: 'roche'; cible: number; x: number; y: number; part: number }
-export type Pepite = { id: number; x: number; y: number; vx: number; vy: number; graine: number; minerai: Minerai; /** Sa valeur (au vortex, en points d'expérience) : 1, 3 ou 10 — une petite, une moyenne, une grosse ; 1 si absente. */ valeur?: number; /** L'AIMANT (voir `invasion.aimant`) : pris, il attire toutes les pépites. */ aimant?: boolean; /** L'instant où l'aimant du JOUEUR l'a prise : elle ne le lâche plus (voir plus bas, « une pépite aimantée »). */ aimanteeA?: number }
+export type Pepite = { id: number; x: number; y: number; vx: number; vy: number; graine: number; minerai: Minerai; /** Sa valeur (au vortex, en points d'expérience) : 1, 3 ou 10 — une petite, une moyenne, une grosse ; 1 si absente. */ valeur?: number; /** L'AIMANT (voir `invasion.aimant`) : pris, il attire toutes les pépites. */ aimant?: boolean; /** L'instant où l'aimant du JOUEUR l'a prise : elle ne le lâche plus (voir plus bas, « une pépite aimantée »). */ aimanteeA?: number; /** À plusieurs : le pilote qui l'aimante (voir `avancerLEquipage`). */ par?: number }
 /** Un choc contre un astéroïde : où, et avec quelle vitesse normale (pour l'étincelle et la vibration). */
 export type Choc = { x: number; y: number; force: number; asteroide: number; /** Le vaisseau a TRAVERSÉ la roche, trop légère pour lui : la part de sa vitesse qu'il y a laissée (roche ÷ vaisseau). */ perce?: number }
 /** Un trait tiré par l'ennemi. */
@@ -1247,6 +1252,8 @@ export type Monde = {
   liens: { arme: number; cible: number; depuis: number }[]
   /** LES VRILLES D'OMBRE (voir `Arme.vrille`) : où elles sont sorties, quand, leur prochain coup, leur dernière proie. */
   vrilles: { id: number; arme: number; x: number; y: number; nee: number; libreA: number; cible: number | null; saisieA: number; signaleA: number }[]
+  /** L'ÉQUIPAGE, à plusieurs (voir `avancerLEquipage`) ; absent, on vole seul. */
+  equipage?: Equipage
 }
 
 /** Un rejeton du Kraken (voir `Arme.rejeton`) : son arme, où, sa vitesse, quand il est né, sa proie, son prochain coup. */
@@ -1857,7 +1864,8 @@ function blesserParLaTempete(c: ConfigVaisseau, m: Monde, x: number, y: number, 
 
 /** UN POINT DE NAISSANCE DANS L'ARÈNE (voir `arene`) : à `d` du vaisseau dans la direction `a` — tourné, ou ramené, s'il tombait dans la tempête. */
 function dansLArene(c: ConfigVaisseau, m: Monde, a: number, d: number): Vecteur {
-  const v = m.vaisseau
+  // (à plusieurs, depuis le milieu de l'équipage — voir `centreDeLEquipage`)
+  const v = centreDeLEquipage(m)
   const limite = c.arene.rayon - c.arene.marge
   for (let essai = 0; essai < 12; essai++) {
     const an = a + (essai % 2 === 0 ? 1 : -1) * Math.ceil(essai / 2) * 0.5
@@ -2136,7 +2144,7 @@ function heurterLesDerives(c: ConfigVaisseau, m: Monde): void {
 
 /** LE CENTRE DU CHAMP : le portail, au centre du monde ; sans portail, le vaisseau (voir `sansPortail`). */
 function centreDuChamp(c: ConfigVaisseau, m: Monde): Vecteur {
-  return c.invasion.sansPortail ? { x: m.vaisseau.x, y: m.vaisseau.y } : { x: 0, y: 0 }
+  return c.invasion.sansPortail ? centreDeLEquipage(m) : { x: 0, y: 0 }
 }
 
 /**
@@ -2404,8 +2412,13 @@ function aPorteeDUnePose(c: ConfigVaisseau, m: Monde, e: Ennemi): boolean {
 /** Ce que fait UN INSECTE pendant `dt` : il marche vers le portail et le traverse ; ou il chasse le joueur qui l'a approché, le mord, et le lâche s'il est entraîné trop loin. */
 function conduireLInsecte(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number, ev: Evenement[]): Choc[] {
   const I = c.invasion
-  const v = m.vaisseau
   const b = e.corps
+  // (À PLUSIEURS, IL CHASSE LE VAISSEAU EN VOL LE PLUS PROCHE DE LUI — voir `avancerLEquipage` ; Keko, 21/11 : « à plusieurs
+  // joueurs, ils iraient vers les autres » ; seul, le vaisseau du joueur, s'il vole)
+  const cible = cibleDeLInsecte(m, b)
+  const v = cible?.v ?? m.vaisseau
+  const enVol = cible !== null
+  const abattu = m.equipage === undefined ? m.phase === 'perdu' : !enVol
   const dj = Math.hypot(v.x - b.x, v.y - b.y) || 1
   const dp = Math.hypot(b.x, b.y) || 1
   // LE CONTOUR DU PORTAIL : qui le touche est téléporté, en chasse ou non — il quitte le monde (la page joue sa disparition)
@@ -2434,10 +2447,10 @@ function conduireLInsecte(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number, ev
     }
   }
   // (CE QUE LE VAISSEAU A POSÉ L'ATTIRE SUR LUI — voir `aPorteeDUnePose`)
-  const attire = m.phase === 'vol' && aPorteeDUnePose(c, m, e)
+  const attire = enVol && aPorteeDUnePose(c, m, e)
   // (LE TRAÎNARD REVIENT DEVANT — voir `continu.recycle` : resté trop loin derrière, il réapparaît hors de vue, dans l'axe
   // de vol du vaisseau)
-  if (I.continu.actif && m.phase === 'vol' && dj > I.continu.recycle) {
+  if (I.continu.actif && enVol && dj > I.continu.recycle) {
     const cle = Math.floor(m.t * 10)
     const a = Math.hypot(v.vx, v.vy) > 20 ? angleDeNaissance(c, m, e.id * 7919 + cle) : Math.atan2(b.y - v.y, b.x - v.x) + (tire(m.graine, e.id, 53, cle) * 2 - 1) * I.continu.cone
     const { x, y } = dansLArene(c, m, a, I.naissance * (1 + I.continu.etalement * tire(m.graine, e.id, 54, cle)))
@@ -2451,14 +2464,14 @@ function conduireLInsecte(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number, ev
     // l'espace ; que l'ennemi arrête de suivre le joueur quand le joueur s'éloigne trop de lui, mais tant qu'il est à une
     // certaine distance, il peut le poursuivre très loin » : plus de laisse autour du portail — il lâche à `lache` du
     // joueur, ou le joueur abattu ; jamais tant qu'il est à portée de ce que le vaisseau a posé)
-    if (m.phase !== 'vol' || (dj > I.lache && !attire)) {
+    if (!enVol || (dj > I.lache && !attire)) {
       e.fait = 'marche'
       e.calmeA = m.t + I.calme
     }
-  } else if (attire || (m.phase === 'vol' && dj <= I.aggro && m.t >= (e.calmeA ?? 0))) e.fait = 'aggro'
+  } else if (attire || (enVol && dj <= I.aggro && m.t >= (e.calmeA ?? 0))) e.fait = 'aggro'
   else e.fait = 'marche'
   let direction: Vecteur
-  if (I.sansPortail && m.phase === 'perdu') {
+  if (I.sansPortail && abattu) {
     // LE JOUEUR ABATTU, ILS ERRENT (Keko, 21/11 : « à partir du moment où un ennemi réussit à nous tuer, on laisse les
     // ennemis se déplacer un peu au hasard — à plusieurs joueurs, ils iraient vers les autres ; seul, ils déambulent, pour
     // éviter qu'ils se regroupent tous comme des idiots à l'endroit où on va respawn ») : chacun suit son cap, tiré de son
@@ -2467,9 +2480,12 @@ function conduireLInsecte(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number, ev
     direction = { x: Math.cos(a) * I.errance, y: Math.sin(a) * I.errance }
   } else if (e.fait === 'aggro') {
     direction = { x: (v.x - b.x) / dj, y: (v.y - b.y) / dj }
-    if (m.phase === 'vol' && dj <= c.rayon + rayonDe(c, e) + 2 && m.t >= (e.mordA ?? 0)) {
+    if (enVol && dj <= c.rayon + rayonDe(c, e) + 2 && m.t >= (e.mordA ?? 0)) {
       e.mordA = m.t + I.cadenceMorsure
-      encaisser(c, m, v.x, v.y, I.morsure * gabaritDInsecte(c, e).morsure, ev)
+      // (un autre pilote que celui dont c'est le tour : sa morsure l'attend, il l'encaissera à son tour)
+      const degats = I.morsure * gabaritDInsecte(c, e).morsure
+      if (m.equipage === undefined || cible!.k === m.equipage.actif) encaisser(c, m, v.x, v.y, degats, ev)
+      else m.equipage.pilotes[cible!.k].morsures.push({ x: v.x, y: v.y, degats })
     }
   } else direction = { x: -b.x / dp, y: -b.y / dp }
   // (IL ÉVITE LES ROCHES QUI DÉRIVENT : à moins de `eviteRoche` de leur bord, il s'en écarte d'autant plus qu'il en est près)
@@ -5085,7 +5101,11 @@ export function ennemiLePlusProche(m: Monde, portee: number): Vecteur | null {
  */
 function gagnerLaPepite(c: ConfigVaisseau, m: Monde, p: Pepite, ev: Evenement[]): void {
   if (p.aimant === true) {
-    for (const q of m.pepites) if (q.aimant !== true) q.aimanteeA = m.t
+    for (const q of m.pepites) {
+      if (q.aimant === true) continue
+      q.aimanteeA = m.t
+      if (m.equipage !== undefined) q.par = m.equipage.actif
+    }
     ev.push({ type: 'aimant', x: p.x, y: p.y })
     return
   }
@@ -5102,16 +5122,19 @@ export const xpDuNiveau = (c: ConfigVaisseau, n: number): number => c.invasion.x
  * L'INVASION CONTINUE SANS LE JOUEUR ABATTU : les vagues naissent, les insectes marchent et traversent le portail ; sa
  * pénalité passée, il REVIENT au portail, blindage et bouclier pleins.
  */
-function avancerSansLeJoueur(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[], direction: Vecteur = { x: 0, y: 0 }): void {
-  m.t += dt
-  menerLInvasion(c, m, ev)
-  menerLesDerives(c, m)
-  menerLesRochesPrises(c, m, dt)
-  for (const e of [...m.ennemis]) conduireLEnnemi(c, m, e, dt, ev)
-  m.ennemis = m.ennemis.filter((e) => !e.parti)
-  ecarterLesInsectes(c, m)
-  heurterLesDerives(c, m)
-  if (c.invasion.sansPortail) heurterLesRoches(c, m, ev)
+function avancerSansLeJoueur(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[], direction: Vecteur = { x: 0, y: 0 }, seul = false): void {
+  // (`seul` : le tour d'un pilote de l'équipage — le monde commun a déjà avancé, voir `avancerLEquipage`)
+  if (!seul) {
+    m.t += dt
+    menerLInvasion(c, m, ev)
+    menerLesDerives(c, m)
+    menerLesRochesPrises(c, m, dt)
+    for (const e of [...m.ennemis]) conduireLEnnemi(c, m, e, dt, ev)
+    m.ennemis = m.ennemis.filter((e) => !e.parti)
+    ecarterLesInsectes(c, m)
+    heurterLesDerives(c, m)
+    if (c.invasion.sansPortail) heurterLesRoches(c, m, ev)
+  }
   // (SANS PORTAIL, L'ÉPAVE GLISSE VERS SON POINT DE RETOUR — voir `invasion.retour` : les insectes y convergent, les roches
   // s'y comptent, la caméra y va)
   const I = c.invasion
@@ -5205,7 +5228,9 @@ export function lancerLaBombe(c: ConfigVaisseau, m: Monde, direction?: Vecteur):
  * direction de la visée ») : tant que le regard est franc, les armes tirent à leur cadence DANS SA DIRECTION, rival ou
  * pas — les missiles aussi, qui virent ensuite vers le rival s'il y en a un.
  */
-export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, direction: Vecteur, regard?: Vecteur, manuel = false): { chocs: Choc[]; evenements: Evenement[] } {
+// (`seul` : LE TOUR D'UN PILOTE DE L'ÉQUIPAGE, le monde commun déjà avancé — ni le temps, ni les insectes, ni les roches ne
+// bougent : son vaisseau, ses armes, ses coups, ses pépites — voir `avancerLEquipage`)
+export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, direction: Vecteur, regard?: Vecteur, manuel = false, seul = false): { chocs: Choc[]; evenements: Evenement[] } {
   const ev: Evenement[] = []
   // (le lance-flammes ne crache qu'en vol, à ce pas : abattu, il se tait — Keko, 15/11 : « quand je meurs, le souffle
   // du lance-flammes reste en place pendant le compte du retour »)
@@ -5219,10 +5244,10 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   if (m.invasion.finie) return { chocs: [], evenements: ev }
   if (m.verrou !== null && ennemiVerrouille(m) === null) m.verrou = null
   if (m.phase !== 'vol') {
-    if (c.invasion.active && m.phase === 'perdu') avancerSansLeJoueur(c, m, dt, ev, direction)
+    if (c.invasion.active && m.phase === 'perdu') avancerSansLeJoueur(c, m, dt, ev, direction, seul)
     return { chocs: [], evenements: ev }
   }
-  m.t += dt
+  if (!seul) m.t += dt
   // le bouclier se recharge, passé le délai sans coup
   if (c.bouclier.points > 0 && m.bouclier < c.bouclier.points && m.t - m.toucheA >= c.bouclier.delai) m.bouclier = Math.min(c.bouclier.points, m.bouclier + ((c.bouclier.plein ?? 0) > 0 ? c.bouclier.points / c.bouclier.plein! : c.bouclier.regain) * dt)
   // (LES PLAQUES SE RÉPARENT — voir `reparation` : la dernière cassée revient, une à la fois)
@@ -5285,21 +5310,23 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   // (L'ACIDE : ce que les insectes rongés perdent pendant ce pas — de toutes les sources — sera majoré, voir `majorerParLAcide`)
   const avantLAcide = new Map<Ennemi, number>()
   for (const e of m.ennemis) if (e.acide !== undefined && e.acide.jusque > m.t) avantLAcide.set(e, e.pv)
-  if (c.invasion.active) menerLInvasion(c, m, ev)
-  else if (m.ennemis.length === 0 && m.t >= m.prochainEnnemiA && Math.hypot(v.x, v.y) >= c.base.calme) faireNaitreUnEnnemi(c, m, ev)
-  menerLesDerives(c, m)
-  menerLesRochesPrises(c, m, dt)
-  for (const e of [...m.ennemis]) {
-    chocs.push(...conduireLEnnemi(c, m, e, dt, ev))
-    // (il brûle encore : le lance-flammes l'a touché — mais à sa sortie seulement : dans la flamme, c'est elle qui brûle)
-    if ((e.bruleA ?? -1) > m.t && (e.bruleA ?? 0) - m.t < (e.dureeBrulure ?? 0) - dt * 1.5) e.pv -= (e.dpsBrulure ?? 0) * dt
-    if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
+  if (!seul) {
+    if (c.invasion.active) menerLInvasion(c, m, ev)
+    else if (m.ennemis.length === 0 && m.t >= m.prochainEnnemiA && Math.hypot(v.x, v.y) >= c.base.calme) faireNaitreUnEnnemi(c, m, ev)
+    menerLesDerives(c, m)
+    menerLesRochesPrises(c, m, dt)
+    for (const e of [...m.ennemis]) {
+      chocs.push(...conduireLEnnemi(c, m, e, dt, ev))
+      // (il brûle encore : le lance-flammes l'a touché — mais à sa sortie seulement : dans la flamme, c'est elle qui brûle)
+      if ((e.bruleA ?? -1) > m.t && (e.bruleA ?? 0) - m.t < (e.dureeBrulure ?? 0) - dt * 1.5) e.pv -= (e.dpsBrulure ?? 0) * dt
+      if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
+    }
+    // (les insectes passés par le portail ont quitté le monde)
+    if (c.invasion.active) m.ennemis = m.ennemis.filter((e) => !e.parti)
+    if (c.invasion.active) ecarterLesInsectes(c, m)
+    heurterLesDerives(c, m)
+    if (c.invasion.sansPortail) heurterLesRoches(c, m, ev)
   }
-  // (les insectes passés par le portail ont quitté le monde)
-  if (c.invasion.active) m.ennemis = m.ennemis.filter((e) => !e.parti)
-  if (c.invasion.active) ecarterLesInsectes(c, m)
-  heurterLesDerives(c, m)
-  if (c.invasion.sansPortail) heurterLesRoches(c, m, ev)
   // (L'INVINCIBILITÉ DU RETOUR FINIE : ce qui le recouvre est écarté — voir `degager`)
   if (m.renaitJusque > -100 && m.t >= m.renaitJusque) {
     degager(c, m)
@@ -5607,8 +5634,16 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   // les pépites : elles dérivent en freinant, viennent au vaisseau le plus proche à portée d'aimant, montent à bord au contact
   // (dans l'invasion, les insectes ne ramassent rien : les pépites sont au joueur)
   const corps: { x: number; y: number; par: 'joueur' | 'ennemi'; e: Ennemi | null }[] = [{ x: v.x, y: v.y, par: 'joueur', e: null }, ...(c.invasion.active ? [] : m.ennemis.map((e) => ({ x: e.corps.x, y: e.corps.y, par: 'ennemi' as const, e })))]
+  // (À PLUSIEURS, UNE PÉPITE VA AU VAISSEAU EN VOL LE PLUS PROCHE D'ELLE, et celle qu'un autre aimante est à lui : elles
+  // attendent son tour — voir `avancerLEquipage`)
+  const ici = m.equipage?.actif ?? 0
+  const autres = m.equipage === undefined ? [] : vaisseauxEnVol(m).filter((x) => x.k !== ici)
   for (let i = m.pepites.length - 1; i >= 0; i--) {
     const p = m.pepites[i]
+    if (autres.length > 0) {
+      if (p.aimanteeA !== undefined && (p.par ?? 0) !== ici && autres.some((x) => x.k === (p.par ?? 0))) continue
+      if (p.aimanteeA === undefined && autres.some((x) => Math.hypot(x.v.x - p.x, x.v.y - p.y) < Math.hypot(v.x - p.x, v.y - p.y))) continue
+    }
     let plusProche = corps[0]
     let dmin = Infinity
     for (const b of corps) {
@@ -5671,7 +5706,10 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
     p.vx *= frein
     p.vy *= frein
     const aimant = c.forage.aimant * (plusProche.e === null ? c.foreuse.aimant : 1) // (l'aimant du joueur suit sa foreuse)
-    if (d <= aimant && !soutePleine && !attend && plusProche.e === null && c.forage.accelerationAimantee > 0) p.aimanteeA = m.t
+    if (d <= aimant && !soutePleine && !attend && plusProche.e === null && c.forage.accelerationAimantee > 0) {
+      p.aimanteeA = m.t
+      if (m.equipage !== undefined) p.par = ici
+    }
     if (d <= aimant && !soutePleine && !attend) {
       const tirage = c.forage.vitessePepite * (1 - d / aimant) + 40
       p.vx += (dx / d) * tirage * dt * 6
@@ -5681,4 +5719,146 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
     p.y += p.vy * dt
   }
   return { chocs, evenements: ev }
+}
+
+/**
+ * L'ÉQUIPAGE — PLUSIEURS VAISSEAUX DANS UN MÊME MONDE (Keko, 22/11 : « Tente l'étape 1 » — deux vaisseaux dans le même
+ * monde, le second piloté par un second manche sur le même écran, avant le réseau). LE MONDE EST COMMUN : le temps, les
+ * insectes, les roches, la tempête, les pépites, l'expérience et le niveau. CHAQUE PILOTE A LE SIEN : son vaisseau, sa
+ * coque, son bouclier, ses plaques, ses armes et tout ce qu'elles ont lancé ou posé, son verrou, sa mort et son retour.
+ * La règle d'un vaisseau ne change pas : le pilote dont c'est le tour est DANS le monde — ses champs sont ceux de
+ * `Monde` —, les autres attendent dans `equipage.pilotes` ; `prendreLaMain` les échange.
+ */
+export const CHAMPS_DU_PILOTE = ['phase', 'vaisseau', 'coque', 'bouclier', 'plaques', 'intouchableJusque', 'corruption', 'dephaseJusque', 'plaqueCasseeA', 'renaitJusque', 'toucheA', 'forage', 'forages', 'tirs', 'obus', 'armesA', 'extraction', 'sorti', 'boostA', 'bombes', 'charges', 'verrou', 'crache', 'drones', 'tourelles', 'flaques', 'balayage', 'rayonVu', 'canal', 'scies', 'balises', 'givres', 'tornades', 'novas', 'echardes', 'spheres', 'puits', 'meteores', 'tentacules', 'nuees', 'rejetons', 'flaquesAcides', 'mines', 'fleaux', 'parasites', 'brochettes', 'hypercubes', 'coupes', 'des', 'oeufs', 'miniVers', 'liens', 'vrilles'] as const
+/** Un pilote qui attend son tour : ses champs du monde, l'instant de son retour s'il est abattu, les morsures qu'il doit encaisser. */
+export type Pilote = Pick<Monde, (typeof CHAMPS_DU_PILOTE)[number]> & { retourA: number; morsures: { x: number; y: number; degats: number }[] }
+/** Les pilotes (celui dont c'est le tour, `actif`, a sa place gardée mais périmée : il est dans le monde). */
+export type Equipage = { pilotes: Pilote[]; actif: number }
+
+function sortirLePilote(m: Monde, morsures: Pilote['morsures'] = []): Pilote {
+  const p = { retourA: m.invasion.retourA, morsures } as Pilote
+  for (const k of CHAMPS_DU_PILOTE) (p as Record<string, unknown>)[k] = m[k]
+  return p
+}
+
+/** Le pilote `k` prend le monde : celui qui l'avait retourne attendre. */
+export function prendreLaMain(m: Monde, k: number): void {
+  const eq = m.equipage
+  if (eq === undefined || eq.actif === k) return
+  eq.pilotes[eq.actif] = sortirLePilote(m, eq.pilotes[eq.actif].morsures)
+  const p = eq.pilotes[k]
+  for (const c of CHAMPS_DU_PILOTE) (m as Record<string, unknown>)[c] = p[c]
+  m.invasion.retourA = p.retourA
+  eq.actif = k
+}
+
+/** Ce qu'est le pilote `k` à cet instant (celui dont c'est le tour : lu dans le monde). */
+export function etatDuPilote(m: Monde, k: number): Pilote {
+  const eq = m.equipage
+  if (eq === undefined || eq.actif === k) return sortirLePilote(m)
+  return eq.pilotes[k]
+}
+
+/** Un pilote de plus, de la configuration `c`, son vaisseau posé à (dx, dy) du premier. */
+export function ajouterUnPilote(c: ConfigVaisseau, m: Monde, dx: number, dy: number): void {
+  if (m.equipage === undefined) m.equipage = { pilotes: [sortirLePilote(m)], actif: 0 }
+  const neuf = nouveauMonde(c, m.graine)
+  neuf.vaisseau = { ...neuf.vaisseau, x: m.vaisseau.x + dx, y: m.vaisseau.y + dy, cap: m.vaisseau.cap }
+  neuf.invasion.retourA = 0
+  m.equipage.pilotes.push(sortirLePilote(neuf))
+}
+
+/** Les vaisseaux en vol, et à qui ils sont (seul : le joueur, s'il vole). */
+export function vaisseauxEnVol(m: Monde): { k: number; v: Vaisseau }[] {
+  const eq = m.equipage
+  if (eq === undefined) return m.phase === 'vol' ? [{ k: 0, v: m.vaisseau }] : []
+  return eq.pilotes.flatMap((p, k) => {
+    const phase = k === eq.actif ? m.phase : p.phase
+    return phase === 'vol' ? [{ k, v: k === eq.actif ? m.vaisseau : p.vaisseau }] : []
+  })
+}
+
+/** LE MILIEU DE L'ÉQUIPAGE : celui des vaisseaux en vol — personne : le vaisseau dont c'est le tour (seul : le sien). */
+function centreDeLEquipage(m: Monde): Vecteur {
+  const vs = m.equipage === undefined ? [] : vaisseauxEnVol(m)
+  if (vs.length === 0) return { x: m.vaisseau.x, y: m.vaisseau.y }
+  return { x: vs.reduce((s, x) => s + x.v.x, 0) / vs.length, y: vs.reduce((s, x) => s + x.v.y, 0) / vs.length }
+}
+
+/** Le vaisseau en vol le plus proche de ce point, ou null : personne ne vole. */
+function cibleDeLInsecte(m: Monde, b: Vecteur): { k: number; v: Vaisseau } | null {
+  // (seul, sans rien chercher : à chaque insecte, à chaque pas)
+  if (m.equipage === undefined) return m.phase === 'vol' ? { k: 0, v: m.vaisseau } : null
+  let meilleur: { k: number; v: Vaisseau } | null = null
+  let dm = Infinity
+  for (const x of vaisseauxEnVol(m)) {
+    const d = Math.hypot(x.v.x - b.x, x.v.y - b.y)
+    if (d < dm) (dm = d), (meilleur = x)
+  }
+  return meilleur
+}
+
+/**
+ * UN PAS DE L'ÉQUIPAGE : LE MONDE COMMUN AVANCE UNE FOIS, au tour du premier pilote en vol (personne : le premier) — le
+ * temps, les naissances, les insectes, les roches —, puis CHAQUE AUTRE PILOTE A SON TOUR, sans lui : il encaisse les
+ * morsures qui l'attendaient, vole, tire, ramasse. Les deux tours sont ceux d'un vaisseau seul (`avancerLeMonde`,
+ * `seul`). Ensuite la laisse (voir `equipage.laisse`) ; le premier pilote reprend le monde. Rend les chocs et les
+ * événements de chacun. `regardDe(k)` : où regarde le pilote `k` — demandé quand il est dans le monde.
+ */
+export function avancerLEquipage(cs: ConfigVaisseau[], m: Monde, dt: number, directions: Vecteur[], regardDe?: (k: number) => Vecteur | undefined): { chocs: Choc[][]; evenements: Evenement[][] } {
+  const eq = m.equipage
+  if (eq === undefined) {
+    const r = avancerLeMonde(cs[0], m, dt, directions[0] ?? { x: 0, y: 0 }, regardDe?.(0))
+    return { chocs: [r.chocs], evenements: [r.evenements] }
+  }
+  const n = eq.pilotes.length
+  const phaseDe = (k: number): Monde['phase'] => (k === eq.actif ? m.phase : eq.pilotes[k].phase)
+  let chef = 0
+  while (chef < n && phaseDe(chef) !== 'vol') chef++
+  if (chef === n) chef = 0
+  const chocs: Choc[][] = Array.from({ length: n }, () => [])
+  const evenements: Evenement[][] = Array.from({ length: n }, () => [])
+  const tour = (k: number, seul: boolean): void => {
+    prendreLaMain(m, k)
+    const c = cs[k] ?? cs[0]
+    const ev: Evenement[] = []
+    for (const mo of eq.pilotes[k].morsures.splice(0)) if (m.phase === 'vol') encaisser(c, m, mo.x, mo.y, mo.degats, ev)
+    const r = avancerLeMonde(c, m, dt, directions[k] ?? { x: 0, y: 0 }, regardDe?.(k), false, seul)
+    chocs[k] = r.chocs
+    evenements[k] = [...ev, ...r.evenements]
+  }
+  tour(chef, false)
+  for (let k = 0; k < n; k++) if (k !== chef) tour(k, true)
+  prendreLaMain(m, 0)
+  retenirLEquipage(cs[0], m, dt)
+  return { chocs, evenements }
+}
+
+/**
+ * LA LAISSE (voir `equipage.laisse`) : deux vaisseaux — ou une épave qui attend son retour — plus loin que la laisse l'un
+ * de l'autre sont ramenés vers elle, chacun de sa moitié, en un dixième de seconde environ, et ce qui les écartait
+ * encore est annulé.
+ */
+function retenirLEquipage(c: ConfigVaisseau, m: Monde, dt: number): void {
+  const eq = m.equipage
+  if (eq === undefined) return
+  const L = c.equipage.laisse
+  const lire = (k: number): Vaisseau => (k === eq.actif ? m.vaisseau : eq.pilotes[k].vaisseau)
+  const poser = (k: number, w: Vaisseau): void => {
+    if (k === eq.actif) m.vaisseau = w
+    else eq.pilotes[k].vaisseau = w
+  }
+  for (let i = 0; i < eq.pilotes.length; i++)
+    for (let j = i + 1; j < eq.pilotes.length; j++) {
+      const a = lire(i)
+      const b = lire(j)
+      const d = Math.hypot(b.x - a.x, b.y - a.y)
+      if (d <= L) continue
+      const nx = (b.x - a.x) / d
+      const ny = (b.y - a.y) / d
+      const pas = ((d - L) / 2) * Math.min(1, dt * 10)
+      const ecarte = Math.max(0, (b.vx - a.vx) * nx + (b.vy - a.vy) * ny) / 2
+      poser(i, { ...a, x: a.x + nx * pas, y: a.y + ny * pas, vx: a.vx + nx * ecarte, vy: a.vy + ny * ecarte })
+      poser(j, { ...b, x: b.x - nx * pas, y: b.y - ny * pas, vx: b.vx - nx * ecarte, vy: b.vy - ny * ecarte })
+    }
 }

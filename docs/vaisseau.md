@@ -7553,3 +7553,34 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     à 20 puis 40 s, le bouclier plein à 15 s, une moyenne qui vaut 4,5 avec +50 %, une mine qui ronge sans plus rien
     retirer ensuite. Vu à la capture sur quatre vaisseaux.
   - *Les noms Impact (les dégâts critiques), Réparation, Maniabilité, et les 20 s de la réparation sont de moi.*
+- **22/11, L'ÉQUIPAGE : DEUX VAISSEAUX DANS LE MÊME MONDE (`&coop`).** Keko : « Comment on ferait pour jouer en multi ?
+  Y aurait du lag avec un pote aux USA ? Faut un serveur ? » — la réponse : un hôte qui simule, l'invité qui envoie son
+  manche, WebRTC en direct, un petit service de mise en relation ; d'abord l'étape 1 — « Tente l'étape 1 » : deux
+  vaisseaux dans le même monde, le second piloté par un second manche sur le même écran, sans réseau.
+  - LA RÈGLE (`avancerLEquipage`, `jeu.ts`) : LE MONDE EST COMMUN — le temps, les insectes, les roches, la tempête, les
+    pépites, l'expérience et le niveau ; CHAQUE PILOTE A LE SIEN — son vaisseau, sa coque, son bouclier, ses plaques, ses
+    armes et tout ce qu'elles ont lancé ou posé, son verrou, sa mort et son retour (`CHAMPS_DU_PILOTE`). La règle d'un
+    vaisseau n'a pas été réécrite : le pilote dont c'est le tour est DANS le monde, les autres attendent dans
+    `equipage.pilotes`, `prendreLaMain` les échange. Un pas : le monde commun avance une fois, au tour du premier pilote
+    en vol, puis chaque autre a son tour sans lui (`avancerLeMonde(…, seul)`) — il encaisse les morsures qui l'attendaient,
+    vole, tire, ramasse.
+  - L'INSECTE CHASSE LE VAISSEAU EN VOL LE PLUS PROCHE (Keko l'avait dit le 21/11 : « à plusieurs joueurs, ils iraient
+    vers les autres ») ; personne en vol, ils errent comme seul. Les insectes naissent autour du MILIEU de l'équipage. Une
+    pépite va au vaisseau en vol le plus proche ; l'aimant pris aimante tout vers celui qui l'a pris.
+  - LA LAISSE (`equipage.laisse`, 220, de moi) : deux vaisseaux — ou une épave qui attend son retour — ne s'éloignent pas
+    plus ; ramenés en un dixième de seconde environ. LA CAMÉRA est au milieu, sans regarder devant, et LE CHAMP s'ouvre
+    autant qu'il faut pour les voir tous les deux (40 de marge, jusqu'au champ le plus large).
+  - L'ÉCRAN (`page.ts`) : LE SECOND est du même modèle et de la même arme que le premier, dans l'apparence suivante ; la
+    MOITIÉ DROITE de l'écran le pilote (la gauche, le premier), les FLÈCHES au clavier (ZQSD le premier). Sa vie est sous
+    lui, un « 2 » à côté (le haut de l'écran est au premier) ; abattu, son compte du retour est sur son épave. Ce que
+    l'écran garde d'un vaisseau (ses instants, sa flamme, sa poussée, ses talents) lui est prêté le temps d'avancer, de
+    célébrer et de peindre ce qui est à lui (`avecLeSecond`) — le même prêt que l'aperçu des armes.
+  - LES TALENTS : à chaque niveau, le joueur 1 choisit, puis le joueur 2, sur des cartes tirées pour lui ; ce que le délai
+    lui fait perdre lui est gardé pour le choix suivant.
+  - Testés : le temps avance une fois par pas ; l'insecte chasse et mord le plus proche, l'autre intact ; le premier
+    abattu, l'insecte chasse le second ; une pépite ramassée par le second compte pour tous ; la laisse tient à 220 ; le
+    second abattu revient après sa pénalité pendant que le premier vole. Vu à la capture : couché et debout, les deux
+    manches, le choix des deux joueurs, le premier abattu.
+  - *Limites de cette étape* : même modèle et même arme pour les deux (un autre modèle demande d'autres pièces au
+    hangar) ; les vaisseaux ne se heurtent pas entre eux ; quelques effets à l'écran qui sont à tous (les arcs, les
+    éclosions) partent du premier.
