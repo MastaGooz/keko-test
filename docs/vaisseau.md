@@ -8054,3 +8054,8 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   en 10 s à 940, 980 et 995, arrêté ou en le suivant ; il ne déborde que de 8 unités au plus, quand le vaisseau tout au
   bord le pousse au contact. L'errance (le joueur abattu) garde l'ancien évitement, large. Un vaisseau enfoncé DANS la
   tempête reste hors d'atteinte : elle le ronge, et ses roches le frappent. Un test le garde.
+- **22/11, TOUCHÉ, ON TRAVERSE LES INSECTES.** Keko : « quand on est touché on est invincible un court instant ? Je
+  voudrais qu'on traverse aussi les ennemis ». Oui : `invulnerabilite`, 1 s après un coup reçu (bouclier, plaque ou
+  blindage), le vaisseau clignote et ne prend rien. Désormais, pendant ce temps, il passe aussi au travers des insectes
+  (`heurterLesVaisseaux`, au vortex) — ni il ne les pousse, ni ils ne l'écartent ; les roches l'arrêtent toujours. La
+  morsure qui le touche l'ouvre aussitôt : un insecte qui mord ne le bouscule plus. Un test le garde.

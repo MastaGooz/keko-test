@@ -3141,6 +3141,27 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   verifier(`le retour : tombé à 1 100, il revient à ${Math.round(ou.x)} (en deçà de la tempête, ${ici}) ; l'explosion (${deflagration}) abat les trois proches (${abattus}), épargne le lointain et la roche (${epargnes}), ${pepites} pépites tombent ; invincible deux secondes, rien ne le mord (${!mordu}) ; à la fin, rien ne le recouvre (${libre})`, Math.abs(ou.x - ici) < 1 && Math.abs(ou.y) < 1 && deflagration && abattus && epargnes && pepites >= 3 && !mordu && libre && (w.phase as string) === 'vol')
 }
 
+// TOUCHÉ, ON TRAVERSE LES INSECTES (Keko, 22/11 : « quand on est touché on est invincible un court instant ; je voudrais
+// qu'on traverse aussi les ennemis ») : le temps qu'il clignote, un insecte posé sur lui ne l'écarte pas ; après, si ; une
+// roche l'arrête toujours
+{
+  const cfg = { ...VAISSEAU, coque: 1e9, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9 }, derive: { ...VAISSEAU.derive, active: false }, armes: [] }
+  const ecart = (touche: boolean, roche: boolean): number => {
+    const w = nouveauMonde(cfg, 5)
+    w.invasion.prochainA = 1e9
+    w.vaisseau = { ...w.vaisseau, x: 0, y: 0, vx: 0, vy: 0 }
+    if (touche) w.intouchableJusque = w.t + cfg.invulnerabilite
+    const corps = { ...nouveauVaisseau(), x: 2, y: 0 }
+    w.ennemis.push(roche
+      ? { id: 300, corps, pv: 500, fait: 'marche', roche: null, forage: null, tirA: 0, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, grand: true, asteroide: { rayon: 10, graine: 1, angle0: 0, vitesseAngulaire: 0, pvMax: 500 } }
+      : { id: 300, corps, pv: 1e9, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9 }) // (sans morsure : elle le rendrait intouchable)
+    avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+    return Math.hypot(w.ennemis[0].corps.x - w.vaisseau.x, w.ennemis[0].corps.y - w.vaisseau.y)
+  }
+  const [touche, frais, roche] = [ecart(true, false), ecart(false, false), ecart(true, true)]
+  verifier(`touché, un insecte posé sur lui reste à ${touche.toFixed(1)} (il le traverse) ; sans coup reçu, il est écarté à ${frais.toFixed(1)} ; une roche l'écarte encore (${roche.toFixed(1)})`, touche < 4 && frais >= cfg.rayon && roche >= cfg.rayon)
+}
+
 // LONGER LA TEMPÊTE NE MET PAS À L'ABRI (Keko, 22/11 : « si je longe le vortex, les ennemis ne me touchent jamais ») : un
 // vaisseau collé au bord de l'arène, arrêté ou qui le suit, est mordu ; les insectes n'entrent pas dans la tempête pour
 // autant — d'à peine quelques unités, quand le vaisseau tout au bord les y pousse au contact

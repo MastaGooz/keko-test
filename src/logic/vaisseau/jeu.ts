@@ -2863,7 +2863,11 @@ function heurterLesVaisseaux(c: ConfigVaisseau, m: Monde, ev: Evenement[]): bool
   // (déphasé, il passe au travers — voir `dephasage` ; revenu, aussi — voir `invasion.retour`)
   if (m.t < m.dephaseJusque || m.t < m.renaitJusque) return true
   const v = m.vaisseau
+  // (TOUCHÉ, IL TRAVERSE LES INSECTES le temps qu'il clignote — Keko, 22/11 : « quand on est touché on est invincible un
+  // court instant ; je voudrais qu'on traverse aussi les ennemis » — voir `invulnerabilite` ; les roches l'arrêtent encore)
+  const traverse = c.invasion.active && m.t < m.intouchableJusque
   for (const e of [...m.ennemis]) {
+    if (traverse && e.asteroide === undefined) continue
     const b = e.corps
     const dx = b.x - v.x
     const dy = b.y - v.y
