@@ -7693,3 +7693,11 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   quand on clique dessus, on voit la liste des joueurs et qui est prêt, plutôt que d'ouvrir le panneau du salon ». La
   plaque dit « Salon CODE » et « N/M prêts » (cristal quand tous le sont), un petit chevron ; une tape DÉPLIE la liste
   dessous (la case et le pseudo de chacun), une autre la replie. Le panneau du salon reste dans « Plus ». VU à quatre.
+- **22/11, « FERMER LE SALON » EN ROUGE ; HUIT LETTRES ; LE SALON DE QUATRE D'UN LIEN.** Keko : « le bouton fermer le
+  salon dans des tons rouges, différents du bouton en dessous : ça peut prêter à confusion » ; « simule 4 pseudos de
+  joueurs, très longs de préférence, pour voir l'interface » ; « des pseudos de 8 caractères au maximum ». Le bouton est
+  de la matière `rouge` (et « Sûr ? » aussi). LES PSEUDOS : HUIT LETTRES AU PLUS (`PSEUDO_MAX`, le champ aussi ; un pseudo
+  gardé plus long est coupé). `&faux` : le salon s'ouvre avec trois faux invités de huit lettres (Wolfgang, Mathilde,
+  Zéphirin), prêts, chacun dans une autre apparence ; l'hôte s'appelle Kekoland ; au décollage, leurs vaisseaux
+  paraissent, immobiles, leur pseudo dessous. VU : la plaque « 3/4 prêts », la liste dépliée, le panneau, le vol couché
+  et debout.
