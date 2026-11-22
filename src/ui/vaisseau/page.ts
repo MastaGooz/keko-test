@@ -2694,21 +2694,38 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     dessinerUneMarque(p, x, y + 1, j.pret)
     motEnRelief(p, j.pseudo, x + 13 + largeurDe(j.pseudo, GRAS) / 2, y, j.soi ? true : 'ivoire')
   }
+  /**
+   * (… PUIS COMPACTE — Keko, 22/11 : « quand il y a 4 joueurs, le panneau des joueurs bloque la visibilité sur le
+   * vaisseau ; marque juste le nom du salon et le nombre de joueurs prêts sur le nombre total ; quand on clique dessus, on
+   * voit la liste des joueurs et qui est prêt, plutôt que d'ouvrir le panneau du salon ») : « Salon CODE », « N/M prêts » ;
+   * une tape déplie la liste dessous, une autre la replie.
+   */
+  let listeDuSalonOuverte = false
   function dessinerLesJoueursDuSalon(p: Peintre, y0: number): void {
     if (!enSalon() || vue !== 'hangar') return
     const joueurs = joueursDuSalon()
     if (joueurs.length === 0) return
     const titre = `Salon ${liaison?.code() ?? ''}`
+    const prets = joueurs.filter((j) => j.pret).length
+    const compte = `${prets}/${joueurs.length} prêts`
     const x = 5
     const y = y0 + 5
-    const lw = Math.max(largeurDe(titre, GRAS), ...joueurs.map((j) => largeurDe(j.pseudo, GRAS) + 13)) + 14
-    const h = 19 + 12 * joueurs.length
+    const ouverte = listeDuSalonOuverte
+    const lw = Math.max(largeurDe(titre, GRAS), largeurDe(compte, GRAS) + 10, ...(ouverte ? joueurs.map((j) => largeurDe(j.pseudo, GRAS) + 13) : [0])) + 14
+    const h = 31 + (ouverte ? 4 + 12 * joueurs.length : 0)
     // (UNE PLAQUE PLEINE, comme les panneaux de la base : le décor ne passe plus au travers)
     plaque(p, x, y, lw, h, 'encre')
     motEnRelief(p, titre, x + lw / 2, y + 5, true)
-    joueurs.forEach((j, i) => dessinerUnJoueur(p, x + 7, y + 18 + 12 * i, j))
-    // (une tape ouvre le salon)
-    zone(x, y, lw, h, ouvrirLePanneauDuSalon)
+    motEnRelief(p, compte, x + lw / 2 - 4, y + 18, prets === joueurs.length ? 'cristal' : 'ivoire')
+    // (le petit chevron : la liste se déplie, ou se replie)
+    const cx = Math.round(x + lw / 2 + largeurDe(compte, GRAS) / 2 + 2)
+    const cy = y + 21
+    for (let i = 0; i < 3; i++) p.rect(cx + i, ouverte ? cy + 2 - i : cy + i, 5 - 2 * i, 1, COQUE[5])
+    if (ouverte) {
+      p.rect(x + 6, y + 31, lw - 12, 1, MATIERES.encre.contour)
+      joueurs.forEach((j, i) => dessinerUnJoueur(p, x + 7, y + 35 + 12 * i, j))
+    }
+    zone(x, y, lw, h, () => (listeDuSalonOuverte = !listeDuSalonOuverte))
   }
   /** COMBIEN SONT PRÊTS, au-dessus de « Décoller » : une plaque, « Prêts N / M » en relief, une case par joueur. */
   function dessinerLesPrets(p: Peintre, cx: number, y: number, joueurs: { pret: boolean }[]): void {

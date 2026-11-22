@@ -7688,3 +7688,8 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   « FERMER LE SALON » dans son panneau (« Sûr ? » à la première tape, comme la remise à zéro) : ses invités le savent
   tout de suite (« L'hôte a fermé le salon », la croix) et repassent seuls ; lui aussi — en vol, la partie continue
   sans eux — et « Inviter » en ouvre un neuf. La fermeture du panneau devient « Retour ». VU à deux Chrome.
+- **22/11, LE SALON AU HANGAR, COMPACT.** Keko : « quand il y a 4 joueurs, le panneau des joueurs bloque la visibilité
+  sur le vaisseau ; marque juste le nom du salon et le nombre de joueurs prêts sur le nombre total — 2 sur 4 prêts… ;
+  quand on clique dessus, on voit la liste des joueurs et qui est prêt, plutôt que d'ouvrir le panneau du salon ». La
+  plaque dit « Salon CODE » et « N/M prêts » (cristal quand tous le sont), un petit chevron ; une tape DÉPLIE la liste
+  dessous (la case et le pseudo de chacun), une autre la replie. Le panneau du salon reste dans « Plus ». VU à quatre.
