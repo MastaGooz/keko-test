@@ -17,6 +17,7 @@ import { readFileSync } from 'node:fs'
 import { VAISSEAU, CHAMPS_DE_DEGATS, degatsMultiplies, avancerLeMonde, nouveauMonde, cargaisonVide, type ConfigVaisseau, type Ennemi, type Monde } from '../src/logic/vaisseau/jeu.ts'
 import { configDuHangar, pieceDe } from '../src/logic/vaisseau/hangar.ts'
 import { MODELES } from '../src/logic/vaisseau/flotte.ts'
+import { ARMES_DE_FACTION } from '../src/logic/vaisseau/talents.ts'
 import { boucheMontee, RACINES_DU_KRAKEN, ANCRES_DU_KRAKEN } from '../src/ui/vaisseau/rendu-vaisseau.ts'
 
 const ARMES_PAR_VAISSEAU: Record<string, string[]> = { chasseur: ['arme-laser', 'arme-mitrailleuse', 'arme-minimissiles'], salamandre: ['arme-flammes', 'arme-rayon', 'arme-napalm'], sentinelle: ['arme-drones', 'arme-chaine', 'arme-aura'], ingenieur: ['arme-tourelles', 'arme-scie', 'arme-fleau'], frimas: ['arme-nova', 'arme-eclats', 'arme-tornade'], pulsar: ['arme-plasma', 'arme-essaim', 'arme-meteore'], kraken: ['arme-tentacules', 'arme-nuee', 'arme-rejetons'], vouivre: ['arme-crachat', 'arme-mines', 'arme-poison'], prisme: ['arme-faisceau', 'arme-cristaux', 'arme-rail'], neant: ['arme-puits', 'arme-drain', 'arme-vrilles'], mante: ['arme-parasites', 'arme-oeufs', 'arme-epines'], tesseract: ['arme-hypercube', 'arme-de', 'arme-coupe'] }
@@ -185,12 +186,26 @@ const MEDIANES = { monoMoy: 46.3, bossMax: 64.7, fouleMoy: 109.9, vagueMax: 1.19
 const POIDS = { monoMoy: 0.25, bossMax: 0.25, fouleMoy: 0.15, vagueMax: 0.35 }
 const indice = (d: Record<keyof typeof POIDS, number> & { frein: number }): number => (Object.keys(POIDS) as (keyof typeof POIDS)[]).reduce((s, k) => s + (POIDS[k] * d[k]) / MEDIANES[k], 0) * (1 + Math.max(0, d.frein - 0.05))
 
+/**
+ * LES NOUVELLES ARMES DES FACTIONS, mesurées seules (Keko, 22/11 : « il faut vraiment que les armes qu'on gagne soient
+ * équivalentes aux armes qu'on a au début, à un niveau d'amélioration égal ») : le premier vaisseau de leur race, ses
+ * armes de départ ôtées, l'arme de la carte spéciale montée comme la carte la monte (`ARMES_DE_FACTION`, déjà à
+ * l'échelle du vortex). Leur identifiant : `faction-<id>`.
+ */
+const PREMIER_DE_LA_RACE: Partial<Record<string, string>> = { humains: 'chasseur', essaim: 'kraken', etheres: 'sentinelle', innommes: 'prisme' }
+function configDeFaction(idFaction: string, facteur = 1): ConfigVaisseau {
+  const af = ARMES_DE_FACTION.find((x) => x.id === idFaction)!
+  const base = configDe(PREMIER_DE_LA_RACE[af.race]!, ARMES_PAR_VAISSEAU[PREMIER_DE_LA_RACE[af.race]!]![0]!)
+  return { ...base, armes: af.armes().map((a) => multiplier(a, facteur) as typeof a) }
+}
+
 const args = new Map(process.argv.slice(2).map((a) => a.replace(/^--/, '').split('=') as [string, string]))
 const facteurs: Record<string, number> = args.has('facteurs') ? JSON.parse(readFileSync(args.get('facteurs')!, 'utf8')) : {}
-for (const [vaisseau, armes] of Object.entries(ARMES_PAR_VAISSEAU))
-  for (const id of armes) {
-    if (args.has('arme') && args.get('arme') !== id) continue
-    const c = configDe(vaisseau, id, facteurs[id] ?? 1)
+const BANCS: [string, string][] = [...Object.entries(ARMES_PAR_VAISSEAU).flatMap(([v, armes]) => armes.map((id): [string, string] => [v, id])), ...ARMES_DE_FACTION.map((af): [string, string] => [PREMIER_DE_LA_RACE[af.race]!, `faction-${af.id}`])]
+for (const [vaisseau, id] of BANCS) {
+  {
+    if (args.has('arme') && !args.get('arme')!.split(',').includes(id)) continue
+    const c = id.startsWith('faction-') ? configDeFaction(id.slice('faction-'.length), facteurs[id] ?? 1) : configDe(vaisseau, id, facteurs[id] ?? 1)
     const distances = [15, 35, 60, 90, 120].map((d) => mono(c, d))
     const f = [45, 90].map((d) => foule(c, d))
     const v = [vague(c, false), vague(c, true)]
@@ -199,3 +214,4 @@ for (const [vaisseau, armes] of Object.entries(ARMES_PAR_VAISSEAU))
     const d = { vaisseau, arme: id, mono: distances.map((x) => +x.toFixed(1)), monoMoy: +(distances.reduce((s, x) => s + x, 0) / 5).toFixed(2), foule: f.map((x) => +x.toFixed(1)), fouleMoy: +((f[0] + f[1]) / 2).toFixed(2), vague: v.map((x) => +x.abattus.toFixed(2)), vagueMax: +meilleure.abattus.toFixed(2), frein: +v[0].frein.toFixed(2), boss: b.map((x) => +x.toFixed(1)), bossMax: +Math.max(...b).toFixed(2) }
     console.log(args.has('json') ? JSON.stringify(d) : `${id.padEnd(18)} indice ${indice(d).toFixed(2)}   portée ${(d.monoMoy / MEDIANES.monoMoy).toFixed(2)}  boss ${(d.bossMax / MEDIANES.bossMax).toFixed(2)}  foule ${(d.fouleMoy / MEDIANES.fouleMoy).toFixed(2)}  vague ${(d.vagueMax / MEDIANES.vagueMax).toFixed(2)}  frein ${d.frein.toFixed(2)}`)
   }
+}

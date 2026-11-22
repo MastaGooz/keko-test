@@ -8105,3 +8105,31 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   deux « tchomp » de tube et le « tink » d'une grenade ; ESCORTE, un « tik » d'avion léger, aigu, d'une oreille ou de
   l'autre. Mesurés hors du navigateur (crêtes 0,13 à 0,34, au niveau des tirs voisins ; aucun NaN) ; PAS ÉCOUTÉS : à
   juger à l'oreille.
+- **23/11, LES ARMES DE L'EMPIRE ÉQUILIBRÉES SUR CELLES DU DÉPART, ET PLUS DE PUNCH.** Keko : « le railgun, la bobine
+  tesla et l'obusier manquent de punch ; l'obus a une explosion toute petite ; les missiles qu'on peut prendre avec le
+  chasseur, j'aurais voulu une version plus lente et plus grosse zone, pour la distinguer ; il faut vraiment que les
+  armes qu'on gagne soient équivalentes aux armes qu'on a au début, à un niveau d'amélioration égal ».
+  - MESURÉ : `npm run equilibrage` mesure désormais aussi les armes des cartes spéciales (`faction-<id>`, montées
+    seules sur le premier vaisseau de leur race, comme la carte les monte ; `--arme=a,b` en prend plusieurs). Le
+    Chasseur au départ : laser 0,98, mitrailleuse 0,97, missiles 1,15. Les six de l'Empire étaient de 0,56 à 0,83 :
+    railgun 0,75, obusier 0,83, roquettes 0,59, bobine 0,56, grenades 0,69, escorte 0,62. Réglées : 0,97 / 1,01 /
+    1,02 / 1,00 / 0,96 / 1,03. Les cartes ordinaires sont en pour cent : à indice égal, égales à amélioration égale.
+  - RAILGUN : 160 de dégâts (110) toutes les 3 s (2,6) — la balle abat un insecte d'un coup, et le suivant derrière
+    lui (120) ; à son départ un éclair, une gerbe, une secousse, une vibration ; À CHAQUE INSECTE TRAVERSÉ (événement
+    `balleTraverse`), un éclair cyan, une gerbe projetée dans le sens de la balle, une secousse et le choc de l'acier
+    (`balleRailgun`) ; son tir a un coup de canon grave sous le fouet.
+  - OBUSIER : il explose sur 40 (26), 78 de dégâts (70). LA BOULE DE FEU DE TOUTE EXPLOSION GRANDIT AVEC SON RAYON —
+    c'était la vraie cause : elle grandissait avec la carte « Portée », pas avec le rayon de l'arme, et l'obus de 26
+    éclatait comme le missile de 18. Elle se mesure au missile (son rayon sur 18, `RAYON_DU_MISSILE` lu dans la pièce).
+    L'obus a en plus l'explosion du dépôt par-dessus, un éclair de sa zone, une forte secousse, une vibration, et sa
+    détonation à lui (`impactObus`, plus grave et plus longue que le missile) ; au départ, l'éclair et la secousse.
+  - ROQUETTES : plus lentes que les missiles (elles partent à 60 et plafonnent à 90, les missiles à 110), elles
+    zigzaguent moins et CHACUNE EXPLOSE SUR 30 (les missiles sur 18) ; 20 de dégâts, toutes les 3 s ; dessinées une
+    fois et demie plus grandes. Leurs cartes « Explosives » et « Perforantes » (qui perdait l'explosion) sont devenues
+    « Gros calibre » et « Fragmentation ».
+  - BOBINE TESLA : elle foudroie toutes les 0,6 s (0,4) pour 58 (22) ; la foudre a un cœur blanc dans un trait bleu de
+    trois pixels, deux fourches, dure 0,22 s (0,14), et frappe d'un éclair rond, d'une gerbe et d'une petite secousse ;
+    son claquement a un coup grave et un grésillement de plus.
+  - GRENADES 51 (32), ESCORTE 20 (12) : rien d'autre.
+  VU en capture (l'obus sur toute sa zone, la balle et son impact, la foudre) ; les sons mesurés (crêtes 0,2 à 0,5,
+  aucun NaN), PAS ÉCOUTÉS.

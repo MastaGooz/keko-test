@@ -1457,6 +1457,8 @@ export type Evenement =
   | { type: 'rail'; x0: number; y0: number; x1: number; y1: number; arme: string }
   /** La bobine tesla foudroie un insecte (voir `Arme.sphere.foudre`). */
   | { type: 'foudre'; x0: number; y0: number; x1: number; y1: number }
+  /** La balle du railgun traverse un insecte (voir `Arme.balle`), là où il est, filant à `cap`. */
+  | { type: 'balleTraverse'; x: number; y: number; cap: number }
   /** Une tentacule s'étend vers un insecte, le pique (voir `Arme.tentacule`). */
   | { type: 'tentacule'; x: number; y: number }
   | { type: 'piqure'; x: number; y: number }
@@ -5816,6 +5818,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
         ev.push({ type: 'ennemiTouche', id: e.id, x: ba === undefined ? o.x : e.corps.x, y: ba === undefined ? o.y : e.corps.y, critique: o.critique === true })
         // (la balle perd une part de ses dégâts ; ses éclats partent de l'insecte traversé)
         if (ba !== undefined) {
+          ev.push({ type: 'balleTraverse', x: e.corps.x, y: e.corps.y, cap: Math.atan2(o.vy, o.vx) })
           if (o.fragments !== undefined) fragmenter(m, e.corps.x, e.corps.y, o.fragments, e)
           o.degats = Math.max(1, Math.round(o.degats * ba.part))
         }

@@ -326,18 +326,26 @@ export type ArmeDeFaction = { id: string; nom: string; dit: string; race: Race; 
 const nouvelle = (a: Omit<Arme, 'dispersion' | 'guide' | 'vitesse' | 'vie'> & Partial<Arme>): Arme => ({ dispersion: 0, guide: false, vitesse: 0, vie: 0, ...a, ajoutee: true, tousSens: true, place: 20 })
 export const ARMES_DE_FACTION: ArmeDeFaction[] = [
   // L'EMPIRE : de l'artillerie, de l'électricité, des escortes
+  // (ÉQUILIBRÉES SUR LES ARMES DE DÉPART — Keko, 22/11 : « il faut vraiment que les armes qu'on gagne soient équivalentes
+  // aux armes qu'on a au début, à un niveau d'amélioration égal » : mesurées par `npm run equilibrage` — `faction-<id>` —,
+  // elles étaient de 0,56 à 0,83, le Chasseur de 0,97 à 1,15 ; réglées, de 0,96 à 1,04. ET PLUS DE PUNCH : la balle du
+  // railgun abat un insecte d'un coup et le suivant derrière lui, plus rare ; l'obus explose sur 40 au lieu de 26 ; la
+  // bobine foudroie moins souvent, plus fort)
   // (UNE BALLE, PLUS UN TRAIT — Keko, 22/11 : « un projectile très rapide qui laisse une traînée, juste visuelle, et qui perd
   // en dégâts à chaque cible traversée » ; un quart à chaque insecte — voir `Arme.balle`)
-  { id: 'railgun', nom: 'Railgun', dit: 'Une balle très rapide qui transperce les ennemis, un peu moins forte à chacun.', race: 'humains', icone: 'imp-railgun', armes: () => [nouvelle({ id: 'railgun', cadence: 2.6, degats: 110, portee: 190, vitesse: 900, vie: 190 / 900, perforant: true, balle: { part: 0.75, calibre: 2 } })] },
-  { id: 'obusier', nom: 'Obusier', dit: 'De lourds obus qui explosent sur une large zone.', race: 'humains', icone: 'imp-obusier', armes: () => [nouvelle({ id: 'obusier', cadence: 2.4, degats: 70, portee: 150, vitesse: 140, vie: 1.3, dispersion: 0.05, zone: { rayon: 26 } })] },
-  { id: 'roquettes', nom: 'Roquettes', dit: 'Quatre roquettes qui fondent sur les ennemis proches.', race: 'humains', icone: 'imp-roquettes', armes: () => [nouvelle({ id: 'roquettes', cadence: 2.8, degats: 30, portee: 130, vitesse: 150, vie: 1.6, essaim: { nombre: 4, eventail: 2.4, acces: 120, pointe: 230, braquage: 8, chaos: 2.4, pas: 0.25, calme: 1.3, reprise: 45 } })] },
+  { id: 'railgun', nom: 'Railgun', dit: 'Une balle très rapide qui transperce les ennemis, un peu moins forte à chacun.', race: 'humains', icone: 'imp-railgun', armes: () => [nouvelle({ id: 'railgun', cadence: 3, degats: 160, portee: 190, vitesse: 900, vie: 190 / 900, perforant: true, balle: { part: 0.75, calibre: 2 } })] },
+  { id: 'obusier', nom: 'Obusier', dit: 'De lourds obus qui explosent sur une large zone.', race: 'humains', icone: 'imp-obusier', armes: () => [nouvelle({ id: 'obusier', cadence: 2.4, degats: 78, portee: 150, vitesse: 140, vie: 1.3, dispersion: 0.05, zone: { rayon: 40 } })] },
+  { id: 'roquettes', nom: 'Roquettes', dit: 'Quatre lourdes roquettes, lentes, qui explosent sur une large zone.', race: 'humains', icone: 'imp-roquettes', armes: () => [nouvelle({ id: 'roquettes', cadence: 3, degats: 20, portee: 130, vitesse: 60, vie: 2, zone: { rayon: 30 }, essaim: { nombre: 4, eventail: 2, acces: 60, pointe: 90, braquage: 5, chaos: 1.6, pas: 0.32, calme: 1.4, reprise: 45 } })] },
+  // (LES ROQUETTES, PLUS LENTES ET PLUS LARGES QUE LES MISSILES DU CHASSEUR — Keko, 22/11 : « une version plus lente et
+  // plus grosse zone que les missiles, pour la distinguer » : elles partent à 60, plafonnent à 90 — les missiles volent
+  // à 110, guidés —, zigzaguent moins, et chacune explose sur 30, les missiles sur 18)
   // (LA BOBINE TESLA — Keko, 22/11 : « l'arc tesla, c'est une chaîne d'éclair bis » : une boule de foudre lente qui
-  // traverse la mêlée en foudroyant les trois insectes les plus proches toutes les 0,4 s ; l'identifiant reste `tesla`)
-  { id: 'tesla', nom: 'Bobine tesla', dit: 'Une boule de foudre lente qui foudroie les ennemis autour d’elle.', race: 'humains', icone: 'imp-tesla', armes: () => [nouvelle({ id: 'tesla', cadence: 2.6, degats: 22, portee: 120, sphere: { vitesse: 45, duree: 3, rayon: 42, periode: 0.4, vitesseTir: 0, foudre: { cibles: 3 } } })] },
-  { id: 'grenades', nom: 'Lance-grenades', dit: 'Deux grenades à chaque tir, qui explosent à l’impact.', race: 'humains', icone: 'imp-grenades', armes: () => [nouvelle({ id: 'grenades', cadence: 1.5, degats: 32, portee: 110, vitesse: 150, vie: 0.9, dispersion: 0.08, zone: { rayon: 15 }, gerbe: { nombre: 2, ecart: 0.3 } })] },
+  // traverse la mêlée en foudroyant les trois insectes les plus proches toutes les 0,6 s ; l'identifiant reste `tesla`)
+  { id: 'tesla', nom: 'Bobine tesla', dit: 'Une boule de foudre lente qui foudroie les ennemis autour d’elle.', race: 'humains', icone: 'imp-tesla', armes: () => [nouvelle({ id: 'tesla', cadence: 2.6, degats: 58, portee: 120, sphere: { vitesse: 45, duree: 3, rayon: 42, periode: 0.6, vitesseTir: 0, foudre: { cibles: 3 } } })] },
+  { id: 'grenades', nom: 'Lance-grenades', dit: 'Deux grenades à chaque tir, qui explosent à l’impact.', race: 'humains', icone: 'imp-grenades', armes: () => [nouvelle({ id: 'grenades', cadence: 1.5, degats: 51, portee: 110, vitesse: 150, vie: 0.9, dispersion: 0.08, zone: { rayon: 15 }, gerbe: { nombre: 2, ecart: 0.3 } })] },
   // (DES MINI-AVIONS, PAS DES DRONES — Keko, 22/11 : « on a déjà les drones de la Sentinelle » : l'orbite des drones, plus
   // large et plus vive ; la page les dessine en petits chasseurs)
-  { id: 'escorte', nom: 'Escorte', dit: 'Deux mini-avions qui mitraillent les ennemis autour du vaisseau.', race: 'humains', icone: 'imp-escorte', armes: () => [0, 1].map((k) => ({ ...nouvelle({ id: 'escorte', cadence: 0.45, degats: 12, portee: 70, vitesse: 320, vie: 0.5, dispersion: 0.05 }), place: 20 + k, orbite: { ...ORBITE_DES_DRONES, rayon: 30, vitesse: 2.6, vol: 230, braquage: 9, autour: 34, phase: k * Math.PI } })) },
+  { id: 'escorte', nom: 'Escorte', dit: 'Deux mini-avions qui mitraillent les ennemis autour du vaisseau.', race: 'humains', icone: 'imp-escorte', armes: () => [0, 1].map((k) => ({ ...nouvelle({ id: 'escorte', cadence: 0.45, degats: 20, portee: 70, vitesse: 320, vie: 0.5, dispersion: 0.05 }), place: 20 + k, orbite: { ...ORBITE_DES_DRONES, rayon: 30, vitesse: 2.6, vol: 230, braquage: 9, autour: 34, phase: k * Math.PI } })) },
 ]
 export const armeDeFaction = (id: string): ArmeDeFaction | undefined => ARMES_DE_FACTION.find((x) => x.id === id)
 
@@ -381,10 +389,12 @@ export const MUTATIONS: Mutation[] = [
   variation('obusier-lourd', 'obusier', 'Gros calibre', 'Des obus plus lents à venir, plus forts, qui explosent plus large.', changerA('obusier', V.lourd)),
   // L'ESSAIM DE ROQUETTES
   variation('roquettes-nuee', 'roquettes', 'Nuée', 'Deux fois plus de roquettes, un peu moins fortes.', changerA('roquettes', (a) => ({ ...a, essaim: a.essaim === undefined ? undefined : { ...a.essaim, nombre: a.essaim.nombre * 2 }, degats: fois(a, 0.6) }))),
-  variation('roquettes-explosives', 'roquettes', 'Explosives', 'Les roquettes explosent à l’impact.', changerA('roquettes', (a) => ({ ...a, zone: { rayon: 14 } }))),
+  // (elles explosent déjà toutes — Keko, 22/11 : « une version plus lente et plus grosse zone que les missiles » —, la
+  // carte « Explosives » est devenue « Gros calibre », et « Perforantes », qui perdait l'explosion, « Fragmentation »)
+  variation('roquettes-lourdes', 'roquettes', 'Gros calibre', 'Des roquettes plus lentes à venir, plus fortes, qui explosent plus large.', changerA('roquettes', V.lourd)),
   variation('roquettes-incendiaires', 'roquettes', 'Incendiaires', 'Les roquettes enflamment ce qu’elles touchent.', changerA('roquettes', V.incendiaire)),
   variation('roquettes-cryo', 'roquettes', 'Cryogéniques', 'Les roquettes gèlent ce qu’elles touchent.', changerA('roquettes', V.cryo)),
-  variation('roquettes-perforantes', 'roquettes', 'Perforantes', 'Les roquettes traversent les ennemis.', changerA('roquettes', V.perforant)),
+  variation('roquettes-fragmentation', 'roquettes', 'Fragmentation', 'Chaque explosion projette six éclats brûlants tout autour.', changerA('roquettes', V.fragments)),
   variation('roquettes-ricochet', 'roquettes', 'Ricochet', 'Chaque roquette rebondit sur deux autres ennemis.', changerA('roquettes', V.ricochet)),
   // L'ARC TESLA
   variation('tesla-rebonds', 'tesla', 'Orage', 'La bobine foudroie trois ennemis de plus à chaque décharge.', changerA('tesla', (a) => ({ ...a, sphere: a.sphere === undefined ? undefined : { ...a.sphere, foudre: { cibles: (a.sphere.foudre?.cibles ?? 3) + 3 } } }))),
