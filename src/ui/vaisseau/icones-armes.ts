@@ -418,6 +418,21 @@ export const ICONES_DES_ARMES: Record<string, readonly string[]> = {
     '............',
   ],
   // (… UN TRAIT QUI FAIT ÉCLATER SA CIBLE EN FRAGMENTS — Keko, 21/11 : « la flèche n'est pas terrible »)
+  // (TOUTES LES ARMES — une carte qui les vise toutes, voir `STATS_GLOBALES` : un réticule d'or, ses quatre branches)
+  'toutes-armes': [
+    '.....oo.....',
+    '.....oo.....',
+    '...ooyyoo...',
+    '..oO.yy.Oo..',
+    '..o......o..',
+    'oyy..ww..yyo',
+    'oyy..ww..yyo',
+    '..o......o..',
+    '..oO.yy.Oo..',
+    '...ooyyoo...',
+    '.....oo.....',
+    '.....oo.....',
+  ],
   // LES ARMES DE L'EMPIRE (Keko, 22/11 : « pour les icônes des armements, ne pas utiliser celles qui existent déjà pour
   // des armes du jeu, mais en faire de nouvelles ») — voir `ARMES_DE_FACTION`
   // (le railgun : un long canon à deux rails, ses bobines cyan, la pointe blanche)

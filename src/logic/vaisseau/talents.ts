@@ -81,10 +81,21 @@ export const SEULEMENT_EN: Partial<Record<StatDArme | StatDeFaction, Rarete>> = 
  */
 export const POINTS_DE_CHANCE: Record<Rarete, number> = { commune: 0.01, peuCommune: 0.02, rare: 0.03, epique: 0.04, legendaire: 0.05, speciale: 0 }
 /** LA CHANCE DE CRITIQUE, deux fois plus (Keko, 22/11 : « plutôt que 1, 2, 3, 4, 5, on fait 2, 4, 6, 8, 10 ») ; le déphasage garde les siens. */
+/**
+ * LES STATS DES CARTES « TOUTES LES ARMES » : celles d'une arme, sans le critique (déjà au vaisseau, pour toutes) ; une
+ * carte n'est proposée que si une arme portée au moins a cette stat, et son bonus est LA MOITIÉ de celui de la rareté.
+ */
+export const STATS_GLOBALES: StatDArme[] = ['degats', 'cadence', 'portee', 'zone', 'pose', 'feu', 'corrosion', 'givre']
+export const PART_GLOBALE = 0.5
 export const POINTS_DE_CRITIQUE: Record<Rarete, number> = { commune: 0.02, peuCommune: 0.04, rare: 0.06, epique: 0.08, legendaire: 0.1, speciale: 0 }
 const EN_POINTS: ReadonlySet<string> = new Set(['critique', 'dephasage'])
 
-export type Cible = { sorte: 'arme'; arme: string } | { sorte: 'faction'; race: Race }
+/**
+ * LA CIBLE D'UNE CARTE : une arme, la faction — ou TOUTES LES ARMES (Keko, 22/11 : « des catégories globales à toutes
+ * les armes, mais divisées par 2 — +X % aux dégâts, à la cadence, à la zone de toutes les armes ; avant, il faut
+ * vérifier que le joueur possède au moins une arme qui a un rapport avec la zone » — voir `STATS_GLOBALES`).
+ */
+export type Cible = { sorte: 'arme'; arme: string } | { sorte: 'faction'; race: Race } | { sorte: 'armes' }
 export type Talent = {
   id: string
   cible: Cible
@@ -106,12 +117,20 @@ export function ajouterLeBonus(b: Bonus, ta: Talent): Bonus {
 export function avecLesBonus(base: ConfigVaisseau, b: Bonus): ConfigVaisseau {
   let c = base
   for (const x of b) {
+    // (« toutes les armes » vient à la fin, ci-dessous : il vaut aussi pour une arme prise après lui)
+    if (x.cible.sorte === 'armes') continue
     // (le critique est au vaisseau : la chance en points, les dégâts critiques en points du facteur — 150 % +12 % : 162 %)
     // (une carte spéciale change la configuration elle-même — voir `MUTATIONS`)
     if (x.stat === 'mutation') c = MUTATIONS.find((mu) => `mutation:${mu.id}` === x.id)?.appliquer(c) ?? c
     else if (x.stat === 'critique') c = { ...c, passifs: { ...c.passifs, critique: c.passifs.critique + x.somme } }
     else if (x.stat === 'critiques') c = { ...c, passifs: { ...c.passifs, critiqueFacteur: c.passifs.critiqueFacteur + x.somme } }
     else c = x.cible.sorte === 'arme' ? { ...c, armes: c.armes.map((a) => (a.id === (x.cible as { arme: string }).arme ? armeAmelioree(a, x.stat as StatDArme, x.somme) : a)) } : factionAmelioree(c, x.stat as StatDeFaction, x.somme)
+  }
+  // TOUTES LES ARMES : chaque arme portée qui a cette stat — même prise après la carte
+  for (const x of b) {
+    if (x.cible.sorte !== 'armes') continue
+    const stat = x.stat as StatDArme
+    c = { ...c, armes: c.armes.map((a) => (statsDeLArme(a).includes(stat) ? armeAmelioree(a, stat, x.somme) : a)) }
   }
   return c
 }
@@ -235,8 +254,9 @@ export function factionAmelioree(c: ConfigVaisseau, stat: StatDeFaction, k: numb
 /** Une carte : sa cible, sa stat, sa rareté. */
 export function carte(cible: Cible, stat: StatDArme | StatDeFaction, rarete: Rarete): Talent {
   // (une chance, des points à l'échelle ; le reste, le bonus de la rareté)
-  const bonus = stat === 'critique' ? POINTS_DE_CRITIQUE[rarete] : EN_POINTS.has(stat) ? POINTS_DE_CHANCE[rarete] : rareteDe(rarete).bonus
-  return { id: `${cible.sorte === 'arme' ? `arme-${cible.arme}` : cible.race}:${stat}`, cible, stat, rarete, bonus }
+  // (toutes les armes : la moitié)
+  const bonus = cible.sorte === 'armes' ? rareteDe(rarete).bonus * PART_GLOBALE : stat === 'critique' ? POINTS_DE_CRITIQUE[rarete] : EN_POINTS.has(stat) ? POINTS_DE_CHANCE[rarete] : rareteDe(rarete).bonus
+  return { id: `${cible.sorte === 'arme' ? `arme-${cible.arme}` : cible.sorte === 'armes' ? 'armes' : cible.race}:${stat}`, cible, stat, rarete, bonus }
 }
 
 // ---------------------------------------------------------------- les cartes spéciales
@@ -434,6 +454,8 @@ export function proposer(graine: number, niveau: number, rang: number, arme: Arm
   const pool: { cible: Cible; stat: StatDArme | StatDeFaction }[] = [
     ...portees.flatMap((a) => statsDeLArme(a).map((stat) => ({ cible: { sorte: 'arme', arme: a.id } as Cible, stat }))),
     ...STATS_DE_FACTION[race].map((stat) => ({ cible: { sorte: 'faction', race } as Cible, stat })),
+    // (toutes les armes : une stat qu'une arme portée au moins a)
+    ...STATS_GLOBALES.filter((stat) => portees.some((a) => statsDeLArme(a).includes(stat))).map((stat) => ({ cible: { sorte: 'armes' } as Cible, stat })),
   ]
   const choisies: Talent[] = []
   for (let k = 0; k < 3 && pool.length > 0; k++) {

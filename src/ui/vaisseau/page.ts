@@ -2152,8 +2152,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     p.circle(cx, cy, 14.5, ENCRE)
     p.circle(cx, cy, 14, NUIT_C)
     p.disc(cx, cy, 14, F[1], (d) => 0.7 * (1 - d))
-    if (ta.cible.sorte === 'arme') {
-      const id = armeDeLaCarte(ta.cible.arme).icone
+    if (ta.cible.sorte === 'arme' || ta.cible.sorte === 'armes') {
+      const id = ta.cible.sorte === 'armes' ? 'toutes-armes' : armeDeLaCarte(ta.cible.arme).icone
       for (const [px, py, c] of pixelsDeLIcone(id)) {
         let nc = couleursDesIcones.get(c)
         if (nc === undefined) couleursDesIcones.set(c, (nc = N.hex(c)))
@@ -2203,7 +2203,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // texture » ; la lettre des titres, et celle des en-têtes, faisaient d'un 8 un 0)
     ly += 6
     {
-      const mot = spell(`+${Math.round(ta.bonus * 100)} %`, GRAS) as { letters: { g: unknown; x: number }[]; w: number }
+      // (au dixième : « toutes les armes » vaut la moitié — +2,5 %)
+      const mot = spell(`+${String(Math.round(ta.bonus * 1000) / 10).replace('.', ',')} %`, GRAS) as { letters: { g: unknown; x: number }[]; w: number }
       const x0 = Math.round(cx - mot.w / 2)
       const items = mot.letters.filter((L) => L.g).map((L) => ({ g: L.g, x: x0 + L.x, y: ly - decalage(GRAS), sx: 1, sy: 1 }))
       const eclat = ((tReel * 0.5 + i * 0.29) % 2.2) * 40 - 12
@@ -2212,7 +2213,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     ly += 14
     // ce qu'il change — LA CATÉGORIE NE S'ÉCRIT PAS, L'ICÔNE SUFFIT ; une carte d'arme nomme son arme (Keko, 21/11 : « ne
     // marque pas textuellement le type, l'icône suffit ; par contre pour l'arme précise : cadence de "nom de l'arme" »)
-    const nomDeLArme = ta.cible.sorte === 'arme' ? armeDeLaCarte(ta.cible.arme).nom : ''
+    const nomDeLArme = ta.cible.sorte === 'arme' ? armeDeLaCarte(ta.cible.arme).nom : ta.cible.sorte === 'armes' ? 'toutes les armes' : ''
     const effet = nomDeLArme === '' ? st.effet : `${st.effet} ${/^[aeiouyàâéèêëîïôœûüh]/i.test(nomDeLArme) ? 'd’' : 'de '}${nomDeLArme}`
     // (DEUX LIGNES NE SE TOUCHENT PAS — Keko, 21/11 : dix pixels d'une ligne à l'autre, huit d'abord : les accents de
     // l'une touchaient les jambages de l'autre)

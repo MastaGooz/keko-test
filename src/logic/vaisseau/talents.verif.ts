@@ -32,6 +32,28 @@ const n2 = armeAmelioree(napalm, 'zone', 0.12)
 const f2 = armeAmelioree(napalm, 'feu', 0.2)
 const g2 = armeAmelioree(givre, 'givre', 0.2)
 verifier(`zone +12 % → rayon ${n2.napalm!.rayon.toFixed(2)} (14) ; feu +20 % → la brûlure ${f2.napalm!.dpsBrulure} (10), le reste non (${f2.napalm!.dps}, ${f2.degats}) ; givre +20 % → ralenti ${g2.givre!.ralenti.toFixed(2)} (0,5 : on ôte 60 % de la vitesse au lieu de 50) ; corrosion +20 % → vulnérabilité ${armeAmelioree(crachat, 'corrosion', 0.2).crachat!.acide.bonus.toFixed(2)} (0,35) ; durée des posées +25 % → napalm ${armeAmelioree(napalm, 'pose', 0.25).napalm!.duree} (3), tourelles ${(armeAmelioree(tourelle, 'pose', 0.25) as unknown as { pose: { duree: number } }).pose.duree} (8)`, Math.abs(n2.napalm!.rayon - 15.68) < 1e-9 && f2.napalm!.dpsBrulure === 12 && f2.napalm!.dps === 20 && f2.degats === 60 && Math.abs(g2.givre!.ralenti - 0.4) < 1e-9 && Math.abs(armeAmelioree(crachat, 'corrosion', 0.2).crachat!.acide.bonus - 0.42) < 1e-9 && armeAmelioree(napalm, 'pose', 0.25).napalm!.duree === 3.75 && (armeAmelioree(tourelle, 'pose', 0.25) as unknown as { pose: { duree: number } }).pose.duree === 10)
+// TOUTES LES ARMES : la moitié du bonus, sur chaque arme qui a la stat — même prise après la carte ; proposée seulement si
+// une arme portée a la stat
+{
+  const g = carte({ sorte: 'armes' }, 'degats', 'legendaire')
+  const zoneG = carte({ sorte: 'armes' }, 'zone', 'rare')
+  const ca = { ...base, armes: [canon, napalm] }
+  const avec = avecLesBonus(ca, ajouterLeBonus(ajouterLeBonus([], g), zoneG))
+  verifier(`toutes les armes : la moitié (+${(g.bonus * 100).toFixed(1)} % de dégâts, la légendaire en donne 25) ; le canon ${avec.armes[0].degats} (${canon.degats}), le napalm ${avec.armes[1].degats} (${napalm.degats}) ; la zone ne touche que le napalm (rayon ${avec.armes[1].napalm!.rayon.toFixed(2)})`, Math.abs(g.bonus - 0.125) < 1e-9 && avec.armes[0].degats > canon.degats && avec.armes[1].degats > napalm.degats && avec.armes[0].portee === canon.portee && avec.armes[1].napalm!.rayon > napalm.napalm!.rayon)
+  // (une arme ajoutée après la carte la reçoit aussi)
+  const apres = avecLesBonus({ ...base, armes: [canon] }, ajouterLeBonus([], g))
+  const plusTard = avecLesBonus({ ...base, armes: [canon, napalm] }, ajouterLeBonus([], g))
+  verifier(`toutes les armes vaut pour une arme venue après (napalm ${plusTard.armes[1].degats} au lieu de ${napalm.degats})`, plusTard.armes[1].degats > napalm.degats && apres.armes[0].degats > canon.degats)
+  // (la zone n'est proposée qu'avec une arme qui en a une)
+  const statsGlobalesVues = (armes: Arme[]): Set<string> => {
+    const vues = new Set<string>()
+    for (let n = 1; n < 400; n++) for (const ta of proposer(n, n, 1, armes[0], 'humains', Array.from({ length: 999 }, (_, k) => `deja-${k}`), armes)) if (ta.cible.sorte === 'armes') vues.add(ta.stat)
+    return vues
+  }
+  const seul = statsGlobalesVues([canon])
+  const avecZone = statsGlobalesVues([canon, napalm])
+  verifier(`toutes les armes, proposées selon ce qu'on porte : le canon seul ${[...seul].join(', ')} ; avec le napalm ${[...avecZone].join(', ')}`, seul.has('degats') && !seul.has('zone') && !seul.has('critique') && avecZone.has('zone') && avecZone.has('feu'))
+}
 const crit = avecLesBonus(base, ajouterLeBonus(ajouterLeBonus([], carte({ sorte: 'arme', arme: 'canon' }, 'critique', 'commune')), carte({ sorte: 'arme', arme: 'canon' }, 'critiques', 'rare')))
 verifier(`le critique : une commune +2 points de chance (${(crit.passifs.critique * 100).toFixed(0)} %), une rare +12 points de dégâts critiques (${(crit.passifs.critiqueFacteur * 100).toFixed(0)} %, ${(base.passifs.critiqueFacteur * 100).toFixed(0)} avant)`, Math.abs(crit.passifs.critique - base.passifs.critique - 0.02) < 1e-9 && Math.abs(crit.passifs.critiqueFacteur - base.passifs.critiqueFacteur - 0.12) < 1e-9)
 
@@ -51,7 +73,7 @@ verifier(`une carte d'arme ne change que son arme (${avecLesBonus(deux, un).arme
 
 // LE TIRAGE DES TROIS CARTES
 const p1 = proposer(7, 2, 0, canon, 'essaim')
-verifier(`trois cartes différentes, du pool de l'arme et de la faction : ${p1.map((x) => `${x.id} (${x.rarete})`).join(', ')} ; les mêmes pour la même partie et le même niveau`, p1.length === 3 && new Set(p1.map((x) => x.id)).size === 3 && proposer(7, 2, 0, canon, 'essaim').map((x) => x.id + x.rarete).join() === p1.map((x) => x.id + x.rarete).join() && p1.every((x) => (x.cible.sorte === 'arme' ? x.cible.arme === 'canon' : x.cible.race === 'essaim')))
+verifier(`trois cartes différentes, du pool de l'arme et de la faction : ${p1.map((x) => `${x.id} (${x.rarete})`).join(', ')} ; les mêmes pour la même partie et le même niveau`, p1.length === 3 && new Set(p1.map((x) => x.id)).size === 3 && proposer(7, 2, 0, canon, 'essaim').map((x) => x.id + x.rarete).join() === p1.map((x) => x.id + x.rarete).join() && p1.every((x) => (x.cible.sorte === 'arme' ? x.cible.arme === 'canon' : x.cible.sorte === 'armes' || x.cible.race === 'essaim')))
 let rien = true
 for (let n = 1; n < 200; n++) for (const x of proposer(3, n, 0, canon, 'humains')) if (x.stat === 'bouclier' || x.stat === 'regeneration' || x.stat === 'zone' || x.stat === 'dephasage' || x.stat === 'feu') rien = false
 verifier('une carte hors du pool n’est jamais proposée (le canon n’a pas de zone, l’Empire ni bouclier, ni régénération, ni déphasage)', rien)

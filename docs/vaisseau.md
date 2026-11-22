@@ -7995,3 +7995,13 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
 - **22/11, LA CHANCE DE CRITIQUE DOUBLÉE.** Keko : « plutôt que 1, 2, 3, 4, 5, on fait 2, 4, 6, 8, 10 » : la carte
   « Critique » donne +2 / +4 / +6 / +8 / +10 points de chance, de la commune à la légendaire (`POINTS_DE_CRITIQUE`) ;
   le déphasage garde 1 à 5 (`POINTS_DE_CHANCE`).
+- **22/11, LES CARTES « TOUTES LES ARMES ».** Keko : « des catégories globales à toutes les armes, mais divisées par
+  2 — +X % aux dégâts, à la cadence, à la zone de toutes les armes ; avant, il faut vérifier que le joueur possède au
+  moins une arme qui a un rapport avec la zone ». Une troisième cible de carte, `{ sorte: 'armes' }` :
+  - LES STATS (`STATS_GLOBALES`) : dégâts, cadence, portée, zone, durée des posées, feu, corrosion, givre — pas le
+    critique, déjà au vaisseau pour toutes les armes. Une stat n'est proposée que si UNE ARME PORTÉE au moins l'a.
+  - LE BONUS : LA MOITIÉ de la rareté (`PART_GLOBALE`) — +2,5 / 4 / 6 / 9 / 12,5 % ; le chiffre de la carte s'écrit
+    au dixième. Il agit sur CHAQUE ARME QUI A LA STAT, et aussi sur une arme prise APRÈS la carte (`avecLesBonus` les
+    applique à la fin).
+  - Proposée dès la première arme, mêlée aux autres cartes ; son icône est un réticule d'or (`toutes-armes`), son
+    texte « de dégâts de toutes les armes ». Vérifié ; VU au choix.
