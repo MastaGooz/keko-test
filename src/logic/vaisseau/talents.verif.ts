@@ -1,7 +1,7 @@
 /**
  * Vérifications des talents du jeu du vortex, sans navigateur.
  */
-import { armeDeFaction, ARMES_DE_FACTION, type Mutation, NIVEAU_SPECIAL, carteSpeciale, MUTATIONS, mutationsPrises, ajouterLeBonus, apresUnChoix, armeAmelioree, avecLesBonus, carte, factionAmelioree, type Bonus, ouvrirLeChoix, proposer, RARETES, rareteTiree, reserveApresLeDelai, STATS_DE_FACTION, statsDeLArme } from './talents.ts'
+import { aUneZone, armeDeFaction, ARMES_DE_FACTION, type Mutation, NIVEAU_SPECIAL, carteSpeciale, MUTATIONS, mutationsPrises, ajouterLeBonus, apresUnChoix, armeAmelioree, avecLesBonus, carte, factionAmelioree, type Bonus, ouvrirLeChoix, proposer, RARETES, rareteTiree, reserveApresLeDelai, STATS_DE_FACTION, statsDeLArme } from './talents.ts'
 import { VAISSEAU as C, type Arme, type ConfigVaisseau } from './jeu.ts'
 
 let echecs = 0
@@ -27,24 +27,24 @@ verifier(`le tirage suit les chances : ${RARETES.map((r) => `${r.nom} ${Math.rou
 const crachat = { ...canon, id: 'crachat', crachat: { cone: 0.4, duree: 3, acide: { duree: 3, dps: 0, bonus: 0.35 } } } as Arme
 const givre = { ...canon, id: 'givre', cadence: 0.1, portee: 0, givre: { ecart: 5, rayon: 8, duree: 4, dps: 12, ralenti: 0.5 } } as Arme
 const tourelle = { ...canon, id: 'tourelle', pose: { tous: 3, ecart: 10, max: 3, duree: 8, pivot: 1 } } as unknown as Arme
-verifier(`le canon : ${statsDeLArme(canon).join(', ')} ; le napalm : ${statsDeLArme(napalm).join(', ')} ; le crachat : ${statsDeLArme(crachat).join(', ')} ; le givre : ${statsDeLArme(givre).join(', ')} ; les tourelles : ${statsDeLArme(tourelle).join(', ')} ; les drones (leur orbite n'est pas une zone) : ${statsDeLArme(drones).join(', ')}`, statsDeLArme(canon).join() === 'degats,critique,critiques,cadence,portee' && statsDeLArme(napalm).join() === 'degats,critique,critiques,cadence,portee,zone,pose,feu' && statsDeLArme(crachat).includes('corrosion') && statsDeLArme(givre).includes('givre') && !statsDeLArme(givre).includes('portee') && statsDeLArme(tourelle).includes('pose') && !statsDeLArme(drones).includes('zone'))
-const n2 = armeAmelioree(napalm, 'zone', 0.12)
+verifier(`le canon : ${statsDeLArme(canon).join(', ')} ; le napalm : ${statsDeLArme(napalm).join(', ')} ; le crachat : ${statsDeLArme(crachat).join(', ')} ; le givre : ${statsDeLArme(givre).join(', ')} ; les tourelles : ${statsDeLArme(tourelle).join(', ')} ; les drones (leur orbite n'est pas une zone) : ${statsDeLArme(drones).join(', ')}`, statsDeLArme(canon).join() === 'degats,critique,critiques,cadence,portee' && statsDeLArme(napalm).join() === 'degats,critique,critiques,cadence,portee,pose,feu' && statsDeLArme(crachat).includes('corrosion') && statsDeLArme(givre).includes('givre') && statsDeLArme(givre).includes('portee') && statsDeLArme(tourelle).includes('pose') && !aUneZone(drones))
+const n2 = armeAmelioree(napalm, 'portee', 0.12)
 const f2 = armeAmelioree(napalm, 'feu', 0.2)
 const g2 = armeAmelioree(givre, 'givre', 0.2)
-verifier(`zone +12 % → rayon ${n2.napalm!.rayon.toFixed(2)} (14) ; feu +20 % → la brûlure ${f2.napalm!.dpsBrulure} (10), le reste non (${f2.napalm!.dps}, ${f2.degats}) ; givre +20 % → ralenti ${g2.givre!.ralenti.toFixed(2)} (0,5 : on ôte 60 % de la vitesse au lieu de 50) ; corrosion +20 % → vulnérabilité ${armeAmelioree(crachat, 'corrosion', 0.2).crachat!.acide.bonus.toFixed(2)} (0,35) ; durée des posées +25 % → napalm ${armeAmelioree(napalm, 'pose', 0.25).napalm!.duree} (3), tourelles ${(armeAmelioree(tourelle, 'pose', 0.25) as unknown as { pose: { duree: number } }).pose.duree} (8)`, Math.abs(n2.napalm!.rayon - 15.68) < 1e-9 && f2.napalm!.dpsBrulure === 12 && f2.napalm!.dps === 20 && f2.degats === 60 && Math.abs(g2.givre!.ralenti - 0.4) < 1e-9 && Math.abs(armeAmelioree(crachat, 'corrosion', 0.2).crachat!.acide.bonus - 0.42) < 1e-9 && armeAmelioree(napalm, 'pose', 0.25).napalm!.duree === 3.75 && (armeAmelioree(tourelle, 'pose', 0.25) as unknown as { pose: { duree: number } }).pose.duree === 10)
+verifier(`portée +12 % → rayon ${n2.napalm!.rayon.toFixed(2)} (14), portée ${n2.portee.toFixed(1)} (${napalm.portee}) ; la traînée de givre, sans portée, agrandie quand même (${armeAmelioree(givre, 'portee', 0.12).givre!.rayon.toFixed(2)}) ; feu +20 % → la brûlure ${f2.napalm!.dpsBrulure} (10), le reste non (${f2.napalm!.dps}, ${f2.degats}) ; givre +20 % → ralenti ${g2.givre!.ralenti.toFixed(2)} (0,5 : on ôte 60 % de la vitesse au lieu de 50) ; corrosion +20 % → vulnérabilité ${armeAmelioree(crachat, 'corrosion', 0.2).crachat!.acide.bonus.toFixed(2)} (0,35) ; durée des posées +25 % → napalm ${armeAmelioree(napalm, 'pose', 0.25).napalm!.duree} (3), tourelles ${(armeAmelioree(tourelle, 'pose', 0.25) as unknown as { pose: { duree: number } }).pose.duree} (8)`, Math.abs(n2.napalm!.rayon - 15.68) < 1e-9 && Math.abs(n2.portee - napalm.portee * 1.12) < 1e-9 && Math.abs(armeAmelioree(givre, 'portee', 0.12).givre!.rayon - 8.96) < 1e-9 && armeAmelioree(givre, 'portee', 0.12).portee === 0 && f2.napalm!.dpsBrulure === 12 && f2.napalm!.dps === 20 && f2.degats === 60 && Math.abs(g2.givre!.ralenti - 0.4) < 1e-9 && Math.abs(armeAmelioree(crachat, 'corrosion', 0.2).crachat!.acide.bonus - 0.42) < 1e-9 && armeAmelioree(napalm, 'pose', 0.25).napalm!.duree === 3.75 && (armeAmelioree(tourelle, 'pose', 0.25) as unknown as { pose: { duree: number } }).pose.duree === 10)
 // TOUTES LES ARMES : la moitié du bonus, sur chaque arme qui a la stat — même prise après la carte ; proposée seulement si
 // une arme portée a la stat
 {
   const g = carte({ sorte: 'armes' }, 'degats', 'legendaire')
-  const zoneG = carte({ sorte: 'armes' }, 'zone', 'rare')
+  const zoneG = carte({ sorte: 'armes' }, 'portee', 'rare')
   const ca = { ...base, armes: [canon, napalm] }
   const avec = avecLesBonus(ca, ajouterLeBonus(ajouterLeBonus([], g), zoneG))
-  verifier(`toutes les armes : la moitié (+${(g.bonus * 100).toFixed(1)} % de dégâts, la légendaire en donne 25) ; le canon ${avec.armes[0].degats} (${canon.degats}), le napalm ${avec.armes[1].degats} (${napalm.degats}) ; la zone ne touche que le napalm (rayon ${avec.armes[1].napalm!.rayon.toFixed(2)})`, Math.abs(g.bonus - 0.125) < 1e-9 && avec.armes[0].degats > canon.degats && avec.armes[1].degats > napalm.degats && avec.armes[0].portee === canon.portee && avec.armes[1].napalm!.rayon > napalm.napalm!.rayon)
+  verifier(`toutes les armes : la moitié (+${(g.bonus * 100).toFixed(1)} % de dégâts, la légendaire en donne 25) ; le canon ${avec.armes[0].degats} (${canon.degats}), le napalm ${avec.armes[1].degats} (${napalm.degats}) ; la portée de toutes les armes : le canon tire à ${avec.armes[0].portee.toFixed(1)} (${canon.portee}), le rayon du napalm ${avec.armes[1].napalm!.rayon.toFixed(2)} (${napalm.napalm!.rayon})`, Math.abs(g.bonus - 0.125) < 1e-9 && avec.armes[0].degats > canon.degats && avec.armes[1].degats > napalm.degats && Math.abs(avec.armes[0].portee - canon.portee * 1.06) < 1e-9 && Math.abs(avec.armes[1].napalm!.rayon - napalm.napalm!.rayon * 1.06) < 1e-9)
   // (une arme ajoutée après la carte la reçoit aussi)
   const apres = avecLesBonus({ ...base, armes: [canon] }, ajouterLeBonus([], g))
   const plusTard = avecLesBonus({ ...base, armes: [canon, napalm] }, ajouterLeBonus([], g))
   verifier(`toutes les armes vaut pour une arme venue après (napalm ${plusTard.armes[1].degats} au lieu de ${napalm.degats})`, plusTard.armes[1].degats > napalm.degats && apres.armes[0].degats > canon.degats)
-  // (la zone n'est proposée qu'avec une arme qui en a une)
+  // (le feu n'est proposé qu'avec une arme qui en a ; la portée, toujours)
   const statsGlobalesVues = (armes: Arme[]): Set<string> => {
     const vues = new Set<string>()
     for (let n = 1; n < 400; n++) for (const ta of proposer(n, n, 1, armes[0], 'humains', Array.from({ length: 999 }, (_, k) => `deja-${k}`), armes)) if (ta.cible.sorte === 'armes') vues.add(ta.stat)
@@ -52,7 +52,7 @@ verifier(`zone +12 % → rayon ${n2.napalm!.rayon.toFixed(2)} (14) ; feu +20 % �
   }
   const seul = statsGlobalesVues([canon])
   const avecZone = statsGlobalesVues([canon, napalm])
-  verifier(`toutes les armes, proposées selon ce qu'on porte : le canon seul ${[...seul].join(', ')} ; avec le napalm ${[...avecZone].join(', ')}`, seul.has('degats') && !seul.has('zone') && seul.has('critique') && avecZone.has('zone') && avecZone.has('feu'))
+  verifier(`toutes les armes, proposées selon ce qu'on porte : le canon seul ${[...seul].join(', ')} ; avec le napalm ${[...avecZone].join(', ')}`, seul.has('degats') && seul.has('portee') && !seul.has('feu') && seul.has('critique') && avecZone.has('portee') && avecZone.has('feu'))
 }
 {
   // (LE CRITIQUE EST À L'ARME — Keko, 22/11 : celui du canon ne touche que le canon ; « toutes les armes », la moitié, au vaisseau)
@@ -80,8 +80,8 @@ verifier(`une carte d'arme ne change que son arme (${avecLesBonus(deux, un).arme
 const p1 = proposer(7, 2, 0, canon, 'essaim')
 verifier(`trois cartes différentes, du pool de l'arme et de la faction : ${p1.map((x) => `${x.id} (${x.rarete})`).join(', ')} ; les mêmes pour la même partie et le même niveau`, p1.length === 3 && new Set(p1.map((x) => x.id)).size === 3 && proposer(7, 2, 0, canon, 'essaim').map((x) => x.id + x.rarete).join() === p1.map((x) => x.id + x.rarete).join() && p1.every((x) => (x.cible.sorte === 'arme' ? x.cible.arme === 'canon' : x.cible.sorte === 'armes' || x.cible.race === 'essaim')))
 let rien = true
-for (let n = 1; n < 200; n++) for (const x of proposer(3, n, 0, canon, 'humains')) if (x.stat === 'bouclier' || x.stat === 'regeneration' || x.stat === 'zone' || x.stat === 'dephasage' || x.stat === 'feu') rien = false
-verifier('une carte hors du pool n’est jamais proposée (le canon n’a pas de zone, l’Empire ni bouclier, ni régénération, ni déphasage)', rien)
+for (let n = 1; n < 200; n++) for (const x of proposer(3, n, 0, canon, 'humains')) if (x.stat === 'bouclier' || x.stat === 'regeneration' || x.stat === 'dephasage' || x.stat === 'feu') rien = false
+verifier('une carte hors du pool n’est jamais proposée (le canon n’a pas de feu, l’Empire ni bouclier, ni régénération, ni déphasage)', rien)
 const rar = new Map<string, number>()
 for (let n = 1; n <= 3000; n++) for (const x of proposer(11, n, 0, canon, 'etheres')) rar.set(x.rarete, (rar.get(x.rarete) ?? 0) + 1)
 verifier(`sur 9 000 cartes tirées : ${RARETES.map((r) => `${r.nom} ${Math.round(((rar.get(r.id) ?? 0) / 9000) * 1000) / 10} %`).join(', ')}`, Math.abs((rar.get('commune') ?? 0) / 9000 - 0.55) < 0.03 && (rar.get('legendaire') ?? 0) > 30 && (rar.get('legendaire') ?? 0) < 160)
@@ -95,8 +95,8 @@ verifier('le délai passé, ce qui restait à choisir part en réserve', reserve
 {
   // (LA ZONE GRANDIT TOUT CE QUI EST UNE ZONE — 22/11 : le rayon de la Singularité, et celui de son effondrement)
   const puits = { id: 'puits', cadence: 5, degats: 11.5, portee: 130, vitesse: 0, vie: 0, dispersion: 0, guide: false, puits: { vitesse: 150, rayon: 45, force: 70, duree: 2, eclat: 28 } } as Arme
-  const z = armeAmelioree(puits, 'zone', 0.25)
-  verifier(`une carte « Zone » de +25 % : la Singularité attire à ${z.puits!.rayon} (45), s'effondre à ${z.puits!.eclat} (28) ; sa force ne bouge pas (${z.puits!.force})`, z.puits!.rayon === 56.25 && z.puits!.eclat === 35 && z.puits!.force === 70)
+  const z = armeAmelioree(puits, 'portee', 0.25)
+  verifier(`une carte « Portée » de +25 % : la Singularité, lancée à ${z.portee} (130), attire à ${z.puits!.rayon} (45), s'effondre à ${z.puits!.eclat} (28) ; sa force ne bouge pas (${z.puits!.force})`, z.puits!.rayon === 56.25 && z.portee === 162.5 && z.puits!.eclat === 35 && z.puits!.force === 70)
 }
 {
   // LES CARTES SPÉCIALES (Keko, 22/11 : aux niveaux 10, 20, 30, une nouvelle arme et une variation de l'arme principale au

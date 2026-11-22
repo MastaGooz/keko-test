@@ -52,7 +52,10 @@ export function rareteTiree(u: number): Rarete {
  * ralentissement du givre » ; et « la durée des armes posées », choisie parmi quatre oublis. Le nombre de projectiles ou
  * de créatures, « extrêmement puissant », est gardé de côté.)
  */
-export type StatDArme = 'degats' | 'critique' | 'critiques' | 'cadence' | 'portee' | 'zone' | 'pose' | 'feu' | 'corrosion' | 'givre'
+// (LA PORTÉE FAIT AUSSI LA ZONE — Keko, 22/11 : « on peut pas fusionner la portée et la zone, en considérant que la portée
+// d'une zone est son rayon ? » puis « va pour Portée qui fait les deux » : une seule carte, qui allonge le tir ET agrandit
+// tout ce qui est une zone — voir rmeAmelioree ; plus de carte « Zone »)
+export type StatDArme = 'degats' | 'critique' | 'critiques' | 'cadence' | 'portee' | 'pose' | 'feu' | 'corrosion' | 'givre'
 /**
  * LES CARTES DE FACTION (Keko, 21/11) : pour toutes, le blindage (les points de vie des Xénoïdes), la vitesse, la
  * maniabilité, l'aimant (la distance) et l'expérience (+X % par pépite) ; l'Empire, la RÉCUPÉRATION (22/11 : la chance
@@ -86,7 +89,7 @@ export const POINTS_DE_CHANCE: Record<Rarete, number> = { commune: 0.02, peuComm
  * globale deux fois moins forte qui concerne toutes les armes, comme pour le reste ») ; une
  * carte n'est proposée que si une arme portée au moins a cette stat, et son bonus est LA MOITIÉ de celui de la rareté.
  */
-export const STATS_GLOBALES: StatDArme[] = ['degats', 'critique', 'critiques', 'cadence', 'portee', 'zone', 'pose', 'feu', 'corrosion', 'givre']
+export const STATS_GLOBALES: StatDArme[] = ['degats', 'critique', 'critiques', 'cadence', 'portee', 'pose', 'feu', 'corrosion', 'givre']
 export const PART_GLOBALE = 0.5
 const EN_POINTS: ReadonlySet<string> = new Set(['critique', 'dephasage'])
 
@@ -163,6 +166,8 @@ function changer<A>(a: A, cles: ReadonlySet<string>, f: (v: number) => number): 
 // (… ET `eclat`, le rayon de l'effondrement de la Singularité — 22/11 : il restait à sa taille sous les cartes « Zone »)
 const CLES_DE_ZONE: ReadonlySet<string> = new Set(['rayon', 'largeur', 'eclat'])
 const CLES_DE_CADENCE: ReadonlySet<string> = new Set(['cadence', 'tous'])
+/** L'arme a-t-elle une zone (un rayon, une largeur, un éclat) — ce que la carte « Portée » agrandit aussi. */
+export const aUneZone = (a: Arme): boolean => valeurs(a, CLES_DE_ZONE).some((v) => v > 0)
 /** (les branches de ce qu'une arme POSE — tourelles, balises, mines, flaques de napalm, œufs — et leur durée) */
 const POSEES = ['pose', 'balise', 'mine', 'napalm', 'ponte'] as const
 const CLES_DU_FEU: ReadonlySet<string> = new Set(['dpsBrulure'])
@@ -179,8 +184,8 @@ export const corrodeDe = (a: Arme): number[] => [a.crachat?.acide.bonus, a.mine?
 export function statsDeLArme(a: Arme): StatDArme[] {
   const s: StatDArme[] = ['degats', 'critique', 'critiques']
   if (a.cadence > 0 && Number.isFinite(a.cadence)) s.push('cadence')
-  if (a.portee > 0) s.push('portee')
-  if (valeurs(a, CLES_DE_ZONE).some((v) => v > 0)) s.push('zone')
+  // (la portée, ou une zone : son rayon est sa portée)
+  if (a.portee > 0 || aUneZone(a)) s.push('portee')
   if (poseesDe(a).length > 0) s.push('pose')
   if (valeurs(a, CLES_DU_FEU).some((v) => v > 0)) s.push('feu')
   if (corrodeDe(a).length > 0) s.push('corrosion')
@@ -199,10 +204,11 @@ export function armeAmelioree(a: Arme, stat: StatDArme, k: number): Arme {
       return changer(a, CHAMPS_DE_DEGATS, (v) => Math.max(v + 1, Math.round(v * (1 + k))))
     case 'cadence':
       return changer(a, CLES_DE_CADENCE, (v) => v / (1 + k))
-    case 'portee':
-      return { ...a, portee: a.portee * (1 + k), vie: a.vie * (1 + k) }
-    case 'zone':
-      return changer(a, CLES_DE_ZONE, (v) => v * (1 + k))
+    case 'portee': {
+      // (le tir va plus loin — sa portée, la vie de ses projectiles —, et tout ce qui est une zone grandit d'autant)
+      const z = changer(a, CLES_DE_ZONE, (v) => v * (1 + k))
+      return a.portee > 0 ? { ...z, portee: a.portee * (1 + k), vie: a.vie * (1 + k) } : z
+    }
     case 'pose': {
       const r: Record<string, unknown> = { ...a }
       for (const { cle } of poseesDe(a)) r[cle] = { ...(a as unknown as Record<string, object>)[cle], duree: (a as unknown as Record<string, { duree: number }>)[cle].duree * (1 + k) }

@@ -8067,3 +8067,14 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   la part de sa course qui va vers la tempête SE RENVERSE, de rien au seuil (`eviteTempete`) à tout au bord : il glisse
   et repart vers le milieu sans s'arrêter ; dans la tempête, il en est chassé comme avant. Rejoué : trois changements au
   plus (de vrais demi-tours). Un test le garde (quatre au plus).
+- **22/11, LA PORTÉE FAIT AUSSI LA ZONE.** Keko : « on peut pas fusionner la portée et la zone, en considérant que la
+  portée d'une zone est son rayon ? » ; puis, à mon avis donné, « va pour Portée qui fait les deux ». Une seule carte,
+  « Portée » (`StatDArme` n'a plus `zone`) : elle allonge le tir (la portée, la vie des projectiles) ET agrandit tout ce
+  qui est une zone (`CLES_DE_ZONE` : rayons, largeurs, éclat) du même pourcentage ; une arme qui n'a qu'une zone (les
+  traînées) l'a aussi (`aUneZone`). Pourquoi : sur la Tempête, la Nova et l'Intrication, la portée n'était lue nulle part
+  pour frapper — la carte « Portée » ne faisait rien ; la portée seule pesait peu dans un jeu où les ennemis viennent à
+  soi ; et le pool d'une arme perd une carte. Ce qu'on perd : sur les armes qui lancent une explosion (Obusier, Missiles,
+  Grenades, Singularité, Dé, Hypercube…), aller plus loin et exploser plus large ne se choisissent plus séparément. La
+  carte dit « de portée et de zone » (« de zone » pour une arme sans portée) ; `zoneDuVol` (les dessins agrandis) lit
+  les cartes « Portée » des armes à zone et celles de toutes les armes ; `&zone=N` pose N % de portée. VU : la carte
+  « toutes les armes » tient en trois lignes.

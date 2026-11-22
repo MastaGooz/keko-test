@@ -44,7 +44,7 @@ import { RASSEMBLE as TELEPORTE_A } from '../pixelfx/fx/keko/teleportation.js'
 import * as MATERIALISATION from '../pixelfx/fx/keko/materialisation.js'
 import * as QUETE_TERMINEE from '../pixelfx/fx/keko/quete-terminee.js'
 import * as VORTEX_FX from '../pixelfx/fx/keko/vortex.js'
-import { carteSpeciale, armeDeFaction, NIVEAU_SPECIAL, MUTATIONS, mutationsPrises, ajouterLeBonus, apresUnChoix, avecLesBonus, carte, DUREE_DU_CHOIX, type Bonus, ouvrirLeChoix, proposer, RARETES, reserveApresLeDelai, type Choix, type Rarete, type Talent } from '../../logic/vaisseau/talents.ts'
+import { aUneZone, carteSpeciale, armeDeFaction, NIVEAU_SPECIAL, MUTATIONS, mutationsPrises, ajouterLeBonus, apresUnChoix, avecLesBonus, carte, DUREE_DU_CHOIX, type Bonus, ouvrirLeChoix, proposer, RARETES, reserveApresLeDelai, type Choix, type Rarete, type Talent } from '../../logic/vaisseau/talents.ts'
 import { depuisTexte, ordreVuDu, retirerLesPilotes, retirerUnPilote, versTexte, vuDu } from '../../logic/vaisseau/reseau.ts'
 import { compresser, decompresser, ouvrirLeSalon, rejoindreLeSalon, type EtatDeLaLiaison, type Liaison } from './reseau.ts'
 import { APPARAIT as ARRIVE_A, REFROIDI as REFROIDI_A } from '../pixelfx/fx/keko/materialisation.js'
@@ -1141,11 +1141,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       banc = { ...bancDeDepart }
       appliquerLeBanc()
     }
-    // (`&zone=N` : décoller avec N % de zone sur l'arme montée — voir `zoneDuVol` — pour juger ses dessins agrandis d'un lien)
+    // (`&zone=N` : décoller avec N % de portée — elle fait la zone — sur l'arme montée — voir `zoneDuVol` — pour juger ses dessins agrandis d'un lien)
     if (parametres.has('zone') && CONF.armes[0] !== undefined) {
       const a = CONF.armes[0]
       confSansTalents = CONF
-      bonusDuVol = [{ id: `arme-${a.id}:zone`, cible: { sorte: 'arme', arme: a.id }, stat: 'zone', somme: (Number(parametres.get('zone')) || 100) / 100 }]
+      bonusDuVol = [{ id: `arme-${a.id}:portee`, cible: { sorte: 'arme', arme: a.id }, stat: 'portee', somme: (Number(parametres.get('zone')) || 100) / 100 }]
       CONF = avecLesBonus(CONF, bonusDuVol)
     }
     // (`&spe=id,id` : décoller avec ces cartes spéciales déjà prises — une nouvelle arme, `arme-railgun`, une variation,
@@ -1524,7 +1524,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * grandit déjà avec elles ; ce qu'ils posent à taille fixe — flammes, gerbes, lueurs, cristaux, traits, corps — s'y
    * multiplie. Prêtée avec l'écran d'un allié (voir `avecLAutre`). `&zone=N` : N % de zone dès le décollage.
    */
-  const zoneDuVol = (): number => 1 + bonusDuVol.reduce((somme, b) => (b.stat === 'zone' ? somme + b.somme : somme), 0)
+  // (LA PORTÉE FAIT LA ZONE depuis le 22/11 — voir `StatDArme` : les cartes « Portée » d'une arme qui a une zone, et celles
+  // de toutes les armes)
+  const zoneDuVol = (): number => 1 + bonusDuVol.reduce((somme, b) => (b.stat === 'portee' && (b.cible.sorte === 'armes' || (b.cible.sorte === 'arme' && CONF.armes.some((x) => x.id === (b.cible as { arme: string }).arme && aUneZone(x)))) ? somme + b.somme : somme), 0)
   /**
    * L'ÉQUIPAGE, SUR UN MÊME ÉCRAN (`&coop` — Keko, 22/11 : « Tente l'étape 1 », deux vaisseaux dans le même monde avant le
    * réseau) : un second vaisseau, du même modèle et de la même arme que le premier, dans l'apparence suivante ; LA MOITIÉ
@@ -2014,7 +2016,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     critiques: { nom: 'Impact', effet: 'de dégâts critiques' },
     cadence: { nom: 'Cadence', effet: 'de cadence' },
     portee: { nom: 'Portée', effet: 'de portée' },
-    zone: { nom: 'Zone', effet: 'de zone d’effet' },
     pose: { nom: 'Durée', effet: 'de durée' },
     feu: { nom: 'Feu', effet: 'de dégâts du feu' },
     corrosion: { nom: 'Corrosion', effet: 'd’effet corrosif' },
@@ -2194,7 +2195,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // le nom de la stat (en gras s'il tient, sinon en lettre fine)
     const st0 = STATS_DES_CARTES[ta.stat]
     // (le blindage des Xénoïdes, ce sont leurs points de vie — Keko, 21/11)
-    const st = ta.stat === 'blindage' && ta.cible.sorte === 'faction' && ta.cible.race === 'essaim' ? { nom: 'Points de vie', effet: 'de points de vie' } : st0
+    // (la Portée d'une arme qui a une zone la grandit aussi — Keko, 22/11 : la carte le dit ; « toutes les armes », si l'une
+    // des armes portées en a une)
+    // (une arme qui n'a qu'une zone — les traînées — : « de zone » seulement)
+    const visee = ta.cible.sorte === 'arme' ? CONF.armes.find((x) => x.id === (ta.cible as { arme: string }).arme) : undefined
+    const effetDeLaPortee = ta.cible.sorte === 'armes' ? (CONF.armes.some(aUneZone) ? 'de portée et de zone' : null) : visee !== undefined && aUneZone(visee) ? (visee.portee > 0 ? 'de portée et de zone' : 'de zone') : null
+    const st = ta.stat === 'blindage' && ta.cible.sorte === 'faction' && ta.cible.race === 'essaim' ? { nom: 'Points de vie', effet: 'de points de vie' } : ta.stat === 'portee' && effetDeLaPortee !== null ? { nom: 'Portée', effet: effetDeLaPortee } : st0
     let ly = y + 44
     ecrire(p, st.nom, cx, ly, F[4], { align: 'center', police: largeurDe(st.nom, GRAS) <= CW - 12 ? GRAS : TEXTE, ombre: ENCRE })
     // un filet orné : deux traits, un losange au milieu
