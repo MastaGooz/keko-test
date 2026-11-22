@@ -12,7 +12,7 @@
  */
 import './vaisseau.css'
 import * as noyau from 'pixelfx'
-import { ajouterUnPilote, avancerLEquipage, prendreLaMain, type SorteDInsecte, SORTES_D_INSECTES, gabaritDInsecte, gemmesDuButin, butinDeLaRoche, pointDeRetour, rayonDe, rocheDeLaTempete, vieMultipliee, degatsMultiplies, placeDeLEcharde, frontDeLaNova, ancreDansLeMonde, zoneDuDe, coupeDUnCube, formeDeLaCoupe, liesAuDrain, encaisser, type Ennemi, type Evenement, type Monde, impactDuRayon, asteroidesVisibles, avancerLeMonde, finDuTrio, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur, xpDuNiveau, ennemiLePlusProche, ennemiVerrouille, verrouiller, angleDuBalayage } from '../../logic/vaisseau/jeu.ts'
+import { ajouterUnPilote, avancerLEquipage, prendreLaMain, type SorteDInsecte, SORTES_D_INSECTES, gabaritDInsecte, gemmesDuButin, butinDeLaRoche, pointDeRetour, rayonDe, rocheDeLaTempete, vieMultipliee, degatsMultiplies, placeDeLEcharde, frontDeLaNova, ancreDansLeMonde, zoneDuDe, coupeDUnCube, formeDeLaCoupe, liesAuDrain, encaisser, type Ennemi, type Evenement, type Monde, impactDuRayon, asteroidesVisibles, avancerLeMonde, finDuTrio, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur, xpDuNiveau, ennemiLePlusProche, ennemiVerrouille, verrouiller, angleDuBalayage, aPlusieurs, alliesAuRetour } from '../../logic/vaisseau/jeu.ts'
 import { ETALONS as ETALONS_DU_BANC, acheter, ajouterLesPiecesDEssai, capacite, poidsTotal, POIDS_SERIE, configDuHangar, demonter, demonterA, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, montantCourt, monteeA, monter, monterA, peutAcheter, peutMonter, perdreLesMontees, estDeBase, exemplaires, libres, pieceDe, piecesDe, placeLourde, possede, aimantMonte, radarMonte, type Jauge, type Piece, type Sorte } from '../../logic/vaisseau/hangar.ts'
 import { drawWord, spell } from 'pixelfx/fx/ui/_lib'
 import { firePuff, hotFirst, smokePuff } from 'pixelfx/fx/fire/_lib'
@@ -1500,7 +1500,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * leur apparence ; leurs choix de talent (`aFaire`, `reserve` à l'écran partagé ; `choix`, à distance, chez l'hôte) ;
    * chez l'hôte, leur dernier manche ; `k`, leur place dans l'équipage DE L'HÔTE.
    */
-  type MancheDistant = { n: number; d: Vecteur; v: { x: number; y: number; vx: number; vy: number; cap: number; poussee: number } | null; a: number }
+  type MancheDistant = { n: number; d: Vecteur; v: { x: number; y: number; vx: number; vy: number; cap: number; poussee: number } | null; a: number; /** Son verrou (voir `dessinerLeVerrou`). */ l?: number | null }
   type Autre = { id: string; pseudo: string; ecran: EcranDuPilote; peau: string; modele: string; arme: string; aFaire: number; reserve: number; choix: Choix | null; manche: MancheDistant | null; k: number }
   let autres: Autre[] = []
   /** L'autre dont l'écran est prêté (voir `avecLAutre`), ou null. */
@@ -1604,7 +1604,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (neuf) p.glow(bx + bw / 2, y + 3, bw * 0.6, XP[2], 0.5 * (1 - (t - niveauA) / 0.8))
   }
   /** LA MÊME, DEBOUT, dans le bandeau de gauche : le niveau en haut, centré sur `axe`, puis la barre qui descend — elle se remplit par le bas, comme le blindage d'en face. */
-  function dessinerLExperienceDebout(p: Peintre, axe: number, y: number, G = 1): void {
+  function dessinerLExperienceDebout(p: Peintre, axe: number, y: number, G = 1): number {
     const inv = m.invasion
     const neuf = t - niveauA < 0.8
     const lw = 8
@@ -1631,6 +1631,44 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.glow(axe, by + bh - plein, 6, XP[2], allume ? 0.8 : 0.3)
     }
     if (neuf) p.glow(axe, by + bh / 2, bh * 0.6, XP[2], 0.5 * (1 - (t - niveauA) / 0.8))
+    return by + bh + 1
+  }
+  /**
+   * LES VIES (Keko, 22/11 : « sous la barre d'XP, à gauche de l'écran, un chiffre doré, un peu comme le chiffre du
+   * compteur de résurrection, et un petit symbole qui évoque un petit vaisseau doré » — voir `invasion.vies`) : le
+   * vaisseau d'or, le chiffre frappé d'or dessous (`debout`, dans le bandeau) ou à sa droite ; une vie prise, ils
+   * blanchissent et tremblent.
+   */
+  const VAISSEAU_DES_VIES = ['...a...', '..aba..', '..aba..', '.aaaaa.', 'aaaaaaa', 'aa.a.aa', 'a.....a']
+  let viesVues = -1
+  let vieRepriseA = -10
+  function dessinerLesVies(p: Peintre, cx: number, y: number, G: number, debout: boolean): void {
+    if (CONF.invasion.vies <= 0) return
+    const n = m.invasion.vies
+    if (viesVues >= 0 && n < viesVues) vieRepriseA = t
+    viesVues = n
+    const u = t - vieRepriseA
+    const blanc = u < 0.12
+    const tremble = u < 0.5 ? Math.round(Math.sin(u * 60) * 2 * G * (1 - u / 0.5)) : 0
+    const dit = String(n)
+    const wi = 7 * G
+    const wn = largeurDe(dit, GRAS) * G
+    const x0 = Math.round(debout ? cx - wi / 2 : cx) + tremble
+    // (le vaisseau : son contour d'abord, d'un pixel autour, puis l'or — clair en haut, foncé en bas)
+    for (const [ox, oy] of [[-1, 0], [1, 0], [0, -1], [0, 1]])
+      VAISSEAU_DES_VIES.forEach((rang, j) => [...rang].forEach((c, i) => c !== '.' && p.rect(x0 + (i + ox) * G, y + (j + oy) * G, G, G, N.hex('#1e0e03'))))
+    VAISSEAU_DES_VIES.forEach((rang, j) =>
+      [...rang].forEach((c, i) => {
+        if (c === '.') return
+        const teinte = blanc ? N.WHITE : c === 'b' ? PEPITE[4] : j <= 2 ? PEPITE[3] : j <= 4 ? PEPITE[2] : N.hex('#a8650f')
+        p.rect(x0 + i * G, y + j * G, G, G, teinte)
+      }),
+    )
+    p.glow(x0 + wi / 2, y + 3.5 * G, 7 * G, PEPITE[2], blanc ? 0.7 : 0.18)
+    // (le chiffre, frappé comme celui du retour)
+    const nx = debout ? cx + tremble : x0 + wi + 3 * G + wn / 2
+    const ny = debout ? y + 7 * G + 8 * G : y + 3.5 * G
+    motFrappe(p, dit, nx, ny, G, blanc ? 1 : 0)
   }
   /**
    * LE COMPTE DU RETOUR (Keko, 14/11 : « quand je meurs, à la place de mettre fin à la partie, utilise le compte à
@@ -1854,10 +1892,20 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       }
       p.arc(sx, sy, R + 2, 1, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * fait, PEPITE[3])
     }
-    const ub = Math.ceil(reste) - reste
+    // (À PLUSIEURS, LE COMPTE EST RETENU tant qu'aucun allié n'est dans le cercle, et pour de bon sans vie — voir
+    // `invasion.vies` : il ne frappe plus, et le dit sous lui)
+    const plusDeVie = CONF.invasion.vies > 0 && m.invasion.vies <= 0
+    const retenu = CONF.invasion.vies > 0 && aPlusieurs(m) && (plusDeVie || alliesAuRetour(CONF, m) === 0)
+    if (plusDeVie && aPlusieurs(m)) {
+      motEnRelief(p, 'Plus de vie', sx, sy - 6, true, GRAS)
+      return
+    }
+    const ub = retenu ? 0.5 : Math.ceil(reste) - reste
     const tremble = ub < 0.22 ? 3 * (1 - ub / 0.22) : 0
     p.glow(sx, sy, 30, PEPITE[2], 0.25 + (ub < 0.12 ? 0.6 * (1 - ub / 0.12) : 0))
     motFrappe(p, String(Math.max(1, Math.ceil(reste))), sx + Math.round(Math.sin(t * 90) * tremble), sy - 6 + Math.round(Math.cos(t * 77) * tremble), 2 + 1.1 * Math.exp(-ub * 26) * Math.cos(ub * 38), ub < 0.035 ? 1 : ub < 0.07 ? 0.4 : 0)
+    // (chez soi : ce qu'on attend)
+    if (retenu && !dessinDuSecond) ecrire(p, 'En attente d’un allié', sx, sy + 12, PEPITE[3], { align: 'center', police: GRAS, contour: N.hex('#1e0e03') })
   }
   /**
    * LE CHOIX D'UN TALENT (Keko, 14/11 : « à chaque fois que la barre est remplie à 100 %, on met le jeu en pause pour
@@ -2336,7 +2384,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (typeof d !== 'string') return
     const a = autres.find((x) => x.id === de)
     if (a === undefined) return
-    const o = JSON.parse(d) as { n: number; d: Vecteur; v: MancheDistant['v'] }
+    const o = JSON.parse(d) as { n: number; d: Vecteur; v: MancheDistant['v']; l?: number | null }
     if (a.manche !== null && o.n <= a.manche.n) return
     a.manche = { ...o, a: performance.now() }
   }
@@ -2421,7 +2469,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const predit = distant.recu && m.phase === 'vol' && W2.phase === 'vol' ? m.vaisseau : null
     const tLocal = m.t
     W2.refuses = m.refuses
+    // (SON VERROU : le sien, pas celui que l'hôte a vu — son message le lui porte, l'état revient sans lui le temps du
+    // trajet ; la cible grise qui s'effaçait au bout d'un instant, Keko, 22/11)
+    const monVerrou = m.verrou
     m = W2
+    m.verrou = monVerrou !== null && m.ennemis.some((e) => e.id === monVerrou) ? monVerrou : null
     distant.recu = true
     if (predit !== null && !s.fige) {
       const k = Math.max(0, Math.min(12, Math.round((tLocal - m.t) / PAS)))
@@ -2977,8 +3029,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // PLUS DE PORTAIL, PLUS DE POUR CENT (Keko, 20/11 : « supprime les pourcentages de vie du portail de l'interface, et
     // agrandis vers le haut la barre d'XP ») : le niveau et sa barre prennent la place de l'icône et de sa vie
     if (CONF.invasion.sansPortail) {
-      if (enBande) dessinerLExperienceDebout(p, enLigne ? cx : axe, enLigne ? 8 : 6, G)
-      else dessinerLExperience(p, x0, y, droite - x0)
+      if (enBande) {
+        const bas = dessinerLExperienceDebout(p, enLigne ? cx : axe, enLigne ? 8 : 6, G)
+        dessinerLesVies(p, enLigne ? cx : axe, bas + 6 * G, G, true)
+      } else {
+        dessinerLExperience(p, x0, y, droite - x0)
+        dessinerLesVies(p, x0, y + 12, 1, false)
+      }
       dessinerLeRetour(p)
       return
     }
@@ -3361,11 +3418,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     p.rect(0, 0, W, H, NUIT, 0.78 * u0)
     zones = []
     const cy = Math.round(H / 2)
-    motEnRelief(p, 'Portail perdu', W / 2, cy - 30 + Math.round((1 - u0) * 8), true, TITRE)
-    ecrire(p, `Vague ${Math.max(1, m.invasion.vague)} / Niveau ${m.invasion.niveau}`, W / 2, cy - 8, COQUE[6], { align: 'center', police: GRAS })
+    // (SANS PORTAIL, LES VIES ÉPUISÉES, ou tous abattus à la fois — voir `invasion.vies`)
+    motEnRelief(p, CONF.invasion.sansPortail ? 'Partie terminée' : 'Portail perdu', W / 2, cy - 30 + Math.round((1 - u0) * 8), true, TITRE)
+    ecrire(p, CONF.invasion.sansPortail ? `Niveau ${m.invasion.niveau}` : `Vague ${Math.max(1, m.invasion.vague)} / Niveau ${m.invasion.niveau}`, W / 2, cy - 8, COQUE[6], { align: 'center', police: GRAS })
+    // (à distance, pas de « Rejouer » : on rentre ensemble au hangar, et on repart de là)
+    const ensemble = estHote || estInvite
     if (t - finA > 0.8) {
       const bw = largeurDe('Rejouer', GRAS) + 30
-      bouton(p, Math.round(W / 2 - bw / 2), cy + 10, bw, 17, 'Rejouer', true, () => {
+      if (!ensemble) bouton(p, Math.round(W / 2 - bw / 2), cy + 10, bw, 17, 'Rejouer', true, () => {
         choixDeTalent = null
         reserveDeTalents = 0
         taches = []
@@ -3374,7 +3434,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       }, 'achat')
       // (… ou retour au hangar)
       const bh = largeurDe('Hangar', GRAS) + 30
-      bouton(p, Math.round(W / 2 - bh / 2), cy + 32, bh, 17, 'Hangar', true, () => {
+      bouton(p, Math.round(W / 2 - bh / 2), ensemble ? cy + 10 : cy + 32, bh, 17, 'Hangar', true, () => {
         choixDeTalent = null
         reserveDeTalents = 0
         taches = []
@@ -16832,7 +16892,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
             autres.forEach((a, j) => {
               const pj = m.equipage!.pilotes[j + 1]
               const md = a.manche
-              if (md === null || md.v === null || pj === undefined || pj.phase !== 'vol') return
+              if (md === null || pj === undefined) return
+              // (SON VERROU EST LE SIEN — Keko, 22/11 : « chaque joueur peut avoir sa propre cible » : posé chez lui, il
+              // vaut ici pour ses armes ; il ne se dessine que chez lui)
+              pj.verrou = md.l ?? null
+              if (md.v === null || pj.phase !== 'vol') return
               const age = Math.min(0.25, (performance.now() - md.a) / 1000)
               pj.vaisseau = { ...pj.vaisseau, x: md.v.x + md.v.vx * age, y: md.v.y + md.v.vy * age, vx: md.v.vx, vy: md.v.vy, cap: md.v.cap, poussee: md.v.poussee }
             })
@@ -17059,7 +17123,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (estInvite && enJeu && distant.recu && tReel - envoyeA >= 1 / 30) {
       envoyeA = tReel
       const dir = t - arriveA < ARRIVE_A ? { x: 0, y: 0 } : directionVoulue()
-      liaison?.envoyerVite(JSON.stringify({ n: ++envois, d: dir, v: m.phase === 'vol' ? { x: v.x, y: v.y, vx: v.vx, vy: v.vy, cap: v.cap, poussee: v.poussee } : null }))
+      liaison?.envoyerVite(JSON.stringify({ n: ++envois, d: dir, v: m.phase === 'vol' ? { x: v.x, y: v.y, vx: v.vx, vy: v.vy, cap: v.cap, poussee: v.poussee } : null, l: m.verrou }))
     }
     // LA CAMÉRA REGARDE DEVANT (Keko, 12/11 : « quand le vaisseau avance dans une direction, avancer la caméra vers
     // l'avant pour voir plus loin devant — souvent je me prends des astéroïdes parce que je n'ai pas une portée de vue

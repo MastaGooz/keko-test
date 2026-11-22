@@ -267,6 +267,16 @@ export const VAISSEAU = {
      */
     // (`vitesse` : celle de la zone que le manche déplace pendant le compte — la moitié de la pointe d'un vaisseau ; de moi)
     retour: { rayon: 110, invincible: 2, marge: 60, vitesse: 55 },
+    /**
+     * LES VIES (Keko, 22/11 : « on a 5 vies au départ d'une partie, et à chaque fois qu'on est ressuscité, on consomme une
+     * vie ; quand toutes les vies ont été épuisées, c'est game over ») : COMMUNES À L'ÉQUIPAGE (Keko) — chaque retour, de
+     * qui que ce soit, en prend une. Seul, abattu sans vie, la partie est finie. À PLUSIEURS, LE RETOUR N'EST PLUS
+     * AUTOMATIQUE (Keko : « il faut qu'un autre joueur se trouve dans le cercle doré du joueur qui est mort pour lancer le
+     * compteur des 10 secondes ; à chaque fois qu'un allié ressort du cercle, le compteur bloque et s'arrête ») : le compte
+     * n'avance que tant qu'un allié en vol est dans le cercle (`retour.rayon`, voir `alliesAuRetour`) ; sans vie, il
+     * n'avance plus. Tous abattus à la fois, la partie est finie, qu'il reste des vies ou non (Keko). 0 : sans limite.
+     */
+    vies: 5,
     /** La part de leur poussée avec laquelle les insectes errent, le joueur abattu (voir `conduireLInsecte`). *De moi.* */
     errance: 0.45,
     /**
@@ -1146,7 +1156,7 @@ export type Monde = {
   /** La prochaine roche qui dérive (voir `derive`). */
   prochaineDeriveA: number
   /** L'invasion : la vague en cours, ce qu'il lui reste à faire naître, l'instant de la prochaine naissance, ceux qui ont traversé le portail, ceux qu'on a abattus. */
-  invasion: { vague: number; aNaitre: number; prochainA: number; passes: number; abattus: number; /** L'expérience du niveau en cours, le niveau (1 au départ), l'instant du retour d'un joueur abattu. */ xp: number; niveau: number; retourA: number; /** La vie du portail, en pour cent ; à zéro, la partie est finie. */ vie: number; finie: boolean; /** Les cadrans d'où vient la vague en cours (0 : est-sud, puis en tournant), et combien de ses insectes sont nés. */ cadrans: number[]; nes: number }
+  invasion: { vague: number; aNaitre: number; prochainA: number; passes: number; abattus: number; /** L'expérience du niveau en cours, le niveau (1 au départ), l'instant du retour d'un joueur abattu. */ xp: number; niveau: number; retourA: number; /** La vie du portail, en pour cent ; à zéro, la partie est finie. */ vie: number; /** Les vies de l'équipage (voir `invasion.vies`). */ vies: number; finie: boolean; /** Les cadrans d'où vient la vague en cours (0 : est-sud, puis en tournant), et combien de ses insectes sont nés. */ cadrans: number[]; nes: number }
   tirs: Tir[]
   /** Les obus du joueur, et l'instant où chaque arme montée peut tirer à nouveau. */
   obus: Obus[]
@@ -1438,7 +1448,7 @@ export function nouveauVaisseau(): Vaisseau {
 }
 
 export function nouveauMonde(c: ConfigVaisseau = VAISSEAU, graine = 1): Monde {
-  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, plaques: Array.from({ length: c.plaques }, () => true), intouchableJusque: -1, corruption: 0, dephaseJusque: -100, plaqueCasseeA: 0, renaitJusque: -100, rochesPrises: [], toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, prochaineDeriveA: c.derive.premier, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, scies: [], balises: [], givres: [], tornades: [], novas: [], echardes: [], spheres: [], puits: [], meteores: [], tentacules: [], nuees: [], rejetons: [], flaquesAcides: [], mines: [], fleaux: [], parasites: [], vrilles: [], liens: [], oeufs: [], brochettes: [], miniVers: [], hypercubes: [], des: [], coupes: [], rayonVu: null }
+  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, plaques: Array.from({ length: c.plaques }, () => true), intouchableJusque: -1, corruption: 0, dephaseJusque: -100, plaqueCasseeA: 0, renaitJusque: -100, rochesPrises: [], toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, prochaineDeriveA: c.derive.premier, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, vies: c.invasion.vies, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, scies: [], balises: [], givres: [], tornades: [], novas: [], echardes: [], spheres: [], puits: [], meteores: [], tentacules: [], nuees: [], rejetons: [], flaquesAcides: [], mines: [], fleaux: [], parasites: [], vrilles: [], liens: [], oeufs: [], brochettes: [], miniVers: [], hypercubes: [], des: [], coupes: [], rayonVu: null }
 }
 
 /** Un hachage entier déterministe (celui de pixelfx), et un réel dans [0, 1) qui en sort. */
@@ -5131,6 +5141,13 @@ export const xpDuNiveau = (c: ConfigVaisseau, n: number): number => c.invasion.x
  */
 function avancerSansLeJoueur(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[], direction: Vecteur = { x: 0, y: 0 }, seul = false): void {
   // (`seul` : le tour d'un pilote de l'équipage — le monde commun a déjà avancé, voir `avancerLEquipage`)
+  // LA PARTIE EST FINIE (voir `invasion.vies`) : seul, abattu sans vie ; à plusieurs, au tour du premier — c'est que
+  // personne ne vole plus (voir `avancerLEquipage`)
+  if (!seul && c.invasion.vies > 0 && (aPlusieurs(m) || m.invasion.vies <= 0)) {
+    m.invasion.finie = true
+    ev.push({ type: 'fin', vague: m.invasion.vague })
+    return
+  }
   if (!seul) {
     m.t += dt
     menerLInvasion(c, m, ev)
@@ -5160,7 +5177,10 @@ function avancerSansLeJoueur(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenem
     const pas = Math.min(d, 400 * dt)
     m.vaisseau = { ...b, x: d > 0 ? b.x + ((o.x - b.x) / d) * pas : b.x, y: d > 0 ? b.y + ((o.y - b.y) / d) * pas : b.y, vx: 0, vy: 0 }
   }
+  // (À PLUSIEURS, LE COMPTE NE COURT QUE SOUS UN ALLIÉ, et jamais sans vie : il est retenu — voir `invasion.vies`)
+  if (I.vies > 0 && aPlusieurs(m) && (m.invasion.vies <= 0 || alliesAuRetour(c, m) === 0)) m.invasion.retourA += dt
   if (m.t < m.invasion.retourA) return
+  if (I.vies > 0) m.invasion.vies = Math.max(0, m.invasion.vies - 1)
   if (I.sansPortail) {
     // IL REVIENT LÀ OÙ IL EST TOMBÉ, dans une explosion de lumière qui abat ce qui l'entoure
     const o = pointDeRetour(c, m)
@@ -5783,6 +5803,17 @@ export function vaisseauxEnVol(m: Monde): { k: number; v: Vaisseau }[] {
     const phase = k === eq.actif ? m.phase : p.phase
     return phase === 'vol' ? [{ k, v: k === eq.actif ? m.vaisseau : p.vaisseau }] : []
   })
+}
+
+/** À plusieurs : plus d'un pilote dans l'équipage. */
+export const aPlusieurs = (m: Monde): boolean => m.equipage !== undefined && m.equipage.pilotes.length > 1
+
+/** Combien d'AUTRES pilotes en vol sont dans le cercle du retour de celui dont c'est le tour (voir `invasion.vies`). */
+export function alliesAuRetour(c: ConfigVaisseau, m: Monde): number {
+  const eq = m.equipage
+  if (eq === undefined) return 0
+  const o = pointDeRetour(c, m)
+  return vaisseauxEnVol(m).filter((x) => x.k !== eq.actif && Math.hypot(x.v.x - o.x, x.v.y - o.y) <= c.invasion.retour.rayon).length
 }
 
 /** LE MILIEU DE L'ÉQUIPAGE : celui des vaisseaux en vol — personne : le vaisseau dont c'est le tour (seul : le sien). */

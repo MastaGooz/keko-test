@@ -3567,12 +3567,12 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   const w5 = deux()
   pas(w5, 60 * 5, { x: -1, y: 0 }, { x: 1, y: 0 })
   const d5 = Math.hypot(etatDuPilote(w5, 1).vaisseau.x - w5.vaisseau.x, etatDuPilote(w5, 1).vaisseau.y - w5.vaisseau.y)
-  // (le second abattu : il revient après sa pénalité, là où il est tombé ; le premier vole pendant ce temps)
+  // (le second abattu : il revient après sa pénalité, là où il est tombé, le premier dans son cercle — voir `invasion.vies`)
   const w6 = deux()
   w6.equipage!.pilotes[1].morsures.push({ x: 100, y: 0, degats: 1e6 })
   const evs6: string[] = []
-  for (let i = 0; i < 60 * (cfg.invasion.penalite + 1); i++) for (const e of avancerLEquipage([cfg, cfg], w6, 1 / 60, [{ x: 1, y: 0 }, { x: 0, y: 0 }]).evenements[1]) if (e.type === 'perdu' || e.type === 'retour') evs6.push(e.type)
-  verifier(`le second abattu revient après ${cfg.invasion.penalite} s (${evs6.join(', ')}) ; le premier a volé pendant ce temps (${Math.round(w6.vaisseau.x)})`, evs6.join() === 'perdu,retour' && etatDuPilote(w6, 1).phase === 'vol' && w6.phase === 'vol' && w6.vaisseau.x > 100)
+  for (let i = 0; i < 60 * (cfg.invasion.penalite + 1); i++) for (const e of avancerLEquipage([cfg, cfg], w6, 1 / 60, [{ x: 0, y: 0 }, { x: 0, y: 0 }]).evenements[1]) if (e.type === 'perdu' || e.type === 'retour') evs6.push(e.type)
+  verifier(`le second abattu revient après ${cfg.invasion.penalite} s, le premier dans son cercle (${evs6.join(', ')}) ; une vie prise (${w6.invasion.vies} / ${cfg.invasion.vies})`, evs6.join() === 'perdu,retour' && etatDuPilote(w6, 1).phase === 'vol' && w6.phase === 'vol' && w6.invasion.vies === cfg.invasion.vies - 1)
   verifier(`la laisse : tirés à l’opposé cinq secondes, ils restent à ${Math.round(d5)} l’un de l’autre (laisse ${cfg.equipage.laisse})`, d5 <= cfg.equipage.laisse + 6 && d5 > cfg.equipage.laisse - 20)
 }
 
@@ -3633,6 +3633,71 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   const d = Math.hypot(b.x - w.vaisseau.x, b.y - w.vaisseau.y)
   const pres = (v: { x: number; y: number }): number => w.ennemis.filter((e) => Math.hypot(e.corps.x - v.x, e.corps.y - v.y) < 500).length
   verifier(`sans laisse, tirés à l’opposé huit secondes, ils sont à ${Math.round(d)} l’un de l’autre ; des insectes autour de chacun (${pres(w.vaisseau)} et ${pres(b)})`, d > 600 && pres(w.vaisseau) > 3 && pres(b) > 3)
+}
+
+// LES VIES (Keko, 22/11 : « 5 vies au départ ; à chaque résurrection, on en consomme une ; épuisées, c'est game over » ;
+// à plusieurs, « il faut qu'un allié passe 10 secondes dans le cercle pour ressusciter son allié »)
+{
+  const cfg: ConfigVaisseau = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9 }, derive: { ...VAISSEAU.derive, active: false }, armes: [] }
+  const abattre = (w: ReturnType<typeof nouveauMonde>): void => {
+    w.coque = 0
+    w.phase = 'perdu'
+    w.invasion.retourA = w.t + cfg.invasion.penalite
+  }
+  // (seul : le retour prend une vie ; sans vie, abattu, c'est la fin)
+  const w = nouveauMonde(cfg, 3)
+  w.invasion.prochainA = 1e9
+  abattre(w)
+  for (let i = 0; i < 60 * (cfg.invasion.penalite + 0.5); i++) avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+  const apres1 = w.invasion.vies
+  w.invasion.vies = 0
+  abattre(w)
+  const evs: string[] = []
+  for (let i = 0; i < 60; i++) for (const e of avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements) evs.push(e.type)
+  verifier(`seul : ${cfg.invasion.vies} vies au départ, un retour en prend une (${apres1}) ; abattu sans vie, la partie est finie (${evs.join(', ')})`, cfg.invasion.vies === 5 && apres1 === 4 && w.phase === 'perdu' && w.invasion.finie && evs.join() === 'fin')
+  // (à deux : le second abattu à 300 du premier ne revient pas ; le premier dans son cercle cinq secondes, puis dehors
+  // cinq secondes, puis dedans : le compte s'est arrêté dehors et reprend où il était)
+  const q = nouveauMonde(cfg, 4)
+  q.invasion.prochainA = 1e9
+  ajouterUnPilote(cfg, q, 300, 0)
+  q.equipage!.pilotes[1].morsures.push({ x: 300, y: 0, degats: 1e6 })
+  const pas = (n: number, d0: { x: number; y: number }): void => {
+    for (let i = 0; i < n; i++) avancerLEquipage([cfg, cfg], q, 1 / 60, [d0, { x: 0, y: 0 }], undefined, false)
+  }
+  pas(60 * 12, { x: 0, y: 0 })
+  const seul12 = etatDuPilote(q, 1).phase
+  const reste = (): number => etatDuPilote(q, 1).retourA - q.t
+  const avant = reste()
+  // (le premier posé dans le cercle — sans élan, au point de retour)
+  const o = etatDuPilote(q, 1).vaisseau
+  q.vaisseau = { ...q.vaisseau, x: o.x - 40, y: o.y, vx: 0, vy: 0 }
+  pas(60 * 5, { x: 0, y: 0 })
+  const dedans5 = reste()
+  q.vaisseau = { ...q.vaisseau, x: o.x - 600, y: o.y, vx: 0, vy: 0 }
+  pas(60 * 5, { x: 0, y: 0 })
+  const dehors5 = reste()
+  q.vaisseau = { ...q.vaisseau, x: o.x - 40, y: o.y, vx: 0, vy: 0 }
+  pas(60 * 5.5, { x: 0, y: 0 })
+  verifier(`à deux, seul dans son cercle rien ne court (${seul12}, ${avant.toFixed(1)} s) ; un allié dedans 5 s : ${dedans5.toFixed(1)} s ; dehors 5 s, le compte tient : ${dehors5.toFixed(1)} s ; dedans encore, il revient (${etatDuPilote(q, 1).phase}, ${q.invasion.vies} vies)`, seul12 === 'perdu' && Math.abs(avant - cfg.invasion.penalite) < 0.05 && Math.abs(dedans5 - 5) < 0.1 && Math.abs(dehors5 - 5) < 0.1 && etatDuPilote(q, 1).phase === 'vol' && q.invasion.vies === cfg.invasion.vies - 1)
+  // (sans vie, l'allié a beau être dedans : il ne revient pas ; puis le premier abattu aussi : la partie est finie)
+  q.invasion.vies = 0
+  q.equipage!.pilotes[1].intouchableJusque = -1
+  q.equipage!.pilotes[1].renaitJusque = -100
+  q.equipage!.pilotes[1].morsures.push({ x: o.x, y: o.y, degats: 1e6 })
+  pas(60 * 12, { x: 0, y: 0 })
+  const sansVie = etatDuPilote(q, 1).phase
+  abattre(q)
+  const fins: string[] = []
+  for (let i = 0; i < 30; i++) for (const e of avancerLEquipage([cfg, cfg], q, 1 / 60, [{ x: 0, y: 0 }, { x: 0, y: 0 }], undefined, false).evenements.flat()) if (e.type === 'fin') fins.push(e.type)
+  verifier(`à deux sans vie, l’allié dans le cercle ne relève personne (${sansVie}) ; tous abattus, la partie est finie (${fins.length} fin)`, sansVie === 'perdu' && q.invasion.finie && fins.length === 1)
+  // (tous abattus avec des vies : la fin aussi — Keko)
+  const r = nouveauMonde(cfg, 6)
+  r.invasion.prochainA = 1e9
+  ajouterUnPilote(cfg, r, 50, 0)
+  r.equipage!.pilotes[1].morsures.push({ x: 50, y: 0, degats: 1e6 })
+  abattre(r)
+  for (let i = 0; i < 30; i++) avancerLEquipage([cfg, cfg], r, 1 / 60, [{ x: 0, y: 0 }, { x: 0, y: 0 }], undefined, false)
+  verifier(`à deux, tous abattus avec ${r.invasion.vies} vies : la partie est finie`, r.invasion.finie && r.invasion.vies === cfg.invasion.vies)
 }
 
 // (TOUJOURS EN DERNIER : des blocs ajoutés après cette ligne échouaient sans faire échouer `npm run verif` — 17/11)

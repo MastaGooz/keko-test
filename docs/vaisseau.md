@@ -7735,3 +7735,24 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   les 30 s, la partie reprend chez les deux sans rien proposer à l'hôte.
   - Et, vu en relisant : LA SAUVEGARDE PENDANT LE PRÊT D'ÉCRAN À UN ALLIÉ (`avecLAutre`) gardait son modèle et son hangar
     à la place des siens ; elle attend maintenant la fin du prêt.
+- **22/11, CHACUN SON VERROU ; LES VIES ; À PLUSIEURS, ON SE RELÈVE ENSEMBLE.** Keko : « quand le deuxième joueur est
+  sur PC, je ne peux pas verrouiller un astéroïde ou un ennemi : ça crée une cible grise une petite seconde et elle
+  disparaît ; chaque joueur doit avoir sa propre cible, et la cible des autres est invisible » ; « on rajoute un système
+  de vie : sous la barre d'XP, un chiffre doré, comme celui du compteur de résurrection, et un petit vaisseau doré ; 5
+  vies au départ, chaque résurrection en consomme une, épuisées c'est game over ; en multijoueur, la résurrection n'est
+  pas automatique : il faut qu'un allié soit dans le cercle doré du joueur mort pour lancer le compteur des 10 secondes ;
+  s'il ressort, le compteur bloque et s'arrête ; sans vie, l'allié ne peut plus être ressuscité ».
+  - LE VERROU : chaque pilote avait déjà le sien dans la règle (`CHAMPS_DU_PILOTE`) ; la page de l'invité le posait,
+    puis l'état suivant de l'hôte, qui ne le connaissait pas, l'effaçait. L'invité l'envoie avec son manche (`l`),
+    l'hôte le pose sur son pilote (ses armes le visent), l'invité garde le sien en lisant l'état. On ne dessine que le
+    sien (`dessinerLeVerrou` lit le pilote dans le monde). Pas vu en vrai à deux pages : viser un insecte d'un lien sans
+    tête n'a pas abouti ; à faire juger par Keko.
+  - LES VIES, tranchées par Keko : COMMUNES À L'ÉQUIPAGE ; LA FIN quand tous sont abattus à la fois, qu'il reste des vies
+    ou non. Règle (`invasion.vies`, 5 ; `Monde.invasion.vies`) : un retour en prend une ; seul, abattu sans vie, la
+    partie est finie ; à plusieurs, le compte ne court que si un allié en vol est dans le cercle (`alliesAuRetour`,
+    `retour.rayon`) — sinon il est RETENU, il reprend où il était —, et jamais sans vie. Vérifié (`npm run verif`) :
+    5 s dedans → 5 s restantes, 5 s dehors → toujours 5, dedans → retour, une vie de moins ; tous abattus → la fin.
+  - À L'ÉCRAN : le petit vaisseau d'or et le chiffre frappé comme le compte du retour (`dessinerLesVies`), sous la barre
+    d'XP debout, à droite du vaisseau sous la barre couchée ; une vie prise, ils blanchissent et tremblent. Le compte
+    retenu ne frappe plus, et dit « En attente d'un allié » chez le mort ; sans vie, « Plus de vie » à la place du
+    chiffre. L'écran de fin dit « Partie terminée » et le niveau ; à distance, seulement « Hangar » (on rentre ensemble).
