@@ -7890,3 +7890,30 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   (le toast « Mission réussie — Nettoyage » paraissait encore). `compter` ne fait plus rien au vortex : ni contrat, ni
   mission de vaisseau, ni toast ; l'état gardé ne bouge plus. (Une mission finie ne payait qu'en la réclamant dans
   l'onglet masqué : rien n'a pu être gagné.)
+- **22/11, LES CARTES SPÉCIALES (prototype : le Chasseur).** Keko : « un nouveau type de carte d'amélioration, d'une
+  nouvelle couleur — je te laisse choisir —, qui concerne une réelle modification de gameplay : une modification
+  fondamentale du fonctionnement de l'arme en cours, voire un rajout d'effets ou de tirs ; dans les survivors, tu
+  accumules plusieurs armes, c'est ce qui en fait l'intérêt ; pour l'instant on n'a qu'une seule arme, c'est notre plus
+  gros défaut ». Tranché : TOUS LES 5 NIVEAUX, des armes DÉRIVÉES DE L'ARME DE DÉPART, un PROTOTYPE SUR LE CHASSEUR.
+  - LA RÈGLE (`MUTATIONS`, `SPECIALE_TOUS`, `proposer` dans `talents.ts`) : au premier choix d'un niveau, s'il est dû une
+    spéciale (une par 5 niveaux) et qu'il en reste à l'arme montée, trois spéciales ; manquée (le délai), elle revient au
+    choix suivant ; chacune une fois. DEUX SORTES : L'ARSENAL AJOUTE UNE ARME de la même famille — son nom, ses dessins,
+    et SES CARTES (une carte « Dégâts » du laser grandit aussi la tourelle laser) — ; L'ÉVOLUTION CHANGE L'ARME (toutes
+    celles de son nom). Une carte prise est un bonus `mutation` : `avecLesBonus` la rejoue dans l'ordre.
+  - LES DOUZE CARTES (chiffres de moi, à rejuger) :
+    - CANON LASER : Tourelle laser (Arsenal, tire tout autour, 60 % des dégâts) ; Drones laser (Arsenal, deux drones en
+      orbite) ; Laser perforant (Évolution, traverse toute la ligne) ; Ricochet (Évolution, rebondit sur deux autres
+      ennemis à 70 %).
+    - MITRAILLEUSE : Canons jumelés (Évolution, deux balles par tir à 70 %) ; Tourelle de queue (Arsenal, tout autour) ;
+      Balles incendiaires (Évolution, brûlent 3 s) ; Drones mitrailleurs (Arsenal).
+    - MISSILES : Salve (Évolution, trois missiles en éventail à 60 %) ; Fragmentation (Évolution, six éclats brûlants par
+      explosion) ; Lance-missiles (Arsenal, tout autour) ; Drones lance-missiles (Arsenal).
+  - CE QUE LA RÈGLE A GAGNÉ (`Arme`) : `ajoutee` (une arme ajoutée ne tire pas à tour de rôle avec les ailes),
+    `tousSens` (elle tire tout autour, pas seulement devant le nez), `gerbe`, `perforant` (un tir infaillible lâche sa
+    cible une fois dessus et file droit), `ricochet` (il ne retouche jamais un ennemi déjà touché), `incendiaire`,
+    `fragments` ; les tirs des drones emportent les effets de leur arme (`effetsDuTir`). Vérifié (`npm run verif`).
+  - LA CARTE : PRISMATIQUE (`tonsPrismatiques`) — sa teinte tourne dans l'arc-en-ciel, décalée d'une carte à l'autre, et
+    son cadre et l'anneau de son médaillon portent TOUT L'ARC-EN-CIEL À LA FOIS (d'une seule teinte, on la prenait pour
+    une verte ou une orange) ; dessus, son nom, « Arsenal » ou « Évolution » en relief, ce qu'elle fait. VU.
+  - `&speciale` : une spéciale due à chaque premier choix ; avec `&choix`, dès le décollage.
+  - À VENIR : les armes ajoutées ne se voient pas encore sur le vaisseau (sauf les drones) ; les 33 autres armes.

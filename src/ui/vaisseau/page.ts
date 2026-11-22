@@ -44,7 +44,7 @@ import { RASSEMBLE as TELEPORTE_A } from '../pixelfx/fx/keko/teleportation.js'
 import * as MATERIALISATION from '../pixelfx/fx/keko/materialisation.js'
 import * as QUETE_TERMINEE from '../pixelfx/fx/keko/quete-terminee.js'
 import * as VORTEX_FX from '../pixelfx/fx/keko/vortex.js'
-import { ajouterLeBonus, apresUnChoix, avecLesBonus, carte, DUREE_DU_CHOIX, type Bonus, ouvrirLeChoix, proposer, RARETES, reserveApresLeDelai, type Choix, type Rarete, type Talent } from '../../logic/vaisseau/talents.ts'
+import { MUTATIONS, mutationsPrises, ajouterLeBonus, apresUnChoix, avecLesBonus, carte, DUREE_DU_CHOIX, type Bonus, ouvrirLeChoix, proposer, RARETES, reserveApresLeDelai, type Choix, type Rarete, type Talent } from '../../logic/vaisseau/talents.ts'
 import { depuisTexte, ordreVuDu, retirerLesPilotes, retirerUnPilote, versTexte, vuDu } from '../../logic/vaisseau/reseau.ts'
 import { compresser, decompresser, ouvrirLeSalon, rejoindreLeSalon, type EtatDeLaLiaison, type Liaison } from './reseau.ts'
 import { APPARAIT as ARRIVE_A, REFROIDI as REFROIDI_A } from '../pixelfx/fx/keko/materialisation.js'
@@ -1977,6 +1977,23 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     rare: { c: ['#0c1a3a', '#1f4a8a', '#3a86d8', '#7cc4ff', '#e0f4ff'].map((c) => N.hex(c)), rayons: 1 },
     epique: { c: ['#1e0a3a', '#4e1f8a', '#8a3ad8', '#c08aff', '#f2e4ff'].map((c) => N.hex(c)), rayons: 1.35 },
     legendaire: { c: ['#3a1a06', '#8a4410', '#e07a20', '#ffb85a', '#fff2d6'].map((c) => N.hex(c)), rayons: 1.8 },
+    // (LA SPÉCIALE est PRISMATIQUE — voir `tonsPrismatiques` : ses tons tournent dans l'arc-en-ciel ; ceux-ci ne servent qu'au repli)
+    speciale: { c: ['#2a0a2e', '#7a1f8a', '#e03ad8', '#ff8af0', '#fff0ff'].map((c) => N.hex(c)), rayons: 2.2 },
+  }
+  /**
+   * LA COULEUR DES CARTES SPÉCIALES (Keko, 22/11 : « une nouvelle couleur, je te laisse choisir ») : PRISMATIQUE — ni
+   * blanc, ni vert, ni bleu, ni violet, ni orange : ses cinq tons, du sombre au clair, tournent doucement dans
+   * l'arc-en-ciel (une teinte par instant, décalée d'une carte à l'autre) ; son cadre scintille de toutes les couleurs.
+   */
+  const hsl = (h: number, s0: number, l: number): number => {
+    const k = (n: number): number => (n + h / 30) % 12
+    const a = s0 * Math.min(l, 1 - l)
+    const f = (n: number): number => Math.round(255 * (l - a * Math.max(-1, Math.min(k(n) - 3, 9 - k(n), 1))))
+    return ((255 << 24) | (f(0) << 16) | (f(8) << 8) | f(4)) >>> 0
+  }
+  const tonsPrismatiques = (decale: number): number[] => {
+    const h = (tReel * 50 + decale * 40) % 360
+    return [hsl(h, 0.7, 0.1), hsl(h, 0.75, 0.3), hsl(h, 0.85, 0.55), hsl(h, 0.95, 0.75), hsl(h, 1, 0.93)]
   }
   /** LES STATS : leur nom sur la carte, et ce que le bonus change (« +12 % » puis ces mots). */
   const STATS_DES_CARTES: Record<Talent['stat'], { nom: string; effet: string }> = {
@@ -1999,6 +2016,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     regeneration: { nom: 'Régénération', effet: 'de régénération' },
     bouclier: { nom: 'Bouclier', effet: 'de capacité du bouclier' },
     dephasage: { nom: 'Déphasage', effet: 'de chance de déphasage' },
+    mutation: { nom: '', effet: '' },
   }
   /** Deux couleurs mêlées (t de 0 à 1), opaques. */
   const meler = (a: number, b: number, t: number): number => {
@@ -2019,7 +2037,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   function dessinerUneCarteDeTalent(p: Peintre, ta: Talent, x: number, y: number, i: number, o: { survole: boolean; tient: number; blanc: number; eteinte: boolean }): void {
     const { w: CW, h: CH } = CARTE_DE_TALENT
     const R_ = COULEURS_DE_RARETE[ta.rarete]
-    const F = R_.c
+    const speciale = ta.rarete === 'speciale'
+    const mu = speciale ? MUTATIONS.find((x) => x.id === ta.mutation) : undefined
+    const F = speciale ? tonsPrismatiques(i) : R_.c
     const ENCRE = N.hex('#07050d')
     const NUIT_C = N.hex('#0d0b16')
     const cx = x + CW / 2
@@ -2043,7 +2063,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         const d = Math.hypot(dx, dy)
         if (d < 15 || d > 48) continue
         const an = Math.atan2(dy, dx)
-        if (Math.sin(an * 8 + tReel * 0.6) > 0.35) p.light(x + xx, y + j, F[2], 0.11 * R_.rayons * (1 - d / 48) * (vif ? 1.5 : 1))
+        if (Math.sin(an * 8 + tReel * 0.6) > 0.35) p.light(x + xx, y + j, speciale ? hsl((an * 57.3 + tReel * 90) % 360, 1, 0.6) : F[2], 0.11 * R_.rayons * (1 - d / 48) * (vif ? 1.5 : 1))
       }
     // LE CADRE : un cerne d'encre, deux pixels de métal biseauté (clair en haut et à gauche), un filet sombre dedans
     const haut = vif ? F[4] : F[3]
@@ -2065,10 +2085,24 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.poly([[kx + 0.5, ky - 2], [kx + 3, ky + 0.5], [kx + 0.5, ky + 3], [kx - 2, ky + 0.5]], F[3])
       p.px(kx, ky, F[4])
     }
-    // (UNE LÉGENDAIRE SCINTILLE : des étoiles courent sur son cadre)
-    if (ta.rarete === 'legendaire' || ta.rarete === 'epique') {
+    // (UNE SPÉCIALE A TOUT L'ARC-EN-CIEL À LA FOIS sur son cadre, qui court autour d'elle : d'une seule teinte à un instant,
+    // on l'aurait prise pour une verte ou une orange)
+    if (speciale) {
       const tour = 2 * (CW + CH)
-      const n = ta.rarete === 'legendaire' ? 5 : 2
+      const teinte = (u: number, l: number): number => hsl(((u / tour) * 720 + tReel * 160) % 360, 1, l)
+      for (let k = 0; k < CW; k++) {
+        p.rect(x + k, y, 1, 2, teinte(k, 0.62))
+        p.rect(x + CW - 1 - k, y + CH - 2, 1, 2, teinte(CW + CH + k, 0.45))
+      }
+      for (let k = 0; k < CH; k++) {
+        p.rect(x + CW - 2, y + k, 2, 1, teinte(CW + k, 0.5))
+        p.rect(x, y + CH - 1 - k, 2, 1, teinte(2 * CW + CH + k, 0.58))
+      }
+    }
+    // (UNE LÉGENDAIRE SCINTILLE : des étoiles courent sur son cadre)
+    if (ta.rarete === 'legendaire' || ta.rarete === 'epique' || speciale) {
+      const tour = 2 * (CW + CH)
+      const n = ta.rarete === 'legendaire' ? 5 : speciale ? 7 : 2
       for (let k = 0; k < n; k++) {
         const u = ((tReel * 34 + (k * tour) / n) % tour + tour) % tour
         const [sx, sy] = u < CW ? [x + u, y] : u < CW + CH ? [x + CW - 1, y + u - CW] : u < 2 * CW + CH ? [x + CW - 1 - (u - CW - CH), y + CH - 1] : [x, y + CH - 1 - (u - 2 * CW - CH)]
@@ -2084,6 +2118,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     p.circle(cx, cy, 17, F[2])
     p.arc(cx, cy, 17, 2, Math.PI, Math.PI * 1.75, haut)
     p.arc(cx, cy, 17, 2, 0, Math.PI * 0.75, F[1])
+    // (l'anneau d'une spéciale : l'arc-en-ciel qui tourne)
+    if (speciale)
+      for (let a = 0; a < Math.PI * 2; a += 0.04) {
+        const c = hsl(((a / (Math.PI * 2)) * 360 + tReel * 160) % 360, 1, 0.6)
+        for (const r of [15.5, 16.5]) p.px(Math.round(cx + Math.cos(a) * r), Math.round(cy + Math.sin(a) * r), c)
+      }
     p.circle(cx, cy, 14.5, ENCRE)
     p.circle(cx, cy, 14, NUIT_C)
     p.disc(cx, cy, 14, F[1], (d) => 0.7 * (1 - d))
@@ -2095,6 +2135,32 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         p.rect(Math.round(cx) - 14 + px * 2, cy - 14 + py * 2, 2, 2, nc)
       }
     } else dessinerLEmblemeDeRace(p, ta.cible.race, cx, cy)
+    // UNE SPÉCIALE (voir `MUTATIONS`) : son nom, un filet, sa sorte en relief — « Arsenal », « Évolution » —, ce qu'elle fait
+    if (speciale && mu !== undefined) {
+      let sy = y + 44
+      const police = largeurDe(mu.nom, GRAS) <= CW - 10 ? GRAS : TEXTE
+      for (const li of police === GRAS ? [mu.nom] : replier(mu.nom, CW - 10).slice(0, 2)) {
+        ecrire(p, li, cx, sy, F[4], { align: 'center', police, ombre: ENCRE })
+        sy += 9
+      }
+      sy += 1
+      p.rect(x + 12, sy, CW / 2 - 16, 1, F[2])
+      p.rect(cx + 4, sy, CW / 2 - 16, 1, F[2])
+      p.poly([[cx + 0.5, sy - 2.5], [cx + 3, sy + 0.5], [cx + 0.5, sy + 3.5], [cx - 2, sy + 0.5]], F[3])
+      sy += 6
+      {
+        const mot = spell(mu.sorte === 'arsenal' ? 'Arsenal' : 'Évolution', GRAS) as { letters: { g: unknown; x: number }[]; w: number }
+        const x0 = Math.round(cx - mot.w / 2)
+        const items = mot.letters.filter((L) => L.g).map((L) => ({ g: L.g, x: x0 + L.x, y: sy - decalage(GRAS), sx: 1, sy: 1 }))
+        const eclat = ((tReel * 0.5 + i * 0.29) % 2.2) * 40 - 12
+        drawWord(p, items, { fill: [F[3], F[4], N.WHITE], edge: N.WHITE, under: F[2], outline: ENCRE, shadow: 0, ...(eclat < mot.w + 12 ? { shine: x0 + eclat } : {}) })
+      }
+      sy += 13
+      for (const li of replier(mu.dit, CW - 10).slice(0, 5)) {
+        ecrire(p, li, cx, sy, COQUE[5], { align: 'center' })
+        sy += 9
+      }
+    } else {
     // le nom de la stat (en gras s'il tient, sinon en lettre fine)
     const st0 = STATS_DES_CARTES[ta.stat]
     // (le blindage des Xénoïdes, ce sont leurs points de vie — Keko, 21/11)
@@ -2127,6 +2193,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     for (const li of replier(effet, CW - 12).slice(0, 4)) {
       ecrire(p, li, cx, ly, COQUE[5], { align: 'center' })
       ly += 10
+    }
     }
     // (SA RARETÉ NE S'ÉCRIT PAS, SA COULEUR LA DIT — Keko, 21/11 : « ne marque pas la rareté textuellement, la couleur
     // suffit »)
@@ -2180,10 +2247,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (estInvite) return distant.choix?.enCours.find((x) => x.k === maPlace)?.cartes ?? []
     const conf = autre !== null ? autre.ecran.CONF : CONF
     const modele = autre !== null ? autre.modele : flotte.actif
-    const tirees = proposer(graineDuVol + 7919 * (autre?.k ?? 0), m.invasion.niveau, ch.rang, conf.armes[0], modeleDeVaisseau(modele).race)
+    // (LES SPÉCIALES DÉJÀ PRISES par ce pilote — voir `MUTATIONS` ; `&speciale` : une spéciale due à chaque premier choix, pour les juger)
+    const prises = mutationsPrises(autre !== null ? autre.ecran.bonus : bonusDuVol)
+    const niveau = parametres.has('speciale') ? Math.max(m.invasion.niveau, 5 * (prises.length + 1)) : m.invasion.niveau
+    const tirees = proposer(graineDuVol + 7919 * (autre?.k ?? 0), niveau, ch.rang, conf.armes[0], modeleDeVaisseau(modele).race, prises)
     // (`&rarete=R` : les trois cartes à cette rareté — commune, peuCommune, rare, epique, legendaire —, pour les juger)
     const rareteForcee = RARETES.find((r) => r.id === parametres.get('rarete'))?.id
-    return rareteForcee === undefined ? tirees : tirees.map((ta) => carte(ta.cible, ta.stat, rareteForcee))
+    return rareteForcee === undefined ? tirees : tirees.map((ta) => (ta.stat === 'mutation' ? ta : carte(ta.cible, ta.stat, rareteForcee)))
   }
 
   // ---------------------------------------------------------------- le jeu à distance (voir `estHote`, `estInvite`)

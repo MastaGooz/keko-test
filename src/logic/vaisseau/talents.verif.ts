@@ -1,7 +1,7 @@
 /**
  * Vérifications des talents du jeu du vortex, sans navigateur.
  */
-import { ajouterLeBonus, apresUnChoix, armeAmelioree, avecLesBonus, carte, factionAmelioree, type Bonus, ouvrirLeChoix, proposer, RARETES, rareteTiree, reserveApresLeDelai, STATS_DE_FACTION, statsDeLArme } from './talents.ts'
+import { carteSpeciale, MUTATIONS, mutationsPrises, SPECIALE_TOUS, ajouterLeBonus, apresUnChoix, armeAmelioree, avecLesBonus, carte, factionAmelioree, type Bonus, ouvrirLeChoix, proposer, RARETES, rareteTiree, reserveApresLeDelai, STATS_DE_FACTION, statsDeLArme } from './talents.ts'
 import { VAISSEAU as C, type Arme, type ConfigVaisseau } from './jeu.ts'
 
 let echecs = 0
@@ -17,7 +17,9 @@ const drones = { ...canon, id: 'drones', orbite: { rayon: 30, vitesse: 2, phase:
 const base: ConfigVaisseau = { ...C, armes: [canon], bouclier: { ...C.bouclier, points: 3 }, regeneration: 0.01, dephasage: { chance: 0.05, duree: 1.5 } }
 
 // LES RARETÉS : la somme des chances, le tirage
-verifier(`les chances des raretés font 100 % (${Math.round(RARETES.reduce((n, r) => n + r.chance, 0) * 100)}), leurs bonus montent : ${RARETES.map((r) => `+${Math.round(r.bonus * 100)} %`).join(' ')}`, Math.abs(RARETES.reduce((n, r) => n + r.chance, 0) - 1) < 1e-9 && RARETES.every((r, i) => i === 0 || r.bonus > RARETES[i - 1].bonus))
+// (les raretés TIRÉES : la spéciale a ses niveaux, jamais le hasard — voir `MUTATIONS`)
+const TIREES = RARETES.filter((r) => r.id !== 'speciale')
+verifier(`les chances des raretés font 100 % (${Math.round(RARETES.reduce((n, r) => n + r.chance, 0) * 100)}), leurs bonus montent : ${TIREES.map((r) => `+${Math.round(r.bonus * 100)} %`).join(' ')}`, Math.abs(RARETES.reduce((n, r) => n + r.chance, 0) - 1) < 1e-9 && TIREES.every((r, i) => i === 0 || r.bonus > TIREES[i - 1].bonus))
 const tirees = Array.from({ length: 10000 }, (_, i) => rareteTiree((i + 0.5) / 10000))
 verifier(`le tirage suit les chances : ${RARETES.map((r) => `${r.nom} ${Math.round((tirees.filter((x) => x === r.id).length / 100) * 10) / 10} %`).join(', ')}`, Math.abs(tirees.filter((x) => x === 'commune').length - 5500) <= 1 && tirees.filter((x) => x === 'legendaire').length === 100)
 
@@ -60,7 +62,7 @@ verifier(`sur 9 000 cartes tirées : ${RARETES.map((r) => `${r.nom} ${Math.round
 verifier('un choix à faire, plus la réserve ; le dernier choisi, c’est fini', ouvrirLeChoix(0).aFaire === 1 && ouvrirLeChoix(1).aFaire === 2 && apresUnChoix(ouvrirLeChoix(0)) === null && apresUnChoix(ouvrirLeChoix(1))?.aFaire === 1 && apresUnChoix(ouvrirLeChoix(1))?.rang === 1)
 const recup = new Map<string, number>()
 for (let n = 1; n <= 4000; n++) for (const x of proposer(5, n, 0, canon, 'humains')) if (x.stat === 'recuperation') recup.set(x.rarete, (recup.get(x.rarete) ?? 0) + 1)
-verifier(`la Récupération de l'Empire paraît à toutes les raretés (${RARETES.map((r) => `${r.nom} ${recup.get(r.id) ?? 0}`).join(', ')}), son bonus celui de la rareté`, RARETES.every((r) => (recup.get(r.id) ?? 0) > 0) && carte({ sorte: 'faction', race: 'humains' }, 'recuperation', 'rare').bonus === 0.12)
+verifier(`la Récupération de l'Empire paraît à toutes les raretés (${TIREES.map((r) => `${r.nom} ${recup.get(r.id) ?? 0}`).join(', ')}), son bonus celui de la rareté`, TIREES.every((r) => (recup.get(r.id) ?? 0) > 0) && carte({ sorte: 'faction', race: 'humains' }, 'recuperation', 'rare').bonus === 0.12)
 verifier('le délai passé, ce qui restait à choisir part en réserve', reserveApresLeDelai(ouvrirLeChoix(0)) === 1 && reserveApresLeDelai(ouvrirLeChoix(1)) === 2 && reserveApresLeDelai(apresUnChoix(ouvrirLeChoix(1))!) === 1)
 
 {
@@ -68,6 +70,28 @@ verifier('le délai passé, ce qui restait à choisir part en réserve', reserve
   const puits = { id: 'puits', cadence: 5, degats: 11.5, portee: 130, vitesse: 0, vie: 0, dispersion: 0, guide: false, puits: { vitesse: 150, rayon: 45, force: 70, duree: 2, eclat: 28 } } as Arme
   const z = armeAmelioree(puits, 'zone', 0.25)
   verifier(`une carte « Zone » de +25 % : la Singularité attire à ${z.puits!.rayon} (45), s'effondre à ${z.puits!.eclat} (28) ; sa force ne bouge pas (${z.puits!.force})`, z.puits!.rayon === 56.25 && z.puits!.eclat === 35 && z.puits!.force === 70)
+}
+{
+  // LES CARTES SPÉCIALES (Keko, 22/11 : tous les 5 niveaux, des armes dérivées de l'arme de départ — prototype : le Chasseur)
+  const laser = { id: 'laser', cadence: 2.2, degats: 90, portee: 120, vitesse: 420, vie: 0.7, dispersion: 0, guide: false, infaillible: true } as Arme
+  const base: ConfigVaisseau = { ...C, armes: [{ ...laser, place: 0 }, { ...laser, place: 1 }] }
+  const a4 = proposer(9, 4, 0, laser, 'humains')
+  const a5 = proposer(9, 5, 0, laser, 'humains')
+  const a5b = proposer(9, 5, 1, laser, 'humains')
+  const a6 = proposer(9, 6, 0, laser, 'humains', ['laser-tourelle'])
+  const a6manque = proposer(9, 6, 0, laser, 'humains')
+  const a10 = proposer(9, 10, 0, laser, 'humains', ['laser-tourelle'])
+  const tous = proposer(9, 100, 0, laser, 'humains', MUTATIONS.filter((mu) => mu.arme === 'laser').map((mu) => mu.id))
+  verifier(`tous les ${SPECIALE_TOUS} niveaux, trois spéciales de l'arme (niveau 5 : ${a5.map((x) => x.mutation).join(', ')}) ; pas au 4 ni au second choix ; au 6 si on l'a prise, rien ; manquée, elle revient ; au 10, sans celle qu'on a ; toutes prises, les cartes ordinaires`, a4.every((x) => x.rarete !== 'speciale') && a5.length === 3 && a5.every((x) => x.rarete === 'speciale' && MUTATIONS.find((mu) => mu.id === x.mutation)?.arme === 'laser') && a5b.every((x) => x.rarete !== 'speciale') && a6.every((x) => x.rarete !== 'speciale') && a6manque.every((x) => x.rarete === 'speciale') && a10.length === 3 && a10.every((x) => x.rarete === 'speciale' && x.mutation !== 'laser-tourelle') && tous.every((x) => x.rarete !== 'speciale'))
+  let b = ajouterLeBonus([], carteSpeciale(MUTATIONS.find((mu) => mu.id === 'laser-tourelle')!))
+  const c1 = avecLesBonus(base, b)
+  b = ajouterLeBonus(b, carte({ sorte: 'arme', arme: 'laser' }, 'degats', 'legendaire'))
+  b = ajouterLeBonus(b, carteSpeciale(MUTATIONS.find((mu) => mu.id === 'laser-drones')!))
+  b = ajouterLeBonus(b, carteSpeciale(MUTATIONS.find((mu) => mu.id === 'laser-perforant')!))
+  const c2 = avecLesBonus(base, b)
+  const tourelle = c2.armes.find((a) => a.ajoutee === true && a.orbite === undefined)!
+  verifier(`l'Arsenal ajoute des armes de la famille : la tourelle (${c1.armes.length} armes, tout autour : ${c1.armes[2].tousSens}), puis deux drones (${c2.armes.filter((a) => a.orbite !== undefined).length}) ; les cartes de l'arme les grandissent aussi (la tourelle ${tourelle.degats} = 54 × 1,25) ; l'Évolution les change toutes (perforant : ${c2.armes.every((a) => a.perforant === true)}) ; prises : ${mutationsPrises(b).join(', ')}`, c1.armes.length === 3 && c1.armes[2].tousSens === true && c1.armes[2].bouche === undefined && c2.armes.filter((a) => a.orbite !== undefined).length === 2 && tourelle.degats === Math.round(54 * 1.25) && c2.armes.every((a) => a.perforant === true) && mutationsPrises(b).join() === 'laser-tourelle,laser-drones,laser-perforant')
+  verifier(`chaque arme du Chasseur a ses quatre spéciales (${['laser', 'mitraille', 'minimissile'].map((id) => `${id} ${MUTATIONS.filter((mu) => mu.arme === id).length}`).join(', ')}), deux Arsenal et deux Évolutions`, ['laser', 'mitraille', 'minimissile'].every((id) => MUTATIONS.filter((mu) => mu.arme === id && mu.sorte === 'arsenal').length === 2 && MUTATIONS.filter((mu) => mu.arme === id && mu.sorte === 'evolution').length === 2))
 }
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)
 console.log('Tout passe.')

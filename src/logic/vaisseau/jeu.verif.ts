@@ -1,7 +1,7 @@
 /**
  * Vérifications du vaisseau, sans navigateur : le temps est injecté.
  */
-import { recompenseDeFin, tableauVide, chanceDePlaque, ajouterUnPilote, avancerLEquipage, etatDuPilote, partDe, gabaritDInsecte, rayonDe, rocheDeLaTempete, vieMultipliee, cadenceDeLaVague, asteroideDeLaCase, coupeDUnCube, asteroidesAutour, avancer, avancerLeMonde, encaisser, purger, impactDuRayon, lancerLaBombe, larguer, porteeDeLaBombe, MINERAIS, nouveauMonde, nouveauVaisseau, solidite, voler, totalDe, stationDeLaCase, stationLaPlusProche, VAISSEAU, verrouiller, ennemiLePlusProche, type ConfigVaisseau, type Ennemi, type Evenement, type Vaisseau, xpDuNiveau, gemmesDuButin, tire, type Pepite } from './jeu.ts'
+import { type Arme, recompenseDeFin, tableauVide, chanceDePlaque, ajouterUnPilote, avancerLEquipage, etatDuPilote, partDe, gabaritDInsecte, rayonDe, rocheDeLaTempete, vieMultipliee, cadenceDeLaVague, asteroideDeLaCase, coupeDUnCube, asteroidesAutour, avancer, avancerLeMonde, encaisser, purger, impactDuRayon, lancerLaBombe, larguer, porteeDeLaBombe, MINERAIS, nouveauMonde, nouveauVaisseau, solidite, voler, totalDe, stationDeLaCase, stationLaPlusProche, VAISSEAU, verrouiller, ennemiLePlusProche, type ConfigVaisseau, type Ennemi, type Evenement, type Vaisseau, xpDuNiveau, gemmesDuButin, tire, type Pepite } from './jeu.ts'
 import { acheter, configDuHangar, hangarNeuf, monter, pieceDe } from './hangar.ts'
 import { depuisTexte, retirerLesPilotes, retirerUnPilote, versTexte, vuDu, vuDuSecond } from './reseau.ts'
 
@@ -3798,6 +3798,46 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   avancerLEquipage([cfg, cfg], w, 1 / 60, [{ x: 0, y: 0 }, { x: 0, y: 0 }], undefined, false)
   const t0 = w.tableau
   verifier(`le tableau compte au tour de celui qui abat (le premier : ${t0.insectes} insecte, ${t0.points} points, ${t0.roches} roche, ${t0.pointsDeRoches} points) ; le grand à l'équipe (${w.invasion.miniBoss} mini-boss) ; le second, rien (${etatDuPilote(w, 1).tableau.insectes})`, t0.insectes === 1 && t0.points === 5 && t0.roches === 1 && t0.pointsDeRoches === 5 && w.invasion.miniBoss === 1 && etatDuPilote(w, 1).tableau.insectes === 0)
+}
+
+// LES CARTES SPÉCIALES DANS LA RÈGLE (Keko, 22/11) : tout autour, en gerbe, perforant, ricochet, incendiaire, éclats
+{
+  const cfgDe = (a: Partial<Arme>): ConfigVaisseau => ({ ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9 }, derive: { ...VAISSEAU.derive, active: false }, coque: 1e9, arcDeTir: 0.87, armes: [{ id: 'laser', cadence: 1, degats: 10, portee: 200, vitesse: 300, vie: 1, dispersion: 0, guide: false, ...a } as Arme] })
+  const insecte = (id: number, x: number, y: number): Ennemi => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv: 100, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 } })
+  const jouer = (cf: ConfigVaisseau, ennemis: Ennemi[], s: number): ReturnType<typeof nouveauMonde> => {
+    const w = nouveauMonde(cf, 2)
+    w.invasion.prochainA = 1e9
+    w.vaisseau = { ...w.vaisseau, cap: 0 }
+    w.ennemis.push(...ennemis)
+    for (let i = 0; i < 60 * s; i++) avancerLeMonde(cf, w, 1 / 60, { x: 0, y: 0 })
+    return w
+  }
+  // (derrière le nez : l'arme ordinaire ne tire pas ; tout autour, si)
+  const derriere = jouer(cfgDe({}), [insecte(1, -80, 0)], 0.5).ennemis[0].pv
+  const autour = jouer(cfgDe({ tousSens: true }), [insecte(1, -80, 0)], 0.5).ennemis[0].pv
+  // (en gerbe : deux obus à chaque tir)
+  const wg = nouveauMonde(cfgDe({ gerbe: { nombre: 2, ecart: 0.1 } }), 2)
+  wg.vaisseau = { ...wg.vaisseau, cap: 0 }
+  wg.ennemis.push(insecte(1, 150, 0))
+  avancerLeMonde(cfgDe({ gerbe: { nombre: 2, ecart: 0.1 } }), wg, 1 / 60, { x: 0, y: 0 })
+  // (perforant : deux insectes en ligne, touchés tous deux d'un seul tir)
+  const wp = jouer(cfgDe({ perforant: true, infaillible: true, cadence: 99 }), [insecte(1, 60, 0), insecte(2, 110, 0)], 0.6)
+  // (ricochet : trois insectes, un tir les touche tous)
+  const wr = jouer(cfgDe({ ricochet: { rebonds: 2, portee: 80, part: 0.7 }, infaillible: true, cadence: 99 }), [insecte(1, 60, 0), insecte(2, 60, 40), insecte(3, 60, 80)], 0.8)
+  // (incendiaire : touché, il brûle et perd encore après)
+  const wi = jouer(cfgDe({ incendiaire: { duree: 3, dps: 10 }, infaillible: true, cadence: 99 }), [insecte(1, 150, 0)], 2)
+  verifier(`les spéciales dans la règle : derrière le nez, rien (${derriere}) / tout autour, touché (${autour}) ; en gerbe, ${wg.obus.length} obus d'un tir ; perforant, ${wp.ennemis.map((e) => e.pv).join(' et ')} ; ricochet, ${wr.ennemis.map((e) => Math.round(e.pv)).join(', ')} ; incendiaire, ${Math.round(wi.ennemis[0].pv)} (90 sans le feu)`, derriere === 100 && autour < 100 && wg.obus.length === 2 && wp.ennemis.every((e) => e.pv === 90) && wr.ennemis.every((e) => e.pv < 100) && wi.ennemis[0].pv < 80)
+  // (éclats : un missile qui explose en projette six)
+  const cf = cfgDe({ id: 'minimissile', zone: { rayon: 18 }, fragments: { nombre: 6, degats: 3, vitesse: 160, vie: 0.25 }, cadence: 99, vitesse: 200 })
+  const wf = nouveauMonde(cf, 2)
+  wf.vaisseau = { ...wf.vaisseau, cap: 0 }
+  wf.ennemis.push(insecte(1, 50, 0))
+  let eclats = 0
+  for (let i = 0; i < 30; i++) {
+    avancerLeMonde(cf, wf, 1 / 60, { x: 0, y: 0 })
+    eclats = Math.max(eclats, wf.obus.filter((o) => o.arme === 'mitraille').length)
+  }
+  verifier(`fragmentation : l'explosion projette ${eclats} éclats`, eclats === 6)
 }
 
 // (TOUJOURS EN DERNIER : des blocs ajoutés après cette ligne échouaient sans faire échouer `npm run verif` — 17/11)

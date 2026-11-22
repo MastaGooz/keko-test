@@ -23,13 +23,15 @@ import { CHAMPS_DE_DEGATS, hache, type Arme, type ConfigVaisseau } from './jeu.t
 import type { Race } from './flotte.ts'
 
 /** LES RARETÉS : leur bonus (une part : 0,05 = +5 %) et leur chance d'être tirée. */
-export type Rarete = 'commune' | 'peuCommune' | 'rare' | 'epique' | 'legendaire'
+// (`speciale` : LES CARTES SPÉCIALES — voir `MUTATIONS` : jamais tirée au hasard, elle a ses niveaux)
+export type Rarete = 'commune' | 'peuCommune' | 'rare' | 'epique' | 'legendaire' | 'speciale'
 export const RARETES: { id: Rarete; nom: string; bonus: number; chance: number }[] = [
   { id: 'commune', nom: 'Commune', bonus: 0.05, chance: 0.55 },
   { id: 'peuCommune', nom: 'Peu commune', bonus: 0.08, chance: 0.25 },
   { id: 'rare', nom: 'Rare', bonus: 0.12, chance: 0.13 },
   { id: 'epique', nom: 'Épique', bonus: 0.18, chance: 0.06 },
   { id: 'legendaire', nom: 'Légendaire', bonus: 0.25, chance: 0.01 },
+  { id: 'speciale', nom: 'Spéciale', bonus: 0, chance: 0 },
 ]
 export const rareteDe = (id: Rarete): (typeof RARETES)[number] => RARETES.find((r) => r.id === id)!
 /** La rareté d'un tirage `u` de [0, 1[ : les chances cumulées. */
@@ -77,20 +79,22 @@ export const SEULEMENT_EN: Partial<Record<StatDArme | StatDeFaction, Rarete>> = 
  * LES CHANCES SE COMPTENT EN POINTS, À L'ÉCHELLE DE LA RARETÉ (le déphasage — Keko ; le critique, pareil : en relatif,
  * « +12 % » d'1 % de chance n'en faisait que 1,12) : la commune +1 point, la légendaire +5.
  */
-export const POINTS_DE_CHANCE: Record<Rarete, number> = { commune: 0.01, peuCommune: 0.02, rare: 0.03, epique: 0.04, legendaire: 0.05 }
+export const POINTS_DE_CHANCE: Record<Rarete, number> = { commune: 0.01, peuCommune: 0.02, rare: 0.03, epique: 0.04, legendaire: 0.05, speciale: 0 }
 const EN_POINTS: ReadonlySet<string> = new Set(['critique', 'dephasage'])
 
 export type Cible = { sorte: 'arme'; arme: string } | { sorte: 'faction'; race: Race }
 export type Talent = {
   id: string
   cible: Cible
-  stat: StatDArme | StatDeFaction
+  stat: StatDArme | StatDeFaction | 'mutation'
   rarete: Rarete
   /** Le bonus, en part (0,12 = +12 %). */
   bonus: number
+  /** Une carte spéciale : laquelle (voir `MUTATIONS`). */
+  mutation?: string
 }
-/** LES BONUS DU VOL : par cible et par stat, la somme des bonus pris (en part). */
-export type Bonus = { id: string; cible: Cible; stat: StatDArme | StatDeFaction; somme: number }[]
+/** LES BONUS DU VOL : par cible et par stat, la somme des bonus pris (en part) ; les cartes spéciales prises, dans l'ordre. */
+export type Bonus = { id: string; cible: Cible; stat: StatDArme | StatDeFaction | 'mutation'; somme: number }[]
 /** Les bonus, une carte de plus : sa somme grossit de son bonus. */
 export function ajouterLeBonus(b: Bonus, ta: Talent): Bonus {
   const deja = b.find((x) => x.id === ta.id)
@@ -101,7 +105,9 @@ export function avecLesBonus(base: ConfigVaisseau, b: Bonus): ConfigVaisseau {
   let c = base
   for (const x of b) {
     // (le critique est au vaisseau : la chance en points, les dégâts critiques en points du facteur — 150 % +12 % : 162 %)
-    if (x.stat === 'critique') c = { ...c, passifs: { ...c.passifs, critique: c.passifs.critique + x.somme } }
+    // (une carte spéciale change la configuration elle-même — voir `MUTATIONS`)
+    if (x.stat === 'mutation') c = MUTATIONS.find((mu) => `mutation:${mu.id}` === x.id)?.appliquer(c) ?? c
+    else if (x.stat === 'critique') c = { ...c, passifs: { ...c.passifs, critique: c.passifs.critique + x.somme } }
     else if (x.stat === 'critiques') c = { ...c, passifs: { ...c.passifs, critiqueFacteur: c.passifs.critiqueFacteur + x.somme } }
     else c = x.cible.sorte === 'arme' ? { ...c, armes: c.armes.map((a) => (a.id === (x.cible as { arme: string }).arme ? armeAmelioree(a, x.stat as StatDArme, x.somme) : a)) } : factionAmelioree(c, x.stat as StatDeFaction, x.somme)
   }
@@ -231,12 +237,72 @@ export function carte(cible: Cible, stat: StatDArme | StatDeFaction, rarete: Rar
   return { id: `${cible.sorte === 'arme' ? `arme-${cible.arme}` : cible.race}:${stat}`, cible, stat, rarete, bonus }
 }
 
+// ---------------------------------------------------------------- les cartes spéciales
+/**
+ * LES CARTES SPÉCIALES (Keko, 22/11 : « un nouveau type de carte d'amélioration, d'une nouvelle couleur — je te laisse
+ * choisir —, qui concerne une réelle modification de gameplay : une modification fondamentale du fonctionnement de
+ * l'arme en cours, voire un rajout d'effets ou de tirs ; dans les survivors, tu accumules plusieurs armes, c'est ce qui en
+ * fait l'intérêt, et pour l'instant on n'a qu'une seule arme, c'est notre plus gros défaut » ; tranché : tous les 5
+ * niveaux, des armes DÉRIVÉES DE L'ARME DE DÉPART, un prototype sur le Chasseur). À chaque niveau multiple de
+ * `SPECIALE_TOUS`, le premier choix est fait de trois d'entre elles (celles de l'arme montée qu'on n'a pas encore) ; une
+ * spéciale manquée (un choix laissé au délai) revient au choix suivant. Deux sortes : L'ARSENAL ajoute une arme — de la
+ * même famille, son nom, ses dessins et ses cartes —, L'ÉVOLUTION change l'arme (toutes celles de son nom). Chacune se
+ * prend une fois. *Leurs chiffres sont de moi, à rejuger.*
+ */
+export const SPECIALE_TOUS = 5
+export type Mutation = { id: string; arme: string; sorte: 'arsenal' | 'evolution'; nom: string; dit: string; appliquer: (c: ConfigVaisseau) => ConfigVaisseau }
+/** L'arme de départ de ce nom (pas une ajoutée). */
+const principale = (c: ConfigVaisseau, id: string): Arme | undefined => c.armes.find((a) => a.id === id && a.ajoutee !== true)
+/** Toutes les armes de ce nom, changées. */
+const changerLes = (c: ConfigVaisseau, id: string, f: (a: Arme) => Arme): ConfigVaisseau => ({ ...c, armes: c.armes.map((a) => (a.id === id ? f(a) : a)) })
+/** Une arme ajoutée, tirée de l'arme de départ : elle tire tout autour, du centre du vaisseau. */
+const ajoutee = (a: Arme, place: number, f: Partial<Arme>): Arme => {
+  const { bouche: _b, ...reste } = a
+  return { ...reste, ...f, ajoutee: true, tousSens: true, place }
+}
+const ajouter = (c: ConfigVaisseau, id: string, f: (a: Arme) => Arme[]): ConfigVaisseau => {
+  const a = principale(c, id)
+  return a === undefined ? c : { ...c, armes: [...c.armes, ...f(a)] }
+}
+/** (l'orbite des drones de la Sentinelle) */
+const ORBITE_DES_DRONES = { rayon: 20, vitesse: 1.7, laisse: 120, vol: 170, braquage: 7, autour: 26, tour: 2 }
+/** Deux drones de l'arme, en orbite, qui partent tirer ses obus sur l'ennemi proche. */
+const deuxDrones = (a: Arme, f: Partial<Arme>): Arme[] => [0, 1].map((k) => ajoutee(a, 10 + k, { ...f, infaillible: false, orbite: { ...ORBITE_DES_DRONES, phase: k * Math.PI } }))
+export const MUTATIONS: Mutation[] = [
+  // LE CANON LASER
+  { id: 'laser-tourelle', arme: 'laser', sorte: 'arsenal', nom: 'Tourelle laser', dit: 'Une tourelle tire des lasers tout autour du vaisseau.', appliquer: (c) => ajouter(c, 'laser', (a) => [ajoutee(a, 9, { cadence: a.cadence * 0.75, degats: Math.round(a.degats * 0.6) })]) },
+  { id: 'laser-drones', arme: 'laser', sorte: 'arsenal', nom: 'Drones laser', dit: 'Deux drones en orbite tirent des lasers sur les ennemis proches.', appliquer: (c) => ajouter(c, 'laser', (a) => deuxDrones(a, { cadence: 1.4, degats: Math.round(a.degats * 0.45), portee: 70, vie: 0.5 })) },
+  { id: 'laser-perforant', arme: 'laser', sorte: 'evolution', nom: 'Laser perforant', dit: 'Les lasers traversent les ennemis et touchent toute leur ligne.', appliquer: (c) => changerLes(c, 'laser', (a) => ({ ...a, perforant: true, vie: a.vie * 1.5 })) },
+  { id: 'laser-ricochet', arme: 'laser', sorte: 'evolution', nom: 'Ricochet', dit: 'Chaque laser rebondit sur deux autres ennemis proches.', appliquer: (c) => changerLes(c, 'laser', (a) => ({ ...a, ricochet: { rebonds: 2, portee: 80, part: 0.7 } })) },
+  // LA MITRAILLEUSE
+  { id: 'mitraille-jumelee', arme: 'mitraille', sorte: 'evolution', nom: 'Canons jumelés', dit: 'Chaque tir part en double : deux balles côte à côte.', appliquer: (c) => changerLes(c, 'mitraille', (a) => ({ ...a, gerbe: { nombre: 2, ecart: 0.12 }, degats: Math.round(a.degats * 0.7) })) },
+  { id: 'mitraille-tourelle', arme: 'mitraille', sorte: 'arsenal', nom: 'Tourelle de queue', dit: 'Une mitrailleuse arrose tout autour du vaisseau.', appliquer: (c) => ajouter(c, 'mitraille', (a) => [ajoutee(a, 9, { cadence: a.cadence * 0.9, degats: Math.round(a.degats * 0.6), portee: a.portee * 0.9 })]) },
+  { id: 'mitraille-incendiaire', arme: 'mitraille', sorte: 'evolution', nom: 'Balles incendiaires', dit: 'Les balles enflamment les ennemis : ils brûlent trois secondes.', appliquer: (c) => changerLes(c, 'mitraille', (a) => ({ ...a, incendiaire: { duree: 3, dps: Math.round(a.degats * 0.8) } })) },
+  { id: 'mitraille-drones', arme: 'mitraille', sorte: 'arsenal', nom: 'Drones mitrailleurs', dit: 'Deux drones en orbite mitraillent les ennemis proches.', appliquer: (c) => ajouter(c, 'mitraille', (a) => deuxDrones(a, { cadence: 0.3, degats: Math.round(a.degats * 0.6), portee: 70 })) },
+  // LES MISSILES
+  { id: 'missile-salve', arme: 'minimissile', sorte: 'evolution', nom: 'Salve', dit: 'Chaque tir lâche trois missiles en éventail.', appliquer: (c) => changerLes(c, 'minimissile', (a) => ({ ...a, gerbe: { nombre: 3, ecart: 0.35 }, degats: Math.round(a.degats * 0.6) })) },
+  { id: 'missile-fragmentation', arme: 'minimissile', sorte: 'evolution', nom: 'Fragmentation', dit: 'Chaque explosion projette six éclats brûlants tout autour.', appliquer: (c) => changerLes(c, 'minimissile', (a) => ({ ...a, fragments: { nombre: 6, degats: Math.round(a.degats * 0.25), vitesse: 160, vie: 0.25 } })) },
+  { id: 'missile-lanceur', arme: 'minimissile', sorte: 'arsenal', nom: 'Lance-missiles', dit: 'Un lanceur tire des missiles tout autour du vaisseau.', appliquer: (c) => ajouter(c, 'minimissile', (a) => [ajoutee(a, 9, { cadence: a.cadence * 0.75, degats: Math.round(a.degats * 0.7) })]) },
+  { id: 'missile-drones', arme: 'minimissile', sorte: 'arsenal', nom: 'Drones lance-missiles', dit: 'Deux drones en orbite tirent des missiles sur les ennemis proches.', appliquer: (c) => ajouter(c, 'minimissile', (a) => deuxDrones(a, { cadence: 2.5, degats: Math.round(a.degats * 0.5), portee: 80, vie: 1.2 })) },
+]
+/** La carte d'une spéciale. */
+export const carteSpeciale = (mu: Mutation): Talent => ({ id: `mutation:${mu.id}`, cible: { sorte: 'arme', arme: mu.arme }, stat: 'mutation', rarete: 'speciale', bonus: 0, mutation: mu.id })
+/** Les spéciales déjà prises, d'après les bonus du vol. */
+export const mutationsPrises = (b: Bonus): string[] => b.filter((x) => x.stat === 'mutation').map((x) => x.id.slice('mutation:'.length))
+
 /**
  * LES TROIS CARTES proposées : le pool de l'arme montée et celui de la faction, réunis, trois stats différentes tirées de
  * la graine de la partie, du niveau et du rang du choix (un joueur qui en a deux à faire voit deux tirages) ; chacune sa
- * rareté.
+ * rareté. LES SPÉCIALES D'ABORD (voir `MUTATIONS`) : au premier choix, s'il en est dû une — une par `SPECIALE_TOUS`
+ * niveaux — et qu'il en reste à l'arme, trois spéciales.
  */
-export function proposer(graine: number, niveau: number, rang: number, arme: Arme | undefined, race: Race): Talent[] {
+export function proposer(graine: number, niveau: number, rang: number, arme: Arme | undefined, race: Race, prises: string[] = []): Talent[] {
+  if (arme !== undefined && rang === 0 && Math.floor(niveau / SPECIALE_TOUS) > prises.length) {
+    const libres = MUTATIONS.filter((mu) => mu.arme === arme.id && !prises.includes(mu.id))
+    const choisies: Mutation[] = []
+    for (let k = 0; k < 3 && libres.length > 0; k++) choisies.push(libres.splice(hache(hache(graine, niveau, 41), k) % libres.length, 1)[0])
+    if (choisies.length > 0) return choisies.map(carteSpeciale)
+  }
   const pool: { cible: Cible; stat: StatDArme | StatDeFaction }[] = [
     ...(arme === undefined ? [] : statsDeLArme(arme).map((stat) => ({ cible: { sorte: 'arme', arme: arme.id } as Cible, stat }))),
     ...STATS_DE_FACTION[race].map((stat) => ({ cible: { sorte: 'faction', race } as Cible, stat })),
@@ -246,7 +312,7 @@ export function proposer(graine: number, niveau: number, rang: number, arme: Arm
     // (la rareté d'abord : une carte qui n'est que d'une rareté n'est tirée qu'à elle — voir `SEULEMENT_EN`)
     const u = (hache(hache(graine, niveau, 17), hache(rang, k, 29)) % 1000000) / 1000000
     const rarete = rareteTiree(u)
-    const permis = pool.filter((x) => SEULEMENT_EN[x.stat] === undefined || SEULEMENT_EN[x.stat] === rarete)
+    const permis = pool.filter((x) => SEULEMENT_EN[x.stat as StatDArme | StatDeFaction] === undefined || SEULEMENT_EN[x.stat as StatDArme | StatDeFaction] === rarete)
     if (permis.length === 0) break
     const choisie = permis[hache(hache(graine, niveau), hache(rang, k)) % permis.length]
     pool.splice(pool.indexOf(choisie), 1)
