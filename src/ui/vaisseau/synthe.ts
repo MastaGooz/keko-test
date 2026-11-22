@@ -752,6 +752,105 @@ const RECETTES = {
       note(m, 0.09, 0.25, 0.4, { f: 1420, glisse: { vers: 680, en: 0.8 }, a: 0.003, d: 0.85, battement: 15, partiels: [[1, 1, 1], [2.76, 0.3, 0.5]] })
     },
   },
+  // LES NOUVELLES ARMES DE L'EMPIRE (Keko, 22/11 : « des sons originaux pour chacune des nouvelles armes ») : elles
+  // empruntaient ceux du rail, du canon, de l'essaim, de l'arc, du mini-missile et de la mitrailleuse
+  /**
+   * LE RAILGUN (une balle, depuis le 22/11) : la bobine qui claque — un bourdon électrique très bref qui monte —, LE
+   * COUP DE FOUET d'une balle qui passe le mur du son — un claquement aigu et sec, un sifflement qui tombe très vite —,
+   * un coup grave court, et l'acier qui tinte à peine. Plus sec et plus court que le rail du Prisme, sans sa longue traîne.
+   */
+  railgun: {
+    duree: 0.6, niveau: 0.3, salle: [0.3, 0.12], variantes: 3,
+    faire: (m, h) => {
+      note(m, 0, 0.3, 0, { f: 140, glisse: { vers: 420, en: 0.035, droit: true }, a: 0.002, d: 0.04, partiels: [[1, 1, 1], [3, 0.6, 1], [5, 0.4, 1], [7, 0.25, 1]] })
+      souffle(m, h, 0.035, 1, 0, { f: 6500, glisse: { vers: 2600, en: 0.02 }, q: 1.2, bande: true, a: 0.0005, d: 0.03 })
+      const f = 2600 * (0.95 + 0.1 * h.next())
+      note(m, 0.036, 0.45, 0, { f, glisse: { vers: f * 0.3, en: 0.05 }, a: 0.001, d: 0.09, partiels: [[1, 1, 1], [2, 0.2, 0.5]] })
+      note(m, 0.036, 0.8, 0, { f: 150, glisse: { vers: 60, en: 0.05 }, a: 0.001, d: 0.1, partiels: CORPS, sature: 1.8 })
+      note(m, 0.05, 0.12, 0.3, { f: 3100, a: 0.002, d: 0.25, partiels: [[1, 1, 1], [2.76, 0.4, 0.5], [5.4, 0.15, 0.3]] })
+    },
+  },
+  /**
+   * L'OBUSIER : un coup d'artillerie — un grave profond et saturé qui s'enfonce, le souffle de la gueule qui s'ouvre, puis
+   * la culasse qui se referme, un « clac » d'acier, un dixième plus tard ; une salle plus grande que les autres tirs
+   */
+  obusier: {
+    duree: 1.1, niveau: 0.34, salle: [0.55, 0.2], variantes: 2,
+    faire: (m, h) => {
+      note(m, 0, 1, 0, { f: 120, glisse: { vers: 42, en: 0.09 }, a: 0.001, d: 0.32, partiels: CORPS, sature: 2.4 })
+      souffle(m, h, 0, 0.9, 0, { f: 1400, glisse: { vers: 180, en: 0.12 }, q: 0.7, a: 0.001, d: 0.3, large: true })
+      souffle(m, h, 0, 0.4, 0, { f: 3500, glisse: { vers: 1200, en: 0.03 }, q: 1, bande: true, a: 0.001, d: 0.05 })
+      note(m, 0.16, 0.22, 0.35, { f: 820 * (0.97 + 0.06 * h.next()), a: 0.001, d: 0.06, partiels: [[1, 1, 1], [2.3, 0.6, 0.6], [3.9, 0.3, 0.4]] })
+      souffle(m, h, 0.16, 0.25, 0.35, { f: 2400, q: 2, bande: true, a: 0.001, d: 0.025 })
+    },
+  },
+  /**
+   * LES ROQUETTES : quatre mises à feu en rafale, d'une oreille à l'autre — chacune un petit « tchk » d'allumage puis le
+   * chuintement d'un propulseur qui part en montant —, sur un grondement court
+   */
+  roquettes: {
+    duree: 0.9, niveau: 0.26, salle: [0.35, 0.14], variantes: 3,
+    faire: (m, h) => {
+      note(m, 0, 0.45, 0, { f: 90, glisse: { vers: 55, en: 0.15 }, a: 0.003, d: 0.25, partiels: CORPS, sature: 1.6 })
+      for (let k = 0; k < 4; k++) {
+        const t0 = k * 0.055 + 0.01 * h.next()
+        const pan = [-0.6, 0.6, -0.25, 0.25][k]
+        souffle(m, h, t0, 0.5, pan, { f: 2200, q: 1.5, bande: true, a: 0.0005, d: 0.02 })
+        souffle(m, h, t0 + 0.01, 0.6, pan, { f: 700 + 150 * h.next(), glisse: { vers: 2400, en: 0.25, droit: true }, q: 1.1, bande: true, a: 0.01, d: 0.3 })
+      }
+    },
+  },
+  /**
+   * LA BOBINE TESLA EST LANCÉE : la bobine qui se charge — un bourdon électrique, des harmoniques impaires, qui monte et
+   * vibre —, un claquement de décharge, et le grésillement d'une boule de foudre qui s'éloigne
+   */
+  tesla: {
+    duree: 0.8, niveau: 0.24, salle: [0.35, 0.14], variantes: 2,
+    faire: (m, h) => {
+      note(m, 0, 0.7, 0, { f: 100, glisse: { vers: 160, en: 0.2, droit: true }, a: 0.03, d: 0.35, battement: 30, partiels: [[1, 1, 1], [3, 0.6, 1], [5, 0.4, 1], [7, 0.3, 1], [9, 0.15, 1]] })
+      souffle(m, h, 0.18, 0.9, 0, { f: 4800, glisse: { vers: 2400, en: 0.04 }, q: 1.6, bande: true, a: 0.001, d: 0.05 })
+      for (let k = 0; k < 6; k++) souffle(m, h, 0.22 + k * 0.05 + 0.02 * h.next(), 0.35 - k * 0.04, (h.next() - 0.5) * 0.8, { f: 3000 + 2000 * h.next(), q: 2, bande: true, a: 0.001, d: 0.02 })
+    },
+  },
+  /**
+   * LA FOUDRE DE LA BOBINE frappe : un éclair sec, plus grave et plus large que l'arc des drones — un claquement en deux
+   * temps (l'amorce, le coup), un bourdon de 50 Hz et ses harmoniques impaires, court
+   */
+  foudre: {
+    duree: 0.35, niveau: 0.16, salle: [0.25, 0.1], variantes: 4,
+    faire: (m, h) => {
+      const pan = (h.next() - 0.5) * 0.7
+      souffle(m, h, 0, 0.4, pan, { f: 5500, q: 2, bande: true, a: 0.0005, d: 0.012 })
+      souffle(m, h, 0.018, 1, pan, { f: 2800, glisse: { vers: 1500, en: 0.03 }, q: 1.1, bande: true, a: 0.0005, d: 0.05 })
+      note(m, 0.018, 0.5, 0, { f: 50 + 15 * h.next(), a: 0.002, d: 0.1, partiels: [[1, 1, 1], [3, 0.7, 1], [5, 0.5, 1], [7, 0.35, 1], [9, 0.2, 1]], sature: 1.5 })
+    },
+  },
+  /**
+   * LE LANCE-GRENADES : deux « tchomp » de tube, l'un sur l'autre — un pop creux qui tombe, l'air qui sort du tube —, et le
+   * petit « tink » métallique d'une grenade qui tourne
+   */
+  grenades: {
+    duree: 0.55, niveau: 0.24, salle: [0.3, 0.12], variantes: 3,
+    faire: (m, h) => {
+      for (const [t0, pan] of [[0, -0.3], [0.06, 0.3]] as const) {
+        note(m, t0, 1, pan, { f: 240 * (0.95 + 0.1 * h.next()), glisse: { vers: 110, en: 0.03 }, a: 0.001, d: 0.09, partiels: [[1, 1, 1], [2.3, 0.35, 0.5], [3.6, 0.12, 0.4]] })
+        souffle(m, h, t0, 0.55, pan, { f: 900, glisse: { vers: 350, en: 0.04 }, q: 1.3, bande: true, a: 0.001, d: 0.06 })
+      }
+      note(m, 0.1, 0.15, 0, { f: 2300 * (0.95 + 0.1 * h.next()), a: 0.001, d: 0.08, partiels: [[1, 1, 1], [2.76, 0.4, 0.5]] })
+    },
+  },
+  /**
+   * L'ESCORTE : la mitrailleuse d'un petit avion — un « tik » clair et léger, bien plus aigu que la mitrailleuse du
+   * Chasseur, d'une oreille ou de l'autre (deux avions), qui ne fatigue pas : elle tire souvent
+   */
+  escorte: {
+    duree: 0.2, niveau: 0.13, salle: [0.2, 0.08], variantes: 4,
+    faire: (m, h, v) => {
+      const pan = v % 2 === 0 ? -0.5 : 0.5
+      note(m, 0, 1, pan, { f: 820 + 60 * v, glisse: { vers: 420 + 30 * v, en: 0.015 }, a: 0.001, d: 0.035, partiels: [[1, 1, 1], [2, 0.25, 0.6]] })
+      souffle(m, h, 0, 0.4, pan, { f: 4200, glisse: { vers: 2200, en: 0.01 }, q: 1.2, bande: true, a: 0.0005, d: 0.018 })
+    },
+  },
   /** UNE TENTACULE FOUETTE (le Kraken, 16/11) : un sifflement d'air bref qui monte, et un claquement mouillé, sourd */
   fouet: {
     duree: 0.4, niveau: 0.16, salle: [0.25, 0.1], variantes: 4,

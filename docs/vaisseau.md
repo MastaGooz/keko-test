@@ -8094,3 +8094,14 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   dix secondes en avançant du même pas que le temps (`retourA += dt`) ; la somme des pas le laissait à 10 plus quelques
   millionièmes de milliardième — mesuré : 4 × 10⁻¹², dix secondes durant — et le chiffre, arrondi au-dessus, disait 11.
   Il s'arrondit désormais au-dessus à un millionième près (`dessinerLeRetour`).
+- **22/11, LES NOUVELLES ARMES ONT LEURS SONS.** Keko : « des sons originaux pour chacune des nouvelles armes ». Elles
+  empruntaient le rail du Prisme, le canon, l'essaim, l'arc des drones, le mini-missile et la mitrailleuse. Composés dans
+  `synthe.ts`, l'id de l'arme est celui de son son (`sonDeLArme` ne traduit plus rien) : RAILGUN, la bobine qui claque
+  puis le coup de fouet d'une balle supersonique, court et sec (0,6 s, sans la traîne du rail) ; OBUSIER, un grave
+  d'artillerie saturé, le souffle de la gueule, la culasse qui claque un dixième plus tard, une grande salle ; ROQUETTES,
+  quatre mises à feu d'une oreille à l'autre, chacune un allumage et un propulseur qui monte ; BOBINE TESLA, la bobine
+  qui se charge (bourdon d'harmoniques impaires qui monte), la décharge, le grésillement qui s'éloigne ; et SA FOUDRE
+  (`foudre`, à la place de l'arc des drones), un claquement en deux temps sur un bourdon de 50 Hz ; LANCE-GRENADES,
+  deux « tchomp » de tube et le « tink » d'une grenade ; ESCORTE, un « tik » d'avion léger, aigu, d'une oreille ou de
+  l'autre. Mesurés hors du navigateur (crêtes 0,13 à 0,34, au niveau des tirs voisins ; aucun NaN) ; PAS ÉCOUTÉS : à
+  juger à l'oreille.

@@ -2047,7 +2047,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     return { icone: pc?.id ?? armeDuVortex(), nom: pc?.nom ?? '' }
   }
   /** LE SON D'UNE ARME : le sien, ou, pour une arme de faction, celui d'une arme qui lui ressemble. */
-  const sonDeLArme = (id: string): string => ({ railgun: 'rail', roquettes: 'essaim', tesla: 'zap', obusier: 'canon', grenades: 'minimissile', escorte: 'mitraille' })[id] ?? id
+  // (LES NOUVELLES ARMES ONT LEURS SONS — Keko, 22/11 : « des sons originaux pour chacune » ; voir `synthe.ts` — l'id de l'arme
+  // est celui de son son ; reste ici ce qui n'en a pas à son nom)
+  const sonDeLArme = (id: string): string => id
   /** Deux couleurs mêlées (t de 0 à 1), opaques. */
   const meler = (a: number, b: number, t: number): number => {
     const c = (k: number): number => Math.round(((a >>> k) & 255) + ((((b >>> k) & 255) - ((a >>> k) & 255)) * t))
@@ -17106,7 +17108,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           foudresTesla.push({ x0: ev.x0, y0: ev.y0, x1: ev.x1, y1: ev.y1, t0: t, g: Math.round(ev.x1 * 13 + ev.y1 * 7) })
           if (t - zapA > 0.1) {
             zapA = t
-            jouer('zap')
+            jouer('foudre', { dx: ev.x1 - v.x, dy: ev.y1 - v.y })
           }
           break
         case 'sphereTir': {
