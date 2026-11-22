@@ -8012,3 +8012,6 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   `facteurDeCritique`, `critiqueTire(c, m, a)` — les quarante endroits de `jeu.ts`). Les deux entrent dans
   « toutes les armes », à la moitié (+1 à +5 points de chance, +2,5 à +12,5 points de dégâts critiques), posées au
   vaisseau, donc à toutes les armes, même prises après. Vérifié.
+- **22/11, LE DÉPHASAGE COMME LE CRITIQUE.** Keko : « passe le déphasage en 2, 4, 6, 8, 10 comme les chances de
+  critique » : une seule table, `POINTS_DE_CHANCE` (+2 à +10 points de la commune à la légendaire), pour les deux ;
+  `POINTS_DE_CRITIQUE` disparaît. La carte « toutes les armes » Critique garde la moitié (+1 à +5).

@@ -77,10 +77,10 @@ export const STATS_DE_FACTION: Record<Race, StatDeFaction[]> = {
 export const SEULEMENT_EN: Partial<Record<StatDArme | StatDeFaction, Rarete>> = {}
 /**
  * LES CHANCES SE COMPTENT EN POINTS, À L'ÉCHELLE DE LA RARETÉ (le déphasage — Keko ; le critique, pareil : en relatif,
- * « +12 % » d'1 % de chance n'en faisait que 1,12) : la commune +1 point, la légendaire +5.
+ * « +12 % » d'1 % de chance n'en faisait que 1,12) : la commune +2 points, la légendaire +10 (Keko, 22/11 : « plutôt
+ * que 1, 2, 3, 4, 5, on fait 2, 4, 6, 8, 10 » pour le critique, puis « passe le déphasage en 2, 4, 6, 8, 10 »).
  */
-export const POINTS_DE_CHANCE: Record<Rarete, number> = { commune: 0.01, peuCommune: 0.02, rare: 0.03, epique: 0.04, legendaire: 0.05, speciale: 0 }
-/** LA CHANCE DE CRITIQUE, deux fois plus (Keko, 22/11 : « plutôt que 1, 2, 3, 4, 5, on fait 2, 4, 6, 8, 10 ») ; le déphasage garde les siens. */
+export const POINTS_DE_CHANCE: Record<Rarete, number> = { commune: 0.02, peuCommune: 0.04, rare: 0.06, epique: 0.08, legendaire: 0.1, speciale: 0 }
 /**
  * LES STATS DES CARTES « TOUTES LES ARMES » : celles d'une arme, critique compris (Keko, 22/11 : « une carte critique
  * globale deux fois moins forte qui concerne toutes les armes, comme pour le reste ») ; une
@@ -88,7 +88,6 @@ export const POINTS_DE_CHANCE: Record<Rarete, number> = { commune: 0.01, peuComm
  */
 export const STATS_GLOBALES: StatDArme[] = ['degats', 'critique', 'critiques', 'cadence', 'portee', 'zone', 'pose', 'feu', 'corrosion', 'givre']
 export const PART_GLOBALE = 0.5
-export const POINTS_DE_CRITIQUE: Record<Rarete, number> = { commune: 0.02, peuCommune: 0.04, rare: 0.06, epique: 0.08, legendaire: 0.1, speciale: 0 }
 const EN_POINTS: ReadonlySet<string> = new Set(['critique', 'dephasage'])
 
 /**
@@ -259,7 +258,7 @@ export function factionAmelioree(c: ConfigVaisseau, stat: StatDeFaction, k: numb
 export function carte(cible: Cible, stat: StatDArme | StatDeFaction, rarete: Rarete): Talent {
   // (une chance, des points à l'échelle ; le reste, le bonus de la rareté)
   // (toutes les armes : la moitié)
-  const bonus = cible.sorte === 'armes' ? (stat === 'critique' ? POINTS_DE_CRITIQUE[rarete] : rareteDe(rarete).bonus) * PART_GLOBALE : stat === 'critique' ? POINTS_DE_CRITIQUE[rarete] : EN_POINTS.has(stat) ? POINTS_DE_CHANCE[rarete] : rareteDe(rarete).bonus
+  const bonus = cible.sorte === 'armes' ? (stat === 'critique' ? POINTS_DE_CHANCE[rarete] : rareteDe(rarete).bonus) * PART_GLOBALE : EN_POINTS.has(stat) ? POINTS_DE_CHANCE[rarete] : rareteDe(rarete).bonus
   return { id: `${cible.sorte === 'arme' ? `arme-${cible.arme}` : cible.sorte === 'armes' ? 'armes' : cible.race}:${stat}`, cible, stat, rarete, bonus }
 }
 
