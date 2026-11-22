@@ -7756,3 +7756,15 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     d'XP debout, à droite du vaisseau sous la barre couchée ; une vie prise, ils blanchissent et tremblent. Le compte
     retenu ne frappe plus, et dit « En attente d'un allié » chez le mort ; sans vie, « Plus de vie » à la place du
     chiffre. L'écran de fin dit « Partie terminée » et le niveau ; à distance, seulement « Hangar » (on rentre ensemble).
+- **22/11, LES VIES, PLUS LISIBLES ET À LEUR PLACE.** Keko : « le marron sombre du chiffre de la vie et du logo est trop
+  sombre, le chiffre est mal lisible ; en paysage, bien aligner horizontalement la vie et l'icône avec la barre d'XP ; en
+  vertical, agrandir un peu la longueur de la barre de vie du vaisseau, et mettre la vie et l'icône à gauche de la barre
+  de vie, bien centrées verticalement ».
+  - L'OR DES VIES EST PLUS DOUX (`OR_DES_VIES`) : le pied, le dessous et le cerne du vaisseau et du chiffre éclaircis, un
+    cerne d'un pixel au lieu de deux ; à l'échelle 1 (portrait, petit paysage), le chiffre prend la lettre d'or des titres
+    (`motEnRelief`) : frappé si petit, il se perdait dans son cerne, un pavé brun.
+  - L'AXE : le vaisseau des vies est large de HUIT (sept avant, il ne pouvait être qu'à un demi-pixel de l'axe de la barre
+    d'XP, large de huit). MESURÉ au canevas, téléphone couché et PC : médaillon, barre, vaisseau et chiffre centrés sur la
+    même colonne (20).
+  - DEBOUT : la barre de vie passe de 52 à 80 de long ; les vies sont à sa gauche, centrées sur sa hauteur, bouclier compris
+    (`placeDesVies`, posée par `dessinerLeScore`).

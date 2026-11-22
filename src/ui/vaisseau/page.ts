@@ -1639,9 +1639,19 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * vaisseau d'or, le chiffre frappé d'or dessous (`debout`, dans le bandeau) ou à sa droite ; une vie prise, ils
    * blanchissent et tremblent.
    */
-  const VAISSEAU_DES_VIES = ['...a...', '..aba..', '..aba..', '.aaaaa.', 'aaaaaaa', 'aa.a.aa', 'a.....a']
+  // (LARGE DE HUIT, UN NOMBRE PAIR — Keko, 22/11 : « bien aligner horizontalement la vie et l'icône avec la barre d'XP » :
+  // large de sept, il ne pouvait être qu'à un demi-pixel de l'axe de la barre, large de huit)
+  const VAISSEAU_DES_VIES = ['...aa...', '..abba..', '..abba..', '.aaaaaa.', 'aaaaaaaa', 'aa.aa.aa', 'a......a']
+  // (UN OR PLUS DOUX QUE CELUI DU COMPTE DU RETOUR — Keko, 22/11 : « le marron sombre du chiffre et du logo est trop
+  // sombre, le contraste entre le jaune et le sombre est trop fort » : le pied, le dessous et le cerne éclaircis)
+  const OR_DES_VIES = { pied: N.hex('#e0a232'), dessous: N.hex('#cf8c26'), cerne: N.hex('#6e4214'), trait: 1 }
   let viesVues = -1
   let vieRepriseA = -10
+  /** Debout, PORTRAIT : où les poser — le bord droit et le milieu en hauteur, à gauche de la barre de vie (voir `dessinerLeScore`). */
+  let placeDesVies: { droite: number; milieu: number } | null = null
+  /** La largeur du chiffre tel qu'il s'écrit (MESURÉE au canevas : sa boîte est son encre). */
+  const inkDuChiffre = (dit: string): number => largeurDe(dit, GRAS)
+  const largeurDesVies = (G: number): number => 8 * G + 4 * G + inkDuChiffre(String(m.invasion.vies)) * G
   function dessinerLesVies(p: Peintre, cx: number, y: number, G: number, debout: boolean): void {
     if (CONF.invasion.vies <= 0) return
     const n = m.invasion.vies
@@ -1651,24 +1661,26 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const blanc = u < 0.12
     const tremble = u < 0.5 ? Math.round(Math.sin(u * 60) * 2 * G * (1 - u / 0.5)) : 0
     const dit = String(n)
-    const wi = 7 * G
-    const wn = largeurDe(dit, GRAS) * G
-    const x0 = Math.round(debout ? cx - wi / 2 : cx) + tremble
-    // (le vaisseau : son contour d'abord, d'un pixel autour, puis l'or — clair en haut, foncé en bas)
+    const wi = 8 * G
+    const wn = inkDuChiffre(dit) * G
+    const x0 = (debout ? cx - 4 * G : cx) + tremble
+    // (le vaisseau : son contour d'abord, d'un pixel autour, puis l'or — clair en haut, plus doux en bas)
     for (const [ox, oy] of [[-1, 0], [1, 0], [0, -1], [0, 1]])
-      VAISSEAU_DES_VIES.forEach((rang, j) => [...rang].forEach((c, i) => c !== '.' && p.rect(x0 + (i + ox) * G, y + (j + oy) * G, G, G, N.hex('#1e0e03'))))
+      VAISSEAU_DES_VIES.forEach((rang, j) => [...rang].forEach((c, i) => c !== '.' && p.rect(x0 + (i + ox) * G, y + (j + oy) * G, G, G, OR_DES_VIES.cerne)))
     VAISSEAU_DES_VIES.forEach((rang, j) =>
       [...rang].forEach((c, i) => {
         if (c === '.') return
-        const teinte = blanc ? N.WHITE : c === 'b' ? PEPITE[4] : j <= 2 ? PEPITE[3] : j <= 4 ? PEPITE[2] : N.hex('#a8650f')
+        const teinte = blanc ? N.WHITE : c === 'b' ? PEPITE[4] : j <= 2 ? PEPITE[3] : j <= 4 ? PEPITE[2] : OR_DES_VIES.pied
         p.rect(x0 + i * G, y + j * G, G, G, teinte)
       }),
     )
     p.glow(x0 + wi / 2, y + 3.5 * G, 7 * G, PEPITE[2], blanc ? 0.7 : 0.18)
-    // (le chiffre, frappé comme celui du retour)
-    const nx = debout ? cx + tremble : x0 + wi + 3 * G + wn / 2
+    // (le chiffre, frappé comme celui du retour, dans l'or plus doux)
+    const nx = debout ? cx + tremble : x0 + wi + 4 * G + wn / 2
     const ny = debout ? y + 7 * G + 8 * G : y + 3.5 * G
-    motFrappe(p, dit, nx, ny, G, blanc ? 1 : 0)
+    // (EN PETIT, LA LETTRE D'OR DES TITRES : frappé à l'échelle 1, le chiffre se perdait dans son cerne — un pavé brun)
+    if (G > 1) motFrappe(p, dit, nx, ny, G, blanc ? 1 : 0, OR_DES_VIES)
+    else motEnRelief(p, dit, nx, Math.round(ny - 5.5) + decalage(GRAS), blanc ? 'ivoire' : true, GRAS)
   }
   /**
    * LE COMPTE DU RETOUR (Keko, 14/11 : « quand je meurs, à la place de mettre fin à la partie, utilise le compte à
@@ -3034,7 +3046,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         dessinerLesVies(p, enLigne ? cx : axe, bas + 6 * G, G, true)
       } else {
         dessinerLExperience(p, x0, y, droite - x0)
-        dessinerLesVies(p, x0, y + 12, 1, false)
+        // (À GAUCHE DE LA BARRE DE VIE, centrées sur sa hauteur — Keko, 22/11 ; voir `placeDesVies`)
+        if (placeDesVies !== null) dessinerLesVies(p, placeDesVies.droite - largeurDesVies(1), Math.round(placeDesVies.milieu - 3.5), 1, false)
       }
       dessinerLeRetour(p)
       return
@@ -3916,12 +3929,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * être entière : le mot arrive énorme et retombe à sa taille sur un ressort raide —, centrée sur (cx, cy), en or,
    * cernée de deux pixels ; `flash` la blanchit.
    */
-  function motFrappe(p: Peintre, s: string, cx: number, cy: number, e: number, flash: number): void {
+  // (`or` : un or plus doux — voir `OR_DES_VIES`)
+  function motFrappe(p: Peintre, s: string, cx: number, cy: number, e: number, flash: number, or?: { pied: number; dessous: number; cerne: number; trait: number }): void {
     const mot = spell(s, GRAS) as { letters: { g: unknown; x: number }[]; w: number }
     const x0 = cx - (mot.w * e) / 2
     const y0 = cy - 5.5 * e // (les capitales tiennent sur les rangées 2 à 8 de la boîte de 11)
     const items = mot.letters.filter((L) => L.g).map((L) => ({ g: L.g, x: x0 + L.x * e, y: y0, sx: e, sy: e, flash }))
-    drawWord(p, items, { fill: [N.hex('#a8650f'), PEPITE[2], N.hex('#ffe68a')], edge: N.hex('#fff7d6'), under: N.hex('#6b3a0c'), outline: N.hex('#1e0e03'), ow: 2, shadow: N.hex('#0a0408') })
+    drawWord(p, items, { fill: [or?.pied ?? N.hex('#a8650f'), PEPITE[2], N.hex('#ffe68a')], edge: N.hex('#fff7d6'), under: or?.dessous ?? N.hex('#6b3a0c'), outline: or?.cerne ?? N.hex('#1e0e03'), ow: or?.trait ?? 2, shadow: or === undefined ? N.hex('#0a0408') : undefined })
   }
   /** Un texte replié à `largeur`, ligne par ligne, dans sa police (les petites capitales passent sans accents). */
   function replier(s: string, largeur: number, f: Police | 'mini' = TEXTE): string[] {
@@ -14926,8 +14940,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const doux = u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2
       return valeur + Math.max(0, coqueFantome - valeur) * (1 - doux)
     }
-    const BW = 52
+    // (PLUS LONGUE AU VORTEX — Keko, 22/11 : « agrandir un peu la longueur de la barre de vie, qui est toute petite »)
+    const BW = VORTEX ? 80 : 52
     const wp = 5 + 9 + 3 + BW + 5
+    // (les vies, à sa gauche : son bord gauche et son milieu en hauteur, bouclier ou plaques compris, sans la secousse)
+    if (VORTEX) placeDesVies = { droite: W - 5 - wp + 5 + 9 + 3 - 7, milieu: yHud + 1 + (CONF.bouclier.points > 0 || CONF.plaques > 0 ? 5 : 3) }
     const sursaut = du >= 0 && du < 0.28 ? 3 * (1 - du / 0.28) : db >= 0 && db < 0.2 ? 1.5 * (1 - db / 0.2) : 0
     const ox = W - 5 - wp + Math.round(Math.sin(t * 90) * sursaut)
     const oy = yHud + Math.round(Math.cos(t * 77) * sursaut * 0.7) + (du >= 0 && du < 0.6 ? Math.round(3 * Math.exp(-du * 10) * Math.cos(du * 24)) : 0)
