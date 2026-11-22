@@ -326,7 +326,9 @@ export type ArmeDeFaction = { id: string; nom: string; dit: string; race: Race; 
 const nouvelle = (a: Omit<Arme, 'dispersion' | 'guide' | 'vitesse' | 'vie'> & Partial<Arme>): Arme => ({ dispersion: 0, guide: false, vitesse: 0, vie: 0, ...a, ajoutee: true, tousSens: true, place: 20 })
 export const ARMES_DE_FACTION: ArmeDeFaction[] = [
   // L'EMPIRE : de l'artillerie, de l'électricité, des escortes
-  { id: 'railgun', nom: 'Railgun', dit: 'Un trait de métal qui transperce toute une ligne d’ennemis.', race: 'humains', icone: 'imp-railgun', armes: () => [nouvelle({ id: 'railgun', cadence: 2.6, degats: 110, portee: 190, rail: { largeur: 3 } })] },
+  // (UNE BALLE, PLUS UN TRAIT — Keko, 22/11 : « un projectile très rapide qui laisse une traînée, juste visuelle, et qui perd
+  // en dégâts à chaque cible traversée » ; un quart à chaque insecte — voir `Arme.balle`)
+  { id: 'railgun', nom: 'Railgun', dit: 'Une balle très rapide qui transperce les ennemis, un peu moins forte à chacun.', race: 'humains', icone: 'imp-railgun', armes: () => [nouvelle({ id: 'railgun', cadence: 2.6, degats: 110, portee: 190, vitesse: 900, vie: 190 / 900, perforant: true, balle: { part: 0.75, calibre: 2 } })] },
   { id: 'obusier', nom: 'Obusier', dit: 'De lourds obus qui explosent sur une large zone.', race: 'humains', icone: 'imp-obusier', armes: () => [nouvelle({ id: 'obusier', cadence: 2.4, degats: 70, portee: 150, vitesse: 140, vie: 1.3, dispersion: 0.05, zone: { rayon: 26 } })] },
   { id: 'roquettes', nom: 'Roquettes', dit: 'Quatre roquettes qui fondent sur les ennemis proches.', race: 'humains', icone: 'imp-roquettes', armes: () => [nouvelle({ id: 'roquettes', cadence: 2.8, degats: 30, portee: 130, vitesse: 150, vie: 1.6, essaim: { nombre: 4, eventail: 2.4, acces: 120, pointe: 230, braquage: 8, chaos: 2.4, pas: 0.25, calme: 1.3, reprise: 45 } })] },
   // (LA BOBINE TESLA — Keko, 22/11 : « l'arc tesla, c'est une chaîne d'éclair bis » : une boule de foudre lente qui
@@ -364,12 +366,12 @@ export const MUTATIONS: Mutation[] = [
   variation('missile-incendiaire', 'minimissile', 'Incendiaires', 'Les missiles enflamment ce qu’ils touchent.', changerA('minimissile', V.incendiaire)),
   variation('missile-cryo', 'minimissile', 'Cryogéniques', 'Les missiles gèlent ce qu’ils touchent et le ralentissent.', changerA('minimissile', V.cryo)),
   // LE RAILGUN
-  variation('railgun-incendiaire', 'railgun', 'Incendiaire', 'Tout ce que le trait traverse s’enflamme.', changerA('railgun', V.incendiaire)),
-  variation('railgun-cryo', 'railgun', 'Cryogénique', 'Tout ce que le trait traverse gèle.', changerA('railgun', V.cryo)),
-  variation('railgun-large', 'railgun', 'Rail large', 'Un trait deux fois et demie plus large.', changerA('railgun', (a) => ({ ...a, rail: { largeur: (a.rail?.largeur ?? 3) * 2.5 } }))),
-  variation('railgun-jumeau', 'railgun', 'Rail jumeau', 'Un second rail, un peu moins fort, tire aussi.', ajouterA('railgun', (a) => [ajoutee(a, 21, { degats: fois(a, 0.6) })])),
-  variation('railgun-eclats', 'railgun', 'Rail à éclats', 'Chaque ennemi traversé projette des éclats autour de lui.', changerA('railgun', (a) => ({ ...V.fragments(a), fragments: { nombre: 4, degats: fois(a, 0.2), vitesse: 160, vie: 0.2 } }))),
-  variation('railgun-surcharge', 'railgun', 'Surcharge', 'Deux fois plus de traits, un peu moins forts.', changerA('railgun', (a) => ({ ...a, cadence: a.cadence * 0.5, degats: fois(a, 0.6) }))),
+  variation('railgun-incendiaire', 'railgun', 'Incendiaire', 'Tout ce que la balle traverse s’enflamme.', changerA('railgun', V.incendiaire)),
+  variation('railgun-cryo', 'railgun', 'Cryogénique', 'Tout ce que la balle traverse gèle.', changerA('railgun', V.cryo)),
+  variation('railgun-large', 'railgun', 'Gros calibre', 'Une balle deux fois et demie plus grosse, qui touche plus large.', changerA('railgun', (a) => ({ ...a, balle: a.balle === undefined ? undefined : { ...a.balle, calibre: a.balle.calibre * 2.5 } }))),
+  variation('railgun-jumeau', 'railgun', 'Rail jumeau', 'Un second railgun, un peu moins fort, tire aussi.', ajouterA('railgun', (a) => [ajoutee(a, 21, { degats: fois(a, 0.6) })])),
+  variation('railgun-eclats', 'railgun', 'Balle à éclats', 'Chaque ennemi traversé projette des éclats autour de lui.', changerA('railgun', (a) => ({ ...V.fragments(a), fragments: { nombre: 4, degats: fois(a, 0.2), vitesse: 160, vie: 0.2 } }))),
+  variation('railgun-surcharge', 'railgun', 'Surcharge', 'Deux fois plus de tirs, un peu moins forts.', changerA('railgun', (a) => ({ ...a, cadence: a.cadence * 0.5, degats: fois(a, 0.6) }))),
   // L'OBUSIER
   variation('obusier-fragmentation', 'obusier', 'Fragmentation', 'Chaque explosion projette six éclats brûlants tout autour.', changerA('obusier', V.fragments)),
   variation('obusier-incendiaire', 'obusier', 'Incendiaires', 'Les obus enflamment ce qu’ils touchent.', changerA('obusier', V.incendiaire)),

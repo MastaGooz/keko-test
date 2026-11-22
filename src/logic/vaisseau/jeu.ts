@@ -1076,6 +1076,14 @@ export type Arme = {
   tousSens?: boolean
   gerbe?: { nombre: number; ecart: number }
   perforant?: boolean
+  /**
+   * LE RAILGUN DE L'EMPIRE (Keko, 22/11 : « un projectile très rapide qui laisse une traînée — juste visuelle — et qui
+   * perd en dégâts à chaque cible traversée ; ça suffit à le distinguer » de la Désintégration du Prisme, un trait
+   * instantané) : un tir qui traverse (perforant) garde part de ses dégâts après chaque insecte touché ; son corps
+   * touche à calibre au-delà du bord d'un insecte (1,5 sinon), et sa course se suit d'un bout à l'autre du pas — il va
+   * si vite qu'il sauterait par-dessus ; les éclats d'une variation partent de chaque insecte traversé.
+   */
+  balle?: { part: number; calibre: number }
   ricochet?: { rebonds: number; portee: number; part: number }
   incendiaire?: { duree: number; dps: number }
   fragments?: { nombre: number; degats: number; vitesse: number; vie: number }
@@ -1133,7 +1141,7 @@ export type Choc = { x: number; y: number; force: number; asteroide: number; /**
 /** (un trait du rival armé porte les dégâts de son arme, son nom, et s'il est guidé — absents : le trait d'avant, un point) */
 export type Tir = { id: number; x: number; y: number; vx: number; vy: number; vie: number; degats?: number; guide?: boolean; arme?: string }
 /** Un obus du joueur : un trait qui porte des dégâts, de l'arme qui l'a tiré ; guidé, il tourne vers le rival. */
-export type Obus = Tir & { degats: number; guide: boolean; arme: string; /** Ses ricochets qui restent (voir `Arme.ricochet`), ceux qu'il a déjà touchés (il ne les retouche pas en repartant). */ rebonds?: { n: number; portee: number; part: number }; deja?: number[]; /** Ce qu'il enflamme (voir `Arme.incendiaire`). */ brule?: { duree: number; dps: number }; /** Les éclats de son explosion (voir `Arme.fragments`). */ fragments?: { nombre: number; degats: number; vitesse: number; vie: number }; /** L'insecte auquel il est accroché (voir `Arme.infaillible`). */ verrou?: number; /** Un coup critique (le passif du labo) : ses dégâts sont déjà multipliés. */ critique?: boolean; /** Il explose (voir `Arme.zone`). */ zone?: { rayon: number; degats: number }; /** Il gèle ce qu'il touche (voir `Arme.gel`). */ gel?: { duree: number; ralenti: number }; /** Il traverse (voir `Arme.salve`) : les insectes déjà touchés. */ perce?: number[]; /** Il se brise au premier insecte touché en petits fragments, en cône derrière lui (voir `Arme.salve`). */ eclatement?: { nombre: number; cone: number; vitesse: number; vie: number; degats: number }; /** Un missile d'essaim (voir `Arme.essaim`) : sa cible, sa naissance, sa vitesse de départ, et comment il fonce. */ traque?: { cible: number; nee: number; v0: number; acces: number; pointe: number; braquage: number; chaos: number; pas: number; calme: number; reprise: number; /** L'instant où il a repris une autre cible (la sienne morte) : son chaos repart de là. */ depuis?: number }; /** Une boule de napalm, lancée en cloche (voir `Arme.napalm`) : sa durée de vol au départ ; elle ne touche rien en vol. */ napalm?: { rayon: number; duree: number; dps: number; brulure: number; dpsBrulure: number }; vie0?: number }
+export type Obus = Tir & { degats: number; guide: boolean; arme: string; /** Ses ricochets qui restent (voir `Arme.ricochet`), ceux qu'il a déjà touchés (il ne les retouche pas en repartant). */ rebonds?: { n: number; portee: number; part: number }; deja?: number[]; /** Ce qu'il enflamme (voir `Arme.incendiaire`). */ brule?: { duree: number; dps: number }; /** Les éclats de son explosion (voir `Arme.fragments`). */ fragments?: { nombre: number; degats: number; vitesse: number; vie: number }; /** L'insecte auquel il est accroché (voir `Arme.infaillible`). */ verrou?: number; /** Un coup critique (le passif du labo) : ses dégâts sont déjà multipliés. */ critique?: boolean; /** Il explose (voir `Arme.zone`). */ zone?: { rayon: number; degats: number }; /** Il gèle ce qu'il touche (voir `Arme.gel`). */ gel?: { duree: number; ralenti: number }; /** Il traverse (voir `Arme.salve`) : les insectes déjà touchés. */ perce?: number[]; /** Une balle de railgun (voir `Arme.balle`) : la part de ses dégâts qu'elle garde à chaque insecte traversé, son calibre. */ balle?: { part: number; calibre: number }; /** Il se brise au premier insecte touché en petits fragments, en cône derrière lui (voir `Arme.salve`). */ eclatement?: { nombre: number; cone: number; vitesse: number; vie: number; degats: number }; /** Un missile d'essaim (voir `Arme.essaim`) : sa cible, sa naissance, sa vitesse de départ, et comment il fonce. */ traque?: { cible: number; nee: number; v0: number; acces: number; pointe: number; braquage: number; chaos: number; pas: number; calme: number; reprise: number; /** L'instant où il a repris une autre cible (la sienne morte) : son chaos repart de là. */ depuis?: number }; /** Une boule de napalm, lancée en cloche (voir `Arme.napalm`) : sa durée de vol au départ ; elle ne touche rien en vol. */ napalm?: { rayon: number; duree: number; dps: number; brulure: number; dpsBrulure: number }; vie0?: number }
 /** Une bombe en vol (la capacité active d'essai). */
 export type Bombe = Tir
 /** Le rival : un vaisseau comme l'autre, des points, ce qu'il fait, sa roche, son laser, son prochain tir, son butin. */
@@ -5081,11 +5089,20 @@ function brulerLesFlaques(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement
 }
 
 /** UNE EXPLOSION DE ZONE (voir `Arme.zone`) : tout ennemi à moins du rayon — sauf celui qu'on vient de toucher — en perd. */
+/** La distance du point (x, y) au segment de (x0, y0) à (x1, y1). */
+function distanceAuSegment(x: number, y: number, x0: number, y0: number, x1: number, y1: number): number {
+  const dx = x1 - x0
+  const dy = y1 - y0
+  const l2 = dx * dx + dy * dy
+  const u = l2 === 0 ? 0 : Math.max(0, Math.min(1, ((x - x0) * dx + (y - y0) * dy) / l2))
+  return Math.hypot(x - (x0 + dx * u), y - (y0 + dy * u))
+}
 /** CE QU'UN TIR EMPORTE DE SON ARME : sa zone, et ce que les cartes spéciales lui ont donné (voir `Arme.ajoutee`). */
 function effetsDuTir(a: Arme): Partial<Obus> {
   return {
     ...(a.zone === undefined ? {} : { zone: { rayon: a.zone.rayon, degats: a.degats } }),
     ...(a.perforant === true ? { perce: [] } : {}),
+    ...(a.balle === undefined ? {} : { balle: { ...a.balle } }),
     ...(a.ricochet === undefined ? {} : { rebonds: { n: a.ricochet.rebonds, portee: a.ricochet.portee, part: a.ricochet.part } }),
     ...(a.incendiaire === undefined ? {} : { brule: { ...a.incendiaire } }),
     ...(a.fragments === undefined ? {} : { fragments: { ...a.fragments } }),
@@ -5759,6 +5776,8 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
         o.vie = Math.max(o.vie, dt)
       }
     }
+    const ox = o.x
+    const oy = o.y
     if (bouge) {
       o.x += o.vx * dt
       o.y += o.vy * dt
@@ -5783,15 +5802,23 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
     }
     // (UN ÉCLAT QUI TRAVERSE : il touche tout ce qu'il croise, une fois chacun, et continue)
     if (!fini && o.perce !== undefined) {
-      for (const e of [...touchables]) {
-        if (o.perce.includes(e.id) || Math.hypot(e.corps.x - o.x, e.corps.y - o.y) > rayonDe(c, e) + 1.5) continue
+      // (UNE BALLE DE RAILGUN — voir `Arme.balle` : tout ce que sa course du pas a croisé, dans l'ordre où elle l'a croisé)
+      const ba = o.balle
+      const croises = ba === undefined ? touchables : touchables.filter((e) => !o.perce!.includes(e.id) && distanceAuSegment(e.corps.x, e.corps.y, ox, oy, o.x, o.y) <= rayonDe(c, e) + ba.calibre).sort((p, q) => Math.hypot(p.corps.x - ox, p.corps.y - oy) - Math.hypot(q.corps.x - ox, q.corps.y - oy))
+      for (const e of [...croises]) {
+        if (o.perce.includes(e.id) || (ba === undefined && Math.hypot(e.corps.x - o.x, e.corps.y - o.y) > rayonDe(c, e) + 1.5)) continue
         o.perce.push(e.id)
         // (UN TIR INFAILLIBLE QUI TRAVERSE lâche sa cible une fois sur elle, et file droit — voir `Arme.perforant`)
         if (o.verrou === e.id) delete o.verrou
         if (o.gel !== undefined) geler(m, e, o.gel.duree, o.gel.ralenti, ev)
         if (o.brule !== undefined) enflammer(m, e, o.brule)
         e.pv -= o.degats
-        ev.push({ type: 'ennemiTouche', id: e.id, x: o.x, y: o.y, critique: o.critique === true })
+        ev.push({ type: 'ennemiTouche', id: e.id, x: ba === undefined ? o.x : e.corps.x, y: ba === undefined ? o.y : e.corps.y, critique: o.critique === true })
+        // (la balle perd une part de ses dégâts ; ses éclats partent de l'insecte traversé)
+        if (ba !== undefined) {
+          if (o.fragments !== undefined) fragmenter(m, e.corps.x, e.corps.y, o.fragments, e)
+          o.degats = Math.max(1, Math.round(o.degats * ba.part))
+        }
         if (e.pv <= 0) abattre(e)
       }
     }

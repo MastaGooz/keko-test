@@ -8078,3 +8078,14 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   carte dit « de portée et de zone » (« de zone » pour une arme sans portée) ; `zoneDuVol` (les dessins agrandis) lit
   les cartes « Portée » des armes à zone et celles de toutes les armes ; `&zone=N` pose N % de portée. VU : la carte
   « toutes les armes » tient en trois lignes.
+- **22/11, LE RAILGUN DEVIENT UNE BALLE.** Keko : « quelle différence entre le railgun et la Désintégration ? » — aucune
+  dans la règle (le même `tirerLesRails`) : des chiffres et un dessin. Puis : « un projectile très rapide qui laisse une
+  traînée (juste visuelle) et qui perd en dégâts à chaque cible traversée ; ça suffit à le distinguer ». LA BALLE
+  (`Arme.balle`) : 900 par seconde, perforante, elle garde 75 % de ses dégâts après chaque insecte traversé (110, 83,
+  62…) ; à cette vitesse elle ferait quinze unités par pas, plus qu'un insecte n'est large : sa course du pas se suit
+  d'un bout à l'autre (`distanceAuSegment`), les insectes croisés touchés dans l'ordre. Ses variations suivent : « Rail
+  large » devient GROS CALIBRE (la balle touche plus large, `calibre` ×2,5), « Rail à éclats » devient BALLE À ÉCLATS
+  (les éclats partent de chaque insecte traversé), les textes disent « la balle » ; Rail jumeau, Surcharge, Incendiaire,
+  Cryogénique ne changent pas. LA TRAÎNÉE est à la page (`dessinerLesTrainesDuRailgun`) : du départ à la balle, le fil
+  blanc-bleu et ses anneaux de bobine, qui s'efface en 0,35 s la balle partie. Le son reste celui du rail. VU (traînée
+  allongée pour la capture, puis remise) ; un test garde la balle (trois insectes alignés, 110 / 83 / 62, dans l'ordre).

@@ -11177,40 +11177,58 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       if (u < 0.3) p.glow(e.x, e.y, 12 * e.s, VIDE[5], 0.7 * (1 - u / 0.3))
     }
   }
+  /**
+   * LA TRAÎNÉE DU RAILGUN (Keko, 22/11 : « un projectile très rapide qui laisse une traînée, juste visuelle » — voir
+   * `Arme.balle`) : de là où la balle est partie à là où elle est, UN FIL BLANC-BLEU très fin et, à pas réguliers, DES
+   * ANNEAUX DE BOBINE en travers (l'onde des aimants), qui s'écartent en vieillissant ; la balle partie, le fil s'efface
+   * de son départ vers son bout. Rien dans la règle : la page la tient, par balle.
+   */
+  const trainesDuRailgun = new Map<number, { x0: number; y0: number; x: number; y: number; nee: number; finA: number | null; s: number }>()
+  const DUREE_DE_LA_TRAINEE = 0.35
+  function dessinerLesTrainesDuRailgun(p: Peintre): void {
+    const vivantes = new Set<number>()
+    for (const o of m.obus) {
+      if (o.arme !== 'railgun') continue
+      vivantes.add(o.id)
+      const tr = trainesDuRailgun.get(o.id)
+      // (vue pour la première fois : elle est partie un pas plus tôt)
+      if (tr === undefined) trainesDuRailgun.set(o.id, { x0: o.x - o.vx * PAS, y0: o.y - o.vy * PAS, x: o.x, y: o.y, nee: t, finA: null, s: (o.balle?.calibre ?? 2) / 2 })
+      else (tr.x = o.x), (tr.y = o.y)
+    }
+    for (const [id, tr] of trainesDuRailgun) {
+      if (!vivantes.has(id) && tr.finA === null) tr.finA = t
+      if (tr.finA !== null && t - tr.finA > DUREE_DE_LA_TRAINEE) {
+        trainesDuRailgun.delete(id)
+        continue
+      }
+      const L = Math.hypot(tr.x - tr.x0, tr.y - tr.y0)
+      if (L < 1) continue
+      const ux = (tr.x - tr.x0) / L
+      const uy = (tr.y - tr.y0) / L
+      const nx = -uy
+      const ny = ux
+      const u = tr.finA === null ? 0 : (t - tr.finA) / DUREE_DE_LA_TRAINEE
+      const age = t - tr.nee
+      const efface = u * L
+      for (let d = efface; d < L; d += 1) {
+        const a = (1 - u) * (0.35 + 0.65 * (d / L))
+        p.dot(tr.x0 + ux * d, tr.y0 + uy * d, d > L - 4 ? N.WHITE : N.hex('#7ad8ff'), a)
+      }
+      const pas = 9
+      for (let d = pas; d < L - 4; d += pas) {
+        if (d < efface) continue
+        const ecart = (1.2 + 2.5 * Math.min(1, age / 0.3)) * tr.s
+        p.line(tr.x0 + ux * d - nx * ecart, tr.y0 + uy * d - ny * ecart, tr.x0 + ux * d + nx * ecart, tr.y0 + uy * d + ny * ecart, age < 0.12 ? N.hex('#bfefff') : N.hex('#3a8ad8'), 0.7 * (1 - u))
+      }
+      // (au départ, un éclair blanc tant qu'elle est jeune)
+      if (age < 0.12) p.glow(tr.x0, tr.y0, 8 * tr.s, N.WHITE, 0.7 * (1 - age / 0.12))
+    }
+  }
   function dessinerLeRailgun(p: Peintre): void {
     for (let i = traitsDuRail.length - 1; i >= 0; i--) if (t - traitsDuRail[i].t0 > DUREE_DU_RAIL) traitsDuRail.splice(i, 1)
     for (const r of traitsDuRail) {
       const u = (t - r.t0) / DUREE_DU_RAIL
       const v1 = 1 - u
-      // LE RAILGUN DE L'EMPIRE (Keko, 22/11 : « c'est exactement le rayon du Prisme ; un trait plus fin, un graphisme
-      // différent ») : UN FIL BLANC-BLEU très fin, tendu d'un coup ; le long de lui, DES ANNEAUX DE BOBINE — de petits
-      // traits en travers, à pas réguliers, qui s'écartent et s'éteignent (l'onde des aimants) ; à la bouche, un éclair
-      // blanc et deux flammèches ; il s'efface du canon vers le bout
-      if (r.arme === 'railgun') {
-        const L = Math.hypot(r.x1 - r.x0, r.y1 - r.y0) || 1
-        const ux = (r.x1 - r.x0) / L
-        const uy = (r.y1 - r.y0) / L
-        const nx = -uy
-        const ny = ux
-        const efface = u * L * 1.2
-        for (let d = efface; d < L; d += 1) {
-          const a = v1 * (0.6 + 0.4 * (1 - d / L))
-          p.dot(r.x0 + ux * d, r.y0 + uy * d, d < efface + 3 ? N.hex('#7ad8ff') : N.WHITE, a)
-        }
-        const pas = 9
-        for (let d = pas; d < L; d += pas) {
-          if (d < efface) continue
-          const ecart = (1.5 + 3 * u) * r.s
-          const c = u < 0.4 ? N.hex('#bfefff') : N.hex('#3a8ad8')
-          p.line(r.x0 + ux * d - nx * ecart, r.y0 + uy * d - ny * ecart, r.x0 + ux * d + nx * ecart, r.y0 + uy * d + ny * ecart, c, 0.8 * v1)
-        }
-        if (u < 0.35) {
-          const k = 1 - u / 0.35
-          p.glow(r.x0, r.y0, 9 * r.s, N.WHITE, 0.8 * k)
-          for (const sg of [-1, 1]) p.line(r.x0, r.y0, r.x0 + (ux * 4 + nx * sg * 3) * r.s, r.y0 + (uy * 4 + ny * sg * 3) * r.s, N.hex('#bfefff'), k)
-        }
-        continue
-      }
       const L = Math.hypot(r.x1 - r.x0, r.y1 - r.y0) || 1
       const nx = -(r.y1 - r.y0) / L
       const ny = (r.x1 - r.x0) / L
@@ -11484,12 +11502,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   function dessinerLePlasma(p: Peintre): void {
     for (let i = eclatsDePlasma.length - 1; i >= 0; i--) if (t - eclatsDePlasma[i].t0 > DUREE_DE_L_ECLAT) eclatsDePlasma.splice(i, 1)
     const orbes = m.obus.filter((o) => o.arme === 'plasma')
-    if (orbes.length === 0 && eclatsDePlasma.length === 0 && rubans.size === 0 && popsDEssaim.length === 0 && m.spheres.length === 0 && m.puits.length === 0 && effondrements.length === 0 && traitsDuRail.length === 0 && !m.obus.some((o) => o.arme === 'essaim' || o.arme === 'arcane')) return
+    if (orbes.length === 0 && eclatsDePlasma.length === 0 && rubans.size === 0 && popsDEssaim.length === 0 && m.spheres.length === 0 && m.puits.length === 0 && effondrements.length === 0 && traitsDuRail.length === 0 && trainesDuRailgun.size === 0 && !m.obus.some((o) => o.arme === 'essaim' || o.arme === 'arcane' || o.arme === 'railgun')) return
     p.place(W / 2 - camera.x, centreY() - camera.y)
     dessinerLesSpheres(p)
     dessinerLesPuits(p)
     dessinerLEssaim(p)
     dessinerLeRailgun(p)
+    dessinerLesTrainesDuRailgun(p)
     for (const o of orbes) {
       const l = Math.hypot(o.vx, o.vy) || 1
       const ux = o.vx / l
@@ -14196,6 +14215,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         p.circle(o.x - 0.5, o.y - hauteur - 0.5, 1.7, FEU[5])
         p.px(Math.round(o.x - 1), Math.round(o.y - hauteur - 1), N.hex('#fff2a8'))
         p.glow(o.x, o.y - hauteur, 6, FEU[4], 0.6)
+      } else if (o.arme === 'railgun') {
+        // (LA BALLE DU RAILGUN — voir `dessinerLesTrainesDuRailgun` : un court fuseau blanc, son cœur cyan, sa lueur)
+        const k = (o.balle?.calibre ?? 2) / 2
+        p.glow(o.x, o.y, 6 * k, N.hex('#7ad8ff'), 0.7)
+        p.line(o.x - ux * 4 * k, o.y - uy * 4 * k, o.x, o.y, N.hex('#bfefff'))
+        if (k > 1.5) p.circle(o.x, o.y, 0.8 * k, N.hex('#bfefff'))
+        p.px(Math.round(o.x), Math.round(o.y), N.WHITE)
       } else if (o.arme === 'obusier') {
         // (UN OBUS — l'Obusier de l'Empire : une ogive d'acier sombre, sa pointe claire, une traîne de feu)
         p.glow(o.x - ux * 3, o.y - uy * 3, 7, FEU[4], 0.5)

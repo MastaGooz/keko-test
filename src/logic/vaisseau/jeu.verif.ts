@@ -3141,6 +3141,26 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   verifier(`le retour : tombé à 1 100, il revient à ${Math.round(ou.x)} (en deçà de la tempête, ${ici}) ; l'explosion (${deflagration}) abat les trois proches (${abattus}), épargne le lointain et la roche (${epargnes}), ${pepites} pépites tombent ; invincible deux secondes, rien ne le mord (${!mordu}) ; à la fin, rien ne le recouvre (${libre})`, Math.abs(ou.x - ici) < 1 && Math.abs(ou.y) < 1 && deflagration && abattus && epargnes && pepites >= 3 && !mordu && libre && (w.phase as string) === 'vol')
 }
 
+// LA BALLE DU RAILGUN (Keko, 22/11 : « un projectile très rapide qui laisse une traînée et qui perd en dégâts à chaque
+// cible traversée ») : à 900 par seconde — quinze unités par pas, plus qu'un insecte n'est large —, elle touche les trois
+// insectes alignés, chacun une fois, dans l'ordre, un quart de moins à chacun ; elle ne frappe pas tout d'un coup
+{
+  const railgun = { id: 'railgun', cadence: 2.6, degats: 110, portee: 190, vitesse: 900, vie: 190 / 900, dispersion: 0, guide: false, perforant: true, tousSens: true, balle: { part: 0.75, calibre: 2 } }
+  const cfg = { ...VAISSEAU, coque: 1e9, armes: [railgun], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false }, passifs: { ...VAISSEAU.passifs, critique: 0 } }
+  const w = nouveauMonde(cfg, 5)
+  w.invasion.prochainA = 1e9
+  const pv0 = 1e6
+  const ligne = [40, 47, 120].map((x, k): Ennemi => ({ id: 500 + k, corps: { ...nouveauVaisseau(), x, y: 0 }, pv: pv0, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9 }))
+  w.ennemis.push(...ligne)
+  const ordre: number[] = []
+  let pas = 0
+  for (let i = 0; i < 40 && ordre.length < 3; i++) {
+    for (const ev of avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements) if (ev.type === 'ennemiTouche' && !ordre.includes(ev.id)) (ordre.push(ev.id), (pas = i))
+  }
+  const pris = ligne.map((e) => pv0 - e.pv)
+  verifier(`la balle du railgun traverse la ligne dans l'ordre (${ordre.join(', ')}) : ${pris.join(' / ')} de dégâts (110, 83, 62) ; un seul coup chacun`, ordre.join() === '500,501,502' && pris[0] === 110 && pris[1] === 83 && pris[2] === 62 && pas > 0)
+}
+
 // TOUCHÉ, ON TRAVERSE LES INSECTES (Keko, 22/11 : « quand on est touché on est invincible un court instant ; je voudrais
 // qu'on traverse aussi les ennemis ») : le temps qu'il clignote, un insecte posé sur lui ne l'écarte pas ; après, si ; une
 // roche l'arrête toujours
