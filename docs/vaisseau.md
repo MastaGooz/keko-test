@@ -7768,3 +7768,9 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     même colonne (20).
   - DEBOUT : la barre de vie passe de 52 à 80 de long ; les vies sont à sa gauche, centrées sur sa hauteur, bouclier compris
     (`placeDesVies`, posée par `dessinerLeScore`).
+- **22/11, LES CHIFFRES DES DÉGÂTS À LA TAILLE DE L'INTERFACE.** Keko : « vérifier que la taille des chiffres des dégâts
+  infligés soit proportionnelle à la taille de l'interface ; sur PC, ils sont beaucoup plus petits ». La cause : sur PC,
+  l'interface du vol est dessinée au double (`G`, voir `dessinerLInvasion` : médaillon, barres, vies) ; les chiffres, eux,
+  restaient à un pixel. Ils prennent le même `G` (`dessinerLesDegats`) — leurs pixels, leur cerne (`petitsChiffres(…,
+  trait)`), leur course, leur bond, la gerbe et la lueur du critique. Au téléphone, rien ne change (`G` = 1). VU sur PC : un
+  critique est maintenant presque aussi haut que le chiffre des vies, comme au téléphone.

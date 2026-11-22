@@ -1806,7 +1806,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     '9': ['.###.', '#...#', '#...#', '.####', '....#', '....#', '.###.'], ',': ['.', '.', '.', '.', '.', '#', '#'],
   }
   const largeurDesPetitsChiffres = (s: string, e: number, table = PETITS_CHIFFRES, gras = false): number => [...s].reduce((w, ch) => w + ((table[ch]?.[0].length ?? 3) + (gras ? 2 : 1)) * e, -e)
-  function petitsChiffres(p: Peintre, s: string, cx: number, cy: number, rampe: number[], e: number, a: number, table = PETITS_CHIFFRES, gras = false): void {
+  // (`trait` : l'épaisseur du cerne — celle d'un pixel de l'interface, voir `dessinerLesDegats`)
+  function petitsChiffres(p: Peintre, s: string, cx: number, cy: number, rampe: number[], e: number, a: number, table = PETITS_CHIFFRES, gras = false, trait = 1): void {
     const haut = table['0'].length
     const x0 = Math.round(cx - largeurDesPetitsChiffres(s, e, table, gras) / 2)
     const y0 = Math.round(cy - (haut * e) / 2)
@@ -1822,7 +1823,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
             if (px !== '#') return
             // (la rampe s'étire sur toute la hauteur du chiffre)
             const ton = rampe[Math.round((r * (rampe.length - 1)) / Math.max(1, haut - 1))]
-            if (passe === 0) p.rect(x + k * e - 1, y0 + r * e - 1, large + 2, e + 2, encre, a)
+            if (passe === 0) p.rect(x + k * e - trait, y0 + r * e - trait, large + 2 * trait, e + 2 * trait, encre, a)
             else p.rect(x + k * e, y0 + r * e, large, e, ton, a)
           }),
         )
@@ -1837,6 +1838,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   function dessinerLesDegats(p: Peintre): void {
     suivreLesDegats()
     const rs = CONF.ennemi.rayon / champApplique
+    // (À LA TAILLE DE L'INTERFACE — Keko, 22/11 : « sur PC, les chiffres sont beaucoup plus petits » : MESURÉ, leurs
+    // pixels étaient ceux de l'interface sans son double — `G` de `dessinerLInvasion` ; tout y passe, leur cerne, leur
+    // course, leur gerbe)
+    const G = interfaceEnBande() && couvreApplique ? 2 : 1
     for (const c of chiffres) {
       if (c.total < 1) continue
       const age = t - c.nait
@@ -1847,38 +1852,38 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // (son côté : chaque insecte le sien, tiré de son identité — les chiffres voisins ne s'empilent pas)
       const cote = ((c.id * 37) % 7) / 3 - 1
       const bx = (c.x - camera.x) / champApplique + W / 2
-      const by = (c.y - camera.y) / champApplique + centreY() - rs - 5
+      const by = (c.y - camera.y) / champApplique + centreY() - rs - 5 * G
       // (il s'efface en finissant : les 0,2 dernières secondes)
       const a = repos < 0.4 ? 1 : 1 - (repos - 0.4) / 0.2
       if (!c.critique) {
         // UN COUP : il JAILLIT — monte vite puis ralentit, part un peu de son côté —, BONDIT à chaque coup qui s'ajoute
         // (deux pixels, 0,12 s), blanc au jaillissement ; il fonce en finissant
-        const monte = 9 * (1 - Math.exp(-age * 7))
-        const bond = repos < 0.12 ? -2 * Math.sin((repos / 0.12) * Math.PI) : 0
-        const x = bx + cote * 5 * (1 - Math.exp(-age * 5))
+        const monte = 9 * G * (1 - Math.exp(-age * 7))
+        const bond = repos < 0.12 ? -2 * G * Math.sin((repos / 0.12) * Math.PI) : 0
+        const x = bx + cote * 5 * G * (1 - Math.exp(-age * 5))
         const y = by - monte + bond
         const rampe = repos < 0.04 ? [N.WHITE, N.WHITE, N.WHITE, N.WHITE, N.WHITE] : repos > 0.4 ? RAMPE_DU_COUP.slice(2).concat([N.hex('#c98a4a'), N.hex('#a0603a')]) : RAMPE_DU_COUP
-        petitsChiffres(p, dit, x, y, rampe, 1, a)
+        petitsChiffres(p, dit, x, y, rampe, G, a, PETITS_CHIFFRES, false, G)
       } else {
         // UN COUP CRITIQUE : il FRAPPE — deux fois plus grand l'espace de deux images, puis à sa taille (ses chiffres en
         // gras, voir `CHIFFRES_DU_CRITIQUE`) —, TREMBLE, FLAMBE du jaune au rouge (sa rampe défile), lance une gerbe
         // d'étincelles, et monte plus haut
-        const e = age < 0.05 ? 2 : 1
-        const tremble = age < 0.25 ? Math.round(Math.sin(t * 95) * 1.5 * (1 - age / 0.25)) : 0
-        const monte = 14 * (1 - Math.exp(-age * 5))
-        const x = bx + cote * 4 * (1 - Math.exp(-age * 5)) + tremble
-        const y = by - 3 - monte + (repos < 0.12 ? -2 * Math.sin((repos / 0.12) * Math.PI) : 0)
+        const e = (age < 0.05 ? 2 : 1) * G
+        const tremble = age < 0.25 ? Math.round(Math.sin(t * 95) * 1.5 * G * (1 - age / 0.25)) : 0
+        const monte = 14 * G * (1 - Math.exp(-age * 5))
+        const x = bx + cote * 4 * G * (1 - Math.exp(-age * 5)) + tremble
+        const y = by - 3 * G - monte + (repos < 0.12 ? -2 * G * Math.sin((repos / 0.12) * Math.PI) : 0)
         const cran = Math.floor(t * 18) % 2
         const rampe = age < 0.05 ? [N.WHITE, N.WHITE, N.WHITE, N.WHITE, N.WHITE] : cran === 0 ? RAMPE_EN_FLAMMES : RAMPE_DU_CRITIQUE
-        if (age < 0.3) p.glow(x, y, 12, N.hex('#ff8a1a'), 0.45 * (1 - age / 0.3))
+        if (age < 0.3) p.glow(x, y, 12 * G, N.hex('#ff8a1a'), 0.45 * (1 - age / 0.3))
         // (la gerbe : huit étincelles qui partent du chiffre et s'éteignent)
         if (age < 0.35)
           for (let k = 0; k < 8; k++) {
             const an = (k / 8) * Math.PI * 2 + c.id
-            const d = 6 + 26 * (age / 0.35) * (0.7 + 0.3 * ((k * 5) % 3) / 2)
-            p.rect(Math.round(x + Math.cos(an) * d), Math.round(y + Math.sin(an) * d * 0.7), 1, 1, k % 2 === 0 ? N.WHITE : N.hex('#ffe04a'), 1 - age / 0.35)
+            const d = (6 + 26 * (age / 0.35) * (0.7 + 0.3 * ((k * 5) % 3) / 2)) * G
+            p.rect(Math.round(x + Math.cos(an) * d), Math.round(y + Math.sin(an) * d * 0.7), G, G, k % 2 === 0 ? N.WHITE : N.hex('#ffe04a'), 1 - age / 0.35)
           }
-        petitsChiffres(p, dit, x, y, rampe, e, a, CHIFFRES_DU_CRITIQUE, true)
+        petitsChiffres(p, dit, x, y, rampe, e, a, CHIFFRES_DU_CRITIQUE, true, G)
       }
     }
   }
