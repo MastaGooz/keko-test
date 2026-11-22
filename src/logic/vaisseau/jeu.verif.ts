@@ -3788,13 +3788,26 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   for (let i = 0; i < 60; i++) avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
   const reste = w.pepites.filter((p) => p.soin === true).length
   verifier(`un soin ramassé à 50 % : ${Math.round(apres * 100)} % ; à 95 % : ${Math.round(plafond * 100)} % (le plein) ; plein, il reste là (${reste})`, Math.abs(apres - 0.75) < 1e-9 && plafond === 1 && reste === 1)
-  // (à deux : le second blessé, le premier plein et posé dessus — le soin va au second)
+  // (L'AIMANT NE L'ATTIRE PAS — Keko, 22/11 : « je veux pas que les soins soient attirés par l'aimant, ni le surblindage » :
+  // à portée d'aimant mais pas dessus, blessé, il ne bouge pas ; une plaque non plus)
+  const a = nouveauMonde(cfg, 7)
+  a.coque = cfg.coque * 0.5
+  a.plaques = [false, true, true]
+  a.pepites.push({ id: 904, x: 25, y: 0, vx: 0, vy: 0, graine: 1, minerai: 'fer', valeur: 0, soin: true })
+  a.pepites.push({ id: 905, x: -25, y: 0, vx: 0, vy: 0, graine: 1, minerai: 'fer', valeur: 0, plaque: true })
+  for (let i = 0; i < 60 * 3; i++) avancerLeMonde(cfg, a, 1 / 60, { x: 0, y: 0 })
+  const immobiles = a.pepites.filter((p) => (p.soin === true && p.x === 25) || (p.plaque === true && p.x === -25)).length
+  verifier(`à 25 (portée d'aimant ${cfg.forage.aimant}), le soin et la plaque ne viennent pas : ${immobiles} / 2 immobiles, blindage ${Math.round((a.coque / cfg.coque) * 100)} %`, immobiles === 2 && a.coque === cfg.coque * 0.5 && a.plaques[0] === false)
+  // (à deux : le second blessé, le premier plein et posé dessus — il le laisse ; le second passe dessus, il le prend)
   const q = nouveauMonde(cfg, 6)
   ajouterUnPilote(cfg, q, 40, 0)
   q.equipage!.pilotes[1].coque = cfg.coque * 0.5
   q.pepites.push({ id: 903, x: 0, y: 0, vx: 0, vy: 0, graine: 1, minerai: 'fer', valeur: 0, soin: true })
-  for (let i = 0; i < 60 * 4; i++) avancerLEquipage([cfg, cfg], q, 1 / 60, [{ x: 0, y: 0 }, { x: 0, y: 0 }], undefined, false)
-  verifier(`à deux, le soin sous le premier (plein) va au second, blessé : ${Math.round((etatDuPilote(q, 1).coque / cfg.coque) * 100)} %, le premier ${Math.round((q.coque / cfg.coque) * 100)} %`, etatDuPilote(q, 1).coque > cfg.coque * 0.5 && q.coque === cfg.coque && !q.pepites.some((p) => p.soin === true))
+  for (let i = 0; i < 60; i++) avancerLEquipage([cfg, cfg], q, 1 / 60, [{ x: 0, y: 0 }, { x: 0, y: 0 }], undefined, false)
+  const laisse = q.pepites.some((p) => p.soin === true) && q.coque === cfg.coque
+  q.pepites.find((p) => p.soin === true)!.x = 40
+  for (let i = 0; i < 60; i++) avancerLEquipage([cfg, cfg], q, 1 / 60, [{ x: 0, y: 0 }, { x: 0, y: 0 }], undefined, false)
+  verifier(`à deux, le soin sous le premier (plein) reste là (${laisse}) ; sous le second, blessé, il le prend : ${Math.round((etatDuPilote(q, 1).coque / cfg.coque) * 100)} %`, laisse && etatDuPilote(q, 1).coque > cfg.coque * 0.5 && q.coque === cfg.coque && !q.pepites.some((p) => p.soin === true))
 }
 
 // LA RÉCOMPENSE DE FIN (Keko, 22/11 : « à un niveau 100 où on a fait pas mal de choses, plusieurs milliers » ; le coup

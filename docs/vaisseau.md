@@ -8040,3 +8040,7 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   (« Maximum call stack size exceeded ») et le monde s'arrêtait. Reproduit (le banc `&cartes=50`, puis le vol), corrigé,
   rejoué sans erreur jusqu'au niveau 51 ; un test le garde (`jeu.verif.ts` : un coup critique de l'arme, 32 de dégâts).
   *Un remplacement en masse se relit à l'endroit où il définit ce qu'il remplace.*
+- **22/11, LE SOIN ET LA PLAQUE NE S'AIMANTENT PLUS.** Keko : « je veux pas que les soins soient attirés par l'aimant, ni
+  le surblindage » : ni la portée d'aimant ni l'aimant ramassé ne les tirent ; on les prend en passant dessus (le vaisseau
+  les touche, `c.rayon + 3`), et toujours seulement si l'on en manque. Les pépites et l'aimant lui-même s'aimantent comme
+  avant. Un test le garde (à 25, dans la portée d'aimant, soin et plaque restent immobiles).
