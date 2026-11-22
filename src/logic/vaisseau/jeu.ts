@@ -1171,6 +1171,12 @@ export type Ennemi = {
   grand?: boolean
   /** Un grand qui est UN BOSS (sinon, un mini-boss) — voir `invasion.recompense`. */
   boss?: boolean
+  /**
+   * L'instant où il a perdu de la vie AUTREMENT QUE PAR UNE ARME — la tempête, l'explosion du retour — : la page n'en fait
+   * pas un chiffre de dégâts (Keko, 22/11 : « des chiffres blancs énormes » — l'explosion du retour montrait toute la vie
+   * qui restait aux insectes qu'elle abat, des milliers au niveau 60).
+   */
+  horsArmeA?: number
   /** Son dernier choc contre une roche qui dérive (voir `sansPortail`). */
   heurteA?: number
   /** UN ASTÉROÏDE QUI DÉRIVE (voir `derive`) : sa taille, son dessin (graine, angle, rotation), ses points au départ. */
@@ -2562,6 +2568,7 @@ function conduireLInsecte(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number, ev
   // les mêmes dégâts que le joueur ; un ennemi qui meurt dans le vortex ne lâche aucune pépite ») : `arene.dps` unités de
   // vie par seconde ; il y meurt sans butin
   if (c.arene.active && Math.hypot(b.x, b.y) > c.arene.rayon) {
+    e.horsArmeA = m.t
     e.pv -= c.arene.dps * c.uniteDeVie * dt
     if (e.pv <= 0) {
       abattreLEnnemi(c, m, e, ev, true)
@@ -5345,6 +5352,7 @@ function avancerSansLeJoueur(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenem
     for (const e of [...m.ennemis]) {
       if (e.grand === true || Math.hypot(e.corps.x - o.x, e.corps.y - o.y) > I.retour.rayon + rayonDe(c, e)) continue
       ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique: false })
+      e.horsArmeA = m.t
       e.pv = 0
       abattreLEnnemi(c, m, e, ev)
     }

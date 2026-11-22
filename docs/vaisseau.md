@@ -7954,3 +7954,9 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     nouvelles armes « Roquettes » et « Escorte ». Tous tiennent sur une ligne (54 en gras, 6 en lettre fine) ; le nom
     s'écrit sur une ligne, toujours ; « Nouvelle arme », trop large en gras, passe en lettre fine. VU debout.
   - Puis Keko : « à la place de "nouvelle arme", mets "armement" ».
+- **22/11, PLUS DE CHIFFRES BLANCS ÉNORMES.** Keko : « les chiffres de dégâts sont parfois super gros, en blanc, non
+  critiques ; j'étais niveau 60 avec plein d'armes ». La cause : les chiffres se lisent dans ce que les insectes PERDENT
+  de vie (`suivreLesDegats`) — et deux choses qui ne sont pas des armes en faisaient perdre : L'EXPLOSION DU RETOUR, qui
+  met à zéro les insectes qu'elle abat (le chiffre montrait TOUTE LA VIE QUI LEUR RESTAIT, des milliers au niveau 60), et
+  LA TEMPÊTE, qui ronge ceux qui s'y aventurent. Elles marquent l'insecte (`Ennemi.horsArmeA`, l'instant) ; la page n'en
+  fait plus de chiffre. Les coups des armes, le surplus (« overkill ») compris, s'écrivent comme avant.

@@ -1809,10 +1809,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         if (visibles.length > 10) chiffres.splice(chiffres.indexOf(visibles[0]), 1)
       }
     }
+    // (CE QUE LES ARMES FONT, SEULEMENT : la tempête et l'explosion du retour ne s'écrivent pas — voir `Ennemi.horsArmeA`)
+    const parUneArme = (e: Ennemi): boolean => e.horsArmeA === undefined || m.t - e.horsArmeA > 0.1
     for (const e of m.ennemis) {
       vus.add(e.id)
       const avant = pvVus.get(e.id)
-      if (avant !== undefined && e.pv < avant.pv) ajouter(e.id, e.corps.x, e.corps.y, avant.pv - e.pv)
+      if (avant !== undefined && e.pv < avant.pv && parUneArme(e)) ajouter(e.id, e.corps.x, e.corps.y, avant.pv - e.pv)
       pvVus.set(e.id, { e, pv: e.pv })
     }
     // (MORT ENTRE DEUX IMAGES : TOUT CE QU'IL A PRIS, L'EXCÈS COMPRIS — Keko, 20/11 : « affiche l'overkill : s'il reste 3
@@ -1821,7 +1823,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // rien perdu : rien ne s'affiche)
     for (const [id, a] of pvVus)
       if (!vus.has(id)) {
-        if (a.e.pv < a.pv) ajouter(id, a.e.corps.x, a.e.corps.y, a.pv - a.e.pv)
+        if (a.e.pv < a.pv && parUneArme(a.e)) ajouter(id, a.e.corps.x, a.e.corps.y, a.pv - a.e.pv)
         pvVus.delete(id)
       }
     for (let i = chiffres.length - 1; i >= 0; i--) if (t - chiffres[i].dernier > 0.7) chiffres.splice(i, 1)
