@@ -7885,3 +7885,8 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     pas envie que les joueurs créent des parties et les arrêtent à l'infini pour gagner la prime ». PLUS DE PRIME : la
     ligne du niveau vaut 10 × N + 0,25 × (N − 1)² — une partie vide, 10 crédits ; niveau 10 ordinaire, 180 ; niveau 100
     bien rempli, 6 280. Le titre, puis l'encadré, puis le total ; plus rien sous le titre ni sous le total.
+- **22/11, LES MISSIONS ÉTEINTES.** Keko : « désactiver les quêtes qu'on a actuellement ; vu qu'on a masqué l'onglet des
+  missions, je voudrais m'assurer qu'on n'en valide pas une par hasard ». Ce n'était pas fait : elles avançaient en vol
+  (le toast « Mission réussie — Nettoyage » paraissait encore). `compter` ne fait plus rien au vortex : ni contrat, ni
+  mission de vaisseau, ni toast ; l'état gardé ne bouge plus. (Une mission finie ne payait qu'en la réclamant dans
+  l'onglet masqué : rien n'a pu être gagné.)

@@ -313,6 +313,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    */
   function compter(c: Compteur, valeur: number): void {
     if (enApercu) return // (l'aperçu des armes ne compte pour aucune mission)
+    // (AU VORTEX, LES MISSIONS SONT ÉTEINTES — Keko, 22/11 : « vu qu'on a masqué l'onglet des missions, je voudrais m'assurer
+    // qu'on n'en valide pas une par hasard » : rien n'avance, ni contrat ni mission de vaisseau, aucun toast ; leur état
+    // gardé ne bouge plus. On les rallume en retirant cette ligne, avec l'onglet — voir `VUES`)
+    if (parametres.has('vortex')) return
     const avant = new Set(quetes.actives.filter(estTerminee).map((q) => q.modele))
     const etapesAvant = new Map(quetes.actives.map((q) => [q.modele, etapesFaites(q)]))
     quetes = noter(quetes, c, valeur)
