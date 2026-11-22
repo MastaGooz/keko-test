@@ -2041,6 +2041,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const pc = montee?.arme?.id === id ? montee : PIECES.find((x) => x.arme?.id === id)
     return { icone: pc?.id ?? armeDuVortex(), nom: pc?.nom ?? '' }
   }
+  /** LE SON D'UNE ARME : le sien, ou, pour une arme de faction, celui d'une arme qui lui ressemble. */
+  const sonDeLArme = (id: string): string => ({ railgun: 'rail', roquettes: 'essaim', tesla: 'zap', obusier: 'canon', grenades: 'minimissile', escorte: 'mitraille' })[id] ?? id
   /** Deux couleurs mêlées (t de 0 à 1), opaques. */
   const meler = (a: number, b: number, t: number): number => {
     const c = (k: number): number => Math.round(((a >>> k) & 255) + ((((b >>> k) & 255) - ((a >>> k) & 255)) * t))
@@ -10929,14 +10931,71 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   let arcaneSonneA = -10
   /** LES TRAITS DU RAILGUN qui viennent de partir (voir l'événement `rail`) : un trait épais qui s'amincit et pâlit. */
   const DUREE_DU_RAIL = 0.32
-  const traitsDuRail: { x0: number; y0: number; x1: number; y1: number; t0: number; s: number }[] = []
+  const traitsDuRail: { x0: number; y0: number; x1: number; y1: number; t0: number; s: number; arme?: string }[] = []
   /** LES ÉCLATS DE GLACE QUI SE BRISENT (voir l'événement `eclatement`) : un éclair blanc et une étoile, 0,2 s. */
   const eclatsBrises: { x: number; y: number; t0: number }[] = []
   let eclatementSonneA = -10
+  /** LES FOUDRES DE LA BOBINE TESLA (voir `Arme.sphere.foudre`) : un instant chacune, en fourche. */
+  const foudresTesla: { x0: number; y0: number; x1: number; y1: number; t0: number; g: number }[] = []
+  /** Le bleu électrique de l'Empire, du sombre au blanc. */
+  const TESLA = ['#0a1430', '#1a3a8a', '#3a7ae8', '#8ac8ff', '#e0f4ff'].map((c) => N.hex(c))
   function dessinerLesSpheres(p: Peintre): void {
+    for (let i = foudresTesla.length - 1; i >= 0; i--) if (t - foudresTesla[i].t0 > 0.14) foudresTesla.splice(i, 1)
+    // (LA FOUDRE : un trait brisé qui change de forme à chaque image, une fourche qui s'en détache, un point blanc à l'impact)
+    for (const f of foudresTesla) {
+      const u = (t - f.t0) / 0.14
+      const R2 = new N.Rng((f.g * 131 + Math.floor(t * 30) * 7) | 0)
+      const L = Math.hypot(f.x1 - f.x0, f.y1 - f.y0) || 1
+      const nx = -(f.y1 - f.y0) / L
+      const ny = (f.x1 - f.x0) / L
+      let px = f.x0
+      let py = f.y0
+      const n = Math.max(3, Math.round(L / 7))
+      let fourche: [number, number] | null = null
+      for (let k = 1; k <= n; k++) {
+        const q = k / n
+        const j = k === n ? 0 : R2.range(-4, 4)
+        const x = f.x0 + (f.x1 - f.x0) * q + nx * j
+        const y = f.y0 + (f.y1 - f.y0) * q + ny * j
+        p.line(px, py, x, y, u < 0.4 ? N.WHITE : TESLA[3], 1 - u * 0.6)
+        if (k === Math.floor(n / 2)) fourche = [x, y]
+        px = x
+        py = y
+      }
+      if (fourche !== null) p.line(fourche[0], fourche[1], fourche[0] + nx * R2.range(-9, 9) + (f.x1 - f.x0) * 0.15, fourche[1] + ny * R2.range(-9, 9) + (f.y1 - f.y0) * 0.15, TESLA[2], 0.8 * (1 - u))
+      p.glow(f.x1, f.y1, 6, TESLA[3], 0.7 * (1 - u))
+      p.dot(f.x1, f.y1, N.WHITE)
+    }
     for (const s of m.spheres) {
       const sp = CONF.armes[s.arme]?.sphere
       if (sp === undefined) continue
+      // LA BOBINE TESLA (Keko, 22/11 : « une chaîne d'éclair bis » — voir `Arme.sphere.foudre`) : UNE BOULE DE FOUDRE, un
+      // cœur blanc qui bat, un halo bleu, TROIS ÉLECTRODES qui tournent autour d'elle, reliées au cœur par des fils qui
+      // crépitent ; le cercle de sa portée, à peine marqué
+      if (sp.foudre !== undefined) {
+        const age = m.t - s.nee
+        const k = Math.min(1, age / 0.18) * Math.min(1, (sp.duree - age) / 0.25)
+        if (k <= 0) continue
+        const bat = 0.5 + 0.5 * Math.sin(t * 22 + s.id)
+        const flash = Math.max(0, 1 - (t - (sphereTirA.get(s.id) ?? -10)) / 0.15)
+        const Rb = (4 + bat) * k * zoneDuVol()
+        p.ring(s.x, s.y, sp.rayon, 1, TESLA[2], 0.12 * k)
+        p.glow(s.x, s.y, Rb * 3.5, TESLA[2], (0.35 + 0.35 * flash) * k)
+        for (let e = 0; e < 3; e++) {
+          const a = t * 5 + s.id + (e * 2 * Math.PI) / 3
+          const ex = s.x + Math.cos(a) * (Rb + 4)
+          const ey = s.y + Math.sin(a) * (Rb + 4)
+          const mx = (s.x + ex) / 2 + (Math.sin(t * 40 + e) * 1.5)
+          const my = (s.y + ey) / 2 + (Math.cos(t * 37 + e) * 1.5)
+          p.line(s.x, s.y, mx, my, TESLA[3], 0.8 * k)
+          p.line(mx, my, ex, ey, TESLA[3], 0.8 * k)
+          p.circle(ex, ey, 1.4, TESLA[1], k)
+          p.dot(ex, ey, TESLA[4], k)
+        }
+        p.circle(s.x, s.y, Rb, TESLA[3], k)
+        p.circle(s.x, s.y, Rb * 0.6, flash > 0.3 ? N.WHITE : TESLA[4], k)
+        continue
+      }
       const age = m.t - s.nee
       const k = Math.min(1, age / 0.18) * Math.min(1, (sp.duree - age) / 0.25)
       if (k <= 0) continue
@@ -11073,6 +11132,35 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     for (const r of traitsDuRail) {
       const u = (t - r.t0) / DUREE_DU_RAIL
       const v1 = 1 - u
+      // LE RAILGUN DE L'EMPIRE (Keko, 22/11 : « c'est exactement le rayon du Prisme ; un trait plus fin, un graphisme
+      // différent ») : UN FIL BLANC-BLEU très fin, tendu d'un coup ; le long de lui, DES ANNEAUX DE BOBINE — de petits
+      // traits en travers, à pas réguliers, qui s'écartent et s'éteignent (l'onde des aimants) ; à la bouche, un éclair
+      // blanc et deux flammèches ; il s'efface du canon vers le bout
+      if (r.arme === 'railgun') {
+        const L = Math.hypot(r.x1 - r.x0, r.y1 - r.y0) || 1
+        const ux = (r.x1 - r.x0) / L
+        const uy = (r.y1 - r.y0) / L
+        const nx = -uy
+        const ny = ux
+        const efface = u * L * 1.2
+        for (let d = efface; d < L; d += 1) {
+          const a = v1 * (0.6 + 0.4 * (1 - d / L))
+          p.dot(r.x0 + ux * d, r.y0 + uy * d, d < efface + 3 ? N.hex('#7ad8ff') : N.WHITE, a)
+        }
+        const pas = 9
+        for (let d = pas; d < L; d += pas) {
+          if (d < efface) continue
+          const ecart = (1.5 + 3 * u) * r.s
+          const c = u < 0.4 ? N.hex('#bfefff') : N.hex('#3a8ad8')
+          p.line(r.x0 + ux * d - nx * ecart, r.y0 + uy * d - ny * ecart, r.x0 + ux * d + nx * ecart, r.y0 + uy * d + ny * ecart, c, 0.8 * v1)
+        }
+        if (u < 0.35) {
+          const k = 1 - u / 0.35
+          p.glow(r.x0, r.y0, 9 * r.s, N.WHITE, 0.8 * k)
+          for (const sg of [-1, 1]) p.line(r.x0, r.y0, r.x0 + (ux * 4 + nx * sg * 3) * r.s, r.y0 + (uy * 4 + ny * sg * 3) * r.s, N.hex('#bfefff'), k)
+        }
+        continue
+      }
       const L = Math.hypot(r.x1 - r.x0, r.y1 - r.y0) || 1
       const nx = -(r.y1 - r.y0) / L
       const ny = (r.x1 - r.x0) / L
@@ -12421,6 +12509,35 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * lueur — aux couleurs de son apparence — et TROIS PETITS PICS autour de lui, qui tournent (Keko, 19/11 : « leur ajouter 3
    * tout petits pics discrets autour de la sphère, car la forme fait qu'on les confond encore avec les pépites »).
    */
+  /**
+   * UN MINI-AVION DE L'ESCORTE (Keko, 22/11 : « à la place de drones, des mini-avions ») : un petit chasseur d'acier vu de
+   * dessus, tourné vers où il vole — le nez, deux ailes en flèche, la verrière bleue, deux dérives —, une flamme qui
+   * bat derrière lui et sa traînée ; il penche ses ailes en virage.
+   */
+  function dessinerUnMiniAvion(p: Peintre, x: number, y: number, vx: number, vy: number, chasse: boolean): void {
+    const v0 = Math.hypot(vx, vy)
+    const cap = v0 > 5 ? Math.atan2(vy, vx) : t * 2.6
+    const ux = Math.cos(cap)
+    const uy = Math.sin(cap)
+    const nx = -uy
+    const ny = ux
+    const pt = (a: number, b: number): [number, number] => [x + ux * a + nx * b, y + uy * a + ny * b]
+    // (la traînée et la flamme)
+    for (let i = 1; i <= 3; i++) p.dot(x - vx * i * 0.016, y - vy * i * 0.016, N.hex('#8ac8ff'), 0.4 * (1 - i / 4))
+    const fl = 2 + (Math.sin(t * 50 + x) + 1) * (chasse ? 1.2 : 0.7)
+    p.line(pt(-3, 0)[0], pt(-3, 0)[1], pt(-3 - fl, 0)[0], pt(-3 - fl, 0)[1], FEU[4])
+    p.dot(pt(-3.5, 0)[0], pt(-3.5, 0)[1], N.hex('#fff2a8'))
+    // (le corps : les ailes, le fuselage, les dérives, cernés)
+    const ENC = MATIERES.encre.contour
+    const ailes: [number, number][] = [pt(1, 0), pt(-2, 4), pt(-3, 4), pt(-2, 0), pt(-3, -4), pt(-2, -4)]
+    p.poly(ailes.map(([a, b]) => [a, b]), COQUE[3])
+    p.line(pt(4, 0)[0], pt(4, 0)[1], pt(-3, 0)[0], pt(-3, 0)[1], COQUE[5])
+    p.line(pt(3, 0.6)[0], pt(3, 0.6)[1], pt(-3, 0.6)[0], pt(-3, 0.6)[1], COQUE[4])
+    p.dot(pt(4, 0)[0], pt(4, 0)[1], ENC)
+    p.dot(pt(1.5, 0)[0], pt(1.5, 0)[1], N.hex('#3ab0e8'))
+    for (const sg of [-1, 1]) p.dot(pt(-3, sg * 1.5)[0], pt(-3, sg * 1.5)[1], COQUE[2])
+    p.glow(x, y, 5, N.hex('#8ac8ff'), chasse ? 0.35 : 0.2)
+  }
   function dessinerUnDrone(p: Peintre, x: number, y: number, vx: number, vy: number, k: number, chasse: boolean, rang: number): void {
     const ru = rampesDuJoueur()
     const perle = ru?.perle ?? [0, 0, ...tonsDeLaMatiere('perle')]
@@ -14143,7 +14260,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // que la couleur des drones change en fonction du skin du vaisseau et de sa couleur » : le corps de la perle de son
       // disque, la traînée et la lueur de sa verrière, l'œil à son accent — d'origine, de l'argent et du bleu, loin du
       // vert d'eau des pépites)
-      m.drones.forEach((d, k) => dessinerUnDrone(p, d.x, d.y, d.vx, d.vy, 1, d.cible !== null, k))
+      // (… SAUF L'ESCORTE DE L'EMPIRE, EN MINI-AVIONS — Keko, 22/11 : « on a déjà les drones de la Sentinelle »)
+      const orbitales = CONF.armes.filter((a) => a.orbite !== undefined)
+      m.drones.forEach((d, k) => (orbitales[k]?.id === 'escorte' ? dessinerUnMiniAvion(p, d.x, d.y, d.vx, d.vy, d.cible !== null) : dessinerUnDrone(p, d.x, d.y, d.vx, d.vy, 1, d.cible !== null, k)))
     }
     // LE RAYON THERMIQUE, À LA MANIÈRE DE « LASER GRID » DU DÉPÔT (Keko, 15/11 : « tu peux utiliser laser grid pour
     // t'inspirer ») : un CŒUR BLANC où des impulsions défilent vers la pointe, un CORPS ROUGE de part et d'autre (clair
@@ -16345,7 +16464,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           // une arme tire : deux étincelles à la bouche, et son son
           // (un coup annoncé en avance a déjà sonné)
           if (t - (armeAnnonceeA.get(ev.arme) ?? -10) < 0.4) armeAnnonceeA.delete(ev.arme)
-          else jouer(ev.arme as Son)
+          else jouer(sonDeLArme(ev.arme) as Son)
           for (let i = 0; i < 2; i++) etincelles.ajouter('etincelle', ev.x, ev.y, R.range(-20, 20), R.range(-20, 20), 0.12, N.WHITE, 1, 1.5)
           break
         case 'ennemiTouche': {
@@ -16548,7 +16667,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           // (une salve d'éclats part : son crissement — sauf s'il a sonné en avance —, une couronne de givre autour
           // du vaisseau)
           if (t - (armeAnnonceeA.get(ev.arme) ?? -10) < 0.4) armeAnnonceeA.delete(ev.arme)
-          else jouer(ev.arme as Son)
+          else jouer(sonDeLArme(ev.arme) as Son)
           for (let i = 0; i < 12; i++) {
             const a = (i / 12) * Math.PI * 2
             etincelles.ajouter('etincelle', ev.x + Math.cos(a) * 6, ev.y + Math.sin(a) * 6, Math.cos(a) * R.range(30, 60), Math.sin(a) * R.range(30, 60), R.range(0.12, 0.25), R.next() < 0.5 ? N.WHITE : GLACE[5], 1, 1.5)
@@ -16590,7 +16709,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         case 'crachat':
           // (la Vouivre crache : son crachat gluant — sauf s'il a sonné en avance —, la gerbe de gouttes dans le cône)
           if (t - (armeAnnonceeA.get(ev.arme) ?? -10) < 0.4) armeAnnonceeA.delete(ev.arme)
-          else jouer(ev.arme as Son)
+          else jouer(sonDeLArme(ev.arme) as Son)
           crachats.push({ x: ev.x, y: ev.y, cap: ev.cap, cone: ev.cone, portee: ev.portee, t0: t, id: Math.round(t * 1000) })
           break
         case 'fleauFrappe':
@@ -16614,7 +16733,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           parasitePartiA = t
           // (un cerveau est lancé : son petit couinement mouillé — sauf s'il a sonné en avance)
           if (t - (armeAnnonceeA.get(ev.arme) ?? -10) < 0.4) armeAnnonceeA.delete(ev.arme)
-          else jouer(ev.arme as Son)
+          else jouer(sonDeLArme(ev.arme) as Son)
           break
         case 'parasiteAccroche':
           // (il s'accroche : ses crocs se plantent, une giclée)
@@ -16644,7 +16763,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           // (une pustule part de son dos : un « blop » — sauf s'il a sonné en avance ; celle du dos est partie — Keko, 19/11)
           minePartieA = t
           if (t - (armeAnnonceeA.get(ev.arme) ?? -10) < 0.4) armeAnnonceeA.delete(ev.arme)
-          else jouer(ev.arme as Son)
+          else jouer(sonDeLArme(ev.arme) as Son)
           break
         case 'gaz':
           // (ELLE ÉCLATE : le nuage de gaz, son « pchouf » mouillé, des gouttes, une petite secousse)
@@ -16896,10 +17015,18 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         case 'sphere':
           // (une sphère part : la décharge — sauf si elle a sonné en avance —, des grains de plasma à la bouche)
           if (t - (armeAnnonceeA.get(ev.arme) ?? -10) < 0.4) armeAnnonceeA.delete(ev.arme)
-          else jouer(ev.arme as Son)
+          else jouer(sonDeLArme(ev.arme) as Son)
           for (let i = 0; i < 8; i++) {
             const a = R.range(0, Math.PI * 2)
             etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(30, 70), Math.sin(a) * R.range(30, 70), R.range(0.12, 0.25), R.next() < 0.5 ? N.WHITE : PLASMA_V[3], 1, 1.5)
+          }
+          break
+        case 'foudre':
+          // (la bobine tesla foudroie : la foudre, un claquement — pas plus d'un tous les dixièmes)
+          foudresTesla.push({ x0: ev.x0, y0: ev.y0, x1: ev.x1, y1: ev.y1, t0: t, g: Math.round(ev.x1 * 13 + ev.y1 * 7) })
+          if (t - zapA > 0.1) {
+            zapA = t
+            jouer('zap')
           }
           break
         case 'sphereTir': {
@@ -16962,12 +17089,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         case 'rail': {
           // (LE RAILGUN : le trait, son claquement — sauf s'il a sonné en avance —, des étincelles tout le long, une secousse)
           if (t - (armeAnnonceeA.get(ev.arme) ?? -10) < 0.4) armeAnnonceeA.delete(ev.arme)
-          else jouer(ev.arme as Son)
-          traitsDuRail.push({ x0: ev.x0, y0: ev.y0, x1: ev.x1, y1: ev.y1, t0: t, s: zoneDuVol() })
+          else jouer(sonDeLArme(ev.arme) as Son)
+          traitsDuRail.push({ x0: ev.x0, y0: ev.y0, x1: ev.x1, y1: ev.y1, t0: t, s: zoneDuVol(), arme: ev.arme })
           for (let i = 0; i < 18; i++) {
             const q = R.next()
             const a = R.range(0, Math.PI * 2)
-            etincelles.ajouter('etincelle', ev.x0 + (ev.x1 - ev.x0) * q, ev.y0 + (ev.y1 - ev.y0) * q, Math.cos(a) * R.range(15, 50), Math.sin(a) * R.range(15, 50), R.range(0.15, 0.35), [N.WHITE, lumiereDuPrisme()[4], lumiereDuPrisme()[2]][Math.floor(R.next() * 3)], 1, 1.5)
+            etincelles.ajouter('etincelle', ev.x0 + (ev.x1 - ev.x0) * q, ev.y0 + (ev.y1 - ev.y0) * q, Math.cos(a) * R.range(15, 50), Math.sin(a) * R.range(15, 50), R.range(0.15, 0.35), ev.arme === 'railgun' ? [N.WHITE, N.hex('#bfefff'), N.hex('#3a8ad8')][Math.floor(R.next() * 3)] : [N.WHITE, lumiereDuPrisme()[4], lumiereDuPrisme()[2]][Math.floor(R.next() * 3)], 1, 1.5)
           }
           secousse = Math.max(secousse, 0.25)
           break
@@ -16975,7 +17102,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         case 'essaim':
           // (un essaim part : sa volée de sifflements — sauf s'il a sonné en avance —, des grains de plasma à la bouche)
           if (t - (armeAnnonceeA.get(ev.arme) ?? -10) < 0.4) armeAnnonceeA.delete(ev.arme)
-          else jouer(ev.arme as Son)
+          else jouer(sonDeLArme(ev.arme) as Son)
           for (let i = 0; i < 8; i++) {
             const a = R.range(0, Math.PI * 2)
             etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(30, 80), Math.sin(a) * R.range(30, 80), R.range(0.12, 0.25), R.next() < 0.5 ? N.WHITE : PLASMA_V[3], 1, 1.5)
@@ -16984,7 +17111,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         case 'tornade':
           // (une tornade part : le souffle du vent qui se lève — sauf s'il a sonné en avance)
           if (t - (armeAnnonceeA.get(ev.arme) ?? -10) < 0.4) armeAnnonceeA.delete(ev.arme)
-          else jouer(ev.arme as Son)
+          else jouer(sonDeLArme(ev.arme) as Son)
           break
         case 'tornadeFinie':
           // (elle s'éteint : un dernier tourbillon de flocons qui s'éparpille)

@@ -295,12 +295,16 @@ export type ArmeDeFaction = { id: string; nom: string; dit: string; race: Race; 
 const nouvelle = (a: Omit<Arme, 'dispersion' | 'guide' | 'vitesse' | 'vie'> & Partial<Arme>): Arme => ({ dispersion: 0, guide: false, vitesse: 0, vie: 0, ...a, ajoutee: true, tousSens: true, place: 20 })
 export const ARMES_DE_FACTION: ArmeDeFaction[] = [
   // L'EMPIRE : de l'artillerie, de l'électricité, des escortes
-  { id: 'railgun', nom: 'Railgun', dit: 'Un trait de métal qui transperce toute une ligne d’ennemis.', race: 'humains', icone: 'arme-rail', armes: () => [nouvelle({ id: 'railgun', cadence: 2.6, degats: 110, portee: 190, rail: { largeur: 3 } })] },
-  { id: 'obusier', nom: 'Obusier', dit: 'De lourds obus qui explosent sur une large zone.', race: 'humains', icone: 'arme-napalm', armes: () => [nouvelle({ id: 'obusier', cadence: 2.4, degats: 70, portee: 150, vitesse: 140, vie: 1.3, dispersion: 0.05, zone: { rayon: 26 } })] },
-  { id: 'roquettes', nom: 'Roquettes', dit: 'Quatre roquettes qui fondent sur les ennemis proches.', race: 'humains', icone: 'arme-essaim', armes: () => [nouvelle({ id: 'roquettes', cadence: 2.8, degats: 30, portee: 130, vitesse: 150, vie: 1.6, essaim: { nombre: 4, eventail: 2.4, acces: 120, pointe: 230, braquage: 8, chaos: 2.4, pas: 0.25, calme: 1.3, reprise: 45 } })] },
-  { id: 'tesla', nom: 'Arc tesla', dit: 'Un éclair qui saute d’un ennemi à l’autre.', race: 'humains', icone: 'arme-chaine', armes: () => [nouvelle({ id: 'tesla', cadence: 1.6, degats: 55, portee: 95, chaine: { rebonds: 3, saut: 45, attenuation: 0.75 } })] },
-  { id: 'grenades', nom: 'Lance-grenades', dit: 'Deux grenades à chaque tir, qui explosent à l’impact.', race: 'humains', icone: 'arme-minimissiles', armes: () => [nouvelle({ id: 'grenades', cadence: 1.5, degats: 32, portee: 110, vitesse: 150, vie: 0.9, dispersion: 0.08, zone: { rayon: 15 }, gerbe: { nombre: 2, ecart: 0.3 } })] },
-  { id: 'escorte', nom: 'Escorte', dit: 'Deux drones qui mitraillent les ennemis autour du vaisseau.', race: 'humains', icone: 'arme-drones', armes: () => [0, 1].map((k) => ({ ...nouvelle({ id: 'escorte', cadence: 0.45, degats: 12, portee: 70, vitesse: 320, vie: 0.5, dispersion: 0.05 }), place: 20 + k, orbite: { ...ORBITE_DES_DRONES, phase: k * Math.PI } })) },
+  { id: 'railgun', nom: 'Railgun', dit: 'Un trait de métal qui transperce toute une ligne d’ennemis.', race: 'humains', icone: 'imp-railgun', armes: () => [nouvelle({ id: 'railgun', cadence: 2.6, degats: 110, portee: 190, rail: { largeur: 3 } })] },
+  { id: 'obusier', nom: 'Obusier', dit: 'De lourds obus qui explosent sur une large zone.', race: 'humains', icone: 'imp-obusier', armes: () => [nouvelle({ id: 'obusier', cadence: 2.4, degats: 70, portee: 150, vitesse: 140, vie: 1.3, dispersion: 0.05, zone: { rayon: 26 } })] },
+  { id: 'roquettes', nom: 'Roquettes', dit: 'Quatre roquettes qui fondent sur les ennemis proches.', race: 'humains', icone: 'imp-roquettes', armes: () => [nouvelle({ id: 'roquettes', cadence: 2.8, degats: 30, portee: 130, vitesse: 150, vie: 1.6, essaim: { nombre: 4, eventail: 2.4, acces: 120, pointe: 230, braquage: 8, chaos: 2.4, pas: 0.25, calme: 1.3, reprise: 45 } })] },
+  // (LA BOBINE TESLA — Keko, 22/11 : « l'arc tesla, c'est une chaîne d'éclair bis » : une boule de foudre lente qui
+  // traverse la mêlée en foudroyant les trois insectes les plus proches toutes les 0,4 s ; l'identifiant reste `tesla`)
+  { id: 'tesla', nom: 'Bobine tesla', dit: 'Une boule de foudre lente qui foudroie les ennemis autour d’elle.', race: 'humains', icone: 'imp-tesla', armes: () => [nouvelle({ id: 'tesla', cadence: 2.6, degats: 22, portee: 120, sphere: { vitesse: 45, duree: 3, rayon: 42, periode: 0.4, vitesseTir: 0, foudre: { cibles: 3 } } })] },
+  { id: 'grenades', nom: 'Lance-grenades', dit: 'Deux grenades à chaque tir, qui explosent à l’impact.', race: 'humains', icone: 'imp-grenades', armes: () => [nouvelle({ id: 'grenades', cadence: 1.5, degats: 32, portee: 110, vitesse: 150, vie: 0.9, dispersion: 0.08, zone: { rayon: 15 }, gerbe: { nombre: 2, ecart: 0.3 } })] },
+  // (DES MINI-AVIONS, PAS DES DRONES — Keko, 22/11 : « on a déjà les drones de la Sentinelle » : l'orbite des drones, plus
+  // large et plus vive ; la page les dessine en petits chasseurs)
+  { id: 'escorte', nom: 'Escorte', dit: 'Deux mini-avions qui mitraillent les ennemis autour du vaisseau.', race: 'humains', icone: 'imp-escorte', armes: () => [0, 1].map((k) => ({ ...nouvelle({ id: 'escorte', cadence: 0.45, degats: 12, portee: 70, vitesse: 320, vie: 0.5, dispersion: 0.05 }), place: 20 + k, orbite: { ...ORBITE_DES_DRONES, rayon: 30, vitesse: 2.6, vol: 230, braquage: 9, autour: 34, phase: k * Math.PI } })) },
 ]
 export const armeDeFaction = (id: string): ArmeDeFaction | undefined => ARMES_DE_FACTION.find((x) => x.id === id)
 
@@ -350,12 +354,12 @@ export const MUTATIONS: Mutation[] = [
   variation('roquettes-perforantes', 'roquettes', 'Perforantes', 'Les roquettes traversent les ennemis.', changerA('roquettes', V.perforant)),
   variation('roquettes-ricochet', 'roquettes', 'Ricochet', 'Chaque roquette rebondit sur deux autres ennemis.', changerA('roquettes', V.ricochet)),
   // L'ARC TESLA
-  variation('tesla-rebonds', 'tesla', 'Arc en chaîne', 'L’éclair saute sur trois ennemis de plus.', changerA('tesla', (a) => ({ ...a, chaine: a.chaine === undefined ? undefined : { ...a.chaine, rebonds: a.chaine.rebonds + 3 } }))),
-  variation('tesla-incendiaire', 'tesla', 'Incendiaire', 'Ce que l’éclair touche s’enflamme.', changerA('tesla', V.incendiaire)),
-  variation('tesla-cryo', 'tesla', 'Cryogénique', 'Ce que l’éclair touche gèle.', changerA('tesla', V.cryo)),
-  variation('tesla-surtension', 'tesla', 'Surtension', 'L’éclair ne faiblit plus d’un ennemi à l’autre.', changerA('tesla', (a) => ({ ...a, chaine: a.chaine === undefined ? undefined : { ...a.chaine, attenuation: 1 } }))),
+  variation('tesla-rebonds', 'tesla', 'Orage', 'La bobine foudroie trois ennemis de plus à chaque décharge.', changerA('tesla', (a) => ({ ...a, sphere: a.sphere === undefined ? undefined : { ...a.sphere, foudre: { cibles: (a.sphere.foudre?.cibles ?? 3) + 3 } } }))),
+  variation('tesla-incendiaire', 'tesla', 'Incendiaire', 'Ce que la foudre touche s’enflamme.', changerA('tesla', V.incendiaire)),
+  variation('tesla-cryo', 'tesla', 'Cryogénique', 'Ce que la foudre touche gèle.', changerA('tesla', V.cryo)),
+  variation('tesla-surtension', 'tesla', 'Surtension', 'La bobine décharge deux fois plus souvent.', changerA('tesla', (a) => ({ ...a, sphere: a.sphere === undefined ? undefined : { ...a.sphere, periode: a.sphere.periode * 0.5 } }))),
   variation('tesla-champ', 'tesla', 'Champ tesla', 'Un champ électrique blesse les ennemis tout près du vaisseau.', changerA('tesla', (a) => ({ ...a, aura: { rayon: 34, dps: fois(a, 0.4) } }))),
-  variation('tesla-jumeau', 'tesla', 'Arc jumeau', 'Un second arc, un peu moins fort, frappe aussi.', ajouterA('tesla', (a) => [ajoutee(a, 21, { degats: fois(a, 0.6) })])),
+  variation('tesla-jumeau', 'tesla', 'Grande bobine', 'Une boule plus grande, qui dure plus longtemps.', changerA('tesla', (a) => ({ ...a, sphere: a.sphere === undefined ? undefined : { ...a.sphere, rayon: a.sphere.rayon * 1.5, duree: a.sphere.duree * 1.4 } }))),
   // LE LANCE-GRENADES
   variation('grenades-fragmentation', 'grenades', 'Fragmentation', 'Chaque explosion projette six éclats brûlants tout autour.', changerA('grenades', V.fragments)),
   variation('grenades-incendiaires', 'grenades', 'Incendiaires', 'Les grenades enflamment ce qu’elles touchent.', changerA('grenades', V.incendiaire)),
@@ -364,12 +368,12 @@ export const MUTATIONS: Mutation[] = [
   variation('grenades-drones', 'grenades', 'Drones', 'Deux drones en orbite lancent des grenades sur les ennemis proches.', ajouterA('grenades', (a) => drones(a, { cadence: 1.8, degats: fois(a, 0.6), portee: 80, gerbe: undefined }))),
   variation('grenades-lourdes', 'grenades', 'Gros calibre', 'Des grenades plus lentes à venir, plus fortes, qui explosent plus large.', changerA('grenades', V.lourd)),
   // LES DRONES D'ESCORTE
-  variation('escorte-plus', 'escorte', 'Escadrille', 'Deux drones d’escorte de plus.', ajouterA('escorte', (a) => drones(a, { cadence: a.cadence, degats: a.degats, portee: a.portee }, 2, Math.PI / 2).map((d, k) => ({ ...d, place: 22 + k })))),
-  variation('escorte-perforantes', 'escorte', 'Perforantes', 'Les balles des drones traversent les ennemis.', changerA('escorte', V.perforant)),
-  variation('escorte-incendiaires', 'escorte', 'Incendiaires', 'Les balles des drones enflamment les ennemis.', changerA('escorte', V.incendiaire)),
-  variation('escorte-cryo', 'escorte', 'Cryogéniques', 'Les balles des drones gèlent les ennemis.', changerA('escorte', V.cryo)),
-  variation('escorte-ricochet', 'escorte', 'Ricochet', 'Chaque balle des drones rebondit sur deux autres ennemis.', changerA('escorte', V.ricochet)),
-  variation('escorte-roquettes', 'escorte', 'Roquettes', 'Les drones tirent des roquettes qui explosent.', changerA('escorte', (a) => ({ ...V.explosif(a), cadence: a.cadence * 2.5, degats: fois(a, 2) }))),
+  variation('escorte-plus', 'escorte', 'Escadrille', 'Deux mini-avions de plus.', ajouterA('escorte', (a) => drones(a, { cadence: a.cadence, degats: a.degats, portee: a.portee }, 2, Math.PI / 2).map((d, k) => ({ ...d, place: 22 + k })))),
+  variation('escorte-perforantes', 'escorte', 'Perforantes', 'Les balles des mini-avions traversent les ennemis.', changerA('escorte', V.perforant)),
+  variation('escorte-incendiaires', 'escorte', 'Incendiaires', 'Les balles des mini-avions enflamment les ennemis.', changerA('escorte', V.incendiaire)),
+  variation('escorte-cryo', 'escorte', 'Cryogéniques', 'Les balles des mini-avions gèlent les ennemis.', changerA('escorte', V.cryo)),
+  variation('escorte-ricochet', 'escorte', 'Ricochet', 'Chaque balle des mini-avions rebondit sur deux autres ennemis.', changerA('escorte', V.ricochet)),
+  variation('escorte-roquettes', 'escorte', 'Roquettes', 'Les mini-avions tirent des roquettes qui explosent.', changerA('escorte', (a) => ({ ...V.explosif(a), cadence: a.cadence * 2.5, degats: fois(a, 2) }))),
 ]
 /** La carte d'une spéciale. */
 export const carteSpeciale = (mu: Mutation): Talent => ({ id: `mutation:${mu.id}`, cible: { sorte: 'arme', arme: mu.arme }, stat: 'mutation', rarete: 'speciale', bonus: 0, mutation: mu.id })

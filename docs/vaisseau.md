@@ -7968,3 +7968,20 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     suivante n'est plus due, rien ne change en jeu ordinaire ; et s'il reste MOINS DE TROIS SPÉCIALES (une arme seule
     dont cinq variations sont prises), des CARTES ORDINAIRES COMPLÈTENT jusqu'à trois (on n'en voyait plus qu'une).
     Vérifié ; VU au niveau 60.
+- **22/11, LES ARMES DE L'EMPIRE SE DISTINGUENT.** Keko : « escorte : à la place de drones, des mini-avions — on a déjà
+  les drones de la Sentinelle » ; « l'arc tesla, c'est une chaîne d'éclair bis » ; « le railgun, c'est exactement le
+  rayon du Prisme — un trait plus fin, un graphisme différent » ; « pour les icônes, ne pas utiliser celles qui existent
+  déjà, en faire de nouvelles ».
+  - L'ESCORTE : deux MINI-AVIONS (`dessinerUnMiniAvion` : un petit chasseur d'acier tourné vers où il vole, verrière
+    bleue, flamme qui bat), sur une orbite plus large et plus vive que les drones (rayon 30, vol 230).
+  - LA BOBINE TESLA (l'identifiant reste `tesla`) : plus d'éclair qui saute. Toutes les 2,6 s, une BOULE DE FOUDRE part
+    lentement vers un insecte (45 px/s, 3 s) et, toutes les 0,4 s, FOUDROIE À L'INSTANT LES TROIS PLUS PROCHES dans son
+    rayon de 42 (22 de dégâts) — `Arme.sphere.foudre`, l'événement `foudre`. Elle se voit : un cœur blanc qui bat, trois
+    électrodes qui tournent, sa portée à peine marquée, des foudres en fourche. Ses variations : Orage (+3 cibles),
+    Surtension (deux fois plus souvent), Grande bobine (×1,5 de rayon, ×1,4 de durée), Incendiaire et Cryogénique
+    inchangées (elles passent par la foudre), Champ tesla aussi.
+  - LE RAILGUN : un FIL blanc-bleu très fin, des anneaux de bobine en travers qui s'écartent en s'éteignant, un éclair à
+    la bouche ; il s'efface du canon vers le bout ; ses étincelles blanc-bleu (le Prisme garde son rayon d'or).
+  - SIX ICÔNES NEUVES (`imp-railgun`, `imp-obusier`, `imp-roquettes`, `imp-tesla`, `imp-grenades`, `imp-escorte`) ;
+    chaque arme a un son d'emprunt (`sonDeLArme`).
+  - EN ATTENTE DE KEKO : comment montrer une arme ajoutée sur le vaisseau.
