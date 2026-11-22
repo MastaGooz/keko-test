@@ -8023,3 +8023,9 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   qu'un armement, une variation et l'autre au hasard » (`proposerLesSpeciales`). Ce qui manque — quatre armes déjà
   portées, ou plus d'armement à prendre — est complété par ce qui reste (armements, variations de l'arme principale).
   Vérifié.
+- **22/11, LA LIGNE SOUS LE NOM D'UNE SPÉCIALE DIT L'ARME.** Keko : « on a du mal à comprendre à quelle arme
+  s'applique la variation ; à la place de "Variation", le nom de l'arme, et à la place d'"Armement", "Nouvelle arme" ».
+  Toujours en lettre fine (en relief), sous le nom en gras : « Lance-grenades » et « Nouvelle arme » ne tenaient pas en
+  gras, et deux cartes voisines ne changent plus de lettre. Mesurées dans la page, deux descriptions passaient à six
+  lignes, coupées : le Champ tesla (« … tout près. ») et le Gros calibre des grenades (« Des grenades plus lentes… »)
+  sont raccourcis ; toutes tiennent en cinq. VU.

@@ -2173,8 +2173,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       sy += 6
       {
         // (en gras s'il tient, en lettre fine sinon — « Nouvelle arme » touchait le bord de la carte)
-        const sorte = mu.sorte === 'arme' ? 'Armement' : 'Variation' // (« Armement » — Keko, 22/11 ; « Nouvelle arme » avant)
-        const fonte = largeurDe(sorte, GRAS) <= CW - 10 ? GRAS : TEXTE
+        // (« NOUVELLE ARME », et pour une variation LE NOM DE L'ARME QU'ELLE CHANGE — Keko, 22/11 : « on a du mal à comprendre à
+        // quelle arme s'applique la variation » ; « Armement » et « Variation » avant)
+        const sorte = mu.sorte === 'arme' ? 'Nouvelle arme' : armeDeLaCarte(mu.arme).nom
+        // (TOUJOURS EN LETTRE FINE, sous le nom en gras : « Lance-grenades » et « Nouvelle arme » ne tiennent pas en gras, et
+        // deux cartes côte à côte ne doivent pas changer de lettre)
+        const fonte = TEXTE
         const mot = spell(sorte, fonte) as { letters: { g: unknown; x: number }[]; w: number }
         const x0 = Math.round(cx - mot.w / 2)
         const items = mot.letters.filter((L) => L.g).map((L) => ({ g: L.g, x: x0 + L.x, y: sy - decalage(fonte), sx: 1, sy: 1 }))

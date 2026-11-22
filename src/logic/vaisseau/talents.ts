@@ -383,7 +383,7 @@ export const MUTATIONS: Mutation[] = [
   variation('tesla-incendiaire', 'tesla', 'Incendiaire', 'Ce que la foudre touche s’enflamme.', changerA('tesla', V.incendiaire)),
   variation('tesla-cryo', 'tesla', 'Cryogénique', 'Ce que la foudre touche gèle.', changerA('tesla', V.cryo)),
   variation('tesla-surtension', 'tesla', 'Surtension', 'La bobine décharge deux fois plus souvent.', changerA('tesla', (a) => ({ ...a, sphere: a.sphere === undefined ? undefined : { ...a.sphere, periode: a.sphere.periode * 0.5 } }))),
-  variation('tesla-champ', 'tesla', 'Champ tesla', 'Un champ électrique blesse les ennemis tout près du vaisseau.', changerA('tesla', (a) => ({ ...a, aura: { rayon: 34, dps: fois(a, 0.4) } }))),
+  variation('tesla-champ', 'tesla', 'Champ tesla', 'Un champ électrique blesse les ennemis tout près.', changerA('tesla', (a) => ({ ...a, aura: { rayon: 34, dps: fois(a, 0.4) } }))),
   variation('tesla-jumeau', 'tesla', 'Grande bobine', 'Une boule plus grande, qui dure plus longtemps.', changerA('tesla', (a) => ({ ...a, sphere: a.sphere === undefined ? undefined : { ...a.sphere, rayon: a.sphere.rayon * 1.5, duree: a.sphere.duree * 1.4 } }))),
   // LE LANCE-GRENADES
   variation('grenades-fragmentation', 'grenades', 'Fragmentation', 'Chaque explosion projette six éclats brûlants tout autour.', changerA('grenades', V.fragments)),
@@ -391,7 +391,7 @@ export const MUTATIONS: Mutation[] = [
   variation('grenades-cryo', 'grenades', 'Cryogéniques', 'Les grenades gèlent ce qu’elles touchent.', changerA('grenades', V.cryo)),
   variation('grenades-rafale', 'grenades', 'Rafale', 'Quatre grenades à chaque tir.', changerA('grenades', (a) => ({ ...a, gerbe: { nombre: 4, ecart: 0.25 }, degats: fois(a, 0.7) }))),
   variation('grenades-drones', 'grenades', 'Drones', 'Deux drones en orbite lancent des grenades sur les ennemis proches.', ajouterA('grenades', (a) => drones(a, { cadence: 1.8, degats: fois(a, 0.6), portee: 80, gerbe: undefined }))),
-  variation('grenades-lourdes', 'grenades', 'Gros calibre', 'Des grenades plus lentes à venir, plus fortes, qui explosent plus large.', changerA('grenades', V.lourd)),
+  variation('grenades-lourdes', 'grenades', 'Gros calibre', 'Des grenades plus lentes, plus fortes, qui explosent plus large.', changerA('grenades', V.lourd)),
   // LES DRONES D'ESCORTE
   variation('escorte-plus', 'escorte', 'Escadrille', 'Deux mini-avions de plus.', ajouterA('escorte', (a) => drones(a, { cadence: a.cadence, degats: a.degats, portee: a.portee }, 2, Math.PI / 2).map((d, k) => ({ ...d, place: 22 + k })))),
   variation('escorte-perforantes', 'escorte', 'Perforantes', 'Les balles des mini-avions traversent les ennemis.', changerA('escorte', V.perforant)),
