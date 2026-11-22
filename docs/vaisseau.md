@@ -7824,3 +7824,5 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   des vaisseaux, sur deux lignes : Les astéroïdes donnent des plaques de blindage ». MESURÉ (téléphone debout et couché) :
   ainsi, « blindage. » tombait seul sur une troisième ligne ; « de blindage », que « Surblindage » dit déjà, est ôté —
   « Surblindage : Les astéroïdes donnent des plaques. » tient sur deux lignes (`RACES`, `flotte.ts`).
+  - Puis Keko : « on va plutôt dire : les astéroïdes peuvent lâcher du surblindage ». « Surblindage : Les astéroïdes
+    peuvent lâcher du surblindage. » — MESURÉ, deux lignes, debout et couché.

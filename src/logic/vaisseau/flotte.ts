@@ -41,7 +41,7 @@ export type Race = 'humains' | 'essaim' | 'etheres' | 'innommes'
 // fonctionnement des différentes races » ; puis, le 21/11 : « un petit mot avec deux points et la définition » — ses
 // mots : `defense`, le mot et ce qu'il fait)
 export const RACES: { id: Race; nom: string; defense: { nom: string; dit: string } }[] = [
-  { id: 'humains', nom: 'L’Empire', defense: { nom: 'Surblindage', dit: 'Les astéroïdes donnent des plaques.' } }, // (Keko, 22/11 : « Les astéroïdes donnent des plaques de blindage » — sur trois lignes ; « de blindage », que « Surblindage » dit déjà, ôté pour qu'il tienne sur deux)
+  { id: 'humains', nom: 'L’Empire', defense: { nom: 'Surblindage', dit: 'Les astéroïdes peuvent lâcher du surblindage.' } }, // (Keko, 22/11 : elles tombent des roches, voir `recuperation`)
   { id: 'essaim', nom: 'Les Xénoïdes', defense: { nom: 'Carapace', dit: 'Les points de vie se régénèrent lentement.' } },
   // (… PUIS LES VECTRANS ET LES XL'QOTH, PUIS YHG'THARR — Keko, 19/11 : « pour les Éthérés, un nom qui sonne vraiment technologie avancée ;
   // pour les Innommés, un nom eldritch qui sonne presque imprononçable » ; puis, la Convergence essayée : « je veux
