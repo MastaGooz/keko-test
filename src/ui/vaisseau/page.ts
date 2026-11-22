@@ -226,9 +226,17 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   // (… et pas de tutoriel : ses trois onglets sont là d'emblée)
   if ((parametres.get('tuto') === '0' || parametres.has('vortex')) && !tutorielFini(quetes)) quetes = quetesSansTutoriel(1, (x) => aLaMecanique(labo, x as Mecanique))
   const sauver = (): void => {
+    // (PAS PENDANT QU'UN ALLIÉ EST PRÊTÉ — voir `avecLAutre` : son modèle et son hangar sont en place, la sauvegarde
+    // aurait gardé son vaisseau à la place du sien ; elle se fait à la fin du prêt)
+    if (sauverApresLePret !== null) {
+      sauverApresLePret = true
+      return
+    }
     flotte = avecLeHangar(flotte, hangar)
     sauverHangar(flotte, tresor, credits, labo, marche, quetes)
   }
+  /** Pendant un prêt d'écran à un allié (voir `avecLAutre`) : une sauvegarde demandée attend la fin (null : pas de prêt). */
+  let sauverApresLePret: boolean | null = null
   /** LA LIVRÉE du vaisseau du joueur (Keko, 12/11) : la couleur de sa coque et de ses ailes, choisie au hangar. */
   /** (CHAQUE VAISSEAU A LA SIENNE — Keko, 14/11 : relue à chaque changement de vaisseau) */
   // (DANS LE JEU DU VORTEX, LA COULEUR EST CELLE DU JOUEUR, pas du vaisseau — Keko, 15/11 : « chaque joueur aura une
@@ -2839,7 +2847,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         zone(0, 0, W, H, () => {}, null)
         return
       }
-      if (choixDeTalent === null) passerAuSecond()
+      // (l'écran partagé seulement : à distance, chacun a son choix chez lui)
+      if (choixDeTalent === null && COOP) passerAuSecond()
       talentFinA = tReel + DUREE_DU_CHOIX
       talentA = tReel
       zone(0, 0, W, H, () => {}, null)
@@ -9442,6 +9451,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     poserLEcran({ ...second.ecran, v: m.vaisseau })
     dessinDuSecond = true
     autreEnCours = second
+    sauverApresLePret = false
     try {
       f()
     } finally {
@@ -9457,6 +9467,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       prendreLaMain(m, 0)
       poserLEcran(premier)
       v = m.vaisseau
+      // (le rappel a pu la demander : le type ne le sait pas)
+      const aSauver = (sauverApresLePret as boolean | null) === true
+      sauverApresLePret = null
+      if (aSauver) sauver()
     }
   }
   /** Où est un vaisseau de l'équipage (en vol, ou son épave), dans le monde. */
@@ -16766,7 +16780,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         a.choix = null
       }
       choixDeTalent = null
-      passerAuSecond()
+      // (L'ÉCRAN PARTAGÉ SEULEMENT — Keko, 22/11 : « je jouais la Sentinelle et on m'a proposé une carte de points de vie
+      // des Xénoïdes, parce que mon allié joue Xénoïde » : à distance, le choix laissé par un allié au bout du compte
+      // passait ici à l'hôte, avec les cartes de l'allié)
+      if (COOP) passerAuSecond()
     }
     if (enJeu && (souteOuverte || choixDeTalent !== null || pauseOuverte)) regler(0, false, 0, false)
     if (enJeu && !souteOuverte && choixDeTalent === null && (estInvite ? distant.recu && distant.enVol && !distant.fige : !pauseOuverte)) {

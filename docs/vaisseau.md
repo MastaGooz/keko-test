@@ -7725,3 +7725,13 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   - LES ALLIÉS HORS DE L'ÉCRAN : la flèche d'or de la base (`dessinerUneFleche`, celle de l'ancien pointeur), au bord,
     vers chacun, sans nom. VU à deux Chrome.
   - La barre de vie et le pseudo des alliés étaient déjà d'or pour toutes les races (le bouclier, au-dessus, reste bleu).
+- **22/11, LES CARTES D'UN ALLIÉ CHEZ L'HÔTE (corrigé).** Keko : « je jouais la Sentinelle et on m'a proposé une carte
+  d'amélioration de points de vie des Xénoïdes, parce que mon allié joue Xénoïde ; il faut surtout pas que les cartes
+  soient mélangées ». La cause : AU BOUT DU COMPTE, le choix qu'un allié n'avait pas fait passait en réserve… puis
+  `passerAuSecond` — le choix « l'un après l'autre » de L'ÉCRAN PARTAGÉ — l'ouvrait CHEZ L'HÔTE, avec les cartes de
+  l'allié, et la carte prise allait à son vaisseau. Il ne s'ouvre plus qu'à l'écran partagé (`&coop`) ; à distance, le
+  choix laissé reste dans la réserve de l'allié. Mesuré d'abord : au premier niveau, les cartes étaient justes des deux
+  côtés (Sentinelle et Kraken, dans les deux sens) ; le bug était au délai. VU : l'hôte choisit, l'allié laisse passer
+  les 30 s, la partie reprend chez les deux sans rien proposer à l'hôte.
+  - Et, vu en relisant : LA SAUVEGARDE PENDANT LE PRÊT D'ÉCRAN À UN ALLIÉ (`avecLAutre`) gardait son modèle et son hangar
+    à la place des siens ; elle attend maintenant la fin du prêt.
