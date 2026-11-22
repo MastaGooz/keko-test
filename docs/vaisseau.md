@@ -7829,3 +7829,23 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
 - **22/11, LE HANGAR SEUL.** Keko : « masquer les onglets recherche et missions pour l'instant, vu qu'elles ne sont pas
   encore retravaillées ». `VUES` du vortex : `['hangar']` ; la barre ne montre plus que « Hangar » et « Plus » (Inviter).
   Leur code reste, il suffit de les remettre dans `VUES`. VU debout et couché.
+- **22/11, LA ZONE GRANDIT TOUTE L'ANIMATION.** Keko : « quand on augmente la zone d'une attaque, que la totalité de
+  l'animation prenne ça en compte, pour un rendu visuel très cohérent » (après : « l'onde suit la zone, mais la boule de
+  feu des missiles reste petite »). VINGT ARMES ONT LA CARTE « ZONE » (missiles, rayon thermique, napalm, tempête, scie,
+  fléau, nova, éclats, blizzard, orbe, nuée, mines, traînée corrosive, désintégration, singularité, intrication, épine,
+  hypercube, dé, superposition). Ce que leurs dessins lisent dans l'arme ou la règle (un rayon, une largeur) grandissait
+  déjà ; ce qu'ils posaient À TAILLE FIXE grandit maintenant avec `zoneDuVol()` (1 + la somme des cartes « Zone » du vol,
+  une seule arme par vol ; prêtée avec l'écran d'un allié ; gardée dans l'effet quand il naît d'un événement) :
+  - missiles : flammes plus nombreuses et plus grosses, braises plus loin, fumée, lueur du cœur ; napalm et traînée du
+    rayon : les bouffées de feu ; rayon thermique : son point d'impact ; tempête : les arcs sur son bord ;
+  - nova : les cristaux (plus nombreux, plus hauts), le flocon, les éclats ; son verglas : ses éclats de glace, ses
+    paillettes ; la traînée de givre : ses flocons ; blizzard : bouffées, traînées, flocons, lueurs ;
+  - orbe (la sphère qui tire) : l'orbe ; singularité : l'horizon, son disque, son anneau, l'effondrement ; désintégration :
+    la largeur du trait, ses lueurs, sa spirale ; intrication : les traînées et les grains de son bord ;
+  - nuée : plus de moucherons, des bras plus larges ; mines : l'amas, sa lueur, son ombre ; fléau : ses pics ; scie : la
+    lame ; épine : l'os entier ; hypercube et dé : le cube, son ombre, les points du chiffre ; superposition : ses bords,
+    les crans du point final, l'éclair, le faisceau, le carré, l'éclat et les ondes.
+  - ET LA RÈGLE : le rayon d'EFFONDREMENT de la Singularité (`puits.eclat`) ne grandissait pas avec la carte — `eclat`
+    rejoint `rayon` et `largeur` dans `CLES_DE_ZONE` (vérifié : +25 %, 45 → 56,25, 28 → 35, la force ne bouge pas).
+  - `&zone=N` décolle avec N % de zone sur l'arme montée. VU : la nova du Frimas à +100 %, son verglas et ses éclats deux
+    fois plus grands. Les éclats de glace (le Frimas) : la carte grandit le cercle où ils attendent, pas un coup de zone.

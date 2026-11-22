@@ -132,7 +132,8 @@ function changer<A>(a: A, cles: ReadonlySet<string>, f: (v: number) => number): 
   }
   return passe(a) as A
 }
-const CLES_DE_ZONE: ReadonlySet<string> = new Set(['rayon', 'largeur'])
+// (… ET `eclat`, le rayon de l'effondrement de la Singularité — 22/11 : il restait à sa taille sous les cartes « Zone »)
+const CLES_DE_ZONE: ReadonlySet<string> = new Set(['rayon', 'largeur', 'eclat'])
 const CLES_DE_CADENCE: ReadonlySet<string> = new Set(['cadence', 'tous'])
 /** (les branches de ce qu'une arme POSE — tourelles, balises, mines, flaques de napalm, œufs — et leur durée) */
 const POSEES = ['pose', 'balise', 'mine', 'napalm', 'ponte'] as const

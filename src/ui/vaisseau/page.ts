@@ -1135,6 +1135,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       banc = { ...bancDeDepart }
       appliquerLeBanc()
     }
+    // (`&zone=N` : décoller avec N % de zone sur l'arme montée — voir `zoneDuVol` — pour juger ses dessins agrandis d'un lien)
+    if (parametres.has('zone') && CONF.armes[0] !== undefined) {
+      const a = CONF.armes[0]
+      confSansTalents = CONF
+      bonusDuVol = [{ id: `arme-${a.id}:zone`, cible: { sorte: 'arme', arme: a.id }, stat: 'zone', somme: (Number(parametres.get('zone')) || 100) / 100 }]
+      CONF = avecLesBonus(CONF, bonusDuVol)
+    }
     m = monterLeMonde()
     // (ce que le hangar a semé ne suit pas le vaisseau dans l'espace : les fumées et les étincelles du décollage, les
     // nombres qui montent — Keko, 13/11 : deux points de fumée du décollage restaient à l'écran à l'arrivée en vol)
@@ -1490,6 +1497,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** La configuration d'avant le premier talent du vol, et les bonus pris depuis (voir `avecLesBonus`). */
   let confSansTalents: ConfigVaisseau | null = null
   let bonusDuVol: Bonus = []
+  /**
+   * L'ÉCHELLE DE ZONE DU VOL (Keko, 22/11 : « quand on augmente la zone d'une attaque, que la totalité de l'animation
+   * prenne ça en compte, pour un rendu visuel très cohérent ») : 1 + la somme des cartes « Zone » prises (une seule arme
+   * par vol : ce sont les siennes). Ce que les dessins lisent dans l'arme ou dans la règle — un rayon, une largeur —
+   * grandit déjà avec elles ; ce qu'ils posent à taille fixe — flammes, gerbes, lueurs, cristaux, traits, corps — s'y
+   * multiplie. Prêtée avec l'écran d'un allié (voir `avecLAutre`). `&zone=N` : N % de zone dès le décollage.
+   */
+  const zoneDuVol = (): number => 1 + bonusDuVol.reduce((somme, b) => (b.stat === 'zone' ? somme + b.somme : somme), 0)
   /**
    * L'ÉQUIPAGE, SUR UN MÊME ÉCRAN (`&coop` — Keko, 22/11 : « Tente l'étape 1 », deux vaisseaux dans le même monde avant le
    * réseau) : un second vaisseau, du même modèle et de la même arme que le premier, dans l'apparence suivante ; LA MOITIÉ
@@ -10098,10 +10113,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.ring(sx, sy, r, 1, C[4], 0.25 + 0.1 * Math.sin(t * 9))
       p.glow(sx, sy, r, C[3], 0.12)
       const R = new N.Rng((image * 131 + 7) | 0)
-      for (let k = 0; k < 7; k++) {
+      // (autant d'arcs sur le bord qu'il en faut pour sa longueur — voir `zoneDuVol`)
+      const sz = zoneDuVol()
+      for (let k = 0; k < Math.round(7 * sz); k++) {
         const a0 = R.range(0, Math.PI * 2)
         const a1 = a0 + R.range(0.25, 0.6)
-        const rr = r + R.range(-2, 2)
+        const rr = r + R.range(-2, 2) * sz
         crackle(p, zigzag(R, sx + Math.cos(a0) * rr, sy + Math.sin(a0) * rr, sx + Math.cos(a1) * rr, sy + Math.sin(a1) * rr, 0.35, 0.1), 0.55, C, 0.35)
       }
       // (des arcs vers ce qui est dedans, qui sautent d'une image à l'autre)
@@ -10122,7 +10139,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
   }
   /** L'ONDE D'UNE EXPLOSION DE MINI-MISSILE : un anneau orange qui s'ouvre jusqu'à son rayon, en 0,25 s. */
-  let ondesDeZone: { x: number; y: number; t0: number; r: number }[] = []
+  let ondesDeZone: { x: number; y: number; t0: number; r: number; s: number }[] = []
   function dessinerLesConsumes(p: Peintre): void {
     ondesDeZone = ondesDeZone.filter((o) => t - o.t0 < 0.25)
     for (const o of ondesDeZone) {
@@ -10132,7 +10149,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.ring(ox, oy, 3 + (o.r - 3) * Math.sqrt(u), 1, u < 0.3 ? N.hex('#fff2a8') : FEU[4], 1 - u)
       // (le cœur de l'explosion : une lueur chaude qui s'éteint — à la place de l'éclair des chocs, dont l'anneau s'ouvrait
       // jusqu'à presque trois fois son rayon : c'était lui, le grand cercle)
-      p.glow(ox, oy, 12 * (1 - u) + 4, FEU[5], 0.8 * (1 - u))
+      p.glow(ox, oy, (12 * (1 - u) + 4) * o.s, FEU[5], 0.8 * (1 - u))
     }
     if (parametres.has('consume') && enJeu && m.phase === 'vol' && t - bancConsumeA > 1.6) {
       bancConsumeA = t
@@ -10215,17 +10232,18 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (m.flaques.length === 0) return
     p.place(W / 2 - camera.x, centreY() - camera.y)
     const H_FEU = hotFirst(RAMPE_DU_FEU)
+    const sz = zoneDuVol()
     for (const f of m.flaques) {
       const age = m.t - f.nee
       const k = Math.min(1, age / 0.12) * Math.min(1, (f.duree - age) / 0.8)
       if (k <= 0) continue
       p.circle(f.x, f.y, f.rayon * (0.6 + 0.4 * Math.min(1, age / 0.12)), N.hex('#2a120c'), 0.55 * k)
       p.glow(f.x, f.y, f.rayon * 1.5, FEU[4], 0.35 * k)
-      for (let j = 0; j < 10; j++) {
+      for (let j = 0; j < Math.round(10 * sz); j++) {
         const a = alea(f.id, j, 1) * Math.PI * 2
         const d = Math.sqrt(alea(f.id, j, 2)) * f.rayon * 0.85
         const ph = (t * (1.6 + alea(f.id, j, 3)) + alea(f.id, j, 4)) % 1
-        firePuff(p, f.x + Math.cos(a) * d, f.y + Math.sin(a) * d - ph * 6, (1 - ph) * k, (1.3 + 1.4 * alea(f.id, j, 5)) * (0.5 + 0.5 * k), alea(f.id, j, 6), H_FEU, 0.06, 0, -1)
+        firePuff(p, f.x + Math.cos(a) * d, f.y + Math.sin(a) * d - ph * 6 * sz, (1 - ph) * k, (1.3 + 1.4 * alea(f.id, j, 5)) * (0.5 + 0.5 * k) * sz, alea(f.id, j, 6), H_FEU, 0.06, 0, -1)
       }
     }
     p.place(0, 0)
@@ -10244,6 +10262,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   function dessinerLeGivre(p: Peintre): void {
     if (m.givres.length === 0) return
     p.place(W / 2 - camera.x, centreY() - camera.y)
+    const sz = zoneDuVol()
     // LA TRAÎNÉE DE POISON DU VER, UNE SEULE FLAQUE (Keko, 17/11 : « on dirait une superposition de taches bizarres ; une
     // texture plus uniforme, comme si c'était une seule et même flaque, comme le crachat de la Vouivre qui laisse une trace
     // dans le sol ») : ses plaques se peignent EN DEUX PASSES, PLEINES — d'abord leur bord vif, toutes ; puis leur dedans,
@@ -10321,7 +10340,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       for (let j = 0; j < nEclats; j++) {
         const a = alea(g.id, j, 51) * Math.PI * 2
         const d = Math.sqrt(0.04 + 0.96 * alea(g.id, j, 52)) * g.rayon * 0.92 * (1 - Math.exp(-age * 7))
-        const taille = (2 + 3.6 * alea(g.id, j, 53)) * (0.45 + 0.55 * k)
+        const taille = (2 + 3.6 * alea(g.id, j, 53)) * (0.45 + 0.55 * k) * sz
         const coins = 3 + Math.floor(alea(g.id, j, 54) * 3)
         const pts: number[][] = []
         for (let c = 0; c < coins; c++) {
@@ -10351,7 +10370,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         const sc = 0.5 + 0.5 * Math.sin(m.t * (2 + 3 * alea(g.id, j, 65)) + alea(g.id, j, 66) * 6)
         const x = g.x + Math.cos(a) * d
         const y = g.y + Math.sin(a) * d
-        if (sc > 0.93) N.sparkle(p, x, y, 2, N.WHITE, GLACE[5], 0.8 * k)
+        if (sc > 0.93) N.sparkle(p, x, y, 2 * sz, N.WHITE, GLACE[5], 0.8 * k)
         else p.dot(x, y, sc > 0.5 ? GLACE[6] : GLACE[5], (0.3 + 0.5 * sc) * k * nait)
       }
     }
@@ -10373,7 +10392,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         const a = alea(g.id, j, 1) * Math.PI * 2
         const d = Math.sqrt(alea(g.id, j, 2)) * g.rayon * 0.8
         const scint = 0.5 + 0.5 * Math.sin(t * (3 + 2 * alea(g.id, j, 3)) + alea(g.id, j, 4) * 6)
-        snowflake(p, Math.round(g.x + Math.cos(a) * d), Math.round(g.y + Math.sin(a) * d), 1.4 + 1.2 * alea(g.id, j, 5), alea(g.id, j, 6) * 3, FLOCON, GLACE, { a: 0.85 * k, hot: scint > 0.85 ? 1 : 0 })
+        snowflake(p, Math.round(g.x + Math.cos(a) * d), Math.round(g.y + Math.sin(a) * d), (1.4 + 1.2 * alea(g.id, j, 5)) * sz, alea(g.id, j, 6) * 3, FLOCON, GLACE, { a: 0.85 * k, hot: scint > 0.85 ? 1 : 0 })
       }
       if (alea(g.id, 7, 1) < 0.5) p.rect(Math.round(g.x + (alea(g.id, 7, 2) - 0.5) * g.rayon), Math.round(g.y + (alea(g.id, 7, 3) - 0.5) * g.rayon), 1, 1, N.WHITE, 0.7 * k)
     }
@@ -10385,7 +10404,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * jaillissent du sol, pointés vers le dehors, plus grands près du vaisseau, qui tiennent puis fondent ; des éclats de
    * glace qui filent.
    */
-  const novas: { x: number; y: number; r: number; t0: number; id: number }[] = []
+  const novas: { x: number; y: number; r: number; t0: number; id: number; s: number }[] = []
   const DUREE_DE_LA_NOVA = 1.4
   /** La couronne de dents de givre sur le front de la nova (retirée pour l'essai, Keko, 20/11). */
   const DENTS_DU_FRONT = false
@@ -10399,21 +10418,22 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // ce qui est dessiné s'arrête où elle frappe)
       const front = frontDeLaNova(nv.r, age)
       // (les cristaux : ils jaillissent quand le front les atteint, tiennent, puis fondent)
-      for (let j = 0; j < 26; j++) {
+      // (plus de cristaux, plus hauts, sur une nova agrandie — voir `zoneDuVol`)
+      for (let j = 0; j < Math.round(26 * nv.s); j++) {
         const q = 0.3 + 0.58 * alea(nv.id, j, 1)
         const d = q * nv.r
         if (front < d) continue
         const ne = age - 0.35 * (1 - Math.cbrt(1 - Math.min(1, d / nv.r)))
         const pousse = Math.min(1, ne / 0.1)
         const fond = Math.max(0, Math.min(1, (age - 0.9) / 0.5))
-        const h = (6 - 3.5 * q) * pousse * (1 - fond)
+        const h = (6 - 3.5 * q) * pousse * (1 - fond) * nv.s
         if (h < 0.5) continue
         const a = alea(nv.id, j, 2) * Math.PI * 2
         const bx = nv.x + Math.cos(a) * d
         const by = nv.y + Math.sin(a) * d
         const ux = Math.cos(a)
         const uy = Math.sin(a)
-        const w = 1.2 + 0.6 * (1 - q)
+        const w = (1.2 + 0.6 * (1 - q)) * nv.s
         p.poly([[bx - uy * w, by + ux * w], [bx + ux * h, by + uy * h], [bx + uy * w, by - ux * w], [bx - ux * h * 0.3, by - uy * h * 0.3]], GLACE[5])
         p.line(bx, by, bx + ux * h, by + uy * h, ne < 0.05 ? N.WHITE : GLACE[6])
       }
@@ -10438,9 +10458,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         p.glow(nv.x, nv.y, front * 0.6, GLACE[4], 0.15 * (1 - u))
       }
       // (le flocon qui éclate au cœur, et les éclats qui filent)
-      if (age < 0.25) snowflake(p, Math.round(nv.x), Math.round(nv.y), 2 + 5 * (age / 0.25), age * 8, FLOCON, GLACE, { a: 1 - age / 0.25, hot: 1 })
+      if (age < 0.25) snowflake(p, Math.round(nv.x), Math.round(nv.y), (2 + 5 * (age / 0.25)) * nv.s, age * 8, FLOCON, GLACE, { a: 1 - age / 0.25, hot: 1 })
       if (age < 0.5)
-        for (let j = 0; j < 12; j++) {
+        for (let j = 0; j < Math.round(12 * nv.s); j++) {
           const a = alea(nv.id, j, 21) * Math.PI * 2
           const d = front * (0.5 + 0.5 * alea(nv.id, j, 22))
           p.px(Math.round(nv.x + Math.cos(a) * d), Math.round(nv.y + Math.sin(a) * d), j % 3 === 0 ? N.WHITE : GLACE[6])
@@ -10471,13 +10491,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       if (k <= 0) continue
       const R = to.rayon * (0.45 + 0.55 * k)
       const rot = m.t * 5 + tn.id
+      const sz = zoneDuVol()
       // (le pied : des bouffées de neige qui tournent sur le bord et s'en échappent, sous le reste)
-      for (let j = 0; j < 6; j++) {
+      for (let j = 0; j < Math.round(6 * sz); j++) {
         const vie = 0.9 + 0.4 * alea(tn.id, j, 1)
         const u = ((m.t + alea(tn.id, j, 2) * vie) % vie) / vie
         const an = alea(tn.id, j, 3) * Math.PI * 2 + m.t * 4.5
         const d = R * (0.8 + 0.6 * u)
-        const ra = 1.5 + 3 * u
+        const ra = (1.5 + 3 * u) * sz
         const a = 0.45 * (1 - u) * Math.min(1, u / 0.1) * k
         p.disc(tn.x + Math.cos(an) * d, tn.y + Math.sin(an) * d, ra, GLACE[6], (dd) => a * (1 - dd * dd))
       }
@@ -10495,9 +10516,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // (la lumière froide dans sa gorge — retenue : trop forte, elle en faisait une boule de lumière)
       p.glow(tn.x, tn.y, R * 1.5, GLACE[4], 0.14 * k)
       p.glow(tn.x, tn.y, R * 0.5, GLACE[5], (0.22 + 0.06 * Math.sin(m.t * 12)) * k)
-      p.glow(tn.x, tn.y, 2, N.WHITE, 0.25 * k)
+      p.glow(tn.x, tn.y, 2 * sz, N.WHITE, 0.25 * k)
       // (les traînées de vent : des arcs aspirés vers le cœur, plus rapides près de lui)
-      for (let j = 0; j < 9; j++) {
+      for (let j = 0; j < Math.round(9 * sz); j++) {
         const vie = 0.6 + 0.35 * alea(tn.id, j, 4)
         const u = ((m.t + alea(tn.id, j, 5) * vie) % vie) / vie
         const r = R * (1.05 - 0.7 * u)
@@ -10514,7 +10535,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         }
       }
       // (les flocons en orbite : une petite traînée, une tête claire ; les gros en croix, avec leur lueur)
-      for (let j = 0; j < 12; j++) {
+      for (let j = 0; j < Math.round(12 * sz); j++) {
         const r = R * (0.35 + 0.75 * alea(tn.id, j, 9))
         const w = (6 + 4 * alea(tn.id, j, 10)) * (1.5 - r / R)
         const th = alea(tn.id, j, 11) * Math.PI * 2 + m.t * w
@@ -10524,7 +10545,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         p.dot(x, y, j % 2 === 0 ? N.WHITE : GLACE[6], k)
         if (j % 4 === 0) {
           for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) p.dot(x + dx, y + dy, GLACE[6], k)
-          p.glow(x, y, 4, GLACE[5], 0.3 * k)
+          p.glow(x, y, 4 * sz, GLACE[5], 0.3 * k)
         }
       }
     }
@@ -10636,7 +10657,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   let arcaneSonneA = -10
   /** LES TRAITS DU RAILGUN qui viennent de partir (voir l'événement `rail`) : un trait épais qui s'amincit et pâlit. */
   const DUREE_DU_RAIL = 0.32
-  const traitsDuRail: { x0: number; y0: number; x1: number; y1: number; t0: number }[] = []
+  const traitsDuRail: { x0: number; y0: number; x1: number; y1: number; t0: number; s: number }[] = []
   /** LES ÉCLATS DE GLACE QUI SE BRISENT (voir l'événement `eclatement`) : un éclair blanc et une étoile, 0,2 s. */
   const eclatsBrises: { x: number; y: number; t0: number }[] = []
   let eclatementSonneA = -10
@@ -10647,7 +10668,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const age = m.t - s.nee
       const k = Math.min(1, age / 0.18) * Math.min(1, (sp.duree - age) / 0.25)
       if (k <= 0) continue
-      const R = RAYON_DE_LA_SPHERE * (0.4 + 0.6 * k) * (1 + 0.06 * Math.sin(t * 9 + s.id))
+      const R = RAYON_DE_LA_SPHERE * zoneDuVol() * (0.4 + 0.6 * k) * (1 + 0.06 * Math.sin(t * 9 + s.id))
       const flash = Math.max(0, 1 - (t - (sphereTirA.get(s.id) ?? -10)) / 0.15)
       // (UNE ORBE À MOITIÉ TRANSPARENTE ET VIDE — Keko, 16/11 : « l'espèce d'étoile à l'intérieur, c'est un peu moche, et ça
       // lui donne une texture pleine ; plutôt une orbe à moitié transparente, vide, parcourue par des ondes et de
@@ -10708,7 +10729,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    */
   const VIDE = ['#06010a', '#1a0516', '#3d0a33', '#701560', '#b0228f', '#f53cd1', '#ff86e6', '#ffd2f6'].map((c) => N.hex(c))
   const NOIR_DU_TROU = N.hex('#020004')
-  const effondrements: { x: number; y: number; t0: number; r: number }[] = []
+  const effondrements: { x: number; y: number; t0: number; r: number; s: number }[] = []
   function dessinerLesPuits(p: Peintre): void {
     for (let i = effondrements.length - 1; i >= 0; i--) if (t - effondrements[i].t0 > 0.5) effondrements.splice(i, 1)
     for (const pu of m.puits) {
@@ -10728,7 +10749,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const u = Math.min(1, age / conf.duree)
       const naissance = Math.min(1, age / 0.25)
       const R0 = conf.rayon
-      const c = (2.5 + 3 * u) * naissance + 0.5
+      // (l'horizon, son disque et son anneau grandissent avec la zone — voir `zoneDuVol`)
+      const c = ((2.5 + 3 * u) * naissance + 0.5) * zoneDuVol()
       // (l'espace s'assombrit autour de lui)
       p.disc(pu.x, pu.y, R0 * 0.7 * naissance, VIDE[0], (d) => 0.55 * (1 - d) * (1 - d))
       // (le cercle de son rayon, qui bat de plus en plus vite)
@@ -10762,16 +10784,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const age = t - e.t0
       if (age < 0.1) {
         const k = 1 - age / 0.1
-        p.circle(e.x, e.y, 6 * k + 1, NOIR_DU_TROU)
-        p.circle(e.x, e.y, 1, N.WHITE)
-        p.glow(e.x, e.y, 10, VIDE[6], 0.9)
+        p.circle(e.x, e.y, (6 * k + 1) * e.s, NOIR_DU_TROU)
+        p.circle(e.x, e.y, e.s, N.WHITE)
+        p.glow(e.x, e.y, 10 * e.s, VIDE[6], 0.9)
         continue
       }
       const u = (age - 0.1) / 0.4
       const r = e.r * 1.2 * (1 - (1 - u) * (1 - u))
       p.ring(e.x, e.y, r + 1.5, 1, VIDE[1], 0.6 * (1 - u))
       p.ring(e.x, e.y, r, u < 0.4 ? 2 : 1, u < 0.25 ? VIDE[7] : u < 0.6 ? VIDE[6] : VIDE[4], 0.9 * (1 - u))
-      if (u < 0.3) p.glow(e.x, e.y, 12, VIDE[5], 0.7 * (1 - u / 0.3))
+      if (u < 0.3) p.glow(e.x, e.y, 12 * e.s, VIDE[5], 0.7 * (1 - u / 0.3))
     }
   }
   function dessinerLeRailgun(p: Peintre): void {
@@ -10784,18 +10806,19 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const ny = (r.x1 - r.x0) / L
       // (le trait : une gaine bleue large qui s'amincit, une bande cyan, une âme blanche ; il pâlit de la bouche au bout —
       // AUX COULEURS DU PRISME, depuis qu'il est à lui : Keko, 16/11, « ça colle mieux avec les cristaux »)
-      const demi = Math.max(0, Math.round(3 * v1))
+      // (aussi large que ce qu'il frappe — voir `zoneDuVol`)
+      const demi = Math.max(0, Math.round(3 * r.s * v1))
       for (let o = -demi - 1; o <= demi + 1; o++) {
         const bord = Math.abs(o) / (demi + 1)
         const c = bord < 0.3 ? N.WHITE : bord < 0.7 ? lumiereDuPrisme()[3] : lumiereDuPrisme()[1]
         p.line(r.x0 + nx * o, r.y0 + ny * o, r.x1 + nx * o, r.y1 + ny * o, c, (bord < 0.3 ? 1 : 0.75) * v1)
       }
       // (des nœuds de lumière le long du trait, et le flash à la bouche)
-      for (let q = 0; q <= 8; q++) p.glow(r.x0 + ((r.x1 - r.x0) * q) / 8, r.y0 + ((r.y1 - r.y0) * q) / 8, 6 * v1 + 2, q % 2 === 0 ? lumiereDuPrisme()[3] : lumiereDuPrisme()[1], 0.4 * v1)
-      if (u < 0.3) p.glow(r.x0, r.y0, 10, N.WHITE, 0.8 * (1 - u / 0.3))
+      for (let q = 0; q <= 8; q++) p.glow(r.x0 + ((r.x1 - r.x0) * q) / 8, r.y0 + ((r.y1 - r.y0) * q) / 8, (6 * v1 + 2) * r.s, q % 2 === 0 ? lumiereDuPrisme()[3] : lumiereDuPrisme()[1], 0.4 * v1)
+      if (u < 0.3) p.glow(r.x0, r.y0, 10 * r.s, N.WHITE, 0.8 * (1 - u / 0.3))
       // (une spirale d'énergie autour du trait, qui s'efface)
       for (let d = 0; d < L; d += 2) {
-        const off = Math.sin(d * 0.35 - t * 40) * (3 + 3 * u)
+        const off = Math.sin(d * 0.35 - t * 40) * (3 + 3 * u) * r.s
         p.dot(r.x0 + ((r.x1 - r.x0) * d) / L + nx * off, r.y0 + ((r.y1 - r.y0) * d) / L + ny * off, lumiereDuPrisme()[2], 0.7 * v1)
       }
     }
@@ -11149,6 +11172,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // s'éteint en s'enroulant vers l'intérieur ; trois plus pâles qui tournent dans l'autre sens, un peu dehors ; et des
     // grains aspirés du dehors, qui spiralent jusqu'au bord et s'y perdent
     const R = dr.rayon
+    const sz = zoneDuVol()
     p.ring(sx, sy, R, 1, C[2], 0.35)
     const traine = (n: number, vit: number, r0: number, long: number, rentre: number, tons: number[]): void => {
       for (let k = 0; k < n; k++) {
@@ -11162,16 +11186,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         }
       }
     }
-    traine(3, -0.7, R + 3, 0.7, 2, [C[3], C[2]])
-    traine(4, 1.3, R, 1.1, 5, [N.WHITE, C[7], C[6], C[5], C[4], C[3]])
-    for (let k = 0; k < 4; k++) {
-      const tete = t * 1.3 + (k / 4) * Math.PI * 2
-      p.glow(sx + Math.cos(tete) * R, sy + Math.sin(tete) * R, 5, C[5], 0.4)
+    traine(Math.round(3 * sz), -0.7, R + 3 * sz, 0.7, 2 * sz, [C[3], C[2]])
+    traine(Math.round(4 * sz), 1.3, R, 1.1, 5 * sz, [N.WHITE, C[7], C[6], C[5], C[4], C[3]])
+    for (let k = 0; k < Math.round(4 * sz); k++) {
+      const tete = t * 1.3 + (k / Math.round(4 * sz)) * Math.PI * 2
+      p.glow(sx + Math.cos(tete) * R, sy + Math.sin(tete) * R, 5 * sz, C[5], 0.4)
     }
-    for (let k = 0; k < 10; k++) {
+    for (let k = 0; k < Math.round(10 * sz); k++) {
       const q = (((t * 0.45 + k / 10) % 1) + 1) % 1
       const an = (k * 2.399) + t * 1.3 + q * 1.6
-      const rr = R + 10 * (1 - q)
+      const rr = R + 10 * sz * (1 - q)
       p.px(Math.round(sx + Math.cos(an) * rr), Math.round(sy + Math.sin(an) * rr), q > 0.75 ? C[7] : q > 0.4 ? C[5] : C[3])
     }
     for (const e of pris) {
@@ -11603,10 +11627,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    */
   const epinesFinies: { x: number; y: number; cap: number; t0: number }[] = []
   const LONGUEUR_DE_L_EPINE = 14
-  function dessinerUneEpine(p: Peintre, x: number, y: number, ux: number, uy: number, long: number, a: number): void {
+  // (`e` : son échelle — la zone, voir `zoneDuVol` : plus large, elle est plus grosse)
+  function dessinerUneEpine(p: Peintre, x: number, y: number, ux: number, uy: number, long: number, a: number, e = 1): void {
     const nx = -uy
     const ny = ux
-    const pt = (u: number, w: number): number[] => [x + ux * u + nx * w, y + uy * u + ny * w]
+    const pt = (u: number, w: number): number[] => [x + ux * u * e + nx * w * e, y + uy * u * e + ny * w * e]
     p.poly([pt(2, 0), pt(-long * 0.4, 2.2), pt(-long, 2.4), pt(-long, -2.4), pt(-long * 0.4, -2.2)], OS[0], a)
     p.poly([pt(1, 0), pt(-long * 0.4, 1.3), pt(-long + 0.5, 1.5), pt(-long + 0.5, -1.5), pt(-long * 0.4, -1.3)], OS[1], a)
     p.line(pt(0, -0.4)[0], pt(0, -0.4)[1], pt(-long + 1, -0.9)[0], pt(-long + 1, -0.9)[1], OS[2], a)
@@ -11614,8 +11639,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     for (const c of [-1, 1]) p.line(pt(-2.5, c * 0.8)[0], pt(-2.5, c * 0.8)[1], pt(-5.5, c * 2.8)[0], pt(-5.5, c * 2.8)[1], OS[2], a)
     // (le talon : les deux nœuds d'un bout d'os)
     for (const c of [-1, 1]) {
-      p.circle(pt(-long, c * 1.4)[0], pt(-long, c * 1.4)[1], 1.9, OS[0], a)
-      p.circle(pt(-long, c * 1.4)[0], pt(-long, c * 1.4)[1], 1.2, c < 0 ? OS[2] : OS[1], a)
+      p.circle(pt(-long, c * 1.4)[0], pt(-long, c * 1.4)[1], 1.9 * e, OS[0], a)
+      p.circle(pt(-long, c * 1.4)[0], pt(-long, c * 1.4)[1], 1.2 * e, c < 0 ? OS[2] : OS[1], a)
     }
     // (la pointe)
     p.line(pt(-2, 0)[0], pt(-2, 0)[1], pt(1, 0)[0], pt(1, 0)[1], OS[3], a)
@@ -11624,21 +11649,22 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     for (let i = epinesFinies.length - 1; i >= 0; i--) if (t - epinesFinies[i].t0 > 0.2) epinesFinies.splice(i, 1)
     if ((m.brochettes.length === 0 && epinesFinies.length === 0) || m.phase !== 'vol') return
     p.place(W / 2 - camera.x, centreY() - camera.y)
+    const sz = zoneDuVol()
     for (const b of m.brochettes) {
       const vit = Math.hypot(b.vx, b.vy) || 1
       const ux = b.vx / vit
       const uy = b.vy / vit
       const long = LONGUEUR_DE_L_EPINE
-      for (let j = 1; j <= 4; j++) p.dot(b.x - ux * (long + j * 2.5), b.y - uy * (long + j * 2.5), OS[j < 3 ? 2 : 1], 0.55 - j * 0.12)
-      p.glow(b.x - ux * 3, b.y - uy * 3, 7, OS[2], 0.25)
-      dessinerUneEpine(p, b.x, b.y, ux, uy, long, 1)
+      for (let j = 1; j <= 4; j++) p.dot(b.x - ux * (long + j * 2.5) * sz, b.y - uy * (long + j * 2.5) * sz, OS[j < 3 ? 2 : 1], 0.55 - j * 0.12)
+      p.glow(b.x - ux * 3 * sz, b.y - uy * 3 * sz, 7 * sz, OS[2], 0.25)
+      dessinerUneEpine(p, b.x, b.y, ux, uy, long, 1, sz)
     }
     // (au bout de sa course : elle file encore un peu, et s'efface)
     for (const e of epinesFinies) {
       const age = t - e.t0
       const ux = Math.cos(e.cap)
       const uy = Math.sin(e.cap)
-      dessinerUneEpine(p, e.x + ux * age * 60, e.y + uy * age * 60, ux, uy, LONGUEUR_DE_L_EPINE, Math.max(0, 1 - age / 0.2))
+      dessinerUneEpine(p, e.x + ux * age * 60, e.y + uy * age * 60, ux, uy, LONGUEUR_DE_L_EPINE, Math.max(0, 1 - age / 0.2), sz)
     }
     p.place(0, 0)
   }
@@ -11688,7 +11714,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     for (const h of m.hypercubes) {
       const u = Math.max(0, Math.min(1, (m.t - h.depart) / h.duree))
       const haut = hauteurDuCube(u, h.duree)
-      p.circle(h.x0 + (h.x1 - h.x0) * u, h.y0 + (h.y1 - h.y0) * u, 2.6 - Math.min(1, haut / 20), N.hex('#06040a'), 0.4)
+      p.circle(h.x0 + (h.x1 - h.x0) * u, h.y0 + (h.y1 - h.y0) * u, (2.6 - Math.min(1, haut / 20)) * zoneDuVol(), N.hex('#06040a'), 0.4)
     }
     for (const e of empreintesDuCube) {
       const u = (t - e.t0) / DUREE_DE_L_EMPREINTE
@@ -11718,7 +11744,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const HAUTEUR_DU_DE = 46
   const TAILLE_DU_DE = 5.5
   const DUREE_DE_LA_MARQUE = 0.6
-  const marquesDuDe: { x: number; y: number; face: number; rayon: number; t0: number }[] = []
+  const marquesDuDe: { x: number; y: number; face: number; rayon: number; t0: number; s: number }[] = []
   /** Les points de chaque face de dé, sur une grille de −1 à 1. */
   const POINTS_DU_DE: [number, number][][] = [
     [[0, 0]],
@@ -11786,7 +11812,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const u = Math.max(0, Math.min(1, (s - de.roule) / de.chute))
       const pret = Math.min(1, s / 0.2)
       // (L'OMBRE : petite et pâle quand il est haut, large et sombre quand il touche)
-      p.disc(dd.x, dd.y, 3 + 4 * u, N.hex('#06040a'), (d) => (0.2 + 0.4 * u) * pret * (1 - d * d))
+      p.disc(dd.x, dd.y, (3 + 4 * u) * zoneDuVol(), N.hex('#06040a'), (d) => (0.2 + 0.4 * u) * pret * (1 - d * d))
       // (LA ZONE : un anneau qui s'ouvre quand il paraît, et s'allume à mesure qu'il descend ; quatre crans qui tournent —
       // ET SA TAILLE SUIT LA FACE MONTRÉE : elle saute avec les faces qui défilent, puis s'arrête sur celle du chiffre tiré)
       const zone = zoneDuDe(de, faceMontree(dd.id, dd.face, s, de.roule))
@@ -11809,8 +11835,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       for (const [px, py] of POINTS_DU_DE[mq.face - 1]) {
         const gx = mq.x + px * ecart
         const gy = mq.y + py * ecart
-        p.circle(gx, gy, 1.6, u < 0.3 ? N.WHITE : lu[5], 1 - u)
-        p.glow(gx, gy, 5, lu[5], 0.5 * (1 - u))
+        p.circle(gx, gy, 1.6 * mq.s, u < 0.3 ? N.WHITE : lu[5], 1 - u)
+        p.glow(gx, gy, 5 * mq.s, lu[5], 0.5 * (1 - u))
       }
     }
     p.place(0, 0)
@@ -11820,6 +11846,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (m.des.length === 0 || m.phase !== 'vol') return
     p.place(W / 2 - camera.x, centreY() - camera.y)
     const { sp, lu } = tonsDuCube()
+    // (le dé, plus gros avec la zone qu'il frappera — voir `zoneDuVol`)
+    const TAILLE = TAILLE_DU_DE * zoneDuVol()
     for (const dd of m.des) {
       const de = CONF.armes[dd.arme]?.de
       if (de === undefined) continue
@@ -11840,12 +11868,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         for (const k of [1, 2]) {
           const ue = Math.max(0, u - k * 0.12)
           const he = HAUTEUR_DU_DE * (1 - ue * ue)
-          p.glow(x, dd.y - he, TAILLE_DU_DE * 2, sp[4], 0.35 / k)
+          p.glow(x, dd.y - he, TAILLE * 2, sp[4], 0.35 / k)
           p.line(x, dd.y - he, x, y, k === 1 ? sp[4] : sp[3], 0.5 / k)
         }
-      if (eclat > 0) p.ring(x, y, TAILLE_DU_DE * (2 + 4 * (1 - eclat)), 1, lu[5], 0.8 * eclat)
-      dessinerUnDe(p, x, y, dd.id * 3 + tourDuDe(s, de.roule), TAILLE_DU_DE * gonfle, faceMontree(dd.id, dd.face, s, de.roule), eclat)
-      if (parait < 1) p.glow(x, y, 12, lu[5], 0.8 * (1 - parait))
+      if (eclat > 0) p.ring(x, y, TAILLE * (2 + 4 * (1 - eclat)), 1, lu[5], 0.8 * eclat)
+      dessinerUnDe(p, x, y, dd.id * 3 + tourDuDe(s, de.roule), TAILLE * gonfle, faceMontree(dd.id, dd.face, s, de.roule), eclat)
+      if (parait < 1) p.glow(x, y, 12 * TAILLE / TAILLE_DU_DE, lu[5], 0.8 * (1 - parait))
     }
     p.place(0, 0)
   }
@@ -11861,8 +11889,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * FAISCEAU DE LUMIÈRE JAILLIT DU POINT VERS LE HAUT, blanc au cœur, un éclat à son pied, une onde ; plus fort s'il a
    * frappé quelque chose)
    */
-  const eclairsDeCoupe: { x: number; y: number; t0: number }[] = []
-  const faisceauxDeCoupe: { x: number; y: number; t0: number; touches: number }[] = []
+  const eclairsDeCoupe: { x: number; y: number; t0: number; s: number }[] = []
+  const faisceauxDeCoupe: { x: number; y: number; t0: number; touches: number; s: number }[] = []
   const DUREE_DU_FAISCEAU = 0.4
   const HAUTEUR_DU_FAISCEAU = 90
   function dessinerLesCoupes(p: Peintre): void {
@@ -11898,7 +11926,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         for (let j = 0; j < f.length; j++) {
           const a = f[j]
           const b = f[(j + 1) % f.length]
-          p.glowLine(a.x, a.y, b.x, b.y, 3, sp[4], 0.35 + 0.3 * coup)
+          p.glowLine(a.x, a.y, b.x, b.y, 3 * zoneDuVol(), sp[4], 0.35 + 0.3 * coup)
           p.line(a.x, a.y, b.x, b.y, coup > 0.5 ? lu[5] : lu[4])
         }
         for (const q of f) p.dot(q.x, q.y, N.WHITE)
@@ -11906,20 +11934,21 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // (LE POINT QUI VA FRAPPER : dans son dernier quart, quatre crans se resserrent sur le centre, qui s'allume)
       if (u > 0.75) {
         const w = (u - 0.75) / 0.25
-        const d0 = 3 + 9 * (1 - w)
+        const sz = zoneDuVol()
+        const d0 = (3 + 9 * (1 - w)) * sz
         for (let j = 0; j < 4; j++) {
           const a = an * 2 + (j * Math.PI) / 2
-          p.line(co.x + Math.cos(a) * d0, co.y + Math.sin(a) * d0, co.x + Math.cos(a) * (d0 + 3), co.y + Math.sin(a) * (d0 + 3), sp[5], 0.5 + 0.5 * w)
+          p.line(co.x + Math.cos(a) * d0, co.y + Math.sin(a) * d0, co.x + Math.cos(a) * (d0 + 3 * sz), co.y + Math.sin(a) * (d0 + 3 * sz), sp[5], 0.5 + 0.5 * w)
         }
-        p.glow(co.x, co.y, 4 + 6 * w, sp[5], 0.3 + 0.5 * w)
+        p.glow(co.x, co.y, (4 + 6 * w) * sz, sp[5], 0.3 + 0.5 * w)
         p.dot(co.x, co.y, sp[5])
       }
     }
     // (L'ÉCLAIR où elle paraît : une étoile de lumière qui s'éteint vite)
     for (const e of eclairsDeCoupe) {
       const k = 1 - (t - e.t0) / 0.25
-      p.glow(e.x, e.y, 14, lu[5], 0.8 * k)
-      for (const [ax, ay] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) for (let d = 1; d <= Math.round(5 * k); d++) p.dot(e.x + ax * d, e.y + ay * d, d > 3 * k ? sp[5] : N.WHITE, k)
+      p.glow(e.x, e.y, 14 * e.s, lu[5], 0.8 * k)
+      for (const [ax, ay] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) for (let d = 1; d <= Math.round(5 * k * e.s); d++) p.dot(e.x + ax * d, e.y + ay * d, d > 3 * k * e.s ? sp[5] : N.WHITE, k)
     }
     p.place(0, 0)
   }
@@ -11938,7 +11967,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     for (const fx of faisceauxDeCoupe) {
       const age = t - fx.t0
       const u = age / DUREE_DU_FAISCEAU
-      const fort = fx.touches > 0 ? 1 : 0.65
+      // (`fort` porte aussi la zone — voir `zoneDuVol` : l'éclair, le faisceau, le carré, l'éclat et les ondes grandissent)
+      const fort = (fx.touches > 0 ? 1 : 0.65) * fx.s
       const k = 1 - u
       // (L'ÉCLAIR : un instant, la zone entière s'allume, le point blanc)
       if (age < 0.06) {
@@ -11949,7 +11979,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // (LE FAISCEAU : il jaillit en 0,04 s, PLEIN tant qu'il est jeune — translucide, la trame le hachait —, son cœur au
       // ton le plus clair de la tranche, ses bords un cran plus sombres ; il s'amincit, puis s'efface par le haut)
       const haut = HAUTEUR_DU_FAISCEAU * fort * Math.min(1, age / 0.04)
-      const demi = fx.touches > 0 ? (u < 0.25 ? 3 : u < 0.5 ? 2 : u < 0.75 ? 1 : 0) : u < 0.3 ? 2 : u < 0.6 ? 1 : 0
+      const demi = Math.round((fx.touches > 0 ? (u < 0.25 ? 3 : u < 0.5 ? 2 : u < 0.75 ? 1 : 0) : u < 0.3 ? 2 : u < 0.6 ? 1 : 0) * fx.s)
       for (let dy = 0; dy <= haut; dy++) {
         const f = dy / Math.max(1, haut)
         const a = u < 0.5 && f < 0.8 ? 1 : k * (1 - f * 0.7)
@@ -11983,7 +12013,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     for (const h of m.hypercubes) {
       const u = Math.max(0, Math.min(1, (m.t - h.depart) / h.duree))
       const gonfle = h.contacts > 0 ? 1 + 0.35 * Math.max(0, 1 - (m.t - h.depart) / 0.15) : 1
-      const taille = TAILLE_DE_L_HYPERCUBE * Math.pow(CONF.armes[h.arme]?.hypercube?.croissance ?? 1, h.contacts) * gonfle
+      // (plus gros avec la zone qu'il frappe — voir `zoneDuVol`)
+      const taille = TAILLE_DE_L_HYPERCUBE * zoneDuVol() * Math.pow(CONF.armes[h.arme]?.hypercube?.croissance ?? 1, h.contacts) * gonfle
       dessinerUnHypercube(p, h.x0 + (h.x1 - h.x0) * u, h.y0 + (h.y1 - h.y0) * u - hauteurDuCube(u, h.duree), m.t * 3 + h.id, taille)
     }
     p.place(0, 0)
@@ -12200,11 +12231,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const tendu = bras.reduce((mx, b) => Math.max(mx, b.u), 0)
       const sorti = Math.min(1, tendu * 1.5)
       const R = Math.max(nu.rayon * 0.5, Rn * (1 - 0.55 * sorti))
+      // (plus de moucherons, des bras plus larges, sur une nuée agrandie — voir `zoneDuVol`)
+      const sz = zoneDuVol()
       p.disc(n.x, n.y, R, BILE[0], (d) => 0.16 * (1 - d * d))
       // (le voile le long des bras)
       for (const b of bras) for (let q = 1; q <= 4; q++) {
         const s = (q / 4) * b.u
-        p.disc(n.x + (b.tx - n.x) * s, n.y + (b.ty - n.y) * s, 3.5, BILE[0], (d) => 0.14 * (1 - d * d))
+        p.disc(n.x + (b.tx - n.x) * s, n.y + (b.ty - n.y) * s, 3.5 * sz, BILE[0], (d) => 0.14 * (1 - d * d))
       }
       const tic = Math.floor(t * 24)
       // (… CLAIRSEMÉE AU REPOS, DENSE DANS SES BRAS — Keko, 19/11 : « diminue beaucoup le nombre d'insectes lorsqu'il n'y a
@@ -12213,8 +12246,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // (… ET ELLE GROSSIT EN SE NOURRISSANT — Keko, 20/11 : ceux du nuage suivent sa taille ; ceux des bras, la taille de
       // l'essaim — jusqu'à deux fois et demie au plein — : les premiers moucherons sont dans les bras, les autres dans le
       // nuage, qui en perd six sur dix quand ils sont tendus)
-      const dansLesBras = bras.length === 0 ? 0 : Math.round((MOUCHERONS - MOUCHERONS_AU_REPOS) * sorti * (1 + 1.5 * plein))
-      const combien = dansLesBras + Math.round(((MOUCHERONS_AU_REPOS * Rn) / nu.rayon) * (1 - 0.6 * sorti))
+      const dansLesBras = bras.length === 0 ? 0 : Math.round((MOUCHERONS - MOUCHERONS_AU_REPOS) * sorti * (1 + 1.5 * plein) * sz)
+      const combien = dansLesBras + Math.round(((MOUCHERONS_AU_REPOS * Rn) / nu.rayon) * (1 - 0.6 * sorti) * sz * sz)
       for (let j = 0; j < combien; j++) {
         let x: number
         let y: number
@@ -12227,13 +12260,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           if (b.u >= 0.85 && s > 0.75) {
             // (au bout du bras tendu : il grouille sur l'insecte)
             const a = alea(j, 1, 41) * Math.PI * 2 + t * (6 + 4 * alea(j, 1, 42))
-            const r = 2 + 3.5 * alea(j, 1, 43)
+            const r = (2 + 3.5 * alea(j, 1, 43)) * sz
             x = b.tx + Math.cos(a) * r
             y = b.ty + Math.sin(a) * r
           } else {
             // (le long du bras : renflé au milieu, un peu courbe, il ondule)
             const le = s * b.u
-            const large = (1.5 + 3.5 * Math.sin(Math.PI * Math.min(1, le + 0.1))) * (alea(j, 1, 61) * 2 - 1)
+            const large = (1.5 + 3.5 * Math.sin(Math.PI * Math.min(1, le + 0.1))) * (alea(j, 1, 61) * 2 - 1) * sz
             const courbe = Math.sin(Math.PI * le) * (b.cible % 2 === 0 ? 1 : -1) * L * 0.12 + Math.sin(t * 5 + le * 7 + b.cible) * 1.5
             x = n.x + (b.tx - n.x) * le + px * (large + courbe)
             y = n.y + (b.ty - n.y) * le + py * (large + courbe)
@@ -12846,7 +12879,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       if (age < mi.vol) {
         // (son ombre au sol, là où elle va tomber)
         const u = age / mi.vol
-        p.circle(mn.x0 + (mn.x - mn.x0) * u, mn.y0 + (mn.y - mn.y0) * u, 1.6, N.hex('#06040a'), 0.4)
+        p.circle(mn.x0 + (mn.x - mn.x0) * u, mn.y0 + (mn.y - mn.y0) * u, 1.6 * zoneDuVol(), N.hex('#06040a'), 0.4)
         continue
       }
       // (UN AMAS DE CLOQUES — Keko, 16/11 : « plutôt l'apparence d'un amas de bulles, un peu plus grosses, comme plusieurs
@@ -12855,11 +12888,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const reste = mi.vol + mi.duree - age
       const vite = reste < 2 ? 3.2 : 1.6
       const { venin: VENIN } = teintesDesMines()
-      p.glow(mn.x, mn.y, 10, VENIN[3], 0.25 + 0.1 * Math.sin(t * 4 + mn.id))
-      dessinerUnAmas(p, mn.x, mn.y, mn.id, age, vite, 6, 1)
+      // (plus grosse, elle qui explose plus large — voir `zoneDuVol`)
+      const sz = zoneDuVol()
+      p.glow(mn.x, mn.y, 10 * sz, VENIN[3], 0.25 + 0.1 * Math.sin(t * 4 + mn.id))
+      dessinerUnAmas(p, mn.x, mn.y, mn.id, age, vite, 6, sz)
       // (un filet de gaz qui s'en échappe)
       const fu = (t * 0.9 + mn.id * 0.53) % 1
-      p.dot(mn.x + Math.sin(mn.id + fu * 4) * 1.5, mn.y - 2 - fu * 6, VENIN[3], 0.6 * (1 - fu))
+      p.dot(mn.x + Math.sin(mn.id + fu * 4) * 1.5 * sz, mn.y - (2 + fu * 6) * sz, VENIN[3], 0.6 * (1 - fu))
     }
     p.place(0, 0)
   }
@@ -12878,8 +12913,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const h = Math.sin(Math.PI * u) * 16
       const x = mn.x0 + (mn.x - mn.x0) * u
       const y = mn.y0 + (mn.y - mn.y0) * u - h
-      p.glow(x, y, 6, teintesDesMines().venin[3], 0.35)
-      dessinerUnAmas(p, x, y, mn.id, m.t - mn.lancee, 4, 3, 0.8)
+      p.glow(x, y, 6 * zoneDuVol(), teintesDesMines().venin[3], 0.35)
+      dessinerUnAmas(p, x, y, mn.id, m.t - mn.lancee, 4, 3, 0.8 * zoneDuVol())
     }
     for (const g of gaz) {
       const u = (t - g.t0) / DUREE_DU_GAZ
@@ -12953,15 +12988,17 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       for (let j = 4; j >= 1; j--) p.circle(f.x - rvx * 0.012 * j, f.y - rvy * 0.012 * j, fl.rayon * (1 - j * 0.12), ACIER_DU_FLEAU[3], 0.35 * (1 - j / 5))
       // (la masse : cernée, éclairée d'en haut à gauche ; huit pics qui tournent avec elle)
       const tourne = t * 9
+      // (ses pics et son reflet grandissent avec la masse — voir `zoneDuVol`)
+      const sz = zoneDuVol()
       for (let k = 0; k < 8; k++) {
         const a = tourne + (k * Math.PI) / 4
-        p.line(f.x + Math.cos(a) * fl.rayon * 0.7, f.y + Math.sin(a) * fl.rayon * 0.7, f.x + Math.cos(a) * (fl.rayon + 2.2), f.y + Math.sin(a) * (fl.rayon + 2.2), ACIER_DU_FLEAU[4])
-        p.px(Math.round(f.x + Math.cos(a) * (fl.rayon + 2.2)), Math.round(f.y + Math.sin(a) * (fl.rayon + 2.2)), ACIER_DU_FLEAU[5])
+        p.line(f.x + Math.cos(a) * fl.rayon * 0.7, f.y + Math.sin(a) * fl.rayon * 0.7, f.x + Math.cos(a) * (fl.rayon + 2.2 * sz), f.y + Math.sin(a) * (fl.rayon + 2.2 * sz), ACIER_DU_FLEAU[4])
+        p.px(Math.round(f.x + Math.cos(a) * (fl.rayon + 2.2 * sz)), Math.round(f.y + Math.sin(a) * (fl.rayon + 2.2 * sz)), ACIER_DU_FLEAU[5])
       }
-      p.circle(f.x, f.y, fl.rayon * 0.85 + 0.8, ACIER_DU_FLEAU[0])
+      p.circle(f.x, f.y, fl.rayon * 0.85 + 0.8 * sz, ACIER_DU_FLEAU[0])
       p.circle(f.x, f.y, fl.rayon * 0.85, ACIER_DU_FLEAU[2])
-      p.circle(f.x - 0.8, f.y - 0.8, fl.rayon * 0.45, ACIER_DU_FLEAU[4])
-      p.px(Math.round(f.x - 1.4), Math.round(f.y - 1.4), ACIER_DU_FLEAU[5])
+      p.circle(f.x - 0.8 * sz, f.y - 0.8 * sz, fl.rayon * 0.45, ACIER_DU_FLEAU[4])
+      p.px(Math.round(f.x - 1.4 * sz), Math.round(f.y - 1.4 * sz), ACIER_DU_FLEAU[5])
     }
     p.place(0, 0)
   }
@@ -13154,13 +13191,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   function dessinerLesScies(p: Peintre): void {
     if (m.scies.length === 0) return
     const SCIE = formesDeLaScie()
+    // (plus grande, elle qui tranche plus large — voir `zoneDuVol`)
+    const sz = zoneDuVol()
     for (const s of m.scies) {
       const sx = s.x - camera.x + W / 2
       const sy = s.y - camera.y + centreY()
       const vit = Math.hypot(s.vx, s.vy)
       if (vit > 30)
-        for (let k = 1; k <= 2; k++) p.circle(sx - (s.vx / vit) * k * 3, sy - (s.vy / vit) * k * 3, 4.5, N.hex('#8a8a96'), 0.22 / k)
-      peindreFormes(p, SCIE, Math.round(sx), Math.round(sy), 1.1, { cap: m.t * 26, lumiere: LUMIERE_DU_VOL, reflet: REFLET_DU_VOL })
+        for (let k = 1; k <= 2; k++) p.circle(sx - (s.vx / vit) * k * 3 * sz, sy - (s.vy / vit) * k * 3 * sz, 4.5 * sz, N.hex('#8a8a96'), 0.22 / k)
+      peindreFormes(p, SCIE, Math.round(sx), Math.round(sy), 1.1 * sz, { cap: m.t * 26, lumiere: LUMIERE_DU_VOL, reflet: REFLET_DU_VOL })
     }
   }
   /**
@@ -13841,10 +13880,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           p.dot(l.x0 + ux * d, l.y0 + uy * d, k < 0.1 ? N.WHITE : k < 0.35 ? C[6] : k < 0.75 ? C[4] : C[3], Math.max(0.3, 1 - k * 0.5))
         }
         dessinerUnLaser(p, v, { sorte: 'roche', cible: 0, x: im.x, y: im.y, part: 1 }, C, 3, placeDOutil(monteeA(hangar, 'coque').cran, 0))
-        p.glow(im.x, im.y, 13, C[4], 0.6)
-        p.ring(im.x, im.y, 3.5 + 1.5 * Math.sin(t * 30), 1, C[6], 0.8)
-        p.circle(im.x, im.y, 2, N.WHITE)
-        p.glow(im.x, im.y, 5, N.WHITE, 0.5)
+        // (le point d'impact, aussi large que ce qu'il brûle — voir `zoneDuVol`)
+        const sz = zoneDuVol()
+        p.glow(im.x, im.y, 13 * sz, C[4], 0.6)
+        p.ring(im.x, im.y, (3.5 + 1.5 * Math.sin(t * 30)) * sz, 1, C[6], 0.8)
+        p.circle(im.x, im.y, 2 * sz, N.WHITE)
+        p.glow(im.x, im.y, 5 * sz, N.WHITE, 0.5)
       }
       const r = angleDuBalayage(CONF, m)
       if (r !== null && m.phase === 'vol') {
@@ -15943,18 +15984,20 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           // (L'ONDE À LA TAILLE DE LA ZONE — Keko, 15/11 : le grand cercle était l'éclair des chocs ; réduite aux deux
           // tiers, « trop réduite » : elle s'ouvre jusqu'au bord de la zone de dégâts ; et PLUS DE FEU À L'IMPACT : des flammes plus nombreuses et plus grosses,
           // qui ROULENT — décalées de quelques centièmes — et fument en s'éteignant)
-          ondesDeZone.push({ x: ev.x, y: ev.y, t0: t, r: ev.rayon })
-          for (let i = 0; i < 16; i++) {
+          // (… ET TOUTE LA BOULE DE FEU GRANDIT AVEC LA ZONE — voir `zoneDuVol` : plus de flammes, plus grosses, plus loin)
+          const sz = zoneDuVol()
+          ondesDeZone.push({ x: ev.x, y: ev.y, t0: t, r: ev.rayon, s: sz })
+          for (let i = 0; i < Math.round(16 * sz); i++) {
             const a = R.range(0, Math.PI * 2)
             const d = R.range(0, ev.rayon * 0.35)
-            const vit = R.range(8, 32)
-            feuDesConsumes.spawn(N.P.FIRE, ev.x + Math.cos(a) * d, ev.y + Math.sin(a) * d, Math.cos(a) * vit, Math.sin(a) * vit - 8, R.range(0.25, 0.5), 0, R.range(1.6, 3), R.range(0, 0.09), R.next() < 0.5 ? 1 : 0)
+            const vit = R.range(8, 32) * sz
+            feuDesConsumes.spawn(N.P.FIRE, ev.x + Math.cos(a) * d, ev.y + Math.sin(a) * d, Math.cos(a) * vit, Math.sin(a) * vit - 8, R.range(0.25, 0.5), 0, R.range(1.6, 3) * sz, R.range(0, 0.09), R.next() < 0.5 ? 1 : 0)
           }
-          for (let i = 0; i < 6; i++) {
+          for (let i = 0; i < Math.round(6 * sz); i++) {
             const a = R.range(0, Math.PI * 2)
-            feuDesConsumes.spawn(N.P.EMBER, ev.x, ev.y, Math.cos(a) * R.range(40, 90), Math.sin(a) * R.range(40, 90), R.range(0.3, 0.6), 0, 1)
+            feuDesConsumes.spawn(N.P.EMBER, ev.x, ev.y, Math.cos(a) * R.range(40, 90) * sz, Math.sin(a) * R.range(40, 90) * sz, R.range(0.3, 0.6), 0, 1)
           }
-          for (let i = 0; i < 2; i++) feuDesConsumes.spawn(N.P.SMOKE, ev.x + R.range(-3, 3), ev.y + R.range(-3, 3), R.range(-5, 5), R.range(-8, -2), R.range(0.6, 1), FUMEE_DU_FEU, R.range(2.5, 3.5))
+          for (let i = 0; i < 2; i++) feuDesConsumes.spawn(N.P.SMOKE, ev.x + R.range(-3, 3) * sz, ev.y + R.range(-3, 3) * sz, R.range(-5, 5), R.range(-8, -2), R.range(0.6, 1), FUMEE_DU_FEU, R.range(2.5, 3.5) * sz)
           secousse = Math.max(secousse, 0.2)
           break
         }
@@ -16420,14 +16463,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           // (un cube commence à traverser le plan : son chant de verre qui monte puis redescend — sauf s'il a sonné en avance —, un éclair)
           if (t - (armeAnnonceeA.get(ev.arme) ?? -10) < 0.4) armeAnnonceeA.delete(ev.arme)
           else jouer('coupe', { dx: ev.x - v.x, dy: ev.y - v.y })
-          eclairsDeCoupe.push({ x: ev.x, y: ev.y, t0: t })
+          eclairsDeCoupe.push({ x: ev.x, y: ev.y, t0: t, s: zoneDuVol() })
           break
         case 'coupeFinie': {
           // (elle s'est refermée en un point : son coup de cristal — sauf s'il a sonné en avance —, LE FAISCEAU qui jaillit
           // vers le haut, une gerbe, une secousse s'il a frappé)
           if (coupesAnnoncees.has(ev.id)) coupesAnnoncees.delete(ev.id)
           else jouer('pointCoupe', { dx: ev.x - v.x, dy: ev.y - v.y })
-          faisceauxDeCoupe.push({ x: ev.x, y: ev.y, t0: t, touches: ev.touches })
+          faisceauxDeCoupe.push({ x: ev.x, y: ev.y, t0: t, touches: ev.touches, s: zoneDuVol() })
           const { sp } = tonsDuCube()
           const n = ev.touches > 0 ? 18 : 8
           for (let i = 0; i < n; i++) {
@@ -16447,7 +16490,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           // (IL S'ABAT : son coup — sauf s'il a sonné en avance —, le chiffre frappé au sol, une gerbe et une secousse à sa mesure)
           if (desAnnonces.has(ev.id)) desAnnonces.delete(ev.id)
           else jouer('impactDe', { dx: ev.x - v.x, dy: ev.y - v.y })
-          marquesDuDe.push({ x: ev.x, y: ev.y, face: ev.face, rayon: ev.rayon, t0: t })
+          marquesDuDe.push({ x: ev.x, y: ev.y, face: ev.face, rayon: ev.rayon, t0: t, s: zoneDuVol() })
           const { sp, lu } = tonsDuCube()
           for (let i = 0; i < 4 + 3 * ev.face; i++) {
             const a = R.range(0, Math.PI * 2)
@@ -16615,7 +16658,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         case 'puitsEclate':
           // (il éclate : le trou noir s'effondre — l'horizon se referme, une onde magenta s'ouvre —, une secousse)
           jouer('eclatPlasma', { dx: ev.x - v.x, dy: ev.y - v.y })
-          effondrements.push({ x: ev.x, y: ev.y, t0: t, r: ev.rayon })
+          effondrements.push({ x: ev.x, y: ev.y, t0: t, r: ev.rayon, s: zoneDuVol() })
           for (let i = 0; i < 16; i++) {
             const a = R.range(0, Math.PI * 2)
             const vit = R.range(40, 120)
@@ -16632,7 +16675,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           // (LE RAILGUN : le trait, son claquement — sauf s'il a sonné en avance —, des étincelles tout le long, une secousse)
           if (t - (armeAnnonceeA.get(ev.arme) ?? -10) < 0.4) armeAnnonceeA.delete(ev.arme)
           else jouer(ev.arme as Son)
-          traitsDuRail.push({ x0: ev.x0, y0: ev.y0, x1: ev.x1, y1: ev.y1, t0: t })
+          traitsDuRail.push({ x0: ev.x0, y0: ev.y0, x1: ev.x1, y1: ev.y1, t0: t, s: zoneDuVol() })
           for (let i = 0; i < 18; i++) {
             const q = R.next()
             const a = R.range(0, Math.PI * 2)
@@ -16666,7 +16709,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           // (une nova de givre part : son claquement froid — une seule fois, comme l'épine —, la secousse, le froid tout autour)
           if (t - (armeAnnonceeA.get('nova') ?? -10) < 0.4) armeAnnonceeA.delete('nova')
           else jouer('nova')
-          novas.push({ x: ev.x, y: ev.y, r: ev.rayon, t0: t, id: Math.round(t * 1000) })
+          novas.push({ x: ev.x, y: ev.y, r: ev.rayon, t0: t, id: Math.round(t * 1000), s: zoneDuVol() })
           secousse = Math.max(secousse, 0.3)
           break
         case 'gele':
