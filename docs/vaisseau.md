@@ -7802,3 +7802,16 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     champ en une moitié claire et une dans l'ombre, deux RIVETS en haut ; le reflet et l'étoile suivent sa taille.
   - LE VERROU : un clic (ou une tape brève, au doigt) sans ennemi ni roche dessous LÂCHE le verrou (`lacherLeVerrou`) —
     ses coins s'ouvrent et s'effacent, le son du déverrou. Les clics sur l'interface (réglette, menu) passent avant.
+- **22/11, LE SOIN.** Keko : « un dernier drop des ennemis : une petite chance, un peu comme l'aimant, de looter un truc
+  qu'on peut ramasser et qui soigne du blindage, ou de la carapace pour les Xénoïdes ; comme une potion de soin ; une
+  icône qui le fasse comprendre, peut-être un petit plus en jaune, ou en vert si on joue Xénoïde ; je te laisse choisir ».
+  - LA RÈGLE (`invasion.soin`, `Pepite.soin`) : un insecte abattu en lâche un avec la chance `chance` (1 sur 200 — l'aimant
+    est à 1 sur 300) ; ramassé, il rend `part` du blindage plein (un quart), sans dépasser le plein (événement `soin`). Il
+    NE VA QU'À QUI EST BLESSÉ, comme la plaque : plein, on passe dessus sans le prendre, il attend ; à plusieurs, au plus
+    proche des blessés — chaque pilote garde son plein (`Monde.coqueMax`, posé à chaque pas) pour que les autres le
+    sachent ; l'aimant des pépites ne l'attire pas. *Les chiffres sont de moi.*
+  - L'ICÔNE (`dessinerSoin`) : UNE CROIX épaisse, cernée, claire en haut à gauche, qui flotte et bat sous son halo — À LA
+    COULEUR DE LA BARRE DE VIE de celui qui la voit : l'or (`SOIN_OR`), le vert des Xénoïdes (`SOIN_VERT`). Le son du
+    bouclier et une petite vibration à la prise. `&vitrine` en pose un.
+  - Vérifié : 3 000 insectes, 17 soins (15 attendus) ; à 50 %, 75 % ; à 95 %, le plein ; plein, il reste ; à deux, celui
+    posé sous le premier (plein) va au second, blessé.

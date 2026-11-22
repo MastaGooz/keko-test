@@ -33,7 +33,7 @@ import { ajouterLeVaisseau, avecLeHangar, choisirLeVaisseau, coutEnMinerai, estD
 import { annulerLOrdre, coursA, gainDe, historiqueDe, marcheNeuf, ordreNumero, ordresDe, poserUnOrdre, previsionDe, prixPlafond, reglerLeMarche, tendanceDe, vendreAuCours } from '../../logic/vaisseau/marche.ts'
 import { aLaMecanique, BRANCHES, configDuLabo, coutDe, debloquer, estDebloque, laboNeuf, noeudDe, noeudsDe, NOMS_BRANCHE, passifsDe, peutDebloquer, rangOuvert, RANGS, type Branche, type Mecanique, type Noeud } from '../../logic/vaisseau/labo.ts'
 import { ECLOSION_DE_L_ARRIVEE, jouer as jouerLeSon, latenceMs, regler, reveiller, type GenreDePropulsion, type Son } from './sons.ts'
-import { dessinerAimant, dessinerPlaqueTombee, dessinerAsteroide, dessinerPepite, dessinerPepiteDuVortex, dessinerRocheDuVortex, LUMIERE, rocheDe, TEINTES_MINERAI } from './asteroide.ts'
+import { dessinerAimant, dessinerPlaqueTombee, dessinerSoin, dessinerAsteroide, dessinerPepite, dessinerPepiteDuVortex, dessinerRocheDuVortex, LUMIERE, rocheDe, TEINTES_MINERAI } from './asteroide.ts'
 import { dessinerBase, dessinerStation, ENVERGURE_BASE, RECUL_DE_LA_BASE } from './station.ts'
 import { animerAstre, astresVisibles, demiTailleDeLAstre, peindreAstre, rayonQuiCache, voilerLAstre, type Astre, type PeintreCeleste } from './celeste.ts'
 import * as EXPLOSION from '../pixelfx/fx/keko/explosion-espace.js'
@@ -102,6 +102,9 @@ let W = 180
 let H = 320
 const PAS = 1 / 60
 const COQUE = N.fit(['#141a2a', '#2a3550', '#46587a', '#6f87ab', '#9fb4d2', '#d6e4f5', '#ffffff'], 7)
+/** LE SOIN (voir `dessinerSoin`) : le cerne, puis trois tons du sombre au clair — l'or de la barre de vie, ou le vert des Xénoïdes. */
+const SOIN_OR = [N.hex('#3a2206'), N.hex('#c98a12'), N.hex('#ffd23a'), N.hex('#fff2a8')]
+const SOIN_VERT = [N.hex('#0f2a0c'), N.hex('#2e8a24'), N.hex('#5ccf3c'), N.hex('#b4f57a')]
 /** L'acier gris d'une plaque tombée d'une roche (voir `dessinerPlaqueTombee`) : le cerne, puis trois gris du sombre au clair. */
 const ACIER_DE_LA_PLAQUE = [N.hex('#14161d'), N.hex('#5b6272'), N.hex('#8a92a3'), N.hex('#c3c9d5')]
 const VERRIERE = N.fit(['#0a3a4a', '#19a0c0', '#8ff0ff', '#ffffff'], 4)
@@ -502,14 +505,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (parametres.has('bord') && CONF.arene.active) monde.vaisseau = { ...monde.vaisseau, x: CONF.arene.rayon - 90 }
     // (le jeu du vortex : les deux canons tirent À TOUR DE RÔLE — le second part une demi-cadence après le premier)
     if (parametres.has('vortex') && CONF.armes.length === 2) monde.armesA = [0, CONF.armes[0].cadence / 2]
-    // (`&vitrine` : les trois gemmes, trois fois, l'aimant et une plaque, posés en couronne autour de lui, hors de son
-    // aimant — pour les juger d'un lien ; l'aimant est au nord, la plaque juste après, la couronne s'ouvre de la petite à
-    // la grosse)
+    // (`&vitrine` : les trois gemmes, trois fois, l'aimant, une plaque et un soin, posés en couronne autour de lui, hors
+    // de son aimant — pour les juger d'un lien ; l'aimant est au nord, la plaque et le soin juste après, la couronne
+    // s'ouvre de la petite à la grosse)
     if (parametres.has('vitrine') && CONF.invasion.active)
-      [1, 3, 10, 1, 3, 10, 1, 3, 10, 0, -1].forEach((val, i) => {
-        const a = -Math.PI / 2 + (i / 11) * Math.PI * 2
+      [1, 3, 10, 1, 3, 10, 1, 3, 10, 0, -1, -2].forEach((val, i) => {
+        const a = -Math.PI / 2 + (i / 12) * Math.PI * 2
         const d = 62 + (i % 3) * 10
-        monde.pepites.push({ id: 1e6 + i, x: monde.vaisseau.x + Math.cos(a) * d, y: monde.vaisseau.y + Math.sin(a) * d, vx: 0, vy: 0, graine: 77 + i, minerai: 'fer', ...(val === 0 ? { valeur: 0, aimant: true } : val < 0 ? { valeur: 0, plaque: true } : { valeur: val }) })
+        monde.pepites.push({ id: 1e6 + i, x: monde.vaisseau.x + Math.cos(a) * d, y: monde.vaisseau.y + Math.sin(a) * d, vx: 0, vy: 0, graine: 77 + i, minerai: 'fer', ...(val === 0 ? { valeur: 0, aimant: true } : val === -1 ? { valeur: 0, plaque: true } : val === -2 ? { valeur: 0, soin: true } : { valeur: val }) })
       })
     return monde
   }
@@ -15249,6 +15252,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       else if (pe.aimant === true) dessinerAimant(p, pe.x, pe.y, t, XP, pe.graine)
       // (UNE PLAQUE, tombée d'une roche — voir `recuperation` : un écu d'acier qui brille)
       else if (pe.plaque === true) dessinerPlaqueTombee(p, pe.x, pe.y, t, ACIER_DE_LA_PLAQUE, pe.graine)
+      // (UN SOIN — voir `invasion.soin` : la croix à la couleur de la barre de vie, l'or, ou le vert des Xénoïdes)
+      else if (pe.soin === true) dessinerSoin(p, pe.x, pe.y, t, vieVerte() ? SOIN_VERT : SOIN_OR, pe.graine)
       else dessinerPepiteDuVortex(p, pe, t, XP)
     // (L'AIMANT PRIS : deux anneaux de la teinte des pépites se referment sur le vaisseau, le temps qu'elles arrivent)
     const ua = (t - aimantA) / 0.9
@@ -15837,6 +15842,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         case 'plaqueReparee':
           // (UNE PLAQUE RESTAURÉE — une plaque ramassée, voir `recuperation` : la case revient, blanche un instant)
           jouer('bouclier')
+          break
+        case 'soin':
+          // (UN SOIN PRIS — voir `invasion.soin` : la barre remonte, une note qui monte)
+          jouer('bouclier')
+          if (typeof navigator.vibrate === 'function') vibrer(15)
           break
         case 'aimant':
           aimantA = t

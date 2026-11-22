@@ -429,6 +429,31 @@ export function dessinerPlaqueTombee(p: PeintreRoche, x0: number, y0: number, t:
   }
 }
 /**
+ * LE SOIN (Keko, 22/11 : « comme une potion de soin ; une icône qui fait comprendre ça ; peut-être un petit plus en
+ * jaune, ou en vert si on joue Xénoïde ») : une croix épaisse, cernée, à la couleur de la barre de vie de celui qui la
+ * voit (`T`), claire en haut à gauche ; elle flotte et bat doucement, sous son halo.
+ */
+const SOIN = [
+  '...ooooo...',
+  '...o433o...',
+  '...o332o...',
+  'oooo332oooo',
+  'o443333332o',
+  'o333333322o',
+  'o322222211o',
+  'oooo321oooo',
+  '...o321o...',
+  '...o211o...',
+  '...ooooo...',
+]
+export function dessinerSoin(p: PeintreRoche, x0: number, y0: number, t: number, T: number[], graine = 0): void {
+  const x = Math.round(x0)
+  const y = Math.round(y0) + Math.round(Math.sin(t * 2.4 + tire(graine, 74) * 6.28))
+  const bat = 0.5 + 0.5 * Math.sin(t * 4.5 + tire(graine, 75) * 6.28)
+  p.glow(x, y, 12, T[2], 0.22 + 0.22 * bat)
+  poserLeDessin(p, SOIN, x, y, T)
+}
+/**
  * L'AIMANT (Keko, 21/11 : « un petit symbole de la couleur des pépites, un symbole d'aimant ; quand on le prend, ça
  * attire toutes les pépites de la carte ») : un fer à cheval à la teinte des pépites, ses deux pôles blancs, cerné,
  * qui flotte et bat sous son halo, plus vif que les pépites.

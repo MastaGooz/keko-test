@@ -331,6 +331,13 @@ export const VAISSEAU = {
      */
     aimant: 1 / 300,
     /**
+     * LE SOIN (Keko, 22/11 : « un dernier drop des ennemis : une petite chance, un peu comme l'aimant, de looter un truc
+     * qu'on peut ramasser et qui soigne du blindage — ou de la carapace pour les Xénoïdes ; comme une potion de soin ») :
+     * la chance qu'un insecte abattu le lâche, et la part du blindage qu'il rend. Il ne va qu'à qui est blessé ; personne,
+     * il attend. *Les chiffres sont de moi, à rejuger.*
+     */
+    soin: { chance: 1 / 200, part: 0.25 },
+    /**
      * LA VIE DU PORTAIL (Keko, 14/11 : « elle s'exprime en pourcentage : il commence à 100 %, et s'il atteint 0 c'est
      * la fin de la partie ; pour l'instant les ennemis lui enlèvent 1 % à chaque fois qu'ils passent ») : `viePortail`
      * au départ, `degatsAuPortail` par insecte qui le traverse. À zéro, la partie est FINIE (`fin`) : plus rien n'avance.
@@ -1077,7 +1084,7 @@ export const totalDe = (c: Cargaison): number => c.fer + c.or + c.cristal
 export type Asteroide = { id: number; x: number; y: number; rayon: number; graine: number; angle0: number; vitesseAngulaire: number; minerai: Minerai; richesse: number }
 /** Un laser posé sur sa roche : laquelle, le point d'impact, la part déjà creusée (0 à 1). *Il a visé le rival un temps ; la foreuse ne sert plus qu'aux roches (Keko).* */
 export type Forage = { sorte: 'roche'; cible: number; x: number; y: number; part: number }
-export type Pepite = { id: number; x: number; y: number; vx: number; vy: number; graine: number; minerai: Minerai; /** Sa valeur (au vortex, en points d'expérience) : 1, 3 ou 10 — une petite, une moyenne, une grosse ; 1 si absente. */ valeur?: number; /** L'AIMANT (voir `invasion.aimant`) : pris, il attire toutes les pépites. */ aimant?: boolean; /** UNE PLAQUE (voir `recuperation`) : prise, elle restaure une plaque cassée ; personne n'en manque, elle attend. */ plaque?: boolean; /** L'instant où l'aimant du JOUEUR l'a prise : elle ne le lâche plus (voir plus bas, « une pépite aimantée »). */ aimanteeA?: number; /** À plusieurs : le pilote qui l'aimante (voir `avancerLEquipage`). */ par?: number }
+export type Pepite = { id: number; x: number; y: number; vx: number; vy: number; graine: number; minerai: Minerai; /** Sa valeur (au vortex, en points d'expérience) : 1, 3 ou 10 — une petite, une moyenne, une grosse ; 1 si absente. */ valeur?: number; /** L'AIMANT (voir `invasion.aimant`) : pris, il attire toutes les pépites. */ aimant?: boolean; /** UNE PLAQUE (voir `recuperation`) : prise, elle restaure une plaque cassée ; personne n'en manque, elle attend. */ plaque?: boolean; /** UN SOIN (voir `invasion.soin`) : pris, il rend du blindage ; personne n'est blessé, il attend. */ soin?: boolean; /** L'instant où l'aimant du JOUEUR l'a prise : elle ne le lâche plus (voir plus bas, « une pépite aimantée »). */ aimanteeA?: number; /** À plusieurs : le pilote qui l'aimante (voir `avancerLEquipage`). */ par?: number }
 /** Un choc contre un astéroïde : où, et avec quelle vitesse normale (pour l'étincelle et la vibration). */
 export type Choc = { x: number; y: number; force: number; asteroide: number; /** Le vaisseau a TRAVERSÉ la roche, trop légère pour lui : la part de sa vitesse qu'il y a laissée (roche ÷ vaisseau). */ perce?: number }
 /** Un trait tiré par l'ennemi. */
@@ -1146,6 +1153,8 @@ export type Monde = {
   bouclier: number
   /** Les plaques de blindage, de la portion du haut de la barre à celle du bas : vrai, elle tient (voir la configuration). */
   plaques: boolean[]
+  /** Le blindage plein de ce pilote (sa configuration, posée à chaque pas) : à plusieurs, les autres savent s'il est blessé — voir `invasion.soin`. */
+  coqueMax?: number
   /** Jusqu'à quel instant (`t` du monde) le joueur ne prend plus de coup — voir `invulnerabilite`. */
   intouchableJusque: number
   /** La part de la coque qui est corrompue (en points, jamais plus que la coque) — voir la configuration. */
@@ -1316,6 +1325,8 @@ export type Drone = { x: number; y: number; vx: number; vy: number; cible: numbe
 export type Evenement =
   | { type: 'plaqueReparee'; k: number }
   | { type: 'aimant'; x: number; y: number }
+  /** Un soin ramassé (voir `invasion.soin`). */
+  | { type: 'soin'; x: number; y: number }
   | { type: 'eclat'; x: number; y: number; rayon: number; graine: number; minerai: Minerai }
   | { type: 'ramasse'; x: number; y: number; par: 'joueur' | 'ennemi'; minerai: Minerai }
   /** Une pépite déposée à la station. */
@@ -1459,7 +1470,7 @@ export function nouveauVaisseau(): Vaisseau {
 }
 
 export function nouveauMonde(c: ConfigVaisseau = VAISSEAU, graine = 1): Monde {
-  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, bouclier: c.bouclier.points, plaques: Array.from({ length: c.plaques }, () => true), intouchableJusque: -1, corruption: 0, dephaseJusque: -100, plaqueCasseeA: 0, renaitJusque: -100, rochesPrises: [], toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, prochaineDeriveA: c.derive.premier, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, vies: c.invasion.vies, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, scies: [], balises: [], givres: [], tornades: [], novas: [], echardes: [], spheres: [], puits: [], meteores: [], tentacules: [], nuees: [], rejetons: [], flaquesAcides: [], mines: [], fleaux: [], parasites: [], vrilles: [], liens: [], oeufs: [], brochettes: [], miniVers: [], hypercubes: [], des: [], coupes: [], rayonVu: null }
+  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, coqueMax: c.coque, bouclier: c.bouclier.points, plaques: Array.from({ length: c.plaques }, () => true), intouchableJusque: -1, corruption: 0, dephaseJusque: -100, plaqueCasseeA: 0, renaitJusque: -100, rochesPrises: [], toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, prochaineDeriveA: c.derive.premier, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, vies: c.invasion.vies, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, scies: [], balises: [], givres: [], tornades: [], novas: [], echardes: [], spheres: [], puits: [], meteores: [], tentacules: [], nuees: [], rejetons: [], flaquesAcides: [], mines: [], fleaux: [], parasites: [], vrilles: [], liens: [], oeufs: [], brochettes: [], miniVers: [], hypercubes: [], des: [], coupes: [], rayonVu: null }
 }
 
 /** Un hachage entier déterministe (celui de pixelfx), et un réel dans [0, 1) qui en sort. */
@@ -1761,13 +1772,15 @@ function abattreLEnnemi(c: ConfigVaisseau, m: Monde, e: Ennemi, ev: Evenement[],
   if (aimant) (rendues.push('fer'), valeurs.push(0))
   // (UNE ROCHE, SOUS LES ARMES D'UN VAISSEAU À PLAQUES : peut-être une plaque — voir `recuperation`)
   if (ro !== undefined && c.plaques > 0 && tire(e.id, 37) < chanceDePlaque(c, ro.rayon)) (rendues.push('fer'), valeurs.push(-1))
+  // (UN INSECTE : peut-être un soin — voir `invasion.soin`)
+  if (c.invasion.active && ro === undefined && tire(e.id, 38) < c.invasion.soin.chance) (rendues.push('fer'), valeurs.push(-2))
   const n = rendues.length
   const dec = n - valeurs.length
   for (let i = 0; i < n; i++) {
     const an = (i / n) * Math.PI * 2 + tire(e.id, 30, i)
     const vit = 20 + 40 * tire(e.id, 31, i)
     const val = i >= dec ? valeurs[i - dec] : undefined
-    m.pepites.push({ id: m.prochainId++, x: e.corps.x, y: e.corps.y, vx: Math.cos(an) * vit + e.corps.vx * 0.3, vy: Math.sin(an) * vit + e.corps.vy * 0.3, graine: hache(e.id, i), minerai: rendues[i], ...(val === undefined ? {} : val === 0 ? { aimant: true, valeur: 0 } : val < 0 ? { plaque: true, valeur: 0 } : { valeur: val }) })
+    m.pepites.push({ id: m.prochainId++, x: e.corps.x, y: e.corps.y, vx: Math.cos(an) * vit + e.corps.vx * 0.3, vy: Math.sin(an) * vit + e.corps.vy * 0.3, graine: hache(e.id, i), minerai: rendues[i], ...(val === undefined ? {} : val === 0 ? { aimant: true, valeur: 0 } : val === -1 ? { plaque: true, valeur: 0 } : val === -2 ? { soin: true, valeur: 0 } : { valeur: val }) })
   }
 }
 
@@ -5146,10 +5159,16 @@ function gagnerLaPepite(c: ConfigVaisseau, m: Monde, p: Pepite, ev: Evenement[])
     }
     return
   }
+  // (UN SOIN : une part du blindage revient, sans dépasser le plein — voir `invasion.soin`)
+  if (p.soin === true) {
+    m.coque = Math.min(c.coque, m.coque + c.coque * c.invasion.soin.part)
+    ev.push({ type: 'soin', x: p.x, y: p.y })
+    return
+  }
   if (p.aimant === true) {
     for (const q of m.pepites) {
-      // (l'aimant n'attire pas les plaques : elles vont à qui en manque)
-      if (q.aimant === true || q.plaque === true) continue
+      // (l'aimant n'attire ni les plaques ni les soins : ils vont à qui en manque)
+      if (q.aimant === true || q.plaque === true || q.soin === true) continue
       q.aimanteeA = m.t
       if (m.equipage !== undefined) q.par = m.equipage.actif
     }
@@ -5289,6 +5308,7 @@ export function lancerLaBombe(c: ConfigVaisseau, m: Monde, direction?: Vecteur):
 // bougent : son vaisseau, ses armes, ses coups, ses pépites — voir `avancerLEquipage`)
 export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, direction: Vecteur, regard?: Vecteur, manuel = false, seul = false): { chocs: Choc[]; evenements: Evenement[] } {
   const ev: Evenement[] = []
+  m.coqueMax = c.coque
   // (le lance-flammes ne crache qu'en vol, à ce pas : abattu, il se tait — Keko, 15/11 : « quand je meurs, le souffle
   // du lance-flammes reste en place pendant le compte du retour »)
   m.crache = false
@@ -5697,12 +5717,14 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   const autres = m.equipage === undefined ? [] : vaisseauxEnVol(m).filter((x) => x.k !== ici)
   for (let i = m.pepites.length - 1; i >= 0; i--) {
     const p = m.pepites[i]
-    // (UNE PLAQUE NE VA QU'À QUI EN MANQUE — voir `recuperation` : à plusieurs, au plus proche de ceux-là ; personne n'en
-    // manque, elle flotte, au plus proche de tous)
-    const manqueIci = m.plaques.includes(false)
+    // (UNE PLAQUE, UN SOIN NE VONT QU'À QUI EN MANQUE — voir `recuperation`, `invasion.soin` : à plusieurs, au plus proche
+    // de ceux-là ; personne n'en manque, ils flottent, au plus proche de tous)
+    const reserve = p.plaque === true || p.soin === true
+    const enManque = (x: { plaques: boolean[]; coque: number; coqueMax?: number }): boolean => (p.plaque === true ? x.plaques.includes(false) : x.coque < (x.coqueMax ?? Infinity) - 1e-6)
+    const manqueIci = reserve && enManque(m)
     let rivaux = autres
-    if (p.plaque === true && m.equipage !== undefined) {
-      const enManquent = autres.filter((x) => m.equipage!.pilotes[x.k].plaques.includes(false))
+    if (reserve && m.equipage !== undefined) {
+      const enManquent = autres.filter((x) => enManque(m.equipage!.pilotes[x.k]))
       if (manqueIci || enManquent.length > 0) {
         if (!manqueIci) continue
         rivaux = enManquent
@@ -5723,7 +5745,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
     const d = dmin || 1
     // LA SOUTE PLEINE (la capacité de la coque — Keko), ou LE MINERAI REFUSÉ : la pépite reste là, ni ramassée ni aimantée
     // (… ET LA PLAQUE, pour qui n'en manque pas : elle reste là, elle aussi)
-    const soutePleine = (!c.invasion.active && plusProche.e === null && (m.minerai >= c.capacite || m.refuses[p.minerai])) || (p.plaque === true && !manqueIci)
+    const soutePleine = (!c.invasion.active && plusProche.e === null && (m.minerai >= c.capacite || m.refuses[p.minerai])) || (reserve && !manqueIci)
     // (LE JOUEUR QUI REVIENT N'AIMANTE RIEN TANT QU'IL EST INVINCIBLE — Keko, 21/11 : « que les pépites ne soient pas attirées
     // immédiatement quand on respawn, qu'on attende la fin de l'animation : pile au retour, ça lance un gain de niveau la
     // plupart du temps » — l'explosion du retour en sème tout autour ; voir `invasion.retour`)
@@ -5798,7 +5820,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
  * La règle d'un vaisseau ne change pas : le pilote dont c'est le tour est DANS le monde — ses champs sont ceux de
  * `Monde` —, les autres attendent dans `equipage.pilotes` ; `prendreLaMain` les échange.
  */
-export const CHAMPS_DU_PILOTE = ['phase', 'vaisseau', 'coque', 'bouclier', 'plaques', 'intouchableJusque', 'corruption', 'dephaseJusque', 'plaqueCasseeA', 'renaitJusque', 'toucheA', 'forage', 'forages', 'tirs', 'obus', 'armesA', 'extraction', 'sorti', 'boostA', 'bombes', 'charges', 'verrou', 'crache', 'drones', 'tourelles', 'flaques', 'balayage', 'rayonVu', 'canal', 'scies', 'balises', 'givres', 'tornades', 'novas', 'echardes', 'spheres', 'puits', 'meteores', 'tentacules', 'nuees', 'rejetons', 'flaquesAcides', 'mines', 'fleaux', 'parasites', 'brochettes', 'hypercubes', 'coupes', 'des', 'oeufs', 'miniVers', 'liens', 'vrilles'] as const
+export const CHAMPS_DU_PILOTE = ['phase', 'vaisseau', 'coque', 'coqueMax', 'bouclier', 'plaques', 'intouchableJusque', 'corruption', 'dephaseJusque', 'plaqueCasseeA', 'renaitJusque', 'toucheA', 'forage', 'forages', 'tirs', 'obus', 'armesA', 'extraction', 'sorti', 'boostA', 'bombes', 'charges', 'verrou', 'crache', 'drones', 'tourelles', 'flaques', 'balayage', 'rayonVu', 'canal', 'scies', 'balises', 'givres', 'tornades', 'novas', 'echardes', 'spheres', 'puits', 'meteores', 'tentacules', 'nuees', 'rejetons', 'flaquesAcides', 'mines', 'fleaux', 'parasites', 'brochettes', 'hypercubes', 'coupes', 'des', 'oeufs', 'miniVers', 'liens', 'vrilles'] as const
 /** Un pilote qui attend son tour : ses champs du monde, l'instant de son retour s'il est abattu, les morsures qu'il doit encaisser. */
 export type Pilote = Pick<Monde, (typeof CHAMPS_DU_PILOTE)[number]> & { retourA: number; morsures: { x: number; y: number; degats: number }[] }
 /** Les pilotes (celui dont c'est le tour, `actif`, a sa place gardée mais périmée : il est dans le monde). */

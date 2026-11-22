@@ -3742,5 +3742,42 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   verifier(`sans roche, les plaques ne reviennent pas avec le temps (${r.plaques.join()})`, r.plaques.every((x) => !x))
 }
 
+// LE SOIN (Keko, 22/11 : « une petite chance, un peu comme l'aimant, de looter un truc qui soigne du blindage, comme une
+// potion de soin »)
+{
+  const cfg: ConfigVaisseau = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9 }, derive: { ...VAISSEAU.derive, active: false }, armes: [] }
+  const insecte = (id: number): Ennemi => ({ id, corps: { ...nouveauVaisseau(), x: 400, y: 0 }, pv: 0, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 } })
+  let soins = 0
+  const N = 3000
+  for (let id = 5000; id < 5000 + N; id++) {
+    const w = nouveauMonde(cfg, 3)
+    w.ennemis.push(insecte(id))
+    avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+    soins += w.pepites.filter((p) => p.soin === true).length
+  }
+  verifier(`${N} insectes abattus : ${soins} soins (${Math.round(N * cfg.invasion.soin.chance)} attendus, ${Math.round(cfg.invasion.soin.chance * 1000) / 10} %)`, Math.abs(soins - N * cfg.invasion.soin.chance) < 8)
+  // (ramassé blessé : un quart du blindage revient, pas plus que le plein ; sans blessure, il reste ; l'aimant ne l'attire pas)
+  const w = nouveauMonde(cfg, 4)
+  w.coque = cfg.coque * 0.5
+  w.pepites.push({ id: 900, x: 0, y: 0, vx: 0, vy: 0, graine: 1, minerai: 'fer', valeur: 0, soin: true })
+  avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+  const apres = w.coque / cfg.coque
+  w.coque = cfg.coque * 0.95
+  w.pepites.push({ id: 901, x: 0, y: 0, vx: 0, vy: 0, graine: 1, minerai: 'fer', valeur: 0, soin: true })
+  avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+  const plafond = w.coque / cfg.coque
+  w.pepites.push({ id: 902, x: 0, y: 0, vx: 0, vy: 0, graine: 1, minerai: 'fer', valeur: 0, soin: true })
+  for (let i = 0; i < 60; i++) avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+  const reste = w.pepites.filter((p) => p.soin === true).length
+  verifier(`un soin ramassé à 50 % : ${Math.round(apres * 100)} % ; à 95 % : ${Math.round(plafond * 100)} % (le plein) ; plein, il reste là (${reste})`, Math.abs(apres - 0.75) < 1e-9 && plafond === 1 && reste === 1)
+  // (à deux : le second blessé, le premier plein et posé dessus — le soin va au second)
+  const q = nouveauMonde(cfg, 6)
+  ajouterUnPilote(cfg, q, 40, 0)
+  q.equipage!.pilotes[1].coque = cfg.coque * 0.5
+  q.pepites.push({ id: 903, x: 0, y: 0, vx: 0, vy: 0, graine: 1, minerai: 'fer', valeur: 0, soin: true })
+  for (let i = 0; i < 60 * 4; i++) avancerLEquipage([cfg, cfg], q, 1 / 60, [{ x: 0, y: 0 }, { x: 0, y: 0 }], undefined, false)
+  verifier(`à deux, le soin sous le premier (plein) va au second, blessé : ${Math.round((etatDuPilote(q, 1).coque / cfg.coque) * 100)} %, le premier ${Math.round((q.coque / cfg.coque) * 100)} %`, etatDuPilote(q, 1).coque > cfg.coque * 0.5 && q.coque === cfg.coque && !q.pepites.some((p) => p.soin === true))
+}
+
 // (TOUJOURS EN DERNIER : des blocs ajoutés après cette ligne échouaient sans faire échouer `npm run verif` — 17/11)
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)
