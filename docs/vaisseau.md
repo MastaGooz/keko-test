@@ -7584,3 +7584,30 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   - *Limites de cette étape* : même modèle et même arme pour les deux (un autre modèle demande d'autres pièces au
     hangar) ; les vaisseaux ne se heurtent pas entre eux ; quelques effets à l'écran qui sont à tous (les arcs, les
     éclosions) partent du premier.
+- **22/11, LE JEU À DISTANCE (`&salon`, `&rejoindre=CODE`).** Keko : « je veux pas jouer en écran local, je veux pouvoir
+  jouer à distance avec mon ami, moi sur le téléphone et lui sur le sien, ou moi sur mon PC et lui sur son téléphone ».
+  Choisis par Keko : le serveur public de PeerJS pour se trouver, sans relais d'abord ; puis LA BIBLIOTHÈQUE PeerJS
+  (MIT, 1.5.4) — MESURÉ : sans elle, le serveur ouvre la connexion mais ne relaie aucun de nos messages (quatre essais :
+  le port, la forme exacte, un délai, une copie de ses messages) ; avec elle, deux pairs se parlent en 0,3 s. Elle a ses
+  propres relais (TURN) par défaut : la 4G est peut-être couverte sans compte.
+  - L'HÔTE (`&salon`, `&salon=CODE` pour garder le même code) : le monde tourne chez lui, comme l'équipage du 22/11 ; en
+    vol, « Salon CODE : inviter » sous le haut de l'écran — une tape partage le lien (`?vortex&rejoindre=CODE`), ou le
+    copie. Il envoie L'ÉTAT DU MONDE quinze fois par seconde (le monde entier en texte, les nombres au centième,
+    compressé en gzip : 4,5 Ko pour 121 insectes, mesuré — un demi-mégabit par seconde), les événements de chacun depuis
+    le dernier, sa direction, s'il est figé, le choix de talent en cours.
+  - L'INVITÉ (`&rejoindre=CODE`) : il choisit SON vaisseau et son arme dans SON hangar, décolle, et se présente (son
+    modèle, son arme, son apparence, sa configuration). SON VAISSEAU EST PILOTÉ CHEZ LUI — le manche répond sans retard —
+    et l'hôte le reprend tel quel, avancé du temps de son message (trente fois par seconde). Le reste vient de l'hôte :
+    chaque état reçu est vu depuis lui (`vuDuSecond`), RATTRAPÉ jusqu'à l'instant où il en était sans rien en célébrer,
+    et il le fait avancer lui-même entre deux ; ce qu'il voit éclater et sonner, ce sont les événements de l'hôte. Le
+    ciel est celui de l'hôte.
+  - LES TALENTS : le joueur 1 choisit chez lui, l'autre voit « Le joueur 1 choisit un talent… » ; puis le joueur 2 chez
+    lui, sur ses cartes à lui (son arme, sa race) ; c'est l'hôte qui le donne.
+  - Partir : l'invité qui rentre au hangar quitte la partie de l'hôte ; l'hôte qui rentre, l'invité attend
+    (« En attente du joueur 1… »).
+  - Testés (`jeu.verif.ts`) : le monde en texte et retour (l'infini, les Map, les Set), deux copies relues qui avancent
+    pareil, le monde vu du second, l'équipage défait. VU, entre deux Chrome à travers le vrai serveur de PeerJS : un
+    Chasseur hôte et un Kraken invité, chacun le sien à l'écran, le même ciel, le choix des deux joueurs. 49 images par
+    seconde chez l'hôte (53 seul, la même foule), 87 chez l'invité.
+  - *De moi* : quinze états par seconde, trente manches, le code de quatre lettres, le rattrapage borné à 0,2 s. *Pas
+    encore essayé* : entre deux appareils réels, loin l'un de l'autre.

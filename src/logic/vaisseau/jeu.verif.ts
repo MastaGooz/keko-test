@@ -3,6 +3,7 @@
  */
 import { ajouterUnPilote, avancerLEquipage, etatDuPilote, partDe, gabaritDInsecte, rayonDe, rocheDeLaTempete, vieMultipliee, cadenceDeLaVague, asteroideDeLaCase, coupeDUnCube, asteroidesAutour, avancer, avancerLeMonde, encaisser, purger, impactDuRayon, lancerLaBombe, larguer, porteeDeLaBombe, MINERAIS, nouveauMonde, nouveauVaisseau, solidite, voler, totalDe, stationDeLaCase, stationLaPlusProche, VAISSEAU, verrouiller, ennemiLePlusProche, type ConfigVaisseau, type Ennemi, type Evenement, type Vaisseau, xpDuNiveau, gemmesDuButin, tire, type Pepite } from './jeu.ts'
 import { acheter, configDuHangar, hangarNeuf, monter, pieceDe } from './hangar.ts'
+import { depuisTexte, retirerLesPilotes, versTexte, vuDuSecond } from './reseau.ts'
 
 /** Les règles sont vérifiées SANS la zone calme de la base (le rival naît où que soit le joueur) et AVEC les extracteurs par case (éteints en jeu pour l'instant) ; la base et la station seule ont leurs propres vérifications, plus bas. */
 const C: ConfigVaisseau = { ...VAISSEAU, base: { ...VAISSEAU.base, calme: 0 }, station: { ...VAISSEAU.station, seule: false } }
@@ -3573,6 +3574,36 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   for (let i = 0; i < 60 * (cfg.invasion.penalite + 1); i++) for (const e of avancerLEquipage([cfg, cfg], w6, 1 / 60, [{ x: 1, y: 0 }, { x: 0, y: 0 }]).evenements[1]) if (e.type === 'perdu' || e.type === 'retour') evs6.push(e.type)
   verifier(`le second abattu revient après ${cfg.invasion.penalite} s (${evs6.join(', ')}) ; le premier a volé pendant ce temps (${Math.round(w6.vaisseau.x)})`, evs6.join() === 'perdu,retour' && etatDuPilote(w6, 1).phase === 'vol' && w6.phase === 'vol' && w6.vaisseau.x > 100)
   verifier(`la laisse : tirés à l’opposé cinq secondes, ils restent à ${Math.round(d5)} l’un de l’autre (laisse ${cfg.equipage.laisse})`, d5 <= cfg.equipage.laisse + 6 && d5 > cfg.equipage.laisse - 20)
+}
+
+// LE JEU À DISTANCE (Keko, 22/11) : le monde en texte et retour, vu depuis le second, l'équipage défait
+{
+  const cfg: ConfigVaisseau = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 0, continu: { ...VAISSEAU.invasion.continu, actif: true, debut: 4, max: 4 } }, derive: { ...VAISSEAU.derive, active: false }, coque: 1e9 }
+  const w = nouveauMonde(cfg, 9)
+  ajouterUnPilote(cfg, w, 60, 0)
+  w.intouchableJusque = Infinity
+  w.creuse.set(4, 2.5)
+  w.detruits.add(7)
+  for (let i = 0; i < 60 * 8; i++) avancerLEquipage([cfg, cfg], w, 1 / 60, [{ x: 1, y: 0 }, { x: 0, y: 1 }])
+  const texte = versTexte(w)
+  const lu = depuisTexte<typeof w>(texte)
+  verifier(`le monde en texte (${texte.length} caractères, ${w.ennemis.length} insectes) et retour : l’infini, la Map, le Set et les insectes reviennent`, lu.intouchableJusque === Infinity && lu.creuse.get(4) === 2.5 && lu.detruits.has(7) && lu.ennemis.length === w.ennemis.length && Math.abs(lu.ennemis[0].corps.x - w.ennemis[0].corps.x) < 0.01)
+  // (relu, il avance comme l'original, au centième près)
+  const a = depuisTexte<typeof w>(texte)
+  const b = depuisTexte<typeof w>(texte)
+  for (let i = 0; i < 30; i++) {
+    avancerLEquipage([cfg, cfg], a, 1 / 60, [{ x: 1, y: 0 }, { x: 0, y: 1 }])
+    avancerLEquipage([cfg, cfg], b, 1 / 60, [{ x: 1, y: 0 }, { x: 0, y: 1 }])
+  }
+  verifier('deux copies relues avancent pareil', versTexte(a) === versTexte(b))
+  // (vu du second : il prend la place du premier, et l'hôte la sienne)
+  const hote = { x: w.vaisseau.x, y: w.vaisseau.y }
+  const invite = { ...etatDuPilote(w, 1).vaisseau }
+  const v2 = depuisTexte<typeof w>(texte)
+  vuDuSecond(v2)
+  verifier(`vu du second, il est le premier (${Math.round(v2.vaisseau.x)}, ${Math.round(v2.vaisseau.y)}) et l’hôte le second (${Math.round(etatDuPilote(v2, 1).vaisseau.x)})`, Math.abs(v2.vaisseau.x - invite.x) < 0.01 && Math.abs(v2.vaisseau.y - invite.y) < 0.01 && Math.abs(etatDuPilote(v2, 1).vaisseau.x - hote.x) < 0.01 && v2.equipage?.actif === 0)
+  retirerLesPilotes(v2)
+  verifier('l’équipage défait, il reste un monde seul', v2.equipage === undefined && Math.abs(v2.vaisseau.x - invite.x) < 0.01)
 }
 
 // (TOUJOURS EN DERNIER : des blocs ajoutés après cette ligne échouaient sans faire échouer `npm run verif` — 17/11)
