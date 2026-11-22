@@ -7820,3 +7820,7 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   plus gros astéroïde, 5 % de chance » — de 1 à 5 %, géantes comprises (tranché). `invasion.soin.chance` : 1/200 → 1/500
   (l'aimant reste à 1/300) ; `derive.plaque` : 10–60 % → 1–5 % (3 % pour une roche de 27). Vérifié : 10 000 insectes, 27
   soins (20 attendus) ; 2 000 roches de 27, 73 plaques (60 attendues).
+- **22/11, LE MOT DU SURBLINDAGE.** Keko : « changer le petit texte qui explique le blindage des humains dans la sélection
+  des vaisseaux, sur deux lignes : Les astéroïdes donnent des plaques de blindage ». MESURÉ (téléphone debout et couché) :
+  ainsi, « blindage. » tombait seul sur une troisième ligne ; « de blindage », que « Surblindage » dit déjà, est ôté —
+  « Surblindage : Les astéroïdes donnent des plaques. » tient sur deux lignes (`RACES`, `flotte.ts`).
