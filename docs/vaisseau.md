@@ -7703,3 +7703,6 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   et debout.
 - **22/11, `&faux` RETIRÉ.** Keko : « tu peux enlever le test avec tous les joueurs, c'est concluant ». Le salon de quatre
   d'un lien est parti ; `git log` le garde.
+- **22/11, L'ICÔNE D'« INVITER ».** Keko : « un autre logo pour le bouton inviter, je le trouve super moche » (c'était le
+  petit personnage des onglets d'essai). DEUX VAISSEAUX — la flèche du hangar en acier, une seconde à côté, un peu en
+  retrait — et une PASTILLE D'OR au coin, un plus blanc dedans : un vaisseau de plus ; l'onglet ouvert, elle luit et bat.

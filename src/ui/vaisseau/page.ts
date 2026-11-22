@@ -4977,7 +4977,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const e = etatDuBouton(x, y, tw, th)
       if (!e.enfonce) ombrePortee(p, x, y, tw, th)
       plaque(p, x, y + e.dy, tw, th, actif ? 'or' : 'encre', { enfonce: e.enfonce, survole: e.survole, flash: e.flash })
-      dessinerLIconeDeVue(p, vv === 'inviter' ? 'equipage' : vv, x + tw / 2, y + 13 + e.dy, actif)
+      dessinerLIconeDeVue(p, vv, x + tw / 2, y + 13 + e.dy, actif)
       const nomV = vv === 'inviter' ? (estInvite ? 'Salon' : 'Inviter') : NOMS_VUE[vv]
       // (un nom plus large que la tuile — « Paramètres » — passe en petites capitales)
       if (largeurDe(nomV) <= tw - 2) ecrire(p, nomV, x + tw / 2, y + th - 12 + e.dy, actif ? N.WHITE : COQUE[5], { align: 'center' })
@@ -5112,7 +5112,27 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const y = Math.round(y0)
     const a = 1 // (opaques toujours : à demi transparentes, elles sortaient tramées — l'onglet éteint se lit à son nom et sa plaque)
     const OMBRE = MATIERES.encre.contour
-    if (vv === 'hangar') {
+    if (vv === 'inviter') {
+      // INVITER (Keko, 22/11 : « un autre logo pour le bouton inviter, je le trouve super moche » — c'était le petit
+      // personnage des onglets d'essai) : DEUX VAISSEAUX, celui du hangar en acier et un second à côté, un peu en retrait,
+      // et un PLUS d'or au coin — un vaisseau de plus ; l'onglet ouvert, le plus luit et bat
+      const vaisseau = (cx: number, cy: number, corps: number, clair: number): void => {
+        p.poly([[cx, cy - 6], [cx + 4, cy + 4], [cx, cy + 2], [cx - 4, cy + 4]], OMBRE, a)
+        p.poly([[cx, cy - 5], [cx + 3, cy + 3], [cx, cy + 1], [cx - 3, cy + 3]], corps, a)
+        p.poly([[cx, cy - 5], [cx, cy + 1], [cx - 3, cy + 3]], clair, a)
+        p.rect(cx, cy - 1, 1, 1, RUNE[2], a)
+      }
+      vaisseau(x - 3, y - 1, COQUE[3], COQUE[4])
+      vaisseau(x + 2, y + 2, COQUE[4], COQUE[5])
+      const bat = actif && Math.floor(t * 3) % 2 === 0
+      // (une pastille d'or cernée, éclairée en haut, le plus blanc dedans)
+      p.rect(x + 3, y - 9, 7, 7, OMBRE, a)
+      p.rect(x + 4, y - 8, 5, 5, bat ? PEPITE[3] : PEPITE[2], a)
+      p.rect(x + 4, y - 8, 5, 1, N.hex('#fff2a8'), a)
+      p.rect(x + 6, y - 7, 1, 3, N.WHITE, a)
+      p.rect(x + 5, y - 6, 3, 1, N.WHITE, a)
+      if (actif) p.glow(x + 6, y - 6, 6, PEPITE[2], 0.5)
+    } else if (vv === 'hangar') {
       p.poly([[x, y - 7], [x + 5, y + 5], [x, y + 3], [x - 5, y + 5]], OMBRE, a)
       p.poly([[x, y - 6], [x + 4, y + 4], [x, y + 2], [x - 4, y + 4]], COQUE[4], a)
       p.poly([[x, y - 6], [x, y + 2], [x - 4, y + 4]], COQUE[5], a)
