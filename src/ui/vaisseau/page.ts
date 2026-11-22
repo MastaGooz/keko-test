@@ -3471,7 +3471,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   let finSonnee = { titre: false, lignes: 0, frappe: false, tic: 0 }
   /** Les lignes montrées : la prime, le niveau, les insectes, les roches ; les grands de l'équipe, s'il y en a eu. */
   const lignesMontrees = (r: { lignes: LigneDeRecompense[] }): LigneDeRecompense[] => r.lignes.filter((l) => l.quoi === 'base' || l.quoi === 'niveau' || l.quoi === 'insectes' || l.quoi === 'roches' || l.nombre > 0)
-  const NOMS_DES_LIGNES: Record<LigneDeRecompense['quoi'], string> = { base: 'Prime de partie', niveau: 'Niveau', insectes: 'Insectes', roches: 'Astéroïdes', miniBoss: 'Mini-boss (équipe)', boss: 'Boss (équipe)' }
+  const NOMS_DES_LIGNES: Record<LigneDeRecompense['quoi'], string> = { base: 'Prime de partie', niveau: 'Niveau', insectes: 'Insectes', roches: 'Astéroïdes', miniBoss: 'Mini-boss', boss: 'Boss' } // (sans « (équipe) » — Keko, 22/11)
   /** Le moment de l'écran : la fin des lignes, l'instant du total, de sa frappe, des boutons. */
   const tempsDeLaFin = (n: number): { total: number; frappe: number; boutons: number } => {
     const H0 = HEURES_DE_LA_FIN
