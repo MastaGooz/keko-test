@@ -7701,3 +7701,5 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   Zéphirin), prêts, chacun dans une autre apparence ; l'hôte s'appelle Kekoland ; au décollage, leurs vaisseaux
   paraissent, immobiles, leur pseudo dessous. VU : la plaque « 3/4 prêts », la liste dépliée, le panneau, le vol couché
   et debout.
+- **22/11, `&faux` RETIRÉ.** Keko : « tu peux enlever le test avec tous les joueurs, c'est concluant ». Le salon de quatre
+  d'un lien est parti ; `git log` le garde.

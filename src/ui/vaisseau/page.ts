@@ -2142,16 +2142,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** Au chargement : `&pseudo=X` (pour les essais d'un lien) ou celui de l'appareil ; `&salon` ouvre le salon tout de suite. */
   function ouvrirLeJeuADistance(): void {
     pseudo = pseudoPropre(parametres.get('pseudo') ?? '') || lirePseudo()
-    // (`&faux` : UN SALON DE QUATRE, POUR JUGER L'INTERFACE — Keko, 22/11 : « simule 4 pseudos de joueurs dans la partie,
-    // des pseudos très longs de préférence » : trois faux invités de huit lettres, prêts, chacun dans une autre apparence ;
-    // au décollage, leurs vaisseaux paraissent à côté du sien, immobiles, leur pseudo dessous)
-    if (VORTEX && parametres.has('faux')) {
-      if (!parametres.has('pseudo')) pseudo = 'Kekoland'
-      ouvrirLeSalonIci()
-      const ps = peauxDe(flotte.actif)
-      const conf = configDuVol(armeDuVortex(), 1)
-      ;['Wolfgang', 'Mathilde', 'Zéphirin'].forEach((nom, i) => membres.set(`faux-${i}`, { id: `faux-${i}`, pseudo: nom, pret: true, vaisseau: { modele: flotte.actif, arme: armeDuVortex(), peau: ps[(i + 1) % ps.length]?.id ?? '', conf } }))
-    } else if (VORTEX && parametres.has('salon')) {
+    if (VORTEX && parametres.has('salon')) {
       if (pseudo === '') pseudo = 'Hôte'
       ouvrirLeSalonIci()
     } else if (estInvite) {
