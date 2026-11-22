@@ -9299,6 +9299,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
   }
   let choixOuvertAvant = false
+  /** `&cartes=N` : le nombre de choix du banc, tant qu'il dure — le niveau suit le choix en cours (le k-ième, le niveau k). */
+  let bancDeCartes: number | null = null
   /**
    * LE FILET DES DEUX MANCHES (Keko, 12/11 : « quand je lance le premier joystick et que j'active le deuxième, si je
    * lâche le premier et que je le réenclenche, je ne peux plus bouger » — pas reproduit en émulation, où le relâchement
@@ -17303,13 +17305,18 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // (à deux, quand le second est là : son choix suit celui du premier)
     // (`&niveau=N` : le vol part au niveau N, et toutes les cartes spéciales dues jusque-là sont à choisir d'emblée, l'une
     // après l'autre — un banc à pleine puissance ; avec `&flot=N`, beaucoup d'ennemis)
-    // (`&cartes=N` : N choix d'affilée, au niveau N si `&niveau` ne dit rien — Keko, 22/11 : « 50 cartes à choisir dès le
-    // début de la partie, comme si j'étais niveau 50 » ; les spéciales dues d'abord, puis les ordinaires)
+    // (`&cartes=N` : N choix d'affilée COMME LES NIVEAUX 1 À N — Keko, 22/11 : « 50 cartes d'affilée, comme si c'était les
+    // niveaux 1 à 50, pas juste les cartes spéciales » : le k-ième choix est celui du niveau k, les spéciales aux
+    // niveaux 10, 20… à leur place ; voir `bancDeCartes`)
     if (VORTEX && (parametres.has('niveau') || parametres.has('cartes')) && !choixDEssaiOuvert && enJeu && t - arriveA > 1.5 && choixDeTalent === null && !estInvite) {
       choixDEssaiOuvert = true
       const cartes = Math.max(0, Math.floor(Number(parametres.get('cartes')) || 0))
       m.invasion.niveau = Math.max(1, Math.floor(Number(parametres.get('niveau')) || cartes || 60))
       const dues = parametres.has('cartes') ? cartes : Math.floor(m.invasion.niveau / NIVEAU_SPECIAL)
+      if (parametres.has('cartes') && !parametres.has('niveau') && cartes > 0) {
+        bancDeCartes = cartes
+        m.invasion.niveau = 1
+      }
       if (dues > 0) {
         choixDeTalent = ouvrirLeChoix(dues - 1)
         talentFinA = tReel + DUREE_DU_CHOIX
@@ -17399,6 +17406,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (souteOuverte && (!enJeu || m.phase !== 'vol')) souteOuverte = false
     // (le choix refermé, de quelque façon que ce soit : le manche revient sous le pouce resté posé)
     if (choixOuvertAvant && choixDeTalent === null) repasserLeManche()
+    if (bancDeCartes !== null) {
+      if (choixDeTalent !== null) m.invasion.niveau = Math.max(1, bancDeCartes - choixDeTalent.aFaire + 1)
+      else {
+        m.invasion.niveau = bancDeCartes
+        bancDeCartes = null
+      }
+    }
     choixOuvertAvant = choixDeTalent !== null
     // LE CHOIX D'UN TALENT : le jeu est en pause pour tout le monde ; le délai passé, ce qui reste à choisir part en réserve
     if (!estInvite && choixDeTalent !== null && tReel >= talentFinA) {

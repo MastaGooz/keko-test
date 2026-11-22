@@ -8029,3 +8029,8 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   gras, et deux cartes voisines ne changent plus de lettre. Mesurées dans la page, deux descriptions passaient à six
   lignes, coupées : le Champ tesla (« … tout près. ») et le Gros calibre des grenades (« Des grenades plus lentes… »)
   sont raccourcis ; toutes tiennent en cinq. VU.
+- **22/11, `&cartes=N` SUIT LES NIVEAUX 1 À N.** Keko : « je voulais 50 cartes d'affilée, comme si c'était les niveaux 1
+  à 50, pas juste les cartes spéciales » : le k-ième choix est celui du niveau k (`bancDeCartes` : le niveau suit le
+  compte qui reste), les spéciales aux niveaux 10, 20… à leur place ; le banc fini, le vol continue au niveau N.
+  `&niveau=X&cartes=N` garde l'ancien banc (N choix au niveau X, les spéciales dues d'abord). VU : niveau 1, puis au
+  niveau 10 les trois spéciales, au niveau 11 les ordinaires.
