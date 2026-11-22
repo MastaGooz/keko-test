@@ -7706,3 +7706,6 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
 - **22/11, L'ICÔNE D'« INVITER ».** Keko : « un autre logo pour le bouton inviter, je le trouve super moche » (c'était le
   petit personnage des onglets d'essai). DEUX VAISSEAUX — la flèche du hangar en acier, une seconde à côté, un peu en
   retrait — et une PASTILLE D'OR au coin, un plus blanc dedans : un vaisseau de plus ; l'onglet ouvert, elle luit et bat.
+- **22/11, L'ICÔNE D'« INVITER », UN ESCADRON.** Keko : « rajoute un troisième vaisseau en mode escadron, et enlève le
+  petit plus jaune, c'est bizarre ». Trois vaisseaux EN V : le chef devant, plus clair, ses deux ailiers en retrait ;
+  l'onglet ouvert, leurs feux luisent. Plus de pastille.

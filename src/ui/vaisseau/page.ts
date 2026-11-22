@@ -5115,23 +5115,19 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (vv === 'inviter') {
       // INVITER (Keko, 22/11 : « un autre logo pour le bouton inviter, je le trouve super moche » — c'était le petit
       // personnage des onglets d'essai) : DEUX VAISSEAUX, celui du hangar en acier et un second à côté, un peu en retrait,
-      // et un PLUS d'or au coin — un vaisseau de plus ; l'onglet ouvert, le plus luit et bat
+      // et un PLUS d'or au coin — un vaisseau de plus
       const vaisseau = (cx: number, cy: number, corps: number, clair: number): void => {
         p.poly([[cx, cy - 6], [cx + 4, cy + 4], [cx, cy + 2], [cx - 4, cy + 4]], OMBRE, a)
         p.poly([[cx, cy - 5], [cx + 3, cy + 3], [cx, cy + 1], [cx - 3, cy + 3]], corps, a)
         p.poly([[cx, cy - 5], [cx, cy + 1], [cx - 3, cy + 3]], clair, a)
         p.rect(cx, cy - 1, 1, 1, RUNE[2], a)
       }
-      vaisseau(x - 3, y - 1, COQUE[3], COQUE[4])
-      vaisseau(x + 2, y + 2, COQUE[4], COQUE[5])
-      const bat = actif && Math.floor(t * 3) % 2 === 0
-      // (une pastille d'or cernée, éclairée en haut, le plus blanc dedans)
-      p.rect(x + 3, y - 9, 7, 7, OMBRE, a)
-      p.rect(x + 4, y - 8, 5, 5, bat ? PEPITE[3] : PEPITE[2], a)
-      p.rect(x + 4, y - 8, 5, 1, N.hex('#fff2a8'), a)
-      p.rect(x + 6, y - 7, 1, 3, N.WHITE, a)
-      p.rect(x + 5, y - 6, 3, 1, N.WHITE, a)
-      if (actif) p.glow(x + 6, y - 6, 6, PEPITE[2], 0.5)
+      // (… PUIS UN ESCADRON — Keko, 22/11 : « rajoute un troisième vaisseau en mode escadron, et enlève le petit plus jaune,
+      // c'est bizarre » : en V, le chef devant, ses deux ailiers en retrait, plus sombres ; l'onglet ouvert, ses feux luisent)
+      vaisseau(x - 5, y + 2, COQUE[3], COQUE[4])
+      vaisseau(x + 5, y + 2, COQUE[3], COQUE[4])
+      vaisseau(x, y - 2, COQUE[4], COQUE[5])
+      if (actif) for (const [gx, gy] of [[x - 5, y + 1], [x + 5, y + 1], [x, y - 3]] as [number, number][]) p.glow(gx, gy, 4, RUNE[2], 0.4 + 0.2 * Math.sin(t * 5 + gx))
     } else if (vv === 'hangar') {
       p.poly([[x, y - 7], [x + 5, y + 5], [x, y + 3], [x - 5, y + 5]], OMBRE, a)
       p.poly([[x, y - 6], [x + 4, y + 4], [x, y + 2], [x - 4, y + 4]], COQUE[4], a)
