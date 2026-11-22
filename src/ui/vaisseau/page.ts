@@ -9258,6 +9258,43 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   racine.addEventListener('pointerup', lever)
   racine.addEventListener('pointercancel', lever)
   /**
+   * LES DOIGTS POSÉS, où qu'ils soient (Keko, 22/11 : « une fois le talent sélectionné, l'interface se ferme, mais mon
+   * pouce n'a plus de joystick sous lui ; il faut que je l'enlève et que je le remette ») : leur dernière place, pour
+   * reposer le manche sous un pouce resté sur l'écran — voir `repasserLeManche`.
+   */
+  const doigtsTenus = new Map<number, Vecteur>()
+  racine.addEventListener('pointerdown', (ev) => {
+    if (ev.pointerType === 'touch') doigtsTenus.set(ev.pointerId, { x: ev.clientX, y: ev.clientY })
+  })
+  racine.addEventListener('pointermove', (ev) => {
+    if (doigtsTenus.has(ev.pointerId)) doigtsTenus.set(ev.pointerId, { x: ev.clientX, y: ev.clientY })
+  })
+  for (const fin of ['pointerup', 'pointercancel'] as const) racine.addEventListener(fin, (ev) => doigtsTenus.delete(ev.pointerId))
+  /**
+   * LE CHOIX D'UN TALENT REFERMÉ, UN POUCE ENCORE POSÉ : le manche renaît sous lui, comme s'il venait de se poser (au
+   * vortex ; à deux sur un écran, `&coop`, la moitié où il est dit lequel des deux manches).
+   */
+  function repasserLeManche(): void {
+    if (!VORTEX || !enJeu) return
+    const cadre = canvas.getBoundingClientRect()
+    for (const [id, q] of doigtsTenus) {
+      if (id === manche?.id || id === manche2?.id || id === regard?.id || id === pince?.id) continue
+      if (tenue !== null && tenue.id === id) tenue = null
+      try {
+        racine.setPointerCapture(id)
+      } catch {
+        // (le doigt vient de se lever : rien à reprendre)
+        doigtsTenus.delete(id)
+        continue
+      }
+      const nouveau = { id, centre: q, doigt: q, t0: t, depart: q, vu: false }
+      if (COOP && q.x >= cadre.left + cadre.width / 2) {
+        if (manche2 === null) manche2 = nouveau
+      } else if (manche === null) manche = nouveau
+    }
+  }
+  let choixOuvertAvant = false
+  /**
    * LE FILET DES DEUX MANCHES (Keko, 12/11 : « quand je lance le premier joystick et que j'active le deuxième, si je
    * lâche le premier et que je le réenclenche, je ne peux plus bouger » — pas reproduit en émulation, où le relâchement
    * arrive bien ; sur l'appareil, tout se passe comme si le relâchement du premier doigt s'était perdu : le manche reste
@@ -17352,6 +17389,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
     // (la soute ouverte : le monde est en pause, ses sons continus se taisent)
     if (souteOuverte && (!enJeu || m.phase !== 'vol')) souteOuverte = false
+    // (le choix refermé, de quelque façon que ce soit : le manche revient sous le pouce resté posé)
+    if (choixOuvertAvant && choixDeTalent === null) repasserLeManche()
+    choixOuvertAvant = choixDeTalent !== null
     // LE CHOIX D'UN TALENT : le jeu est en pause pour tout le monde ; le délai passé, ce qui reste à choisir part en réserve
     if (!estInvite && choixDeTalent !== null && tReel >= talentFinA) {
       if (choixDuSecond && autres.length > 0) autres[0].reserve += reserveApresLeDelai(choixDeTalent)

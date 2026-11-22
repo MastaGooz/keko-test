@@ -7985,3 +7985,10 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   - SIX ICÔNES NEUVES (`imp-railgun`, `imp-obusier`, `imp-roquettes`, `imp-tesla`, `imp-grenades`, `imp-escorte`) ;
     chaque arme a un son d'emprunt (`sonDeLArme`).
   - EN ATTENTE DE KEKO : comment montrer une arme ajoutée sur le vaisseau.
+- **22/11, LE MANCHE REVIENT SOUS LE POUCE APRÈS UN CHOIX DE TALENT.** Keko : « une fois le talent sélectionné,
+  l'interface se ferme, mais mon pouce n'a plus de joystick sous lui ; il faut que je l'enlève et que je le remette,
+  ça me fait perdre une seconde ou deux ». La page garde la place de chaque doigt posé (`doigtsTenus`) ; quand le choix
+  se referme, de quelque façon que ce soit (carte prise, délai écoulé, choix d'un allié), un doigt encore posé qui ne
+  tient rien reprend le manche à l'endroit où il est (`repasserLeManche` ; à deux sur un écran, la moitié dit lequel).
+  Reproduit sur la version d'avant (un toucher tenu sur la carte : plus de manche), corrigé et VU (le manche paraît sous
+  le doigt, le glisser pilote).
