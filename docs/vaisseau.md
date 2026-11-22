@@ -7657,3 +7657,8 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     avancent. VUS entre trois Chrome à travers le serveur de PeerJS : un Chasseur, un Kraken et une Sentinelle, chacun
     les deux autres avec leur pseudo ; le pseudo tapé, le salon des deux côtés, « Prêts : 1 / 2 », « ✓ PRÊT », le départ
     ensemble ; un invité fermé net qui part de la partie.
+- **22/11, LE CHAMP DU PSEUDO SUR SON DESSIN.** Keko : « sur téléphone, quand je clique sur le champ pour écrire mon
+  pseudo, ça ouvre mon clavier et le referme instantanément ». Le vrai champ était invisible dans un coin : le doigt
+  posé sur le canevas lui donnait le focus, le relâchement, sur le canevas, le lui reprenait. IL EST MAINTENANT POSÉ SUR
+  SON DESSIN, transparent, à chaque image (`placerLeChampDuPseudo`) : le doigt touche le champ lui-même. Vérifié :
+  l'élément sous le doigt est le champ, il garde le focus après la tape. *Pas encore vu sur un vrai téléphone.*

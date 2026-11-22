@@ -2447,7 +2447,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    */
   let panneauSalon: 'ferme' | 'pseudo' | 'salon' = 'ferme'
   let panneauA = -10
-  /** LE CHAMP DU PSEUDO : un vrai champ, invisible — il appelle le clavier ; le jeu le peint en pixels. */
+  /**
+   * LE CHAMP DU PSEUDO : un vrai champ, transparent — il appelle le clavier ; le jeu le peint en pixels. IL EST POSÉ SUR
+   * SON DESSIN, à chaque image (Keko, 22/11 : « sur téléphone, quand je clique sur le champ, ça ouvre mon clavier et le
+   * referme instantanément » : invisible dans un coin, il prenait le focus par le doigt posé sur le canevas, et le
+   * relâchement, sur le canevas, le lui reprenait) : le doigt touche le champ lui-même, le navigateur fait le reste.
+   */
   const champDuPseudo = document.createElement('input')
   champDuPseudo.type = 'text'
   champDuPseudo.maxLength = 12
@@ -2455,14 +2460,36 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   champDuPseudo.setAttribute('autocapitalize', 'words')
   champDuPseudo.setAttribute('aria-label', 'Pseudo')
   // (16 px : en dessous, l'iPhone zoome sur le champ)
-  champDuPseudo.style.cssText = 'position:fixed;left:0;top:0;width:1px;height:1px;opacity:0;border:0;padding:0;font-size:16px;pointer-events:none'
+  champDuPseudo.style.cssText = 'position:fixed;left:0;top:0;width:1px;height:1px;display:none;z-index:5;margin:0;border:0;padding:0;outline:none;background:transparent;color:transparent;caret-color:transparent;font-size:16px'
   racine.append(champDuPseudo)
   champDuPseudo.addEventListener('keydown', (ev) => {
     ev.stopPropagation()
     if (ev.key === 'Enter') validerLePseudo()
   })
-  /** Le champ à prendre au relâchement du doigt (le clavier d'un téléphone ne s'ouvre que sur un geste). */
-  let focusVoulu = false
+  /** La place du champ dans le tampon, à cette image (null : pas de champ à l'écran). */
+  let placeDuChamp: { x: number; y: number; w: number; h: number } | null = null
+  /** Le champ suit son dessin, à chaque image ; sans panneau du pseudo, il s'en va (et lâche le clavier). */
+  function placerLeChampDuPseudo(): void {
+    const pl = panneauSalon === 'pseudo' && !accueil && ecranVisible() ? placeDuChamp : null
+    if (pl === null) {
+      if (champDuPseudo.style.display !== 'none') {
+        champDuPseudo.blur()
+        champDuPseudo.style.display = 'none'
+      }
+      return
+    }
+    const r = canvas.getBoundingClientRect()
+    champDuPseudo.style.display = 'block'
+    champDuPseudo.style.left = `${r.left + pl.x * zoom}px`
+    champDuPseudo.style.top = `${r.top + pl.y * zoom}px`
+    champDuPseudo.style.width = `${pl.w * zoom}px`
+    champDuPseudo.style.height = `${pl.h * zoom}px`
+  }
+  const suivreLeChamp = (): void => {
+    placerLeChampDuPseudo()
+    requestAnimationFrame(suivreLeChamp)
+  }
+  requestAnimationFrame(suivreLeChamp)
   function ouvrirLePanneauDuSalon(): void {
     feuille = false
     panneauSalon = liaison === null ? 'pseudo' : 'salon'
@@ -2523,10 +2550,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const dit = champDuPseudo.value
       ecrire(p, dit === '' && !actif ? 'Toucher pour écrire' : dit, fx + 4, fy + 4, dit === '' ? COQUE[3] : N.WHITE)
       if (actif && Math.floor(tReel * 2.5) % 2 === 0) p.rect(fx + 5 + largeurDe(dit), fy + 3, 1, 9, N.WHITE)
-      zone(fx, fy, fw, 15, () => {
-        focusVoulu = true
-        champDuPseudo.focus()
-      }, null)
+      // (le vrai champ est posé là — voir `placerLeChampDuPseudo` ; la souris aussi y tombe)
+      placeDuChamp = { x: fx + ORIGINE.x, y: fy + ORIGINE.y, w: fw, h: 15 }
       const bw = Math.round((lw - 30) / 2)
       bouton(p, x0 + 10, y0 + h - 26, bw, 16, 'Annuler', true, () => {
         champDuPseudo.blur()
@@ -8272,6 +8297,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   }
   racine.addEventListener('pointerdown', (ev) => {
     reveiller() // (le contexte audio ne naît que sur un geste)
+    // (le champ du pseudo : c'est le navigateur qui le prend — voir `placerLeChampDuPseudo`)
+    if (ev.target === champDuPseudo) return
     // (l'accueil se quitte AU RELÂCHEMENT : au doigt, c'est lui — pas l'appui — que le navigateur compte comme un geste)
     if (accueil) return
     if (ecranVisible()) {
@@ -8562,11 +8589,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   }
   const lever = (ev: PointerEvent) => {
     reveiller() // (au doigt, c'est le relâchement qui rend le son à la page)
-    // (le champ du pseudo : au relâchement aussi — le clavier d'un téléphone s'ouvre sur un geste)
-    if (focusVoulu) {
-      focusVoulu = false
-      champDuPseudo.focus()
-    }
     // (l'appui tenu relâché avant son terme : rien)
     if (tenue !== null && ev.pointerId === tenue.id) tenue = null
     if (tapeVerrou !== null && ev.pointerId === tapeVerrou.id) {
