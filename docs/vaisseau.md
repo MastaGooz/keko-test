@@ -8034,3 +8034,9 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   compte qui reste), les spéciales aux niveaux 10, 20… à leur place ; le banc fini, le vol continue au niveau N.
   `&niveau=X&cartes=N` garde l'ancien banc (N choix au niveau X, les spéciales dues d'abord). VU : niveau 1, puis au
   niveau 10 les trois spéciales, au niveau 11 les ordinaires.
+- **22/11, CORRIGÉ : LE PREMIER COUP CRITIQUE PLANTAIT LE JEU.** Keko : « après avoir choisi mes cartes je joue et le
+  jeu plante ». En passant le critique à l'arme, le remplacement automatique des quarante endroits avait aussi réécrit
+  la définition de `facteurDeCritique`, qui s'appelait elle-même : au premier coup critique, la pile débordait
+  (« Maximum call stack size exceeded ») et le monde s'arrêtait. Reproduit (le banc `&cartes=50`, puis le vol), corrigé,
+  rejoué sans erreur jusqu'au niveau 51 ; un test le garde (`jeu.verif.ts` : un coup critique de l'arme, 32 de dégâts).
+  *Un remplacement en masse se relit à l'endroit où il définit ce qu'il remplace.*

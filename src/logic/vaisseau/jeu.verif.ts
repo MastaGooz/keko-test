@@ -1543,6 +1543,24 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   verifier('un insecte verrouillé : le trait va sur lui', verrouille.pv[0] === 16 && verrouille.pv[1] === 0)
 }
 
+// LE CRITIQUE EST À L'ARME (Keko, 22/11) : un coup critique ne plante pas (il s'appelait lui-même à l'infini : le premier
+// critique de la partie arrêtait le jeu) ; le facteur est celui du vaisseau plus celui de l'arme
+{
+  const insecte = (id: number, x: number, y: number) => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv: 1000, fait: 'marche' as const, roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, calmeA: 1e9 })
+  const rail = { id: 'rail', cadence: 2.6, degats: 16, portee: 220, vitesse: 0, vie: 0, dispersion: 0, guide: false, rail: { largeur: 3 }, critique: 1, critiques: 0.5 }
+  const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, armes: [rail], ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, pv: 1000 }, passifs: { ...VAISSEAU.passifs, critique: 0, critiqueFacteur: 1.5 } }
+  const w = nouveauMonde(cfg, 3)
+  w.ennemis.push(insecte(1, 0, -60))
+  w.vaisseau = { ...w.vaisseau, x: 0, y: 0, vx: 0, vy: 0 }
+  let erreur = ''
+  try {
+    avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+  } catch (e) {
+    erreur = String(e)
+  }
+  verifier(`un coup critique de l'arme (chance 100 %, facteur 150 % + 50 points) : ${erreur || `${1000 - w.ennemis[0].pv} de dégâts (32 attendus)`}`, erreur === '' && 1000 - w.ennemis[0].pv === 32)
+}
+
 // LES TENTACULES DU KRAKEN (Keko, 16/11) : chacune s'étend en courbe vers un insecte, le pique au bout de son élan,
 // reste plantée, se rétracte, se repose, recommence
 {

@@ -2379,7 +2379,7 @@ function faireNaitreUnInsecte(c: ConfigVaisseau, m: Monde, ev: Evenement[]): voi
  */
 /** LE CRITIQUE D'UNE ARME : celui du vaisseau (le même pour toutes) plus le sien (voir `Arme.critique`). */
 const chanceDeCritique = (c: ConfigVaisseau, a: Arme | undefined): number => c.passifs.critique + (a?.critique ?? 0)
-const facteurDeCritique = (c: ConfigVaisseau, a: Arme | undefined): number => facteurDeCritique(c, a) + (a?.critiques ?? 0)
+const facteurDeCritique = (c: ConfigVaisseau, a: Arme | undefined): number => c.passifs.critiqueFacteur + (a?.critiques ?? 0)
 const critiqueTire = (c: ConfigVaisseau, m: Monde, a: Arme | undefined): boolean => chanceDeCritique(c, a) > 0 && tire(m.graine, m.prochainId++, 12) < chanceDeCritique(c, a)
 
 /**
