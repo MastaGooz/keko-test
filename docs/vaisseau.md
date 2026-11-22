@@ -7681,3 +7681,10 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     vaisseaux sortent du monde) ; au hangar, il est seul, « Inviter » est à lui ; le lien ne rejoint plus au rechargement.
   - VU à cinq Chrome : la liste et « Prêts 0 / 4 » ; le cinquième, sa croix, seul ; l'hôte fermé en vol, l'invité qui
     continue et passe un niveau ; l'hôte fermé au hangar, l'invité seul.
+- **22/11, LES BOUTONS DU SALON ; « VOUS ÊTES CONNECTÉ » ; FERMER SON SALON.** Keko : « le texte de "Copier le lien"
+  dépasse du bouton » ; « une fois connecté, dis juste "Vous êtes connecté au salon" » ; « un moyen pour un joueur qui a
+  créé un salon de le fermer et de repasser en mode un joueur, pour en recréer un nouveau ». « Partager » et « Copier
+  le lien » sont à la taille de leurs mots, côte à côte s'ils tiennent, l'un sous l'autre sinon (debout). L'HÔTE A
+  « FERMER LE SALON » dans son panneau (« Sûr ? » à la première tape, comme la remise à zéro) : ses invités le savent
+  tout de suite (« L'hôte a fermé le salon », la croix) et repassent seuls ; lui aussi — en vol, la partie continue
+  sans eux — et « Inviter » en ouvre un neuf. La fermeture du panneau devient « Retour ». VU à deux Chrome.

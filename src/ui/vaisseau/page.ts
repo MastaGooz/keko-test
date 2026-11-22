@@ -2183,6 +2183,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       message: recevoirDeLHote,
       vite: (d) => void recevoirUnEtat(d),
       etat: (e) => {
+        // (le salon déjà quitté — l'hôte l'a fermé : la liaison qui tombe ensuite ne dit plus rien)
+        if (!estInvite) return
         etatDuSalon = e
         if (e === 'connecte') {
           liaison?.envoyer({ bonjour: { pseudo } })
@@ -2342,7 +2344,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     void compresser(versTexte(etat)).then((d) => liaison?.envoyerVite(d))
   }
   function recevoirDeLHote(msg: unknown): void {
-    const o = msg as { salon?: NonNullable<typeof salonDistant>; toi?: string | number; depart?: boolean; retour?: boolean; pilotes?: string }
+    const o = msg as { salon?: NonNullable<typeof salonDistant>; toi?: string | number; depart?: boolean; retour?: boolean; pilotes?: string; ferme?: boolean }
+    // (L'HÔTE A FERMÉ SON SALON : on repasse seul, tout de suite)
+    if (o.ferme === true) {
+      annoncer(`Salon ${REJOINDRE}`, 'L’hôte a fermé le salon', true)
+      quitterLeSalonDistant()
+      return
+    }
     if (o.salon !== undefined) {
       salonDistant = o.salon
       if (typeof o.toi === 'string') monId = o.toi
@@ -2601,21 +2609,32 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       bouton(p, x0 + lw - 10 - bw, y0 + h - 26, bw, 16, 'Valider', pseudoPropre(champDuPseudo.value) !== '', validerLePseudo, 'achat')
     } else {
       const joueurs = joueursDuSalon()
-      const h = 92 + 12 * Math.max(1, joueurs.length)
+      // (LES BOUTONS À LA TAILLE DE LEURS MOTS — Keko, 22/11 : « le texte de "Copier le lien" dépasse du bouton » ; côte à
+      // côte s'ils tiennent, l'un sous l'autre sinon)
+      const partage = estHote && typeof (navigator as Navigator & { share?: unknown }).share === 'function'
+      const wP = largeurDe('Partager', GRAS) + 20
+      const wC = largeurDe('Copier le lien', GRAS) + 20
+      const empiles = partage && wP + wC + 8 > lw - 20
+      const h = 92 + 12 * Math.max(1, joueurs.length) + (empiles ? 20 : 0) + (estHote ? 20 : 0)
       const y0 = Math.round(H / 2 - h / 2) + Math.round((1 - u) * 8)
       plaque(p, x0, y0, lw, h, 'encre')
       const code = liaison?.code() ?? REJOINDRE
       motEnRelief(p, `Salon ${code}`, W / 2, y0 + 7, true)
-      const etatDit = estHote ? (etatDuSalon === 'erreur' ? 'Serveur injoignable' : 'Partagez le lien du salon') : etatDuSalon === 'connecte' ? 'Connecté : choisissez un vaisseau' : etatDuSalon === 'introuvable' ? 'Salon introuvable' : etatDuSalon === 'plein' ? 'Ce salon est déjà plein' : etatDuSalon === 'erreur' || etatDuSalon === 'perdu' ? 'Connexion impossible' : 'Connexion…'
+      const etatDit = estHote ? (etatDuSalon === 'erreur' ? 'Serveur injoignable' : 'Partagez le lien du salon') : etatDuSalon === 'connecte' ? 'Vous êtes connecté au salon' : etatDuSalon === 'introuvable' ? 'Salon introuvable' : etatDuSalon === 'plein' ? 'Ce salon est déjà plein' : etatDuSalon === 'erreur' || etatDuSalon === 'perdu' ? 'Connexion impossible' : 'Connexion…'
       ecrire(p, etatDit, W / 2, y0 + 22, COQUE[5], { align: 'center' })
       let y = y0 + 36
       if (estHote) {
-        const bw = Math.round((lw - 30) / 2)
-        const nav = navigator as Navigator & { share?: unknown }
-        if (typeof nav.share === 'function') {
-          bouton(p, x0 + 10, y, bw, 16, 'Partager', true, partagerLeSalon, 'achat')
-          bouton(p, x0 + lw - 10 - bw, y, bw, 16, 'Copier le lien', true, copierLeLien, 'clic', 'acier')
-        } else bouton(p, Math.round(W / 2 - bw), y, bw * 2, 16, 'Copier le lien', true, copierLeLien, 'achat')
+        if (!partage) bouton(p, Math.round(W / 2 - wC / 2), y, wC, 16, 'Copier le lien', true, copierLeLien, 'achat')
+        else if (empiles) {
+          const wb = Math.max(wP, wC)
+          bouton(p, Math.round(W / 2 - wb / 2), y, wb, 16, 'Partager', true, partagerLeSalon, 'achat')
+          y += 20
+          bouton(p, Math.round(W / 2 - wb / 2), y, wb, 16, 'Copier le lien', true, copierLeLien, 'clic', 'acier')
+        } else {
+          const xb = Math.round(W / 2 - (wP + wC + 8) / 2)
+          bouton(p, xb, y, wP, 16, 'Partager', true, partagerLeSalon, 'achat')
+          bouton(p, xb + wP + 8, y, wC, 16, 'Copier le lien', true, copierLeLien, 'clic', 'acier')
+        }
         y += 22
       } else if (etatDuSalon !== 'connecte') {
         liaison?.detail().split('\n').forEach((l, i) => ecrire(p, l, W / 2, y + 10 * i, COQUE[3], { align: 'center' }))
@@ -2627,8 +2646,23 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         if (j.pret) motEnRelief(p, 'prêt', x0 + lw - 14 - largeurDe('prêt', GRAS) / 2, y, 'cristal')
         y += 12
       }
-      const bf = largeurDe('Fermer', GRAS) + 24
-      bouton(p, Math.round(W / 2 - bf / 2), y0 + h - 24, bf, 16, 'Fermer', true, () => (panneauSalon = 'ferme'), 'retour', 'acier')
+      // (L'HÔTE PEUT FERMER SON SALON — Keko, 22/11 : « un moyen de fermer le salon et de repasser en mode un joueur, pour
+      // pouvoir en recréer un nouveau » ; une première tape demande « Sûr ? », comme la remise à zéro)
+      if (estHote) {
+        const sur = tReel - fermetureDemandeeA < 2
+        const mot = sur ? 'Sûr ?' : 'Fermer le salon'
+        const wf = largeurDe('Fermer le salon', GRAS) + 20
+        bouton(p, Math.round(W / 2 - wf / 2), y0 + h - 44, wf, 16, mot, true, () => {
+          if (!sur) {
+            fermetureDemandeeA = tReel
+            return
+          }
+          fermetureDemandeeA = -10
+          fermerLeSalon()
+        }, sur ? 'refus' : 'clic', sur ? 'or' : 'acier')
+      }
+      const bf = largeurDe('Retour', GRAS) + 24
+      bouton(p, Math.round(W / 2 - bf / 2), y0 + h - 24, bf, 16, 'Retour', true, () => (panneauSalon = 'ferme'), 'retour', 'acier')
     }
     zone(0, 0, W, H, () => {}, null)
   }
@@ -2686,6 +2720,37 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     plaque(p, x, y, w, 15, 'encre')
     motEnRelief(p, texte, x + 8 + lt / 2, y + 4, prets === joueurs.length ? 'cristal' : true)
     joueurs.forEach((j, i) => dessinerUneMarque(p, x + 13 + lt + i * 10, y + 4, j.pret))
+  }
+  /** La première tape sur « Fermer le salon » (la seconde, dans les deux secondes, le ferme). */
+  let fermetureDemandeeA = -10
+  /**
+   * (l'hôte) LE SALON SE FERME : les invités le savent tout de suite (et repassent seuls — voir `quitterLeSalonDistant`) ;
+   * l'hôte aussi est seul — en vol, la partie continue sans eux — et peut en rouvrir un, sous un autre code.
+   */
+  function fermerLeSalon(): void {
+    if (!estHote || liaison === null) return
+    liaison.envoyer({ ferme: true })
+    const l = liaison
+    // (le message part avant que la liaison ne tombe)
+    setTimeout(() => l.fermer(), 400)
+    liaison = null
+    estHote = false
+    membres.clear()
+    pretIci = false
+    if (choixDeTalent?.aFaire === 0) choixDeTalent = null
+    for (const a of autres) a.choix = null
+    if (m.equipage !== undefined) retirerLesPilotes(m)
+    autres = []
+    panneauSalon = 'ferme'
+    etatDuSalon = 'ouverture'
+    annoncer('Salon', 'Salon fermé', true)
+    try {
+      const u = new URL(location.href)
+      u.searchParams.delete('salon')
+      history.replaceState(null, '', u.toString())
+    } catch {
+      // (sans l'histoire du navigateur : le lien reste ; rien de grave)
+    }
   }
   function passerAuSecond(): void {
     if (choixDuSecond) {
