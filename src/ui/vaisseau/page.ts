@@ -2229,9 +2229,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     p.place(0, 0)
     if (INVITE) {
       if (distant.recu && distant.enVol) return
-      const dit = etatDuSalon === 'introuvable' ? `Salon ${REJOINDRE} introuvable` : etatDuSalon === 'perdu' || etatDuSalon === 'erreur' ? 'Le joueur 1 est parti' : etatDuSalon === 'connecte' ? 'En attente du joueur 1…' : `Connexion au salon ${REJOINDRE}…`
+      const dit = etatDuSalon === 'introuvable' ? `Salon ${REJOINDRE} introuvable` : etatDuSalon === 'perdu' ? 'Le joueur 1 est parti' : etatDuSalon === 'erreur' ? 'Connexion impossible' : etatDuSalon === 'connecte' ? 'En attente du joueur 1…' : `Connexion au salon ${REJOINDRE}…`
       p.rect(0, 0, W, H, NUIT, 0.6)
       motEnRelief(p, dit, W / 2, Math.round(H / 2) - 6, true, GRAS)
+      // (OÙ ÇA EN EST, en clair : le serveur, la connexion directe, les chemins trouvés — voir `Liaison.detail`)
+      if (etatDuSalon !== 'connecte') liaison.detail().split('\n').forEach((l, i) => ecrire(p, l, W / 2, Math.round(H / 2) + 12 + 10 * i, COQUE[5], { align: 'center' }))
       return
     }
     const code = liaison.code()
@@ -2244,6 +2246,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     p.rect(x, y, w, 1, second !== null ? PALETTE_ETAPE_CLAIRE : PEPITE[2])
     ecrire(p, dit, W / 2, y + 2, second !== null ? N.WHITE : PEPITE[3], { align: 'center' })
     zone(x, y - 4, w, 19, partagerLeSalon)
+    // (sans invité : où en est le salon, en petit dessous)
+    if (second === null) liaison.detail().split('\n').forEach((l, i) => ecrire(p, l, W / 2, y + 14 + 10 * i, COQUE[5], { align: 'center' }))
   }
   const PALETTE_ETAPE_CLAIRE = N.hex('#35c878')
   /** Le lien du salon : partagé (au téléphone), ou copié. */

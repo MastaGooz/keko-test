@@ -7611,3 +7611,11 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     seconde chez l'hôte (53 seul, la même foule), 87 chez l'invité.
   - *De moi* : quinze états par seconde, trente manches, le code de quatre lettres, le rattrapage borné à 0,2 s. *Pas
     encore essayé* : entre deux appareils réels, loin l'un de l'autre.
+- **22/11, LE SALON QUI BLOQUE.** Keko, premier essai téléphone et PC : « sur le PC j'ai Connexion au salon YZF8 quand je
+  décolle, mais ça bloque ici ». Mesuré ici : les relais gratuits (ceux de PeerJS, Open Relay en UDP, en TCP et en TLS)
+  ne donnent AUCUN chemin relayé depuis cette machine — inconclusif, ses navigateurs n'y obtenaient même pas toujours
+  d'adresse publique par le STUN. Donc : L'ATTENTE DIT OÙ ÇA EN EST (`Liaison.detail`, deux lignes : le serveur ; la
+  liaison directe — pas commencée, en recherche, établie, impossible — et ses chemins : `host` le réseau local, `srflx`
+  l'adresse publique, `relay` un relais) ; chez l'hôte, sous le code tant que personne n'est là. L'HÔTE REVENU AU PREMIER
+  PLAN se reconnecte au serveur (on est allé envoyer le lien dans une autre appli) ; L'INVITÉ REFAIT UN ESSAI au bout de
+  quinze secondes, trois en tout, puis « Connexion impossible ».

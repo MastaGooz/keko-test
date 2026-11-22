@@ -29,7 +29,28 @@ export type Liaison = {
   envoyer: (m: unknown) => void
   envoyerVite: (d: string | ArrayBuffer | Uint8Array) => void
   fermer: () => void
+  /** OÙ EN EST LA CONNEXION, en clair (Keko, 22/11 : « ça bloque ici ») : le serveur, la connexion directe, les chemins trouvés. */
+  detail: () => string
 }
+
+/**
+ * LE SUIVI D'UNE CONNEXION DIRECTE : l'état de sa négociation (ICE) et les sortes de chemins que cet appareil a trouvés
+ * — `host` le réseau local, `srflx` son adresse publique (par le STUN), `relay` un relais (TURN).
+ */
+type Suivi = { ice: string; chemins: Set<string> }
+const suiviNeuf = (): Suivi => ({ ice: '-', chemins: new Set() })
+function suivre(c: DataConnection, s: Suivi): void {
+  const pc = c.peerConnection as RTCPeerConnection | undefined
+  if (pc === undefined || pc === null) return
+  s.ice = pc.iceConnectionState
+  pc.addEventListener('iceconnectionstatechange', () => (s.ice = pc.iceConnectionState))
+  pc.addEventListener('icecandidate', (e) => {
+    if (e.candidate !== null) s.chemins.add(e.candidate.type ?? '?')
+  })
+}
+const ICE: Record<string, string> = { '-': 'pas commencée', new: 'prête', checking: 'en recherche', connected: 'établie', completed: 'établie', disconnected: 'coupée', failed: 'impossible', closed: 'fermée' }
+/** (deux lignes : le serveur, puis la connexion directe et ses chemins) */
+const dire = (serveur: string, s: Suivi): string => `Serveur ${serveur}\nLiaison ${ICE[s.ice] ?? s.ice} (${[...s.chemins].join(', ') || 'aucun chemin'})`
 
 /** L'HÔTE : le salon s'ouvre sous ce code, ou un tiré au hasard (un autre s'il est pris), et attend un invité. */
 export function ouvrirLeSalon(r: Rappels, voulu = ''): Liaison {
@@ -38,6 +59,7 @@ export function ouvrirLeSalon(r: Rappels, voulu = ''): Liaison {
   let peer: Peer | null = null
   let ctrl: DataConnection | null = null
   let vite: DataConnection | null = null
+  let suivi = suiviNeuf()
   const poser = (e: EtatDeLaLiaison): void => {
     if (etat === e) return
     etat = e
@@ -46,6 +68,13 @@ export function ouvrirLeSalon(r: Rappels, voulu = ''): Liaison {
   const verifier = (): void => {
     if (ctrl?.open === true && vite?.open === true) poser('connecte')
   }
+  // (LE TÉLÉPHONE REVENU AU PREMIER PLAN — on est allé envoyer le lien dans une autre appli : la page dormait, le serveur
+  // l'a peut-être oubliée ; elle s'y reconnecte, sous le même code)
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState !== 'visible' || peer === null) return
+    if (peer.destroyed) lancer()
+    else if (peer.disconnected) peer.reconnect()
+  })
   const perdre = (): void => {
     ctrl = null
     vite = null
@@ -77,6 +106,8 @@ export function ouvrirLeSalon(r: Rappels, voulu = ''): Liaison {
       }
       if (c.label === 'ctrl') ctrl = c
       else vite = c
+      if (c.label === 'ctrl') suivi = suiviNeuf()
+      suivre(c, suivi)
       c.on('open', verifier)
       c.on('data', (d) => (c.label === 'ctrl' ? r.message(d) : r.vite(d as string | ArrayBuffer)))
       c.on('close', perdre)
@@ -97,6 +128,7 @@ export function ouvrirLeSalon(r: Rappels, voulu = ''): Liaison {
       peer?.destroy()
       peer = null
     },
+    detail: () => dire(peer === null ? 'fermé' : peer.open ? 'joint' : peer.disconnected ? 'perdu' : 'en cours', suivi),
   }
 }
 
@@ -111,20 +143,36 @@ export function rejoindreLeSalon(code: string, r: Rappels): Liaison {
   const peer = new Peer()
   let ctrl: DataConnection | null = null
   let vite: DataConnection | null = null
-  peer.on('open', () => {
-    ctrl = peer.connect(PREFIXE + code, { label: 'ctrl', reliable: true, serialization: 'json' })
-    vite = peer.connect(PREFIXE + code, { label: 'etat', reliable: false, serialization: 'raw' })
+  let suivi = suiviNeuf()
+  let essais = 0
+  // (UN NOUVEL ESSAI au bout de quinze secondes sans connexion, trois en tout — l'hôte revenait peut-être au premier plan)
+  const essayer = (): void => {
+    essais += 1
+    ctrl?.close()
+    vite?.close()
+    suivi = suiviNeuf()
+    const c1 = peer.connect(PREFIXE + code, { label: 'ctrl', reliable: true, serialization: 'json' })
+    const c2 = peer.connect(PREFIXE + code, { label: 'etat', reliable: false, serialization: 'raw' })
+    ctrl = c1
+    vite = c2
     const verifier = (): void => {
-      if (ctrl?.open === true && vite?.open === true) poser('connecte')
+      if (ctrl === c1 && c1.open && c2.open) poser('connecte')
     }
-    for (const c of [ctrl, vite]) {
+    for (const c of [c1, c2]) {
+      suivre(c, suivi)
       c.on('open', verifier)
-      c.on('close', () => poser('perdu'))
-      c.on('error', () => poser('perdu'))
+      c.on('close', () => ctrl === c1 && etat === 'connecte' && poser('perdu'))
+      c.on('error', () => ctrl === c1 && etat === 'connecte' && poser('perdu'))
     }
-    ctrl.on('data', (d) => r.message(d))
-    vite.on('data', (d) => r.vite(d as string | ArrayBuffer))
-  })
+    c1.on('data', (d) => r.message(d))
+    c2.on('data', (d) => r.vite(d as string | ArrayBuffer))
+    setTimeout(() => {
+      if (ctrl !== c1 || etat === 'connecte' || etat === 'introuvable') return
+      if (essais < 3) essayer()
+      else poser('erreur')
+    }, 15000)
+  }
+  peer.on('open', essayer)
   peer.on('error', (e) => poser(e.type === 'peer-unavailable' ? 'introuvable' : 'erreur'))
   return {
     code: () => code,
@@ -136,6 +184,7 @@ export function rejoindreLeSalon(code: string, r: Rappels): Liaison {
       if (vite?.open === true) void vite.send(d)
     },
     fermer: () => peer.destroy(),
+    detail: () => `Essai ${Math.max(1, essais)}/3, ` + dire(peer.open ? 'joint' : peer.disconnected ? 'perdu' : 'en cours', suivi),
   }
 }
 
