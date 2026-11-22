@@ -2169,7 +2169,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       sy += 6
       {
         // (en gras s'il tient, en lettre fine sinon — « Nouvelle arme » touchait le bord de la carte)
-        const sorte = mu.sorte === 'arme' ? 'Nouvelle arme' : 'Variation'
+        const sorte = mu.sorte === 'arme' ? 'Armement' : 'Variation' // (« Armement » — Keko, 22/11 ; « Nouvelle arme » avant)
         const fonte = largeurDe(sorte, GRAS) <= CW - 10 ? GRAS : TEXTE
         const mot = spell(sorte, fonte) as { letters: { g: unknown; x: number }[]; w: number }
         const x0 = Math.round(cx - mot.w / 2)

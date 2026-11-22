@@ -7953,3 +7953,4 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     l'effet — l'icône du médaillon dit l'arme — : « Cryogéniques », « Drones », « Perforantes », « Gros calibre »… ; les
     nouvelles armes « Roquettes » et « Escorte ». Tous tiennent sur une ligne (54 en gras, 6 en lettre fine) ; le nom
     s'écrit sur une ligne, toujours ; « Nouvelle arme », trop large en gras, passe en lettre fine. VU debout.
+  - Puis Keko : « à la place de "nouvelle arme", mets "armement" ».
