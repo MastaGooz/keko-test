@@ -380,21 +380,25 @@ function poserLeDessin(p: PeintreRoche, d: string[], x: number, y: number, T: nu
 }
 /**
  * LA PLAQUE TOMBÉE D'UNE ROCHE (Keko, 22/11 : « un petit objet qui aurait la forme d'un bouclier gris, brillant, qui
- * restaure une plaque ») : un écu d'acier cerné, clair en haut à gauche, qui flotte ; UN REFLET passe en biais toutes
- * les deux secondes, et il scintille d'une étoile à son coin.
+ * restaure une plaque ») : un écu d'acier cerné, qui flotte ; UN REFLET passe en biais toutes les deux secondes, et il
+ * scintille d'une étoile à son coin. (UN VRAI ÉCU — Keko, 22/11 : « pas hyper clair que c'est un bouclier ; une petite
+ * texture à l'intérieur, quelque chose de léger » : plus grand, un REBORD clair tout autour, une ARÊTE au milieu qui
+ * partage le champ en une moitié claire et une moitié dans l'ombre, et deux RIVETS en haut.)
  */
 const PLAQUE_TOMBEE = [
-  '.ooooooooo.',
-  'o432222211o',
-  'o322222111o',
-  'o322222111o',
-  'o222222111o',
-  'o222221111o',
-  '.o2222111o.',
-  '.o2221111o.',
-  '..o22111o..',
-  '...o211o...',
-  '....ooo....',
+  '.ooooooooooo.',
+  'o43333333332o',
+  'o34222311142o',
+  'o32222311112o',
+  'o32222311112o',
+  'o32222311112o',
+  '.o322231112o.',
+  '.o322231112o.',
+  '..o3223112o..',
+  '...o32312o...',
+  '....o332o....',
+  '.....o3o.....',
+  '......o......',
 ]
 export function dessinerPlaqueTombee(p: PeintreRoche, x0: number, y0: number, t: number, T: number[], graine = 0): void {
   const x = Math.round(x0)
@@ -404,9 +408,9 @@ export function dessinerPlaqueTombee(p: PeintreRoche, x0: number, y0: number, t:
   // (le reflet : une diagonale blanche qui traverse l'écu, dedans seulement)
   const u = ((t + tire(graine, 72) * 2) % 2) / 0.45
   if (u < 1) {
-    const x1 = x - 5
-    const y1 = y - 5
-    const d = Math.round(-4 + u * 18)
+    const x1 = x - Math.floor(PLAQUE_TOMBEE[0].length / 2)
+    const y1 = y - Math.floor(PLAQUE_TOMBEE.length / 2)
+    const d = Math.round(-4 + u * 22)
     for (let j = 0; j < PLAQUE_TOMBEE.length; j++)
       for (let i = 0; i < PLAQUE_TOMBEE[j].length; i++) {
         const ch = PLAQUE_TOMBEE[j][i]
@@ -417,11 +421,11 @@ export function dessinerPlaqueTombee(p: PeintreRoche, x0: number, y0: number, t:
   // (une étoile au coin, qui bat)
   const b = (Math.sin(t * 3 + tire(graine, 73) * 6.28) + 1) / 2
   if (b > 0.75) {
-    p.dot(x + 5, y - 6, 0xffffffff)
-    p.dot(x + 4, y - 6, T[3])
-    p.dot(x + 6, y - 6, T[3])
+    p.dot(x + 6, y - 7, 0xffffffff)
     p.dot(x + 5, y - 7, T[3])
-    p.dot(x + 5, y - 5, T[3])
+    p.dot(x + 7, y - 7, T[3])
+    p.dot(x + 6, y - 8, T[3])
+    p.dot(x + 6, y - 6, T[3])
   }
 }
 /**

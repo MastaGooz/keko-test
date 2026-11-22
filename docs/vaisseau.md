@@ -7795,3 +7795,10 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   - Vérifié (`npm run verif`) : 10 % / 35 % / 60 % à 8 / 27 / 46 de rayon ; 400 roches de 27, 128 plaques (140 attendues),
     aucune sans plaques au vaisseau ; ramassée, la dernière cassée revient ; plaques pleines, elle reste ; sans roche, rien
     ne revient en trente secondes ; la Récupération paraît à toutes les raretés.
+- **22/11, UN VRAI ÉCU ; LE VERROU TOMBE DANS LE VIDE.** Keko : « rendre le bouclier du surblindage qu'on ramasse un
+  petit peu plus travaillé, pas hyper clair que c'est un bouclier ; une petite texture à l'intérieur, quelque chose de
+  léger » ; « quand on clique quelque part où il n'y a ni ennemi ni astéroïde, on enlève la sélection du ciblage ».
+  - L'ÉCU (`PLAQUE_TOMBEE`) : 13 × 13 au lieu de 11, un REBORD clair tout autour, une ARÊTE au milieu qui partage le
+    champ en une moitié claire et une dans l'ombre, deux RIVETS en haut ; le reflet et l'étoile suivent sa taille.
+  - LE VERROU : un clic (ou une tape brève, au doigt) sans ennemi ni roche dessous LÂCHE le verrou (`lacherLeVerrou`) —
+    ses coins s'ouvrent et s'effacent, le son du déverrou. Les clics sur l'interface (réglette, menu) passent avant.

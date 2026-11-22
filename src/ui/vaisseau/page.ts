@@ -8682,10 +8682,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
     // LE VERROU, dans le jeu du vortex : la souris verrouille au clic ; le doigt, par une tape brève sur l'ennemi — décidée
     // au relâchement, pour qu'un pouce posé sur un insecte pour piloter ne verrouille rien
+    // (DANS LE VIDE, LE VERROU TOMBE — Keko, 22/11 : « quand on clique quelque part où il n'y a ni ennemi ni astéroïde, on
+    // enlève la sélection du ciblage actuel » ; au doigt, une tape brève dans le vide aussi)
     if (VORTEX && m.phase === 'vol') {
       const vise = ennemiSous(ev.clientX, ev.clientY)
       if (ev.pointerType === 'mouse') {
         if (vise !== null) basculerLeVerrou(vise)
+        else lacherLeVerrou()
         // (la souris tenue zoome, avec `&zoom=pince` : voir `pince`)
         if (ZOOM_PAR_PINCE) {
           racine.setPointerCapture(ev.pointerId)
@@ -8693,7 +8696,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         }
         return
       }
-      tapeVerrou = vise === null ? null : { id: ev.pointerId, x: ev.clientX, y: ev.clientY, a: performance.now(), cible: vise }
+      tapeVerrou = vise === null && m.verrou === null ? null : { id: ev.pointerId, x: ev.clientX, y: ev.clientY, a: performance.now(), cible: vise }
       // (LE DEUXIÈME DOIGT ZOOME : le manche est déjà tenu, par un doigt bien posé — `doigtsPoses` compte encore ceux
       // d'avant celui-ci : l'appui arrive avant `touchstart`)
       if (ZOOM_PAR_PINCE && manche !== null && pince === null && ev.pointerType === 'touch' && doigtsPoses >= 1) {
@@ -8820,8 +8823,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   // place dans le jet (plus loin, un peu plus froide))
   let flammesDuNez: { x: number; y: number; vx: number; vy: number; t0: number; fl: number; sm: boolean; sl: number; s: number; f: number }[] = []
   let flammesDesBrules: { x: number; y: number; vx: number; vy: number; t0: number; vie: number }[] = []
-  /** Une tape commencée sur un ennemi (au doigt) : elle le verrouille si elle est brève et ne bouge pas. */
-  let tapeVerrou: { id: number; x: number; y: number; a: number; cible: number } | null = null
+  /** Une tape commencée sur un ennemi (au doigt) : elle le verrouille si elle est brève et ne bouge pas ; dans le vide (`cible` nulle), elle lâche le verrou. */
+  let tapeVerrou: { id: number; x: number; y: number; a: number; cible: number | null } | null = null
   /**
    * L'ennemi sous ce point de l'écran, ou null : celui dont LE BORD est le plus près du doigt, à une marge près, pour
    * qu'une petite cible se touche. (UNE AIDE POUR LES ROCHERS — Keko, 20/11 : « quand j'essaie de cibler un rocher, j'ai
@@ -8856,6 +8859,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
     if (typeof navigator.vibrate === 'function') navigator.vibrate(8)
   }
+  /** Le verrou lâché (une tape dans le vide) : ses coins s'ouvrent et s'effacent, comme déverrouillé. */
+  function lacherLeVerrou(): void {
+    const avant = ennemiVerrouille(m)
+    if (m.verrou === null) return
+    m.verrou = null
+    if (avant !== null) {
+      deverrou = { x: avant.corps.x, y: avant.corps.y, t0: t }
+      jouer('deverrou')
+    }
+  }
   const lever = (ev: PointerEvent) => {
     reveiller() // (au doigt, c'est le relâchement qui rend le son à la page)
     // (l'appui tenu relâché avant son terme : rien)
@@ -8863,7 +8876,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (tapeVerrou !== null && ev.pointerId === tapeVerrou.id) {
       const tv = tapeVerrou
       tapeVerrou = null
-      if (ev.type === 'pointerup' && performance.now() - tv.a < 350 && Math.hypot(ev.clientX - tv.x, ev.clientY - tv.y) < 14 && m.ennemis.some((e) => e.id === tv.cible)) basculerLeVerrou(tv.cible)
+      const tape = ev.type === 'pointerup' && performance.now() - tv.a < 350 && Math.hypot(ev.clientX - tv.x, ev.clientY - tv.y) < 14
+      if (tape && tv.cible === null) lacherLeVerrou()
+      else if (tape && m.ennemis.some((e) => e.id === tv.cible)) basculerLeVerrou(tv.cible!)
     }
     if (accueil) {
       if (ev.type === 'pointerup') quitterLAccueil()
