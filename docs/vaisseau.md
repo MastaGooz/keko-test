@@ -8005,3 +8005,10 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     applique à la fin).
   - Proposée dès la première arme, mêlée aux autres cartes ; son icône est un réticule d'or (`toutes-armes`), son
     texte « de dégâts de toutes les armes ». Vérifié ; VU au choix.
+- **22/11, LE CRITIQUE EST À L'ARME.** Keko : « il faut que le critique de chaque arme soit propre à l'arme, et qu'on
+  ait une carte critique globale deux fois moins forte qui concerne toutes les armes, comme pour le reste ». Les
+  cartes « Critique » et « Impact » d'une arme ne valent plus que pour elle (`Arme.critique`, `Arme.critiques`, des
+  points ajoutés à ceux du vaisseau) ; chaque coup tire son critique avec l'arme qui frappe (`chanceDeCritique`,
+  `facteurDeCritique`, `critiqueTire(c, m, a)` — les quarante endroits de `jeu.ts`). Les deux entrent dans
+  « toutes les armes », à la moitié (+1 à +5 points de chance, +2,5 à +12,5 points de dégâts critiques), posées au
+  vaisseau, donc à toutes les armes, même prises après. Vérifié.

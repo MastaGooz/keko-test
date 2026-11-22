@@ -82,10 +82,11 @@ export const SEULEMENT_EN: Partial<Record<StatDArme | StatDeFaction, Rarete>> = 
 export const POINTS_DE_CHANCE: Record<Rarete, number> = { commune: 0.01, peuCommune: 0.02, rare: 0.03, epique: 0.04, legendaire: 0.05, speciale: 0 }
 /** LA CHANCE DE CRITIQUE, deux fois plus (Keko, 22/11 : « plutôt que 1, 2, 3, 4, 5, on fait 2, 4, 6, 8, 10 ») ; le déphasage garde les siens. */
 /**
- * LES STATS DES CARTES « TOUTES LES ARMES » : celles d'une arme, sans le critique (déjà au vaisseau, pour toutes) ; une
+ * LES STATS DES CARTES « TOUTES LES ARMES » : celles d'une arme, critique compris (Keko, 22/11 : « une carte critique
+ * globale deux fois moins forte qui concerne toutes les armes, comme pour le reste ») ; une
  * carte n'est proposée que si une arme portée au moins a cette stat, et son bonus est LA MOITIÉ de celui de la rareté.
  */
-export const STATS_GLOBALES: StatDArme[] = ['degats', 'cadence', 'portee', 'zone', 'pose', 'feu', 'corrosion', 'givre']
+export const STATS_GLOBALES: StatDArme[] = ['degats', 'critique', 'critiques', 'cadence', 'portee', 'zone', 'pose', 'feu', 'corrosion', 'givre']
 export const PART_GLOBALE = 0.5
 export const POINTS_DE_CRITIQUE: Record<Rarete, number> = { commune: 0.02, peuCommune: 0.04, rare: 0.06, epique: 0.08, legendaire: 0.1, speciale: 0 }
 const EN_POINTS: ReadonlySet<string> = new Set(['critique', 'dephasage'])
@@ -119,18 +120,19 @@ export function avecLesBonus(base: ConfigVaisseau, b: Bonus): ConfigVaisseau {
   for (const x of b) {
     // (« toutes les armes » vient à la fin, ci-dessous : il vaut aussi pour une arme prise après lui)
     if (x.cible.sorte === 'armes') continue
-    // (le critique est au vaisseau : la chance en points, les dégâts critiques en points du facteur — 150 % +12 % : 162 %)
+    // (le critique d'une arme est à elle : la chance en points, les dégâts critiques en points du facteur — 150 % +12 % : 162 %)
     // (une carte spéciale change la configuration elle-même — voir `MUTATIONS`)
     if (x.stat === 'mutation') c = MUTATIONS.find((mu) => `mutation:${mu.id}` === x.id)?.appliquer(c) ?? c
-    else if (x.stat === 'critique') c = { ...c, passifs: { ...c.passifs, critique: c.passifs.critique + x.somme } }
-    else if (x.stat === 'critiques') c = { ...c, passifs: { ...c.passifs, critiqueFacteur: c.passifs.critiqueFacteur + x.somme } }
     else c = x.cible.sorte === 'arme' ? { ...c, armes: c.armes.map((a) => (a.id === (x.cible as { arme: string }).arme ? armeAmelioree(a, x.stat as StatDArme, x.somme) : a)) } : factionAmelioree(c, x.stat as StatDeFaction, x.somme)
   }
   // TOUTES LES ARMES : chaque arme portée qui a cette stat — même prise après la carte
   for (const x of b) {
     if (x.cible.sorte !== 'armes') continue
     const stat = x.stat as StatDArme
-    c = { ...c, armes: c.armes.map((a) => (statsDeLArme(a).includes(stat) ? armeAmelioree(a, stat, x.somme) : a)) }
+    // (le critique de toutes les armes est celui du vaisseau, que chaque arme ajoute au sien)
+    if (stat === 'critique') c = { ...c, passifs: { ...c.passifs, critique: c.passifs.critique + x.somme } }
+    else if (stat === 'critiques') c = { ...c, passifs: { ...c.passifs, critiqueFacteur: c.passifs.critiqueFacteur + x.somme } }
+    else c = { ...c, armes: c.armes.map((a) => (statsDeLArme(a).includes(stat) ? armeAmelioree(a, stat, x.somme) : a)) }
   }
   return c
 }
@@ -190,7 +192,7 @@ export function statsDeLArme(a: Arme): StatDArme[] {
  * L'ARME AMÉLIORÉE de `k` (la somme des bonus) sur `stat` : `base × (1 + k)`. Les dégâts restent des entiers et montent
  * d'un au moins ; la cadence raccourcit aussi l'intervalle de ce qu'elle pose ; le ralentissement grandit la part de
  * vitesse ÔTÉE (un insecte au ralenti 0,5 perd la moitié de sa vitesse ; +20 % : 0,6, il en garde 0,4 — un dixième au
- * moins). Le critique est au vaisseau : voir `avecLesBonus`.
+ * moins). Le critique est à l'arme (`Arme.critique`), celui de toutes les armes au vaisseau.
  */
 export function armeAmelioree(a: Arme, stat: StatDArme, k: number): Arme {
   switch (stat) {
@@ -219,9 +221,11 @@ export function armeAmelioree(a: Arme, stat: StatDArme, k: number): Arme {
       }
     case 'givre':
       return changer(a, CLES_DU_GIVRE, (v) => (v < 1 ? Math.max(0.1, 1 - (1 - v) * (1 + k)) : v))
+    // (LE CRITIQUE EST À L'ARME — Keko, 22/11 : en points, ajoutés à ceux du vaisseau — voir `Arme.critique`)
     case 'critique':
+      return { ...a, critique: (a.critique ?? 0) + k }
     case 'critiques':
-      return a
+      return { ...a, critiques: (a.critiques ?? 0) + k }
   }
 }
 /** La configuration où la faction gagne `k` (la somme des bonus) sur `stat`. */
@@ -255,7 +259,7 @@ export function factionAmelioree(c: ConfigVaisseau, stat: StatDeFaction, k: numb
 export function carte(cible: Cible, stat: StatDArme | StatDeFaction, rarete: Rarete): Talent {
   // (une chance, des points à l'échelle ; le reste, le bonus de la rareté)
   // (toutes les armes : la moitié)
-  const bonus = cible.sorte === 'armes' ? rareteDe(rarete).bonus * PART_GLOBALE : stat === 'critique' ? POINTS_DE_CRITIQUE[rarete] : EN_POINTS.has(stat) ? POINTS_DE_CHANCE[rarete] : rareteDe(rarete).bonus
+  const bonus = cible.sorte === 'armes' ? (stat === 'critique' ? POINTS_DE_CRITIQUE[rarete] : rareteDe(rarete).bonus) * PART_GLOBALE : stat === 'critique' ? POINTS_DE_CRITIQUE[rarete] : EN_POINTS.has(stat) ? POINTS_DE_CHANCE[rarete] : rareteDe(rarete).bonus
   return { id: `${cible.sorte === 'arme' ? `arme-${cible.arme}` : cible.sorte === 'armes' ? 'armes' : cible.race}:${stat}`, cible, stat, rarete, bonus }
 }
 

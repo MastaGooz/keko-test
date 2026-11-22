@@ -52,10 +52,15 @@ verifier(`zone +12 % → rayon ${n2.napalm!.rayon.toFixed(2)} (14) ; feu +20 % �
   }
   const seul = statsGlobalesVues([canon])
   const avecZone = statsGlobalesVues([canon, napalm])
-  verifier(`toutes les armes, proposées selon ce qu'on porte : le canon seul ${[...seul].join(', ')} ; avec le napalm ${[...avecZone].join(', ')}`, seul.has('degats') && !seul.has('zone') && !seul.has('critique') && avecZone.has('zone') && avecZone.has('feu'))
+  verifier(`toutes les armes, proposées selon ce qu'on porte : le canon seul ${[...seul].join(', ')} ; avec le napalm ${[...avecZone].join(', ')}`, seul.has('degats') && !seul.has('zone') && seul.has('critique') && avecZone.has('zone') && avecZone.has('feu'))
 }
-const crit = avecLesBonus(base, ajouterLeBonus(ajouterLeBonus([], carte({ sorte: 'arme', arme: 'canon' }, 'critique', 'commune')), carte({ sorte: 'arme', arme: 'canon' }, 'critiques', 'rare')))
-verifier(`le critique : une commune +2 points de chance (${(crit.passifs.critique * 100).toFixed(0)} %), une rare +12 points de dégâts critiques (${(crit.passifs.critiqueFacteur * 100).toFixed(0)} %, ${(base.passifs.critiqueFacteur * 100).toFixed(0)} avant)`, Math.abs(crit.passifs.critique - base.passifs.critique - 0.02) < 1e-9 && Math.abs(crit.passifs.critiqueFacteur - base.passifs.critiqueFacteur - 0.12) < 1e-9)
+{
+  // (LE CRITIQUE EST À L'ARME — Keko, 22/11 : celui du canon ne touche que le canon ; « toutes les armes », la moitié, au vaisseau)
+  const deux = avecLesBonus({ ...base, armes: [canon, napalm] }, ajouterLeBonus(ajouterLeBonus([], carte({ sorte: 'arme', arme: 'canon' }, 'critique', 'commune')), carte({ sorte: 'arme', arme: 'canon' }, 'critiques', 'rare')))
+  const cg = carte({ sorte: 'armes' }, 'critique', 'legendaire')
+  const glob = avecLesBonus({ ...base, armes: [canon, napalm] }, ajouterLeBonus([], cg))
+  verifier(`le critique est à l'arme : une commune +2 points au canon (${((deux.armes[0].critique ?? 0) * 100).toFixed(0)}), une rare +12 points de dégâts critiques (${((deux.armes[0].critiques ?? 0) * 100).toFixed(0)}) ; le napalm rien (${deux.armes[1].critique ?? 0}), le vaisseau rien (${deux.passifs.critique}) ; « toutes les armes » légendaire : +${(cg.bonus * 100).toFixed(0)} points au vaisseau`, Math.abs((deux.armes[0].critique ?? 0) - 0.02) < 1e-9 && Math.abs((deux.armes[0].critiques ?? 0) - 0.12) < 1e-9 && deux.armes[1].critique === undefined && deux.passifs.critique === base.passifs.critique && Math.abs(cg.bonus - 0.05) < 1e-9 && Math.abs(glob.passifs.critique - base.passifs.critique - 0.05) < 1e-9)
+}
 
 // LE POOL D'UNE FACTION
 verifier(`les factions : ${Object.entries(STATS_DE_FACTION).map(([r, s]) => `${r} ${s.join('/')}`).join(' ; ')}`, (Object.values(STATS_DE_FACTION) as string[][]).every((s) => ['blindage', 'moteur', 'maniabilite', 'aimant', 'experience'].every((x) => s.includes(x))) && STATS_DE_FACTION.essaim.includes('regeneration') && STATS_DE_FACTION.etheres.includes('bouclier') && STATS_DE_FACTION.innommes.includes('dephasage') && STATS_DE_FACTION.humains.includes('recuperation') && (Object.values(STATS_DE_FACTION) as string[][]).every((s) => s.length === 6))

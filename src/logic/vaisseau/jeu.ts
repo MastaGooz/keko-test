@@ -539,6 +539,9 @@ export const MANCHE: ConfigSurvivor = { vitesse: 0, reponse: 0, manche: VAISSEAU
 /** Une arme du joueur : sa cadence, ce que fait un coup, sa portée, la vitesse et la vie de ses obus, leur dispersion ; guidée, l'obus tourne vers le rival. */
 export type Arme = {
   id: string
+  /** LE CRITIQUE PROPRE À L'ARME (Keko, 22/11 : « le critique de chaque arme propre à l'arme ») : des points de chance et de facteur, ajoutés à ceux du vaisseau — voir `chanceDeCritique`. */
+  critique?: number
+  critiques?: number
   cadence: number
   degats: number
   portee: number
@@ -2374,7 +2377,10 @@ function faireNaitreUnInsecte(c: ConfigVaisseau, m: Monde, ev: Evenement[]): voi
  * dégât d'être un coup critique ») : CHAQUE COUP qui frappe d'un coup en tire un ; les dégâts continus (une zone, un
  * poison, un rayon qui chauffe) n'ont pas de coup à tirer.
  */
-const critiqueTire = (c: ConfigVaisseau, m: Monde): boolean => c.passifs.critique > 0 && tire(m.graine, m.prochainId++, 12) < c.passifs.critique
+/** LE CRITIQUE D'UNE ARME : celui du vaisseau (le même pour toutes) plus le sien (voir `Arme.critique`). */
+const chanceDeCritique = (c: ConfigVaisseau, a: Arme | undefined): number => c.passifs.critique + (a?.critique ?? 0)
+const facteurDeCritique = (c: ConfigVaisseau, a: Arme | undefined): number => facteurDeCritique(c, a) + (a?.critiques ?? 0)
+const critiqueTire = (c: ConfigVaisseau, m: Monde, a: Arme | undefined): boolean => chanceDeCritique(c, a) > 0 && tire(m.graine, m.prochainId++, 12) < chanceDeCritique(c, a)
 
 /**
  * LA VIE DU VAISSEAU À UNE AUTRE ÉCHELLE (Keko, 20/11 : « les chiffres utilisés pour la vie sont trop faibles ; 9 points
@@ -3006,9 +3012,9 @@ function mener_L_Electricite(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenem
     }
     ev.push({ type: 'chaine', points: [{ x: v.x, y: v.y }, ...touches.map((e) => ({ x: e.corps.x, y: e.corps.y }))], ids: touches.map((e) => e.id) })
     touches.forEach((e, k) => {
-      const critique = critiqueTire(c, m)
+      const critique = critiqueTire(c, m, a)
       effetsDuCoup(m, a, e, ev)
-      e.pv -= (a.degats * Math.pow(ch.attenuation, k)) * (critique ? c.passifs.critiqueFacteur : 1)
+      e.pv -= (a.degats * Math.pow(ch.attenuation, k)) * (critique ? facteurDeCritique(c, a) : 1)
       ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })
       if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
     })
@@ -3074,8 +3080,8 @@ function menerLesScies(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[])
     for (const e of [...m.ennemis]) {
       if (s.touches.includes(e.id) || Math.hypot(e.corps.x - s.x, e.corps.y - s.y) > sc.rayon + rayonDe(c, e)) continue
       s.touches.push(e.id)
-      const critique = c.passifs.critique > 0 && tire(m.graine, m.prochainId++, 12) < c.passifs.critique
-      e.pv -= a.degats * (critique ? c.passifs.critiqueFacteur : 1)
+      const critique = chanceDeCritique(c, a) > 0 && tire(m.graine, m.prochainId++, 12) < chanceDeCritique(c, a)
+      e.pv -= a.degats * (critique ? facteurDeCritique(c, a) : 1)
       ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })
       if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
     }
@@ -3159,8 +3165,8 @@ function lancerLesNovas(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
       if (o.frappes.includes(e.id) || e.pv <= 0) continue
       if (Math.hypot(e.corps.x - o.x, e.corps.y - o.y) > front + rayonDe(c, e)) continue
       o.frappes.push(e.id)
-      const critique = c.passifs.critique > 0 && tire(m.graine, m.prochainId++, 12) < c.passifs.critique
-      e.pv -= a.degats * (critique ? c.passifs.critiqueFacteur : 1)
+      const critique = chanceDeCritique(c, a) > 0 && tire(m.graine, m.prochainId++, 12) < chanceDeCritique(c, a)
+      e.pv -= a.degats * (critique ? facteurDeCritique(c, a) : 1)
       geler(m, e, nv.gel.duree, nv.gel.ralenti, ev)
       ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })
       if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
@@ -3271,8 +3277,8 @@ function tirerLesSalves(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
     const cap0 = Math.atan2(cible.corps.y - v.y, cible.corps.x - v.x)
     for (let k = 0; k < sa.nombre; k++) {
       const an = cap0 + (k * 2 * Math.PI) / sa.nombre
-      const critique = c.passifs.critique > 0 && tire(m.graine, m.prochainId, 12) < c.passifs.critique
-      m.obus.push({ id: m.prochainId++, x: v.x + Math.cos(an) * (c.rayon + 2), y: v.y + Math.sin(an) * (c.rayon + 2), vx: Math.cos(an) * a.vitesse, vy: Math.sin(an) * a.vitesse, vie: a.vie, degats: a.degats * (critique ? c.passifs.critiqueFacteur : 1), guide: false, arme: a.id, critique, ...(a.gel === undefined ? {} : { gel: a.gel }), ...(sa.perce === true ? { perce: [] } : {}), ...(sa.eclatement === undefined ? {} : { eclatement: sa.eclatement }) })
+      const critique = chanceDeCritique(c, a) > 0 && tire(m.graine, m.prochainId, 12) < chanceDeCritique(c, a)
+      m.obus.push({ id: m.prochainId++, x: v.x + Math.cos(an) * (c.rayon + 2), y: v.y + Math.sin(an) * (c.rayon + 2), vx: Math.cos(an) * a.vitesse, vy: Math.sin(an) * a.vitesse, vie: a.vie, degats: a.degats * (critique ? facteurDeCritique(c, a) : 1), guide: false, arme: a.id, critique, ...(a.gel === undefined ? {} : { gel: a.gel }), ...(sa.perce === true ? { perce: [] } : {}), ...(sa.eclatement === undefined ? {} : { eclatement: sa.eclatement }) })
     }
     ev.push({ type: 'salve', x: v.x, y: v.y, arme: a.id })
   })
@@ -3329,8 +3335,8 @@ function condenserLesEchardes(c: ConfigVaisseau, m: Monde, ev: Evenement[]): voi
       const p = placeDeLEcharde(c, m, e)
       m.echardes.splice(m.echardes.indexOf(e), 1)
       const an = Math.atan2(cible.corps.y - p.y, cible.corps.x - p.x)
-      const critique = c.passifs.critique > 0 && tire(m.graine, m.prochainId, 12) < c.passifs.critique
-      m.obus.push({ id: m.prochainId++, x: p.x, y: p.y, vx: Math.cos(an) * a.vitesse, vy: Math.sin(an) * a.vitesse, vie: a.vie, degats: a.degats * (critique ? c.passifs.critiqueFacteur : 1), guide: false, arme: a.id, critique, verrou: cible.id, ...(a.gel === undefined ? {} : { gel: a.gel }) })
+      const critique = chanceDeCritique(c, a) > 0 && tire(m.graine, m.prochainId, 12) < chanceDeCritique(c, a)
+      m.obus.push({ id: m.prochainId++, x: p.x, y: p.y, vx: Math.cos(an) * a.vitesse, vy: Math.sin(an) * a.vitesse, vie: a.vie, degats: a.degats * (critique ? facteurDeCritique(c, a) : 1), guide: false, arme: a.id, critique, verrou: cible.id, ...(a.gel === undefined ? {} : { gel: a.gel }) })
       ev.push({ type: 'echarde', x: p.x, y: p.y, arme: a.id })
     }
   })
@@ -3367,8 +3373,8 @@ function tirerLesEssaims(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
       const cible = ordre[k]
       // (il part dans une direction tirée au hasard, à ±`eventail` de sa cible)
       const an = Math.atan2(cible.corps.y - y0, cible.corps.x - x0) + (tire(m.graine, id, 23) - 0.5) * 2 * es.eventail
-      const critique = c.passifs.critique > 0 && tire(m.graine, id, 12) < c.passifs.critique
-      m.obus.push({ id, x: x0, y: y0, vx: Math.cos(an) * a.vitesse, vy: Math.sin(an) * a.vitesse, vie: a.vie, degats: a.degats * (critique ? c.passifs.critiqueFacteur : 1), guide: false, arme: a.id, critique, ...effetsDuTir(a), traque: { cible: cible.id, nee: m.t, v0: a.vitesse, acces: es.acces, pointe: es.pointe, braquage: es.braquage, chaos: es.chaos, pas: es.pas * (0.7 + 0.6 * tire(m.graine, id, 24)), calme: es.calme, reprise: es.reprise } })
+      const critique = chanceDeCritique(c, a) > 0 && tire(m.graine, id, 12) < chanceDeCritique(c, a)
+      m.obus.push({ id, x: x0, y: y0, vx: Math.cos(an) * a.vitesse, vy: Math.sin(an) * a.vitesse, vie: a.vie, degats: a.degats * (critique ? facteurDeCritique(c, a) : 1), guide: false, arme: a.id, critique, ...effetsDuTir(a), traque: { cible: cible.id, nee: m.t, v0: a.vitesse, acces: es.acces, pointe: es.pointe, braquage: es.braquage, chaos: es.chaos, pas: es.pas * (0.7 + 0.6 * tire(m.graine, id, 24)), calme: es.calme, reprise: es.reprise } })
     }
     ev.push({ type: 'essaim', x: x0, y: y0, arme: a.id })
   })
@@ -3421,9 +3427,9 @@ function menerLesSpheres(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[
     if (sp.foudre !== undefined) {
       const proches = m.ennemis.filter((e) => Math.hypot(e.corps.x - s.x, e.corps.y - s.y) <= sp.rayon + rayonDe(c, e)).sort((e1, e2) => Math.hypot(e1.corps.x - s.x, e1.corps.y - s.y) - Math.hypot(e2.corps.x - s.x, e2.corps.y - s.y)).slice(0, sp.foudre.cibles)
       for (const e of proches) {
-        const critique = critiqueTire(c, m)
+        const critique = critiqueTire(c, m, a)
         effetsDuCoup(m, a, e, ev)
-        e.pv -= a.degats * (critique ? c.passifs.critiqueFacteur : 1)
+        e.pv -= a.degats * (critique ? facteurDeCritique(c, a) : 1)
         ev.push({ type: 'foudre', x0: s.x, y0: s.y, x1: e.corps.x, y1: e.corps.y })
         ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })
         if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
@@ -3437,8 +3443,8 @@ function menerLesSpheres(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[
       if (Math.hypot(e.corps.x - s.x, e.corps.y - s.y) > sp.rayon + rayonDe(c, e)) continue
       const id = m.prochainId++
       const an = Math.atan2(e.corps.y - s.y, e.corps.x - s.x) + (tire(m.graine, id, 23) - 0.5) * 1.6
-      const critique = c.passifs.critique > 0 && tire(m.graine, id, 12) < c.passifs.critique
-      m.obus.push({ id, x: s.x, y: s.y, vx: Math.cos(an) * sp.vitesseTir, vy: Math.sin(an) * sp.vitesseTir, vie: 1, degats: a.degats * (critique ? c.passifs.critiqueFacteur : 1), guide: false, arme: 'arcane', critique, traque: { cible: e.id, nee: m.t, v0: sp.vitesseTir, acces: 200, pointe: 260, braquage: 14, chaos: 0.9, pas: 0.09, calme: 0.3, reprise: 20 } })
+      const critique = chanceDeCritique(c, a) > 0 && tire(m.graine, id, 12) < chanceDeCritique(c, a)
+      m.obus.push({ id, x: s.x, y: s.y, vx: Math.cos(an) * sp.vitesseTir, vy: Math.sin(an) * sp.vitesseTir, vie: 1, degats: a.degats * (critique ? facteurDeCritique(c, a) : 1), guide: false, arme: 'arcane', critique, traque: { cible: e.id, nee: m.t, v0: sp.vitesseTir, acces: 200, pointe: 260, braquage: 14, chaos: 0.9, pas: 0.09, calme: 0.3, reprise: 20 } })
       tirs++
     }
     if (tirs > 0) ev.push({ type: 'sphereTir', x: s.x, y: s.y, tirs })
@@ -3481,8 +3487,8 @@ function menerLesMeteores(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
     // (elle ne frappe QUE son insecte — plus de zone d'effet)
     if (e0 !== undefined) {
       const e = e0
-      const critique = c.passifs.critique > 0 && tire(m.graine, m.prochainId++, 12) < c.passifs.critique
-      e.pv -= a.degats * (critique ? c.passifs.critiqueFacteur : 1)
+      const critique = chanceDeCritique(c, a) > 0 && tire(m.graine, m.prochainId++, 12) < chanceDeCritique(c, a)
+      e.pv -= a.degats * (critique ? facteurDeCritique(c, a) : 1)
       ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })
       if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
     }
@@ -3546,8 +3552,8 @@ function menerLesPuits(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[])
     ev.push({ type: 'puitsEclate', x: p.x, y: p.y, rayon: pu.eclat })
     for (const e of [...m.ennemis]) {
       if (Math.hypot(e.corps.x - p.x, e.corps.y - p.y) > pu.eclat + rayonDe(c, e)) continue
-      const critique = c.passifs.critique > 0 && tire(m.graine, m.prochainId++, 12) < c.passifs.critique
-      e.pv -= a.degats * (critique ? c.passifs.critiqueFacteur : 1)
+      const critique = chanceDeCritique(c, a) > 0 && tire(m.graine, m.prochainId++, 12) < chanceDeCritique(c, a)
+      e.pv -= a.degats * (critique ? facteurDeCritique(c, a) : 1)
       ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })
       if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
     }
@@ -3593,9 +3599,9 @@ function tirerLesRails(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
     const touches = traverses(an)
     ev.push({ type: 'rail', x0: b.x, y0: b.y, x1: b.x + Math.cos(an) * a.portee, y1: b.y + Math.sin(an) * a.portee, arme: a.id })
     for (const e of touches) {
-      const critique = c.passifs.critique > 0 && tire(m.graine, m.prochainId++, 12) < c.passifs.critique
+      const critique = chanceDeCritique(c, a) > 0 && tire(m.graine, m.prochainId++, 12) < chanceDeCritique(c, a)
       effetsDuCoup(m, a, e, ev)
-      e.pv -= a.degats * (critique ? c.passifs.critiqueFacteur : 1)
+      e.pv -= a.degats * (critique ? facteurDeCritique(c, a) : 1)
       ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })
       if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
     }
@@ -3708,8 +3714,8 @@ function menerLesTentacules(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void 
       if (tn.u >= 1) {
         tn.fait = 'plantee'
         tn.depuis = m.t
-        const critique = c.passifs.critique > 0 && tire(m.graine, m.prochainId++, 12) < c.passifs.critique
-        cible.pv -= a.degats * (critique ? c.passifs.critiqueFacteur : 1)
+        const critique = chanceDeCritique(c, a) > 0 && tire(m.graine, m.prochainId++, 12) < chanceDeCritique(c, a)
+        cible.pv -= a.degats * (critique ? facteurDeCritique(c, a) : 1)
         ev.push({ type: 'piqure', x: cible.corps.x, y: cible.corps.y })
         ev.push({ type: 'ennemiTouche', id: cible.id, x: cible.corps.x, y: cible.corps.y, critique })
         if (cible.pv <= 0) abattreLEnnemi(c, m, cible, ev)
@@ -3780,8 +3786,8 @@ function cracherLAcide(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[])
     for (const e of [...m.ennemis]) {
       if (!dansLeCone(e.corps.x, e.corps.y, b.x, b.y, cap, cr.cone, a.portee, rayonDe(c, e))) continue
       ronger(m, e, cr.acide, ev)
-      const critique = c.passifs.critique > 0 && tire(m.graine, m.prochainId++, 12) < c.passifs.critique
-      e.pv -= a.degats * (critique ? c.passifs.critiqueFacteur : 1)
+      const critique = chanceDeCritique(c, a) > 0 && tire(m.graine, m.prochainId++, 12) < chanceDeCritique(c, a)
+      e.pv -= a.degats * (critique ? facteurDeCritique(c, a) : 1)
       ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })
       if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
     }
@@ -3950,8 +3956,8 @@ function menerLesFleaux(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]
         if (m.t - (f.frappes[e.id] ?? -1e9) < fl.rebond) continue
         f.frappes[e.id] = m.t
         f.frappesChaine[e.id] = m.t
-        const critique = c.passifs.critique > 0 && tire(m.graine, m.prochainId++, 12) < c.passifs.critique
-        e.pv -= a.degats * (critique ? c.passifs.critiqueFacteur : 1)
+        const critique = chanceDeCritique(c, a) > 0 && tire(m.graine, m.prochainId++, 12) < chanceDeCritique(c, a)
+        e.pv -= a.degats * (critique ? facteurDeCritique(c, a) : 1)
         ev.push({ type: 'fleauFrappe', x: e.corps.x, y: e.corps.y })
         ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })
         if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
@@ -3964,8 +3970,8 @@ function menerLesFleaux(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]
       if (le < 0 || le > fl.longueur || Math.abs(ex * uy - ey * ux) > fl.chaine.epaisseur + rayonDe(c, e)) continue
       if (m.t - (f.frappesChaine[e.id] ?? -1e9) < fl.rebond) continue
       f.frappesChaine[e.id] = m.t
-      const critique = critiqueTire(c, m)
-      e.pv -= fl.chaine.degats * (critique ? c.passifs.critiqueFacteur : 1)
+      const critique = critiqueTire(c, m, a)
+      e.pv -= fl.chaine.degats * (critique ? facteurDeCritique(c, a) : 1)
       ev.push({ type: 'chaineFrappe', x: e.corps.x, y: e.corps.y })
       ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })
       if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
@@ -4012,8 +4018,8 @@ function menerLesMines(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
       // (LE GAZ RONGE — Keko, 21/11 : la vulnérabilité de l'effet corrosif, à la place des dégâts du poison)
       if (mi.corrosion !== undefined) ronger(m, e, { duree: mi.corrosion.duree, dps: 0, bonus: mi.corrosion.bonus }, ev)
       else if (mi.poison !== undefined) empoisonner(m, e, mi.poison)
-      const critique = c.passifs.critique > 0 && tire(m.graine, m.prochainId++, 12) < c.passifs.critique
-      e.pv -= a.degats * (critique ? c.passifs.critiqueFacteur : 1)
+      const critique = chanceDeCritique(c, a) > 0 && tire(m.graine, m.prochainId++, 12) < chanceDeCritique(c, a)
+      e.pv -= a.degats * (critique ? facteurDeCritique(c, a) : 1)
       ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })
       if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
     }
@@ -4098,8 +4104,8 @@ function menerLesRejetons(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement
     // (à portée de tentacule : il fouette)
     if (proie !== undefined && dist(proie) <= rj.allonge + rayonDe(c, proie) && m.t >= r.frappeA) {
       r.frappeA = m.t + rj.periode
-      const critique = c.passifs.critique > 0 && tire(m.graine, m.prochainId++, 12) < c.passifs.critique
-      proie.pv -= a.degats * (critique ? c.passifs.critiqueFacteur : 1)
+      const critique = chanceDeCritique(c, a) > 0 && tire(m.graine, m.prochainId++, 12) < chanceDeCritique(c, a)
+      proie.pv -= a.degats * (critique ? facteurDeCritique(c, a) : 1)
       ev.push({ type: 'coupDeRejeton', id: r.id, x: proie.corps.x, y: proie.corps.y })
       ev.push({ type: 'ennemiTouche', id: proie.id, x: proie.corps.x, y: proie.corps.y, critique })
       if (proie.pv <= 0) abattreLEnnemi(c, m, proie, ev)
@@ -4141,8 +4147,8 @@ function menerLesEpines(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]
     for (const e of [...m.ennemis]) {
       if (b.touches.includes(e.id) || Math.hypot(e.corps.x - b.x, e.corps.y - b.y) > rayonDe(c, e) + ep.largeur) continue
       b.touches.push(e.id)
-      const critique = c.passifs.critique > 0 && tire(m.graine, b.id * 31 + e.id, 12) < c.passifs.critique
-      e.pv -= a.degats * (critique ? c.passifs.critiqueFacteur : 1)
+      const critique = chanceDeCritique(c, a) > 0 && tire(m.graine, b.id * 31 + e.id, 12) < chanceDeCritique(c, a)
+      e.pv -= a.degats * (critique ? facteurDeCritique(c, a) : 1)
       ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })
       ev.push({ type: 'transperce', id: e.id, x: e.corps.x, y: e.corps.y })
       if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
@@ -4283,8 +4289,8 @@ function menerLesCoupes(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
       const f = formeDeLaCoupe(co, cp, co.prochain)
       for (const e of [...m.ennemis]) {
         if (!dansLaForme(f, e.corps.x, e.corps.y, rayonDe(c, e))) continue
-        const critique = c.passifs.critique > 0 && tire(m.graine, co.id * 31 + e.id * 7 + Math.round(co.prochain * 100), 12) < c.passifs.critique
-        e.pv -= a.degats * (critique ? c.passifs.critiqueFacteur : 1)
+        const critique = chanceDeCritique(c, a) > 0 && tire(m.graine, co.id * 31 + e.id * 7 + Math.round(co.prochain * 100), 12) < chanceDeCritique(c, a)
+        e.pv -= a.degats * (critique ? facteurDeCritique(c, a) : 1)
         ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })
         if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
       }
@@ -4295,8 +4301,8 @@ function menerLesCoupes(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
     let touches = 0
     for (const e of [...m.ennemis]) {
       if (Math.hypot(e.corps.x - co.x, e.corps.y - co.y) > rayonDe(c, e)) continue
-      const critique = c.passifs.critique > 0 && tire(m.graine, co.id * 31 + e.id * 7, 64) < c.passifs.critique
-      e.pv -= cp.fin * (critique ? c.passifs.critiqueFacteur : 1)
+      const critique = chanceDeCritique(c, a) > 0 && tire(m.graine, co.id * 31 + e.id * 7, 64) < chanceDeCritique(c, a)
+      e.pv -= cp.fin * (critique ? facteurDeCritique(c, a) : 1)
       touches++
       ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })
       if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
@@ -4347,8 +4353,8 @@ function menerLesDes(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
     // (IL S'ABAT : toute la zone, d'autant plus large et plus fort que le chiffre est haut)
     for (const e of [...m.ennemis]) {
       if (Math.hypot(e.corps.x - dd.x, e.corps.y - dd.y) > zone + rayonDe(c, e)) continue
-      const critique = c.passifs.critique > 0 && tire(m.graine, dd.id * 31 + e.id * 7, 12) < c.passifs.critique
-      e.pv -= a.degats * dd.face * (critique ? c.passifs.critiqueFacteur : 1)
+      const critique = chanceDeCritique(c, a) > 0 && tire(m.graine, dd.id * 31 + e.id * 7, 12) < chanceDeCritique(c, a)
+      e.pv -= a.degats * dd.face * (critique ? facteurDeCritique(c, a) : 1)
       ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })
       if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
     }
@@ -4416,8 +4422,8 @@ function menerLesHypercubes(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void 
     ev.push({ type: 'rebondHypercube', id: h.id, x: h.x1, y: h.y1, rayon, contact: h.contacts })
     for (const e of [...m.ennemis]) {
       if (Math.hypot(e.corps.x - h.x1, e.corps.y - h.y1) > rayon + rayonDe(c, e)) continue
-      const critique = c.passifs.critique > 0 && tire(m.graine, h.id * 31 + e.id * 7 + h.contacts, 12) < c.passifs.critique
-      e.pv -= a.degats * (critique ? c.passifs.critiqueFacteur : 1)
+      const critique = chanceDeCritique(c, a) > 0 && tire(m.graine, h.id * 31 + e.id * 7 + h.contacts, 12) < chanceDeCritique(c, a)
+      e.pv -= a.degats * (critique ? facteurDeCritique(c, a) : 1)
       ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })
       if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
     }
@@ -4505,8 +4511,8 @@ function menerLesOeufs(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[])
     // (AU CONTACT, IL MORD, à sa cadence)
     if (proie !== undefined && dist(proie) <= rayonDe(c, proie) + 3 && m.t >= w.mordA) {
       w.mordA = m.t + po.cadence
-      const critique = critiqueTire(c, m)
-      proie.pv -= po.morsure * (critique ? c.passifs.critiqueFacteur : 1)
+      const critique = critiqueTire(c, m, c.armes[w.arme])
+      proie.pv -= po.morsure * (critique ? facteurDeCritique(c, c.armes[w.arme]) : 1)
       ev.push({ type: 'morsureMiniVer', id: proie.id, x: proie.corps.x, y: proie.corps.y })
       ev.push({ type: 'ennemiTouche', id: proie.id, x: proie.corps.x, y: proie.corps.y, critique })
       if (proie.pv <= 0) abattreLEnnemi(c, m, proie, ev)
@@ -4590,8 +4596,8 @@ function menerLesVrilles(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[
     let proie = r.cible === null ? undefined : m.ennemis.find((e) => e.id === r.cible)
     // (UN GRAND S'ARRACHE : sorti de son allonge, il prend un coup et elle le lâche)
     if (proie !== undefined && dist(proie) > allonge) {
-      const critique = critiqueTire(c, m)
-      proie.pv -= vr.arrache * (critique ? c.passifs.critiqueFacteur : 1)
+      const critique = critiqueTire(c, m, a)
+      proie.pv -= vr.arrache * (critique ? facteurDeCritique(c, a) : 1)
       ev.push({ type: 'arrache', id: r.id, x: proie.corps.x, y: proie.corps.y })
       ev.push({ type: 'ennemiTouche', id: proie.id, x: proie.corps.x, y: proie.corps.y, critique })
       if (proie.pv <= 0) abattreLEnnemi(c, m, proie, ev)
@@ -4802,8 +4808,8 @@ function menerLesBalises(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[
       ev.push({ type: 'ligne', x0: b.x, y0: b.y, x1: autre.x, y1: autre.y, arme: a.id })
       for (const e of dessus) {
         if (!m.ennemis.includes(e)) continue
-        const critique = c.passifs.critique > 0 && tire(m.graine, m.prochainId++, 12) < c.passifs.critique
-        e.pv -= a.degats * (critique ? c.passifs.critiqueFacteur : 1)
+        const critique = chanceDeCritique(c, a) > 0 && tire(m.graine, m.prochainId++, 12) < chanceDeCritique(c, a)
+        e.pv -= a.degats * (critique ? facteurDeCritique(c, a) : 1)
         ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })
         if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
       }
@@ -4941,8 +4947,8 @@ function menerLeRayon(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
     for (const e of [...m.ennemis]) {
       if (b.touches.includes(e.id) || Math.hypot(e.corps.x - ix, e.corps.y - iy) > bl.trace.rayon + rayonDe(c, e)) continue
       b.touches.push(e.id)
-      const critique = critiqueTire(c, m)
-      e.pv -= bl.degats * (critique ? c.passifs.critiqueFacteur : 1)
+      const critique = critiqueTire(c, m, c.armes[b.arme])
+      e.pv -= bl.degats * (critique ? facteurDeCritique(c, c.armes[b.arme]) : 1)
       e.bruleA = m.t + bl.brulure
       e.dpsBrulure = bl.dpsBrulure
       e.dureeBrulure = bl.brulure
@@ -4983,8 +4989,8 @@ function menerLeRayon(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
     if (ecart < -marge) ecart += 2 * Math.PI
     if (ecart > ouverture + marge) continue
     b.touches.push(e.id)
-    const critique = critiqueTire(c, m)
-    e.pv -= bl.degats * (critique ? c.passifs.critiqueFacteur : 1)
+    const critique = critiqueTire(c, m, c.armes[b.arme])
+    e.pv -= bl.degats * (critique ? facteurDeCritique(c, c.armes[b.arme]) : 1)
     e.bruleA = m.t + bl.brulure
     e.dpsBrulure = bl.dpsBrulure
     e.dureeBrulure = bl.brulure
@@ -5064,8 +5070,8 @@ function exploser(c: ConfigVaisseau, m: Monde, x: number, y: number, zone: { ray
   ev.push({ type: 'explosionDeZone', x, y, rayon: zone.rayon, ...(arme === undefined ? {} : { arme }) })
   for (const e of [...m.ennemis]) {
     if (e === touche || Math.hypot(e.corps.x - x, e.corps.y - y) > zone.rayon + rayonDe(c, e)) continue
-    const critique = critiqueTire(c, m)
-    e.pv -= zone.degats * (critique ? c.passifs.critiqueFacteur : 1)
+    const critique = critiqueTire(c, m, c.armes.find((x) => x.id === arme))
+    e.pv -= zone.degats * (critique ? facteurDeCritique(c, c.armes.find((x) => x.id === arme)) : 1)
     ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })
     if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
   }
@@ -5162,8 +5168,8 @@ function menerLesTourelles(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenemen
     const angle = tu.cap + (tire(m.graine, m.prochainId, 11) - 0.5) * 2 * a.dispersion
     const x0 = tu.x + Math.cos(tu.cap) * 4
     const y0 = tu.y + Math.sin(tu.cap) * 4
-    const critique = c.passifs.critique > 0 && tire(m.graine, m.prochainId, 12) < c.passifs.critique
-    m.obus.push({ id: m.prochainId++, x: x0, y: y0, vx: Math.cos(angle) * a.vitesse, vy: Math.sin(angle) * a.vitesse, vie: a.vie, degats: a.degats * (critique ? c.passifs.critiqueFacteur : 1), guide: false, arme: a.id, critique })
+    const critique = chanceDeCritique(c, a) > 0 && tire(m.graine, m.prochainId, 12) < chanceDeCritique(c, a)
+    m.obus.push({ id: m.prochainId++, x: x0, y: y0, vx: Math.cos(angle) * a.vitesse, vy: Math.sin(angle) * a.vitesse, vie: a.vie, degats: a.degats * (critique ? facteurDeCritique(c, a) : 1), guide: false, arme: a.id, critique })
     ev.push({ type: 'obus', x: x0, y: y0, arme: a.id })
   }
 }
@@ -5233,8 +5239,8 @@ function menerLesDrones(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]
     m.armesA[i] = m.t + a.cadence
     // (UN DRONE ÉLECTRIQUE frappe d'un arc, à l'instant)
     if (a.eclair === true) {
-      const critique = critiqueTire(c, m)
-      cible.pv -= a.degats * (critique ? c.passifs.critiqueFacteur : 1)
+      const critique = critiqueTire(c, m, a)
+      cible.pv -= a.degats * (critique ? facteurDeCritique(c, a) : 1)
       ev.push({ type: 'arc', x0: d.x, y0: d.y, x1: cible.corps.x, y1: cible.corps.y, drone: k, id: cible.id })
       ev.push({ type: 'ennemiTouche', id: cible.id, x: cible.corps.x, y: cible.corps.y, critique })
       if (cible.pv <= 0) abattreLEnnemi(c, m, cible, ev)
@@ -5243,8 +5249,8 @@ function menerLesDrones(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]
     const temps = dist / a.vitesse
     const vise = Math.atan2(cible.corps.y + cible.corps.vy * temps - d.y, cible.corps.x + cible.corps.vx * temps - d.x)
     const angle = vise + (tire(m.graine, m.prochainId, 11) - 0.5) * 2 * a.dispersion
-    const critique = c.passifs.critique > 0 && tire(m.graine, m.prochainId, 12) < c.passifs.critique
-    m.obus.push({ id: m.prochainId++, x: d.x, y: d.y, vx: Math.cos(angle) * a.vitesse, vy: Math.sin(angle) * a.vitesse, vie: a.vie, degats: a.degats * (critique ? c.passifs.critiqueFacteur : 1), guide: a.guide, arme: a.id, critique, ...effetsDuTir(a) })
+    const critique = chanceDeCritique(c, a) > 0 && tire(m.graine, m.prochainId, 12) < chanceDeCritique(c, a)
+    m.obus.push({ id: m.prochainId++, x: d.x, y: d.y, vx: Math.cos(angle) * a.vitesse, vy: Math.sin(angle) * a.vitesse, vie: a.vie, degats: a.degats * (critique ? facteurDeCritique(c, a) : 1), guide: a.guide, arme: a.id, critique, ...effetsDuTir(a) })
     ev.push({ type: 'obus', x: d.x, y: d.y, arme: a.id })
   })
 }
@@ -5668,8 +5674,8 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
       const x0 = bo === undefined ? v.x + Math.cos(angle) * (c.rayon + 3) : v.x + Math.cos(v.cap) * bo.x - Math.sin(v.cap) * bo.y
       const y0 = bo === undefined ? v.y + Math.sin(angle) * (c.rayon + 3) : v.y + Math.sin(v.cap) * bo.x + Math.cos(v.cap) * bo.y
       // (le coup critique du labo : tiré du même hachage que la dispersion, sur une autre clé)
-      const critique = c.passifs.critique > 0 && tire(m.graine, m.prochainId, 12) < c.passifs.critique
-      m.obus.push({ id: m.prochainId++, x: x0, y: y0, vx: Math.cos(angle) * arme.vitesse, vy: Math.sin(angle) * arme.vitesse, vie: vieDuTir, degats: arme.degats * (critique ? c.passifs.critiqueFacteur : 1), guide: arme.guide, arme: arme.id, critique, ...(arme.infaillible === true && cibleDuTir !== null ? { verrou: cibleDuTir.id } : {}), ...effetsDuTir(arme), ...(arme.napalm === undefined ? {} : { napalm: arme.napalm, vie0: vieDuTir }), ...(arme.plasma === undefined ? {} : { zone: arme.plasma, perce: [], vie0: vieDuTir }) })
+      const critique = chanceDeCritique(c, arme) > 0 && tire(m.graine, m.prochainId, 12) < chanceDeCritique(c, arme)
+      m.obus.push({ id: m.prochainId++, x: x0, y: y0, vx: Math.cos(angle) * arme.vitesse, vy: Math.sin(angle) * arme.vitesse, vie: vieDuTir, degats: arme.degats * (critique ? facteurDeCritique(c, arme) : 1), guide: arme.guide, arme: arme.id, critique, ...(arme.infaillible === true && cibleDuTir !== null ? { verrou: cibleDuTir.id } : {}), ...effetsDuTir(arme), ...(arme.napalm === undefined ? {} : { napalm: arme.napalm, vie0: vieDuTir }), ...(arme.plasma === undefined ? {} : { zone: arme.plasma, perce: [], vie0: vieDuTir }) })
       if (g === 0) ev.push({ type: 'obus', x: x0, y: y0, arme: arme.id })
     }
   })
