@@ -7992,3 +7992,6 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   tient rien reprend le manche à l'endroit où il est (`repasserLeManche` ; à deux sur un écran, la moitié dit lequel).
   Reproduit sur la version d'avant (un toucher tenu sur la carte : plus de manche), corrigé et VU (le manche paraît sous
   le doigt, le glisser pilote).
+- **22/11, LA CHANCE DE CRITIQUE DOUBLÉE.** Keko : « plutôt que 1, 2, 3, 4, 5, on fait 2, 4, 6, 8, 10 » : la carte
+  « Critique » donne +2 / +4 / +6 / +8 / +10 points de chance, de la commune à la légendaire (`POINTS_DE_CRITIQUE`) ;
+  le déphasage garde 1 à 5 (`POINTS_DE_CHANCE`).

@@ -80,6 +80,8 @@ export const SEULEMENT_EN: Partial<Record<StatDArme | StatDeFaction, Rarete>> = 
  * « +12 % » d'1 % de chance n'en faisait que 1,12) : la commune +1 point, la légendaire +5.
  */
 export const POINTS_DE_CHANCE: Record<Rarete, number> = { commune: 0.01, peuCommune: 0.02, rare: 0.03, epique: 0.04, legendaire: 0.05, speciale: 0 }
+/** LA CHANCE DE CRITIQUE, deux fois plus (Keko, 22/11 : « plutôt que 1, 2, 3, 4, 5, on fait 2, 4, 6, 8, 10 ») ; le déphasage garde les siens. */
+export const POINTS_DE_CRITIQUE: Record<Rarete, number> = { commune: 0.02, peuCommune: 0.04, rare: 0.06, epique: 0.08, legendaire: 0.1, speciale: 0 }
 const EN_POINTS: ReadonlySet<string> = new Set(['critique', 'dephasage'])
 
 export type Cible = { sorte: 'arme'; arme: string } | { sorte: 'faction'; race: Race }
@@ -233,7 +235,7 @@ export function factionAmelioree(c: ConfigVaisseau, stat: StatDeFaction, k: numb
 /** Une carte : sa cible, sa stat, sa rareté. */
 export function carte(cible: Cible, stat: StatDArme | StatDeFaction, rarete: Rarete): Talent {
   // (une chance, des points à l'échelle ; le reste, le bonus de la rareté)
-  const bonus = EN_POINTS.has(stat) ? POINTS_DE_CHANCE[rarete] : rareteDe(rarete).bonus
+  const bonus = stat === 'critique' ? POINTS_DE_CRITIQUE[rarete] : EN_POINTS.has(stat) ? POINTS_DE_CHANCE[rarete] : rareteDe(rarete).bonus
   return { id: `${cible.sorte === 'arme' ? `arme-${cible.arme}` : cible.race}:${stat}`, cible, stat, rarete, bonus }
 }
 
