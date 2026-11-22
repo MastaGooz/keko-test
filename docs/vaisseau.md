@@ -7876,3 +7876,7 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   - `&fin=N` : la partie finit une seconde après le décollage, au niveau N (20 sans nombre), avec un tableau fait pour
     lui — les crédits vont vraiment au trésor. VU debout et couché ; vérifié (`npm run verif`).
   - Puis Keko : « ne précise pas équipe entre parenthèses à côté des boss et des mini-boss » : « Mini-boss », « Boss ».
+  - Puis Keko : « ne dis pas insecte, dis plutôt ennemi ; donne un peu de texture au texte et différencie la couleur des
+    textes et des numéros à côté, comme le nombre d'ennemis, le niveau » : « Ennemis » ; LA LETTRE EN RELIEF partout
+    (`motEnRelief`) — les mots à l'IVOIRE des plaques, les nombres à l'OR, les crédits au CRISTAL ; « Niveau » et son
+    nombre de même sous le titre ; « crédits gagnés » en ivoire. VU debout et couché.

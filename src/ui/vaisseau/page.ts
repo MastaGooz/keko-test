@@ -3471,7 +3471,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   let finSonnee = { titre: false, lignes: 0, frappe: false, tic: 0 }
   /** Les lignes montrées : la prime, le niveau, les insectes, les roches ; les grands de l'équipe, s'il y en a eu. */
   const lignesMontrees = (r: { lignes: LigneDeRecompense[] }): LigneDeRecompense[] => r.lignes.filter((l) => l.quoi === 'base' || l.quoi === 'niveau' || l.quoi === 'insectes' || l.quoi === 'roches' || l.nombre > 0)
-  const NOMS_DES_LIGNES: Record<LigneDeRecompense['quoi'], string> = { base: 'Prime de partie', niveau: 'Niveau', insectes: 'Insectes', roches: 'Astéroïdes', miniBoss: 'Mini-boss', boss: 'Boss' } // (sans « (équipe) » — Keko, 22/11)
+  const NOMS_DES_LIGNES: Record<LigneDeRecompense['quoi'], string> = { base: 'Prime de partie', niveau: 'Niveau', insectes: 'Ennemis', roches: 'Astéroïdes', miniBoss: 'Mini-boss', boss: 'Boss' } // (sans « (équipe) » — Keko, 22/11)
   /** Le moment de l'écran : la fin des lignes, l'instant du total, de sa frappe, des boutons. */
   const tempsDeLaFin = (n: number): { total: number; frappe: number; boutons: number } => {
     const H0 = HEURES_DE_LA_FIN
@@ -3529,7 +3529,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // le niveau
     const yNiv = yTitre + 22
     const un = sortie((tau - H0.titre - 0.05) / 0.3)
-    if (un > 0) ecrire(p, `Niveau ${m.invasion.niveau}`, W / 2, yNiv + Math.round((1 - un) * 4), COQUE[6], { align: 'center', police: GRAS })
+    // (LA LETTRE EN RELIEF — Keko, 22/11 : « un peu de texture au texte, et différencie la couleur des textes et des
+    // numéros » : les mots à l'ivoire des plaques, les nombres à l'or, les crédits au cristal)
+    if (un > 0) {
+      const nv = String(m.invasion.niveau)
+      const wl = largeurDe('Niveau', GRAS) + 4 + largeurDe(nv, GRAS)
+      const xl = Math.round(W / 2 - wl / 2)
+      const yl = yNiv + Math.round((1 - un) * 4)
+      motEnRelief(p, 'Niveau', xl + largeurDe('Niveau', GRAS) / 2, yl, 'ivoire', GRAS)
+      motEnRelief(p, nv, xl + wl - largeurDe(nv, GRAS) / 2, yl, true, GRAS)
+    }
     // LE PANNEAU DU CALCUL : une plaque sombre, cernée d'or, qui s'ouvre
     const yP = yNiv + 14
     const hp = lignes.length * L + 8 + 42
@@ -3555,15 +3564,20 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const glisse = Math.round((1 - sortie(Math.min(1, ul))) * -14)
       const uc = (tau - ti) / H0.compte
       const y = yP + 6 + i * L
-      const nom = l.quoi === 'base' ? NOMS_DES_LIGNES.base : `${NOMS_DES_LIGNES[l.quoi]} ${compte(uc, l.nombre)}`
-      // (trop longue pour le panneau, comptée jusqu'au bout — un mini-boss sur un téléphone debout : la lettre fine)
+      // (trop longue pour le panneau, comptée jusqu'au bout : la lettre fine)
       const police = largeurDe(`${NOMS_DES_LIGNES[l.quoi]} ${l.nombre}`, GRAS) + largeurDe(`+${l.credits}`, GRAS) + 30 > pw ? TEXTE : GRAS
-      ecrire(p, nom, x0 + 8 + glisse, y, COQUE[6], { police })
+      // (le mot à l'ivoire, son nombre à l'or — voir plus haut)
+      const xl = x0 + 8 + glisse
+      const wNom = largeurDe(NOMS_DES_LIGNES[l.quoi], police)
+      motEnRelief(p, NOMS_DES_LIGNES[l.quoi], xl + wNom / 2, y, 'ivoire', police)
+      if (l.quoi !== 'base') {
+        const nb = String(compte(uc, l.nombre))
+        motEnRelief(p, nb, xl + wNom + 4 + largeurDe(nb, police) / 2, y, true, police)
+      }
       const cr = compte(uc, l.credits)
-      const fini = uc >= 1
       const dit = `+${cr}`
       const xc = x0 + pw - 16
-      ecrire(p, dit, xc + glisse, y, fini ? RUNE[3] : RUNE[2], { align: 'right', police: GRAS })
+      motEnRelief(p, dit, xc + glisse - largeurDe(dit, GRAS) / 2, y, 'cristal', GRAS)
       dessinerUnCredit(p, xc + 7 + glisse, y + 3)
       // (son compte fini, un éclat sur ses crédits)
       const ue = (tau - ti - H0.compte) / 0.25
@@ -3602,7 +3616,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       if (uf >= 0 && uf < 0.6) p.glow(W / 2, yT + 14, 40, RUNE[2], 0.6 * (1 - uf / 0.6))
       motEnRelief(p, dit, xg + wn / 2, yT + 14 - 4 * e + 2, 'cristal', GRAS, null, e)
       dessinerUnGrandCredit(p, xg + wn + 4 + 3.5 * e, yT + 14, e)
-      if (uf >= 0) ecrire(p, 'crédits gagnés', W / 2, yT + 14 + 6 * e + 2, COQUE[4], { align: 'center', police: TEXTE })
+      if (uf >= 0) motEnRelief(p, 'crédits gagnés', W / 2, yT + 14 + 6 * e + 2, 'ivoire', TEXTE)
     }
     // les étincelles et les crédits qui jaillissent
     for (let i = piecesDeLaFin.length - 1; i >= 0; i--) {
