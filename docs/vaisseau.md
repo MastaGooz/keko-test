@@ -8389,3 +8389,7 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   LA SUITE (`Arme.rafale` : `{ nombre: 3, intervalle: 0,09 }`, `Monde.rafales`), chacun visant sa cible à nouveau, à
   45 % chacun — 135 % à eux trois (41 × 3 = 123 au lieu de 90) — ; puis la cadence de l'arme. Les ailes alternent à la
   fin d'une rafale, pas entre ses tirs. Le test : six tirs en 2,4 s, écarts 0,10 (l'image), 0,10, 1,10, 0,10, 0,10.
+  (… UN SEUL LASER EN TROIS PARTIES — Keko : « que les trois lasers visent la même cible, et que si la cible meurt, les
+  autres lasers partent quand même » : la rafale garde la cible de son premier tir — même hors de vue ensuite, même si
+  une plus proche arrive — ; morte, les tirs suivants partent dans la dernière direction visée, tout droit. Le test : sa
+  cible morte après le premier tir, les deux autres partent quand même, dans sa direction, pas vers la nouvelle.)

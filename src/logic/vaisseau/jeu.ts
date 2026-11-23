@@ -1136,6 +1136,9 @@ export type Arme = {
    * des rafales de trois lasers ; il faut que le total des trois fasse plus de dégâts que le laser seul ») : `nombre` tirs
    * à la suite, à `intervalle` secondes l'un de l'autre, chacun visant sa cible à nouveau ; puis la cadence de l'arme. Les
    * ailes alternent à la fin d'une rafale, pas entre ses tirs (`Monde.rafales` : où en est la rafale de chaque arme).
+   * (… UN SEUL LASER EN TROIS PARTIES — Keko, 23/11 : « que les trois lasers visent la même cible, et que si la cible meurt,
+   * les autres partent quand même » : la rafale garde sa cible, choisie au premier tir — même hors de vue ensuite — ; morte,
+   * les tirs suivants partent dans la dernière direction visée.)
    */
   rafale?: { nombre: number; intervalle: number }
   perforant?: boolean
@@ -1358,8 +1361,8 @@ export type Monde = {
   canal: { arme: number; cible: number; depuis: number; x: number; y: number; chauffe: number } | null
   /** LES HARPONS (voir `Arme.harpon`) : un par arme, en vol ou plantés (`plante`, l'instant où il s'est planté). */
   harpons: Harpon[]
-  /** OÙ EN EST LA RAFALE DE CHAQUE ARME (voir `Arme.rafale`) : les tirs déjà partis, par arme. */
-  rafales: number[]
+  /** OÙ EN EST LA RAFALE DE CHAQUE ARME (voir `Arme.rafale`) : les tirs déjà partis, sa cible, la dernière direction visée. */
+  rafales: ({ coups: number; cible: number; vise: number } | undefined)[]
   /** LES SCIES EN VOL (voir `Arme.scie`) ; une arme dont la scie n'y est pas l'a à bord. */
   scies: Scie[]
   /** LES BALISES POSÉES (voir `Arme.balise`). */
@@ -5935,15 +5938,20 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
     let vitesseDuTir = arme.vitesse
     // (la cible visée : un tir infaillible s'y accroche)
     let cibleDuTir: Ennemi | null = null
+    // (UNE RAFALE EN COURS garde sa cible ; morte, elle tire dans sa dernière direction — voir `Arme.rafale`)
+    const suite = arme.rafale !== undefined && (m.rafales[i]?.coups ?? 0) > 0 ? m.rafales[i] : undefined
     if (aLaMain) vise = Math.atan2(regard!.y, regard!.x)
+    else if (suite !== undefined && !m.ennemis.some((e) => e.id === suite.cible)) vise = suite.vise
     else {
-      let cible: Ennemi | null = null
+      let cible: Ennemi | null = suite === undefined ? null : (m.ennemis.find((e) => e.id === suite.cible) ?? null)
       let dc = Infinity
       // (hors de portée, ou hors de l'arc de tir, devant le nez : pas une cible)
       const enVue = (e: Ennemi): boolean => Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= arme.portee && !(c.arcDeTir > 0 && arme.tousSens !== true && Math.abs(ecartDAngle(v.cap, Math.atan2(e.corps.y - v.y, e.corps.x - v.x))) > c.arcDeTir)
       // (L'ENNEMI VERROUILLÉ D'ABORD, s'il est en vue ; sinon le plus proche)
       const ve = ennemiVerrouille(m)
-      if (ve !== null && enVue(ve)) cible = ve
+      if (cible !== null) {
+        // (la cible de la rafale en cours, gardée)
+      } else if (ve !== null && enVue(ve)) cible = ve
       else for (const e of m.ennemis) {
         const d = Math.hypot(e.corps.x - v.x, e.corps.y - v.y)
         if (enVue(e) && d < dc) (dc = d), (cible = e)
@@ -5977,12 +5985,12 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
     }
     // (EN RAFALE : le tir suivant de la rafale vient vite ; la rafale finie, la cadence de l'arme — voir `Arme.rafale`)
     const ra = arme.rafale
-    const coup = ra === undefined ? 0 : (m.rafales[i] ?? 0) + 1
+    const coup = ra === undefined ? 0 : (m.rafales[i]?.coups ?? 0) + 1
     if (ra !== undefined && coup < ra.nombre) {
       m.armesA[i] = m.t + ra.intervalle
-      m.rafales[i] = coup
+      m.rafales[i] = { coups: coup, cible: cibleDuTir?.id ?? suite?.cible ?? -1, vise }
     } else {
-      if (ra !== undefined) m.rafales[i] = 0
+      if (ra !== undefined) m.rafales[i] = undefined
       m.armesA[i] = m.t + arme.cadence
       // (À TOUR DE RÔLE ENTRE LES AILES SEULEMENT : une arme ajoutée par une carte spéciale tire à son pas — voir `Arme.ajoutee`)
       if (c.alternance && arme.ajoutee !== true) {

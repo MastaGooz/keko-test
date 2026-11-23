@@ -3308,6 +3308,21 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   for (let i = 0; i < 60 * 2.4; i++) for (const ev of avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements) if (ev.type === 'obus') tirs.push(w.t)
   const ecarts = tirs.slice(1).map((x, k) => x - tirs[k])
   verifier(`la rafale : ${tirs.length} tirs en 2,4 s (6) ; écarts ${ecarts.map((x) => x.toFixed(2)).join(', ')} (0,09, 0,09, 1,1, 0,09, 0,09)`, tirs.length === 6 && Math.abs(ecarts[0] - 0.09) < 0.02 && Math.abs(ecarts[1] - 0.09) < 0.02 && Math.abs(ecarts[2] - 1.1) < 0.02 && Math.abs(ecarts[3] - 0.09) < 0.02)
+  // (UN SEUL LASER EN TROIS PARTIES — Keko, 23/11 : les trois visent la même cible, même si une plus proche arrive ; et si
+  // elle meurt après le premier tir, les deux autres partent quand même, dans sa direction)
+  const w2 = nouveauMonde(cfg, 6)
+  w2.invasion.prochainA = 1e9
+  const loin = { id: 980, corps: { ...nouveauVaisseau(), x: 80, y: 0 }, pv: 1e9, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9 } as Ennemi
+  w2.ennemis.push(loin)
+  const premiers: number[] = []
+  let k = 0
+  for (; k < 60 && premiers.length < 1; k++) for (const ev of avancerLeMonde(cfg, w2, 1 / 60, { x: 0, y: 0 }).evenements) if (ev.type === 'obus') premiers.push(w2.t)
+  // (une autre, plus proche, arrive ; la première meurt)
+  w2.ennemis.push({ ...loin, id: 981, corps: { ...loin.corps, x: 0, y: 40 } } as Ennemi)
+  w2.ennemis = w2.ennemis.filter((e) => e.id !== 980)
+  const angles: number[] = []
+  for (let i = 0; i < 20; i++) for (const ev of avancerLeMonde(cfg, w2, 1 / 60, { x: 0, y: 0 }).evenements) if (ev.type === 'obus') angles.push(Math.atan2(w2.obus[w2.obus.length - 1].vy, w2.obus[w2.obus.length - 1].vx))
+  verifier(`la rafale, sa cible morte après le premier tir : les deux autres partent quand même (${angles.length}), dans sa direction (${angles.map((a) => a.toFixed(2)).join(', ')} ; 0), pas vers la nouvelle (1,57)`, angles.length === 2 && angles.every((a) => Math.abs(a) < 0.05))
 }
 
 // TOUCHÉ, ON TRAVERSE LES INSECTES (Keko, 22/11 : « quand on est touché on est invincible un court instant ; je voudrais
