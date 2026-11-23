@@ -8333,3 +8333,11 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     seconde. L'INSECTE TRAVERSÉ : une lueur rouge plus large et plus forte, un cœur clair, un anneau rouge qui bat autour
     de lui, cinq étincelles brisées plus longues (quatre à huit), et une gerbe de particules rouges qui s'en échappe.
     L'équilibre ne bouge pas (0,98). Le test : le vaisseau parti à 400 d'elle, elle tient 4,02 s.
+- **23/11, LES ÉTATS DES INSECTES À LEUR TAILLE.** Keko : « j'aime bien que l'effet de touche du laser s'adapte à leur
+  taille ; il faudrait que, quand un ennemi est enflammé, gelé ou sous l'effet de la corrosion, l'effet s'adapte
+  également à sa taille ; et rajouter des petites étincelles sur l'effet de touche du laser ». TOUS LES ÉTATS dessinés
+  sur un insecte (`dessinerLesEnnemis`) — gelé, empoisonné, rongé par l'acide, irradié, en feu — se mesurent à `ech`,
+  sa taille rapportée à celle d'un insecte (`rayonDe` ÷ `ennemi.rayon` : moucheron 0,6, cornu 1,5, cuirassier 2,2) :
+  lueurs, gangue, éclats, bulles, vapeurs, braises et leur montée ; sur un gros, plus d'éclats, de bulles et de braises
+  (`plus`) ; les flammes qui montent d'un insecte en feu, plus nombreuses et plus étalées. LA TOUCHE DU LASER : de
+  petites étincelles en étoile qui scintillent sur l'insecte, d'autant plus qu'il est gros (`N.sparkle`).

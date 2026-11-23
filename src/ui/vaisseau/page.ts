@@ -11718,6 +11718,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         p.glow(e.corps.x, e.corps.y, r + 9, ROUGE_LASER[2], 0.65 * k)
         p.glow(e.corps.x, e.corps.y, r * 0.8, ROUGE_LASER[4], 0.45 * k)
         p.ring(e.corps.x, e.corps.y, r + 2 + Math.sin(t * 30 + e.id) * 1.2, 1, ROUGE_LASER[3], 0.7 * k)
+        // (… ET DE PETITES ÉTINCELLES — Keko, 23/11 : des éclats en étoile qui scintillent sur lui, à sa taille)
+        for (let s3 = 0; s3 < Math.max(2, Math.round(r / 3)); s3++) {
+          const a = R2.range(0, Math.PI * 2)
+          const d0 = r * R2.range(0, 1.1)
+          N.sparkle(p, e.corps.x + Math.cos(a) * d0, e.corps.y + Math.sin(a) * d0, R2.range(1.2, 2.4), N.WHITE, ROUGE_LASER[3], 0.9 * k)
+        }
         for (let s2 = 0; s2 < 5; s2++) {
           const a = R2.range(0, Math.PI * 2)
           const d0 = r * R2.range(0.2, 0.9)
@@ -14250,37 +14256,44 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           continue
         }
         dessinerUnInsecte(p, sx, sy, b.cap, e.id * 1.7, blanchi, e.fait === 'aggro', undefined, e.sorte)
+        // (SES ÉTATS À SA TAILLE — Keko, 23/11 : « quand un ennemi est enflammé, gelé ou sous l'effet de la corrosion, que
+        // l'effet s'adapte également à sa taille », comme le crépitement de la balise laser : `ech`, sa taille rapportée à
+        // celle d'un insecte — le moucheron 0,6, le cornu 1,5, le cuirassier 2,2 ; plus de braises, d'éclats, de bulles sur
+        // un gros)
+        const ech = rayonDe(CONF, e) / CONF.ennemi.rayon
+        const plus = (n: number): number => Math.max(1, Math.round(n * Math.max(1, ech)))
         // IL EST GELÉ (le givre) : une gangue de glace bleue sur lui, un liseré clair, des éclats de givre qui scintillent
         if ((e.geleA ?? -1) > m.t) {
-          p.circle(sx, sy, 5, GLACE[4], 0.32)
-          p.ring(sx, sy, 5, 1, GLACE[6], 0.45)
-          for (let j = 0; j < 3; j++) if (Math.sin(t * 7 + e.id + j * 2.1) > 0.3) p.rect(Math.round(sx + Math.cos(e.id + j * 2.1) * 3.5), Math.round(sy + Math.sin(e.id + j * 2.1) * 3.5), 1, 1, N.WHITE, 0.9)
+          p.circle(sx, sy, 5 * ech, GLACE[4], 0.32)
+          p.ring(sx, sy, 5 * ech, 1, GLACE[6], 0.45)
+          for (let j = 0; j < plus(3); j++) if (Math.sin(t * 7 + e.id + j * 2.1) > 0.3) p.rect(Math.round(sx + Math.cos(e.id + j * 2.1) * 3.5 * ech), Math.round(sy + Math.sin(e.id + j * 2.1) * 3.5 * ech), 1, 1, N.WHITE, 0.9)
         }
         // IL EST EMPOISONNÉ (la traînée du Ver) : une lueur de miasme, deux bulles qui montent
         if ((e.poisonA ?? -1) > m.t) {
-          p.glow(sx, sy, 6, MIASME[5], 0.3)
-          for (let k = 0; k < 2; k++) {
-            const ph = (t * 1.5 + k / 2 + e.id * 0.31) % 1
-            p.dot(sx + Math.sin(e.id + k * 2.5) * 2.5, sy - 1 - ph * 6, ph < 0.5 ? MIASME[7] : MIASME[5], 1 - ph)
+          p.glow(sx, sy, 6 * ech, MIASME[5], 0.3)
+          for (let k = 0; k < plus(2); k++) {
+            const ph = (t * 1.5 + k / plus(2) + e.id * 0.31) % 1
+            p.dot(sx + Math.sin(e.id + k * 2.5) * 2.5 * ech, sy - 1 - ph * 6 * ech, ph < 0.5 ? MIASME[7] : MIASME[5], 1 - ph)
           }
         }
         // IL EST RONGÉ (l'acide de la Vouivre) : une tache verte sur lui, qui fume — trois volutes qui montent et pâlissent
         if (e.acide !== undefined && e.acide.jusque > m.t) {
           // (VERT, COMME L'EXPLOSION — Keko, 19/11 : l'acide reste de sa couleur, quelle que soit l'apparence)
           const ve = [...VENIN.slice(0, 4), ECLABOUSSURE[6], ECLABOUSSURE[7]]
-          p.glow(sx, sy, 7, ve[3], 0.3 + 0.1 * Math.sin(t * 9 + e.id))
-          p.circle(sx, sy, 3.5, ve[2], 0.35)
+          p.glow(sx, sy, 7 * ech, ve[3], 0.3 + 0.1 * Math.sin(t * 9 + e.id))
+          p.circle(sx, sy, 3.5 * ech, ve[2], 0.35)
           // (… ET IL GRÉSILLE, comme l'éclaboussure de pixelfx — Keko, 17/11 : une vapeur pâle qui monte en ondulant, et de
           // petites étoiles blanches qui pètent sur lui)
-          for (let k = 0; k < 2; k++) {
-            const ph = (t * 0.9 + k / 2 + e.id * 0.29) % 1
-            for (let h = 0; h < 6; h += 0.5) p.blend(sx + Math.sin(e.id * 2.3 + k * 2.1 + h * 0.5 + t * 2) * (1 + h * 0.3), sy - 2 - ph * 6 - h, h < 2 ? ve[4] : VAPEUR, 0.35 * (1 - ph) * Math.sin((Math.PI * h) / 6))
+          for (let k = 0; k < plus(2); k++) {
+            const ph = (t * 0.9 + k / plus(2) + e.id * 0.29) % 1
+            const dx0 = (k - (plus(2) - 1) / 2) * 2.5 * Math.max(0, ech - 1)
+            for (let h = 0; h < 6 * ech; h += 0.5) p.blend(sx + dx0 + Math.sin(e.id * 2.3 + k * 2.1 + h * 0.5 + t * 2) * (1 + h * 0.3), sy - 2 - ph * 6 * ech - h, h < 2 ? ve[4] : VAPEUR, 0.35 * (1 - ph) * Math.sin((Math.PI * h) / (6 * ech)))
           }
           const pet = (t * 5 + e.id * 0.37) % 1
           if (pet < 0.35) {
             const n = Math.floor(t * 5 + e.id * 0.37)
-            const ox = sx + (alea(e.id, n, 1) - 0.5) * 6
-            const oy = sy + (alea(e.id, n, 2) - 0.5) * 6
+            const ox = sx + (alea(e.id, n, 1) - 0.5) * 6 * ech
+            const oy = sy + (alea(e.id, n, 2) - 0.5) * 6 * ech
             const q = pet / 0.35
             p.px(Math.round(ox), Math.round(oy), N.WHITE)
             for (const [dx, dy] of [[1, 0], [-1, 0], [0, -1]]) p.dot(ox + dx * (1 + q * 2), oy + dy * (1 + q * 2), ve[5], 1 - q)
@@ -14288,20 +14301,20 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         }
         // IL EST IRRADIÉ (les cristaux du Prisme) : une lueur bleue qui bat, des étincelles d'énergie qui montent
         if (e.irradie !== undefined && e.irradie.jusque > m.t) {
-          p.glow(sx, sy, 7, lumiereDuPrisme()[3], 0.35 + 0.15 * Math.sin(t * 17 + e.id))
-          for (let k = 0; k < 3; k++) {
-            const ph = (t * 1.8 + k / 3 + e.id * 0.41) % 1
-            p.rect(Math.round(sx + Math.sin(e.id * 2.7 + k * 2.1) * 3), Math.round(sy - 2 - ph * 8), 1, 1, ph < 0.4 ? N.WHITE : lumiereDuPrisme()[4], 1 - ph)
+          p.glow(sx, sy, 7 * ech, lumiereDuPrisme()[3], 0.35 + 0.15 * Math.sin(t * 17 + e.id))
+          for (let k = 0; k < plus(3); k++) {
+            const ph = (t * 1.8 + k / plus(3) + e.id * 0.41) % 1
+            p.rect(Math.round(sx + Math.sin(e.id * 2.7 + k * 2.1) * 3 * ech), Math.round(sy - 2 - ph * 8 * ech), 1, 1, ph < 0.4 ? N.WHITE : lumiereDuPrisme()[4], 1 - ph)
           }
         }
         // IL BRÛLE (le lance-flammes) : il rougeoie, et des braises s'en échappent
         if ((e.bruleA ?? -1) > m.t) {
           const reste = Math.min(1, ((e.bruleA ?? 0) - m.t) / Math.max(0.1, e.dureeBrulure ?? 2))
-          p.glow(sx, sy, 8, N.hex('#ff6a1a'), (0.35 + 0.15 * Math.sin(t * 23 + e.id)) * (0.4 + 0.6 * reste))
-          for (let k = 0; k < 3; k++) {
-            const ph = (t * 1.6 + k / 3 + e.id * 0.37) % 1
-            const bx = sx + Math.sin(e.id * 3.1 + k * 2.3) * 3
-            p.rect(Math.round(bx), Math.round(sy - 2 - ph * 9), 1, 1, ph < 0.4 ? N.hex('#ffd04a') : N.hex('#ff6a1a'), (1 - ph) * reste)
+          p.glow(sx, sy, 8 * ech, N.hex('#ff6a1a'), (0.35 + 0.15 * Math.sin(t * 23 + e.id)) * (0.4 + 0.6 * reste))
+          for (let k = 0; k < plus(3); k++) {
+            const ph = (t * 1.6 + k / plus(3) + e.id * 0.37) % 1
+            const bx = sx + Math.sin(e.id * 3.1 + k * 2.3) * 3 * ech
+            p.rect(Math.round(bx), Math.round(sy - 2 - ph * 9 * ech), 1, 1, ph < 0.4 ? N.hex('#ffd04a') : N.hex('#ff6a1a'), (1 - ph) * reste)
           }
         }
         dernierVu.set(e.id, { cap: b.cap, aggro: e.fait === 'aggro' })
@@ -17980,9 +17993,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         for (const o of m.obus) if (o.arme === 'obusier' && R.next() < 0.7) feuDesConsumes.spawn(N.P.SMOKE, o.x - o.vx * 0.04, o.y - hauteurEnCloche(o).h - o.vy * 0.04, R.range(-3, 3), R.range(-3, 3), R.range(0.4, 0.6), FUMEE_DU_FEU, R.range(1.3, 1.9))
         for (const o of m.obus) if ((o.arme === 'minimissile' || o.arme === 'roquettes') && R.next() < 0.6) feuDesConsumes.spawn(N.P.SMOKE, o.x - o.vx * 0.03, o.y - o.vy * 0.03, R.range(-3, 3), R.range(-3, 3), R.range(0.3, 0.5), FUMEE_DU_FEU, R.range(0.9, 1.4))
         // les insectes qui brûlent : de petites flammes naissent sur eux et montent
+        // (… à sa taille — Keko, 23/11 : plus nombreuses et plus étalées sur un gros)
         for (const e of m.ennemis) {
-          if ((e.bruleA ?? -1) <= m.t || R.next() > 0.5) continue
-          flammesDesBrules.push({ x: e.corps.x + R.range(-3, 3), y: e.corps.y + R.range(-3, 3), vx: e.corps.vx * 0.7 + R.range(-6, 6), vy: e.corps.vy * 0.7 - R.range(12, 26), t0: t - R.range(0, PAS), vie: R.range(0.25, 0.45) })
+          const ech = e.asteroide === undefined ? rayonDe(CONF, e) / CONF.ennemi.rayon : 1
+          if ((e.bruleA ?? -1) <= m.t || R.next() > 0.5 * Math.max(1, ech)) continue
+          flammesDesBrules.push({ x: e.corps.x + R.range(-3, 3) * ech, y: e.corps.y + R.range(-3, 3) * ech, vx: e.corps.vx * 0.7 + R.range(-6, 6), vy: e.corps.vy * 0.7 - R.range(12, 26), t0: t - R.range(0, PAS), vie: R.range(0.25, 0.45) })
         }
         // (les quêtes : la plus grande distance à la base, comptée tous les vingt pas d'éloignement)
         {
