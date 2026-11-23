@@ -8209,3 +8209,14 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   exactement dessus, je le ramasse pas ». Ils ne s'aimantent pas (on passe dessus) et se prenaient à 3 au-delà de la
   coque : à 9 maintenant (`forage.margeDesObjets`). Le test : à la coque + 8 il est pris, à + 10 non ; à 25, toujours
   immobiles.
+- **23/11, LES PLAQUES DE L'EMPIRE TOMBENT DES INSECTES.** Keko : « on va changer le système des plaques de surblindage
+  de l'Empire et les faire dropper par les ennemis au lieu des astéroïdes ; et renommer la petite ligne de description
+  dans le panneau de sélection des vaisseaux : vous trouvez parfois des plaques de protection ».
+  - LA CHANCE (`invasion.plaque`, `chanceDePlaque(c, insecte)`) : 1 sur 250 pour un insecte ordinaire, FOIS SA VIE —
+    le moucheron 0,1 %, l'insecte 0,4 %, le cornu 1,6 %, le cuirassier 6 % : plus il est dur, plus souvent il en lâche
+    (de moi, à rejuger ; l'aimant est à 1 sur 300, le soin à 1 sur 500). La carte « Récupération » la multiplie
+    toujours. Seul un vaisseau à plaques en fait tomber. LES ROCHES N'EN LÂCHENT PLUS (`derive.plaque` retiré).
+  - LES TEXTES : au hangar, « Vous trouvez parfois des plaques de protection. » (« Les astéroïdes peuvent lâcher du
+    surblindage. ») ; la carte Récupération, « de chance de trouver une plaque » (« … aux astéroïdes »).
+  - Le test : la chance grandit du moucheron au cuirassier, la Récupération la multiplie ; 2 000 cornus en lâchent 35
+    (32 attendues), sans plaques au vaisseau aucune, 2 000 grosses roches aucune.

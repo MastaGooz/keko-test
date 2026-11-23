@@ -68,7 +68,8 @@ export type StatDArme = 'degats' | 'critique' | 'critiques' | 'cadence' | 'porte
 // (L'EMPIRE N'A PLUS QU'UNE CARTE À LUI, LA RÉCUPÉRATION — Keko, 22/11 : « il a deux cartes alors que les autres n'en ont
 // qu'une, et une des deux ne peut arriver qu'en légendaire ; on vire la carte qui augmente le nombre de plaques ; les
 // plaques ne se régénèrent plus avec le temps » ; la carte : « augmente les chances d'obtenir des plaques en détruisant
-// les astéroïdes » — voir `recuperation` dans `jeu.ts`. La réparation et « +1 plaque » sont parties.)
+// les astéroïdes » — voir `recuperation` dans `jeu.ts`. La réparation et « +1 plaque » sont parties. Depuis le 23/11, les
+// plaques tombent des insectes, plus des astéroïdes : la carte grandit leur chance.)
 export type StatDeFaction = 'blindage' | 'moteur' | 'maniabilite' | 'aimant' | 'experience' | 'recuperation' | 'regeneration' | 'bouclier' | 'dephasage'
 export const STATS_DE_FACTION: Record<Race, StatDeFaction[]> = {
   humains: ['blindage', 'recuperation', 'moteur', 'maniabilite', 'aimant', 'experience'],
@@ -248,7 +249,7 @@ export function factionAmelioree(c: ConfigVaisseau, stat: StatDeFaction, k: numb
     case 'experience':
       return { ...c, invasion: { ...c.invasion, gainXp: (c.invasion.gainXp ?? 1) * f } }
     case 'recuperation':
-      // (la chance qu'une roche fasse tomber une plaque — voir `chanceDePlaque`)
+      // (la chance qu'un insecte fasse tomber une plaque — voir `chanceDePlaque`)
       return { ...c, recuperation: c.recuperation * f }
     case 'regeneration':
       return { ...c, regeneration: c.regeneration * f }

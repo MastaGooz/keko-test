@@ -1066,7 +1066,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       }
       // LA VIE SELON LA RACE (Keko, 17/11 — voir `vieSelonLaRace`) : les Éthérés, un gros bouclier sur un blindage fragile ;
       // l'Essaim, pas de bouclier, une coque qui se régénère
-      // (LES PLAQUES DE L'EMPIRE NE SE RÉPARENT PLUS AVEC LE TEMPS — Keko, 22/11 : elles tombent des roches, voir `recuperation`)
+      // (LES PLAQUES DE L'EMPIRE NE SE RÉPARENT PLUS AVEC LE TEMPS — Keko, 22/11 : elles tombent des insectes depuis le 23/11, voir `recuperation`)
       if (VORTEX) conf = { ...conf, ...blindageAuVortex(vieSelonLaRace(modeleDeVaisseau(flotte.actif).race, { coque: conf.coque, bouclier: conf.bouclier, regeneration: conf.regeneration, plaques: conf.plaques, corruption: conf.corruption, dephasage: conf.dephasage }, modeleDeVaisseau(flotte.actif).plaques, modeleDeVaisseau(flotte.actif).dephasage), flotte.actif) }
       if (bouclierDEssai > 0) conf = { ...conf, bouclier: { ...conf.bouclier, points: bouclierDEssai } }
       if (dephasageDEssai !== null) conf = { ...conf, dephasage: { ...conf.dephasage, chance: dephasageDEssai } }
@@ -2033,7 +2033,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     maniabilite: { nom: 'Maniabilité', effet: 'de maniabilité' },
     aimant: { nom: 'Aimant', effet: 'de portée de l’aimant' },
     experience: { nom: 'Expérience', effet: 'd’expérience par pépite' },
-    recuperation: { nom: 'Récupération', effet: 'de chance de plaque aux astéroïdes' },
+    recuperation: { nom: 'Récupération', effet: 'de chance de trouver une plaque' },
     regeneration: { nom: 'Régénération', effet: 'de régénération' },
     bouclier: { nom: 'Bouclier', effet: 'de capacité du bouclier' },
     dephasage: { nom: 'Déphasage', effet: 'de chance de déphasage' },
@@ -15881,7 +15881,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     for (const pe of m.pepites)
       if (!VORTEX) dessinerPepite(p, pe, t, m.refuses[pe.minerai])
       else if (pe.aimant === true) dessinerAimant(p, pe.x, pe.y, t, XP, pe.graine)
-      // (UNE PLAQUE, tombée d'une roche — voir `recuperation` : un écu d'acier qui brille)
+      // (UNE PLAQUE, tombée d'un insecte — voir `recuperation` : un écu d'acier qui brille)
       else if (pe.plaque === true) dessinerPlaqueTombee(p, pe.x, pe.y, t, ACIER_DE_LA_PLAQUE, pe.graine)
       // (UN SOIN — voir `invasion.soin` : la croix à la couleur de la barre de vie, l'or, ou le vert des Xénoïdes)
       else if (pe.soin === true) dessinerSoin(p, pe.x, pe.y, t, vieVerte() ? SOIN_VERT : SOIN_OR, pe.graine)

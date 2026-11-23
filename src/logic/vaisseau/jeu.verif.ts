@@ -3845,30 +3845,34 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   verifier(`à deux, tous abattus avec ${r.invasion.vies} vies : la partie est finie`, r.invasion.finie && r.invasion.vies === cfg.invasion.vies)
 }
 
-// LES PLAQUES TOMBENT DES ROCHES (Keko, 22/11 : « en détruisant des astéroïdes, on a une chance de faire tomber un petit
-// objet qui restaure une plaque ; plus l'astéroïde est gros, plus la chance est importante »)
+// LES PLAQUES TOMBENT DES INSECTES (Keko, 23/11 : « faire dropper les plaques par les ennemis au lieu des astéroïdes » ;
+// avant, 22/11, des roches) : d'autant plus souvent que l'insecte est dur ; la Récupération multiplie la chance ; les
+// roches n'en lâchent plus
 {
   const cfg: ConfigVaisseau = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9 }, derive: { ...VAISSEAU.derive, active: false }, armes: [], plaques: 3 }
-  const petite = chanceDePlaque(cfg, cfg.derive.rayonMin)
-  const grosse = chanceDePlaque(cfg, cfg.derive.rayonMax)
-  const milieu = chanceDePlaque(cfg, 27)
-  const deux = chanceDePlaque({ ...cfg, recuperation: 1.25 }, 27)
-  verifier(`la chance d'une plaque grandit avec la roche : ${Math.round(petite * 100)} % à ${cfg.derive.rayonMin}, ${Math.round(milieu * 100)} % à 27, ${Math.round(grosse * 100)} % à ${cfg.derive.rayonMax} ; la Récupération la multiplie (+25 % : ${Math.round(deux * 100)} %)`, petite < milieu && milieu < grosse && Math.abs(deux - milieu * 1.25) < 1e-9)
-  // (cent roches de 27 abattues : autant de plaques que la chance le dit ; sans plaques au vaisseau, aucune)
-  const roche = (id: number): Ennemi => ({ id, corps: { ...nouveauVaisseau(), x: 300, y: 0 }, pv: 0, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, asteroide: { rayon: 27, pvMax: 1000, graine: id, angle0: 0, vitesseAngulaire: 0 } } as Ennemi)
+  const insecte = (id: number, sorte?: 'moucheron' | 'cornu' | 'cuirassier'): Ennemi => ({ id, corps: { ...nouveauVaisseau(), x: 300, y: 0 }, pv: 0, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, ...(sorte === undefined ? {} : { sorte }) } as Ennemi)
+  const [mouche, ordinaire, cornu, cuirasse] = [chanceDePlaque(cfg, insecte(1, 'moucheron')), chanceDePlaque(cfg, insecte(1)), chanceDePlaque(cfg, insecte(1, 'cornu')), chanceDePlaque(cfg, insecte(1, 'cuirassier'))]
+  const deux = chanceDePlaque({ ...cfg, recuperation: 1.25 }, insecte(1, 'cornu'))
+  const pc = (x: number): string => (x * 100).toFixed(1)
+  verifier(`la chance d'une plaque grandit avec la dureté de l'insecte : moucheron ${pc(mouche)} %, insecte ${pc(ordinaire)} %, cornu ${pc(cornu)} %, cuirassier ${pc(cuirasse)} % ; la Récupération la multiplie (+25 % : ${pc(deux)} %)`, mouche < ordinaire && ordinaire < cornu && cornu < cuirasse && Math.abs(deux - cornu * 1.25) < 1e-9)
+  // (deux mille cornus abattus : autant de plaques que la chance le dit ; sans plaques au vaisseau, aucune ; deux mille
+  // roches : aucune)
+  const roche = (id: number): Ennemi => ({ id, corps: { ...nouveauVaisseau(), x: 300, y: 0 }, pv: 0, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, asteroide: { rayon: 46, pvMax: 1000, graine: id, angle0: 0, vitesseAngulaire: 0 } } as Ennemi)
+  const plaquesDe = (conf: ConfigVaisseau, e: Ennemi): number => {
+    const w = nouveauMonde(conf, 3)
+    w.ennemis.push(e)
+    avancerLeMonde(conf, w, 1 / 60, { x: 0, y: 0 })
+    return w.pepites.filter((p) => p.plaque === true).length
+  }
   let tombees = 0
   let sansPlaques = 0
+  let desRoches = 0
   for (let id = 1000; id < 3000; id++) {
-    const w = nouveauMonde(cfg, 3)
-    w.ennemis.push(roche(id))
-    avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
-    tombees += w.pepites.filter((p) => p.plaque === true).length
-    const w2 = nouveauMonde({ ...cfg, plaques: 0 }, 3)
-    w2.ennemis.push(roche(id))
-    avancerLeMonde({ ...cfg, plaques: 0 }, w2, 1 / 60, { x: 0, y: 0 })
-    sansPlaques += w2.pepites.filter((p) => p.plaque === true).length
+    tombees += plaquesDe(cfg, insecte(id, 'cornu'))
+    sansPlaques += plaquesDe({ ...cfg, plaques: 0 }, insecte(id, 'cornu'))
+    desRoches += plaquesDe(cfg, roche(id))
   }
-  verifier(`2 000 roches de 27 : ${tombees} plaques tombées (${Math.round(milieu * 2000)} attendues) ; sans plaques au vaisseau, ${sansPlaques}`, Math.abs(tombees - milieu * 2000) < Math.max(8, milieu * 2000 * 0.4) && sansPlaques === 0)
+  verifier(`2 000 cornus : ${tombees} plaques tombées (${Math.round(cornu * 2000)} attendues) ; sans plaques au vaisseau, ${sansPlaques} ; 2 000 grosses roches, ${desRoches}`, Math.abs(tombees - cornu * 2000) < Math.max(8, cornu * 2000 * 0.4) && sansPlaques === 0 && desRoches === 0)
   // (ramassée : la dernière plaque cassée revient ; rien ne manque, elle reste là)
   const w = nouveauMonde(cfg, 4)
   w.plaques = [false, false, true]

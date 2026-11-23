@@ -111,6 +111,8 @@ export const VAISSEAU = {
    * restaure une plaque ; plus l'astéroïde est gros, plus la chance est importante ; ainsi, pour réparer ces plaques, ils
    * devront miner des astéroïdes ») : ce qui multiplie la chance d'une roche (`derive.plaque`) — les cartes
    * « Récupération » la grandissent. Seul un vaisseau à plaques en fait tomber.
+   * (… PUIS DES INSECTES, PLUS DES ROCHES — Keko, 23/11 : « on va faire dropper les plaques par les ennemis au lieu des
+   * astéroïdes » : la chance est celle d'un insecte, `invasion.plaque` — voir `chanceDePlaque`.)
    */
   recuperation: 1,
   /**
@@ -339,6 +341,13 @@ export const VAISSEAU = {
      */
     soin: { chance: 1 / 500, part: 0.25 },
     /**
+     * LA PLAQUE QU'UN INSECTE FAIT TOMBER (Keko, 23/11 : « faire dropper les plaques de surblindage de l'Empire par les
+     * ennemis au lieu des astéroïdes » — voir `recuperation`) : la chance d'un insecte ordinaire, FOIS SA VIE (le
+     * moucheron un quart, le cornu 4, le cuirassier 15 : un insecte plus dur à abattre en lâche plus souvent) —
+     * 0,4 %, 0,1 %, 1,6 %, 6 %. Seul un vaisseau à plaques en fait tomber. *Les chiffres sont de moi.*
+     */
+    plaque: 1 / 250,
+    /**
      * LES POINTS D'UN ABATTU (Keko, 22/11 : « chaque monstre aura un score en points ») : le petit insecte, le moucheron,
      * le cornu, le cuirassier ; une roche, `roche` points par unité de rayon (au moins `rocheMin`). Ne compte que LE COUP
      * FATAL, au pilote qui le porte (voir `Monde.tableau`). *De moi, à rejuger.*
@@ -513,11 +522,9 @@ export const VAISSEAU = {
      * du rayon (1,5 avant), le butin suivant : la plus grosse, 46 de rayon (34 avant), 10 580 points et 176 d'expérience
      * (3 135 et 52 pour celle de 34 avant). *Les chiffres sont de moi.*
      */
-    tailles: { courante: 32, geante: 36, kDebut: 2.6, k: 1.3, montee: 420, apres: 480, partDebut: 0.03, partFin: 0.1 },
-    // LA PLAQUE QU'UNE ROCHE FAIT TOMBER (voir `recuperation`) : sa chance, de `petite` pour la plus petite roche
-    // (`rayonMin`) à `grosse` pour la plus grosse (`rayonMax`), en ligne droite entre les deux. (DE 1 À 5 % — Keko, 22/11 :
-    // « trop élevé ; sur le plus gros astéroïde, 5 % », géantes comprises ; de 10 à 60 % avant.)
-    plaque: { petite: 0.01, grosse: 0.05 } },
+    tailles: { courante: 32, geante: 36, kDebut: 2.6, k: 1.3, montee: 420, apres: 480, partDebut: 0.03, partFin: 0.1 } },
+    // (LES ROCHES NE FONT PLUS TOMBER DE PLAQUES — Keko, 23/11 : ce sont les insectes, voir `invasion.plaque` ; elles en
+    // donnaient de 1 % pour la plus petite à 5 % pour la plus grosse)
   ennemi: { apparait: 10, revient: 5, distance: 320, pv: 36, poussee: 120, vitesseMax: 85, rotation: 5, rayon: 4, cherche: 260, rode: 450, voit: 130, accourt: 420, tient: 80, fuit: 10, lache: 260, cadence: 1.8, vitesseTir: 130, dispersion: 0.16, vieTir: 2, butinRendu: 3,
     /**
      * LE RIVAL PEUT PORTER DE VRAIES ARMES (Keko, 14/11 : « deux canons, le reste en mitraillette, et deux missiles dans
@@ -1851,8 +1858,8 @@ function abattreLEnnemi(c: ConfigVaisseau, m: Monde, e: Ennemi, ev: Evenement[],
   else for (let i = 0; i < total; i++) rendues.push('fer')
   const aimant = c.invasion.active && ro === undefined && tire(e.id, 35) < c.invasion.aimant
   if (aimant) (rendues.push('fer'), valeurs.push(0))
-  // (UNE ROCHE, SOUS LES ARMES D'UN VAISSEAU À PLAQUES : peut-être une plaque — voir `recuperation`)
-  if (ro !== undefined && c.plaques > 0 && tire(e.id, 37) < chanceDePlaque(c, ro.rayon)) (rendues.push('fer'), valeurs.push(-1))
+  // (UN INSECTE, SOUS LES ARMES D'UN VAISSEAU À PLAQUES : peut-être une plaque — voir `invasion.plaque`)
+  if (c.invasion.active && ro === undefined && c.plaques > 0 && tire(e.id, 37) < chanceDePlaque(c, e)) (rendues.push('fer'), valeurs.push(-1))
   // (UN INSECTE : peut-être un soin — voir `invasion.soin`)
   if (c.invasion.active && ro === undefined && tire(e.id, 38) < c.invasion.soin.chance) (rendues.push('fer'), valeurs.push(-2))
   const n = rendues.length
@@ -1891,11 +1898,9 @@ export function recompenseDeFin(c: ConfigVaisseau, niveau: number, tableau: Tabl
   return { lignes, total: lignes.reduce((s, l) => s + l.credits, 0) }
 }
 
-/** La chance qu'une roche de `rayon` fasse tomber une plaque (voir `derive.plaque`, `recuperation`). */
-export function chanceDePlaque(c: ConfigVaisseau, rayon: number): number {
-  const D = c.derive
-  const u = Math.max(0, Math.min(1, (rayon - D.rayonMin) / Math.max(1, D.rayonMax - D.rayonMin)))
-  return Math.min(1, (D.plaque.petite + (D.plaque.grosse - D.plaque.petite) * u) * c.recuperation)
+/** La chance qu'un insecte abattu fasse tomber une plaque (voir `invasion.plaque`, `recuperation`) : d'autant plus qu'il est dur. */
+export function chanceDePlaque(c: ConfigVaisseau, e: Ennemi): number {
+  return Math.min(1, c.invasion.plaque * (e.sorte === undefined ? 1 : c.invasion[e.sorte].vie) * c.recuperation)
 }
 
 /** L'ennemi naît au loin, dans une direction tirée de la graine du monde, et regarde le joueur. */
