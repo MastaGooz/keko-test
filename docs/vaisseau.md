@@ -8227,3 +8227,18 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   à 52 Hz qui pousse — ; la bobine n'est plus qu'un grésillement dessous ; le corps grave dure 0,4 s (0,22) ; niveau
   0,5 (0,42). L'efficace des 30 premières millisecondes : 0,14 (0,012) ; de 100 à 300 ms : 0,013 (0,008). Mesuré, PAS
   ÉCOUTÉ.
+- **23/11, LES GRENADES À RETARDEMENT.** Keko : « pas super intéressantes, très proches des missiles : deux projectiles
+  tout droit qui explosent ». Proposés : à rebonds et retardement, collantes, à fragmentation. Keko : « les rebonds, pas
+  une bonne idée : on est dans l'espace, seul l'hypercube peut rebondir sur l'espace-temps ; par contre l'idée du compte à
+  rebours me plaît beaucoup : trois petites grenades, qui clignotent en rouge pour indiquer le timer, et leur
+  clignotement s'intensifie jusqu'à exploser ; l'explosion entre le missile et l'obus ».
+  - LA RÈGLE (`Arme.minuterie` : `{ duree, frein }`) : la grenade ne touche rien en vol ; lancée juste assez vite pour,
+    freinée de 3 par seconde, s'ARRÊTER là où sera sa cible au bout de 1,2 s (v = d × frein / (1 − e^(−frein × durée))),
+    elle y explose. Trois en éventail (deux), zone 28 (15) — le missile 18, l'obus 40. Mesuré à 1,50 avec 51 de dégâts,
+    34 la ramènent à 1,02. « Rafale » : cinq (quatre). Les obus de ses drones gardent l'explosion au contact.
+  - LE FEU ET LE GEL DES CARTES PRENNENT TOUTE LA ZONE d'un tir qui ne touche rien en vol — la grenade ET L'OBUS EN
+    CLOCHE (sans contact, « Incendiaires » et « Cryogéniques » ne prenaient plus nulle part depuis la cloche).
+  - LE DESSIN : la boule kaki, son voyant rouge qui clignote de 3 à 18 fois par seconde (la phase est l'intégrale de
+    3 + 15 u², l'accélération est continue), sa lueur rouge qui grandit et s'intensifie ; dans le dernier cinquième,
+    toute la grenade rougeoie. VU en capture.
+  - Le test : vers un insecte à 90, elle passe celui de 40 sans le toucher, s'arrête et explose à 88, 1,18 s après le tir.

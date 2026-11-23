@@ -14333,9 +14333,22 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         p.px(Math.round(pt(4, -0.6)[0]), Math.round(pt(4, -0.6)[1]), N.WHITE)
       } else if (o.arme === 'grenades') {
         // (UNE GRENADE — le Lance-grenades de l'Empire : une petite boule kaki qui tourne, son voyant qui clignote)
-        p.circle(o.x, o.y, 1.9, N.hex('#3d4a22'))
-        p.circle(o.x - 0.4, o.y - 0.4, 1.1, N.hex('#7a8a44'))
-        if (Math.floor(t * 12 + o.id) % 2 === 0) p.px(Math.round(o.x + 1), Math.round(o.y - 1), N.hex('#ff4a3a'))
+        // (… À RETARDEMENT — Keko, 23/11 : « qu'elles clignotent en rouge pour indiquer le timer, et que leur clignotement
+        // s'intensifie jusqu'à exploser » : son voyant clignote de 3 à 18 fois par seconde, de plus en plus fort, sa lueur
+        // rouge grandit ; dans le dernier cinquième, toute la grenade rougeoie — voir `Arme.minuterie`)
+        const vie0 = o.vie0 ?? 0
+        const age = vie0 > 0 ? vie0 - o.vie : 0
+        const u = vie0 > 0 ? Math.max(0, Math.min(1, age / vie0)) : 0
+        // (la phase du clignotement : l'intégrale de 3 + 15 u², pour que l'accélération soit continue)
+        const phase = vie0 > 0 ? 3 * age + (5 * age * age * age) / (vie0 * vie0) : t * 6 + o.id
+        const allume = phase - Math.floor(phase) < 0.5
+        p.circle(o.x, o.y, 2.2, N.hex('#3d4a22'))
+        p.circle(o.x - 0.5, o.y - 0.5, 1.3, N.hex('#7a8a44'))
+        if (u > 0.8) p.circle(o.x, o.y, 2.2, N.hex('#ff3a2a'), ((u - 0.8) / 0.2) * 0.6)
+        if (allume) {
+          p.glow(o.x, o.y, 4 + 7 * u, N.hex('#ff3a2a'), 0.35 + 0.5 * u)
+          p.px(Math.round(o.x + 1), Math.round(o.y - 1), u > 0.6 ? N.hex('#ffd0c0') : N.hex('#ff4a3a'))
+        }
       } else if (o.arme === 'escorte') {
         // (une balle des drones d'escorte : un court trait clair)
         p.line(o.x - ux * 3, o.y - uy * 3, o.x, o.y, MITRAILLE[2])

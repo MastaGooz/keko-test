@@ -347,7 +347,11 @@ export const ARMES_DE_FACTION: ArmeDeFaction[] = [
   // (LA BOBINE TESLA — Keko, 22/11 : « l'arc tesla, c'est une chaîne d'éclair bis » : une boule de foudre lente qui
   // traverse la mêlée en foudroyant les trois insectes les plus proches toutes les 0,6 s ; l'identifiant reste `tesla`)
   { id: 'tesla', nom: 'Bobine tesla', dit: 'Une boule de foudre lente qui foudroie les ennemis autour d’elle.', race: 'humains', icone: 'imp-tesla', armes: () => [nouvelle({ id: 'tesla', cadence: 2.6, degats: 58, portee: 120, sphere: { vitesse: 45, duree: 3, rayon: 42, periode: 0.6, vitesseTir: 0, foudre: { cibles: 3 } } })] },
-  { id: 'grenades', nom: 'Lance-grenades', dit: 'Deux grenades à chaque tir, qui explosent à l’impact.', race: 'humains', icone: 'imp-grenades', armes: () => [nouvelle({ id: 'grenades', cadence: 1.5, degats: 51, portee: 110, vitesse: 150, vie: 0.9, dispersion: 0.08, zone: { rayon: 15 }, gerbe: { nombre: 2, ecart: 0.3 } })] },
+  // (À RETARDEMENT — Keko, 23/11 : « très proche des missiles : on envoie deux projectiles tout droit qui explosent » ;
+  // « trois petites grenades qui clignotent en rouge pour indiquer le timer, et leur clignotement s'intensifie jusqu'à
+  // exploser ; la taille de l'explosion entre le missile et l'obus » : trois en éventail, elles s'arrêtent là où sera
+  // la cible et explosent au bout de 1,2 s, sur 28 — le missile 18, l'obus 40 ; voir `Arme.minuterie`)
+  { id: 'grenades', nom: 'Lance-grenades', dit: 'Trois grenades à retardement, qui explosent au bout d’un instant.', race: 'humains', icone: 'imp-grenades', armes: () => [nouvelle({ id: 'grenades', cadence: 1.5, degats: 34, portee: 110, vitesse: 150, vie: 1.2, dispersion: 0.08, zone: { rayon: 28 }, gerbe: { nombre: 3, ecart: 0.3 }, minuterie: { duree: 1.2, frein: 3 } })] },
   // (DES MINI-AVIONS, PAS DES DRONES — Keko, 22/11 : « on a déjà les drones de la Sentinelle » : l'orbite des drones, plus
   // large et plus vive ; la page les dessine en petits chasseurs)
   { id: 'escorte', nom: 'Escorte', dit: 'Deux mini-avions qui mitraillent les ennemis autour du vaisseau.', race: 'humains', icone: 'imp-escorte', armes: () => [0, 1].map((k) => ({ ...nouvelle({ id: 'escorte', cadence: 0.45, degats: 20, portee: 70, vitesse: 320, vie: 0.5, dispersion: 0.05 }), place: 20 + k, orbite: { ...ORBITE_DES_DRONES, rayon: 30, vitesse: 2.6, vol: 230, braquage: 9, autour: 34, phase: k * Math.PI } })) },
@@ -412,7 +416,7 @@ export const MUTATIONS: Mutation[] = [
   variation('grenades-fragmentation', 'grenades', 'Fragmentation', 'Chaque explosion projette six éclats brûlants tout autour.', changerA('grenades', V.fragments)),
   variation('grenades-incendiaires', 'grenades', 'Incendiaires', 'Les grenades enflamment ce qu’elles touchent.', changerA('grenades', V.incendiaire)),
   variation('grenades-cryo', 'grenades', 'Cryogéniques', 'Les grenades gèlent ce qu’elles touchent.', changerA('grenades', V.cryo)),
-  variation('grenades-rafale', 'grenades', 'Rafale', 'Quatre grenades à chaque tir.', changerA('grenades', (a) => ({ ...a, gerbe: { nombre: 4, ecart: 0.25 }, degats: fois(a, 0.7) }))),
+  variation('grenades-rafale', 'grenades', 'Rafale', 'Cinq grenades à chaque tir.', changerA('grenades', (a) => ({ ...a, gerbe: { nombre: 5, ecart: 0.22 }, degats: fois(a, 0.7) }))),
   variation('grenades-drones', 'grenades', 'Drones', 'Deux drones en orbite lancent des grenades sur les ennemis proches.', ajouterA('grenades', (a) => drones(a, { cadence: 1.8, degats: fois(a, 0.6), portee: 80, gerbe: undefined }))),
   variation('grenades-lourdes', 'grenades', 'Gros calibre', 'Des grenades plus lentes, plus fortes, qui explosent plus large.', changerA('grenades', V.lourd)),
   // LES DRONES D'ESCORTE

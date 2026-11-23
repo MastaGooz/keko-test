@@ -3182,6 +3182,30 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   verifier(`l'obus en cloche passe au-dessus de l'insecte de devant (${pv0 - devant.pv} de dégâts) et explose en retombant à ${ou?.toFixed(0)}, sur sa cible (${pv0 - cible.pv}), au bout de ${quand.toFixed(2)} s (1,9)`, devant.pv === pv0 && cible.pv === pv0 - 62 && ou !== null && Math.abs(ou - 120) < 4 && Math.abs(quand - (0.8 + 120 / 110)) < 0.1)
 }
 
+// LA GRENADE À RETARDEMENT (Keko, 23/11 : « trois petites grenades qui clignotent en rouge pour indiquer le timer, et leur
+// clignotement s'intensifie jusqu'à exploser ») : lancée vers un insecte à 90, elle passe celui de 40 sans le toucher,
+// s'arrête sur sa cible et n'explose qu'au bout de sa minuterie, 1,2 s
+{
+  const grenades = { id: 'grenades', cadence: 9, degats: 34, portee: 110, vitesse: 150, vie: 1.2, dispersion: 0, guide: false, tousSens: true, zone: { rayon: 28 }, minuterie: { duree: 1.2, frein: 3 } }
+  const cfg = { ...VAISSEAU, coque: 1e9, armes: [grenades], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false }, passifs: { ...VAISSEAU.passifs, critique: 0 } }
+  const w = nouveauMonde(cfg, 5)
+  w.invasion.prochainA = 1e9
+  const pv0 = 1e6
+  const [devant, cible] = [40, 90].map((x, k): Ennemi => ({ id: 700 + k, corps: { ...nouveauVaisseau(), x, y: 0 }, pv: pv0, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9 }))
+  w.ennemis.push(devant, cible)
+  w.verrou = cible.id
+  let ou: number | null = null
+  let quand = 0
+  let tire0 = -1
+  for (let i = 0; i < 200 && ou === null; i++) {
+    for (const ev of avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements) {
+      if (ev.type === 'obus' && tire0 < 0) tire0 = w.t
+      if (ev.type === 'explosionDeZone') (ou = ev.x), (quand = w.t)
+    }
+  }
+  verifier(`la grenade passe l'insecte de 40 sans le toucher (${pv0 - devant.pv}), s'arrête et explose à ${ou?.toFixed(0)} (90), ${(quand - tire0).toFixed(2)} s après le tir (1,2), sur sa cible (${pv0 - cible.pv})`, devant.pv === pv0 && cible.pv === pv0 - 34 && ou !== null && Math.abs(ou - 90) < 3 && Math.abs(quand - tire0 - 1.2) < 0.05)
+}
+
 // TOUCHÉ, ON TRAVERSE LES INSECTES (Keko, 22/11 : « quand on est touché on est invincible un court instant ; je voudrais
 // qu'on traverse aussi les ennemis ») : le temps qu'il clignote, un insecte posé sur lui ne l'écarte pas ; après, si ; une
 // roche l'arrête toujours
