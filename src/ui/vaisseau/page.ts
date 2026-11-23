@@ -1153,6 +1153,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // `railgun-large` — voir `MUTATIONS` — pour les juger d'un lien)
     if (parametres.has('spe')) {
       if (confSansTalents === null) confSansTalents = CONF
+      // (`&seule` : SANS LES ARMES DU VAISSEAU, rien que celles des cartes — Keko, 23/11 : « un lien où j'ai uniquement la
+      // bobine tesla pour la tester » ; retirées de la configuration de base, elles ne reviennent pas avec les talents)
+      if (parametres.has('seule')) confSansTalents = { ...confSansTalents, armes: [] }
       for (const id of (parametres.get('spe') ?? '').split(',')) {
         const mu = MUTATIONS.find((x) => x.id === id.trim())
         if (mu !== undefined) bonusDuVol = ajouterLeBonus(bonusDuVol, carteSpeciale(mu))

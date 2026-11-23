@@ -8189,3 +8189,6 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     l'air et bascule en retombant) — un corps d'acier éclairé d'un côté, ombré de l'autre, cerné de sombre, une ogive
     claire, une ceinture de cuivre, un culot sombre — et derrière lui une simple lueur de chaleur ; sa fumée fait la
     traînée. Son ombre rétrécit et pâlit quand il monte. VU en capture.
+- **23/11, `&seule` : UNE ARME DE CARTE TOUTE SEULE.** Keko : « un lien où j'ai uniquement la bobine tesla pour la
+  tester ». Avec `&spe`, `&seule` retire les armes du vaisseau de sa configuration de base (`confSansTalents`) : il ne
+  porte que celles des cartes, et les talents du vol ne les ramènent pas. VU en capture : seules les décharges frappent.
