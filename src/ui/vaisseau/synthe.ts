@@ -1536,6 +1536,20 @@ const RECETTES = {
       note(m, 0, 0.45, 0, { f: 900, glisse: { vers: 260, en: 0.18 }, a: 0.001, d: 0.25, battement: 14, partiels: [[1, 1, 1], [2.76, 0.4, 0.5]] })
     },
   },
+  /**
+   * L'IMPULSION DU CANON LASER (Keko, 23/11 : « donner un petit son à cette impulsion » — voir `Arme.zone.part`) : un
+   * « whoum » électrique bref — une note ronde qui tombe de 320 à 110 Hz, à peine saturée —, un souffle qui s'ouvre et se
+   * referme, et une pointe claire, deux petits éclats aigus qui pétillent juste après
+   */
+  impulsion: {
+    duree: 0.4, niveau: 0.22, salle: [0.25, 0.1], variantes: 4,
+    faire: (m, h) => {
+      const f = 320 * (0.92 + 0.16 * h.next())
+      note(m, 0, 0.9, 0, { f, glisse: { vers: f * 0.34, en: 0.09 }, a: 0.003, d: 0.12, partiels: [[1, 1, 1], [2, 0.35, 0.7], [3, 0.15, 0.5]], sature: 1.4 })
+      souffle(m, h, 0, 0.45, 0, { f: 900, glisse: { vers: 2600, en: 0.06, droit: true }, q: 1.2, bande: true, a: 0.01, d: 0.1, large: true })
+      for (let i = 0; i < 2; i++) note(m, 0.02 + 0.03 * i + 0.02 * h.next(), 0.16, (h.next() - 0.5) * 0.6, { f: 2400 + 1600 * h.next(), a: 0.001, d: 0.05, partiels: [[1, 1, 1], [2.76, 0.4, 0.5]] })
+    },
+  },
 } satisfies Record<string, Recette>
 
 export type Son = keyof typeof RECETTES

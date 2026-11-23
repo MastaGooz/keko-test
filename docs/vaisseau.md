@@ -8452,3 +8452,10 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   - La Tourelle (`laser-tourelle`) est retirée ; le test qui s'en servait pour vérifier qu'une variation ajoute une
     arme prend les Drones. Le test : un tir, la cible 100, son voisin à 10 la moitié, le lointain rien ; concentré, pareil
     sur la durée du rayon. VU en capture.
+  - SES ÉCLATS ET SON SON (Keko : « quelques petites particules qui explosent dans la zone d'effet de l'impulsion, et un
+    petit son aussi ») : DE PETITS ÉCLATS QUI PÈTENT dans tout le disque de la zone (`petiller` : un point blanc, une petite
+    croix verte qui s'ouvre et s'éteint en 0,12 s, chacun à son instant ; un tous les trois de rayon) — à l'impact pendant
+    l'onde, et sans cesse dans la zone continue de la Concentration (un tirage neuf tous les quarts de seconde). LE SON
+    (`impulsion`, synthe.ts) : un « whoum » électrique bref qui tombe de 320 à 110 Hz, un souffle qui s'ouvre, deux
+    petits éclats aigus ; à chaque impact, et au départ de chaque rayon avec la Concentration. Mesuré (crête 0,22), PAS
+    ÉCOUTÉ.

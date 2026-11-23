@@ -11755,7 +11755,28 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * semées avec les autres particules)
    */
   /** LES ONDES VERTES DE L'IMPULSION (voir l'événement `explosionDeZone` du laser) : un anneau qui s'ouvre jusqu'au bord de la zone en 0,25 s, une lueur qui pâlit. */
-  const impulsionsVertes: { x: number; y: number; t0: number; r: number }[] = []
+  const impulsionsVertes: { x: number; y: number; t0: number; r: number; g: number }[] = []
+  /**
+   * DE PETITS ÉCLATS QUI PÈTENT DANS LA ZONE (Keko, 23/11 : « quelques petites particules qui explosent dans la zone d'effet de
+   * l'impulsion ») : `n` points tirés dans le disque de rayon `r` (graine `g`), chacun pète à son instant — un point blanc,
+   * une petite croix verte qui s'ouvre et s'éteint en 0,12 s ; `u`, le temps de l'onde (0 à 1, sur `duree` secondes).
+   */
+  function petiller(p: Peintre, x: number, y: number, r: number, g: number, n: number, u: number, duree: number, k: number): void {
+    const R2 = new N.Rng((g * 7919) | 0)
+    for (let i = 0; i < n; i++) {
+      const a = R2.range(0, Math.PI * 2)
+      const d = r * Math.sqrt(R2.next())
+      const quand = R2.range(0, 0.75)
+      const q = ((u - quand) * duree) / 0.12
+      if (q < 0 || q > 1) continue
+      const px = x + Math.cos(a) * d
+      const py = y + Math.sin(a) * d
+      const e = 1 + 2 * q
+      if (q < 0.4) p.dot(px, py, N.WHITE, k)
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) p.dot(px + dx * e, py + dy * e, q < 0.5 ? LASER_VERT[4] : LASER_VERT[3], (1 - q) * k)
+      p.glow(px, py, 3, LASER_VERT[3], 0.4 * (1 - q) * k)
+    }
+  }
   const DUREE_DE_L_IMPULSION = 0.25
   function dessinerLesFaisceaux(p: Peintre): void {
     for (let i = impulsionsVertes.length - 1; i >= 0; i--) if (t - impulsionsVertes[i].t0 > DUREE_DE_L_IMPULSION) impulsionsVertes.splice(i, 1)
@@ -11764,6 +11785,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const r = o.r * (1 - (1 - u) ** 3)
       p.glow(o.x, o.y, r, LASER_VERT[2], 0.3 * (1 - u))
       p.ring(o.x, o.y, r, u < 0.4 ? 2 : 1, u < 0.3 ? LASER_VERT[4] : LASER_VERT[3], 0.9 * (1 - u))
+      petiller(p, o.x, o.y, o.r, o.g, Math.max(4, Math.round(o.r / 3)), u, DUREE_DE_L_IMPULSION, 1)
     }
     for (const f of m.faisceaux) {
       const a = CONF.armes[f.arme]
@@ -11796,6 +11818,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         p.glow(x, y, r, LASER_VERT[2], 0.18 * kk)
         p.ring(x, y, r * (0.92 + 0.08 * Math.sin(t * 25 + f.nee)), 1, LASER_VERT[3], 0.6 * kk)
         p.ring(x, y, r * bat, 1, LASER_VERT[4], 0.5 * (1 - bat) * kk)
+        // (des éclats qui pètent sans cesse dans la zone : un tirage neuf tous les quarts de seconde)
+        const cycle = Math.floor(t * 4)
+        petiller(p, x, y, r, cycle * 31 + f.nee * 977 + x * 0.01, Math.max(3, Math.round(r / 4)), t * 4 - cycle, 0.25, kk)
       }
       zoneDe(e.corps.x, e.corps.y, k)
       // (SES REBONDS — la carte Ricochet, voir `Arme.concentre` : le même rayon, de proche en proche, plus pâle à chaque fois)
@@ -16822,7 +16847,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           // (L'IMPULSION DU CANON LASER — Keko, 23/11 : « un petit effet d'onde verte » : pas de feu ; une onde verte qui
           // s'ouvre jusqu'au bord de la zone, quelques étincelles vertes — voir `impulsionsVertes`)
           if (ev.arme === 'laser') {
-            impulsionsVertes.push({ x: ev.x, y: ev.y, t0: t, r: ev.rayon })
+            // (… SON SON — Keko, 23/11 : « un petit son aussi à cette impulsion »)
+            jouer('impulsion', { dx: ev.x - v.x, dy: ev.y - v.y })
+            impulsionsVertes.push({ x: ev.x, y: ev.y, t0: t, r: ev.rayon, g: R.range(0, 1000) })
             for (let i = 0; i < 6; i++) {
               const a = R.range(0, Math.PI * 2)
               const vit = R.range(30, 70)
@@ -16943,6 +16970,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           }
           break
         case 'obus':
+          // (UN RAYON CONCENTRÉ À ZONE S'ALLUME — Concentration et Impulsion : le son de l'impulsion, sur sa cible)
+          if (ev.arme === 'laser' && CONF.armes.some((a) => a.id === 'laser' && a.concentre !== undefined && a.zone !== undefined)) {
+            const fa = m.faisceaux[m.faisceaux.length - 1]
+            const ci = fa === undefined ? undefined : m.ennemis.find((x) => x.id === fa.cible)
+            jouer('impulsion', ci === undefined ? undefined : { dx: ci.corps.x - v.x, dy: ci.corps.y - v.y })
+          }
           // une arme tire : deux étincelles à la bouche, et son son
           // (un coup annoncé en avance a déjà sonné)
           if (t - (armeAnnonceeA.get(ev.arme) ?? -10) < 0.4) armeAnnonceeA.delete(ev.arme)
