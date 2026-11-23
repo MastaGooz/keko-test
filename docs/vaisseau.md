@@ -8468,3 +8468,11 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   de la Vouivre), sans dégâts sur la durée ; ses tirs, ses rebonds et son rayon concentré rongent ; les cartes
   « Corrosion » grandissent le bonus (`corrodeDe`). L'insecte rongé porte la tache d'acide qui fume, à sa taille, et le
   grésillement de l'acide au premier contact. Le test : deux tirs de 100, 235 (le second rongé) ; deux rayons, 237.
+- **23/11, L'INSECTE RONGÉ : TEINTÉ DE VERT, DES GOUTTES QUI S'ÉVAPORENT.** Keko : « je trouve pas l'effet de corrosion
+  sur les ennemis très beau, ça fait juste une sphère verte ; on peut le teinter un peu vert, et faire des petites
+  particules d'acide qui s'évaporent de l'ennemi affecté ? ». La tache verte, la lueur, la vapeur et les petites étoiles
+  sont retirées. L'INSECTE EST TEINT : son image, chaque pixel mêlé à 38 % au vert de l'acide (`rongee`, gardée à côté
+  de l'image d'origine). DES GOUTTES D'ACIDE (`gouttesDAcide`) naissent sur lui — plus sur un gros —, montent en
+  ondulant, passent du vert vif au vert pâle puis à une vapeur grise, et s'effacent en 0,4 à 0,75 s. Vaut pour toute
+  corrosion (le laser, les mines et le crachat de la Vouivre, la traînée du Ver). VU en capture : les gouttes ; la
+  teinte, non (les petits mouraient trop vite).

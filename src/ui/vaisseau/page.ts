@@ -9138,6 +9138,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   // place dans le jet (plus loin, un peu plus froide))
   let flammesDuNez: { x: number; y: number; vx: number; vy: number; t0: number; fl: number; sm: boolean; sl: number; s: number; f: number }[] = []
   let flammesDesBrules: { x: number; y: number; vx: number; vy: number; t0: number; vie: number }[] = []
+  /** LES GOUTTES D'ACIDE QUI S'ÉVAPORENT d'un insecte rongé (Keko, 23/11 — voir « il est rongé ») : elles naissent sur lui, montent en ondulant, pâlissent et rapetissent. */
+  let gouttesDAcide: { x: number; y: number; vx: number; vy: number; t0: number; vie: number; g: number }[] = []
   /** Une tape commencée sur un ennemi (au doigt) : elle le verrouille si elle est brève et ne bouge pas ; dans le vide (`cible` nulle), elle lâche le verrou. */
   let tapeVerrou: { id: number; x: number; y: number; a: number; cible: number | null } | null = null
   /**
@@ -10188,7 +10190,22 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * (`deforme` : SON CORPS EST DÉFORMÉ ET PRIS DE LUMIÈRE VIOLETTE — le portail l'avale : étiré de `long` le long de
    * l'axe `axe` (vers le centre du vortex), resserré de `large` en travers, ses teintes passées au violet, `part` de 0 à 1.)
    */
-  function dessinerUnInsecte(p: Peintre, x: number, y: number, cap: number, phase: number, blanchi: boolean, aggro: boolean, deforme?: { axe: number; long: number; large: number; part: number }, sorte?: SorteDInsecte): void {
+  /**
+   * L'INSECTE RONGÉ, TEINTÉ DE VERT (Keko, 23/11 : « je trouve pas l'effet de corrosion très beau, ça fait juste une sphère
+   * verte ; on peut le teinter un peu vert ») : la même image, chaque pixel mêlé d'un tiers au vert de l'acide ; gardée à
+   * côté de l'image d'origine.
+   */
+  const imagesRongees = new WeakMap<ImageGardee, ImageGardee>()
+  const VERT_DE_L_ACIDE = N.hex('#7ae84a')
+  function rongee(im: ImageGardee): ImageGardee {
+    let r = imagesRongees.get(im)
+    if (r === undefined) {
+      r = { ...im, c: Uint32Array.from(im.c, (c) => meler(c, VERT_DE_L_ACIDE, 0.38)) }
+      imagesRongees.set(im, r)
+    }
+    return r
+  }
+  function dessinerUnInsecte(p: Peintre, x: number, y: number, cap: number, phase: number, blanchi: boolean, aggro: boolean, deforme?: { axe: number; long: number; large: number; part: number }, sorte?: SorteDInsecte, ronge = false): void {
     const taille = sorte === undefined ? 1 : CONF.invasion[sorte].taille
     const marche = t * (aggro ? 22 : 13) + phase
     const morsure = t * 18 + phase
@@ -10208,7 +10225,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         im_ = imageDe(Math.ceil(TAILLE_DE_L_INSECTE * taille) + 2, (p2, c) => peindreLInsecte(p2, c, c, (ic / POSES_DU_CAP) * tour, (im / POSES_DE_LA_MARCHE) * tour, (io / POSES_DE_LA_MORSURE) * tour, false, aggro, sorte))
         imagesDesInsectes.set(cle, im_)
       }
-      poserLImage(p, im_, x, y)
+      poserLImage(p, ronge ? rongee(im_) : im_, x, y)
       if (aggro) p.glow(x, y, 9 * taille ** 0.8, N.hex('#ff3a4a'), 0.25 + 0.1 * Math.sin(t * 9 + phase))
       return
     }
@@ -14354,7 +14371,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           if (e.pv < ro.pvMax) dessinerUneJauge(p, sx, sy + ro.rayon + 4, Math.round(ro.rayon * 1.6), e.pv / ro.pvMax, GRIS_DE_ROCHE[0], GRIS_DE_ROCHE[1], false)
           continue
         }
-        dessinerUnInsecte(p, sx, sy, b.cap, e.id * 1.7, blanchi, e.fait === 'aggro', undefined, e.sorte)
+        dessinerUnInsecte(p, sx, sy, b.cap, e.id * 1.7, blanchi, e.fait === 'aggro', undefined, e.sorte, e.acide !== undefined && e.acide.jusque > m.t)
         // (SES ÉTATS À SA TAILLE — Keko, 23/11 : « quand un ennemi est enflammé, gelé ou sous l'effet de la corrosion, que
         // l'effet s'adapte également à sa taille », comme le crépitement de la balise laser : `ech`, sa taille rapportée à
         // celle d'un insecte — le moucheron 0,6, le cornu 1,5, le cuirassier 2,2 ; plus de braises, d'éclats, de bulles sur
@@ -14376,28 +14393,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           }
         }
         // IL EST RONGÉ (l'acide de la Vouivre) : une tache verte sur lui, qui fume — trois volutes qui montent et pâlissent
-        if (e.acide !== undefined && e.acide.jusque > m.t) {
-          // (VERT, COMME L'EXPLOSION — Keko, 19/11 : l'acide reste de sa couleur, quelle que soit l'apparence)
-          const ve = [...VENIN.slice(0, 4), ECLABOUSSURE[6], ECLABOUSSURE[7]]
-          p.glow(sx, sy, 7 * ech, ve[3], 0.3 + 0.1 * Math.sin(t * 9 + e.id))
-          p.circle(sx, sy, 3.5 * ech, ve[2], 0.35)
-          // (… ET IL GRÉSILLE, comme l'éclaboussure de pixelfx — Keko, 17/11 : une vapeur pâle qui monte en ondulant, et de
-          // petites étoiles blanches qui pètent sur lui)
-          for (let k = 0; k < plus(2); k++) {
-            const ph = (t * 0.9 + k / plus(2) + e.id * 0.29) % 1
-            const dx0 = (k - (plus(2) - 1) / 2) * 2.5 * Math.max(0, ech - 1)
-            for (let h = 0; h < 6 * ech; h += 0.5) p.blend(sx + dx0 + Math.sin(e.id * 2.3 + k * 2.1 + h * 0.5 + t * 2) * (1 + h * 0.3), sy - 2 - ph * 6 * ech - h, h < 2 ? ve[4] : VAPEUR, 0.35 * (1 - ph) * Math.sin((Math.PI * h) / (6 * ech)))
-          }
-          const pet = (t * 5 + e.id * 0.37) % 1
-          if (pet < 0.35) {
-            const n = Math.floor(t * 5 + e.id * 0.37)
-            const ox = sx + (alea(e.id, n, 1) - 0.5) * 6 * ech
-            const oy = sy + (alea(e.id, n, 2) - 0.5) * 6 * ech
-            const q = pet / 0.35
-            p.px(Math.round(ox), Math.round(oy), N.WHITE)
-            for (const [dx, dy] of [[1, 0], [-1, 0], [0, -1]]) p.dot(ox + dx * (1 + q * 2), oy + dy * (1 + q * 2), ve[5], 1 - q)
-          }
-        }
+        // (… PUIS TEINTÉ DE VERT, ET DES GOUTTES QUI S'ÉVAPORENT — Keko, 23/11 : « ça fait juste une sphère verte ; on peut le
+        // teinter un peu vert, et faire des petites particules d'acide qui s'évaporent de l'ennemi affecté » : la tache, la
+        // vapeur et les étoiles retirées ; l'insecte est teint (`rongee`), les gouttes sont semées avec les autres particules —
+        // voir `gouttesDAcide`)
         // IL EST IRRADIÉ (les cristaux du Prisme) : une lueur bleue qui bat, des étincelles d'énergie qui montent
         if (e.irradie !== undefined && e.irradie.jusque > m.t) {
           p.glow(sx, sy, 7 * ech, lumiereDuPrisme()[3], 0.35 + 0.15 * Math.sin(t * 17 + e.id))
@@ -14822,6 +14821,18 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const l = Math.hypot(f.vx, f.vy) || 1
       // (sa pointe traîne en arrière de sa course)
       firePuff(p, x, y, 1 - u, f.s * (1 + 1.3 * u), f.f, H_FEU, 0.07, -f.vx / l, -f.vy / l)
+    }
+    // les gouttes d'acide qui s'évaporent : vert vif, puis vert pâle, puis une vapeur grise qui s'efface ; elles ondulent
+    gouttesDAcide = gouttesDAcide.filter((g) => t - g.t0 < g.vie)
+    for (const g of gouttesDAcide) {
+      const age = t - g.t0
+      const u = age / g.vie
+      const x = g.x + g.vx * age + Math.sin(age * 9 + g.g) * 1.2
+      const y = g.y + g.vy * age
+      const c = u < 0.35 ? N.hex('#b8ff6a') : u < 0.7 ? N.hex('#7ae84a') : N.hex('#9aa894')
+      if (u < 0.5) p.glow(x, y, 3, N.hex('#7ae84a'), 0.35 * (1 - u / 0.5))
+      p.dot(x, y, c, 1 - u * 0.8)
+      if (u < 0.3) p.dot(x, y + 1, c, 0.6 * (1 - u / 0.3))
     }
     // les petites flammes des insectes qui brûlent : des bouffées qui montent en rapetissant
     flammesDesBrules = flammesDesBrules.filter((f) => t - f.t0 < f.vie)
@@ -18143,6 +18154,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         // (et l'obus en cloche une fumée plus grosse, là où il est à l'écran — en l'air)
         for (const o of m.obus) if (o.arme === 'obusier' && R.next() < 0.7) feuDesConsumes.spawn(N.P.SMOKE, o.x - o.vx * 0.04, o.y - hauteurEnCloche(o).h - o.vy * 0.04, R.range(-3, 3), R.range(-3, 3), R.range(0.4, 0.6), FUMEE_DU_FEU, R.range(1.3, 1.9))
         for (const o of m.obus) if ((o.arme === 'minimissile' || o.arme === 'roquettes') && R.next() < 0.6) feuDesConsumes.spawn(N.P.SMOKE, o.x - o.vx * 0.03, o.y - o.vy * 0.03, R.range(-3, 3), R.range(-3, 3), R.range(0.3, 0.5), FUMEE_DU_FEU, R.range(0.9, 1.4))
+        // les insectes rongés : des gouttes d'acide naissent sur eux et s'évaporent (plus sur un gros — voir `gouttesDAcide`)
+        for (const e of m.ennemis) {
+          if (e.acide === undefined || e.acide.jusque <= m.t || e.asteroide !== undefined) continue
+          const r = rayonDe(CONF, e)
+          if (R.next() > 0.35 * Math.max(1, r / CONF.ennemi.rayon)) continue
+          const a = R.range(0, Math.PI * 2)
+          const d = r * 0.7 * Math.sqrt(R.next())
+          gouttesDAcide.push({ x: e.corps.x + Math.cos(a) * d, y: e.corps.y + Math.sin(a) * d, vx: e.corps.vx * 0.5 + R.range(-4, 4), vy: e.corps.vy * 0.5 - R.range(8, 18), t0: t, vie: R.range(0.4, 0.75), g: R.range(0, 6.3) })
+        }
         // les insectes qui brûlent : de petites flammes naissent sur eux et montent
         // (… à sa taille — Keko, 23/11 : plus nombreuses et plus étalées sur un gros)
         for (const e of m.ennemis) {
