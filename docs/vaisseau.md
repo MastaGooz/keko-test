@@ -8414,3 +8414,9 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     presque blanc qui frémit —, qui s'allume en 0,04 s et s'éteint dans son dernier cinquième ; sur la cible, un éclat
     vert qui bat, des étincelles vertes qui en jaillissent ; au départ, le son du laser.
   - Le test : un tir, à mi-course 61 rongés, en tout 122, aucun obus ; il s'éteint seul. VU en capture.
+  - LE NEZ ET LE SON (Keko : « que le vaisseau soit toujours orienté dans le sens du laser, parfois il diffère ; et un son
+    quand le laser est actif ») : le nez se tournait vers l'insecte le plus proche, qui pouvait changer pendant le rayon ;
+    tant qu'un rayon tient, LE NEZ RESTE SUR SA CIBLE (`regardVoulu`). Et une voix continue tant qu'il tient — celle de la
+    balise laser (`voixDuLaser`), une quinte plus haut (147 Hz) et plus claire (passe-bande à 1 400 Hz), pour distinguer
+    le vert du rouge ; elle monte en 20 ms, retombe en 60, placée sur la cible (`rayonConcentre`). PAS ÉCOUTÉE : une
+    copie hors du jeu envoyée à Keko.

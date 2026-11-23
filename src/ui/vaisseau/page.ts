@@ -9421,6 +9421,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // ennemis » : il la lance de sa proue)
     if (VORTEX && CONF.armes.length > 0 && CONF.armes.every((a) => a.orbite !== undefined || a.pose !== undefined || a.chaine !== undefined || a.aura !== undefined || a.balise !== undefined || a.givre !== undefined || a.nova !== undefined || a.salve !== undefined || a.condense !== undefined || a.tornade !== undefined || a.nuee !== undefined || a.rejeton !== undefined || a.mine !== undefined || a.fleau !== undefined || a.drain !== undefined || a.vrille !== undefined || a.ponte !== undefined)) return undefined
     if (VORTEX) {
+      // (UN LASER CONCENTRÉ EN COURS : le nez reste sur sa cible, pas sur l'insecte le plus proche — Keko, 23/11 : « que le
+      // vaisseau soit toujours orienté dans le sens du laser ; parfois il diffère » — voir `Arme.concentre`)
+      if (enJeu && m.phase === 'vol') {
+        for (let i = m.faisceaux.length - 1; i >= 0; i--) {
+          const e = m.ennemis.find((x) => x.id === m.faisceaux[i].cible)
+          if (e === undefined) continue
+          const d = Math.hypot(e.corps.x - v.x, e.corps.y - v.y) || 1
+          return { x: (e.corps.x - v.x) / d, y: (e.corps.y - v.y) / d }
+        }
+      }
       // (… D'ASSEZ LOIN pour être prêt, même avec une arme courte : le lance-flammes ne porte qu'à 45)
       const cible = enJeu && m.phase === 'vol' ? ennemiLePlusProche(m, Math.max(110, Math.max(0, ...CONF.armes.map((a) => a.portee)) * 1.35)) : null
       if (cible === null) return undefined
@@ -11588,6 +11598,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * sinon une seule voix pour toutes les balises — un peu plus forte avec le nombre d'insectes brûlés, jusqu'à quatre —,
    * placée sur le plus proche du vaisseau.
    */
+  /** LE SON DU LASER CONCENTRÉ (Keko, 23/11 : « un son quand le laser est actif » — voir `voixDuLaser`) : placé sur la cible du rayon le plus récent ; null sans rayon. */
+  function rayonConcentre(): { dx: number; dy: number } | null {
+    if (enApercu) return null
+    for (let i = m.faisceaux.length - 1; i >= 0; i--) {
+      const e = m.ennemis.find((x) => x.id === m.faisceaux[i].cible)
+      if (e !== undefined) return { dx: e.corps.x - v.x, dy: e.corps.y - v.y }
+    }
+    return null
+  }
   function laserQuiBrule(): { fort: number; dx: number; dy: number } | null {
     if (enApercu || m.balisesLaser.length === 0) return null
     const touches = m.balisesLaser.flatMap((b) => ennemisDuLien(CONF, m, b))
@@ -18167,7 +18186,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // de l'extraction monte avec l'arc d'or (et se tait quand le compte est au bout : le son de l'extraction la relève)
       if (m.extraction !== compteVu) compteMonte = m.extraction > compteVu
       compteVu = m.extraction
-      regler(m.phase === 'vol' ? Math.max(flamme, 0.6 * v.poussee) : 0, m.phase === 'vol' && (m.forage !== null || m.canal !== null), m.phase === 'vol' ? m.extraction / CONF.extraction.duree : 0, compteMonte, m.phase === 'vol' && m.crache, genreDePropulsion(), bourdonDeLaNuee(), m.phase === 'vol' ? laserQuiBrule() : null)
+      regler(m.phase === 'vol' ? Math.max(flamme, 0.6 * v.poussee) : 0, m.phase === 'vol' && (m.forage !== null || m.canal !== null), m.phase === 'vol' ? m.extraction / CONF.extraction.duree : 0, compteMonte, m.phase === 'vol' && m.crache, genreDePropulsion(), bourdonDeLaNuee(), m.phase === 'vol' ? laserQuiBrule() : null, m.phase === 'vol' ? rayonConcentre() : null)
       if (m.phase === 'vol') annoncerLesSons()
       for (const e of m.ennemis) {
         const f = flammesEnnemies.get(e.id) ?? 0

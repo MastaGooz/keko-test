@@ -242,6 +242,7 @@ let chargeMuette = true
 let flamme: Voix | null = null
 let bourdon: Voix | null = null
 let laser: (Voix & { pan: StereoPannerNode }) | null = null
+let laserVert: (Voix & { pan: StereoPannerNode }) | null = null
 
 /**
  * LE RAYON DE LA BALISE LASER QUI BRÛLE, UNE VOIX CONTINUE (Keko, 23/11 : « trop percutant, plein de petites
@@ -251,10 +252,12 @@ let laser: (Voix & { pan: StereoPannerNode }) | null = null
  * boucle, passe-bande vers 1 800 Hz — ; le tout tremble à 33 Hz, électrique. Il ne sonne que tant que le rayon brûle
  * quelque chose : il monte en 30 ms, retombe en 100 ; placé et éloigné comme les sons ponctuels.
  */
-function voixDuLaser(ctx: AudioContext): Voix & { pan: StereoPannerNode } {
+// (… ET CELLE DU LASER CONCENTRÉ DU CANON — Keko, 23/11 : « rajouter un son quand le laser est actif » : la même voix,
+// une quinte plus haut et plus claire — `base`, `clair` —, pour distinguer le rayon vert du rouge)
+function voixDuLaser(ctx: AudioContext, base = 98, clair = 900): Voix & { pan: StereoPannerNode } {
   const filtre = ctx.createBiquadFilter()
   filtre.type = 'bandpass'
-  filtre.frequency.value = 900
+  filtre.frequency.value = clair
   filtre.Q.value = 0.9
   const tremolo = ctx.createGain()
   tremolo.gain.value = 0.8
@@ -263,7 +266,7 @@ function voixDuLaser(ctx: AudioContext): Voix & { pan: StereoPannerNode } {
   const profondeur = ctx.createGain()
   profondeur.gain.value = 0.2
   lfo.connect(profondeur).connect(tremolo.gain)
-  for (const [type, f, cents, v] of [['sawtooth', 98, 0, 0.5], ['sawtooth', 147, 6, 0.4], ['square', 196, -4, 0.12]] as const) {
+  for (const [type, f, cents, v] of [['sawtooth', base, 0, 0.5], ['sawtooth', base * 1.5, 6, 0.4], ['square', base * 2, -4, 0.12]] as const) {
     const o = ctx.createOscillator()
     o.type = type
     o.frequency.value = f
@@ -677,7 +680,7 @@ function voixDeCharge(ctx: AudioContext): NonNullable<typeof charge> {
  * Règle les sons continus, à chaque image : la poussée du vaisseau (0 à 1), si la foreuse creuse, où en est le compte
  * de l'extraction (`compte`, de 0 à 1) et s'il monte (à quai) ou redescend (hors du parvis).
  */
-export function regler(poussee: number, creuse: boolean, compte: number, monte: boolean, crache = false, genre: GenreDePropulsion = 'souffle', nuee: { taille: number; mord: boolean } | null = null, brule: { fort: number; dx: number; dy: number } | null = null): void {
+export function regler(poussee: number, creuse: boolean, compte: number, monte: boolean, crache = false, genre: GenreDePropulsion = 'souffle', nuee: { taille: number; mord: boolean } | null = null, brule: { fort: number; dx: number; dy: number } | null = null, concentre: { dx: number; dy: number } | null = null): void {
   try {
     const ctx = ZZFX.audioContext
     if (ctx.state !== 'running') return
@@ -691,6 +694,7 @@ export function regler(poussee: number, creuse: boolean, compte: number, monte: 
     if (flamme === null && crache) flamme = voixDeFlamme(ctx)
     if (bourdon === null && nuee !== null) bourdon = voixDeLaNuee(ctx)
     if (laser === null && brule !== null) laser = voixDuLaser(ctx)
+    if (laserVert === null && concentre !== null) laserVert = voixDuLaser(ctx, 147, 1400)
     const t = ctx.currentTime
     // (le rayon de la balise laser : tant qu'il brûle, éloigné et placé comme un son ponctuel ; il se tait sans lui)
     if (laser !== null) {
@@ -701,6 +705,14 @@ export function regler(poussee: number, creuse: boolean, compte: number, monte: 
       const fort = brule === null ? 0 : ZZFX.volume * 0.35 * brule.fort * loin
       laser.gain.gain.setTargetAtTime(fort, t, fort > 0 ? 0.03 : 0.1)
       if (brule !== null) laser.pan.pan.setTargetAtTime(Math.max(-1, Math.min(1, brule.dx / 160)), t, 0.05)
+    }
+    // (le laser concentré du canon : tant qu'un rayon tient, placé sur sa cible)
+    if (laserVert !== null) {
+      const d = concentre === null ? PORTEE : Math.hypot(concentre.dx, concentre.dy)
+      const loin = d >= PORTEE ? 0 : (1 - d / PORTEE) ** 2
+      const fort = concentre === null ? 0 : ZZFX.volume * 0.3 * loin
+      laserVert.gain.gain.setTargetAtTime(fort, t, fort > 0 ? 0.02 : 0.06)
+      if (concentre !== null) laserVert.pan.pan.setTargetAtTime(Math.max(-1, Math.min(1, concentre.dx / 160)), t, 0.05)
     }
     // (la nuée : à peine au repos, un peu plus quand elle mord, et avec sa taille ; elle se tait sans nuée)
     if (bourdon !== null) {
@@ -763,7 +775,7 @@ export function regler(poussee: number, creuse: boolean, compte: number, monte: 
 function taireLesVoix(): void {
   try {
     const ctx = ZZFX.audioContext
-    for (const v of [...propulsions.values(), forage, charge, flamme, bourdon, laser]) {
+    for (const v of [...propulsions.values(), forage, charge, flamme, bourdon, laser, laserVert]) {
       if (v === null) continue
       v.gain.gain.cancelScheduledValues(ctx.currentTime)
       v.gain.gain.setValueAtTime(0, ctx.currentTime)
