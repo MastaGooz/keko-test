@@ -288,9 +288,28 @@ function voixDuLaser(ctx: AudioContext): Voix & { pan: StereoPannerNode } {
   gBruit.gain.value = 0.25
   bruit.connect(grain).connect(gBruit).connect(tremolo)
   bruit.start()
+  // (… ET DE TRÈS LÉGERS CRÉPITEMENTS — Keko, 23/11 : comme ceux du lance-flammes, plus rares et plus discrets : une seconde
+  // de petits claquements semés au hasard, en boucle, passe-haut, sous le bourdon)
+  const cb = ctx.createBuffer(1, n, n)
+  const c = cb.getChannelData(0)
+  for (let k = 0; k < 35; k++) {
+    const at = Math.floor(Math.random() * (n - 300))
+    const fort = 0.3 + 0.7 * Math.random()
+    for (let i = 0; i < 200; i++) c[at + i] += (Math.random() * 2 - 1) * fort * Math.exp(-i / 35)
+  }
+  const crepite = ctx.createBufferSource()
+  crepite.buffer = cb
+  crepite.loop = true
+  const aigu = ctx.createBiquadFilter()
+  aigu.type = 'highpass'
+  aigu.frequency.value = 2200
+  const gCrepite = ctx.createGain()
+  gCrepite.gain.value = 0.22
+  crepite.start()
   const gain = ctx.createGain()
   gain.gain.value = 0
   const pan = new StereoPannerNode(ctx, { pan: 0 })
+  crepite.connect(aigu).connect(gCrepite).connect(gain)
   filtre.connect(tremolo).connect(gain).connect(pan).connect(ctx.destination)
   lfo.start()
   return { gain, filtre, lfo, pan }

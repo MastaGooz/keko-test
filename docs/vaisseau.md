@@ -8375,3 +8375,5 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   tremblement, rendus par un script) a été envoyée à Keko.)
   (… PLUS FORTE — Keko : « augmente un peu le volume, je le trouve trop discret » : 0,22 au lieu de 0,14, environ 4 dB ;
   puis « encore plus fort » : 0,35, encore 4 dB.)
+  (… ET DE TRÈS LÉGERS CRÉPITEMENTS — Keko : « on peut rajouter de très légers crépitements » : comme ceux du lance-flammes,
+  plus rares et plus discrets — 35 petits claquements par seconde, en boucle, passe-haut à 2 200 Hz, à 0,22 du bourdon.)
