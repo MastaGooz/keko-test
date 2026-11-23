@@ -10192,7 +10192,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    */
   /**
    * L'INSECTE RONGÉ, TEINTÉ DE VERT (Keko, 23/11 : « je trouve pas l'effet de corrosion très beau, ça fait juste une sphère
-   * verte ; on peut le teinter un peu vert ») : la même image, chaque pixel mêlé d'un tiers au vert de l'acide ; gardée à
+   * verte ; on peut le teinter un peu vert ») : la même image, chaque pixel mêlé d'un peu de vert de l'acide ; gardée à
    * côté de l'image d'origine.
    */
   const imagesRongees = new WeakMap<ImageGardee, ImageGardee>()
@@ -10200,7 +10200,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   function rongee(im: ImageGardee): ImageGardee {
     let r = imagesRongees.get(im)
     if (r === undefined) {
-      r = { ...im, c: Uint32Array.from(im.c, (c) => meler(c, VERT_DE_L_ACIDE, 0.38)) }
+      // (0,38 d'abord — Keko, 23/11 : « la teinte verte est trop prononcée » : 0,18)
+      r = { ...im, c: Uint32Array.from(im.c, (c) => meler(c, VERT_DE_L_ACIDE, 0.18)) }
       imagesRongees.set(im, r)
     }
     return r

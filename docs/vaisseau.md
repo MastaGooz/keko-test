@@ -8476,3 +8476,4 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   ondulant, passent du vert vif au vert pâle puis à une vapeur grise, et s'effacent en 0,4 à 0,75 s. Vaut pour toute
   corrosion (le laser, les mines et le crachat de la Vouivre, la traînée du Ver). VU en capture : les gouttes ; la
   teinte, non (les petits mouraient trop vite).
+  (… PLUS LÉGÈRE — Keko : « la teinte verte est trop prononcée » : 18 % au lieu de 38 %.)
