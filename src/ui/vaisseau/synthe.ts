@@ -1536,6 +1536,19 @@ const RECETTES = {
       note(m, 0, 0.45, 0, { f: 900, glisse: { vers: 260, en: 0.18 }, a: 0.001, d: 0.25, battement: 14, partiels: [[1, 1, 1], [2.76, 0.4, 0.5]] })
     },
   },
+  /**
+   * LE RAYON DE LA BALISE LASER BRÛLE UN INSECTE (Keko, 23/11 : « un petit bruit de crépitement sur les ennemis touchés
+   * par le laser, pour signifier que les dégâts sont infligés » — voir `Arme.lien`) : trois ou quatre petits claquements
+   * secs, aigus, serrés en 50 ms — un grésillement électrique —, sur un bourdon grave à peine saturé qui s'éteint vite
+   */
+  crepitement: {
+    duree: 0.16, niveau: 0.17, salle: [0.15, 0.06], variantes: 6,
+    faire: (m, h) => {
+      const n = 3 + Math.floor(h.next() * 2)
+      for (let i = 0; i < n; i++) souffle(m, h, h.next() * 0.05, 0.6 + 0.4 * h.next(), (h.next() - 0.5) * 0.5, { f: 3200 + 3000 * h.next(), q: 2.5, bande: true, a: 0.0003, d: 0.006 + 0.008 * h.next() })
+      note(m, 0, 0.35, 0, { f: 120, a: 0.003, d: 0.06, partiels: [[1, 1, 1], [3, 0.5, 0.8], [5, 0.3, 0.6]], sature: 1.6 })
+    },
+  },
 } satisfies Record<string, Recette>
 
 export type Son = keyof typeof RECETTES

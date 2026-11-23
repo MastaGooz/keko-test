@@ -8354,3 +8354,9 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   ennemi ; si un ennemi est gros, des particules sur toute sa longueur qui superpose la ligne » : la corde du rayon
   dans son cercle, une étincelle tous les trois pixels de corde et par image, réparties au hasard sur elle ; plus rapides,
   plus longues, un peu de rose clair parmi les rouges.)
+  (… ET SON CRÉPITEMENT — Keko : « il manque un petit bruit de crépitement sur les ennemis touchés par le laser, sans
+  qu'il se répète trop si beaucoup sont touchés en même temps, et qui dépende de la distance du vaisseau » : `crepitement`
+  (synthe.ts, six variantes) — trois ou quatre claquements secs et aigus serrés en 50 ms, sur un bourdon grave ; UN SEUL
+  pour toutes les balises et tous les insectes, toutes les 0,11 s au plus (`crepiteA`), sur un insecte touché tiré au
+  hasard ; `jouer` l'atténue avec sa distance au vaisseau et le place à gauche ou à droite. Mesuré (crête 0,17), PAS
+  ÉCOUTÉ.)
