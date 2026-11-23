@@ -8350,3 +8350,7 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   points) ; AU POINT OÙ LE RAYON LE TRAVERSE (le pied de sa perpendiculaire sur le rayon), une petite gerbe d'étincelles
   rouges — trois rouges, sept fois sur dix par image —, jaillies de part et d'autre du rayon, en éventail autour de sa
   normale, brèves (0,12 à 0,25 s).
+  (… SUR TOUTE LA CORDE, PLUS VIVES — Keko : « un peu trop discrètes ; sur toute la longueur du laser couverte par un
+  ennemi ; si un ennemi est gros, des particules sur toute sa longueur qui superpose la ligne » : la corde du rayon
+  dans son cercle, une étincelle tous les trois pixels de corde et par image, réparties au hasard sur elle ; plus rapides,
+  plus longues, un peu de rose clair parmi les rouges.)

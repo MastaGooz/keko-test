@@ -17960,14 +17960,28 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           const ux = (b.x - v.x) / L0
           const uy = (b.y - v.y) / L0
           for (const e of ennemisDuLien(CONF, m, b)) {
-            if (R.next() > 0.7) continue
-            const q = Math.max(0, Math.min(L0, (e.corps.x - v.x) * ux + (e.corps.y - v.y) * uy))
-            const tx = v.x + ux * q
-            const ty = v.y + uy * q
-            // (la normale au rayon, d'un côté ou de l'autre, et un éventail autour)
-            const a = (R.next() < 0.5 ? Math.atan2(ux, -uy) : Math.atan2(-ux, uy)) + R.range(-0.8, 0.8)
-            const vit = R.range(40, 90)
-            etincelles.ajouter('etincelle', tx, ty, Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.12, 0.25), [ROUGE_LASER[2], ROUGE_LASER[3], ROUGE_LASER[4]][Math.floor(R.next() * 3)], 1, 1.5)
+            // (… SUR TOUTE LA LONGUEUR DU RAYON QUE L'INSECTE RECOUVRE, ET MOINS DISCRÈTES — Keko, 23/11 : « un peu trop
+            // discrètes ; elles devraient se produire sur toute la longueur du laser qui est couvert par un ennemi ; si un
+            // ennemi est gros, il déclenche des particules de crépitement sur toute sa longueur qui superpose la ligne » :
+            // la corde du rayon dans son cercle, une étincelle tous les trois pixels de corde et par image, plus vives)
+            const q = (e.corps.x - v.x) * ux + (e.corps.y - v.y) * uy
+            const d = Math.abs((e.corps.x - v.x) * -uy + (e.corps.y - v.y) * ux)
+            const r = rayonDe(CONF, e) + 1
+            const demi = Math.sqrt(Math.max(0, r * r - d * d))
+            const q0 = Math.max(0, q - demi)
+            const q1 = Math.min(L0, q + demi)
+            if (q1 <= q0) continue
+            const n = (q1 - q0) / 3
+            const entier = Math.floor(n) + (R.next() < n - Math.floor(n) ? 1 : 0)
+            for (let j = 0; j < entier; j++) {
+              const qq = R.range(q0, q1)
+              const tx = v.x + ux * qq
+              const ty = v.y + uy * qq
+              // (la normale au rayon, d'un côté ou de l'autre, et un éventail autour)
+              const a = (R.next() < 0.5 ? Math.atan2(ux, -uy) : Math.atan2(-ux, uy)) + R.range(-0.9, 0.9)
+              const vit = R.range(45, 110)
+              etincelles.ajouter('etincelle', tx, ty, Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.14, 0.3), [ROUGE_LASER[3], ROUGE_LASER[3], ROUGE_LASER[4], N.hex('#ffeae4')][Math.floor(R.next() * 4)], 1, 2)
+            }
           }
         }
         // les mini-missiles laissent une traînée de fumée
