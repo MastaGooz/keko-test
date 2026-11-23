@@ -8205,3 +8205,7 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   périphérie, la faire pulser en bleu » : à chaque décharge (`bobineDechargeA`, 0,35 s), LE CERCLE DE SA PORTÉE
   s'allume — un trait de deux pixels, bleu clair puis bleu, doublé d'un liseré à l'intérieur — et s'ouvre de 8 % en
   s'éteignant ; la boule gonfle d'un quart et son halo s'éclaire. VU en capture.
+- **23/11, LE SOIN, LA PLAQUE ET L'AIMANT SE PRENNENT PLUS LARGE.** Keko : « parfois je le touche, mais si je suis pas
+  exactement dessus, je le ramasse pas ». Ils ne s'aimantent pas (on passe dessus) et se prenaient à 3 au-delà de la
+  coque : à 9 maintenant (`forage.margeDesObjets`). Le test : à la coque + 8 il est pris, à + 10 non ; à 25, toujours
+  immobiles.

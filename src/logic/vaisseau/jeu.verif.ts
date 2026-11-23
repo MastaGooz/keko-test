@@ -3927,6 +3927,16 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   for (let i = 0; i < 60 * 3; i++) avancerLeMonde(cfg, a, 1 / 60, { x: 0, y: 0 })
   const immobiles = a.pepites.filter((p) => (p.soin === true && p.x === 25) || (p.plaque === true && p.x === -25) || (p.aimant === true && p.y === 25)).length
   verifier(`à 25 (portée d'aimant ${cfg.forage.aimant}), le soin, la plaque et l'aimant ne viennent pas : ${immobiles} / 3 immobiles, blindage ${Math.round((a.coque / cfg.coque) * 100)} %`, immobiles === 3 && a.coque === cfg.coque * 0.5 && a.plaques[0] === false)
+  // (… MAIS ILS SE PRENNENT SANS ÊTRE PILE DESSUS — Keko, 23/11 : « parfois je le touche, mais si je suis pas exactement
+  // dessus, je le ramasse pas » : à la coque plus 8, il le prend ; à la coque plus 10, non)
+  const prisA = (ecart: number): boolean => {
+    const b = nouveauMonde(cfg, 8)
+    b.coque = cfg.coque * 0.5
+    b.pepites.push({ id: 907, x: cfg.rayon + ecart, y: 0, vx: 0, vy: 0, graine: 1, minerai: 'fer', valeur: 0, soin: true })
+    avancerLeMonde(cfg, b, 1 / 60, { x: 0, y: 0 })
+    return !b.pepites.some((p) => p.soin === true)
+  }
+  verifier(`un soin à la coque + 8 est pris (${prisA(8)}), à la coque + 10 non (${!prisA(10)})`, prisA(8) && !prisA(10))
   // (à deux : le second blessé, le premier plein et posé dessus — il le laisse ; le second passe dessus, il le prend)
   const q = nouveauMonde(cfg, 6)
   ajouterUnPilote(cfg, q, 40, 0)

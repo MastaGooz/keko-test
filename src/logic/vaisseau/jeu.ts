@@ -432,7 +432,7 @@ export const VAISSEAU = {
    * une roche a `durete × rayon²` points ; éclatée, elle laisse des pépites (tant par unité de rayon) qui viennent
    * au vaisseau le plus proche à portée d'aimant, et comptent une fois à bord.
    */
-  forage: { portee: 64, debit: 28, durete: 0.6, pepitesParRayon: 0.45, aimant: 44, vitessePepite: 160, ramassage: 5, /** Une pépite aimantée par le joueur : de combien sa vitesse monte chaque seconde (voir « une pépite aimantée »). */ accelerationAimantee: 400 },
+  forage: { portee: 64, debit: 28, durete: 0.6, pepitesParRayon: 0.45, aimant: 44, vitessePepite: 160, ramassage: 5, /** UN SOIN, UNE PLAQUE, UN AIMANT — qui ne s'aimantent pas — se prennent à tant AU-DELÀ DE LA COQUE (Keko, 23/11 : « parfois je le touche, mais si je suis pas exactement dessus, je le ramasse pas » : 9, au lieu de 3). */ margeDesObjets: 9, /** Une pépite aimantée par le joueur : de combien sa vitesse monte chaque seconde (voir « une pépite aimantée »). */ accelerationAimantee: 400 },
   /**
    * LA BOMBE, la première CAPACITÉ ACTIVE (Keko, 12/11 : « une action un peu puissante, soumise à un nombre de charges
    * par vol ») — une capacité d'ESSAI, pour juger le geste : tant de charges par vol ; lancée, elle file à tant d'unités
@@ -6026,7 +6026,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
     // surblindage » : on les prend en passant dessus, le vaisseau les touche)
     // (… NI L'AIMANT LUI-MÊME — Keko, 22/11 : « je veux pas que l'aimant soit lui-même aimanté non plus »)
     const aPasser = reserve || p.aimant === true
-    const ramassage = aPasser ? Math.max(c.forage.ramassage, c.rayon + 3) : c.forage.ramassage
+    const ramassage = aPasser ? Math.max(c.forage.ramassage, c.rayon + c.forage.margeDesObjets) : c.forage.ramassage
     if (d <= ramassage && !soutePleine && !attend) {
       m.pepites.splice(i, 1)
       if (c.invasion.active) gagnerLaPepite(c, m, p, ev)
