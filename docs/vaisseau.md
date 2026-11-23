@@ -8360,3 +8360,6 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   pour toutes les balises et tous les insectes, toutes les 0,11 s au plus (`crepiteA`), sur un insecte touché tiré au
   hasard ; `jouer` l'atténue avec sa distance au vaisseau et le place à gauche ou à droite. Mesuré (crête 0,17), PAS
   ÉCOUTÉ.)
+  (… PLUS GRAVE — Keko : « on dirait un bruit d'insectes qui grignotent ; je voyais plutôt un bruit un peu plus grave,
+  genre laser qui brûle » : plus de claquements aigus ; un bourdon électrique bas et saturé (170 Hz, harmoniques
+  impaires) qui descend un peu, sous un souffle brûlant dans les médiums qui retombe de 1 300 à 650 Hz — 0,22 s.)

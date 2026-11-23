@@ -1540,13 +1540,17 @@ const RECETTES = {
    * LE RAYON DE LA BALISE LASER BRÛLE UN INSECTE (Keko, 23/11 : « un petit bruit de crépitement sur les ennemis touchés
    * par le laser, pour signifier que les dégâts sont infligés » — voir `Arme.lien`) : trois ou quatre petits claquements
    * secs, aigus, serrés en 50 ms — un grésillement électrique —, sur un bourdon grave à peine saturé qui s'éteint vite
+   * (… PLUS GRAVE, UN LASER QUI BRÛLE — Keko, 23/11 : « on dirait un bruit d'insectes qui grignotent ; je voyais plutôt un
+   * bruit un peu plus grave, genre laser qui brûle » : plus de claquements aigus ; un bourdon électrique bas et saturé, aux
+   * harmoniques impaires, qui descend un peu, sous un souffle brûlant dans les médiums qui retombe — un « bzzhhh » bref)
    */
   crepitement: {
-    duree: 0.16, niveau: 0.17, salle: [0.15, 0.06], variantes: 6,
+    duree: 0.22, niveau: 0.2, salle: [0.2, 0.08], variantes: 6,
     faire: (m, h) => {
-      const n = 3 + Math.floor(h.next() * 2)
-      for (let i = 0; i < n; i++) souffle(m, h, h.next() * 0.05, 0.6 + 0.4 * h.next(), (h.next() - 0.5) * 0.5, { f: 3200 + 3000 * h.next(), q: 2.5, bande: true, a: 0.0003, d: 0.006 + 0.008 * h.next() })
-      note(m, 0, 0.35, 0, { f: 120, a: 0.003, d: 0.06, partiels: [[1, 1, 1], [3, 0.5, 0.8], [5, 0.3, 0.6]], sature: 1.6 })
+      const f = 170 * (0.9 + 0.2 * h.next())
+      note(m, 0, 0.8, 0, { f, glisse: { vers: f * 0.8, en: 0.15 }, a: 0.006, d: 0.16, battement: 7, partiels: [[1, 1, 1], [3, 0.55, 0.9], [5, 0.35, 0.8], [7, 0.2, 0.7]], sature: 2.2 })
+      souffle(m, h, 0, 0.7, 0, { f: 1300 * (0.9 + 0.2 * h.next()), glisse: { vers: 650, en: 0.16 }, q: 1.1, bande: true, a: 0.006, d: 0.17, large: true })
+      souffle(m, h, 0, 0.2, 0, { f: 2600, q: 0.8, a: 0.004, d: 0.07 })
     },
   },
 } satisfies Record<string, Recette>
