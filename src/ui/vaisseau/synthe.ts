@@ -1579,11 +1579,14 @@ const RECETTES = {
   execution: {
     duree: 0.9, niveau: 0.36, salle: [0.4, 0.16], variantes: 3,
     faire: (m, h) => {
-      souffle(m, h, 0, 0.8, -0.25, { f: 5200, glisse: { vers: 2400, en: 0.05 }, q: 1.6, bande: true, a: 0.0005, d: 0.04 })
-      souffle(m, h, 0.06, 0.8, 0.25, { f: 5600, glisse: { vers: 2600, en: 0.05 }, q: 1.6, bande: true, a: 0.0005, d: 0.04 })
-      const f = 1650 * (0.95 + 0.1 * h.next())
-      note(m, 0.06, 0.55, 0, { f, a: 0.001, d: 0.6, battement: 6, partiels: [[1, 1, 1], [2.76, 0.55, 0.7], [5.4, 0.3, 0.45], [8.93, 0.15, 0.3]] })
-      note(m, 0, 0.5, 0, { f: 120, glisse: { vers: 55, en: 0.08 }, a: 0.001, d: 0.12, partiels: CORPS, sature: 2 })
+      // (PLUS GRAVE, MOINS CRIARD — Keko, 23/11 : « un petit peu trop aigu, un peu trop criard » : les tranches d'air de 5 200
+      // à 2 400 Hz, la lame de 1 650 Hz et ses partiels jusqu'à 8,9 fois — un centre à 2 500 Hz ; maintenant des tranches de
+      // 2 400 à 900 Hz, une lame à 620 Hz aux partiels doux, et le coup sourd devant)
+      souffle(m, h, 0, 0.6, -0.25, { f: 2400, glisse: { vers: 900, en: 0.06 }, q: 1.2, bande: true, a: 0.0008, d: 0.05 })
+      souffle(m, h, 0.06, 0.6, 0.25, { f: 2600, glisse: { vers: 1000, en: 0.06 }, q: 1.2, bande: true, a: 0.0008, d: 0.05 })
+      const f = 620 * (0.95 + 0.1 * h.next())
+      note(m, 0.06, 0.5, 0, { f, a: 0.002, d: 0.55, battement: 5, partiels: [[1, 1, 1], [2.76, 0.3, 0.6], [5.4, 0.1, 0.35]] })
+      note(m, 0, 0.8, 0, { f: 110, glisse: { vers: 48, en: 0.1 }, a: 0.001, d: 0.16, partiels: CORPS, sature: 2 })
     },
   },
 } satisfies Record<string, Recette>

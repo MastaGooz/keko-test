@@ -8572,3 +8572,6 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   cyan qui claque, des éclats, une secousse, une vibration (`dessinerLesExecutions`). LE SON (`execution`) : deux tranches
   d'air sèches l'une après l'autre, une lame qui sonne — ses partiels de métal —, un coup sourd bref ; mesuré, PAS ÉCOUTÉ.
   VU en capture : chaque insecte exécuté de la ligne porte sa croix.
+  - … PLUS GRAVE (Keko, 23/11 : « un petit peu trop aigu, un peu trop criard ») : MESURÉ, son centre était à 2 508 Hz
+    (la détonation 440, la balle du railgun 599) ; les tranches d'air passent de 5 200 → 2 400 Hz à 2 400 → 900 Hz, la lame
+    de 1 650 Hz à 620 Hz aux partiels adoucis, le coup sourd monte devant : centre à 537 Hz. PAS ÉCOUTÉ.
