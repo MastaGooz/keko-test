@@ -6170,7 +6170,10 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
           let suite: Ennemi | null = null
           let ds = o.rebonds.portee
           for (const f of m.ennemis) {
-            if (f === e || f.asteroide !== undefined || o.deja?.includes(f.id) === true) continue
+            // (IL PEUT REVENIR SUR UN INSECTE DÉJÀ TOUCHÉ, PAS SUR CELUI QU'IL QUITTE — Keko, 23/11 : « permettre au laser de
+            // retoucher une cible déjà touchée, du moment qu'elle est différente de la précédente ; ça distingue bien
+            // l'attaque de la chaîne d'éclair » : il ne les excluait plus tous)
+            if (f === e || f.asteroide !== undefined) continue
             const d = Math.hypot(f.corps.x - o.x, f.corps.y - o.y)
             if (d < ds) (ds = d), (suite = f)
           }
@@ -6180,7 +6183,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
             o.vx = ((suite.corps.x - o.x) / (ds || 1)) * vit
             o.vy = ((suite.corps.y - o.y) / (ds || 1)) * vit
             o.verrou = suite.id
-            o.deja = [...(o.deja ?? []), e.id]
+            o.deja = [e.id]
             o.degats *= o.rebonds.part
             o.rebonds = { ...o.rebonds, n: o.rebonds.n - 1 }
             o.vie = Math.max(o.vie, 0.4)

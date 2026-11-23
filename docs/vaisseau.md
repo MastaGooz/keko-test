@@ -8421,3 +8421,9 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     le vert du rouge ; elle monte en 20 ms, retombe en 60, placée sur la cible (`rayonConcentre`). PAS ÉCOUTÉE : une
     copie hors du jeu envoyée à Keko.
   - VALIDÉ (Keko : « c'est vraiment pas mal, on va valider cette variation »).
+- **23/11, LE RICOCHET PEUT REVENIR.** Keko, sur la carte « Ricochet » du canon laser : « c'est pas mal, mais on va permettre
+  au laser de retoucher une cible déjà touchée, du moment qu'elle est différente de la précédente ; comme ça, ça
+  distingue bien l'attaque de la chaîne d'éclair ». Le rebond excluait tous les insectes déjà touchés (`Obus.deja`) ;
+  il n'exclut plus que celui qu'il quitte : entre deux insectes, il fait l'aller-retour. Vaut pour tous les ricochets
+  (le laser, l'escorte, les roquettes mises de côté). Le test : deux insectes, le premier perd 10 puis 4,9 au retour,
+  le second 7.
