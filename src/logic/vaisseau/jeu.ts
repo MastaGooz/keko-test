@@ -1145,7 +1145,7 @@ export type Arme = {
    */
   rafale?: { nombre: number; intervalle: number }
   /**
-   * UN LASER CONCENTRÉ (la carte « Laser concentré » du canon laser, à la place de la rafale — Keko, 23/11 : « plutôt
+   * UN LASER CONCENTRÉ (la carte « Concentration » du canon laser, à la place de la rafale — Keko, 23/11 : « plutôt
    * qu'un seul tir de laser, un laser un peu comme celui du Prisme, mais qui dure un temps limité : on concentre un rayon
    * pendant un court instant sur la cible, et le temps total de concentration inflige plus de dégâts qu'un seul tir ») :
    * au lieu d'un obus, chaque tir accroche UN RAYON de la bouche de l'arme à sa cible, pendant `duree` secondes ; il la

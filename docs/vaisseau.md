@@ -8435,3 +8435,4 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   même rayon vert de proche en proche, plus pâle à chaque rebond, une lueur et des étincelles sur chaque insecte touché.
   Le test : trois insectes, 100 / 70 / 49. En capture, la mêlée trop dense pour juger les rebonds.
   VALIDÉ (Keko : « les deux fonctionnent bien ensemble »).
+  (LE NOM — Keko : « plutôt que laser concentré, on va l'appeler Concentration » : la carte s'appelle « Concentration » ; son identifiant reste `laser-concentre`.)

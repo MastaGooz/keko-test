@@ -374,7 +374,7 @@ export const MUTATIONS: Mutation[] = [
   // de laser unique, on concentre un rayon pendant un court instant sur la cible, et le temps total de concentration
   // inflige plus de dégâts qu'un seul tir » : chaque tir devient un rayon accroché 0,5 s, qui ronge 135 % d'un tir — voir
   // `Arme.concentre`)
-  variation('laser-concentre', 'laser', 'Laser concentré', 'Chaque tir devient un rayon concentré un instant sur sa cible.', changerA('laser', (a) => ({ ...a, concentre: { duree: 0.5 }, degats: fois(a, 1.35) }))),
+  variation('laser-concentre', 'laser', 'Concentration', 'Chaque tir devient un rayon concentré un instant sur sa cible.', changerA('laser', (a) => ({ ...a, concentre: { duree: 0.5 }, degats: fois(a, 1.35) }))),
   variation('laser-cryo', 'laser', 'Cryogénique', 'Les lasers gèlent ce qu’ils touchent et le ralentissent.', changerA('laser', V.cryo)),
   // LA MITRAILLEUSE
   variation('mitraille-jumelee', 'mitraille', 'Canons jumelés', 'Chaque tir part en double : deux balles côte à côte.', changerA('mitraille', V.gerbe(2, 0.12, 0.7))),
