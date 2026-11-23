@@ -8589,3 +8589,11 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   bleu glace (`gelee`, chaque pixel mêlé à 24 % de `#8fd4ff` — la corrosion, 18 % de vert ; les deux se cumulent), et DES
   FLOCONS s'en détachent (`floconsDeGivre`, plus sur un gros) : une petite croix blanche aux branches bleu glace, ou un
   point, qui dérivent en tournoyant, scintillent et fondent. VU en capture (railgun Cryogénique sur des cuirassiers).
+- LES ÉTATS DURENT 6 S AU VORTEX, QUELLE QUE SOIT LEUR SOURCE (Keko, 23/11 : « on met la durée de tous les effets à 6 s
+  quel que soit leur source ») : le gel, le feu et la corrosion — d'un tir, d'un rayon, d'une flamme, d'une flaque, d'une
+  zone, d'une mine (de 0,25 à 4 s avant) — durent `ConfigVaisseau.dureeDesEtats` (`dureeDEtat` ; les fonctions d'état
+  reçoivent la configuration) ; le vortex pose 6, le Nova Drifter garde 0 — la durée de chaque source, que ses fiches
+  disent. Un nouveau coup remet le compte ; une source qui ne brûle pas ne brûle toujours pas. EFFET SUR L'ÉQUILIBRE : le
+  feu fait des dégâts sur sa durée — une brûlure de 3 s en fait deux fois plus, de 2 s trois fois ; le gel ralentit et la
+  corrosion majore plus longtemps ; une zone (traînée, tornade) laisse son état 6 s après qu'on en sort. Le test : au
+  vortex, gelé 6 s et rongé 6 s ; au Nova Drifter, 1,5 et 3.

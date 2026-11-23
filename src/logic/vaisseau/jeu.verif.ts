@@ -885,7 +885,8 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   const devant = perdu(0, -30)
   verifier('devant, à portée : une seconde de flamme coûte ses dégâts par seconde, et il crache', Math.abs(devant.pv - 10) < 0.6 && devant.crache)
   verifier('de côté, ou trop loin devant : rien, et il ne crache pas', perdu(30, 0).pv === 0 && !perdu(30, 0).crache && perdu(0, -80).pv === 0)
-  // (sorti de la flamme, il brûle encore deux secondes, puis plus)
+  // (sorti de la flamme, il brûle encore deux secondes, puis plus — au Nova Drifter ; au vortex, six : voir
+  // `ConfigVaisseau.dureeDesEtats`)
   const w = nouveauMonde(cfg, 3)
   w.ennemis.push(insecte(1, 0, -30))
   for (let i = 0; i < 30; i++) {
@@ -893,11 +894,11 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
     avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
   }
   const apresFlamme = w.ennemis[0].pv
-  for (let i = 0; i < 60 * 3; i++) {
+  for (let i = 0; i < 60 * 8; i++) {
     w.ennemis[0].corps = { ...w.ennemis[0].corps, x: 0, y: 200, vx: 0, vy: 0 }
     avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
   }
-  verifier('sorti de la flamme, il brûle encore deux secondes (trois points par seconde), puis plus', Math.abs(apresFlamme - w.ennemis[0].pv - 6) < 0.3)
+  verifier(`sorti de la flamme, il brûle encore deux secondes (trois points par seconde : ${(apresFlamme - w.ennemis[0].pv).toFixed(1)}, 6), puis plus`, Math.abs(apresFlamme - w.ennemis[0].pv - 6) < 0.3)
   // (le cône prend tout ce qui s'y trouve, pas un seul)
   const w2 = nouveauMonde({ ...cfg, ennemi: { ...cfg.ennemi, pv: 12 } }, 3)
   w2.ennemis.push({ ...insecte(1, -5, -25), pv: 12 }, { ...insecte(2, 5, -30), pv: 12 }, { ...insecte(3, 0, -38), pv: 12 })
@@ -3464,6 +3465,22 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   }
   const [avec, sans] = [essai(1), essai(0)]
   verifier(`l'exécution : critique, abattus ${avec.morts.join(' / ')} (1 / 0 / 1), le grand perd ${avec.grand} (100), ${avec.annonces} exécutions annoncées (2) ; sans critique, ${sans.morts.join(' / ')} (0 / 0 / 0)`, avec.morts.join() === '1,0,1' && avec.grand === 100 && avec.annonces === 2 && sans.morts.join() === '0,0,0' && sans.annonces === 0)
+}
+
+// LES ÉTATS DURENT 6 S AU VORTEX, QUELLE QUE SOIT LEUR SOURCE (Keko, 23/11 — voir `ConfigVaisseau.dureeDesEtats`) : un tir
+// qui gèle 1,5 s et ronge 3 s selon sa carte — au vortex, l'insecte touché est gelé et rongé pour 6 s ; au Nova Drifter,
+// 1,5 et 3
+for (const vortex of [true, false]) {
+  const laser = { id: 'laser', cadence: 99, degats: 10, portee: 120, vitesse: 420, vie: 0.7, dispersion: 0, guide: false, tousSens: true, infaillible: true, gel: { duree: 1.5, ralenti: 0.5 }, corrosif: { duree: 3, bonus: 0.35 } }
+  const cfg = { ...VAISSEAU, coque: 1e9, dureeDesEtats: vortex ? 6 : 0, armes: [laser], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false } }
+  const w = nouveauMonde(cfg, 5)
+  w.invasion.prochainA = 1e9
+  const e: Ennemi = { id: 1900, corps: { ...nouveauVaisseau(), x: 40, y: 0 }, pv: 1e6, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9 }
+  w.ennemis.push(e)
+  let touche = -1
+  for (let i = 0; i < 60 && touche < 0; i++) if (avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements.some((x) => x.type === 'ennemiTouche')) touche = w.t
+  const [g, r] = vortex ? [6, 6] : [1.5, 3]
+  verifier(`${vortex ? 'au vortex' : 'au Nova Drifter'}, les états : gelé ${((e.geleA ?? 0) - touche).toFixed(2)} s (${g}), rongé ${((e.acide?.jusque ?? 0) - touche).toFixed(2)} s (${r})`, Math.abs((e.geleA ?? 0) - touche - g) < 0.02 && Math.abs((e.acide?.jusque ?? 0) - touche - r) < 0.02)
 }
 
 // TOUCHÉ, ON TRAVERSE LES INSECTES (Keko, 22/11 : « quand on est touché on est invincible un court instant ; je voudrais

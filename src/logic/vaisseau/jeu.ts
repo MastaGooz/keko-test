@@ -155,6 +155,12 @@ export const VAISSEAU = {
    */
   alternance: false as boolean,
   /**
+   * LA DURÉE DES ÉTATS — le gel, le feu, la corrosion —, QUELLE QUE SOIT LEUR SOURCE (le vortex — Keko, 23/11 : « on met la
+   * durée de tous les effets à 6 s quel que soit leur source ») : 0, chaque source garde la sienne (le Nova Drifter, dont
+   * les fiches la disent) ; le vortex pose 6.
+   */
+  dureeDesEtats: 0 as number,
+  /**
    * L'ARC DE TIR (le jeu du vortex — Keko, 15/11 : « limiter les tirs du canon à un angle qui va devant le vaisseau ;
    * pas forcément tout droit, mais les empêcher de tirer en angle droit sur les côtés et en arrière, pour forcer le
    * joueur à se positionner face aux ennemis ») : le demi-angle, en radians, de part et d'autre du nez ; une arme ne
@@ -3157,9 +3163,7 @@ function cracherLaFlamme(c: ConfigVaisseau, m: Monde, arme: Arme, fl: { cone: nu
   if (fl.seul === true) dans.splice(0, dans.length, dans.reduce((a, e) => (Math.hypot(e.corps.x - bx, e.corps.y - by) < Math.hypot(a.corps.x - bx, a.corps.y - by) ? e : a)))
   for (const e of dans) {
     e.pv -= arme.degats * dt
-    e.bruleA = m.t + fl.brulure
-    e.dpsBrulure = fl.dpsBrulure
-    e.dureeBrulure = fl.brulure
+    brulerAuContact(c, m, e, fl.brulure, fl.dpsBrulure)
     if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
   }
 }
@@ -3206,7 +3210,7 @@ function mener_L_Electricite(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenem
     ev.push({ type: 'chaine', points: [{ x: v.x, y: v.y }, ...touches.map((e) => ({ x: e.corps.x, y: e.corps.y }))], ids: touches.map((e) => e.id) })
     touches.forEach((e, k) => {
       const critique = critiqueTire(c, m, a)
-      effetsDuCoup(m, a, e, ev)
+      effetsDuCoup(c, m, a, e, ev)
       e.pv -= (a.degats * Math.pow(ch.attenuation, k)) * (critique ? facteurDeCritique(c, a) : 1)
       ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })
       if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
@@ -3319,10 +3323,10 @@ function menerLeGivre(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]):
       e.poisonA = m.t + 0.4
       e.pv -= venin.dps * dt
       // (LA TRAÎNÉE CORROSIVE RONGE : qui y est est vulnérable — voir `ronger`)
-      if (venin.corrosion !== undefined) ronger(m, e, { duree: venin.corrosion.duree, dps: 0, bonus: venin.corrosion.bonus }, ev)
+      if (venin.corrosion !== undefined) ronger(c, m, e, { duree: venin.corrosion.duree, dps: 0, bonus: venin.corrosion.bonus }, ev)
     }
     if (pire !== undefined) {
-      geler(m, e, 0.25, pire.ralenti, ev)
+      geler(c, m, e, 0.25, pire.ralenti, ev)
       e.pv -= pire.dps * dt
     }
     if (pire === undefined && venin === undefined) continue
@@ -3360,7 +3364,7 @@ function lancerLesNovas(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
       o.frappes.push(e.id)
       const critique = chanceDeCritique(c, a) > 0 && tire(m.graine, m.prochainId++, 12) < chanceDeCritique(c, a)
       e.pv -= a.degats * (critique ? facteurDeCritique(c, a) : 1)
-      geler(m, e, nv.gel.duree, nv.gel.ralenti, ev)
+      geler(c, m, e, nv.gel.duree, nv.gel.ralenti, ev)
       ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })
       if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
     }
@@ -3372,11 +3376,25 @@ export function frontDeLaNova(rayon: number, age: number, ouverture = 0.35): num
 }
 
 /** GELER un insecte (le givre, un éclat de glace) : `duree` secondes, à `ralenti` de sa vitesse — le gel le plus fort l'emporte. */
-function geler(m: Monde, e: Ennemi, duree: number, ralenti: number, ev: Evenement[]): void {
+/**
+ * LA DURÉE D'UN ÉTAT (voir `ConfigVaisseau.dureeDesEtats`) : au vortex, 6 s, quelle que soit la source — d'un tir, d'un
+ * rayon, d'une flaque, d'une zone, d'une mine, de 0,25 à 4 s chacune avant — ; ailleurs, celle de la source. Un nouveau coup
+ * remet le compte ; une source qui ne brûle pas (`brulure` 0) ne brûle toujours pas.
+ */
+const dureeDEtat = (c: ConfigVaisseau, duree: number): number => (c.dureeDesEtats > 0 ? c.dureeDesEtats : duree)
+function geler(c: ConfigVaisseau, m: Monde, e: Ennemi, duree: number, ralenti: number, ev: Evenement[]): void {
   const deja = (e.geleA ?? -1) > m.t
   if (!deja) ev.push({ type: 'gele', id: e.id, x: e.corps.x, y: e.corps.y })
   e.ralenti = deja ? Math.min(e.ralenti ?? 1, ralenti) : ralenti
-  e.geleA = Math.max(e.geleA ?? -1, m.t + duree)
+  e.geleA = Math.max(e.geleA ?? -1, m.t + dureeDEtat(c, duree))
+}
+/** IL BRÛLE (une flamme, un rayon, une traînée, une flaque) : `brulure` secondes à `dps` (voir `dureeDEtat`), si la source brûle. */
+function brulerAuContact(c: ConfigVaisseau, m: Monde, e: Ennemi, brulure: number, dps: number): void {
+  if (brulure <= 0) return
+  const d = dureeDEtat(c, brulure)
+  e.bruleA = m.t + d
+  e.dpsBrulure = dps
+  e.dureeBrulure = d
 }
 
 /** LES TORNADES DE GIVRE (voir `Arme.tornade`) : le départ, la poursuite, la zone qui gèle et ronge, la fin. */
@@ -3440,7 +3458,7 @@ function menerLesTornades(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement
     // LA ZONE : ce qui est dedans est gelé et rongé
     for (const e of [...m.ennemis]) {
       if (Math.hypot(e.corps.x - tn.x, e.corps.y - tn.y) > to.rayon + rayonDe(c, e) * 0.5) continue
-      geler(m, e, 0.25, to.ralenti, ev)
+      geler(c, m, e, 0.25, to.ralenti, ev)
       e.pv -= to.dps * dt
       if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
     }
@@ -3621,7 +3639,7 @@ function menerLesSpheres(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[
       const proches = m.ennemis.filter((e) => Math.hypot(e.corps.x - s.x, e.corps.y - s.y) <= sp.rayon + rayonDe(c, e)).sort((e1, e2) => Math.hypot(e1.corps.x - s.x, e1.corps.y - s.y) - Math.hypot(e2.corps.x - s.x, e2.corps.y - s.y)).slice(0, sp.foudre.cibles)
       for (const e of proches) {
         const critique = critiqueTire(c, m, a)
-        effetsDuCoup(m, a, e, ev)
+        effetsDuCoup(c, m, a, e, ev)
         e.pv -= a.degats * (critique ? facteurDeCritique(c, a) : 1)
         ev.push({ type: 'foudre', x0: s.x, y0: s.y, x1: e.corps.x, y1: e.corps.y })
         ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })
@@ -3793,7 +3811,7 @@ function tirerLesRails(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
     ev.push({ type: 'rail', x0: b.x, y0: b.y, x1: b.x + Math.cos(an) * a.portee, y1: b.y + Math.sin(an) * a.portee, arme: a.id })
     for (const e of touches) {
       const critique = chanceDeCritique(c, a) > 0 && tire(m.graine, m.prochainId++, 12) < chanceDeCritique(c, a)
-      effetsDuCoup(m, a, e, ev)
+      effetsDuCoup(c, m, a, e, ev)
       e.pv -= a.degats * (critique ? facteurDeCritique(c, a) : 1)
       ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })
       if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
@@ -3938,9 +3956,9 @@ function empoisonner(m: Monde, e: Ennemi, po: { duree: number; dps: number }): v
 }
 
 /** Un insecte RONGÉ par l'acide (voir `Arme.crachat`) : jusqu'à `duree` d'ici — le plus long et le plus fort l'emportent. */
-function ronger(m: Monde, e: Ennemi, ac: { duree: number; dps: number; bonus: number }, ev: Evenement[]): void {
+function ronger(c: ConfigVaisseau, m: Monde, e: Ennemi, ac: { duree: number; dps: number; bonus: number }, ev: Evenement[]): void {
   if (e.acide === undefined || e.acide.jusque <= m.t) ev.push({ type: 'ronge', id: e.id, x: e.corps.x, y: e.corps.y })
-  e.acide = { jusque: Math.max(e.acide?.jusque ?? 0, m.t + ac.duree), dps: Math.max(e.acide?.jusque !== undefined && e.acide.jusque > m.t ? e.acide.dps : 0, ac.dps), bonus: Math.max(e.acide?.jusque !== undefined && e.acide.jusque > m.t ? e.acide.bonus : 0, ac.bonus) }
+  e.acide = { jusque: Math.max(e.acide?.jusque ?? 0, m.t + dureeDEtat(c, ac.duree)), dps: Math.max(e.acide?.jusque !== undefined && e.acide.jusque > m.t ? e.acide.dps : 0, ac.dps), bonus: Math.max(e.acide?.jusque !== undefined && e.acide.jusque > m.t ? e.acide.bonus : 0, ac.bonus) }
 }
 
 /** Un point dans un cône (sa pointe, son cap, son demi-angle, sa longueur), un insecte compté avec son rayon. */
@@ -3978,7 +3996,7 @@ function cracherLAcide(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[])
     ev.push({ type: 'crachat', x: b.x, y: b.y, cap, cone: cr.cone, portee: a.portee, arme: a.id })
     for (const e of [...m.ennemis]) {
       if (!dansLeCone(e.corps.x, e.corps.y, b.x, b.y, cap, cr.cone, a.portee, rayonDe(c, e))) continue
-      ronger(m, e, cr.acide, ev)
+      ronger(c, m, e, cr.acide, ev)
       const critique = chanceDeCritique(c, a) > 0 && tire(m.graine, m.prochainId++, 12) < chanceDeCritique(c, a)
       e.pv -= a.degats * (critique ? facteurDeCritique(c, a) : 1)
       ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })
@@ -3990,7 +4008,7 @@ function cracherLAcide(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[])
     const a = c.armes[f.arme]
     const cr = a?.crachat
     if (a === undefined || cr === undefined || m.t - f.nee >= cr.duree) return false
-    for (const e of m.ennemis) if (dansLeCone(e.corps.x, e.corps.y, f.x, f.y, f.cap, cr.cone, a.portee, rayonDe(c, e))) ronger(m, e, cr.acide, ev)
+    for (const e of m.ennemis) if (dansLeCone(e.corps.x, e.corps.y, f.x, f.y, f.cap, cr.cone, a.portee, rayonDe(c, e))) ronger(c, m, e, cr.acide, ev)
     return true
   })
   // (l'acide ronge : ses dégâts à lui ; le poison, les siens)
@@ -4040,7 +4058,7 @@ function menerLesParasites(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenemen
         // (accroché : il suit son hôte et le ronge)
         p.x = hote.corps.x
         p.y = hote.corps.y
-        if (pa.acide !== undefined) ronger(m, hote, pa.acide, ev)
+        if (pa.acide !== undefined) ronger(c, m, hote, pa.acide, ev)
         hote.pv -= pa.dps * dt
         if (hote.pv <= 0) abattreLEnnemi(c, m, hote, ev)
         return true
@@ -4209,7 +4227,7 @@ function menerLesMines(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
     for (const e of [...m.ennemis]) {
       if (Math.hypot(e.corps.x - mn.x, e.corps.y - mn.y) > mi.rayon + rayonDe(c, e)) continue
       // (LE GAZ RONGE — Keko, 21/11 : la vulnérabilité de l'effet corrosif, à la place des dégâts du poison)
-      if (mi.corrosion !== undefined) ronger(m, e, { duree: mi.corrosion.duree, dps: 0, bonus: mi.corrosion.bonus }, ev)
+      if (mi.corrosion !== undefined) ronger(c, m, e, { duree: mi.corrosion.duree, dps: 0, bonus: mi.corrosion.bonus }, ev)
       else if (mi.poison !== undefined) empoisonner(m, e, mi.poison)
       const critique = chanceDeCritique(c, a) > 0 && tire(m.graine, m.prochainId++, 12) < chanceDeCritique(c, a)
       e.pv -= a.degats * (critique ? facteurDeCritique(c, a) : 1)
@@ -5039,9 +5057,7 @@ function canaliserLeRayon(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement
   const depuis = m.canal !== null && m.canal.cible === cible.id ? m.canal.depuis : m.t
   m.canal = { arme: i, cible: cible.id, depuis, x: cible.corps.x, y: cible.corps.y, chauffe: 1 }
   cible.pv -= ca.dps * dt
-  cible.bruleA = m.t + ca.brulure
-  cible.dpsBrulure = ca.dpsBrulure
-  cible.dureeBrulure = ca.brulure
+  brulerAuContact(c, m, cible, ca.brulure, ca.dpsBrulure)
   if (cible.pv <= 0) {
     abattreLEnnemi(c, m, cible, ev)
     m.canal = null
@@ -5060,9 +5076,9 @@ function concentrerLesFaisceaux(c: ConfigVaisseau, m: Monde, dt: number, ev: Eve
     const ronge = f.dps * Math.min(dt, co.duree - (m.t - dt - f.nee))
     const toucher = (x: Ennemi, part: number): void => {
       x.pv -= ronge * part
-      if (a.gel !== undefined) geler(m, x, 0.3, a.gel.ralenti, ev)
-      if (a.incendiaire !== undefined) enflammer(m, x, a.incendiaire)
-      if (a.corrosif !== undefined) ronger(m, x, { ...a.corrosif, dps: 0 }, ev)
+      if (a.gel !== undefined) geler(c, m, x, 0.3, a.gel.ralenti, ev)
+      if (a.incendiaire !== undefined) enflammer(c, m, x, a.incendiaire)
+      if (a.corrosif !== undefined) ronger(c, m, x, { ...a.corrosif, dps: 0 }, ev)
     }
     // (SA ZONE, CONTINUE — la carte « Impulsion », Keko, 23/11 : « si on a déjà la concentration, la zone autour de
     // l'ennemi touché devient une zone continue qui dure tout le temps du laser » : tout ce qui est autour d'un insecte que le
@@ -5165,8 +5181,8 @@ function menerLesBalisesLaser(c: ConfigVaisseau, m: Monde, dt: number, ev: Evene
     }
     for (const e of ennemisDuLien(c, m, b)) {
       e.pv -= a.degats * dt
-      if (a.gel !== undefined) geler(m, e, 0.3, a.gel.ralenti, ev)
-      if (a.incendiaire !== undefined) enflammer(m, e, a.incendiaire)
+      if (a.gel !== undefined) geler(c, m, e, 0.3, a.gel.ralenti, ev)
+      if (a.incendiaire !== undefined) enflammer(c, m, e, a.incendiaire)
       if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
     }
   }
@@ -5241,8 +5257,8 @@ function harponner(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]): vo
     const part = Math.min(1, (m.t - h.plante) / hp.montee)
     e.pv -= a.degats * (1 + (hp.max - 1) * part) * dt
     // (les cartes : le câble gèle et ralentit, enflamme ce qu'il tient ; à sa mort, des éclats)
-    if (a.gel !== undefined) geler(m, e, 0.3, a.gel.ralenti, ev)
-    if (a.incendiaire !== undefined) enflammer(m, e, a.incendiaire)
+    if (a.gel !== undefined) geler(c, m, e, 0.3, a.gel.ralenti, ev)
+    if (a.incendiaire !== undefined) enflammer(c, m, e, a.incendiaire)
     if (e.pv <= 0) {
       if (a.fragments !== undefined) fragmenter(m, e.corps.x, e.corps.y, a.fragments, e)
       abattreLEnnemi(c, m, e, ev)
@@ -5347,9 +5363,7 @@ function menerLeRayon(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
       b.touches.push(e.id)
       const critique = critiqueTire(c, m, c.armes[b.arme])
       e.pv -= bl.degats * (critique ? facteurDeCritique(c, c.armes[b.arme]) : 1)
-      e.bruleA = m.t + bl.brulure
-      e.dpsBrulure = bl.dpsBrulure
-      e.dureeBrulure = bl.brulure
+      brulerAuContact(c, m, e, bl.brulure, bl.dpsBrulure)
       ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })
       if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
     }
@@ -5389,9 +5403,7 @@ function menerLeRayon(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
     b.touches.push(e.id)
     const critique = critiqueTire(c, m, c.armes[b.arme])
     e.pv -= bl.degats * (critique ? facteurDeCritique(c, c.armes[b.arme]) : 1)
-    e.bruleA = m.t + bl.brulure
-    e.dpsBrulure = bl.dpsBrulure
-    e.dureeBrulure = bl.brulure
+    brulerAuContact(c, m, e, bl.brulure, bl.dpsBrulure)
     ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })
     if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
   }
@@ -5423,9 +5435,7 @@ function brulerLesFlaques(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement
     for (const g of m.flaques) if (Math.hypot(e.corps.x - g.x, e.corps.y - g.y) <= g.rayon + rayonDe(c, e) * 0.5 && (f === undefined || g.dps > f.dps)) f = g
     if (f === undefined) continue
     e.pv -= f.dps * dt
-    e.bruleA = m.t + f.brulure
-    e.dpsBrulure = f.dpsBrulure
-    e.dureeBrulure = f.brulure
+    brulerAuContact(c, m, e, f.brulure, f.dpsBrulure)
     if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
   }
 }
@@ -5455,17 +5465,17 @@ function effetsDuTir(a: Arme): Partial<Obus> {
   }
 }
 /** CE QU'UN COUP SANS OBUS FAIT EN PLUS (le rail, l'arc) : le feu, le gel, les éclats — voir les cartes spéciales. */
-function effetsDuCoup(m: Monde, a: Arme, e: Ennemi, ev: Evenement[]): void {
-  if (a.incendiaire !== undefined) enflammer(m, e, a.incendiaire)
-  if (a.gel !== undefined) geler(m, e, a.gel.duree, a.gel.ralenti, ev)
+function effetsDuCoup(c: ConfigVaisseau, m: Monde, a: Arme, e: Ennemi, ev: Evenement[]): void {
+  if (a.incendiaire !== undefined) enflammer(c, m, e, a.incendiaire)
+  if (a.gel !== undefined) geler(c, m, e, a.gel.duree, a.gel.ralenti, ev)
   if (a.fragments !== undefined) fragmenter(m, e.corps.x, e.corps.y, a.fragments, e)
 }
 /** Un ennemi touché par un tir qui enflamme (voir `Arme.incendiaire`) : il brûle, le plus fort l'emporte. */
-function enflammer(m: Monde, e: Ennemi, b: { duree: number; dps: number }): void {
+function enflammer(c: ConfigVaisseau, m: Monde, e: Ennemi, b: { duree: number; dps: number }): void {
   const brule = (e.bruleA ?? -1) > m.t
   e.dpsBrulure = brule ? Math.max(e.dpsBrulure ?? 0, b.dps) : b.dps
-  e.bruleA = Math.max(e.bruleA ?? -1, m.t + b.duree)
-  e.dureeBrulure = b.duree
+  e.bruleA = Math.max(e.bruleA ?? -1, m.t + dureeDEtat(c, b.duree))
+  e.dureeBrulure = dureeDEtat(c, b.duree)
 }
 /** LES ÉCLATS D'UNE EXPLOSION (voir `Arme.fragments`) : tout autour, des balles brûlantes qui traversent, une fois chacun. */
 function fragmenter(m: Monde, x: number, y: number, f: { nombre: number; degats: number; vitesse: number; vie: number }, touche: Ennemi | null): void {
@@ -6246,8 +6256,8 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
         o.perce.push(e.id)
         // (UN TIR INFAILLIBLE QUI TRAVERSE lâche sa cible une fois sur elle, et file droit — voir `Arme.perforant`)
         if (o.verrou === e.id) delete o.verrou
-        if (o.gel !== undefined) geler(m, e, o.gel.duree, o.gel.ralenti, ev)
-        if (o.brule !== undefined) enflammer(m, e, o.brule)
+        if (o.gel !== undefined) geler(c, m, e, o.gel.duree, o.gel.ralenti, ev)
+        if (o.brule !== undefined) enflammer(c, m, e, o.brule)
         e.pv -= o.degats
         // (UN CRITIQUE QUI EXÉCUTE abat net ce qui n'est ni grand ni roche — voir `Arme.execute` ; s'il en réchappait, la page
         // le montre)
@@ -6271,9 +6281,9 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
         if (o.deja?.includes(e.id) === true || Math.hypot(e.corps.x - o.x, e.corps.y - o.y) > rayonDe(c, e) + 1.5) continue
         fini = true
         // (un éclat de glace gèle ce qu'il touche — avant le coup : mort, il vole en éclats)
-        if (o.gel !== undefined) geler(m, e, o.gel.duree, o.gel.ralenti, ev)
-        if (o.brule !== undefined) enflammer(m, e, o.brule)
-        if (o.ronge !== undefined) ronger(m, e, { ...o.ronge, dps: 0 }, ev)
+        if (o.gel !== undefined) geler(c, m, e, o.gel.duree, o.gel.ralenti, ev)
+        if (o.brule !== undefined) enflammer(c, m, e, o.brule)
+        if (o.ronge !== undefined) ronger(c, m, e, { ...o.ronge, dps: 0 }, ev)
         e.pv -= o.degats
         if (o.critique === true && o.execute === true && e.asteroide === undefined && e.grand !== true && e.pv > 0) {
           e.pv = 0
@@ -6359,8 +6369,8 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
       if (o.cloche === true || o.minuterie !== undefined) {
         for (const e of m.ennemis) {
           if (Math.hypot(e.corps.x - o.x, e.corps.y - o.y) > o.zone.rayon + rayonDe(c, e)) continue
-          if (o.gel !== undefined) geler(m, e, o.gel.duree, o.gel.ralenti, ev)
-          if (o.brule !== undefined) enflammer(m, e, o.brule)
+          if (o.gel !== undefined) geler(c, m, e, o.gel.duree, o.gel.ralenti, ev)
+          if (o.brule !== undefined) enflammer(c, m, e, o.brule)
         }
       }
       exploser(c, m, o.x, o.y, o.zone, null, ev, o.arme)
