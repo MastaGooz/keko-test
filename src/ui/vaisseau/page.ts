@@ -11645,27 +11645,51 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * rouge de chaque côté, des lueurs le long, qui frémit — ; et SUR TOUT CE QU'IL TRAVERSE, UN PETIT CRÉPITEMENT ROUGE (Keko)
    * : de courtes étincelles brisées autour de lui, qui changent à chaque image, et une lueur rouge. Il s'allume en un
    * dixième, s'éteint en un quart de seconde.
+   * (EN DEUX TEMPS — Keko, 23/11 : « un temps où on pose la balise, un temps où le rayon se déclenche » : EN VOL, la balise
+   * monte en cloche au-dessus de son ombre, son œil éteint ; POSÉE, trois pieds se déploient, une onde rouge s'ouvre, et le
+   * rayon jaillit d'elle jusqu'au vaisseau en 0,15 s)
    */
   const ROUGE_LASER = ['#3a0808', '#8a1414', '#e02828', '#ff6a5a', '#ffd8d0'].map((c) => N.hex(c))
   function dessinerLesBalisesLaser(p: Peintre): void {
     for (const b of m.balisesLaser) {
       const li = CONF.armes[b.arme]?.lien
       if (li === undefined) continue
-      const age = m.t - b.nee
+      // (EN VOL : en cloche au-dessus de son ombre, son œil sombre)
+      if (b.posee === null) {
+        const u = Math.max(0, Math.min(1, (m.t - b.nee) / b.vol))
+        const h = Math.sin(Math.PI * u) * 16
+        p.circle(b.x, b.y, 2.2 * (1 - h / 40), N.hex('#0a0608'), 0.45)
+        p.circle(b.x, b.y - h, 2.8, N.hex('#2a3044'))
+        p.circle(b.x, b.y - h, 2, COQUE[3])
+        p.circle(b.x - 0.5, b.y - h - 0.5, 1, COQUE[5])
+        p.dot(b.x, b.y - h, ROUGE_LASER[1])
+        continue
+      }
+      const age = m.t - b.posee
       const k = Math.max(0, Math.min(1, age / 0.1) * Math.min(1, (li.duree - age) / 0.25))
+      // (le rayon jaillit d'elle jusqu'au vaisseau en 0,15 s)
+      const jaillit = Math.min(1, age / 0.15)
       const L0 = Math.hypot(b.x - v.x, b.y - v.y) || 1
       const ux = (b.x - v.x) / L0
       const uy = (b.y - v.y) / L0
       const nx = -uy
       const ny = ux
-      const x0 = v.x + ux * (CONF.rayon + 1)
-      const y0 = v.y + uy * (CONF.rayon + 1)
-      const L = Math.max(0, L0 - CONF.rayon - 1)
+      const xv = v.x + ux * (CONF.rayon + 1)
+      const yv = v.y + uy * (CONF.rayon + 1)
+      const x0 = b.x + (xv - b.x) * jaillit
+      const y0 = b.y + (yv - b.y) * jaillit
+      const L = Math.max(0, L0 - CONF.rayon - 1) * jaillit
       const fremit = 0.8 + 0.2 * Math.sin(t * 70 + b.nee * 13)
       for (let d = 4; d < L; d += 9) p.glow(x0 + ux * d, y0 + uy * d, 4, ROUGE_LASER[2], 0.22 * k * fremit)
       for (const o of [-1, 1]) p.line(x0 + nx * o, y0 + ny * o, b.x + nx * o, b.y + ny * o, ROUGE_LASER[2], 0.65 * k * fremit)
       p.line(x0, y0, b.x, b.y, ROUGE_LASER[4], k)
-      // (la balise)
+      // (la balise posée : trois pieds déployés, et à l'instant où elle s'active, une onde rouge qui s'ouvre)
+      const pieds = Math.min(1, age / 0.12)
+      for (let q = 0; q < 3; q++) {
+        const a = b.nee * 3 + (q * 2 * Math.PI) / 3
+        p.line(b.x, b.y, b.x + Math.cos(a) * 4.5 * pieds, b.y + Math.sin(a) * 4.5 * pieds, COQUE[2])
+      }
+      if (age < 0.35) p.ring(b.x, b.y, 3 + 14 * (age / 0.35), age < 0.1 ? 2 : 1, age < 0.12 ? ROUGE_LASER[4] : ROUGE_LASER[3], 0.9 * (1 - age / 0.35))
       const pouls = (t * 2 + b.nee) % 1
       p.ring(b.x, b.y, 3 + 4 * pouls, 1, ROUGE_LASER[3], 0.55 * (1 - pouls) * k)
       p.glow(b.x, b.y, 7, ROUGE_LASER[2], 0.5 * k)
@@ -16752,6 +16776,17 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           else jouer('scie')
           break
         case 'balisePosee':
+          // (LA BALISE LASER SE POSE ET S'ACTIVE — Keko, 23/11, voir `Arme.lien` : le son du laser qui s'allume, une gerbe
+          // rouge, un éclair)
+          if (ev.arme === 'lien') {
+            jouer('lien', { dx: ev.x - v.x, dy: ev.y - v.y })
+            flashs.push({ x: ev.x, y: ev.y, t0: t, r: 4, c: ROUGE_LASER })
+            for (let i = 0; i < 8; i++) {
+              const a = R.range(0, Math.PI * 2)
+              etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(30, 80), Math.sin(a) * R.range(30, 80), R.range(0.12, 0.28), [N.WHITE, ROUGE_LASER[3], ROUGE_LASER[4]][Math.floor(R.next() * 3)], 1, 2)
+            }
+            break
+          }
           // (une balise plantée : son clic, un peu de poussière)
           // (un cristal : un tintement de verre, des éclats bleus)
           jouer(ev.arme === 'cristal' ? 'cristalPose' : 'balisePosee', { dx: ev.x - v.x, dy: ev.y - v.y })

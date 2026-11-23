@@ -8317,3 +8317,12 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     mesuré, PAS ÉCOUTÉ.
   - Le test : lancée vers un insecte à 60, elle s'arrête à 80 ; en 4 s le rayon brûle la cible et l'insecte sur sa ligne
     (~470 chacun), pas celui d'à côté ; puis elle s'éteint. VU en capture.
+  - EN DEUX TEMPS (Keko, le même jour : « bon début, mais il faudrait d'abord lancer la balise en cloche quelque part, et
+    qu'elle ne s'active qu'une fois posée, pas dès qu'elle est tirée ; pour bien qu'on ait deux temps, un temps où on
+    pose la balise et un temps où le rayon se déclenche ») : elle VOLE EN CLOCHE 0,7 s (`lien.vol`, à vitesse constante
+    — le freinage est parti), ne brûle rien, SE POSE (événement `balisePosee`) et seulement alors s'active, pour 4 s. Au
+    lancer, le son du lanceur (`lance`) ; posée, celui du laser qui s'allume (`lien`), un éclair et une gerbe rouges.
+    LE DESSIN : en vol, la balise monte à 16 au-dessus de son ombre, l'œil sombre ; posée, trois pieds se déploient, une
+    onde rouge s'ouvre et le rayon jaillit d'elle jusqu'au vaisseau en 0,15 s. L'équilibre : 1,05, puis 122 par seconde
+    (128) : 0,98. Le test : elle vole 0,72 s sans rien brûler et se pose à 80 ; posée, le rayon brûle la cible et celle
+    de sa ligne (~510 chacune), pas celle d'à côté. VU en capture : le rayon ; le vol en cloche, non (hors du cadre).

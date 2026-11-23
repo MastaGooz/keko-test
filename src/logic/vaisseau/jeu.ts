@@ -645,13 +645,15 @@ export type Arme = {
    * UNE BALISE LASER (la sixième arme de l'Empire, Keko, 23/11 : « le vaisseau lance une balise, et durant tout le temps où
    * la balise est active, un rayon laser rouge est tracé entre la balise et le vaisseau ; tous les ennemis traversés par le
    * rayon subissent des dégâts, et ont une petite animation sur eux — un petit crépitement rouge ») : un insecte à portée,
-   * la balise est lancée vers lui et un peu au-delà, freinée de `frein` par seconde, juste assez vite pour s'arrêter là ;
-   * elle vit `duree` secondes, une à la fois par arme ; pendant ce temps, LE RAYON DU VAISSEAU À ELLE frappe de `degats`
+   * la balise est lancée vers lui et un peu au-delà ; (EN DEUX TEMPS — Keko, 23/11 : « d'abord lancer la balise en cloche
+   * quelque part, et qu'elle ne s'active qu'une fois posée, pas dès qu'elle est tirée : un temps où on pose la balise, un
+   * temps où le rayon se déclenche ») ELLE VOLE EN CLOCHE `vol` secondes, ne touche rien, SE POSE, et alors seulement
+   * elle s'active ; posée, elle vit `duree` secondes, une à la fois par arme ; pendant ce temps, LE RAYON DU VAISSEAU À ELLE frappe de `degats`
    * par seconde tout ce qui est à moins de `epaisseur` de lui — il balaie quand le vaisseau bouge ; il s'éteint si le
    * vaisseau s'éloigne à plus de `rupture` fois la portée. `explosion` (une carte) : à sa fin, elle explose. L'état est
    * `Monde.balisesLaser`. *Les chiffres sont de moi.*
    */
-  lien?: { duree: number; frein: number; epaisseur: number; rupture: number; explosion?: { rayon: number; part: number } }
+  lien?: { duree: number; vol: number; epaisseur: number; rupture: number; explosion?: { rayon: number; part: number } }
   /**
    * UN RAYON QUI BALAIE (la Salamandre, Keko, 15/11 : « un rayon à haute énergie qui part au-dessus du vaisseau et
    * descend en décrivant un cercle autour de lui : il enflamme et fait de gros dégâts ») : toutes les `tous` secondes, si
@@ -4972,12 +4974,12 @@ function canaliserLeRayon(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement
   }
 }
 
-/** Une balise laser de l'Empire (voir `Arme.lien`). */
-export type BaliseLaser = { arme: number; x: number; y: number; vx: number; vy: number; nee: number }
+/** Une balise laser de l'Empire (voir `Arme.lien`) : en vol, son élan et son temps de vol ; posée, l'instant où elle s'est posée. */
+export type BaliseLaser = { arme: number; x: number; y: number; vx: number; vy: number; nee: number; vol: number; posee: number | null }
 /** CE QUE LE RAYON D'UNE BALISE LASER TRAVERSE (voir `Arme.lien`) : du vaisseau à elle, à son épaisseur. */
 export function ennemisDuLien(c: ConfigVaisseau, m: Monde, b: BaliseLaser): Ennemi[] {
   const li = c.armes[b.arme]?.lien
-  if (li === undefined) return []
+  if (li === undefined || b.posee === null) return []
   const v = m.vaisseau
   return m.ennemis.filter((e) => distanceAuSegment(e.corps.x, e.corps.y, v.x, v.y, b.x, b.y) <= li.epaisseur + rayonDe(c, e))
 }
@@ -4998,13 +5000,11 @@ function menerLesBalisesLaser(c: ConfigVaisseau, m: Monde, dt: number, ev: Evene
     const an = Math.atan2(cible.corps.y - v.y, cible.corps.x - v.x)
     const x0 = v.x + Math.cos(an) * (c.rayon + 2)
     const y0 = v.y + Math.sin(an) * (c.rayon + 2)
-    // (lancée juste assez vite pour s'arrêter un peu au-delà de lui, à la portée au plus : freinée de k par seconde, elle
-    // parcourt v / k en tout — à 6, 90 % en 0,4 s)
+    // (lancée en cloche pour se poser un peu au-delà de lui, à la portée au plus, au bout de son vol)
     const loin = Math.max(0, Math.min(a.portee, dist(cible) + 20) - c.rayon - 2)
-    const vit = loin * li.frein
-    m.balisesLaser.push({ arme: i, x: x0, y: y0, vx: Math.cos(an) * vit, vy: Math.sin(an) * vit, nee: m.t })
+    m.balisesLaser.push({ arme: i, x: x0, y: y0, vx: (Math.cos(an) * loin) / li.vol, vy: (Math.sin(an) * loin) / li.vol, nee: m.t, vol: li.vol, posee: null })
     m.armesA[i] = m.t + a.cadence
-    ev.push({ type: 'obus', x: x0, y: y0, arme: a.id })
+    ev.push({ type: 'tourelleLancee', x: x0, y: y0 })
   })
   for (let j = m.balisesLaser.length - 1; j >= 0; j--) {
     const b = m.balisesLaser[j]
@@ -5014,13 +5014,21 @@ function menerLesBalisesLaser(c: ConfigVaisseau, m: Monde, dt: number, ev: Evene
       m.balisesLaser.splice(j, 1)
       continue
     }
-    // (le freinage intégré exactement : pas à pas, elle s'arrêtait 5 % trop tôt)
-    const f = Math.exp(-li.frein * dt)
-    b.x += (b.vx * (1 - f)) / li.frein
-    b.y += (b.vy * (1 - f)) / li.frein
-    b.vx *= f
-    b.vy *= f
-    if (m.t - b.nee >= li.duree || Math.hypot(b.x - v.x, b.y - v.y) > a.portee * li.rupture) {
+    // (EN VOL : elle file, ne touche rien ; au bout de son vol, elle se pose, et s'active)
+    if (b.posee === null) {
+      // (le temps de vol de ce pas : de sa naissance au plus tôt, jusqu'à son atterrissage au plus tard)
+      const pas = Math.max(0, Math.min(m.t, b.nee + b.vol) - Math.max(m.t - dt, b.nee))
+      b.x += b.vx * pas
+      b.y += b.vy * pas
+      if (m.t - b.nee >= b.vol - 1e-9) {
+        b.posee = m.t
+        b.vx = 0
+        b.vy = 0
+        ev.push({ type: 'balisePosee', x: b.x, y: b.y, arme: a.id })
+      }
+      continue
+    }
+    if (m.t - b.posee >= li.duree || Math.hypot(b.x - v.x, b.y - v.y) > a.portee * li.rupture) {
       if (li.explosion !== undefined) exploser(c, m, b.x, b.y, { rayon: li.explosion.rayon, degats: a.degats * li.explosion.part }, null, ev, a.id)
       ev.push({ type: 'baliseFinie', x: b.x, y: b.y, arme: a.id })
       m.balisesLaser.splice(j, 1)

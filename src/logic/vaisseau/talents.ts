@@ -357,7 +357,7 @@ export const ARMES_DE_FACTION: ArmeDeFaction[] = [
   // (LA BALISE LASER, LA SIXIÈME — Keko, 23/11, après les roquettes et le harpon mis de côté : « le vaisseau lance une
   // balise ; tant qu'elle est active, un rayon laser rouge entre elle et le vaisseau ; tous les ennemis traversés
   // subissent des dégâts » — voir `Arme.lien` ; `degats` est ce qu'il brûle par seconde)
-  { id: 'lien', nom: 'Balise laser', dit: 'Une balise reliée par un rayon laser, qui brûle tout ce qu’il traverse.', race: 'humains', icone: 'imp-lien', armes: () => [nouvelle({ id: 'lien', cadence: 5, degats: 128, portee: 110, lien: { duree: 4, frein: 6, epaisseur: 2, rupture: 1.8 } })] },
+  { id: 'lien', nom: 'Balise laser', dit: 'Une balise reliée par un rayon laser, qui brûle tout ce qu’il traverse.', race: 'humains', icone: 'imp-lien', armes: () => [nouvelle({ id: 'lien', cadence: 5, degats: 122, portee: 110, lien: { duree: 4, vol: 0.7, epaisseur: 2, rupture: 1.8 } })] },
 ]
 export const armeDeFaction = (id: string): ArmeDeFaction | undefined => ARMES_DE_FACTION.find((x) => x.id === id)
 

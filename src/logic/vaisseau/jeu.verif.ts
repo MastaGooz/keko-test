@@ -3261,7 +3261,7 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
 // elle s'arrête un peu au-delà ; le rayon brûle l'insecte et celui qui est sur sa ligne, pas celui qui est à côté ; au
 // bout de sa vie, elle s'éteint
 {
-  const lien = { id: 'lien', cadence: 5, degats: 120, portee: 110, vitesse: 0, vie: 0, dispersion: 0, guide: false, tousSens: true, lien: { duree: 4, frein: 6, epaisseur: 2, rupture: 1.8 } }
+  const lien = { id: 'lien', cadence: 5, degats: 128, portee: 110, vitesse: 0, vie: 0, dispersion: 0, guide: false, tousSens: true, lien: { duree: 4, vol: 0.7, epaisseur: 2, rupture: 1.8 } }
   const cfg = { ...VAISSEAU, coque: 1e9, armes: [lien], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false } }
   const w = nouveauMonde(cfg, 5)
   w.invasion.prochainA = 1e9
@@ -3269,13 +3269,16 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   const [cible, surLaLigne, aCote] = [[60, 0], [35, 0], [35, 30]].map(([x, y], k): Ennemi => ({ id: 950 + k, corps: { ...nouveauVaisseau(), x, y }, pv: pv0, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9 }))
   w.ennemis.push(surLaLigne, cible, aCote)
   w.verrou = cible.id
-  for (let i = 0; i < 60; i++) avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+  // (EN DEUX TEMPS — Keko, 23/11 : en vol, elle ne brûle rien ; posée, le rayon s'allume)
+  let poseeA = -1
+  for (let i = 0; i < 60 && poseeA < 0; i++) for (const ev of avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements) if (ev.type === 'balisePosee') poseeA = w.t
   const b = w.balisesLaser[0]
-  const arretee = b !== undefined && Math.abs(b.x - 80) < 3 && Math.hypot(b.vx, b.vy) < 5
+  const posee = b !== undefined && Math.abs(b.x - 80) < 1 && b.posee !== null
+  const avant = pv0 - cible.pv + (pv0 - surLaLigne.pv)
   let finie = false
-  for (let i = 0; i < 60 * 3.2 && !finie; i++) for (const ev of avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements) if (ev.type === 'baliseFinie') finie = true
+  for (let i = 0; i < 60 * 4.2 && !finie; i++) for (const ev of avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements) if (ev.type === 'baliseFinie') finie = true
   const [pc, pl, pa] = [pv0 - cible.pv, pv0 - surLaLigne.pv, pv0 - aCote.pv]
-  verifier(`la balise s'arrête au-delà de sa cible (${b?.x.toFixed(0)}, 80 attendu) ; en 4 s, le rayon brûle la cible (${pc.toFixed(0)}) et l'insecte sur sa ligne (${pl.toFixed(0)}), ~480 chacun, pas celui d'à côté (${pa}) ; puis elle s'éteint (${finie})`, arretee && pc > 440 && pc < 500 && pl > 440 && pl < 500 && pa === 0 && finie && w.balisesLaser.length === 0)
+  verifier(`la balise vole ${poseeA.toFixed(2)} s (0,7), sans rien brûler (${avant}), et se pose au-delà de sa cible (${b?.x.toFixed(0)}, 80 attendu) ; posée, en 4 s, le rayon brûle la cible (${pc.toFixed(0)}) et l'insecte sur sa ligne (${pl.toFixed(0)}), ~510 chacun, pas celui d'à côté (${pa}) ; puis elle s'éteint (${finie})`, posee && Math.abs(poseeA - 0.7) < 0.04 && avant === 0 && pc > 480 && pc < 530 && pl > 480 && pl < 530 && pa === 0 && finie && w.balisesLaser.length === 0)
 }
 
 // TOUCHÉ, ON TRAVERSE LES INSECTES (Keko, 22/11 : « quand on est touché on est invincible un court instant ; je voudrais
