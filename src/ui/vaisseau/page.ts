@@ -9155,6 +9155,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   let flammesDesBrules: { x: number; y: number; vx: number; vy: number; t0: number; vie: number }[] = []
   /** LES GOUTTES D'ACIDE QUI S'ÉVAPORENT d'un insecte rongé (Keko, 23/11 — voir « il est rongé ») : elles naissent sur lui, montent en ondulant, pâlissent et rapetissent. */
   let gouttesDAcide: { x: number; y: number; vx: number; vy: number; t0: number; vie: number; g: number }[] = []
+  /** LES FLOCONS DE GIVRE d'un insecte gelé (Keko, 23/11 — voir « il est gelé ») : ils s'en détachent, dérivent en tournoyant, scintillent et fondent. */
+  let floconsDeGivre: { x: number; y: number; vx: number; vy: number; t0: number; vie: number; g: number; grand: boolean }[] = []
   /** Une tape commencée sur un ennemi (au doigt) : elle le verrouille si elle est brève et ne bouge pas ; dans le vide (`cible` nulle), elle lâche le verrou. */
   let tapeVerrou: { id: number; x: number; y: number; a: number; cible: number | null } | null = null
   /**
@@ -10221,7 +10223,22 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
     return r
   }
-  function dessinerUnInsecte(p: Peintre, x: number, y: number, cap: number, phase: number, blanchi: boolean, aggro: boolean, deforme?: { axe: number; long: number; large: number; part: number }, sorte?: SorteDInsecte, ronge = false): void {
+  /**
+   * L'INSECTE GELÉ, TEINTÉ DE BLEU (Keko, 23/11 : « rework l'état givre avec une teinte bleue et des particules de flocon,
+   * un peu comme corrosion ») : la même image, chaque pixel mêlé d'un peu du bleu de la glace — comme la corrosion (voir
+   * `rongee`) ; la gangue ronde est retirée, les flocons sont semés avec les autres particules (voir `floconsDeGivre`).
+   */
+  const imagesGelees = new WeakMap<ImageGardee, ImageGardee>()
+  const BLEU_DU_GIVRE = N.hex('#8fd4ff')
+  function gelee(im: ImageGardee): ImageGardee {
+    let r = imagesGelees.get(im)
+    if (r === undefined) {
+      r = { ...im, c: Uint32Array.from(im.c, (c) => meler(c, BLEU_DU_GIVRE, 0.24)) }
+      imagesGelees.set(im, r)
+    }
+    return r
+  }
+  function dessinerUnInsecte(p: Peintre, x: number, y: number, cap: number, phase: number, blanchi: boolean, aggro: boolean, deforme?: { axe: number; long: number; large: number; part: number }, sorte?: SorteDInsecte, ronge = false, gele = false): void {
     const taille = sorte === undefined ? 1 : CONF.invasion[sorte].taille
     const marche = t * (aggro ? 22 : 13) + phase
     const morsure = t * 18 + phase
@@ -10241,7 +10258,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         im_ = imageDe(Math.ceil(TAILLE_DE_L_INSECTE * taille) + 2, (p2, c) => peindreLInsecte(p2, c, c, (ic / POSES_DU_CAP) * tour, (im / POSES_DE_LA_MARCHE) * tour, (io / POSES_DE_LA_MORSURE) * tour, false, aggro, sorte))
         imagesDesInsectes.set(cle, im_)
       }
-      poserLImage(p, ronge ? rongee(im_) : im_, x, y)
+      const teinte = ronge ? rongee(im_) : im_
+      poserLImage(p, gele ? gelee(teinte) : teinte, x, y)
       if (aggro) p.glow(x, y, 9 * taille ** 0.8, N.hex('#ff3a4a'), 0.25 + 0.1 * Math.sin(t * 9 + phase))
       return
     }
@@ -14425,7 +14443,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           if (e.pv < ro.pvMax) dessinerUneJauge(p, sx, sy + ro.rayon + 4, Math.round(ro.rayon * 1.6), e.pv / ro.pvMax, GRIS_DE_ROCHE[0], GRIS_DE_ROCHE[1], false)
           continue
         }
-        dessinerUnInsecte(p, sx, sy, b.cap, e.id * 1.7, blanchi, e.fait === 'aggro', undefined, e.sorte, e.acide !== undefined && e.acide.jusque > m.t)
+        dessinerUnInsecte(p, sx, sy, b.cap, e.id * 1.7, blanchi, e.fait === 'aggro', undefined, e.sorte, e.acide !== undefined && e.acide.jusque > m.t, (e.geleA ?? -1) > m.t)
         // (SES ÉTATS À SA TAILLE — Keko, 23/11 : « quand un ennemi est enflammé, gelé ou sous l'effet de la corrosion, que
         // l'effet s'adapte également à sa taille », comme le crépitement de la balise laser : `ech`, sa taille rapportée à
         // celle d'un insecte — le moucheron 0,6, le cornu 1,5, le cuirassier 2,2 ; plus de braises, d'éclats, de bulles sur
@@ -14433,11 +14451,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         const ech = rayonDe(CONF, e) / CONF.ennemi.rayon
         const plus = (n: number): number => Math.max(1, Math.round(n * Math.max(1, ech)))
         // IL EST GELÉ (le givre) : une gangue de glace bleue sur lui, un liseré clair, des éclats de givre qui scintillent
-        if ((e.geleA ?? -1) > m.t) {
-          p.circle(sx, sy, 5 * ech, GLACE[4], 0.32)
-          p.ring(sx, sy, 5 * ech, 1, GLACE[6], 0.45)
-          for (let j = 0; j < plus(3); j++) if (Math.sin(t * 7 + e.id + j * 2.1) > 0.3) p.rect(Math.round(sx + Math.cos(e.id + j * 2.1) * 3.5 * ech), Math.round(sy + Math.sin(e.id + j * 2.1) * 3.5 * ech), 1, 1, N.WHITE, 0.9)
-        }
+        // (… PUIS TEINTÉ DE BLEU, ET DES FLOCONS — Keko, 23/11 : « une teinte bleue et des particules de flocon, un peu comme
+        // corrosion » : la gangue retirée ; l'insecte est teint (`gelee`), les flocons sont semés avec les autres particules —
+        // voir `floconsDeGivre`)
         // IL EST EMPOISONNÉ (la traînée du Ver) : une lueur de miasme, deux bulles qui montent
         if ((e.poisonA ?? -1) > m.t) {
           p.glow(sx, sy, 6 * ech, MIASME[5], 0.3)
@@ -14887,6 +14903,21 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       if (u < 0.5) p.glow(x, y, 3, N.hex('#7ae84a'), 0.35 * (1 - u / 0.5))
       p.dot(x, y, c, 1 - u * 0.8)
       if (u < 0.3) p.dot(x, y + 1, c, 0.6 * (1 - u / 0.3))
+    }
+    // les flocons de givre : une petite croix blanche aux branches bleu glace (les grands), ou un point ; ils dérivent en
+    // tournoyant, scintillent, puis fondent en un point bleu pâle qui s'efface
+    floconsDeGivre = floconsDeGivre.filter((f) => t - f.t0 < f.vie)
+    for (const f of floconsDeGivre) {
+      const age = t - f.t0
+      const u = age / f.vie
+      const x = Math.round(f.x + f.vx * age + Math.sin(age * 6 + f.g) * 1.5)
+      const y = Math.round(f.y + f.vy * age)
+      const brille = 0.75 + 0.25 * Math.sin(age * 22 + f.g * 3)
+      if (u < 0.4) p.glow(x, y, 3, BLEU_DU_GIVRE, 0.3 * (1 - u / 0.4))
+      if (f.grand && u < 0.6) {
+        p.dot(x, y, N.WHITE, brille)
+        for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) p.dot(x + dx, y + dy, BLEU_DU_GIVRE, 0.85 * brille * (1 - u / 0.6))
+      } else p.dot(x, y, u < 0.6 ? N.WHITE : BLEU_DU_GIVRE, (1 - u * 0.8) * brille)
     }
     // les petites flammes des insectes qui brûlent : des bouffées qui montent en rapetissant
     flammesDesBrules = flammesDesBrules.filter((f) => t - f.t0 < f.vie)
@@ -18239,6 +18270,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           const a = R.range(0, Math.PI * 2)
           const d = r * 0.7 * Math.sqrt(R.next())
           gouttesDAcide.push({ x: e.corps.x + Math.cos(a) * d, y: e.corps.y + Math.sin(a) * d, vx: e.corps.vx * 0.5 + R.range(-4, 4), vy: e.corps.vy * 0.5 - R.range(8, 18), t0: t, vie: R.range(0.4, 0.75), g: R.range(0, 6.3) })
+        }
+        // les insectes gelés : des flocons se détachent d'eux et dérivent (plus sur un gros — voir `floconsDeGivre`)
+        for (const e of m.ennemis) {
+          if ((e.geleA ?? -1) <= m.t || e.asteroide !== undefined) continue
+          const r = rayonDe(CONF, e)
+          if (R.next() > 0.3 * Math.max(1, r / CONF.ennemi.rayon)) continue
+          const a = R.range(0, Math.PI * 2)
+          const d = r * 0.8 * Math.sqrt(R.next())
+          floconsDeGivre.push({ x: e.corps.x + Math.cos(a) * d, y: e.corps.y + Math.sin(a) * d, vx: e.corps.vx * 0.4 + Math.cos(a) * R.range(3, 8), vy: e.corps.vy * 0.4 + Math.sin(a) * R.range(3, 8) + R.range(2, 6), t0: t, vie: R.range(0.5, 0.9), g: R.range(0, 6.3), grand: R.next() < 0.4 })
         }
         // les insectes qui brûlent : de petites flammes naissent sur eux et montent
         // (… à sa taille — Keko, 23/11 : plus nombreuses et plus étalées sur un gros)

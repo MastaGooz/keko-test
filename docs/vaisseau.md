@@ -8584,3 +8584,8 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   - … PLUS COURT (Keko, 23/11 : « beaucoup trop long le son ») : la même frappe ; le grave (95 → 38 Hz) et la lame
     s'éteignent en une demi-seconde, six vagues de roulement sur 0,6 s, une salle plus petite. MESURÉ : 100-300 ms 0,040,
     300-600 ms 0,015, 600-1 000 ms 0,003 — éteint en moins d'une seconde (avant, deux). PAS ÉCOUTÉ.
+- L'ÉTAT GIVRE REFAIT COMME LA CORROSION (Keko, 23/11 : « rework l'état givre avec une teinte bleue et des particules de
+  flocon, un peu comme corrosion ») : la gangue ronde, son liseré et ses éclats sont retirés ; l'insecte gelé est TEINT de
+  bleu glace (`gelee`, chaque pixel mêlé à 24 % de `#8fd4ff` — la corrosion, 18 % de vert ; les deux se cumulent), et DES
+  FLOCONS s'en détachent (`floconsDeGivre`, plus sur un gros) : une petite croix blanche aux branches bleu glace, ou un
+  point, qui dérivent en tournoyant, scintillent et fondent. VU en capture (railgun Cryogénique sur des cuirassiers).
