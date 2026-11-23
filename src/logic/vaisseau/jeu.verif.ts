@@ -3386,6 +3386,26 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   verifier(`le laser corrosif : deux tirs, ${tir.toFixed(1)} (100 + 135 = 235) ; deux rayons, ${rayon.toFixed(1)} (plus de 200 : le second rongé)`, Math.abs(tir - 235) < 0.5 && rayon > 220)
 }
 
+// LA DÉTONATION (Keko, 23/11 : « quand un laser fait un coup critique, une explosion dans la zone qui inflige 200 % des
+// dégâts du critique, et peut elle aussi être critique » — voir `Arme.detonation`) : tout critique ; la cible perd son
+// critique, son voisin deux fois ce critique, critique à son tour ; le lointain rien ; sans critique, rien autour
+{
+  const essai = (chance: number): number[] => {
+    const laser = { id: 'laser', cadence: 9, degats: 100, portee: 120, vitesse: 420, vie: 0.7, dispersion: 0, guide: false, tousSens: true, infaillible: true, detonation: { rayon: 24, part: 2 } }
+    const cfg = { ...VAISSEAU, coque: 1e9, armes: [laser], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false }, passifs: { ...VAISSEAU.passifs, critique: chance } }
+    const w = nouveauMonde(cfg, 5)
+    w.invasion.prochainA = 1e9
+    const ins = [[60, 0], [60, 15], [60, 70]].map(([x, y], k): Ennemi => ({ id: 1300 + k, corps: { ...nouveauVaisseau(), x, y }, pv: 1e6, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9 }))
+    w.ennemis.push(...ins)
+    w.verrou = ins[0].id
+    for (let i = 0; i < 60; i++) avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+    return ins.map((e) => 1e6 - e.pv)
+  }
+  const [avec, sans] = [essai(1), essai(0)]
+  const f = avec[0] / 100
+  verifier(`la détonation : tout critique, ${avec.map((x) => x.toFixed(0)).join(' / ')} (${(100 * f).toFixed(0)} / ${(200 * f * f).toFixed(0)} / 0) ; sans critique, ${sans.map((x) => x.toFixed(0)).join(' / ')} (100 / 0 / 0)`, f > 1 && Math.abs(avec[1] - 200 * f * f) < 0.5 && avec[2] === 0 && sans[0] === 100 && sans[1] === 0 && sans[2] === 0)
+}
+
 // TOUCHÉ, ON TRAVERSE LES INSECTES (Keko, 22/11 : « quand on est touché on est invincible un court instant ; je voudrais
 // qu'on traverse aussi les ennemis ») : le temps qu'il clignote, un insecte posé sur lui ne l'écarte pas ; après, si ; une
 // roche l'arrête toujours

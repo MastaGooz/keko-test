@@ -372,7 +372,10 @@ export const MUTATIONS: Mutation[] = [
   // zone inflige un pourcentage des dégâts » : 16 de rayon — la carte « Portée » l'agrandit —, la moitié des dégâts du tir ;
   // avec Concentration, une zone continue tout le temps du rayon — voir `Arme.zone.part`, `Arme.concentre`)
   variation('laser-impulsion', 'laser', 'Impulsion', 'Chaque laser libère une onde qui touche aussi les ennemis autour de sa cible.', changerA('laser', (a) => ({ ...a, zone: { rayon: 16, part: 0.5 } }))),
-  variation('laser-drones', 'laser', 'Drones', 'Deux drones en orbite tirent des lasers sur les ennemis proches.', ajouterA('laser', (a) => drones(a, { cadence: 1.4, degats: fois(a, 0.45), portee: 70, vie: 0.5 }))),
+  // (LA DÉTONATION, À LA PLACE DES DRONES — Keko, 23/11 : « pas fan du drone » ; « dans chaque variation d'armes, une qui se
+  // déclenche en cas de coup critique : une explosion dans la zone, 200 % des dégâts du critique, qui peut elle aussi être
+  // critique » : 24 de rayon, la carte « Portée » l'agrandit — voir `Arme.detonation`)
+  variation('laser-detonation', 'laser', 'Détonation', 'Un coup critique du laser détone : une explosion d’énergie frappe tout autour de deux fois ses dégâts.', changerA('laser', (a) => ({ ...a, detonation: { rayon: 24, part: 2 } }))),
   variation('laser-perforant', 'laser', 'Perforant', 'Les lasers traversent les ennemis et touchent toute leur ligne.', changerA('laser', V.perforant)),
   variation('laser-ricochet', 'laser', 'Ricochet', 'Chaque laser rebondit sur deux autres ennemis proches.', changerA('laser', V.ricochet)),
   // (LE LASER CONCENTRÉ, À LA PLACE DE LA RAFALE — Keko, 23/11 : la rafale « pas fou » — trois lasers en éventail, puis trois

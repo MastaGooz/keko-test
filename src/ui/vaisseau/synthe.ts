@@ -1552,6 +1552,25 @@ const RECETTES = {
       souffle(m, h, 0, 0.5, 0, { f: 220, glisse: { vers: 650, en: 0.08, droit: true }, q: 1.4, bande: true, a: 0.01, d: 0.22, large: true })
     },
   },
+  /**
+   * LA DÉTONATION D'UN COUP CRITIQUE DU LASER (Keko, 23/11 : « une explosion d'énergie, avec un son adapté » — voir
+   * `Arme.detonation`) : UN COUP GRAVE saturé qui tombe de 140 à 40 Hz ; UN ZAP électrique qui plonge de 1 800 à 180 Hz,
+   * ses harmoniques impaires qui battent ; un claquement d'air large ; puis UN GRÉSILLEMENT — des éclats de bruit serrés qui
+   * s'espacent et pâlissent sur un tiers de seconde ; la salle d'une grande explosion
+   */
+  detonation: {
+    duree: 1, niveau: 0.42, salle: [0.55, 0.2], variantes: 3,
+    faire: (m, h) => {
+      note(m, 0, 1, 0, { f: 140, glisse: { vers: 40, en: 0.2 }, a: 0.002, d: 0.38, partiels: CORPS, sature: 2.6 })
+      const f = 1800 * (0.92 + 0.16 * h.next())
+      note(m, 0, 0.5, 0, { f, glisse: { vers: 180, en: 0.22 }, a: 0.002, d: 0.26, battement: 13, partiels: [[1, 1, 1], [3, 0.5, 0.8], [5, 0.3, 0.6]] })
+      souffle(m, h, 0, 0.8, 0, { f: 2600, glisse: { vers: 600, en: 0.1 }, q: 0.8, bande: true, a: 0.0008, d: 0.12, large: true })
+      for (let i = 0; i < 12; i++) {
+        const u = i / 12
+        souffle(m, h, 0.04 + 0.33 * u * u + 0.01 * h.next(), 0.5 * (1 - u), (h.next() - 0.5) * 0.8, { f: 2200 + 2000 * h.next(), q: 2.5, bande: true, a: 0.0005, d: 0.012 })
+      }
+    },
+  },
 } satisfies Record<string, Recette>
 
 export type Son = keyof typeof RECETTES

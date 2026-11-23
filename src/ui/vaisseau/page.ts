@@ -38,6 +38,7 @@ import { dessinerBase, dessinerStation, ENVERGURE_BASE, RECUL_DE_LA_BASE } from 
 import { animerAstre, astresVisibles, demiTailleDeLAstre, peindreAstre, rayonQuiCache, voilerLAstre, type Astre, type PeintreCeleste } from './celeste.ts'
 import * as EXPLOSION from '../pixelfx/fx/keko/explosion-espace.js'
 import * as EXPLOSION_OBUS from '../pixelfx/fx/keko/explosion-obus.js'
+import * as EXPLOSION_LASER from '../pixelfx/fx/keko/explosion-laser.js'
 import * as ECLATEMENT_ORGANIQUE from '../pixelfx/fx/keko/eclatement-organique.js'
 import * as EFFONDREMENT_NEANT from '../pixelfx/fx/keko/effondrement-neant.js'
 import * as TELEPORTATION from '../pixelfx/fx/keko/teleportation.js'
@@ -17570,6 +17571,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
             const a = R.range(0, Math.PI * 2)
             etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(30, 70), Math.sin(a) * R.range(30, 70), R.range(0.12, 0.25), R.next() < 0.5 ? N.WHITE : PLASMA_V[3], 1, 1.5)
           }
+          break
+        case 'detonation':
+          // (UN COUP CRITIQUE DU LASER DÉTONE — Keko, 23/11, voir `Arme.detonation` : l'explosion d'énergie verte —
+          // `explosion-laser.js`, la « Plasma explosion » du dépôt à la taille du jeu —, sa détonation, un éclair vert, une
+          // secousse et une vibration)
+          effets.push({ fx: N.createFx(EXPLOSION_LASER as Module, { x: ev.x - camera.x + W / 2, y: ev.y - camera.y + centreY(), size: ev.rayon / 55, seed: Math.round(ev.x * 7 + ev.y) }), x: ev.x, y: ev.y })
+          jouer('detonation', { dx: ev.x - v.x, dy: ev.y - v.y })
+          flashs.push({ x: ev.x, y: ev.y, t0: t, r: ev.rayon * 0.3, c: LASER_VERT })
+          secousse = Math.max(secousse, 0.45)
+          if (typeof navigator.vibrate === 'function') vibrer(25)
           break
         case 'harponPlante':
           // (LE HARPON SE PLANTE — voir `Arme.harpon` : son choc, un éclair, une gerbe d'acier et de sang, une petite secousse)

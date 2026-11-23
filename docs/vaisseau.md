@@ -8478,3 +8478,20 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   teinte, non (les petits mouraient trop vite).
   (… PLUS LÉGÈRE — Keko : « la teinte verte est trop prononcée » : 18 % au lieu de 38 %.)
 - **23/11, LA CARTE « CORROSIF » S'APPELLE « CORROSION ».** Keko : « appelle la variation Corrosion » ; l'identifiant reste `laser-corrosif`.
+- **23/11, LA DÉTONATION, À LA PLACE DES DRONES — UNE CARTE PAR ARME SUR COUP CRITIQUE.** Keko, pas fan des Drones ni
+  du Perforant : « dans chaque variation d'armes, on va en mettre une qui se déclenche en cas de coup critique ; quand un
+  laser fait un coup critique — ses dégâts directs ou ceux d'un de ses ricochets, pas la zone de l'impulsion —, on
+  déclenche une explosion dans la zone qui inflige 200 % des dégâts du critique, et peut elle aussi être critique ; cherche
+  dans pixelfx un effet d'explosion d'énergie ou de laser, fais-moi quelque chose de joli, avec un son adapté ».
+  - LA RÈGLE (`Arme.detonation` : `{ rayon: 24, part: 2 }`, `laser-detonation`) : un coup critique du laser — un tir, un
+    rebond — fait exploser une zone de 24 autour de l'insecte touché (la carte « Portée » l'agrandit) ; tout ce qui est
+    dedans, sauf lui, perd deux fois les dégâts du critique, et chacun peut être critique à son tour (`exploser`, qui
+    tire le critique par insecte). Avec la Concentration, un rayon critique détone à son départ, de deux fois tout ce
+    qu'il ronge. La zone de l'Impulsion ne détone pas. Le test : tout critique, la cible 200, son voisin 800, le
+    lointain rien ; sans critique, rien autour.
+  - L'EFFET (`keko/explosion-laser`, au banc `?pixelfx`) : la « Plasma explosion » du dépôt — une explosion d'énergie
+    sans fumée : un éclair blanc, une boule qui gonfle en coquille de plus en plus fine, deux anneaux de choc, un anneau
+    penché, des arcs qui crépitent — EN VERT LASER et À LA TAILLE DU JEU (`size`, rayon ÷ 55) ; un éclair vert, une
+    secousse, une vibration. LE SON (`detonation`) : un coup grave saturé qui tombe de 140 à 40 Hz, un zap électrique qui
+    plonge de 1 800 à 180 Hz, un claquement d'air, un grésillement qui s'espace ; mesuré (crête 0,42), PAS ÉCOUTÉ.
+  - Les Drones (`laser-drones`) sont retirés. VU en capture (critique forcé) : les explosions vertes, 135 puis 405.
