@@ -8291,3 +8291,8 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     fouet qui se détend) ; mesurés (crêtes 0,26 à 0,38), PAS ÉCOUTÉS.
   - Le test : entre un insecte proche et un plus résistant, il prend le plus résistant ; l'impact 80 ; le câble 21 par
     seconde au départ, 80 au bout de la montée ; emporté trop loin, il casse. VU en capture.
+  - MIS DE CÔTÉ POUR LES XÉNOÏDES (Keko, le même jour : « l'idée est intéressante, mais je pense qu'elle collerait
+    mieux aux Xénoïdes, en mode tentacule harpon ; on va garder ça de côté quand on aura besoin de faire les armes de
+    faction des Xénoïdes ; et maintenant, on va trouver une nouvelle idée pour l'Empire ») : l'arme et ses six cartes
+    passent dans `ARMES_EN_RESERVE` et `VARIATIONS_EN_RESERVE` ; sa règle, son test, son dessin, son icône et ses sons
+    restent. L'Empire a de nouveau cinq armes.

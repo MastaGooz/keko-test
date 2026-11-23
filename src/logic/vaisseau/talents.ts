@@ -354,10 +354,6 @@ export const ARMES_DE_FACTION: ArmeDeFaction[] = [
   // deux mini-avions à ses ailes, un peu en arrière — voir `orbite.formation`, `Drone.cap`)
   // (… DES AILIERS — Keko, 23/11 : pour la distinguer des drones de la Sentinelle, qui partent chasser au contact : ils
   // ne quittent plus leur place, pivotent vers leur cible et tirent de plus loin, 110 au lieu de 70 — `orbite.ailier`)
-  // (LE HARPON, LA SIXIÈME — Keko, 23/11 : « on fait un test avec le harpon » ; l'arme anti-boss de l'Empire : il harponne
-  // l'insecte le plus résistant à portée, et le câble le ronge de plus en plus fort — voir `Arme.harpon` ; `degats` est
-  // ce qu'il ronge par seconde au départ)
-  { id: 'harpon', nom: 'Harpon', dit: 'Harponne l’ennemi le plus résistant ; le câble le ronge de plus en plus fort.', race: 'humains', icone: 'imp-harpon', armes: () => [nouvelle({ id: 'harpon', cadence: 0.6, degats: 20, portee: 130, harpon: { vitesse: 320, max: 4, montee: 3, rupture: 1.5, impact: 4 } })] },
 ]
 export const armeDeFaction = (id: string): ArmeDeFaction | undefined => ARMES_DE_FACTION.find((x) => x.id === id)
 
@@ -413,13 +409,6 @@ export const MUTATIONS: Mutation[] = [
   variation('grenades-rafale', 'grenades', 'Rafale', 'Cinq grenades à chaque tir.', changerA('grenades', (a) => ({ ...a, gerbe: { nombre: 5, ecart: 0.22 }, degats: fois(a, 0.7) }))),
   variation('grenades-drones', 'grenades', 'Drones', 'Deux drones en orbite lancent des grenades sur les ennemis proches.', ajouterA('grenades', (a) => drones(a, { cadence: 1.8, degats: fois(a, 0.6), portee: 80, gerbe: undefined }))),
   variation('grenades-lourdes', 'grenades', 'Gros calibre', 'Des grenades plus lentes, plus fortes, qui explosent plus large.', changerA('grenades', V.lourd)),
-  // LE HARPON
-  variation('harpon-barbele', 'harpon', 'Barbelé', 'Les dégâts du câble montent bien plus haut.', changerA('harpon', (a) => ({ ...a, harpon: a.harpon === undefined ? undefined : { ...a.harpon, max: a.harpon.max * 1.5 } }))),
-  variation('harpon-treuil', 'harpon', 'Treuil', 'Les dégâts du câble montent deux fois plus vite.', changerA('harpon', (a) => ({ ...a, harpon: a.harpon === undefined ? undefined : { ...a.harpon, montee: a.harpon.montee / 2 } }))),
-  variation('harpon-double', 'harpon', 'Double harpon', 'Un second harpon, sur un autre ennemi.', ajouterA('harpon', (a) => [ajoutee(a, (a.place ?? 20) + 1, { degats: fois(a, 0.7) })])),
-  variation('harpon-cryo', 'harpon', 'Cryogénique', 'Le câble gèle et ralentit l’ennemi harponné.', changerA('harpon', V.cryo)),
-  variation('harpon-incendiaire', 'harpon', 'Incendiaire', 'Le câble enflamme l’ennemi harponné.', changerA('harpon', V.incendiaire)),
-  variation('harpon-fragmentation', 'harpon', 'Fragmentation', 'L’ennemi harponné qui meurt projette six éclats.', changerA('harpon', V.fragments)),
   // LES DRONES D'ESCORTE
   variation('escorte-plus', 'escorte', 'Escadrille', 'Deux mini-avions de plus.', ajouterA('escorte', (a) => drones(a, { cadence: a.cadence, degats: a.degats, portee: a.portee }, 2, Math.PI / 2).map((d, k) => ({ ...d, place: 22 + k, orbite: { ...a.orbite!, phase: Math.PI / 2 + k * Math.PI, formation: { x: -16, y: k === 0 ? -30 : 30 } } })))),
   variation('escorte-perforantes', 'escorte', 'Perforantes', 'Les balles des mini-avions traversent les ennemis.', changerA('escorte', V.perforant)),
@@ -429,12 +418,19 @@ export const MUTATIONS: Mutation[] = [
   variation('escorte-roquettes', 'escorte', 'Roquettes', 'Les mini-avions tirent des roquettes qui explosent.', changerA('escorte', (a) => ({ ...V.explosif(a), cadence: a.cadence * 2.5, degats: fois(a, 2) }))),
 ]
 /**
- * LES ROQUETTES, MISES DE CÔTÉ (Keko, 23/11 : « on va enlever les mini-roquettes, car ça, on va plutôt le mettre comme
+ * LES ARMES MISES DE CÔTÉ — LES ROQUETTES (Keko, 23/11 : « on va enlever les mini-roquettes, car ça, on va plutôt le mettre comme
  * amélioration des missiles, qui pourront éventuellement lancer des petites roquettes supplémentaires ; on va le virer,
  * le garder sous le coude ») : l'arme et ses six variations, hors des cartes — rien ne les propose. Leur règle (`essaim`),
  * leur dessin et leur son restent.
  */
 export const ARMES_EN_RESERVE: ArmeDeFaction[] = [
+  // (LE HARPON, MIS DE CÔTÉ POUR LES XÉNOÏDES — Keko, 23/11 : « l'idée est intéressante, mais je pense qu'elle collerait
+  // mieux aux Xénoïdes, en mode tentacule harpon ; on va garder ça de côté quand on aura besoin de faire les armes de
+  // faction des Xénoïdes » ; sa règle, `Arme.harpon`, son dessin, son icône et ses sons restent)
+  // (LE HARPON, LA SIXIÈME — Keko, 23/11 : « on fait un test avec le harpon » ; l'arme anti-boss de l'Empire : il harponne
+  // l'insecte le plus résistant à portée, et le câble le ronge de plus en plus fort — voir `Arme.harpon` ; `degats` est
+  // ce qu'il ronge par seconde au départ)
+  { id: 'harpon', nom: 'Harpon', dit: 'Harponne l’ennemi le plus résistant ; le câble le ronge de plus en plus fort.', race: 'humains', icone: 'imp-harpon', armes: () => [nouvelle({ id: 'harpon', cadence: 0.6, degats: 20, portee: 130, harpon: { vitesse: 320, max: 4, montee: 3, rupture: 1.5, impact: 4 } })] },
   { id: 'roquettes', nom: 'Roquettes', dit: 'Six petites roquettes à la fois, qui explosent chacune sur une petite zone.', race: 'humains', icone: 'imp-roquettes', armes: () => [nouvelle({ id: 'roquettes', cadence: 3, degats: 21, portee: 130, vitesse: 60, vie: 2, zone: { rayon: 11 }, essaim: { nombre: 6, eventail: 2.4, acces: 60, pointe: 90, braquage: 5, chaos: 1.6, pas: 0.32, calme: 1.4, reprise: 45 } })] },
   // (LES ROQUETTES, PLUS LENTES QUE LES MISSILES DU CHASSEUR — Keko, 22/11 : « une version plus lente que les missiles,
   // pour la distinguer » : elles partent à 60, plafonnent à 90 — les missiles volent à 110, guidés —, zigzaguent moins)
@@ -443,6 +439,13 @@ export const ARMES_EN_RESERVE: ArmeDeFaction[] = [
   // missiles sur 18, l'obus sur 40 —, dessinées plus petites que le missile)
 ]
 export const VARIATIONS_EN_RESERVE: Mutation[] = [
+  // LE HARPON
+  variation('harpon-barbele', 'harpon', 'Barbelé', 'Les dégâts du câble montent bien plus haut.', changerA('harpon', (a) => ({ ...a, harpon: a.harpon === undefined ? undefined : { ...a.harpon, max: a.harpon.max * 1.5 } }))),
+  variation('harpon-treuil', 'harpon', 'Treuil', 'Les dégâts du câble montent deux fois plus vite.', changerA('harpon', (a) => ({ ...a, harpon: a.harpon === undefined ? undefined : { ...a.harpon, montee: a.harpon.montee / 2 } }))),
+  variation('harpon-double', 'harpon', 'Double harpon', 'Un second harpon, sur un autre ennemi.', ajouterA('harpon', (a) => [ajoutee(a, (a.place ?? 20) + 1, { degats: fois(a, 0.7) })])),
+  variation('harpon-cryo', 'harpon', 'Cryogénique', 'Le câble gèle et ralentit l’ennemi harponné.', changerA('harpon', V.cryo)),
+  variation('harpon-incendiaire', 'harpon', 'Incendiaire', 'Le câble enflamme l’ennemi harponné.', changerA('harpon', V.incendiaire)),
+  variation('harpon-fragmentation', 'harpon', 'Fragmentation', 'L’ennemi harponné qui meurt projette six éclats.', changerA('harpon', V.fragments)),
   // L'ESSAIM DE ROQUETTES
   variation('roquettes-nuee', 'roquettes', 'Nuée', 'Deux fois plus de roquettes, un peu moins fortes.', changerA('roquettes', (a) => ({ ...a, essaim: a.essaim === undefined ? undefined : { ...a.essaim, nombre: a.essaim.nombre * 2 }, degats: fois(a, 0.6) }))),
   // (elles explosent déjà toutes — Keko, 22/11 : « une version plus lente et plus grosse zone que les missiles » —, la
