@@ -139,5 +139,21 @@ verifier('le délai passé, ce qui restait à choisir part en réserve', reserve
     }
   verifier(`l'Empire a ${ARMES_DE_FACTION.filter((x) => x.race === 'humains').length} nouvelles armes ; six variations par arme (${ids.map((id) => `${id} ${MUTATIONS.filter((x) => x.sorte === 'variation' && x.arme === id).length}`).join(', ')}) ; aucune sans effet (${sansEffet || 'aucune'})`, ARMES_DE_FACTION.filter((x) => x.race === 'humains').length === 6 && ids.every((id) => MUTATIONS.filter((x) => x.sorte === 'variation' && x.arme === id).length === 6) && sansEffet === '')
 }
+{
+  // LES ÉTATS NE SE PRENNENT QUE POUR TOUTES LES ARMES (Keko, 23/11 : « une augmentation d'un état concerne toujours toutes
+  // les armes ») : un laser corrosif — jamais de carte d'état à une arme ; la corrosion de toutes les armes paraît, au
+  // bonus entier ; ni feu ni givre, que rien n'applique ; un laser nu, aucune carte d'état
+  const nu = { id: 'laser', cadence: 2.2, degats: 90, portee: 120, vitesse: 420, vie: 0.7, dispersion: 0, guide: false, infaillible: true } as Arme
+  const corrosif = { ...nu, corrosif: { duree: 3, bonus: 0.35 } } as Arme
+  const deja = Array.from({ length: 999 }, (_, k) => `deja-${k}`)
+  const tirees = (a: Arme) => Array.from({ length: 400 }, (_, n) => proposer(7, n + 1, 0, a, 'humains', deja, [a])).flat()
+  const avec = tirees(corrosif)
+  const aUneArme = avec.filter((x) => x.cible.sorte === 'arme' && ['feu', 'corrosion', 'givre'].includes(x.stat)).length
+  const aToutes = avec.filter((x) => x.cible.sorte === 'armes' && x.stat === 'corrosion').length
+  const autres = avec.filter((x) => x.cible.sorte === 'armes' && (x.stat === 'feu' || x.stat === 'givre')).length
+  const sans = tirees(nu).filter((x) => ['feu', 'corrosion', 'givre'].includes(x.stat)).length
+  const entier = carte({ sorte: 'armes' }, 'corrosion', 'rare').bonus === carte({ sorte: 'arme', arme: 'laser' }, 'degats', 'rare').bonus
+  verifier(`les états à toutes les armes : à une arme ${aUneArme} (0), corrosion de toutes ${aToutes} (plus de 0, au bonus entier : ${entier}), feu ou givre ${autres} (0) ; un laser nu, ${sans} (0)`, aUneArme === 0 && aToutes > 0 && entier && autres === 0 && sans === 0)
+}
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)
 console.log('Tout passe.')

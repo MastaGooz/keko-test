@@ -8542,3 +8542,11 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   lui disparu, il redevient un tir ordinaire (il rebondit, traverse, s'écrase). Ne change rien à ce qui n'est pas un tir
   du vaisseau (drones, escorte, tourelles, rayons, balise laser). Le test : un insecte droit entre le vaisseau et le
   verrouillé — verrouillé, 0 / 100 ; sans verrou, 100 / 0.
+- LES ÉTATS NE SE PRENNENT QUE POUR TOUTES LES ARMES (Keko, 23/11 : « supprimer les cartes de givre, corrosion et feu
+  propres aux armes ; à partir du moment où on a une attaque qui applique la corrosion, le feu ou la glace, on débloque la
+  carte qui augmente la corrosion, la glace ou le feu pour toutes les armes ; une augmentation d'un état concerne toujours
+  toutes les armes ») : `ETATS` (feu, corrosion, givre) ; plus aucune carte d'état à une arme ; la carte « toutes les
+  armes » de l'état paraît dès qu'une arme portée l'applique (comme avant) et, SEULE À LE FAIRE DÉSORMAIS, VAUT LE BONUS
+  ENTIER de sa rareté — les autres cartes « toutes les armes » restent à la moitié (de moi, à rejuger). Le test : un laser
+  corrosif sur 400 choix — aucune carte d'état à une arme, 78 corrosions de toutes les armes, ni feu ni givre ; un laser nu,
+  aucune.

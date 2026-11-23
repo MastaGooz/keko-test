@@ -92,6 +92,14 @@ export const POINTS_DE_CHANCE: Record<Rarete, number> = { commune: 0.02, peuComm
  */
 export const STATS_GLOBALES: StatDArme[] = ['degats', 'critique', 'critiques', 'cadence', 'portee', 'pose', 'feu', 'corrosion', 'givre']
 export const PART_GLOBALE = 0.5
+/**
+ * LES ÉTATS — LE FEU, LA CORROSION, LE GIVRE — NE SE PRENNENT QUE POUR TOUTES LES ARMES (Keko, 23/11 : « supprimer les
+ * cartes de givre, corrosion et feu propres aux armes ; à partir du moment où on a une attaque qui applique la corrosion,
+ * le feu ou la glace, on débloque la carte qui l'augmente pour toutes les armes ; une augmentation d'un état concerne
+ * toujours toutes les armes ») : plus de carte d'état à une arme ; la carte « toutes les armes » paraît dès qu'une arme
+ * portée applique l'état, et, seule à le faire, ELLE VAUT LE BONUS ENTIER de sa rareté (pas la moitié des autres).
+ */
+export const ETATS: ReadonlySet<StatDArme> = new Set<StatDArme>(['feu', 'corrosion', 'givre'])
 const EN_POINTS: ReadonlySet<string> = new Set(['critique', 'dephasage'])
 
 /**
@@ -266,7 +274,8 @@ export function factionAmelioree(c: ConfigVaisseau, stat: StatDeFaction, k: numb
 export function carte(cible: Cible, stat: StatDArme | StatDeFaction, rarete: Rarete): Talent {
   // (une chance, des points à l'échelle ; le reste, le bonus de la rareté)
   // (toutes les armes : la moitié)
-  const bonus = cible.sorte === 'armes' ? (stat === 'critique' ? POINTS_DE_CHANCE[rarete] : rareteDe(rarete).bonus) * PART_GLOBALE : EN_POINTS.has(stat) ? POINTS_DE_CHANCE[rarete] : rareteDe(rarete).bonus
+  // (un état : le bonus entier — voir `ETATS`)
+  const bonus = cible.sorte === 'armes' ? (stat === 'critique' ? POINTS_DE_CHANCE[rarete] : rareteDe(rarete).bonus) * (ETATS.has(stat as StatDArme) ? 1 : PART_GLOBALE) : EN_POINTS.has(stat) ? POINTS_DE_CHANCE[rarete] : rareteDe(rarete).bonus
   return { id: `${cible.sorte === 'arme' ? `arme-${cible.arme}` : cible.sorte === 'armes' ? 'armes' : cible.race}:${stat}`, cible, stat, rarete, bonus }
 }
 
@@ -541,7 +550,8 @@ export function proposer(graine: number, niveau: number, rang: number, arme: Arm
   }
   // (MOINS DE TROIS SPÉCIALES QUI RESTENT — toutes les variations d'une arme seule prises — : des cartes ordinaires complètent)
   const pool: { cible: Cible; stat: StatDArme | StatDeFaction }[] = [
-    ...portees.flatMap((a) => statsDeLArme(a).map((stat) => ({ cible: { sorte: 'arme', arme: a.id } as Cible, stat }))),
+    // (pas d'état à une arme : il est à toutes — voir `ETATS`)
+    ...portees.flatMap((a) => statsDeLArme(a).filter((stat) => !ETATS.has(stat)).map((stat) => ({ cible: { sorte: 'arme', arme: a.id } as Cible, stat }))),
     ...STATS_DE_FACTION[race].map((stat) => ({ cible: { sorte: 'faction', race } as Cible, stat })),
     // (toutes les armes : une stat qu'une arme portée au moins a)
     ...STATS_GLOBALES.filter((stat) => portees.some((a) => statsDeLArme(a).includes(stat))).map((stat) => ({ cible: { sorte: 'armes' } as Cible, stat })),
