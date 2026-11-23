@@ -8373,4 +8373,5 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   (jusqu'à quatre), placée sur le plus proche du vaisseau et atténuée avec sa distance comme un son ponctuel ; elle se
   tait en pause, au hangar, hors du vol. PAS ÉCOUTÉE : une copie hors du jeu (les mêmes oscillateurs, filtres et
   tremblement, rendus par un script) a été envoyée à Keko.)
-  (… PLUS FORTE — Keko : « augmente un peu le volume, je le trouve trop discret » : 0,22 au lieu de 0,14, environ 4 dB.)
+  (… PLUS FORTE — Keko : « augmente un peu le volume, je le trouve trop discret » : 0,22 au lieu de 0,14, environ 4 dB ;
+  puis « encore plus fort » : 0,35, encore 4 dB.)

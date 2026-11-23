@@ -677,8 +677,9 @@ export function regler(poussee: number, creuse: boolean, compte: number, monte: 
     if (laser !== null) {
       const d = brule === null ? PORTEE : Math.hypot(brule.dx, brule.dy)
       const loin = d >= PORTEE ? 0 : (1 - d / PORTEE) ** 2
-      // (0,14 d'abord — Keko, 23/11 : « augmente un peu le volume, je le trouve trop discret » : 0,22, environ 4 dB de plus)
-      const fort = brule === null ? 0 : ZZFX.volume * 0.22 * brule.fort * loin
+      // (0,14 d'abord — Keko, 23/11 : « augmente un peu le volume, je le trouve trop discret » : 0,22, environ 4 dB de plus ;
+      // puis « encore plus fort » : 0,35, encore 4 dB)
+      const fort = brule === null ? 0 : ZZFX.volume * 0.35 * brule.fort * loin
       laser.gain.gain.setTargetAtTime(fort, t, fort > 0 ? 0.03 : 0.1)
       if (brule !== null) laser.pan.pan.setTargetAtTime(Math.max(-1, Math.min(1, brule.dx / 160)), t, 0.05)
     }
