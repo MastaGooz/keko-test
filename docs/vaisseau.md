@@ -8420,3 +8420,4 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     balise laser (`voixDuLaser`), une quinte plus haut (147 Hz) et plus claire (passe-bande à 1 400 Hz), pour distinguer
     le vert du rouge ; elle monte en 20 ms, retombe en 60, placée sur la cible (`rayonConcentre`). PAS ÉCOUTÉE : une
     copie hors du jeu envoyée à Keko.
+  - VALIDÉ (Keko : « c'est vraiment pas mal, on va valider cette variation »).
