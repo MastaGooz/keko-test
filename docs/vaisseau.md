@@ -8597,3 +8597,14 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   feu fait des dégâts sur sa durée — une brûlure de 3 s en fait deux fois plus, de 2 s trois fois ; le gel ralentit et la
   corrosion majore plus longtemps ; une zone (traînée, tornade) laisse son état 6 s après qu'on en sort. Le test : au
   vortex, gelé 6 s et rongé 6 s ; au Nova Drifter, 1,5 et 3.
+- LE SILLON, À LA PLACE DU RAIL JUMEAU (Keko, 23/11 : « une autre variation : la traînée du railgun laisse un sillon
+  électrique — et de gel si on a Cryogénie » ; le Rail jumeau ajoutait une arme à côté au lieu de changer le tir) :
+  `Arme.sillon` `{ duree: 2, part: 0.3, largeur: 4 }` (de moi, à rejuger), `railgun-sillon`, `Monde.sillons`,
+  `menerLesSillons`. LA RÈGLE : la balle laisse, à chaque pas, un segment de sillon ; deux secondes, tout insecte à 4 de
+  sa course (plus son rayon) perd 30 % des dégâts du tir par seconde, une fois par sillon ; si l'arme gèle (Cryogénique),
+  il est gelé. Les roches n'y perdent rien. LE DESSIN (`dessinerLesSillons`) : un éclair qui serpente le long de la course,
+  refrappé quinze fois par seconde, cœur blanc-bleu et halo cyan, des étincelles qui pètent dessus, pâli sur son dernier
+  tiers ; gelé, il tire vers le bleu glace et sème des flocons. LE SON (`sillon`) : un bourdon électrique bas qui grésille
+  et s'éteint, des crépitements secs qui s'espacent ; mesuré, PAS ÉCOUTÉ. Texte (de moi) : « La balle laisse un sillon
+  électrique qui blesse les ennemis. » Le test : une seconde dans le sillon, 30 (le tiers de 100) ; avec le gel, gelé.
+  VU en capture, avec et sans Cryogénique.

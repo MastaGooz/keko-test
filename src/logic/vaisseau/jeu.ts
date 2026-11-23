@@ -1210,6 +1210,13 @@ export type Arme = {
    * départ du tir : une balle critique exécute toute sa ligne.
    */
   execute?: boolean
+  /**
+   * LE SILLON ÉLECTRIQUE (la carte « Sillon » du railgun, à la place de « Rail jumeau » — Keko, 23/11 : « la traînée du
+   * railgun laisse un sillon électrique — et de gel si on a Cryogénie ») : là où la balle passe, elle laisse un sillon qui
+   * crépite `duree` secondes ; tout insecte dedans (à `largeur` de sa course, plus son rayon) perd `part` fois les dégâts
+   * de l'arme par seconde — et, si l'arme gèle (`gel`), il est gelé. L'état est `Monde.sillons`.
+   */
+  sillon?: { duree: number; part: number; largeur: number }
   fragments?: { nombre: number; degats: number; vitesse: number; vie: number }
   de?: { roule: number; chute: number; /** La zone d'un 4. */ rayon: number; /** Ce que chaque point du dé ajoute à la zone (ou lui retire, sous 4). */ pas: number }
   /**
@@ -1265,7 +1272,7 @@ export type Choc = { x: number; y: number; force: number; asteroide: number; /**
 /** (un trait du rival armé porte les dégâts de son arme, son nom, et s'il est guidé — absents : le trait d'avant, un point) */
 export type Tir = { id: number; x: number; y: number; vx: number; vy: number; vie: number; degats?: number; guide?: boolean; arme?: string }
 /** Un obus du joueur : un trait qui porte des dégâts, de l'arme qui l'a tiré ; guidé, il tourne vers le rival. */
-export type Obus = Tir & { degats: number; guide: boolean; arme: string; /** Ses ricochets qui restent (voir `Arme.ricochet`), ceux qu'il a déjà touchés (il ne les retouche pas en repartant). */ rebonds?: { n: number; portee: number; part: number }; deja?: number[]; /** Ses dégâts sans le coup critique : un rebond retire le sien (voir `Arme.ricochet`). */ brut?: number; /** Ce qu'il enflamme (voir `Arme.incendiaire`). */ brule?: { duree: number; dps: number }; /** Les éclats de son explosion (voir `Arme.fragments`). */ fragments?: { nombre: number; degats: number; vitesse: number; vie: number }; /** L'insecte auquel il est accroché (voir `Arme.infaillible`). */ verrou?: number; /** Un coup critique (le passif du labo) : ses dégâts sont déjà multipliés. */ critique?: boolean; /** Il explose (voir `Arme.zone`). */ zone?: { rayon: number; degats: number }; /** Il gèle ce qu'il touche (voir `Arme.gel`). */ gel?: { duree: number; ralenti: number }; /** Il ronge ce qu'il touche (voir `Arme.corrosif`). */ ronge?: { duree: number; bonus: number }; /** Il détone sur un coup critique (voir `Arme.detonation`). */ detonation?: { rayon: number; part: number }; /** Critique, il exécute (voir `Arme.execute`). */ execute?: boolean; /** Il traverse (voir `Arme.salve`) : les insectes déjà touchés. */ perce?: number[]; /** Une balle de railgun (voir `Arme.balle`) : la part de ses dégâts qu'elle garde à chaque insecte traversé, son calibre. */ balle?: { part: number; calibre: number }; /** Il se brise au premier insecte touché en petits fragments, en cône derrière lui (voir `Arme.salve`). */ eclatement?: { nombre: number; cone: number; vitesse: number; vie: number; degats: number }; /** Un missile d'essaim (voir `Arme.essaim`) : sa cible, sa naissance, sa vitesse de départ, et comment il fonce. */ traque?: { cible: number; nee: number; v0: number; acces: number; pointe: number; braquage: number; chaos: number; pas: number; calme: number; reprise: number; /** L'instant où il a repris une autre cible (la sienne morte) : son chaos repart de là. */ depuis?: number }; /** Une boule de napalm, lancée en cloche (voir `Arme.napalm`) : sa durée de vol au départ ; elle ne touche rien en vol. */ napalm?: { rayon: number; duree: number; dps: number; brulure: number; dpsBrulure: number }; vie0?: number; /** Un obus tiré en cloche (voir `Arme.cloche`) : il ne touche rien en vol, il explose en retombant. */ cloche?: boolean; /** Une grenade à retardement (voir `Arme.minuterie`) : son frein par seconde ; elle ne touche rien, elle explose au bout de sa vie. */ minuterie?: number }
+export type Obus = Tir & { degats: number; guide: boolean; arme: string; /** Ses ricochets qui restent (voir `Arme.ricochet`), ceux qu'il a déjà touchés (il ne les retouche pas en repartant). */ rebonds?: { n: number; portee: number; part: number }; deja?: number[]; /** Ses dégâts sans le coup critique : un rebond retire le sien (voir `Arme.ricochet`). */ brut?: number; /** Ce qu'il enflamme (voir `Arme.incendiaire`). */ brule?: { duree: number; dps: number }; /** Les éclats de son explosion (voir `Arme.fragments`). */ fragments?: { nombre: number; degats: number; vitesse: number; vie: number }; /** L'insecte auquel il est accroché (voir `Arme.infaillible`). */ verrou?: number; /** Un coup critique (le passif du labo) : ses dégâts sont déjà multipliés. */ critique?: boolean; /** Il explose (voir `Arme.zone`). */ zone?: { rayon: number; degats: number }; /** Il gèle ce qu'il touche (voir `Arme.gel`). */ gel?: { duree: number; ralenti: number }; /** Il ronge ce qu'il touche (voir `Arme.corrosif`). */ ronge?: { duree: number; bonus: number }; /** Il détone sur un coup critique (voir `Arme.detonation`). */ detonation?: { rayon: number; part: number }; /** Critique, il exécute (voir `Arme.execute`). */ execute?: boolean; /** Il laisse un sillon (voir `Arme.sillon`) : sa durée, ce qu'il fait par seconde, sa largeur, son gel. */ sillon?: { duree: number; dps: number; largeur: number; gel?: { duree: number; ralenti: number } }; /** Il traverse (voir `Arme.salve`) : les insectes déjà touchés. */ perce?: number[]; /** Une balle de railgun (voir `Arme.balle`) : la part de ses dégâts qu'elle garde à chaque insecte traversé, son calibre. */ balle?: { part: number; calibre: number }; /** Il se brise au premier insecte touché en petits fragments, en cône derrière lui (voir `Arme.salve`). */ eclatement?: { nombre: number; cone: number; vitesse: number; vie: number; degats: number }; /** Un missile d'essaim (voir `Arme.essaim`) : sa cible, sa naissance, sa vitesse de départ, et comment il fonce. */ traque?: { cible: number; nee: number; v0: number; acces: number; pointe: number; braquage: number; chaos: number; pas: number; calme: number; reprise: number; /** L'instant où il a repris une autre cible (la sienne morte) : son chaos repart de là. */ depuis?: number }; /** Une boule de napalm, lancée en cloche (voir `Arme.napalm`) : sa durée de vol au départ ; elle ne touche rien en vol. */ napalm?: { rayon: number; duree: number; dps: number; brulure: number; dpsBrulure: number }; vie0?: number; /** Un obus tiré en cloche (voir `Arme.cloche`) : il ne touche rien en vol, il explose en retombant. */ cloche?: boolean; /** Une grenade à retardement (voir `Arme.minuterie`) : son frein par seconde ; elle ne touche rien, elle explose au bout de sa vie. */ minuterie?: number }
 /** Une bombe en vol (la capacité active d'essai). */
 export type Bombe = Tir
 /** Le rival : un vaisseau comme l'autre, des points, ce qu'il fait, sa roche, son laser, son prochain tir, son butin. */
@@ -1426,6 +1433,8 @@ export type Monde = {
   salveDesAiles: number
   /** LES RAYONS CONCENTRÉS (voir `Arme.concentre`) : leur arme, leur cible, leur naissance, ce qu'ils rongent par seconde. */
   faisceaux: { arme: number; cible: number; nee: number; dps: number; /** Ses rebonds de l'image (voir `Arme.concentre`). */ chaine?: number[] }[]
+  /** LES SILLONS ÉLECTRIQUES (voir `Arme.sillon`) : un par balle, sa course en segments, sa naissance, ce qu'il fait. */
+  sillons: Sillon[]
   /** LES SCIES EN VOL (voir `Arme.scie`) ; une arme dont la scie n'y est pas l'a à bord. */
   scies: Scie[]
   /** LES BALISES POSÉES (voir `Arme.balise`). */
@@ -1597,6 +1606,8 @@ export type Evenement =
   | { type: 'harponPlante'; x: number; y: number; id: number }
   /** Un coup critique détone (voir `Arme.detonation`). */
   | { type: 'detonation'; x: number; y: number; rayon: number }
+  /** Une balle laisse un sillon électrique (voir `Arme.sillon`). */
+  | { type: 'sillon'; x: number; y: number; gel: boolean }
   /** Un coup critique exécute un insecte qui en aurait réchappé (voir `Arme.execute`) : où, et sa taille. */
   | { type: 'execution'; x: number; y: number; rayon: number }
   | { type: 'harponCasse'; x: number; y: number }
@@ -1677,7 +1688,7 @@ export function nouveauVaisseau(): Vaisseau {
 }
 
 export function nouveauMonde(c: ConfigVaisseau = VAISSEAU, graine = 1): Monde {
-  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, coqueMax: c.coque, tableau: tableauVide(), bouclier: c.bouclier.points, plaques: Array.from({ length: c.plaques }, () => true), intouchableJusque: -1, corruption: 0, dephaseJusque: -100, plaqueCasseeA: 0, renaitJusque: -100, rochesPrises: [], toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, prochaineDeriveA: c.derive.premier, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, vies: c.invasion.vies, miniBoss: 0, boss: 0, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, harpons: [], rafales: [], rafaleDesAiles: 0, salveDesAiles: -1e9, faisceaux: [], balisesLaser: [], scies: [], balises: [], givres: [], tornades: [], novas: [], echardes: [], spheres: [], puits: [], meteores: [], tentacules: [], nuees: [], rejetons: [], flaquesAcides: [], mines: [], fleaux: [], parasites: [], vrilles: [], liens: [], oeufs: [], brochettes: [], miniVers: [], hypercubes: [], des: [], coupes: [], rayonVu: null }
+  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, coqueMax: c.coque, tableau: tableauVide(), bouclier: c.bouclier.points, plaques: Array.from({ length: c.plaques }, () => true), intouchableJusque: -1, corruption: 0, dephaseJusque: -100, plaqueCasseeA: 0, renaitJusque: -100, rochesPrises: [], toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, prochaineDeriveA: c.derive.premier, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, vies: c.invasion.vies, miniBoss: 0, boss: 0, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, harpons: [], rafales: [], rafaleDesAiles: 0, salveDesAiles: -1e9, faisceaux: [], sillons: [], balisesLaser: [], scies: [], balises: [], givres: [], tornades: [], novas: [], echardes: [], spheres: [], puits: [], meteores: [], tentacules: [], nuees: [], rejetons: [], flaquesAcides: [], mines: [], fleaux: [], parasites: [], vrilles: [], liens: [], oeufs: [], brochettes: [], miniVers: [], hypercubes: [], des: [], coupes: [], rayonVu: null }
 }
 
 /** Un hachage entier déterministe (celui de pixelfx), et un réel dans [0, 1) qui en sort. */
@@ -5119,6 +5130,24 @@ function concentrerLesFaisceaux(c: ConfigVaisseau, m: Monde, dt: number, ev: Eve
     return e.pv > 0
   })
 }
+/** UN SILLON ÉLECTRIQUE (voir `Arme.sillon`) : la balle qui le trace, sa course, sa naissance et sa durée, ce qu'il fait, son gel. */
+export type Sillon = { balle: number; segments: { x0: number; y0: number; x1: number; y1: number }[]; nee: number; duree: number; dps: number; largeur: number; gel?: { duree: number; ralenti: number } }
+/** LES SILLONS (voir `Arme.sillon`) : tout insecte dedans perd leurs dégâts par seconde, une fois par sillon, et gèle s'il gèle ; puis ils s'éteignent. */
+function menerLesSillons(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]): void {
+  m.sillons = m.sillons.filter((si) => m.phase === 'vol' && m.t - si.nee < si.duree)
+  if (m.sillons.length === 0) return
+  const touches: Ennemi[] = []
+  for (const si of m.sillons)
+    for (const e of m.ennemis) {
+      if (e.asteroide !== undefined) continue
+      const r = rayonDe(c, e) + si.largeur
+      if (!si.segments.some((g) => distanceAuSegment(e.corps.x, e.corps.y, g.x0, g.y0, g.x1, g.y1) <= r)) continue
+      e.pv -= si.dps * dt
+      if (si.gel !== undefined) geler(c, m, e, si.gel.duree, si.gel.ralenti, ev)
+      touches.push(e)
+    }
+  for (const e of touches) if (e.pv <= 0 && m.ennemis.includes(e)) abattreLEnnemi(c, m, e, ev)
+}
 /** Une balise laser de l'Empire (voir `Arme.lien`) : en vol, son élan et son temps de vol ; posée, l'instant où elle s'est posée. */
 export type BaliseLaser = { arme: number; x: number; y: number; vx: number; vy: number; nee: number; vol: number; posee: number | null }
 /** CE QUE LE RAYON D'UNE BALISE LASER TRAVERSE (voir `Arme.lien`) : du vaisseau à elle, à son épaisseur. */
@@ -5462,6 +5491,7 @@ function effetsDuTir(a: Arme): Partial<Obus> {
     ...(a.corrosif === undefined ? {} : { ronge: { ...a.corrosif } }),
     ...(a.detonation === undefined ? {} : { detonation: { ...a.detonation } }),
     ...(a.execute === true ? { execute: true } : {}),
+    ...(a.sillon === undefined ? {} : { sillon: { duree: a.sillon.duree, dps: a.degats * a.sillon.part, largeur: a.sillon.largeur, ...(a.gel === undefined ? {} : { gel: { ...a.gel } }) } }),
   }
 }
 /** CE QU'UN COUP SANS OBUS FAIT EN PLUS (le rail, l'arc) : le feu, le gel, les éclats — voir les cartes spéciales. */
@@ -6022,6 +6052,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   harponner(c, m, dt, ev)
   concentrerLesFaisceaux(c, m, dt, ev)
   menerLesBalisesLaser(c, m, dt, ev)
+  menerLesSillons(c, m, dt, ev)
   mener_L_Electricite(c, m, dt, ev)
   menerLesScies(c, m, dt, ev)
   menerLesBalises(c, m, dt, ev)
@@ -6224,6 +6255,16 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
     if (bouge) {
       o.x += o.vx * dt
       o.y += o.vy * dt
+    }
+    // (SA COURSE LAISSE UN SILLON — voir `Arme.sillon` : un segment par pas, au sillon de la balle)
+    if (o.sillon !== undefined && (o.x !== ox || o.y !== oy)) {
+      let si = m.sillons.find((x) => x.balle === o.id)
+      if (si === undefined) {
+        si = { balle: o.id, segments: [], nee: m.t, duree: o.sillon.duree, dps: o.sillon.dps, largeur: o.sillon.largeur, ...(o.sillon.gel === undefined ? {} : { gel: o.sillon.gel }) }
+        m.sillons.push(si)
+        ev.push({ type: 'sillon', x: ox, y: oy, gel: o.sillon.gel !== undefined })
+      }
+      si.segments.push({ x0: ox, y0: oy, x1: o.x, y1: o.y })
     }
     let fini = o.vie <= 0
     let eclate = false
@@ -6567,7 +6608,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
  * La règle d'un vaisseau ne change pas : le pilote dont c'est le tour est DANS le monde — ses champs sont ceux de
  * `Monde` —, les autres attendent dans `equipage.pilotes` ; `prendreLaMain` les échange.
  */
-export const CHAMPS_DU_PILOTE = ['phase', 'vaisseau', 'coque', 'coqueMax', 'tableau', 'bouclier', 'plaques', 'intouchableJusque', 'corruption', 'dephaseJusque', 'plaqueCasseeA', 'renaitJusque', 'toucheA', 'forage', 'forages', 'tirs', 'obus', 'armesA', 'extraction', 'sorti', 'boostA', 'bombes', 'charges', 'verrou', 'crache', 'drones', 'tourelles', 'flaques', 'balayage', 'rayonVu', 'canal', 'harpons', 'rafales', 'rafaleDesAiles', 'salveDesAiles', 'faisceaux', 'balisesLaser', 'scies', 'balises', 'givres', 'tornades', 'novas', 'echardes', 'spheres', 'puits', 'meteores', 'tentacules', 'nuees', 'rejetons', 'flaquesAcides', 'mines', 'fleaux', 'parasites', 'brochettes', 'hypercubes', 'coupes', 'des', 'oeufs', 'miniVers', 'liens', 'vrilles'] as const
+export const CHAMPS_DU_PILOTE = ['phase', 'vaisseau', 'coque', 'coqueMax', 'tableau', 'bouclier', 'plaques', 'intouchableJusque', 'corruption', 'dephaseJusque', 'plaqueCasseeA', 'renaitJusque', 'toucheA', 'forage', 'forages', 'tirs', 'obus', 'armesA', 'extraction', 'sorti', 'boostA', 'bombes', 'charges', 'verrou', 'crache', 'drones', 'tourelles', 'flaques', 'balayage', 'rayonVu', 'canal', 'harpons', 'rafales', 'rafaleDesAiles', 'salveDesAiles', 'faisceaux', 'sillons', 'balisesLaser', 'scies', 'balises', 'givres', 'tornades', 'novas', 'echardes', 'spheres', 'puits', 'meteores', 'tentacules', 'nuees', 'rejetons', 'flaquesAcides', 'mines', 'fleaux', 'parasites', 'brochettes', 'hypercubes', 'coupes', 'des', 'oeufs', 'miniVers', 'liens', 'vrilles'] as const
 /** Un pilote qui attend son tour : ses champs du monde, l'instant de son retour s'il est abattu, les morsures qu'il doit encaisser. */
 export type Pilote = Pick<Monde, (typeof CHAMPS_DU_PILOTE)[number]> & { retourA: number; morsures: { x: number; y: number; degats: number }[] }
 /** Les pilotes (celui dont c'est le tour, `actif`, a sa place gardée mais périmée : il est dans le monde). */

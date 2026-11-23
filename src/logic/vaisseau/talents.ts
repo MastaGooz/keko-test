@@ -421,7 +421,10 @@ export const MUTATIONS: Mutation[] = [
   // (CRYOGÉNIQUE, SON ÉLÉMENT — Keko, 23/11 : « le même texte que le laser corrosif, en remplaçant corrosion par gel »)
   variation('railgun-cryo', 'railgun', 'Cryogénique', 'Les tirs appliquent gel.', changerA('railgun', V.cryo)),
   variation('railgun-large', 'railgun', 'Gros calibre', 'Une balle deux fois et demie plus grosse, qui touche plus large.', changerA('railgun', (a) => ({ ...a, balle: a.balle === undefined ? undefined : { ...a.balle, calibre: a.balle.calibre * 2.5 } }))),
-  variation('railgun-jumeau', 'railgun', 'Rail jumeau', 'Un second railgun, un peu moins fort, tire aussi.', ajouterA('railgun', (a) => [ajoutee(a, 21, { degats: fois(a, 0.6) })])),
+  // (LE SILLON, À LA PLACE DU RAIL JUMEAU — Keko, 23/11 : « la traînée du railgun laisse un sillon électrique, et de gel si
+  // on a Cryogénie » ; le Rail jumeau ajoutait une arme à côté au lieu de changer le tir : 2 s, 30 % des dégâts par
+  // seconde, 4 de large — de moi, à rejuger ; voir `Arme.sillon`)
+  variation('railgun-sillon', 'railgun', 'Sillon', 'La balle laisse un sillon électrique qui blesse les ennemis.', changerA('railgun', (a) => ({ ...a, sillon: { duree: 2, part: 0.3, largeur: 4 } }))),
   variation('railgun-eclats', 'railgun', 'Balle à éclats', 'Chaque ennemi traversé projette des éclats autour de lui.', changerA('railgun', (a) => ({ ...V.fragments(a), fragments: { nombre: 4, degats: fois(a, 0.2), vitesse: 160, vie: 0.2 } }))),
   variation('railgun-surcharge', 'railgun', 'Surcharge', 'Deux fois plus de tirs, un peu moins forts.', changerA('railgun', (a) => ({ ...a, cadence: a.cadence * 0.5, degats: fois(a, 0.6) }))),
   // L'OBUSIER

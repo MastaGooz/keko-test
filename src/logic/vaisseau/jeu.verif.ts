@@ -3483,6 +3483,38 @@ for (const vortex of [true, false]) {
   verifier(`${vortex ? 'au vortex' : 'au Nova Drifter'}, les états : gelé ${((e.geleA ?? 0) - touche).toFixed(2)} s (${g}), rongé ${((e.acide?.jusque ?? 0) - touche).toFixed(2)} s (${r})`, Math.abs((e.geleA ?? 0) - touche - g) < 0.02 && Math.abs((e.acide?.jusque ?? 0) - touche - r) < 0.02)
 }
 
+// LE SILLON (Keko, 23/11 : « la traînée du railgun laisse un sillon électrique — et de gel si on a Cryogénie » — voir
+// `Arme.sillon`) : la balle passe ; un insecte posé dans sa course juste après y perd 30 par seconde (le tiers de 100),
+// et rien une fois le sillon éteint ; avec le gel, il gèle
+{
+  const essai = (gel: boolean): { perdu: number; gele: boolean } => {
+    const railgun = { id: 'railgun', cadence: 99, degats: 100, portee: 190, vitesse: 900, vie: 190 / 900, dispersion: 0, guide: false, tousSens: true, perforant: true, balle: { part: 1, calibre: 2 }, sillon: { duree: 2, part: 0.3, largeur: 4 }, ...(gel ? { gel: { duree: 1.5, ralenti: 0.5 } } : {}) }
+    const cfg = { ...VAISSEAU, coque: 1e9, armes: [railgun], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false }, passifs: { ...VAISSEAU.passifs, critique: 0 } }
+    const w = nouveauMonde(cfg, 5)
+    w.invasion.prochainA = 1e9
+    const cible: Ennemi = { id: 2000, corps: { ...nouveauVaisseau(), x: 150, y: 0 }, pv: 1e6, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9 }
+    const passant: Ennemi = { id: 2001, corps: { ...nouveauVaisseau(), x: 80, y: 60 }, pv: 1e6, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9 }
+    w.ennemis.push(cible, passant)
+    w.verrou = 2000
+    // (la balle part et file ; puis l'insecte entre dans le sillon et y reste une seconde ; puis deux de plus, éteint)
+    for (let i = 0; i < 18; i++) avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+    const avant = passant.pv
+    for (let i = 0; i < 60; i++) {
+      passant.corps = { ...passant.corps, x: 80, y: 0, vx: 0, vy: 0 }
+      avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+    }
+    const dansLeSillon = avant - passant.pv
+    for (let i = 0; i < 120; i++) {
+      passant.corps = { ...passant.corps, x: 80, y: 0, vx: 0, vy: 0 }
+      avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+    }
+    return { perdu: Math.round(dansLeSillon) + Math.round(avant - passant.pv - dansLeSillon) * 1000, gele: (passant.geleA ?? -1) > 0 }
+  }
+  const [sec, gele] = [essai(false), essai(true)]
+  // (perdu : ce qu'il perd la seconde dans le sillon, plus mille fois ce qu'il perd après — près de rien)
+  verifier(`le sillon : une seconde dedans, ${sec.perdu % 1000} (30) ; après, ${Math.floor(sec.perdu / 1000)} de plus (au plus la fin du sillon) ; sans gel, gelé ${sec.gele} ; avec, gelé ${gele.gele}`, Math.abs((sec.perdu % 1000) - 30) <= 1 && Math.floor(sec.perdu / 1000) <= 30 && !sec.gele && gele.gele)
+}
+
 // TOUCHÉ, ON TRAVERSE LES INSECTES (Keko, 22/11 : « quand on est touché on est invincible un court instant ; je voudrais
 // qu'on traverse aussi les ennemis ») : le temps qu'il clignote, un insecte posé sur lui ne l'écarte pas ; après, si ; une
 // roche l'arrête toujours

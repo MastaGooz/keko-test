@@ -11311,6 +11311,48 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   // traînée dans son sillage, qui se dissipe progressivement » : la balle partie, le fil ne s'efface plus de son départ ; il
   // reste 1,2 s, pâlit et ondule en s'éteignant, sous une brume bleue qui s'élargit ; ses anneaux s'écartent et s'éteignent)
   const DUREE_DE_LA_TRAINEE = 1.2
+  /**
+   * LES SILLONS ÉLECTRIQUES DU RAILGUN (Keko, 23/11 — voir `Arme.sillon`) : le long de la course de la balle, UN ÉCLAIR qui
+   * serpente — refrappé quinze fois par seconde, un cœur blanc-bleu, un halo cyan —, des étincelles qui pètent dessus ; il
+   * pâlit sur son dernier tiers. GELÉ (Cryogénique), il tire vers le bleu glace et sème des flocons.
+   */
+  function dessinerLesSillons(p: Peintre): void {
+    for (const si of m.sillons) {
+      const u = (m.t - si.nee) / si.duree
+      if (u >= 1) continue
+      const k = Math.min(1, u / 0.05) * Math.min(1, (1 - u) / 0.35)
+      const glace = si.gel !== undefined
+      const halo = glace ? BLEU_DU_GIVRE : CYAN_DU_RAILGUN[2]
+      const coeur = glace ? N.hex('#e8f8ff') : CYAN_DU_RAILGUN[4]
+      const frappe = Math.floor(t * 15)
+      for (const [n, g] of si.segments.entries()) {
+        const L = Math.hypot(g.x1 - g.x0, g.y1 - g.y0)
+        if (L < 0.5) continue
+        const ux = (g.x1 - g.x0) / L
+        const uy = (g.y1 - g.y0) / L
+        // (l'éclair : des points tous les 3, écartés de part et d'autre du trait d'un hasard refrappé)
+        let px = g.x0
+        let py = g.y0
+        for (let d = 3; d <= L + 0.01; d += 3) {
+          const ec = (alea(si.balle * 31 + n, frappe * 97 + Math.round(d), 5) - 0.5) * 4 * si.largeur * 0.6
+          const qx = g.x0 + ux * Math.min(d, L) - uy * ec
+          const qy = g.y0 + uy * Math.min(d, L) + ux * ec
+          p.glowLine(px, py, qx, qy, 3, halo, 0.3 * k)
+          p.line(px, py, qx, qy, coeur, 0.9 * k)
+          px = qx
+          py = qy
+        }
+        // (les étincelles qui pètent dessus, tirées de la frappe)
+        if (alea(si.balle + n, frappe, 7) < 0.5) {
+          const d = alea(si.balle + n, frappe, 8) * L
+          p.dot(g.x0 + ux * d, g.y0 + uy * d, N.WHITE, k)
+          p.glow(g.x0 + ux * d, g.y0 + uy * d, 3, halo, 0.6 * k)
+        }
+        // (gelé : des flocons s'en détachent)
+        if (glace && R.next() < 0.08 * k) floconsDeGivre.push({ x: g.x0 + ux * L * R.next(), y: g.y0 + uy * L * R.next(), vx: R.range(-5, 5), vy: R.range(-5, 5), t0: t, vie: R.range(0.5, 0.9), g: R.range(0, 6.3), grand: R.next() < 0.4 })
+      }
+    }
+  }
   function dessinerLesTrainesDuRailgun(p: Peintre): void {
     const vivantes = new Set<number>()
     for (const o of m.obus) {
@@ -11933,12 +11975,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   function dessinerLePlasma(p: Peintre): void {
     for (let i = eclatsDePlasma.length - 1; i >= 0; i--) if (t - eclatsDePlasma[i].t0 > DUREE_DE_L_ECLAT) eclatsDePlasma.splice(i, 1)
     const orbes = m.obus.filter((o) => o.arme === 'plasma')
-    if (orbes.length === 0 && m.faisceaux.length === 0 && executions.length === 0 && impulsionsVertes.length === 0 && m.balisesLaser.length === 0 && m.harpons.length === 0 && cassuresDuHarpon.length === 0 && eclatsDePlasma.length === 0 && rubans.size === 0 && popsDEssaim.length === 0 && m.spheres.length === 0 && m.puits.length === 0 && effondrements.length === 0 && traitsDuRail.length === 0 && trainesDuRailgun.size === 0 && !m.obus.some((o) => o.arme === 'essaim' || o.arme === 'arcane' || o.arme === 'railgun')) return
+    if (orbes.length === 0 && m.faisceaux.length === 0 && executions.length === 0 && impulsionsVertes.length === 0 && m.balisesLaser.length === 0 && m.harpons.length === 0 && cassuresDuHarpon.length === 0 && eclatsDePlasma.length === 0 && rubans.size === 0 && popsDEssaim.length === 0 && m.spheres.length === 0 && m.puits.length === 0 && effondrements.length === 0 && traitsDuRail.length === 0 && trainesDuRailgun.size === 0 && m.sillons.length === 0 && !m.obus.some((o) => o.arme === 'essaim' || o.arme === 'arcane' || o.arme === 'railgun')) return
     p.place(W / 2 - camera.x, centreY() - camera.y)
     dessinerLesSpheres(p)
     dessinerLesPuits(p)
     dessinerLEssaim(p)
     dessinerLeRailgun(p)
+    dessinerLesSillons(p)
     dessinerLesTrainesDuRailgun(p)
     dessinerLesHarpons(p)
     dessinerLesBalisesLaser(p)
@@ -17656,6 +17699,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
             const a = R.range(0, Math.PI * 2)
             etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(30, 70), Math.sin(a) * R.range(30, 70), R.range(0.12, 0.25), R.next() < 0.5 ? N.WHITE : PLASMA_V[3], 1, 1.5)
           }
+          break
+        case 'sillon':
+          // (UNE BALLE LAISSE UN SILLON ÉLECTRIQUE — voir `Arme.sillon` : son grésillement)
+          jouer('sillon', { dx: ev.x - v.x, dy: ev.y - v.y })
           break
         case 'execution':
           // (UN COUP CRITIQUE DU RAILGUN EXÉCUTE — voir `Arme.execute` et `dessinerLesExecutions` : la croix, son « shing »,

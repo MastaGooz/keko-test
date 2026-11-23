@@ -1596,6 +1596,20 @@ const RECETTES = {
       }
     },
   },
+  /**
+   * LE SILLON DU RAILGUN (Keko, 23/11 — voir `Arme.sillon`) : la course de la balle s'électrise — un bourdon électrique bas
+   * qui grésille et s'éteint, ses harmoniques impaires qui battent vite ; dessus, des crépitements secs qui s'espacent
+   */
+  sillon: {
+    duree: 1.2, niveau: 0.26, salle: [0.3, 0.12], variantes: 3,
+    faire: (m, h) => {
+      note(m, 0, 0.6, 0, { f: 110 * (0.95 + 0.1 * h.next()), a: 0.01, d: 0.7, battement: 28, partiels: [[1, 1, 1], [3, 0.5, 0.8], [5, 0.3, 0.6], [7, 0.15, 0.4]], sature: 1.6 })
+      for (let i = 0; i < 10; i++) {
+        const u = i / 10
+        souffle(m, h, 0.02 + 0.8 * u ** 1.5 + 0.02 * h.next(), 0.5 * (1 - u), (h.next() - 0.5) * 0.9, { f: 2400 + 1800 * h.next(), q: 3, bande: true, a: 0.0005, d: 0.01 })
+      }
+    },
+  },
 } satisfies Record<string, Recette>
 
 export type Son = keyof typeof RECETTES
