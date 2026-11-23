@@ -37,6 +37,7 @@ import { dessinerAimant, dessinerPlaqueTombee, dessinerSoin, dessinerAsteroide, 
 import { dessinerBase, dessinerStation, ENVERGURE_BASE, RECUL_DE_LA_BASE } from './station.ts'
 import { animerAstre, astresVisibles, demiTailleDeLAstre, peindreAstre, rayonQuiCache, voilerLAstre, type Astre, type PeintreCeleste } from './celeste.ts'
 import * as EXPLOSION from '../pixelfx/fx/keko/explosion-espace.js'
+import * as EXPLOSION_OBUS from '../pixelfx/fx/keko/explosion-obus.js'
 import * as ECLATEMENT_ORGANIQUE from '../pixelfx/fx/keko/eclatement-organique.js'
 import * as EFFONDREMENT_NEANT from '../pixelfx/fx/keko/effondrement-neant.js'
 import * as TELEPORTATION from '../pixelfx/fx/keko/teleportation.js'
@@ -10482,7 +10483,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (o.cloche !== true) return { h: 0, dh: 0 }
     const vie0 = Math.max(0.01, o.vie0 ?? 1)
     const u = Math.max(0, Math.min(1, 1 - o.vie / vie0))
-    const haut = Math.min(30, 6 + 0.14 * vie0 * Math.hypot(o.vx, o.vy))
+    const haut = Math.min(60, 10 + 0.3 * vie0 * Math.hypot(o.vx, o.vy))
     return { h: Math.sin(Math.PI * u) * haut, dh: (Math.cos(Math.PI * u) * Math.PI * haut) / vie0 }
   }
   function dessinerLesConsumes(p: Peintre): void {
@@ -16548,6 +16549,17 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           // de 18 éclataient pareil. Elle se mesure maintenant au missile : son rayon sur 18)
           const sz = Math.max(0.6, ev.rayon / RAYON_DU_MISSILE)
           ondesDeZone.push({ x: ev.x, y: ev.y, t0: t, r: ev.rayon, s: sz })
+          // (L'OBUS N'EXPLOSE PLUS COMME LE MISSILE — Keko, 23/11 : « change l'effet d'explosion pour autre chose
+          // graphiquement, pour différencier des missiles » ; il a choisi la « Big explosion » de pixelfx : sans sol, trois
+          // détonations, un dôme blanc, une boule de feu qui roule, de gros rochers — `explosion-obus.js` —, à la place de
+          // la boule de feu du missile ; son onde de choc s'ouvre jusqu'au bord de la zone)
+          if (ev.arme === 'obusier') {
+            effets.push({ fx: N.createFx(EXPLOSION_OBUS as Module, { x: ev.x - camera.x + W / 2, y: ev.y - camera.y + centreY(), size: ev.rayon / 54, seed: Math.round(ev.x * 7 + ev.y) }), x: ev.x, y: ev.y })
+            flashs.push({ x: ev.x, y: ev.y, t0: t, r: ev.rayon * 0.35 })
+            secousse = Math.max(secousse, 0.7)
+            if (typeof navigator.vibrate === 'function') vibrer(40)
+            break
+          }
           for (let i = 0; i < Math.round(16 * sz); i++) {
             const a = R.range(0, Math.PI * 2)
             const d = R.range(0, ev.rayon * 0.35)
@@ -16559,14 +16571,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
             feuDesConsumes.spawn(N.P.EMBER, ev.x, ev.y, Math.cos(a) * R.range(40, 90) * sz, Math.sin(a) * R.range(40, 90) * sz, R.range(0.3, 0.6), 0, 1)
           }
           for (let i = 0; i < Math.round(2 * sz); i++) feuDesConsumes.spawn(N.P.SMOKE, ev.x + R.range(-3, 3) * sz, ev.y + R.range(-3, 3) * sz, R.range(-5, 5), R.range(-8, -2), R.range(0.6, 1), FUMEE_DU_FEU, R.range(2.5, 3.5) * sz)
-          // (L'OBUS, LUI, FRAPPE COMME LA BOMBE — Keko, 22/11 : « manque de punch » : l'explosion du dépôt par-dessus, un
-          // éclair de toute la zone, une secousse franche et une vibration)
-          if (ev.arme === 'obusier') {
-            effets.push({ fx: N.createFx(EXPLOSION as Module, { x: ev.x - camera.x + W / 2, y: ev.y - camera.y + centreY(), size: 0.3 * sz, seed: Math.round(ev.x * 7 + ev.y) }), x: ev.x, y: ev.y })
-            flashs.push({ x: ev.x, y: ev.y, t0: t, r: ev.rayon * 0.35 })
-            secousse = Math.max(secousse, 0.7)
-            if (typeof navigator.vibrate === 'function') vibrer(40)
-          } else secousse = Math.max(secousse, ev.arme === 'roquettes' ? 0.15 : 0.2)
+          secousse = Math.max(secousse, ev.arme === 'roquettes' ? 0.15 : 0.2)
           break
         }
         case 'tourelleLancee':

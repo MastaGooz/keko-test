@@ -8155,3 +8155,17 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     éclair au départ, à l'impact une lueur et un anneau qui s'ouvre ; 0,26 s (0,22) ; onze étincelles (sept), une
     secousse de 0,28 (0,22).
   VU en capture : l'obus en l'air et sa fumée en courbe, les petites roquettes, la traînée qui reste et ondule, la foudre.
+- **23/11, L'OBUS PLUS HAUT, ET SA PROPRE EXPLOSION.** Keko : « augmente la hauteur de la cloche de l'obus, ce qui augmente
+  le délai entre tir et impact ; et change l'effet d'explosion pour autre chose graphiquement : sur pixelfx on a d'autres
+  types d'explosions, pour différencier des missiles ».
+  - LA CLOCHE : l'obus vole à 90 (140), sa course peut durer 1,8 s (1,3) — 1,7 s à portée pleine (1,1) ; il monte à
+    `min(60, 10 + 0,3 × la longueur du tir)` au-dessus de son ombre (`min(30, 6 + 0,14 × …)`) : 55 à portée pleine
+    (27). Remesuré : 0,97 (le vol plus long fait viser moins juste), les dégâts gardés à 62.
+  - L'EXPLOSION : choisie par Keko parmi quatre (Big explosion, Nuke, Grenade / Dirt, Plasma recolorée), la « Big
+    explosion » de pixelfx, SANS SOL comme notre explosion de l'espace l'est de la petite — `keko/explosion-obus`
+    (au banc `?pixelfx`, catégorie keko) : trois détonations à un battement d'écart (la première au point d'impact,
+    les deux autres à côté, plus petites), un dôme blanc qui refroidit dans le feu, une boule de feu qui ROULE (des
+    ronds de feu qui tournent autour du centre en s'écartant), une grande onde de choc jusqu'au bord de la zone (54 ×
+    `size`, `size` = rayon ÷ 54), de gros rochers dont les plus chauds traînent du feu ; ni colonne, ni champignon, ni
+    poussière au sol. Elle REMPLACE, pour l'obus, la boule de feu du missile et l'explosion de l'espace ; l'éclair, la
+    secousse, la vibration et la détonation restent. VUE à la planche-contact et en jeu.
