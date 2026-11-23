@@ -1259,7 +1259,7 @@ export type Choc = { x: number; y: number; force: number; asteroide: number; /**
 /** (un trait du rival armé porte les dégâts de son arme, son nom, et s'il est guidé — absents : le trait d'avant, un point) */
 export type Tir = { id: number; x: number; y: number; vx: number; vy: number; vie: number; degats?: number; guide?: boolean; arme?: string }
 /** Un obus du joueur : un trait qui porte des dégâts, de l'arme qui l'a tiré ; guidé, il tourne vers le rival. */
-export type Obus = Tir & { degats: number; guide: boolean; arme: string; /** Ses ricochets qui restent (voir `Arme.ricochet`), ceux qu'il a déjà touchés (il ne les retouche pas en repartant). */ rebonds?: { n: number; portee: number; part: number }; deja?: number[]; /** Ses dégâts sans le coup critique : un rebond retire le sien (voir `Arme.ricochet`). */ brut?: number; /** L'ennemi verrouillé vers lequel il file en survolant tout le reste (voir `Monde.verrou`). */ survole?: number; /** Ce qu'il enflamme (voir `Arme.incendiaire`). */ brule?: { duree: number; dps: number }; /** Les éclats de son explosion (voir `Arme.fragments`). */ fragments?: { nombre: number; degats: number; vitesse: number; vie: number }; /** L'insecte auquel il est accroché (voir `Arme.infaillible`). */ verrou?: number; /** Un coup critique (le passif du labo) : ses dégâts sont déjà multipliés. */ critique?: boolean; /** Il explose (voir `Arme.zone`). */ zone?: { rayon: number; degats: number }; /** Il gèle ce qu'il touche (voir `Arme.gel`). */ gel?: { duree: number; ralenti: number }; /** Il ronge ce qu'il touche (voir `Arme.corrosif`). */ ronge?: { duree: number; bonus: number }; /** Il détone sur un coup critique (voir `Arme.detonation`). */ detonation?: { rayon: number; part: number }; /** Critique, il exécute (voir `Arme.execute`). */ execute?: boolean; /** Il traverse (voir `Arme.salve`) : les insectes déjà touchés. */ perce?: number[]; /** Une balle de railgun (voir `Arme.balle`) : la part de ses dégâts qu'elle garde à chaque insecte traversé, son calibre. */ balle?: { part: number; calibre: number }; /** Il se brise au premier insecte touché en petits fragments, en cône derrière lui (voir `Arme.salve`). */ eclatement?: { nombre: number; cone: number; vitesse: number; vie: number; degats: number }; /** Un missile d'essaim (voir `Arme.essaim`) : sa cible, sa naissance, sa vitesse de départ, et comment il fonce. */ traque?: { cible: number; nee: number; v0: number; acces: number; pointe: number; braquage: number; chaos: number; pas: number; calme: number; reprise: number; /** L'instant où il a repris une autre cible (la sienne morte) : son chaos repart de là. */ depuis?: number }; /** Une boule de napalm, lancée en cloche (voir `Arme.napalm`) : sa durée de vol au départ ; elle ne touche rien en vol. */ napalm?: { rayon: number; duree: number; dps: number; brulure: number; dpsBrulure: number }; vie0?: number; /** Un obus tiré en cloche (voir `Arme.cloche`) : il ne touche rien en vol, il explose en retombant. */ cloche?: boolean; /** Une grenade à retardement (voir `Arme.minuterie`) : son frein par seconde ; elle ne touche rien, elle explose au bout de sa vie. */ minuterie?: number }
+export type Obus = Tir & { degats: number; guide: boolean; arme: string; /** Ses ricochets qui restent (voir `Arme.ricochet`), ceux qu'il a déjà touchés (il ne les retouche pas en repartant). */ rebonds?: { n: number; portee: number; part: number }; deja?: number[]; /** Ses dégâts sans le coup critique : un rebond retire le sien (voir `Arme.ricochet`). */ brut?: number; /** Ce qu'il enflamme (voir `Arme.incendiaire`). */ brule?: { duree: number; dps: number }; /** Les éclats de son explosion (voir `Arme.fragments`). */ fragments?: { nombre: number; degats: number; vitesse: number; vie: number }; /** L'insecte auquel il est accroché (voir `Arme.infaillible`). */ verrou?: number; /** Un coup critique (le passif du labo) : ses dégâts sont déjà multipliés. */ critique?: boolean; /** Il explose (voir `Arme.zone`). */ zone?: { rayon: number; degats: number }; /** Il gèle ce qu'il touche (voir `Arme.gel`). */ gel?: { duree: number; ralenti: number }; /** Il ronge ce qu'il touche (voir `Arme.corrosif`). */ ronge?: { duree: number; bonus: number }; /** Il détone sur un coup critique (voir `Arme.detonation`). */ detonation?: { rayon: number; part: number }; /** Critique, il exécute (voir `Arme.execute`). */ execute?: boolean; /** Il traverse (voir `Arme.salve`) : les insectes déjà touchés. */ perce?: number[]; /** Une balle de railgun (voir `Arme.balle`) : la part de ses dégâts qu'elle garde à chaque insecte traversé, son calibre. */ balle?: { part: number; calibre: number }; /** Il se brise au premier insecte touché en petits fragments, en cône derrière lui (voir `Arme.salve`). */ eclatement?: { nombre: number; cone: number; vitesse: number; vie: number; degats: number }; /** Un missile d'essaim (voir `Arme.essaim`) : sa cible, sa naissance, sa vitesse de départ, et comment il fonce. */ traque?: { cible: number; nee: number; v0: number; acces: number; pointe: number; braquage: number; chaos: number; pas: number; calme: number; reprise: number; /** L'instant où il a repris une autre cible (la sienne morte) : son chaos repart de là. */ depuis?: number }; /** Une boule de napalm, lancée en cloche (voir `Arme.napalm`) : sa durée de vol au départ ; elle ne touche rien en vol. */ napalm?: { rayon: number; duree: number; dps: number; brulure: number; dpsBrulure: number }; vie0?: number; /** Un obus tiré en cloche (voir `Arme.cloche`) : il ne touche rien en vol, il explose en retombant. */ cloche?: boolean; /** Une grenade à retardement (voir `Arme.minuterie`) : son frein par seconde ; elle ne touche rien, elle explose au bout de sa vie. */ minuterie?: number }
 /** Une bombe en vol (la capacité active d'essai). */
 export type Bombe = Tir
 /** Le rival : un vaisseau comme l'autre, des points, ce qu'il fait, sa roche, son laser, son prochain tir, son butin. */
@@ -1591,6 +1591,8 @@ export type Evenement =
   | { type: 'harponPlante'; x: number; y: number; id: number }
   /** Un coup critique détone (voir `Arme.detonation`). */
   | { type: 'detonation'; x: number; y: number; rayon: number }
+  /** Un coup critique exécute un insecte qui en aurait réchappé (voir `Arme.execute`) : où, et sa taille. */
+  | { type: 'execution'; x: number; y: number; rayon: number }
   | { type: 'harponCasse'; x: number; y: number }
   /** La balle du railgun traverse un insecte (voir `Arme.balle`), là où il est, filant à `cap`. */
   | { type: 'balleTraverse'; x: number; y: number; cap: number }
@@ -6165,7 +6167,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
       const y0 = bo === undefined ? v.y + Math.sin(angle) * (c.rayon + 3) : v.y + Math.sin(v.cap) * bo.x + Math.cos(v.cap) * bo.y
       // (le coup critique du labo : tiré du même hachage que la dispersion, sur une autre clé)
       const critique = chanceDeCritique(c, arme) > 0 && tire(m.graine, m.prochainId, 12) < chanceDeCritique(c, arme)
-      m.obus.push({ id: m.prochainId++, x: x0, y: y0, vx: Math.cos(angle) * vitesseDuTir, vy: Math.sin(angle) * vitesseDuTir, vie: vieDuTir, degats: arme.degats * (critique ? facteurDeCritique(c, arme) : 1), guide: arme.guide, arme: arme.id, critique, ...(arme.infaillible === true && cibleDuTir !== null ? { verrou: cibleDuTir.id } : {}), ...effetsDuTir(arme), ...(arme.napalm === undefined ? {} : { napalm: arme.napalm, vie0: vieDuTir }), ...(arme.plasma === undefined ? {} : { zone: arme.plasma, perce: [], vie0: vieDuTir }), ...(arme.cloche !== undefined ? { cloche: true, vie0: vieDuTir } : {}), ...(arme.minuterie !== undefined ? { minuterie: arme.minuterie.frein, vie0: vieDuTir } : {}), brut: arme.degats, ...(cibleDuTir !== null && cibleDuTir.id === m.verrou ? { survole: cibleDuTir.id } : {}) })
+      m.obus.push({ id: m.prochainId++, x: x0, y: y0, vx: Math.cos(angle) * vitesseDuTir, vy: Math.sin(angle) * vitesseDuTir, vie: vieDuTir, degats: arme.degats * (critique ? facteurDeCritique(c, arme) : 1), guide: arme.guide, arme: arme.id, critique, ...(arme.infaillible === true && cibleDuTir !== null ? { verrou: cibleDuTir.id } : {}), ...effetsDuTir(arme), ...(arme.napalm === undefined ? {} : { napalm: arme.napalm, vie0: vieDuTir }), ...(arme.plasma === undefined ? {} : { zone: arme.plasma, perce: [], vie0: vieDuTir }), ...(arme.cloche !== undefined ? { cloche: true, vie0: vieDuTir } : {}), ...(arme.minuterie !== undefined ? { minuterie: arme.minuterie.frein, vie0: vieDuTir } : {}), brut: arme.degats })
       if (g === 0) ev.push({ type: 'obus', x: x0, y: y0, arme: arme.id })
     }
   })
@@ -6220,11 +6222,9 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
     // là » : `rochesMasquees` ne retire les roches qu'au choix des cibles ; sur la course du tir, elles sont là — le
     // napalm passe au-dessus, comme d'un insecte)
     const touchables = masquees.length > 0 ? [...m.ennemis, ...masquees] : m.ennemis
-    // (TIRÉ SUR L'ENNEMI VERROUILLÉ, IL SURVOLE TOUT LE RESTE JUSQU'À LUI — Keko, 23/11 : « quand on a verrouillé une cible et
-    // qu'on tire, les cibles entre la cible verrouillée et le joueur ne sont pas touchées, comme si le joueur tirait au-dessus
-    // pour aller frapper directement celle qu'il verrouille » : il ne touche que lui, ni insecte ni roche en chemin ; arrivé
-    // — ou lui parti —, il redevient un tir comme un autre : il rebondit, il traverse, il s'écrase)
-    if (o.survole !== undefined && !touchables.some((e) => e.id === o.survole)) delete o.survole
+    // (LE VERROU NE CHANGE PAS CE QUI EST TOUCHÉ — Keko, 23/11 : un tir vers l'ennemi verrouillé a survolé un temps tout le
+    // reste jusqu'à lui ; « finalement, c'est une mauvaise idée : si des ennemis sont entre l'ennemi verrouillé et le joueur,
+    // ils arrêtent le projectile, comme c'était avant »)
     const abattre = (e: Ennemi): void => {
       abattreLEnnemi(c, m, e, ev)
       // (une roche masquée brisée ne revient pas avec les autres)
@@ -6242,16 +6242,19 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
       const ba = o.balle
       const croises = ba === undefined ? touchables : touchables.filter((e) => !o.perce!.includes(e.id) && distanceAuSegment(e.corps.x, e.corps.y, ox, oy, o.x, o.y) <= rayonDe(c, e) + ba.calibre).sort((p, q) => Math.hypot(p.corps.x - ox, p.corps.y - oy) - Math.hypot(q.corps.x - ox, q.corps.y - oy))
       for (const e of [...croises]) {
-        if (o.perce.includes(e.id) || (o.survole !== undefined && e.id !== o.survole) || (ba === undefined && Math.hypot(e.corps.x - o.x, e.corps.y - o.y) > rayonDe(c, e) + 1.5)) continue
-        if (o.survole === e.id) delete o.survole
+        if (o.perce.includes(e.id) || (ba === undefined && Math.hypot(e.corps.x - o.x, e.corps.y - o.y) > rayonDe(c, e) + 1.5)) continue
         o.perce.push(e.id)
         // (UN TIR INFAILLIBLE QUI TRAVERSE lâche sa cible une fois sur elle, et file droit — voir `Arme.perforant`)
         if (o.verrou === e.id) delete o.verrou
         if (o.gel !== undefined) geler(m, e, o.gel.duree, o.gel.ralenti, ev)
         if (o.brule !== undefined) enflammer(m, e, o.brule)
         e.pv -= o.degats
-        // (UN CRITIQUE QUI EXÉCUTE abat net ce qui n'est ni grand ni roche — voir `Arme.execute`)
-        if (o.critique === true && o.execute === true && e.asteroide === undefined && e.grand !== true) e.pv = Math.min(e.pv, 0)
+        // (UN CRITIQUE QUI EXÉCUTE abat net ce qui n'est ni grand ni roche — voir `Arme.execute` ; s'il en réchappait, la page
+        // le montre)
+        if (o.critique === true && o.execute === true && e.asteroide === undefined && e.grand !== true && e.pv > 0) {
+          e.pv = 0
+          ev.push({ type: 'execution', x: e.corps.x, y: e.corps.y, rayon: rayonDe(c, e) })
+        }
         ev.push({ type: 'ennemiTouche', id: e.id, x: ba === undefined ? o.x : e.corps.x, y: ba === undefined ? o.y : e.corps.y, critique: o.critique === true })
         // (la balle perd une part de ses dégâts ; ses éclats partent de l'insecte traversé)
         if (ba !== undefined) {
@@ -6265,15 +6268,17 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
     // (un obus en cloche non plus : il passe au-dessus — voir `Arme.cloche`)
     if (!fini && o.napalm === undefined && o.cloche !== true && o.minuterie === undefined && o.perce === undefined) {
       for (const e of touchables) {
-        if (o.deja?.includes(e.id) === true || (o.survole !== undefined && e.id !== o.survole) || Math.hypot(e.corps.x - o.x, e.corps.y - o.y) > rayonDe(c, e) + 1.5) continue
+        if (o.deja?.includes(e.id) === true || Math.hypot(e.corps.x - o.x, e.corps.y - o.y) > rayonDe(c, e) + 1.5) continue
         fini = true
-        delete o.survole
         // (un éclat de glace gèle ce qu'il touche — avant le coup : mort, il vole en éclats)
         if (o.gel !== undefined) geler(m, e, o.gel.duree, o.gel.ralenti, ev)
         if (o.brule !== undefined) enflammer(m, e, o.brule)
         if (o.ronge !== undefined) ronger(m, e, { ...o.ronge, dps: 0 }, ev)
         e.pv -= o.degats
-        if (o.critique === true && o.execute === true && e.asteroide === undefined && e.grand !== true) e.pv = Math.min(e.pv, 0)
+        if (o.critique === true && o.execute === true && e.asteroide === undefined && e.grand !== true && e.pv > 0) {
+          e.pv = 0
+          ev.push({ type: 'execution', x: e.corps.x, y: e.corps.y, rayon: rayonDe(c, e) })
+        }
         ev.push({ type: 'ennemiTouche', id: e.id, x: o.x, y: o.y, critique: o.critique === true })
         // (UN COUP CRITIQUE DÉTONE autour de l'insecte touché — rebonds compris — voir `Arme.detonation`)
         if (o.critique === true && o.detonation !== undefined) exploser(c, m, e.corps.x, e.corps.y, { rayon: o.detonation.rayon, degats: o.degats * o.detonation.part }, e, ev, o.arme, true)
@@ -6339,7 +6344,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
     }
     // (LES ARMES ENTAMENT LES ROCHES — Keko, 12/11 : l'obus qui s'écrase sur une roche l'abîme de ses dégâts ; brisée
     // ainsi, elle ne rend que sa part forée — l'obus en cloche passe au-dessus)
-    if (!fini && o.cloche !== true && o.minuterie === undefined && o.survole === undefined) {
+    if (!fini && o.cloche !== true && o.minuterie === undefined) {
       const a = asteroidesVisibles(c, m, o.x, o.y, c.champ.rayonMax + 2).find((r) => Math.hypot(o.x - r.x, o.y - r.y) <= r.rayon)
       if (a !== undefined) {
         fini = true

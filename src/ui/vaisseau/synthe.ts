@@ -1571,6 +1571,21 @@ const RECETTES = {
       }
     },
   },
+  /**
+   * L'EXÉCUTION DU RAILGUN (Keko, 23/11 : « un petit effet visuel avec un son pour l'exécution » — voir `Arme.execute`) :
+   * un « shing » d'acier — deux tranches d'air sèches, l'une après l'autre (la croix qui se taille), et une lame qui sonne,
+   * ses partiels de métal qui battent et s'éteignent — sur un coup sourd bref
+   */
+  execution: {
+    duree: 0.9, niveau: 0.36, salle: [0.4, 0.16], variantes: 3,
+    faire: (m, h) => {
+      souffle(m, h, 0, 0.8, -0.25, { f: 5200, glisse: { vers: 2400, en: 0.05 }, q: 1.6, bande: true, a: 0.0005, d: 0.04 })
+      souffle(m, h, 0.06, 0.8, 0.25, { f: 5600, glisse: { vers: 2600, en: 0.05 }, q: 1.6, bande: true, a: 0.0005, d: 0.04 })
+      const f = 1650 * (0.95 + 0.1 * h.next())
+      note(m, 0.06, 0.55, 0, { f, a: 0.001, d: 0.6, battement: 6, partiels: [[1, 1, 1], [2.76, 0.55, 0.7], [5.4, 0.3, 0.45], [8.93, 0.15, 0.3]] })
+      note(m, 0, 0.5, 0, { f: 120, glisse: { vers: 55, en: 0.08 }, a: 0.001, d: 0.12, partiels: CORPS, sature: 2 })
+    },
+  },
 } satisfies Record<string, Recette>
 
 export type Son = keyof typeof RECETTES

@@ -11811,7 +11811,45 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
   }
   const DUREE_DE_L_IMPULSION = 0.25
+  /**
+   * LES EXÉCUTIONS DU RAILGUN (Keko, 23/11 : « un petit effet visuel avec un son pour l'exécution » — voir `Arme.execute`) :
+   * sur l'insecte, UNE CROIX TAILLÉE — deux entailles d'acier, la seconde juste après la première, un cœur blanc bordé de
+   * cyan, qui s'élargissent puis s'éteignent —, un éclair blanc, un anneau cyan qui claque autour de lui, et des éclats
+   */
+  const executions: { x: number; y: number; r: number; t0: number; a: number }[] = []
+  const DUREE_DE_L_EXECUTION = 0.5
+  function dessinerLesExecutions(p: Peintre): void {
+    for (let i = executions.length - 1; i >= 0; i--) if (t - executions[i].t0 > DUREE_DE_L_EXECUTION) executions.splice(i, 1)
+    for (const ex of executions) {
+      const age = t - ex.t0
+      const L = ex.r * 1.6 + 6
+      if (age < 0.08) p.glow(ex.x, ex.y, ex.r * 2 + 6, N.WHITE, 0.7 * (1 - age / 0.08))
+      // (l'anneau : il claque autour de l'insecte et s'ouvre)
+      const ua = Math.min(1, age / 0.25)
+      if (ua < 1) p.ring(ex.x, ex.y, ex.r + 2 + ex.r * 2 * (1 - (1 - ua) ** 3), ua < 0.3 ? 2 : 1, ua < 0.25 ? N.WHITE : CYAN_DU_RAILGUN[3], 0.9 * (1 - ua))
+      // (les deux entailles : chacune se taille d'un bout à l'autre en 0,05 s, la seconde 0,07 s après)
+      for (const [k, d0] of [[0, 0], [1, 0.07]] as const) {
+        const ag = age - d0
+        if (ag < 0) continue
+        const trace = Math.min(1, ag / 0.05)
+        const k2 = ag < 0.12 ? 1 : Math.max(0, 1 - (ag - 0.12) / (DUREE_DE_L_EXECUTION - 0.2))
+        if (k2 <= 0) continue
+        const an = ex.a + (k === 0 ? Math.PI / 4 : -Math.PI / 4)
+        const ux = Math.cos(an)
+        const uy = Math.sin(an)
+        const x0 = ex.x - ux * L
+        const y0 = ex.y - uy * L
+        const x1 = x0 + ux * 2 * L * trace
+        const y1 = y0 + uy * 2 * L * trace
+        p.glowLine(x0, y0, x1, y1, 4, CYAN_DU_RAILGUN[2], 0.35 * k2)
+        for (const o of [-1, 1]) p.line(x0 - uy * o, y0 + ux * o, x1 - uy * o, y1 + ux * o, CYAN_DU_RAILGUN[3], 0.85 * k2)
+        p.line(x0, y0, x1, y1, N.WHITE, k2)
+        if (trace < 1) p.glow(x1, y1, 3, N.WHITE, 0.9)
+      }
+    }
+  }
   function dessinerLesFaisceaux(p: Peintre): void {
+    dessinerLesExecutions(p)
     for (let i = impulsionsVertes.length - 1; i >= 0; i--) if (t - impulsionsVertes[i].t0 > DUREE_DE_L_IMPULSION) impulsionsVertes.splice(i, 1)
     for (const o of impulsionsVertes) {
       const u = (t - o.t0) / DUREE_DE_L_IMPULSION
@@ -11875,7 +11913,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   function dessinerLePlasma(p: Peintre): void {
     for (let i = eclatsDePlasma.length - 1; i >= 0; i--) if (t - eclatsDePlasma[i].t0 > DUREE_DE_L_ECLAT) eclatsDePlasma.splice(i, 1)
     const orbes = m.obus.filter((o) => o.arme === 'plasma')
-    if (orbes.length === 0 && m.faisceaux.length === 0 && impulsionsVertes.length === 0 && m.balisesLaser.length === 0 && m.harpons.length === 0 && cassuresDuHarpon.length === 0 && eclatsDePlasma.length === 0 && rubans.size === 0 && popsDEssaim.length === 0 && m.spheres.length === 0 && m.puits.length === 0 && effondrements.length === 0 && traitsDuRail.length === 0 && trainesDuRailgun.size === 0 && !m.obus.some((o) => o.arme === 'essaim' || o.arme === 'arcane' || o.arme === 'railgun')) return
+    if (orbes.length === 0 && m.faisceaux.length === 0 && executions.length === 0 && impulsionsVertes.length === 0 && m.balisesLaser.length === 0 && m.harpons.length === 0 && cassuresDuHarpon.length === 0 && eclatsDePlasma.length === 0 && rubans.size === 0 && popsDEssaim.length === 0 && m.spheres.length === 0 && m.puits.length === 0 && effondrements.length === 0 && traitsDuRail.length === 0 && trainesDuRailgun.size === 0 && !m.obus.some((o) => o.arme === 'essaim' || o.arme === 'arcane' || o.arme === 'railgun')) return
     p.place(W / 2 - camera.x, centreY() - camera.y)
     dessinerLesSpheres(p)
     dessinerLesPuits(p)
@@ -17585,6 +17623,19 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
             const a = R.range(0, Math.PI * 2)
             etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(30, 70), Math.sin(a) * R.range(30, 70), R.range(0.12, 0.25), R.next() < 0.5 ? N.WHITE : PLASMA_V[3], 1, 1.5)
           }
+          break
+        case 'execution':
+          // (UN COUP CRITIQUE DU RAILGUN EXÉCUTE — voir `Arme.execute` et `dessinerLesExecutions` : la croix, son « shing »,
+          // des éclats d'acier, une secousse)
+          executions.push({ x: ev.x, y: ev.y, r: ev.rayon, t0: t, a: R.range(-0.3, 0.3) })
+          jouer('execution', { dx: ev.x - v.x, dy: ev.y - v.y })
+          for (let i = 0; i < 10; i++) {
+            const a = R.range(0, Math.PI * 2)
+            const vit = R.range(40, 120)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.15, 0.35), [N.WHITE, CYAN_DU_RAILGUN[4], CYAN_DU_RAILGUN[3]][Math.floor(R.next() * 3)], 1, 2)
+          }
+          secousse = Math.max(secousse, 0.4)
+          if (typeof navigator.vibrate === 'function') vibrer(25)
           break
         case 'detonation':
           // (UN COUP CRITIQUE DU LASER DÉTONE — Keko, 23/11, voir `Arme.detonation` : l'explosion d'énergie verte —

@@ -3446,30 +3446,11 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   verifier(`chaque rebond tire son critique : ${plus} tirs non critiques dont un rebond l'est, ${moins} critiques dont un rebond ne l'est pas (sur 30)`, plus > 0 && moins > 0 && tirs.every((v) => v.length === 3))
 }
 
-// TIRÉ SUR L'ENNEMI VERROUILLÉ, IL SURVOLE LE RESTE (Keko, 23/11 : « les cibles entre la cible verrouillée et le joueur ne
-// sont pas touchées ») : un insecte droit entre le vaisseau et le verrouillé ; verrouillé, celui du milieu n'a rien et le
-// verrouillé prend le tir ; sans verrou, le tir s'écrase sur le premier (le plus proche, visé)
-{
-  const essai = (verrou: boolean): number[] => {
-    const canon = { id: 'canon', cadence: 99, degats: 100, portee: 150, vitesse: 300, vie: 1, dispersion: 0, guide: false, tousSens: true }
-    const cfg = { ...VAISSEAU, coque: 1e9, armes: [canon], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false }, passifs: { ...VAISSEAU.passifs, critique: 0 } }
-    const w = nouveauMonde(cfg, 5)
-    w.invasion.prochainA = 1e9
-    const ins = [[50, 0], [110, 0]].map(([x, y], k): Ennemi => ({ id: 1700 + k, corps: { ...nouveauVaisseau(), x, y }, pv: 1e6, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9 }))
-    w.ennemis.push(...ins)
-    if (verrou) w.verrou = 1701
-    for (let i = 0; i < 90; i++) avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
-    return ins.map((e) => 1e6 - e.pv)
-  }
-  const [avec, sans] = [essai(true), essai(false)]
-  verifier(`le tir sur le verrouillé survole : verrouillé, ${avec.join(' / ')} (0 / 100) ; sans verrou, ${sans.join(' / ')} (100 / 0)`, avec[0] === 0 && avec[1] === 100 && sans[0] === 100 && sans[1] === 0)
-}
-
 // L'EXÉCUTION (Keko, 23/11 : « un coup critique au railgun détruit tous les monstres qui ne sont pas des mini-boss ou des
 // boss » — voir `Arme.execute`) : une balle critique traverse un insecte, un grand et un insecte ; les deux insectes sont
 // abattus, le grand ne perd que le coup ; sans critique, personne n'est exécuté
 {
-  const essai = (critique: number): { morts: number[]; grand: number } => {
+  const essai = (critique: number): { morts: number[]; grand: number; annonces: number } => {
     const railgun = { id: 'railgun', cadence: 99, degats: 100, portee: 190, vitesse: 900, vie: 190 / 900, dispersion: 0, guide: false, tousSens: true, perforant: true, balle: { part: 1, calibre: 2 }, execute: true }
     const cfg = { ...VAISSEAU, coque: 1e9, armes: [railgun], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false }, passifs: { ...VAISSEAU.passifs, critique, critiqueFacteur: 1 } }
     const w = nouveauMonde(cfg, 5)
@@ -3477,11 +3458,12 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
     const ins = [50, 90, 130].map((x, k): Ennemi => ({ id: 1800 + k, corps: { ...nouveauVaisseau(), x, y: 0 }, pv: 5000, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9, ...(k === 1 ? { grand: true } : {}) }))
     w.ennemis.push(...ins)
     w.verrou = 1800
-    for (let i = 0; i < 30; i++) avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
-    return { morts: ins.map((e) => (w.ennemis.includes(e) ? 0 : 1)), grand: 5000 - ins[1].pv }
+    let annonces = 0
+    for (let i = 0; i < 30; i++) annonces += avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements.filter((e) => e.type === 'execution').length
+    return { morts: ins.map((e) => (w.ennemis.includes(e) ? 0 : 1)), grand: 5000 - ins[1].pv, annonces }
   }
   const [avec, sans] = [essai(1), essai(0)]
-  verifier(`l'exécution : critique, abattus ${avec.morts.join(' / ')} (1 / 0 / 1), le grand perd ${avec.grand} (100) ; sans critique, ${sans.morts.join(' / ')} (0 / 0 / 0)`, avec.morts.join() === '1,0,1' && avec.grand === 100 && sans.morts.join() === '0,0,0')
+  verifier(`l'exécution : critique, abattus ${avec.morts.join(' / ')} (1 / 0 / 1), le grand perd ${avec.grand} (100), ${avec.annonces} exécutions annoncées (2) ; sans critique, ${sans.morts.join(' / ')} (0 / 0 / 0)`, avec.morts.join() === '1,0,1' && avec.grand === 100 && avec.annonces === 2 && sans.morts.join() === '0,0,0' && sans.annonces === 0)
 }
 
 // TOUCHÉ, ON TRAVERSE LES INSECTES (Keko, 22/11 : « quand on est touché on est invincible un court instant ; je voudrais

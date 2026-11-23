@@ -8563,3 +8563,12 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     balle critique exécute toute sa ligne. Le test : une balle critique traverse un insecte, un grand et un insecte — les
     deux insectes abattus, le grand perd 100 ; sans critique, personne.
   - Restent à revoir : Rail jumeau (une seconde arme à côté), Balle à éclats, Surcharge.
+- LE SURVOL DU VERROUILLÉ, RETIRÉ (Keko, 23/11 : « finalement, c'est une mauvaise idée ; le verrouillage ne doit pas changer
+  quels ennemis sont frappés ; si des ennemis sont entre l'ennemi verrouillé et le joueur, ils arrêtent le projectile,
+  comme c'était avant ») : `Obus.survole` et son test sont partis. Chaque rebond garde son propre critique.
+- L'EXÉCUTION SE VOIT ET S'ENTEND (Keko, 23/11 : « c'est pas mal pour l'exécution du railgun, mais rajoute un petit effet
+  visuel avec un son ») : l'événement `execution` (un insecte qui aurait réchappé du coup) ; sur lui, UNE CROIX TAILLÉE —
+  deux entailles d'acier au cœur blanc bordé de cyan, la seconde 0,07 s après la première — un éclair blanc, un anneau
+  cyan qui claque, des éclats, une secousse, une vibration (`dessinerLesExecutions`). LE SON (`execution`) : deux tranches
+  d'air sèches l'une après l'autre, une lame qui sonne — ses partiels de métal —, un coup sourd bref ; mesuré, PAS ÉCOUTÉ.
+  VU en capture : chaque insecte exécuté de la ligne porte sa croix.
