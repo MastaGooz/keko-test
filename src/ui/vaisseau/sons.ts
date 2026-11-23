@@ -752,3 +752,31 @@ export function regler(poussee: number, creuse: boolean, compte: number, monte: 
     // un son raté ne casse rien
   }
 }
+
+/**
+ * EN ARRIÈRE-PLAN, TOUT SE TAIT (Keko, 23/11 : « parfois quand je suis sur téléphone et que je change d'app, le son — celui
+ * du laser rouge — reste en boucle en arrière-plan ») : la page cachée ne dessine plus, plus rien ne règle les voix
+ * continues (`regler`), et elles gardaient leur dernier volume. Cachée — ou quittée —, toutes les voix continues tombent
+ * à zéro sur-le-champ et le contexte audio se suspend ; revenue, il reprend (`reveiller`), et les voix se règlent à
+ * l'image suivante.
+ */
+function taireLesVoix(): void {
+  try {
+    const ctx = ZZFX.audioContext
+    for (const v of [...propulsions.values(), forage, charge, flamme, bourdon, laser]) {
+      if (v === null) continue
+      v.gain.gain.cancelScheduledValues(ctx.currentTime)
+      v.gain.gain.setValueAtTime(0, ctx.currentTime)
+    }
+    void ctx.suspend()
+  } catch {
+    // un son raté ne casse rien
+  }
+}
+if (typeof document !== 'undefined') {
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) taireLesVoix()
+    else reveiller()
+  })
+  window.addEventListener('pagehide', taireLesVoix)
+}

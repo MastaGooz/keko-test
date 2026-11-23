@@ -8377,3 +8377,9 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   puis « encore plus fort » : 0,35, encore 4 dB.)
   (… ET DE TRÈS LÉGERS CRÉPITEMENTS — Keko : « on peut rajouter de très légers crépitements » : comme ceux du lance-flammes,
   plus rares et plus discrets — 35 petits claquements par seconde, en boucle, passe-haut à 2 200 Hz, à 0,22 du bourdon.)
+- **23/11, EN ARRIÈRE-PLAN, TOUT SE TAIT.** Keko : « parfois quand je suis sur téléphone et que je change d'app, le son
+  (par exemple celui du laser rouge) reste en boucle en arrière-plan ». LA CAUSE : la page cachée ne dessine plus, plus rien
+  ne règle les voix continues (le propulseur, la foreuse, la charge, le lance-flammes, la nuée, le laser), qui gardaient
+  leur dernier volume. Page cachée ou quittée (`visibilitychange`, `pagehide`), `taireLesVoix` (sons.ts) les met toutes
+  à zéro sur-le-champ et suspend le contexte audio ; revenue, `reveiller` le reprend, et les voix se règlent à l'image
+  suivante. PAS VÉRIFIÉ sur téléphone.
