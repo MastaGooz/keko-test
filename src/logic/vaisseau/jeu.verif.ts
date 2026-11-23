@@ -3425,6 +3425,46 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   verifier(`le tir double : à tour de rôle ${seul.map((t) => t.toFixed(2)).join(', ')} ; jumelées ${double.map((t) => t.toFixed(2)).join(', ')}`, seul.length === 3 && double.length === 6 && parPaires && Math.abs(double[2] - double[0] - (seul[1] - seul[0])) < 0.05)
 }
 
+// CHAQUE REBOND TIRE SON COUP CRITIQUE (Keko, 23/11 : « chaque ricochet qui fait un coup critique a une chance de déclencher
+// la détonation ») : à une chance sur deux, sur trente graines, un tir dont le premier coup n'est pas critique et un rebond
+// l'est, et l'inverse
+{
+  const touches = (graine: number): boolean[] => {
+    const laser = { id: 'laser', cadence: 99, degats: 100, portee: 120, vitesse: 420, vie: 0.7, dispersion: 0, guide: false, tousSens: true, infaillible: true, ricochet: { rebonds: 2, portee: 80, part: 0.7 } }
+    const cfg = { ...VAISSEAU, coque: 1e9, armes: [laser], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false }, passifs: { ...VAISSEAU.passifs, critique: 0.5 } }
+    const w = nouveauMonde(cfg, graine)
+    w.invasion.prochainA = 1e9
+    w.ennemis.push(...[[60, 0], [60, 25], [85, 10]].map(([x, y], k): Ennemi => ({ id: 1600 + k, corps: { ...nouveauVaisseau(), x, y }, pv: 1e6, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9 })))
+    w.verrou = 1600
+    const vu: boolean[] = []
+    for (let i = 0; i < 60; i++) for (const e of avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements) if (e.type === 'ennemiTouche') vu.push(e.critique)
+    return vu
+  }
+  const tirs = Array.from({ length: 30 }, (_, g) => touches(g + 1))
+  const plus = tirs.filter((v) => v.length === 3 && !v[0] && v.slice(1).some((x) => x)).length
+  const moins = tirs.filter((v) => v.length === 3 && v[0] && v.slice(1).some((x) => !x)).length
+  verifier(`chaque rebond tire son critique : ${plus} tirs non critiques dont un rebond l'est, ${moins} critiques dont un rebond ne l'est pas (sur 30)`, plus > 0 && moins > 0 && tirs.every((v) => v.length === 3))
+}
+
+// TIRÉ SUR L'ENNEMI VERROUILLÉ, IL SURVOLE LE RESTE (Keko, 23/11 : « les cibles entre la cible verrouillée et le joueur ne
+// sont pas touchées ») : un insecte droit entre le vaisseau et le verrouillé ; verrouillé, celui du milieu n'a rien et le
+// verrouillé prend le tir ; sans verrou, le tir s'écrase sur le premier (le plus proche, visé)
+{
+  const essai = (verrou: boolean): number[] => {
+    const canon = { id: 'canon', cadence: 99, degats: 100, portee: 150, vitesse: 300, vie: 1, dispersion: 0, guide: false, tousSens: true }
+    const cfg = { ...VAISSEAU, coque: 1e9, armes: [canon], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false }, passifs: { ...VAISSEAU.passifs, critique: 0 } }
+    const w = nouveauMonde(cfg, 5)
+    w.invasion.prochainA = 1e9
+    const ins = [[50, 0], [110, 0]].map(([x, y], k): Ennemi => ({ id: 1700 + k, corps: { ...nouveauVaisseau(), x, y }, pv: 1e6, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9 }))
+    w.ennemis.push(...ins)
+    if (verrou) w.verrou = 1701
+    for (let i = 0; i < 90; i++) avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+    return ins.map((e) => 1e6 - e.pv)
+  }
+  const [avec, sans] = [essai(true), essai(false)]
+  verifier(`le tir sur le verrouillé survole : verrouillé, ${avec.join(' / ')} (0 / 100) ; sans verrou, ${sans.join(' / ')} (100 / 0)`, avec[0] === 0 && avec[1] === 100 && sans[0] === 100 && sans[1] === 0)
+}
+
 // TOUCHÉ, ON TRAVERSE LES INSECTES (Keko, 22/11 : « quand on est touché on est invincible un court instant ; je voudrais
 // qu'on traverse aussi les ennemis ») : le temps qu'il clignote, un insecte posé sur lui ne l'écarte pas ; après, si ; une
 // roche l'arrête toujours

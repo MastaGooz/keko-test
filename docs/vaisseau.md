@@ -8528,3 +8528,17 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   TIRS, donc deux fois les dégâts du laser — fait tel que demandé, sans compensation (les « Canons jumelés » de la
   mitrailleuse, eux, tirent deux balles à 70 %). Le test : en 3 s, à tour de rôle 0,02 / 1,12 / 2,23 ; jumelées les mêmes
   instants, par paires. Texte (de moi) : « Les deux canons tirent en même temps. » VU en capture : les traits par deux.
+- CHAQUE REBOND TIRE SON COUP CRITIQUE (Keko, 23/11 : « juste pour être sûr : avec le ricochet, chaque ricochet qui fait
+  un coup critique a une chance de déclencher la détonation ; avec un seul tir, on peut déclencher autant de détonations
+  que de ricochets ») : VÉRIFIÉ, CE N'ÉTAIT PAS LE CAS — le critique se tirait une fois au départ du tir, et tous ses rebonds
+  le suivaient (tous détonaient, ou aucun). Maintenant chaque rebond tire le sien, à partir des dégâts sans critique du
+  tir (`Obus.brut`), affaiblis du rebond ; un rebond critique détone. Le test : à une chance sur deux, sur trente graines,
+  13 tirs non critiques dont un rebond l'est, 10 critiques dont un rebond ne l'est pas. (Le rayon de la Concentration,
+  lui, tire son critique une fois, à son départ, et ne détone que là.)
+- TIRÉ SUR L'ENNEMI VERROUILLÉ, LE TIR SURVOLE LE RESTE (Keko, 23/11 : « quand on a verrouillé une cible et qu'on tire
+  avec une arme, les cibles qui se trouvent entre la cible verrouillée et le joueur ne sont pas touchées, comme si le
+  joueur tirait au-dessus des cibles pour aller directement frapper celle qu'il verrouille ») : un tir des armes du
+  vaisseau parti vers l'ennemi verrouillé (`Obus.survole`) ne touche que lui — ni insecte ni roche en chemin ; arrivé, ou
+  lui disparu, il redevient un tir ordinaire (il rebondit, traverse, s'écrase). Ne change rien à ce qui n'est pas un tir
+  du vaisseau (drones, escorte, tourelles, rayons, balise laser). Le test : un insecte droit entre le vaisseau et le
+  verrouillé — verrouillé, 0 / 100 ; sans verrou, 100 / 0.
