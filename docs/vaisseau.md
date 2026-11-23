@@ -8242,3 +8242,14 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     3 + 15 u², l'accélération est continue), sa lueur rouge qui grandit et s'intensifie ; dans le dernier cinquième,
     toute la grenade rougeoie. VU en capture.
   - Le test : vers un insecte à 90, elle passe celui de 40 sans le toucher, s'arrête et explose à 88, 1,18 s après le tir.
+- **23/11, L'ESCORTE EN FORMATION, FACE À SA CIBLE.** Keko : « les grenades, on valide » ; puis « l'escorte est pas mal,
+  mais ce serait bien qu'elle fasse face aux ennemis sur lesquels elle tire ; au lieu de tourner autour du chasseur,
+  qu'elle vole à ses côtés et suive son orientation quand il n'y a pas d'ennemis ».
+  - AU REPOS, EN FORMATION (`orbite.formation`, sa place dans le repère du vaisseau, qui tourne avec lui ; voir
+    `placeDuDrone`) : les deux mini-avions à ses ailes, à 16 de côté et 5 en arrière ; « Escadrille » ajoute les deux
+    suivants à 30 de côté et 16 en arrière (ils tournaient avant comme les drones de la Sentinelle).
+  - LEUR NEZ (`Drone.cap`, tenu par la règle, tourné à 12 rad/s au plus) : vers leur cible quand ils en ont une ; rendus
+    à leur place, celui du vaisseau ; en route, leur course. Le dessin le suit (il suivait la vitesse : en tournant
+    autour d'un insecte, ils tiraient de côté).
+  - Équilibre inchangé : 1,03. Le test : vaisseau tourné vers le bas, le mini-avion de droite tient l'aile droite, le
+    nez comme lui ; un insecte à portée, il le regarde. VU en capture.

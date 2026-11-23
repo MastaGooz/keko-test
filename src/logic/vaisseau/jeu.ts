@@ -582,7 +582,10 @@ export type Arme = {
    * plus, en tournant de `braquage`) et lui TOURNE AUTOUR à `autour`, `tour` rad/s, en tirant de là à sa cadence ;
    * l'ennemi mort ou trop loin, il en prend un autre, ou il revient à sa place.
    */
-  orbite?: { rayon: number; vitesse: number; phase: number; laisse?: number; vol?: number; braquage?: number; autour?: number; tour?: number }
+  // (… OU EN FORMATION — l'Escorte de l'Empire, Keko, 23/11 : « au lieu de tourner autour du chasseur, qu'elle vole à ses
+  // côtés et suive son orientation quand il n'y a pas d'ennemis » : `formation`, sa place au repos dans le repère du
+  // vaisseau — x vers le nez, y vers la droite —, qui tourne avec lui ; l'orbite ne sert plus)
+  orbite?: { rayon: number; vitesse: number; phase: number; laisse?: number; vol?: number; braquage?: number; autour?: number; tour?: number; formation?: Vecteur }
   /**
    * DES TOURELLES POSÉES (l'Ingénieur, Keko, 15/11 : « quelque chose de mécanique, carré, qui pose des petites tours sur
    * son passage ») : l'arme n'est pas sur le vaisseau, il la POSE dans le monde (`Monde.tourelles`, `menerLesTourelles`)
@@ -1403,7 +1406,8 @@ export type Flaque = { id: number; x: number; y: number; nee: number; rayon: num
 export type Tourelle = { id: number; x: number; y: number; nee: number; cap: number; tirA: number; arme: number; /** LANCÉE : d'où, quand ; elle se déploie à `nee` (avant, elle vole). */ x0: number; y0: number; lancee: number; deployee: boolean }
 
 /** Un drone en vol (voir `Arme.orbite`). */
-export type Drone = { x: number; y: number; vx: number; vy: number; cible: number | null }
+/** (`cap` : où son nez regarde — vers sa cible quand il en a une, voir `menerLesDrones`.) */
+export type Drone = { x: number; y: number; vx: number; vy: number; cible: number | null; cap?: number }
 
 /** Ce qui s'est passé pendant un pas, pour le dessin et le son. */
 export type Evenement =
@@ -5166,10 +5170,15 @@ function exploser(c: ConfigVaisseau, m: Monde, x: number, y: number, zone: { ray
   }
 }
 
-/** LA PLACE D'UN DRONE au repos, à l'instant du monde : sur son orbite autour du vaisseau. */
+/** LA PLACE D'UN DRONE au repos, à l'instant du monde : sur son orbite autour du vaisseau — ou à sa place dans la formation. */
 export function placeDuDrone(m: Monde, arme: Arme): Vecteur {
   const o = arme.orbite
   if (o === undefined) return { x: m.vaisseau.x, y: m.vaisseau.y }
+  if (o.formation !== undefined) {
+    const v = m.vaisseau
+    const f = o.formation
+    return { x: v.x + Math.cos(v.cap) * f.x - Math.sin(v.cap) * f.y, y: v.y + Math.sin(v.cap) * f.x + Math.cos(v.cap) * f.y }
+  }
   const a = o.phase + o.vitesse * m.t
   return { x: m.vaisseau.x + Math.cos(a) * o.rayon, y: m.vaisseau.y + Math.sin(a) * o.rayon }
 }
@@ -5321,6 +5330,15 @@ function menerLesDrones(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]
     d.vy += (wy - d.vy) * kb
     d.x += d.vx * dt
     d.y += d.vy * dt
+    // (SON NEZ — Keko, 23/11 : « que l'escorte fasse face aux ennemis sur lesquels elle tire » : vers sa cible ; sans
+    // cible, rendu à sa place, celui du vaisseau ; en route, sa course ; il y tourne à 12 rad/s au plus)
+    {
+      const vd = Math.hypot(d.vx - v.vx, d.vy - v.vy)
+      const voulu = cible !== undefined ? Math.atan2(cible.corps.y - d.y, cible.corps.x - d.x) : l < 8 || vd < 20 ? v.cap : Math.atan2(d.vy, d.vx)
+      const cap = d.cap ?? voulu
+      const ec = ecartDAngle(cap, voulu)
+      d.cap = cap + Math.sign(ec) * Math.min(Math.abs(ec), 12 * dt)
+    }
     // il tire, sa cible à portée
     if (cible === undefined || m.t < (m.armesA[i] ?? 0)) return
     const dist = Math.hypot(cible.corps.x - d.x, cible.corps.y - d.y)

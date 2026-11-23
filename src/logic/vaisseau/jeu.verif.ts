@@ -1,7 +1,7 @@
 /**
  * Vérifications du vaisseau, sans navigateur : le temps est injecté.
  */
-import { type Arme, recompenseDeFin, tableauVide, chanceDePlaque, ajouterUnPilote, avancerLEquipage, etatDuPilote, partDe, gabaritDInsecte, rayonDe, rocheDeLaTempete, vieMultipliee, cadenceDeLaVague, asteroideDeLaCase, coupeDUnCube, asteroidesAutour, avancer, avancerLeMonde, encaisser, purger, impactDuRayon, lancerLaBombe, larguer, porteeDeLaBombe, MINERAIS, nouveauMonde, nouveauVaisseau, solidite, voler, totalDe, stationDeLaCase, stationLaPlusProche, VAISSEAU, verrouiller, ennemiLePlusProche, type ConfigVaisseau, type Ennemi, type Evenement, type Vaisseau, xpDuNiveau, gemmesDuButin, tire, type Pepite } from './jeu.ts'
+import { type Arme, placeDuDrone, recompenseDeFin, tableauVide, chanceDePlaque, ajouterUnPilote, avancerLEquipage, etatDuPilote, partDe, gabaritDInsecte, rayonDe, rocheDeLaTempete, vieMultipliee, cadenceDeLaVague, asteroideDeLaCase, coupeDUnCube, asteroidesAutour, avancer, avancerLeMonde, encaisser, purger, impactDuRayon, lancerLaBombe, larguer, porteeDeLaBombe, MINERAIS, nouveauMonde, nouveauVaisseau, solidite, voler, totalDe, stationDeLaCase, stationLaPlusProche, VAISSEAU, verrouiller, ennemiLePlusProche, type ConfigVaisseau, type Ennemi, type Evenement, type Vaisseau, xpDuNiveau, gemmesDuButin, tire, type Pepite } from './jeu.ts'
 import { acheter, configDuHangar, hangarNeuf, monter, pieceDe } from './hangar.ts'
 import { depuisTexte, retirerLesPilotes, retirerUnPilote, versTexte, vuDu, vuDuSecond } from './reseau.ts'
 
@@ -3204,6 +3204,29 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
     }
   }
   verifier(`la grenade passe l'insecte de 40 sans le toucher (${pv0 - devant.pv}), s'arrête et explose à ${ou?.toFixed(0)} (90), ${(quand - tire0).toFixed(2)} s après le tir (1,2), sur sa cible (${pv0 - cible.pv})`, devant.pv === pv0 && cible.pv === pv0 - 34 && ou !== null && Math.abs(ou - 90) < 3 && Math.abs(quand - tire0 - 1.2) < 0.05)
+}
+
+// L'ESCORTE EN FORMATION (Keko, 23/11 : « qu'elle fasse face aux ennemis sur lesquels elle tire ; au lieu de tourner
+// autour du chasseur, qu'elle vole à ses côtés et suive son orientation quand il n'y a pas d'ennemis ») : sans insecte, le
+// mini-avion de droite tient sa place à l'aile droite, le nez comme le vaisseau, même tourné ; un insecte à portée, il
+// part et le regarde
+{
+  const escorte = { id: 'escorte', cadence: 0.45, degats: 20, portee: 70, vitesse: 320, vie: 0.5, dispersion: 0, guide: false, tousSens: true, orbite: { rayon: 30, vitesse: 2.6, phase: 0, laisse: 120, vol: 230, braquage: 9, autour: 34, tour: 2, formation: { x: -5, y: 16 } } }
+  const cfg = { ...VAISSEAU, coque: 1e9, armes: [escorte], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false } }
+  const w = nouveauMonde(cfg, 5)
+  w.invasion.prochainA = 1e9
+  w.vaisseau = { ...w.vaisseau, cap: Math.PI / 2 }
+  for (let i = 0; i < 120; i++) avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+  const ici = placeDuDrone(w, escorte)
+  const d = w.drones[0]
+  const aSaPlace = Math.hypot(d.x - ici.x, d.y - ici.y) < 2 && Math.abs(ici.x - -16) < 1e-6 && Math.abs(ici.y - -5) < 1e-6
+  const memeNez = Math.abs(((d.cap ?? 9) - w.vaisseau.cap + Math.PI * 3) % (Math.PI * 2) - Math.PI) < 0.05
+  const e: Ennemi = { id: 800, corps: { ...nouveauVaisseau(), x: 60, y: 0 }, pv: 1e9, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9 }
+  w.ennemis.push(e)
+  for (let i = 0; i < 90; i++) avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+  const versLui = Math.atan2(e.corps.y - d.y, e.corps.x - d.x)
+  const leRegarde = Math.abs(((d.cap ?? 9) - versLui + Math.PI * 3) % (Math.PI * 2) - Math.PI) < 0.15
+  verifier(`l'escorte, vaisseau tourné vers le bas : à sa place à l'aile droite (${aSaPlace}, ${ici.x.toFixed(0)} ; ${ici.y.toFixed(0)}), le nez comme lui (${memeNez}) ; un insecte à portée, elle le regarde (${leRegarde})`, aSaPlace && memeNez && leRegarde)
 }
 
 // TOUCHÉ, ON TRAVERSE LES INSECTES (Keko, 22/11 : « quand on est touché on est invincible un court instant ; je voudrais

@@ -12658,9 +12658,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * dessus, tourné vers où il vole — le nez, deux ailes en flèche, la verrière bleue, deux dérives —, une flamme qui
    * bat derrière lui et sa traînée ; il penche ses ailes en virage.
    */
-  function dessinerUnMiniAvion(p: Peintre, x: number, y: number, vx: number, vy: number, chasse: boolean): void {
+  function dessinerUnMiniAvion(p: Peintre, x: number, y: number, vx: number, vy: number, chasse: boolean, capDuDrone?: number): void {
     const v0 = Math.hypot(vx, vy)
-    const cap = v0 > 5 ? Math.atan2(vy, vx) : t * 2.6
+    // (son nez : celui que la règle lui donne — vers sa cible, ou le cap du vaisseau — voir `Drone.cap`)
+    const cap = capDuDrone ?? (v0 > 5 ? Math.atan2(vy, vx) : t * 2.6)
     const ux = Math.cos(cap)
     const uy = Math.sin(cap)
     const nx = -uy
@@ -14456,7 +14457,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // vert d'eau des pépites)
       // (… SAUF L'ESCORTE DE L'EMPIRE, EN MINI-AVIONS — Keko, 22/11 : « on a déjà les drones de la Sentinelle »)
       const orbitales = CONF.armes.filter((a) => a.orbite !== undefined)
-      m.drones.forEach((d, k) => (orbitales[k]?.id === 'escorte' ? dessinerUnMiniAvion(p, d.x, d.y, d.vx, d.vy, d.cible !== null) : dessinerUnDrone(p, d.x, d.y, d.vx, d.vy, 1, d.cible !== null, k)))
+      m.drones.forEach((d, k) => (orbitales[k]?.id === 'escorte' ? dessinerUnMiniAvion(p, d.x, d.y, d.vx, d.vy, d.cible !== null, d.cap) : dessinerUnDrone(p, d.x, d.y, d.vx, d.vy, 1, d.cible !== null, k)))
     }
     // LE RAYON THERMIQUE, À LA MANIÈRE DE « LASER GRID » DU DÉPÔT (Keko, 15/11 : « tu peux utiliser laser grid pour
     // t'inspirer ») : un CŒUR BLANC où des impulsions défilent vers la pointe, un CORPS ROUGE de part et d'autre (clair
