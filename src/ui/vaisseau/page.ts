@@ -2172,12 +2172,25 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         p.rect(Math.round(cx) - 14 + px * 2, cy - 14 + py * 2, 2, 2, nc)
       }
     } else dessinerLEmblemeDeRace(p, ta.cible.race, cx, cy)
+    // LE TITRE DE LA CARTE, EN RELIEF (Keko, 23/11 : « en lettres fines, est-ce qu'on ne peut pas au moins leur donner un
+    // effet qui les mette plus en avant ? « Canon laser » en dessous est plus en avant que « Concentration », alors que
+    // hiérarchiquement ça devrait être le premier ») : la lettre fine en relief — le dégradé de la rareté jusqu'au blanc, un
+    // contour d'encre — et l'éclat qui la traverse de temps en temps ; le sous-titre, lui, est à plat
+    const titreEnRelief = (nom: string, ty: number): void => {
+      const mot = spell(nom, TEXTE) as { letters: { g: unknown; x: number }[]; w: number }
+      const x0 = Math.round(cx - mot.w / 2)
+      const items = mot.letters.filter((L) => L.g).map((L) => ({ g: L.g, x: x0 + L.x, y: ty - decalage(TEXTE), sx: 1, sy: 1 }))
+      const eclat = ((tReel * 0.5 + i * 0.29) % 2.2) * 40 - 12
+      drawWord(p, items, { fill: [F[3], F[4], N.WHITE], edge: N.WHITE, under: F[2], outline: ENCRE, shadow: 0, ...(eclat < mot.w + 12 ? { shine: x0 + eclat } : {}) })
+    }
     // UNE SPÉCIALE (voir `MUTATIONS`) : son nom, un filet, sa sorte en relief — « Arsenal », « Évolution » —, ce qu'elle fait
     if (speciale && mu !== undefined) {
       let sy = y + 44
       // (SON NOM SUR UNE SEULE LIGNE, TOUJOURS — Keko, 22/11 : « ça change la carte quand il y a une ou deux lignes » : en gras
       // s'il tient, en lettre fine sinon ; les noms sont courts, l'icône dit l'arme)
-      ecrire(p, mu.nom, cx, sy, F[4], { align: 'center', police: largeurDe(mu.nom, GRAS) <= CW - 10 ? GRAS : TEXTE, ombre: ENCRE })
+      // (… PUIS TOUJOURS EN LETTRE FINE — Keko, 23/11 : « certaines sont en gras et certaines ne le sont pas, je voudrais un
+      // truc uniforme » : en gras, huit noms passaient 74 pixels ; en lettre fine, le plus long, « Lance-grenades », en fait 70)
+      titreEnRelief(mu.nom, sy)
       sy += 10
       p.rect(x + 12, sy, CW / 2 - 16, 1, F[2])
       p.rect(cx + 4, sy, CW / 2 - 16, 1, F[2])
@@ -2190,12 +2203,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         const sorte = mu.sorte === 'arme' ? 'Nouvelle arme' : armeDeLaCarte(mu.arme).nom
         // (TOUJOURS EN LETTRE FINE, sous le nom en gras : « Lance-grenades » et « Nouvelle arme » ne tiennent pas en gras, et
         // deux cartes côte à côte ne doivent pas changer de lettre)
-        const fonte = TEXTE
-        const mot = spell(sorte, fonte) as { letters: { g: unknown; x: number }[]; w: number }
-        const x0 = Math.round(cx - mot.w / 2)
-        const items = mot.letters.filter((L) => L.g).map((L) => ({ g: L.g, x: x0 + L.x, y: sy - decalage(fonte), sx: 1, sy: 1 }))
-        const eclat = ((tReel * 0.5 + i * 0.29) % 2.2) * 40 - 12
-        drawWord(p, items, { fill: [F[3], F[4], N.WHITE], edge: N.WHITE, under: F[2], outline: ENCRE, shadow: 0, ...(eclat < mot.w + 12 ? { shine: x0 + eclat } : {}) })
+        // (… À PLAT, SOUS LE TITRE EN RELIEF — Keko, 23/11 : le titre d'abord ; d'un ton de la rareté éteint vers l'acier)
+        ecrire(p, sorte, cx, sy, meler(F[3], COQUE[4], 0.5), { align: 'center', ombre: ENCRE })
       }
       sy += 13
       for (const li of replier(mu.dit, CW - 10).slice(0, 5)) {
@@ -2203,7 +2212,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         sy += 9
       }
     } else {
-    // le nom de la stat (en gras s'il tient, sinon en lettre fine)
+    // le nom de la stat (en gras s'il tient, sinon en lettre fine — PUIS TOUJOURS EN LETTRE FINE, comme les spéciales : Keko,
+    // 23/11, « un truc uniforme »)
     const st0 = STATS_DES_CARTES[ta.stat]
     // (le blindage des Xénoïdes, ce sont leurs points de vie — Keko, 21/11)
     // (la Portée d'une arme qui a une zone la grandit aussi — Keko, 22/11 : la carte le dit ; « toutes les armes », si l'une
@@ -2213,7 +2223,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const effetDeLaPortee = ta.cible.sorte === 'armes' ? (CONF.armes.some(aUneZone) ? 'de portée et de zone' : null) : visee !== undefined && aUneZone(visee) ? (visee.portee > 0 ? 'de portée et de zone' : 'de zone') : null
     const st = ta.stat === 'blindage' && ta.cible.sorte === 'faction' && ta.cible.race === 'essaim' ? { nom: 'Points de vie', effet: 'de points de vie' } : ta.stat === 'portee' && effetDeLaPortee !== null ? { nom: 'Portée', effet: effetDeLaPortee } : st0
     let ly = y + 44
-    ecrire(p, st.nom, cx, ly, F[4], { align: 'center', police: largeurDe(st.nom, GRAS) <= CW - 12 ? GRAS : TEXTE, ombre: ENCRE })
+    titreEnRelief(st.nom, ly)
     // un filet orné : deux traits, un losange au milieu
     ly += 10
     p.rect(x + 12, ly, CW / 2 - 16, 1, F[2])

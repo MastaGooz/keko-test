@@ -8502,3 +8502,16 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     tir en un rayon puissant. », Corrosion « Les tirs appliquent corrosion. » ; Perforant garde le sien. Les six
     revues en capture : toutes tiennent. `&montrer=id,id,id` (avec `&choix`) force ces cartes spéciales à chaque choix,
     pour juger leur texte.
+  - LES TITRES DES CARTES, TOUS EN LETTRE FINE (Keko, 23/11 : « certaines sont en gras et certaines ne le sont pas, ce
+    n'est pas joli ; je voudrais un truc uniforme ») : le titre passait en gras s'il tenait, en lettre fine sinon. Mesuré :
+    la carte fait 84 de large ; en gras, huit noms passent la place (« Lance-grenades » 84, « Canons jumelés » 81,
+    « Concentration » 75…) ; en lettre fine, le plus long en fait 70. Au choix de Keko (contre le gras partout, avec des
+    noms raccourcis ou sur deux lignes) : TOUS LES TITRES EN LETTRE FINE, spéciales et cartes de stats. VU en capture.
+  - … PUIS LE TITRE EN RELIEF (Keko, 23/11 : « est-ce qu'on ne peut pas au moins leur donner un effet qui les mette plus
+    en avant ? « Canon laser » en dessous est plus en avant que « Concentration », alors que hiérarchiquement ça devrait
+    être le premier » ; il a d'abord demandé si l'on pouvait élargir les cartes — MESURÉ : debout, l'écran fait 180 de
+    large pour deux cartes, 86 au plus chacune, 78 de titre en gras : Lance-missiles 79, Canons jumelés 81 et
+    Lance-grenades 84 n'y tiennent pas) : le titre, en lettre fine, prend le relief qu'avait le sous-titre (`drawWord` :
+    le dégradé de la rareté jusqu'au blanc, un contour d'encre, l'éclat qui passe — `titreEnRelief`), sur les spéciales
+    comme sur les cartes de stats ; le sous-titre (« Canon laser », « Nouvelle arme ») passe à plat, d'un ton de la
+    rareté éteint vers l'acier. VU en capture.
