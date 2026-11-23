@@ -8169,3 +8169,14 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     `size`, `size` = rayon ÷ 54), de gros rochers dont les plus chauds traînent du feu ; ni colonne, ni champignon, ni
     poussière au sol. Elle REMPLACE, pour l'obus, la boule de feu du missile et l'explosion de l'espace ; l'éclair, la
     secousse, la vibration et la détonation restent. VUE à la planche-contact et en jeu.
+- **23/11, UNE CLOCHE VRAIMENT LENTE, UNE EXPLOSION SANS GROS RONDS.** Keko : « l'obus est toujours trop rapide à toucher sa
+  cible ; je veux vraiment une cloche qui soit assez lente ; et les particules de l'explosion deviennent trop grosses,
+  ça fait des gros ronds rouges qui sont moches ».
+  - LE VOL : `Arme.cloche` devient `{ vol }` — l'obus vole `vol` secondes DE PLUS que la distance à la vitesse de
+    l'arme, et sa vitesse au sol en découle (`vitesseDuTir`), pour retomber pile là où sera la cible : `vol` 1,2,
+    vitesse 100 — 1,3 s tout près, 2,4 s à 120, 2,7 s à portée pleine (1,7 avant). Sa hauteur suit LE TEMPS DE VOL, 26
+    par seconde, 70 au plus ; il grossit moins au sommet (h / 80). Le test le garde : 2,42 s pour 120.
+  - L'ÉQUILIBRE : plus lent, il manque davantage (0,80) ; 86 de dégâts (62) le ramènent à 0,97.
+  - L'EXPLOSION : la boule de feu qui roule en grains trois fois plus petits (un dixième à un cinquième du rayon, au
+    lieu d'un tiers à six dixièmes), deux fois plus nombreux, éteints en moins d'une seconde — ils n'ont plus le temps
+    de rougir en grand ; les feux des détonations et la fumée aussi, plus petits et plus courts.

@@ -604,7 +604,10 @@ export type Arme = {
    * missiles ») : comme la boule de napalm, l'obus vole juste le temps d'atteindre la cible — là où elle sera —, passe
    * au-dessus de tout en vol, et n'explose (sa `zone`) qu'en retombant.
    */
-  cloche?: boolean
+  // (… ET LENTEMENT — Keko, 23/11 : « l'obus est toujours trop rapide à toucher sa cible ; je veux vraiment une cloche
+  // assez lente » : son vol dure `vol` secondes DE PLUS que la distance à la `vitesse` de l'arme — même tout près, il
+  // prend son temps — ; sa vitesse au sol en découle, pour retomber pile là où sera la cible)
+  cloche?: { vol: number }
   /**
    * UN RAYON QUI BALAIE (la Salamandre, Keko, 15/11 : « un rayon à haute énergie qui part au-dessus du vaisseau et
    * descend en décrivant un cercle autour de lui : il enflamme et fait de gros dégâts ») : toutes les `tous` secondes, si
@@ -5698,6 +5701,8 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
     let vise: number
     // (une boule de napalm vole juste le temps d'atteindre la cible — là où elle sera)
     let vieDuTir = arme.vie
+    // (… et un obus en cloche file au sol juste assez vite pour y retomber au bout de son vol — voir `Arme.cloche`)
+    let vitesseDuTir = arme.vitesse
     // (la cible visée : un tir infaillible s'y accroche)
     let cibleDuTir: Ennemi | null = null
     if (aLaMain) vise = Math.atan2(regard!.y, regard!.x)
@@ -5723,13 +5728,16 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
       }
       if (cible === null) return
       if (cible.id >= 0) cibleDuTir = cible
-      const temps = Math.hypot(cible.corps.x - bx, cible.corps.y - by) / arme.vitesse
+      const temps = (arme.cloche?.vol ?? 0) + Math.hypot(cible.corps.x - bx, cible.corps.y - by) / arme.vitesse
       vise = Math.atan2(cible.corps.y + cible.corps.vy * temps - by, cible.corps.x + cible.corps.vx * temps - bx)
       // (l'avance prise sur la cible ne fait pas sortir le tir de l'arc)
       if (c.arcDeTir > 0 && arme.tousSens !== true) vise = v.cap + Math.max(-c.arcDeTir, Math.min(c.arcDeTir, ecartDAngle(v.cap, vise)))
       // (sans bouche, le tir part du bord du vaisseau : d'autant moins à voler)
       // (une orbe de plasma aussi : elle éclate là où sera la cible ; et un obus tiré en cloche, il y retombe)
-      if (arme.napalm !== undefined || arme.plasma !== undefined || arme.cloche === true) vieDuTir = Math.min(arme.vie, Math.max(0, Math.hypot(cible.corps.x + cible.corps.vx * temps - bx, cible.corps.y + cible.corps.vy * temps - by) - (arme.bouche === undefined ? c.rayon + 3 : 0)) / arme.vitesse)
+      if (arme.cloche !== undefined) {
+        vieDuTir = temps
+        vitesseDuTir = Math.max(0, Math.hypot(cible.corps.x + cible.corps.vx * temps - bx, cible.corps.y + cible.corps.vy * temps - by) - (arme.bouche === undefined ? c.rayon + 3 : 0)) / temps
+      } else if (arme.napalm !== undefined || arme.plasma !== undefined) vieDuTir = Math.min(arme.vie, Math.max(0, Math.hypot(cible.corps.x + cible.corps.vx * temps - bx, cible.corps.y + cible.corps.vy * temps - by) - (arme.bouche === undefined ? c.rayon + 3 : 0)) / arme.vitesse)
     }
     m.armesA[i] = m.t + arme.cadence
     // (À TOUR DE RÔLE ENTRE LES AILES SEULEMENT : une arme ajoutée par une carte spéciale tire à son pas — voir `Arme.ajoutee`)
@@ -5748,7 +5756,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
       const y0 = bo === undefined ? v.y + Math.sin(angle) * (c.rayon + 3) : v.y + Math.sin(v.cap) * bo.x + Math.cos(v.cap) * bo.y
       // (le coup critique du labo : tiré du même hachage que la dispersion, sur une autre clé)
       const critique = chanceDeCritique(c, arme) > 0 && tire(m.graine, m.prochainId, 12) < chanceDeCritique(c, arme)
-      m.obus.push({ id: m.prochainId++, x: x0, y: y0, vx: Math.cos(angle) * arme.vitesse, vy: Math.sin(angle) * arme.vitesse, vie: vieDuTir, degats: arme.degats * (critique ? facteurDeCritique(c, arme) : 1), guide: arme.guide, arme: arme.id, critique, ...(arme.infaillible === true && cibleDuTir !== null ? { verrou: cibleDuTir.id } : {}), ...effetsDuTir(arme), ...(arme.napalm === undefined ? {} : { napalm: arme.napalm, vie0: vieDuTir }), ...(arme.plasma === undefined ? {} : { zone: arme.plasma, perce: [], vie0: vieDuTir }), ...(arme.cloche === true ? { cloche: true, vie0: vieDuTir } : {}) })
+      m.obus.push({ id: m.prochainId++, x: x0, y: y0, vx: Math.cos(angle) * vitesseDuTir, vy: Math.sin(angle) * vitesseDuTir, vie: vieDuTir, degats: arme.degats * (critique ? facteurDeCritique(c, arme) : 1), guide: arme.guide, arme: arme.id, critique, ...(arme.infaillible === true && cibleDuTir !== null ? { verrou: cibleDuTir.id } : {}), ...effetsDuTir(arme), ...(arme.napalm === undefined ? {} : { napalm: arme.napalm, vie0: vieDuTir }), ...(arme.plasma === undefined ? {} : { zone: arme.plasma, perce: [], vie0: vieDuTir }), ...(arme.cloche !== undefined ? { cloche: true, vie0: vieDuTir } : {}) })
       if (g === 0) ev.push({ type: 'obus', x: x0, y: y0, arme: arme.id })
     }
   })

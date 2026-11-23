@@ -10475,7 +10475,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const RAYON_DU_MISSILE = pieceDe('arme-minimissiles')?.arme?.zone?.rayon ?? 18
   /**
    * LA HAUTEUR D'UN OBUS EN CLOCHE (voir `Arme.cloche`), en pixels au-dessus de son ombre : nulle au départ et à
-   * l'arrivée, au plus haut au milieu de sa course, d'autant plus haute que le tir est long ; et sa vitesse de montée
+   * l'arrivée, au plus haut au milieu de sa course, d'autant plus haute que le VOL EST LONG (Keko, 23/11 : « une cloche
+   * assez lente » : 26 par seconde de vol, 70 au plus — 34 tout près, 70 à portée pleine) ; et sa vitesse de montée
    * (`dh`, en pixels par seconde), pour que sa traîne suive la courbe à l'écran.
    */
   function hauteurEnCloche(o: { vie: number; vie0?: number; vx: number; vy: number; cloche?: boolean }): { h: number; dh: number } {
@@ -10483,7 +10484,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (o.cloche !== true) return { h: 0, dh: 0 }
     const vie0 = Math.max(0.01, o.vie0 ?? 1)
     const u = Math.max(0, Math.min(1, 1 - o.vie / vie0))
-    const haut = Math.min(60, 10 + 0.3 * vie0 * Math.hypot(o.vx, o.vy))
+    const haut = Math.min(70, 26 * vie0)
     return { h: Math.sin(Math.PI * u) * haut, dh: (Math.cos(Math.PI * u) * Math.PI * haut) / vie0 }
   }
   function dessinerLesConsumes(p: Peintre): void {
@@ -14287,7 +14288,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         // plus gros que le missile » : son ombre au sol, là où il est, qui pâlit quand il monte ; lui plus haut — d'autant
         // plus qu'il est au milieu de sa course —, plus gros au sommet, et sa traîne suit la courbe à l'écran)
         const { h, dh } = hauteurEnCloche(o)
-        const g = 1 + h / 45
+        const g = 1 + h / 80
         const y = o.y - h
         const ex = o.vx
         const ey = o.vy - dh

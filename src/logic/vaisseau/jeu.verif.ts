@@ -3164,7 +3164,7 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
 // L'OBUS EN CLOCHE (Keko, 23/11 : « que l'obus soit tiré en cloche pour le distinguer des missiles ») : visant un insecte
 // à 120, il passe au-dessus de celui qui est à 40 sur sa ligne, et n'explose qu'en retombant, sur sa cible
 {
-  const obusier = { id: 'obusier', cadence: 2.4, degats: 62, portee: 150, vitesse: 140, vie: 1.3, dispersion: 0, guide: false, tousSens: true, zone: { rayon: 40 }, cloche: true }
+  const obusier = { id: 'obusier', cadence: 2.4, degats: 62, portee: 150, vitesse: 100, vie: 2.7, dispersion: 0, guide: false, tousSens: true, zone: { rayon: 40 }, cloche: { vol: 1.2 } }
   const cfg = { ...VAISSEAU, coque: 1e9, armes: [obusier], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false }, passifs: { ...VAISSEAU.passifs, critique: 0 } }
   const w = nouveauMonde(cfg, 5)
   w.invasion.prochainA = 1e9
@@ -3173,10 +3173,12 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   w.ennemis.push(devant, cible)
   w.verrou = cible.id
   let ou: number | null = null
-  for (let i = 0; i < 120 && ou === null; i++) {
-    for (const ev of avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements) if (ev.type === 'explosionDeZone') ou = ev.x
+  let quand = 0
+  for (let i = 0; i < 400 && ou === null; i++) {
+    for (const ev of avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements) if (ev.type === 'explosionDeZone') (ou = ev.x), (quand = w.t)
   }
-  verifier(`l'obus en cloche passe au-dessus de l'insecte de devant (${pv0 - devant.pv} de dégâts) et explose en retombant à ${ou?.toFixed(0)}, sur sa cible (${pv0 - cible.pv})`, devant.pv === pv0 && cible.pv === pv0 - 62 && ou !== null && Math.abs(ou - 120) < 4)
+  // (… ET LENTEMENT — Keko, 23/11 : « une cloche assez lente » : 1,2 s de plus que la distance à 100, 2,4 s pour 120)
+  verifier(`l'obus en cloche passe au-dessus de l'insecte de devant (${pv0 - devant.pv} de dégâts) et explose en retombant à ${ou?.toFixed(0)}, sur sa cible (${pv0 - cible.pv}), au bout de ${quand.toFixed(2)} s (2,4)`, devant.pv === pv0 && cible.pv === pv0 - 62 && ou !== null && Math.abs(ou - 120) < 4 && Math.abs(quand - 2.4) < 0.1)
 }
 
 // TOUCHÉ, ON TRAVERSE LES INSECTES (Keko, 22/11 : « quand on est touché on est invincible un court instant ; je voudrais

@@ -64,14 +64,14 @@ export function create(o) {
     rings.push({ x, y, r0: rad * 0.45, r1: rad * 2.7, life: 0.36, max: 0.36, thick: 3 * Math.sqrt(S), c: F[5] }, { x, y, r0: rad * 0.3, r1: rad * 1.6, life: 0.24, max: 0.24, thick: 1.8 * Math.sqrt(S), c: F[3] });
     lights.add(x, y, rad * 3.4, WARM, 0.6 * power, 0.8);
     lights.add(x, y, rad * 1.6, WHITE, 0.6, 0.1);
-    for (let i = 0; i < 5; i++) grains.ajouter("feu", x + R.range(-2.5, 2.5) * S, y + R.range(-2.5, 2.5) * S, R.range(-20, 20), R.range(-20, 20), R.range(0.25, 0.4), 0, R.range(rad * 0.4, rad * 0.55), 2);
+    for (let i = 0; i < 5; i++) grains.ajouter("feu", x + R.range(-2.5, 2.5) * S, y + R.range(-2.5, 2.5) * S, R.range(-20, 20), R.range(-20, 20), R.range(0.2, 0.32), 0, R.range(rad * 0.3, rad * 0.4), 2);
     for (let i = 0; i < Math.round(26 * power); i++) {
       const a = R.range(0, TAU), d = R.range(0, rad * 0.55), sp = R.range(30, 170) * power;
-      grains.ajouter("feu", x + Math.cos(a) * d, y + Math.sin(a) * d, Math.cos(a) * sp, Math.sin(a) * sp, R.range(0.7, 1.4), 0, R.range(rad * 0.22, rad * 0.46), 2.2);
+      grains.ajouter("feu", x + Math.cos(a) * d, y + Math.sin(a) * d, Math.cos(a) * sp, Math.sin(a) * sp, R.range(0.45, 0.85), 0, R.range(rad * 0.1, rad * 0.22), 2.2);
     }
     for (let i = 0; i < Math.round(10 * power); i++) {
       const a = R.range(0, TAU), d = R.range(0, rad * 0.7), sp = R.range(10, 60);
-      grains.ajouter("fumee", x + Math.cos(a) * d, y + Math.sin(a) * d, Math.cos(a) * sp, Math.sin(a) * sp, R.range(1.6, 2.6), 0, R.range(rad * 0.26, rad * 0.44), 1.2, R.range(0.12, 0.45));
+      grains.ajouter("fumee", x + Math.cos(a) * d, y + Math.sin(a) * d, Math.cos(a) * sp, Math.sin(a) * sp, R.range(1.4, 2.2), 0, R.range(rad * 0.16, rad * 0.28), 1.2, R.range(0.12, 0.45));
     }
     for (let i = 0; i < Math.round(80 * power); i++) {
       const a = R.range(0, TAU), sp = R.range(140, main ? 420 : 340) * power;
@@ -84,9 +84,11 @@ export function create(o) {
     if (!main) return;
     // LA BOULE DE FEU QUI ROULE : de gros ronds de feu qui tournent autour du centre en s'écartant, nés l'un après l'autre
     const sens = R.sign();
-    for (let i = 0; i < Math.round(16 * power); i++) {
+    // (… EN PETITS GRAINS — Keko, 23/11 : « les particules de l'explosion deviennent trop grosses, des gros ronds rouges
+    // qui sont moches » : plus nombreux, trois fois plus petits, et éteints avant d'avoir le temps de rougir en grand)
+    for (let i = 0; i < Math.round(30 * power); i++) {
       const a = R.range(0, TAU), d = R.range(rad * 0.3, rad * 0.8), sp = R.range(25, 60) * power, tour = R.range(60, 120) * power * sens;
-      grains.ajouter("feu", Math.cos(a) * d, Math.sin(a) * d, Math.cos(a) * sp - Math.sin(a) * tour, Math.sin(a) * sp + Math.cos(a) * tour, R.range(1.1, 1.8), 0, R.range(rad * 0.35, rad * 0.6), 1.6, R.range(0.04, 0.3));
+      grains.ajouter("feu", Math.cos(a) * d, Math.sin(a) * d, Math.cos(a) * sp - Math.sin(a) * tour, Math.sin(a) * sp + Math.cos(a) * tour, R.range(0.55, 0.95), 0, R.range(rad * 0.1, rad * 0.2), 1.6, R.range(0.04, 0.3));
     }
     // LES GROS ROCHERS : ils filent en tournant, freinent et s'éteignent ; les plus chauds traînent du feu
     for (let i = 0; i < Math.round(18 * Math.min(1.5, S + 0.4)); i++) {
