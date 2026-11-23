@@ -14295,13 +14295,23 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         const le = Math.hypot(ex, ey) || 1
         const vx = ex / le
         const vy = ey / le
-        p.circle(o.x, o.y, 2.8, N.hex('#0a0608'), 0.45 * (1 - h / 50))
-        p.glow(o.x - vx * 4 * g, y - vy * 4 * g, 9 * g, FEU[4], 0.55)
-        p.line(o.x - vx * 10 * g, y - vy * 10 * g, o.x - vx * 3 * g, y - vy * 3 * g, FEU[4])
-        p.line(o.x - vx * 5 * g, y - vy * 5 * g, o.x - vx * 3 * g, y - vy * 3 * g, N.hex('#fff2a8'))
-        p.circle(o.x, y, 3.3 * g, COQUE[1])
-        p.circle(o.x - 0.7 * g, y - 0.7 * g, 2 * g, COQUE[4])
-        p.px(Math.round(o.x + vx * 2 * g), Math.round(y + vy * 2 * g), N.WHITE)
+        // (… UN VRAI OBUS — Keko, 23/11 : « sa traînée de feu est bizarre, on dirait une aiguille de feu ; on dirait juste
+        // une boule avec une aiguille jaune plantée dedans » : plus de boule ni de trait de feu ; un obus d'artillerie
+        // couché sur sa course à l'écran — un corps d'acier ombré d'un côté, éclairé de l'autre, cerné de sombre, une
+        // ogive claire, une ceinture de cuivre, un culot sombre —, et derrière lui juste une lueur de chaleur ; sa fumée
+        // fait la traînée)
+        const nx = -vy
+        const ny = vx
+        const pt = (a: number, b: number): number[] => [o.x + vx * a * g + nx * b * g, y + vy * a * g + ny * b * g]
+        p.circle(o.x, o.y, 2.6 * (1 - h / 140), N.hex('#0a0608'), 0.45 * Math.max(0.3, 1 - h / 90))
+        p.glow(pt(-5, 0)[0], pt(-5, 0)[1], 5 * g, FEU[4], 0.35)
+        p.poly([pt(2.4, -2.4), pt(-4.6, -2.4), pt(-4.6, 2.4), pt(2.4, 2.4), pt(6, 0)], N.hex('#1a1422'))
+        p.poly([pt(2, -1.6), pt(-4, -1.6), pt(-4, 1.6), pt(2, 1.6)], COQUE[2])
+        p.poly([pt(2, -1.6), pt(-4, -1.6), pt(-4, -0.3), pt(2, -0.3)], COQUE[4])
+        p.poly([pt(2, -1.6), pt(5, 0), pt(2, 1.6)], COQUE[5])
+        p.line(pt(-2.4, -1.6)[0], pt(-2.4, -1.6)[1], pt(-2.4, 1.6)[0], pt(-2.4, 1.6)[1], N.hex('#c8763a'))
+        p.line(pt(-4, -1.6)[0], pt(-4, -1.6)[1], pt(-4, 1.6)[0], pt(-4, 1.6)[1], COQUE[1])
+        p.px(Math.round(pt(4, -0.6)[0]), Math.round(pt(4, -0.6)[1]), N.WHITE)
       } else if (o.arme === 'grenades') {
         // (UNE GRENADE — le Lance-grenades de l'Empire : une petite boule kaki qui tourne, son voyant qui clignote)
         p.circle(o.x, o.y, 1.9, N.hex('#3d4a22'))

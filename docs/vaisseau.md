@@ -8180,3 +8180,12 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   - L'EXPLOSION : la boule de feu qui roule en grains trois fois plus petits (un dixième à un cinquième du rayon, au
     lieu d'un tiers à six dixièmes), deux fois plus nombreux, éteints en moins d'une seconde — ils n'ont plus le temps
     de rougir en grand ; les feux des détonations et la fumée aussi, plus petits et plus courts.
+- **23/11, L'OBUS UN PEU MOINS LENT, ET UN VRAI OBUS.** Keko : « c'est beaucoup mieux ; par contre l'obus est un petit peu
+  trop lent ; et sa traînée de feu est bizarre, une aiguille de feu ; on dirait juste une boule avec une aiguille jaune
+  plantée dedans ».
+  - LE VOL : `vol` 0,8 (1,2), vitesse 110 (100) — 0,9 s tout près, 1,9 s à 120 (2,4), 2,2 s à portée pleine (2,7).
+    Remesuré : 1,03, les dégâts gardés à 86. Le test : 1,90 s pour 120.
+  - LE DESSIN : plus de boule ni de trait de feu ; un OBUS D'ARTILLERIE couché sur sa course à l'écran (il monte nez en
+    l'air et bascule en retombant) — un corps d'acier éclairé d'un côté, ombré de l'autre, cerné de sombre, une ogive
+    claire, une ceinture de cuivre, un culot sombre — et derrière lui une simple lueur de chaleur ; sa fumée fait la
+    traînée. Son ombre rétrécit et pâlit quand il monte. VU en capture.
