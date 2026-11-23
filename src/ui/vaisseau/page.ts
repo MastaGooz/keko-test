@@ -11718,11 +11718,17 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         p.glow(e.corps.x, e.corps.y, r + 9, ROUGE_LASER[2], 0.65 * k)
         p.glow(e.corps.x, e.corps.y, r * 0.8, ROUGE_LASER[4], 0.45 * k)
         p.ring(e.corps.x, e.corps.y, r + 2 + Math.sin(t * 30 + e.id) * 1.2, 1, ROUGE_LASER[3], 0.7 * k)
-        // (… ET DE PETITES ÉTINCELLES — Keko, 23/11 : des éclats en étoile qui scintillent sur lui, à sa taille)
-        for (let s3 = 0; s3 < Math.max(2, Math.round(r / 3)); s3++) {
+        // (… ET DE PETITES ÉTINCELLES — Keko, 23/11 : « assez discrètes, des petites particules rouges, pas du feu ; des
+        // particules crépitantes d'énergie rouge » : des points rouges d'un pixel, quelques-uns en petite croix, autour de
+        // lui, à sa taille, qui changent à chaque image — elles crépitent)
+        for (let s3 = 0; s3 < Math.max(3, Math.round(r / 1.5)); s3++) {
           const a = R2.range(0, Math.PI * 2)
-          const d0 = r * R2.range(0, 1.1)
-          N.sparkle(p, e.corps.x + Math.cos(a) * d0, e.corps.y + Math.sin(a) * d0, R2.range(1.2, 2.4), N.WHITE, ROUGE_LASER[3], 0.9 * k)
+          const d0 = r * R2.range(0.3, 1.3)
+          const px0 = Math.round(e.corps.x + Math.cos(a) * d0)
+          const py0 = Math.round(e.corps.y + Math.sin(a) * d0)
+          const c = R2.next() < 0.3 ? ROUGE_LASER[4] : ROUGE_LASER[3]
+          p.dot(px0, py0, c, R2.range(0.5, 1) * k)
+          if (R2.next() < 0.25) for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) p.dot(px0 + dx, py0 + dy, ROUGE_LASER[2], 0.6 * k)
         }
         for (let s2 = 0; s2 < 5; s2++) {
           const a = R2.range(0, Math.PI * 2)
@@ -17982,10 +17988,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         // les insectes que brûle le rayon d'une balise laser : une gerbe de particules rouges (voir `dessinerLesBalisesLaser`)
         for (const b of m.balisesLaser) {
           for (const e of ennemisDuLien(CONF, m, b)) {
-            if (R.next() > 0.5) continue
+            // (discrètes, rouges, pas du feu — Keko, 23/11 : peu, lentes, brèves, sans blanc)
+            if (R.next() > 0.25) continue
             const a = R.range(0, Math.PI * 2)
-            const vit = R.range(30, 80)
-            etincelles.ajouter('etincelle', e.corps.x, e.corps.y, Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.12, 0.3), [N.WHITE, ROUGE_LASER[3], ROUGE_LASER[4]][Math.floor(R.next() * 3)], 1, 1.5)
+            const vit = R.range(15, 40)
+            etincelles.ajouter('etincelle', e.corps.x, e.corps.y, Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.1, 0.2), R.next() < 0.5 ? ROUGE_LASER[2] : ROUGE_LASER[3], 1, 1)
           }
         }
         // les mini-missiles laissent une traînée de fumée

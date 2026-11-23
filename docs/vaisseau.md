@@ -8340,4 +8340,7 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   sa taille rapportée à celle d'un insecte (`rayonDe` ÷ `ennemi.rayon` : moucheron 0,6, cornu 1,5, cuirassier 2,2) :
   lueurs, gangue, éclats, bulles, vapeurs, braises et leur montée ; sur un gros, plus d'éclats, de bulles et de braises
   (`plus`) ; les flammes qui montent d'un insecte en feu, plus nombreuses et plus étalées. LA TOUCHE DU LASER : de
-  petites étincelles en étoile qui scintillent sur l'insecte, d'autant plus qu'il est gros (`N.sparkle`).
+  petites étincelles — d'abord en étoile, blanches ; puis (Keko : « assez discrètes, des petites particules rouges, pas
+  du feu ; des particules crépitantes d'énergie rouge ») des points rouges d'un pixel, quelques-uns en petite croix,
+  autour de lui et à sa taille, qui changent à chaque image ; la gerbe qui s'en échappe, plus rare, lente, brève,
+  rouge seulement.
