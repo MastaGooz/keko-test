@@ -3256,6 +3256,28 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   verifier(`le harpon prend le plus résistant (${plante}, ${dur.id} attendu), l'insecte proche intact (${1e6 - proche.pv}) ; l'impact ${apresImpact} (80) ; le câble ${auDebut.toFixed(0)} par seconde au départ, ${auBout.toFixed(0)} au bout de la montée (80) ; emporté à ${dur.corps.x}, il casse (${casse})`, plante === dur.id && proche.pv === 1e6 && Math.abs(apresImpact - 80) < 1e-6 && auDebut > 18 && auDebut < 26 && Math.abs(auBout - 80) < 2 && casse && w.harpons.length === 0)
 }
 
+// LA BALISE LASER (Keko, 23/11 : « le vaisseau lance une balise ; tant qu'elle est active, un rayon laser rouge entre elle
+// et le vaisseau ; tous les ennemis traversés subissent des dégâts » — voir `Arme.lien`) : lancée vers un insecte à 60,
+// elle s'arrête un peu au-delà ; le rayon brûle l'insecte et celui qui est sur sa ligne, pas celui qui est à côté ; au
+// bout de sa vie, elle s'éteint
+{
+  const lien = { id: 'lien', cadence: 5, degats: 120, portee: 110, vitesse: 0, vie: 0, dispersion: 0, guide: false, tousSens: true, lien: { duree: 4, frein: 6, epaisseur: 2, rupture: 1.8 } }
+  const cfg = { ...VAISSEAU, coque: 1e9, armes: [lien], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false } }
+  const w = nouveauMonde(cfg, 5)
+  w.invasion.prochainA = 1e9
+  const pv0 = 1e6
+  const [cible, surLaLigne, aCote] = [[60, 0], [35, 0], [35, 30]].map(([x, y], k): Ennemi => ({ id: 950 + k, corps: { ...nouveauVaisseau(), x, y }, pv: pv0, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9 }))
+  w.ennemis.push(surLaLigne, cible, aCote)
+  w.verrou = cible.id
+  for (let i = 0; i < 60; i++) avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+  const b = w.balisesLaser[0]
+  const arretee = b !== undefined && Math.abs(b.x - 80) < 3 && Math.hypot(b.vx, b.vy) < 5
+  let finie = false
+  for (let i = 0; i < 60 * 3.2 && !finie; i++) for (const ev of avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements) if (ev.type === 'baliseFinie') finie = true
+  const [pc, pl, pa] = [pv0 - cible.pv, pv0 - surLaLigne.pv, pv0 - aCote.pv]
+  verifier(`la balise s'arrête au-delà de sa cible (${b?.x.toFixed(0)}, 80 attendu) ; en 4 s, le rayon brûle la cible (${pc.toFixed(0)}) et l'insecte sur sa ligne (${pl.toFixed(0)}), ~480 chacun, pas celui d'à côté (${pa}) ; puis elle s'éteint (${finie})`, arretee && pc > 440 && pc < 500 && pl > 440 && pl < 500 && pa === 0 && finie && w.balisesLaser.length === 0)
+}
+
 // TOUCHÉ, ON TRAVERSE LES INSECTES (Keko, 22/11 : « quand on est touché on est invincible un court instant ; je voudrais
 // qu'on traverse aussi les ennemis ») : le temps qu'il clignote, un insecte posé sur lui ne l'écarte pas ; après, si ; une
 // roche l'arrête toujours

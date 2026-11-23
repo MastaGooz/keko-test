@@ -1515,6 +1515,19 @@ const RECETTES = {
       note(m, 0.02, 0.3, 0, { f: 180, glisse: { vers: 240, en: 0.08 }, a: 0.002, d: 0.4, battement: 9, partiels: [[1, 1, 1], [2.76, 0.5, 0.6], [5.4, 0.25, 0.4]] })
     },
   },
+  /**
+   * LA BALISE LASER PART (Keko, 23/11 — voir `Arme.lien`) : le « clac » du lanceur, puis le laser qui s'allume — un
+   * bourdon électrique qui monte en un éclair et tient, un peu grésillant
+   */
+  lien: {
+    duree: 0.7, niveau: 0.3, salle: [0.3, 0.12], variantes: 2,
+    faire: (m, h) => {
+      note(m, 0, 0.6, 0, { f: 700 * (0.95 + 0.1 * h.next()), glisse: { vers: 300, en: 0.03 }, a: 0.001, d: 0.05, partiels: [[1, 1, 1], [2.3, 0.6, 0.6], [3.9, 0.3, 0.4]] })
+      souffle(m, h, 0, 0.4, 0, { f: 3000, q: 1.5, bande: true, a: 0.0005, d: 0.02 })
+      note(m, 0.06, 0.4, 0, { f: 220, glisse: { vers: 880, en: 0.08, droit: true }, a: 0.005, d: 0.45, battement: 11, partiels: [[1, 1, 1], [2, 0.5, 0.8], [3, 0.35, 0.7], [5, 0.15, 0.5]] })
+      souffle(m, h, 0.06, 0.2, 0, { f: 5200, q: 3, bande: true, a: 0.01, d: 0.4 })
+    },
+  },
   /** LE CÂBLE CASSE : un claquement sec et un fouet d'acier qui se détend, aigu et qui retombe */
   harponCasse: {
     duree: 0.45, niveau: 0.26, salle: [0.25, 0.1], variantes: 2,

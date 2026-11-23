@@ -495,6 +495,21 @@ export const ICONES_DES_ARMES: Record<string, readonly string[]> = {
     'eE.E........',
     '.eE.........',
   ],
+  // (la balise laser : une balise d'acier à l'œil rouge, son rayon rouge qui part en travers)
+  'imp-lien': [
+    '..........rw',
+    '.........rr.',
+    '........rr..',
+    '.......rr...',
+    '......rr....',
+    '.....rr.....',
+    '..MMmrr.....',
+    '.MmsmMr.....',
+    '.MsrsM......',
+    '.MmsmM......',
+    '..MMM.......',
+    '...M........',
+  ],
   // (la bobine tesla : une tour de spires bleues, sa boule de foudre blanche, des étincelles)
   'imp-tesla': [
     '....cwwc....',

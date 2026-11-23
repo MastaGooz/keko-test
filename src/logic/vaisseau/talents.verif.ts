@@ -128,7 +128,7 @@ verifier('le délai passé, ce qui restait à choisir part en réserve', reserve
   b = ajouterLeBonus(b, carteSpeciale(mu('laser-tourelle')))
   const c1 = avecLesBonus(base, b)
   verifier(`une nouvelle arme a ses cartes (${cartesDuRail} pour le railgun) ; prise, elle s'ajoute (${c1.armes.map((a) => a.id).join(', ')}), sa variation la change (calibre ${c1.armes.find((a) => a.id === 'railgun')?.balle?.calibre}) ; prises : ${mutationsPrises(b).join(', ')}`, cartesDuRail > 20 && c1.armes.filter((a) => a.id === 'railgun').length === 1 && c1.armes.find((a) => a.id === 'railgun')!.balle!.calibre === 5 && c1.armes.filter((a) => a.id === 'laser').length === 3 && mutationsPrises(b).join() === 'arme-railgun,railgun-large,laser-tourelle')
-  // (… les roquettes, puis le harpon, mis de côté — Keko, 23/11 — : cinq, la sixième à venir)
+  // (… les roquettes, puis le harpon, mis de côté — Keko, 23/11 — ; la balise laser est la sixième)
   // (le compte : six armes pour l'Empire, six variations pour chacune des neuf armes en jeu ; chaque variation change bien sa config)
   const ids = ['laser', 'mitraille', 'minimissile', ...ARMES_DE_FACTION.filter((x) => x.race === 'humains').map((x) => x.id)]
   let sansEffet = ''
@@ -137,7 +137,7 @@ verifier('le délai passé, ce qui restait à choisir part en réserve', reserve
       const depart = id === 'laser' ? base : id === 'mitraille' || id === 'minimissile' ? { ...C, armes: [{ ...laser, id, place: 0 }] } : avecLesBonus(base, ajouterLeBonus([], carteSpeciale(mu(`arme-${id}`))))
       if (JSON.stringify(v.appliquer(depart)) === JSON.stringify(depart)) sansEffet += ` ${v.id}`
     }
-  verifier(`l'Empire a ${ARMES_DE_FACTION.filter((x) => x.race === 'humains').length} nouvelles armes ; six variations par arme (${ids.map((id) => `${id} ${MUTATIONS.filter((x) => x.sorte === 'variation' && x.arme === id).length}`).join(', ')}) ; aucune sans effet (${sansEffet || 'aucune'})`, ARMES_DE_FACTION.filter((x) => x.race === 'humains').length === 5 && ids.every((id) => MUTATIONS.filter((x) => x.sorte === 'variation' && x.arme === id).length === 6) && sansEffet === '')
+  verifier(`l'Empire a ${ARMES_DE_FACTION.filter((x) => x.race === 'humains').length} nouvelles armes ; six variations par arme (${ids.map((id) => `${id} ${MUTATIONS.filter((x) => x.sorte === 'variation' && x.arme === id).length}`).join(', ')}) ; aucune sans effet (${sansEffet || 'aucune'})`, ARMES_DE_FACTION.filter((x) => x.race === 'humains').length === 6 && ids.every((id) => MUTATIONS.filter((x) => x.sorte === 'variation' && x.arme === id).length === 6) && sansEffet === '')
 }
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)
 console.log('Tout passe.')

@@ -8296,3 +8296,24 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     faction des Xénoïdes ; et maintenant, on va trouver une nouvelle idée pour l'Empire ») : l'arme et ses six cartes
     passent dans `ARMES_EN_RESERVE` et `VARIATIONS_EN_RESERVE` ; sa règle, son test, son dessin, son icône et ses sons
     restent. L'Empire a de nouveau cinq armes.
+- **23/11, LA BALISE LASER, SIXIÈME ARME DE L'EMPIRE.** Proposés : le leurre, la torpille, le canon à impulsion, la
+  frappe orbitale ; Keko : « j'ai une meilleure idée : le vaisseau lance une balise, et durant tout le temps où la balise
+  est active, un rayon laser rouge est tracé entre la balise et le vaisseau ; tous les ennemis traversés par le rayon
+  subissent des dégâts, et ont une petite animation sur eux, un petit crépitement rouge ».
+  - LA RÈGLE (`Arme.lien`, `Monde.balisesLaser`, `menerLesBalisesLaser`, `ennemisDuLien`) : un insecte à portée (110 ; le
+    verrouillé d'abord, sinon le plus proche), la balise est lancée vers lui et s'arrête 20 au-delà — freinée de 6 par
+    seconde, lancée à v = distance × frein (le freinage intégré exactement : pas à pas, elle s'arrêtait 5 % trop tôt) ;
+    elle vit 4 s, une à la fois, relancée toutes les 5 s ; LE RAYON, du vaisseau à elle, brûle de 128 par seconde tout ce
+    qui est à moins de 2 de lui (plus le rayon de l'insecte) — IL BALAIE QUAND LE VAISSEAU BOUGE ; il s'éteint si le
+    vaisseau s'en éloigne à plus de 1,8 portée.
+  - L'ÉQUILIBRE : 0,52 à 60 par seconde (un insecte qui passe ne reste qu'un instant dans le rayon), 0,99 à 128 — seule
+    0,24, boss 1,53, groupe 0,75, vague 1,20 (le banc ne balaie pas : en jeu, on le promène).
+  - SES SIX CARTES : Deux balises (une seconde, son rayon, à 70 %), Longue vie (1,6 fois), Faisceau large (2,5 fois),
+    Surcharge (à sa fin elle explose, sur 30, trois fois ses dégâts), Cryogénique, Incendiaire.
+  - LE DESSIN : la balise, un disque d'acier cerné, son œil rouge qui clignote, un anneau qui pulse ; le rayon, un cœur
+    rose presque blanc, un liseré rouge de chaque côté, des lueurs le long, qui frémit ; sur ce qu'il traverse, UN PETIT
+    CRÉPITEMENT ROUGE (trois étincelles brisées qui changent à chaque image) et une lueur rouge. L'icône : une balise à
+    l'œil rouge et son rayon. LE SON (`lien`) : le « clac » du lanceur, puis le laser qui s'allume en bourdonnant ;
+    mesuré, PAS ÉCOUTÉ.
+  - Le test : lancée vers un insecte à 60, elle s'arrête à 80 ; en 4 s le rayon brûle la cible et l'insecte sur sa ligne
+    (~470 chacun), pas celui d'à côté ; puis elle s'éteint. VU en capture.

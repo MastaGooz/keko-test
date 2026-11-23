@@ -642,6 +642,17 @@ export type Arme = {
    */
   harpon?: { vitesse: number; max: number; montee: number; rupture: number; impact: number }
   /**
+   * UNE BALISE LASER (la sixième arme de l'Empire, Keko, 23/11 : « le vaisseau lance une balise, et durant tout le temps où
+   * la balise est active, un rayon laser rouge est tracé entre la balise et le vaisseau ; tous les ennemis traversés par le
+   * rayon subissent des dégâts, et ont une petite animation sur eux — un petit crépitement rouge ») : un insecte à portée,
+   * la balise est lancée vers lui et un peu au-delà, freinée de `frein` par seconde, juste assez vite pour s'arrêter là ;
+   * elle vit `duree` secondes, une à la fois par arme ; pendant ce temps, LE RAYON DU VAISSEAU À ELLE frappe de `degats`
+   * par seconde tout ce qui est à moins de `epaisseur` de lui — il balaie quand le vaisseau bouge ; il s'éteint si le
+   * vaisseau s'éloigne à plus de `rupture` fois la portée. `explosion` (une carte) : à sa fin, elle explose. L'état est
+   * `Monde.balisesLaser`. *Les chiffres sont de moi.*
+   */
+  lien?: { duree: number; frein: number; epaisseur: number; rupture: number; explosion?: { rayon: number; part: number } }
+  /**
    * UN RAYON QUI BALAIE (la Salamandre, Keko, 15/11 : « un rayon à haute énergie qui part au-dessus du vaisseau et
    * descend en décrivant un cercle autour de lui : il enflamme et fait de gros dégâts ») : toutes les `tous` secondes, si
    * un ennemi est à portée, un rayon de `longueur` part du vaisseau vers le haut (`depart`, un angle du monde) et en
@@ -1384,6 +1395,8 @@ export type Monde = {
   miniVers: { id: number; arme: number; x: number; y: number; cap: number; ne: number; cible: number | null; mordA: number }[]
   /** LES LIENS DU DRAIN D'ÂME (voir `Arme.drain`) : son arme, l'âme accrochée, depuis quand. */
   liens: { arme: number; cible: number; depuis: number }[]
+  /** LES BALISES LASER (voir `Arme.lien`) : leur arme, où elles sont, leur élan, leur naissance. */
+  balisesLaser: BaliseLaser[]
   /** LES VRILLES D'OMBRE (voir `Arme.vrille`) : où elles sont sorties, quand, leur prochain coup, leur dernière proie. */
   vrilles: { id: number; arme: number; x: number; y: number; nee: number; libreA: number; cible: number | null; saisieA: number; signaleA: number }[]
   /** L'ÉQUIPAGE, à plusieurs (voir `avancerLEquipage`) ; absent, on vole seul. */
@@ -1582,7 +1595,7 @@ export function nouveauVaisseau(): Vaisseau {
 }
 
 export function nouveauMonde(c: ConfigVaisseau = VAISSEAU, graine = 1): Monde {
-  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, coqueMax: c.coque, tableau: tableauVide(), bouclier: c.bouclier.points, plaques: Array.from({ length: c.plaques }, () => true), intouchableJusque: -1, corruption: 0, dephaseJusque: -100, plaqueCasseeA: 0, renaitJusque: -100, rochesPrises: [], toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, prochaineDeriveA: c.derive.premier, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, vies: c.invasion.vies, miniBoss: 0, boss: 0, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, harpons: [], scies: [], balises: [], givres: [], tornades: [], novas: [], echardes: [], spheres: [], puits: [], meteores: [], tentacules: [], nuees: [], rejetons: [], flaquesAcides: [], mines: [], fleaux: [], parasites: [], vrilles: [], liens: [], oeufs: [], brochettes: [], miniVers: [], hypercubes: [], des: [], coupes: [], rayonVu: null }
+  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, coqueMax: c.coque, tableau: tableauVide(), bouclier: c.bouclier.points, plaques: Array.from({ length: c.plaques }, () => true), intouchableJusque: -1, corruption: 0, dephaseJusque: -100, plaqueCasseeA: 0, renaitJusque: -100, rochesPrises: [], toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, prochaineDeriveA: c.derive.premier, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, vies: c.invasion.vies, miniBoss: 0, boss: 0, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, harpons: [], balisesLaser: [], scies: [], balises: [], givres: [], tornades: [], novas: [], echardes: [], spheres: [], puits: [], meteores: [], tentacules: [], nuees: [], rejetons: [], flaquesAcides: [], mines: [], fleaux: [], parasites: [], vrilles: [], liens: [], oeufs: [], brochettes: [], miniVers: [], hypercubes: [], des: [], coupes: [], rayonVu: null }
 }
 
 /** Un hachage entier déterministe (celui de pixelfx), et un réel dans [0, 1) qui en sort. */
@@ -4959,6 +4972,68 @@ function canaliserLeRayon(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement
   }
 }
 
+/** Une balise laser de l'Empire (voir `Arme.lien`). */
+export type BaliseLaser = { arme: number; x: number; y: number; vx: number; vy: number; nee: number }
+/** CE QUE LE RAYON D'UNE BALISE LASER TRAVERSE (voir `Arme.lien`) : du vaisseau à elle, à son épaisseur. */
+export function ennemisDuLien(c: ConfigVaisseau, m: Monde, b: BaliseLaser): Ennemi[] {
+  const li = c.armes[b.arme]?.lien
+  if (li === undefined) return []
+  const v = m.vaisseau
+  return m.ennemis.filter((e) => distanceAuSegment(e.corps.x, e.corps.y, v.x, v.y, b.x, b.y) <= li.epaisseur + rayonDe(c, e))
+}
+/** LES BALISES LASER (voir `Arme.lien`) : lancées vers un insecte, elles freinent et tiennent ; le rayon brûle ce qu'il traverse. */
+function menerLesBalisesLaser(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]): void {
+  const v = m.vaisseau
+  c.armes.forEach((a, i) => {
+    const li = a.lien
+    if (li === undefined || m.phase !== 'vol' || m.t < (m.armesA[i] ?? 0) || m.balisesLaser.some((b) => b.arme === i)) return
+    // (vers le verrouillé à portée, sinon l'insecte le plus proche ; une roche sans insecte)
+    const aPortee = (e: Ennemi): boolean => Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= a.portee + rayonDe(c, e)
+    const dist = (e: Ennemi): number => Math.hypot(e.corps.x - v.x, e.corps.y - v.y)
+    let cible: Ennemi | null = null
+    const ve = ennemiVerrouille(m)
+    if (ve !== null && aPortee(ve)) cible = ve
+    for (const insecte of [true, false]) if (cible === null) for (const e of m.ennemis) if ((e.asteroide === undefined) === insecte && aPortee(e) && (cible === null || dist(e) < dist(cible))) cible = e
+    if (cible === null) return
+    const an = Math.atan2(cible.corps.y - v.y, cible.corps.x - v.x)
+    const x0 = v.x + Math.cos(an) * (c.rayon + 2)
+    const y0 = v.y + Math.sin(an) * (c.rayon + 2)
+    // (lancée juste assez vite pour s'arrêter un peu au-delà de lui, à la portée au plus : freinée de k par seconde, elle
+    // parcourt v / k en tout — à 6, 90 % en 0,4 s)
+    const loin = Math.max(0, Math.min(a.portee, dist(cible) + 20) - c.rayon - 2)
+    const vit = loin * li.frein
+    m.balisesLaser.push({ arme: i, x: x0, y: y0, vx: Math.cos(an) * vit, vy: Math.sin(an) * vit, nee: m.t })
+    m.armesA[i] = m.t + a.cadence
+    ev.push({ type: 'obus', x: x0, y: y0, arme: a.id })
+  })
+  for (let j = m.balisesLaser.length - 1; j >= 0; j--) {
+    const b = m.balisesLaser[j]
+    const a = c.armes[b.arme]
+    const li = a?.lien
+    if (a === undefined || li === undefined || m.phase !== 'vol') {
+      m.balisesLaser.splice(j, 1)
+      continue
+    }
+    // (le freinage intégré exactement : pas à pas, elle s'arrêtait 5 % trop tôt)
+    const f = Math.exp(-li.frein * dt)
+    b.x += (b.vx * (1 - f)) / li.frein
+    b.y += (b.vy * (1 - f)) / li.frein
+    b.vx *= f
+    b.vy *= f
+    if (m.t - b.nee >= li.duree || Math.hypot(b.x - v.x, b.y - v.y) > a.portee * li.rupture) {
+      if (li.explosion !== undefined) exploser(c, m, b.x, b.y, { rayon: li.explosion.rayon, degats: a.degats * li.explosion.part }, null, ev, a.id)
+      ev.push({ type: 'baliseFinie', x: b.x, y: b.y, arme: a.id })
+      m.balisesLaser.splice(j, 1)
+      continue
+    }
+    for (const e of ennemisDuLien(c, m, b)) {
+      e.pv -= a.degats * dt
+      if (a.gel !== undefined) geler(m, e, 0.3, a.gel.ralenti, ev)
+      if (a.incendiaire !== undefined) enflammer(m, e, a.incendiaire)
+      if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
+    }
+  }
+}
 /** Un harpon de l'Empire (voir `Arme.harpon`) : son arme, où il est, sa cible, l'instant où il s'est planté, ce qu'il peut encore voler. */
 export type Harpon = { arme: number; x: number; y: number; vx: number; vy: number; cible: number; plante: number | null; reste: number }
 /** LES HARPONS (voir `Arme.harpon`) : ils partent, suivent leur cible, s'y plantent, la rongent de plus en plus fort, cassent. */
@@ -5794,6 +5869,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   menerLeRayon(c, m, ev)
   canaliserLeRayon(c, m, dt, ev)
   harponner(c, m, dt, ev)
+  menerLesBalisesLaser(c, m, dt, ev)
   mener_L_Electricite(c, m, dt, ev)
   menerLesScies(c, m, dt, ev)
   menerLesBalises(c, m, dt, ev)
@@ -5823,7 +5899,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   menerLesTornades(c, m, dt, ev)
   c.armes.forEach((arme, i) => {
     if (arme.flamme !== undefined) return cracherLaFlamme(c, m, arme, arme.flamme, dt, ev)
-    if (arme.orbite !== undefined || arme.pose !== undefined || arme.balayage !== undefined || arme.canalise !== undefined || arme.harpon !== undefined || arme.chaine !== undefined || arme.aura !== undefined || arme.scie !== undefined || arme.balise !== undefined || arme.givre !== undefined || arme.nova !== undefined || arme.salve !== undefined || arme.condense !== undefined || arme.tornade !== undefined || arme.essaim !== undefined || arme.sphere !== undefined || arme.puits !== undefined || arme.meteore !== undefined || arme.rail !== undefined || arme.tentacule !== undefined || arme.nuee !== undefined || arme.rejeton !== undefined || arme.crachat !== undefined || arme.mine !== undefined || arme.fleau !== undefined || arme.parasite !== undefined || arme.drain !== undefined || arme.vrille !== undefined || arme.ponte !== undefined || arme.epines !== undefined || arme.hypercube !== undefined || arme.de !== undefined || arme.coupe !== undefined) return
+    if (arme.orbite !== undefined || arme.pose !== undefined || arme.balayage !== undefined || arme.canalise !== undefined || arme.harpon !== undefined || arme.lien !== undefined || arme.chaine !== undefined || arme.aura !== undefined || arme.scie !== undefined || arme.balise !== undefined || arme.givre !== undefined || arme.nova !== undefined || arme.salve !== undefined || arme.condense !== undefined || arme.tornade !== undefined || arme.essaim !== undefined || arme.sphere !== undefined || arme.puits !== undefined || arme.meteore !== undefined || arme.rail !== undefined || arme.tentacule !== undefined || arme.nuee !== undefined || arme.rejeton !== undefined || arme.crachat !== undefined || arme.mine !== undefined || arme.fleau !== undefined || arme.parasite !== undefined || arme.drain !== undefined || arme.vrille !== undefined || arme.ponte !== undefined || arme.epines !== undefined || arme.hypercube !== undefined || arme.de !== undefined || arme.coupe !== undefined) return
     if (m.t < (m.armesA[i] ?? 0)) return
     // (les missiles aussi — Keko : « de toute façon ils suivent pareil, et s'il n'y a rien à suivre ils vont tout droit »)
     const aLaMain = manuel && regard !== undefined && Math.hypot(regard.x, regard.y) > 0.05
@@ -6254,7 +6330,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
  * La règle d'un vaisseau ne change pas : le pilote dont c'est le tour est DANS le monde — ses champs sont ceux de
  * `Monde` —, les autres attendent dans `equipage.pilotes` ; `prendreLaMain` les échange.
  */
-export const CHAMPS_DU_PILOTE = ['phase', 'vaisseau', 'coque', 'coqueMax', 'tableau', 'bouclier', 'plaques', 'intouchableJusque', 'corruption', 'dephaseJusque', 'plaqueCasseeA', 'renaitJusque', 'toucheA', 'forage', 'forages', 'tirs', 'obus', 'armesA', 'extraction', 'sorti', 'boostA', 'bombes', 'charges', 'verrou', 'crache', 'drones', 'tourelles', 'flaques', 'balayage', 'rayonVu', 'canal', 'harpons', 'scies', 'balises', 'givres', 'tornades', 'novas', 'echardes', 'spheres', 'puits', 'meteores', 'tentacules', 'nuees', 'rejetons', 'flaquesAcides', 'mines', 'fleaux', 'parasites', 'brochettes', 'hypercubes', 'coupes', 'des', 'oeufs', 'miniVers', 'liens', 'vrilles'] as const
+export const CHAMPS_DU_PILOTE = ['phase', 'vaisseau', 'coque', 'coqueMax', 'tableau', 'bouclier', 'plaques', 'intouchableJusque', 'corruption', 'dephaseJusque', 'plaqueCasseeA', 'renaitJusque', 'toucheA', 'forage', 'forages', 'tirs', 'obus', 'armesA', 'extraction', 'sorti', 'boostA', 'bombes', 'charges', 'verrou', 'crache', 'drones', 'tourelles', 'flaques', 'balayage', 'rayonVu', 'canal', 'harpons', 'balisesLaser', 'scies', 'balises', 'givres', 'tornades', 'novas', 'echardes', 'spheres', 'puits', 'meteores', 'tentacules', 'nuees', 'rejetons', 'flaquesAcides', 'mines', 'fleaux', 'parasites', 'brochettes', 'hypercubes', 'coupes', 'des', 'oeufs', 'miniVers', 'liens', 'vrilles'] as const
 /** Un pilote qui attend son tour : ses champs du monde, l'instant de son retour s'il est abattu, les morsures qu'il doit encaisser. */
 export type Pilote = Pick<Monde, (typeof CHAMPS_DU_PILOTE)[number]> & { retourA: number; morsures: { x: number; y: number; degats: number }[] }
 /** Les pilotes (celui dont c'est le tour, `actif`, a sa place gardée mais périmée : il est dans le monde). */

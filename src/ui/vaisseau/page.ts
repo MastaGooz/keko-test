@@ -12,7 +12,7 @@
  */
 import './vaisseau.css'
 import * as noyau from 'pixelfx'
-import { ajouterUnPilote, avancerLEquipage, prendreLaMain, type SorteDInsecte, SORTES_D_INSECTES, gabaritDInsecte, gemmesDuButin, butinDeLaRoche, pointDeRetour, rayonDe, rocheDeLaTempete, vieMultipliee, degatsMultiplies, placeDeLEcharde, frontDeLaNova, ancreDansLeMonde, zoneDuDe, coupeDUnCube, formeDeLaCoupe, liesAuDrain, encaisser, type Ennemi, type Evenement, type Monde, impactDuRayon, asteroidesVisibles, avancerLeMonde, finDuTrio, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur, xpDuNiveau, ennemiLePlusProche, ennemiVerrouille, verrouiller, angleDuBalayage, aPlusieurs, alliesAuRetour, recompenseDeFin, type LigneDeRecompense } from '../../logic/vaisseau/jeu.ts'
+import { ennemisDuLien, ajouterUnPilote, avancerLEquipage, prendreLaMain, type SorteDInsecte, SORTES_D_INSECTES, gabaritDInsecte, gemmesDuButin, butinDeLaRoche, pointDeRetour, rayonDe, rocheDeLaTempete, vieMultipliee, degatsMultiplies, placeDeLEcharde, frontDeLaNova, ancreDansLeMonde, zoneDuDe, coupeDUnCube, formeDeLaCoupe, liesAuDrain, encaisser, type Ennemi, type Evenement, type Monde, impactDuRayon, asteroidesVisibles, avancerLeMonde, finDuTrio, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur, xpDuNiveau, ennemiLePlusProche, ennemiVerrouille, verrouiller, angleDuBalayage, aPlusieurs, alliesAuRetour, recompenseDeFin, type LigneDeRecompense } from '../../logic/vaisseau/jeu.ts'
 import { PIECES, ETALONS as ETALONS_DU_BANC, acheter, ajouterLesPiecesDEssai, capacite, poidsTotal, POIDS_SERIE, configDuHangar, demonter, demonterA, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, montantCourt, monteeA, monter, monterA, peutAcheter, peutMonter, perdreLesMontees, estDeBase, exemplaires, libres, pieceDe, piecesDe, placeLourde, possede, aimantMonte, radarMonte, type Jauge, type Piece, type Sorte } from '../../logic/vaisseau/hangar.ts'
 import { drawWord, spell } from 'pixelfx/fx/ui/_lib'
 import { firePuff, hotFirst, smokePuff } from 'pixelfx/fx/fire/_lib'
@@ -11639,10 +11639,67 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.px(Math.round(pt(3, 0)[0]), Math.round(pt(3, 0)[1]), N.WHITE)
     }
   }
+  /**
+   * LA BALISE LASER DE L'EMPIRE (Keko, 23/11 — voir `Arme.lien`) : LA BALISE, un petit disque d'acier cerné, son œil rouge
+   * qui clignote, un anneau rouge qui pulse ; LE RAYON ROUGE du vaisseau à elle — un cœur rose presque blanc, un liseré
+   * rouge de chaque côté, des lueurs le long, qui frémit — ; et SUR TOUT CE QU'IL TRAVERSE, UN PETIT CRÉPITEMENT ROUGE (Keko)
+   * : de courtes étincelles brisées autour de lui, qui changent à chaque image, et une lueur rouge. Il s'allume en un
+   * dixième, s'éteint en un quart de seconde.
+   */
+  const ROUGE_LASER = ['#3a0808', '#8a1414', '#e02828', '#ff6a5a', '#ffd8d0'].map((c) => N.hex(c))
+  function dessinerLesBalisesLaser(p: Peintre): void {
+    for (const b of m.balisesLaser) {
+      const li = CONF.armes[b.arme]?.lien
+      if (li === undefined) continue
+      const age = m.t - b.nee
+      const k = Math.max(0, Math.min(1, age / 0.1) * Math.min(1, (li.duree - age) / 0.25))
+      const L0 = Math.hypot(b.x - v.x, b.y - v.y) || 1
+      const ux = (b.x - v.x) / L0
+      const uy = (b.y - v.y) / L0
+      const nx = -uy
+      const ny = ux
+      const x0 = v.x + ux * (CONF.rayon + 1)
+      const y0 = v.y + uy * (CONF.rayon + 1)
+      const L = Math.max(0, L0 - CONF.rayon - 1)
+      const fremit = 0.8 + 0.2 * Math.sin(t * 70 + b.nee * 13)
+      for (let d = 4; d < L; d += 9) p.glow(x0 + ux * d, y0 + uy * d, 4, ROUGE_LASER[2], 0.22 * k * fremit)
+      for (const o of [-1, 1]) p.line(x0 + nx * o, y0 + ny * o, b.x + nx * o, b.y + ny * o, ROUGE_LASER[2], 0.65 * k * fremit)
+      p.line(x0, y0, b.x, b.y, ROUGE_LASER[4], k)
+      // (la balise)
+      const pouls = (t * 2 + b.nee) % 1
+      p.ring(b.x, b.y, 3 + 4 * pouls, 1, ROUGE_LASER[3], 0.55 * (1 - pouls) * k)
+      p.glow(b.x, b.y, 7, ROUGE_LASER[2], 0.5 * k)
+      p.circle(b.x, b.y, 2.8, N.hex('#2a3044'))
+      p.circle(b.x, b.y, 2, COQUE[3])
+      p.circle(b.x - 0.5, b.y - 0.5, 1, COQUE[5])
+      p.dot(b.x, b.y, Math.floor(t * 6 + b.nee * 7) % 2 === 0 ? ROUGE_LASER[4] : ROUGE_LASER[2])
+      // (le crépitement rouge sur ce qu'il traverse)
+      if (k < 0.2) continue
+      const R2 = new N.Rng((Math.floor(t * 20) * 977 + Math.round(b.nee * 1000)) | 0)
+      for (const e of ennemisDuLien(CONF, m, b)) {
+        const r = rayonDe(CONF, e)
+        p.glow(e.corps.x, e.corps.y, r + 4, ROUGE_LASER[2], 0.4 * k)
+        for (let s2 = 0; s2 < 3; s2++) {
+          const a = R2.range(0, Math.PI * 2)
+          const d0 = r * R2.range(0.2, 0.9)
+          const l = R2.range(2.5, 5)
+          const xa = e.corps.x + Math.cos(a) * d0
+          const ya = e.corps.y + Math.sin(a) * d0
+          const am = a + R2.range(-0.9, 0.9)
+          const xm = xa + Math.cos(am) * l * 0.5
+          const ym = ya + Math.sin(am) * l * 0.5
+          const xb = xm + Math.cos(a) * l * 0.5
+          const yb = ym + Math.sin(a) * l * 0.5
+          p.line(xa, ya, xm, ym, ROUGE_LASER[3], k)
+          p.line(xm, ym, xb, yb, ROUGE_LASER[4], k)
+        }
+      }
+    }
+  }
   function dessinerLePlasma(p: Peintre): void {
     for (let i = eclatsDePlasma.length - 1; i >= 0; i--) if (t - eclatsDePlasma[i].t0 > DUREE_DE_L_ECLAT) eclatsDePlasma.splice(i, 1)
     const orbes = m.obus.filter((o) => o.arme === 'plasma')
-    if (orbes.length === 0 && m.harpons.length === 0 && cassuresDuHarpon.length === 0 && eclatsDePlasma.length === 0 && rubans.size === 0 && popsDEssaim.length === 0 && m.spheres.length === 0 && m.puits.length === 0 && effondrements.length === 0 && traitsDuRail.length === 0 && trainesDuRailgun.size === 0 && !m.obus.some((o) => o.arme === 'essaim' || o.arme === 'arcane' || o.arme === 'railgun')) return
+    if (orbes.length === 0 && m.balisesLaser.length === 0 && m.harpons.length === 0 && cassuresDuHarpon.length === 0 && eclatsDePlasma.length === 0 && rubans.size === 0 && popsDEssaim.length === 0 && m.spheres.length === 0 && m.puits.length === 0 && effondrements.length === 0 && traitsDuRail.length === 0 && trainesDuRailgun.size === 0 && !m.obus.some((o) => o.arme === 'essaim' || o.arme === 'arcane' || o.arme === 'railgun')) return
     p.place(W / 2 - camera.x, centreY() - camera.y)
     dessinerLesSpheres(p)
     dessinerLesPuits(p)
@@ -11650,6 +11707,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     dessinerLeRailgun(p)
     dessinerLesTrainesDuRailgun(p)
     dessinerLesHarpons(p)
+    dessinerLesBalisesLaser(p)
     for (const o of orbes) {
       const l = Math.hypot(o.vx, o.vy) || 1
       const ux = o.vx / l

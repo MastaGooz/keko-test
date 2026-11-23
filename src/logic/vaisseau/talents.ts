@@ -354,6 +354,10 @@ export const ARMES_DE_FACTION: ArmeDeFaction[] = [
   // deux mini-avions à ses ailes, un peu en arrière — voir `orbite.formation`, `Drone.cap`)
   // (… DES AILIERS — Keko, 23/11 : pour la distinguer des drones de la Sentinelle, qui partent chasser au contact : ils
   // ne quittent plus leur place, pivotent vers leur cible et tirent de plus loin, 110 au lieu de 70 — `orbite.ailier`)
+  // (LA BALISE LASER, LA SIXIÈME — Keko, 23/11, après les roquettes et le harpon mis de côté : « le vaisseau lance une
+  // balise ; tant qu'elle est active, un rayon laser rouge entre elle et le vaisseau ; tous les ennemis traversés
+  // subissent des dégâts » — voir `Arme.lien` ; `degats` est ce qu'il brûle par seconde)
+  { id: 'lien', nom: 'Balise laser', dit: 'Une balise reliée par un rayon laser, qui brûle tout ce qu’il traverse.', race: 'humains', icone: 'imp-lien', armes: () => [nouvelle({ id: 'lien', cadence: 5, degats: 128, portee: 110, lien: { duree: 4, frein: 6, epaisseur: 2, rupture: 1.8 } })] },
 ]
 export const armeDeFaction = (id: string): ArmeDeFaction | undefined => ARMES_DE_FACTION.find((x) => x.id === id)
 
@@ -409,6 +413,13 @@ export const MUTATIONS: Mutation[] = [
   variation('grenades-rafale', 'grenades', 'Rafale', 'Cinq grenades à chaque tir.', changerA('grenades', (a) => ({ ...a, gerbe: { nombre: 5, ecart: 0.22 }, degats: fois(a, 0.7) }))),
   variation('grenades-drones', 'grenades', 'Drones', 'Deux drones en orbite lancent des grenades sur les ennemis proches.', ajouterA('grenades', (a) => drones(a, { cadence: 1.8, degats: fois(a, 0.6), portee: 80, gerbe: undefined }))),
   variation('grenades-lourdes', 'grenades', 'Gros calibre', 'Des grenades plus lentes, plus fortes, qui explosent plus large.', changerA('grenades', V.lourd)),
+  // LA BALISE LASER
+  variation('lien-double', 'lien', 'Deux balises', 'Une seconde balise, son propre rayon.', ajouterA('lien', (a) => [ajoutee(a, (a.place ?? 20) + 1, { degats: fois(a, 0.7) })])),
+  variation('lien-longue', 'lien', 'Longue vie', 'Les balises restent actives bien plus longtemps.', changerA('lien', (a) => ({ ...a, lien: a.lien === undefined ? undefined : { ...a.lien, duree: a.lien.duree * 1.6 } }))),
+  variation('lien-large', 'lien', 'Faisceau large', 'Un rayon bien plus épais.', changerA('lien', (a) => ({ ...a, lien: a.lien === undefined ? undefined : { ...a.lien, epaisseur: a.lien.epaisseur * 2.5 } }))),
+  variation('lien-surcharge', 'lien', 'Surcharge', 'À la fin de sa vie, la balise explose.', changerA('lien', (a) => ({ ...a, lien: a.lien === undefined ? undefined : { ...a.lien, explosion: { rayon: 30, part: 3 } } }))),
+  variation('lien-cryo', 'lien', 'Cryogénique', 'Le rayon gèle et ralentit ce qu’il traverse.', changerA('lien', V.cryo)),
+  variation('lien-incendiaire', 'lien', 'Incendiaire', 'Le rayon enflamme ce qu’il traverse.', changerA('lien', V.incendiaire)),
   // LES DRONES D'ESCORTE
   variation('escorte-plus', 'escorte', 'Escadrille', 'Deux mini-avions de plus.', ajouterA('escorte', (a) => drones(a, { cadence: a.cadence, degats: a.degats, portee: a.portee }, 2, Math.PI / 2).map((d, k) => ({ ...d, place: 22 + k, orbite: { ...a.orbite!, phase: Math.PI / 2 + k * Math.PI, formation: { x: -16, y: k === 0 ? -30 : 30 } } })))),
   variation('escorte-perforantes', 'escorte', 'Perforantes', 'Les balles des mini-avions traversent les ennemis.', changerA('escorte', V.perforant)),
