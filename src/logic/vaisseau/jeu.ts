@@ -649,11 +649,12 @@ export type Arme = {
    * quelque part, et qu'elle ne s'active qu'une fois posée, pas dès qu'elle est tirée : un temps où on pose la balise, un
    * temps où le rayon se déclenche ») ELLE VOLE EN CLOCHE `vol` secondes, ne touche rien, SE POSE, et alors seulement
    * elle s'active ; posée, elle vit `duree` secondes, une à la fois par arme ; pendant ce temps, LE RAYON DU VAISSEAU À ELLE frappe de `degats`
-   * par seconde tout ce qui est à moins de `epaisseur` de lui — il balaie quand le vaisseau bouge ; il s'éteint si le
-   * vaisseau s'éloigne à plus de `rupture` fois la portée. `explosion` (une carte) : à sa fin, elle explose. L'état est
-   * `Monde.balisesLaser`. *Les chiffres sont de moi.*
+   * par seconde tout ce qui est à moins de `epaisseur` de lui — il balaie quand le vaisseau bouge. (TOUJOURS SA DURÉE
+   * PLEINE — Keko, 23/11 : « j'ai l'impression que la durée de la balise est aléatoire » : il s'éteignait quand le vaisseau
+   * s'en éloignait à plus de 1,8 portée, et on bouge sans cesse ; plus de coupure.) `explosion` (une carte) : à sa fin,
+   * elle explose. L'état est `Monde.balisesLaser`. *Les chiffres sont de moi.*
    */
-  lien?: { duree: number; vol: number; epaisseur: number; rupture: number; explosion?: { rayon: number; part: number } }
+  lien?: { duree: number; vol: number; epaisseur: number; explosion?: { rayon: number; part: number } }
   /**
    * UN RAYON QUI BALAIE (la Salamandre, Keko, 15/11 : « un rayon à haute énergie qui part au-dessus du vaisseau et
    * descend en décrivant un cercle autour de lui : il enflamme et fait de gros dégâts ») : toutes les `tous` secondes, si
@@ -5028,7 +5029,7 @@ function menerLesBalisesLaser(c: ConfigVaisseau, m: Monde, dt: number, ev: Evene
       }
       continue
     }
-    if (m.t - b.posee >= li.duree || Math.hypot(b.x - v.x, b.y - v.y) > a.portee * li.rupture) {
+    if (m.t - b.posee >= li.duree) {
       if (li.explosion !== undefined) exploser(c, m, b.x, b.y, { rayon: li.explosion.rayon, degats: a.degats * li.explosion.part }, null, ev, a.id)
       ev.push({ type: 'baliseFinie', x: b.x, y: b.y, arme: a.id })
       m.balisesLaser.splice(j, 1)

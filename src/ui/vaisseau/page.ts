@@ -11690,6 +11690,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         p.line(b.x, b.y, b.x + Math.cos(a) * 4.5 * pieds, b.y + Math.sin(a) * 4.5 * pieds, COQUE[2])
       }
       if (age < 0.35) p.ring(b.x, b.y, 3 + 14 * (age / 0.35), age < 0.1 ? 2 : 1, age < 0.12 ? ROUGE_LASER[4] : ROUGE_LASER[3], 0.9 * (1 - age / 0.35))
+      // (SON COMPTE À REBOURS — Keko, 23/11 : « la durée de la balise semble aléatoire » : un arc rouge autour d'elle qui se
+      // vide en 4 s, et qui clignote dans la dernière seconde)
+      const reste = Math.max(0, 1 - age / li.duree)
+      if (!(li.duree - age < 1 && Math.floor(t * 8) % 2 === 1)) {
+        const nArc = Math.max(1, Math.round(28 * reste))
+        for (let q = 0; q < nArc; q++) {
+          const a = -Math.PI / 2 + (q / 28) * Math.PI * 2
+          p.dot(b.x + Math.cos(a) * 7, b.y + Math.sin(a) * 7, ROUGE_LASER[3], 0.9 * k)
+        }
+      }
       const pouls = (t * 2 + b.nee) % 1
       p.ring(b.x, b.y, 3 + 4 * pouls, 1, ROUGE_LASER[3], 0.55 * (1 - pouls) * k)
       p.glow(b.x, b.y, 7, ROUGE_LASER[2], 0.5 * k)
@@ -11700,13 +11710,18 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // (le crépitement rouge sur ce qu'il traverse)
       if (k < 0.2) continue
       const R2 = new N.Rng((Math.floor(t * 20) * 977 + Math.round(b.nee * 1000)) | 0)
+      // (… PLUS VISIBLE — Keko, 23/11 : « un effet un petit peu plus visible sur l'ennemi traversé » : une lueur plus large
+      // et plus forte, un anneau rouge qui bat autour de lui, cinq étincelles plus longues, et une gerbe de particules
+      // rouges qui s'en échappe — semée avec les autres particules, « les insectes que brûle le rayon d'une balise »)
       for (const e of ennemisDuLien(CONF, m, b)) {
         const r = rayonDe(CONF, e)
-        p.glow(e.corps.x, e.corps.y, r + 4, ROUGE_LASER[2], 0.4 * k)
-        for (let s2 = 0; s2 < 3; s2++) {
+        p.glow(e.corps.x, e.corps.y, r + 9, ROUGE_LASER[2], 0.65 * k)
+        p.glow(e.corps.x, e.corps.y, r * 0.8, ROUGE_LASER[4], 0.45 * k)
+        p.ring(e.corps.x, e.corps.y, r + 2 + Math.sin(t * 30 + e.id) * 1.2, 1, ROUGE_LASER[3], 0.7 * k)
+        for (let s2 = 0; s2 < 5; s2++) {
           const a = R2.range(0, Math.PI * 2)
           const d0 = r * R2.range(0.2, 0.9)
-          const l = R2.range(2.5, 5)
+          const l = R2.range(4, 8)
           const xa = e.corps.x + Math.cos(a) * d0
           const ya = e.corps.y + Math.sin(a) * d0
           const am = a + R2.range(-0.9, 0.9)
@@ -17950,6 +17965,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           if (o.arme !== 'napalm' || R.next() > 0.5) continue
           const u = 1 - o.vie / Math.max(0.01, o.vie0 ?? 1)
           flammesDesBrules.push({ x: o.x, y: o.y - Math.sin(Math.PI * Math.max(0, Math.min(1, u))) * 12, vx: -o.vx * 0.1, vy: -o.vy * 0.1 - 6, t0: t, vie: R.range(0.15, 0.3) })
+        }
+        // les insectes que brûle le rayon d'une balise laser : une gerbe de particules rouges (voir `dessinerLesBalisesLaser`)
+        for (const b of m.balisesLaser) {
+          for (const e of ennemisDuLien(CONF, m, b)) {
+            if (R.next() > 0.5) continue
+            const a = R.range(0, Math.PI * 2)
+            const vit = R.range(30, 80)
+            etincelles.ajouter('etincelle', e.corps.x, e.corps.y, Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.12, 0.3), [N.WHITE, ROUGE_LASER[3], ROUGE_LASER[4]][Math.floor(R.next() * 3)], 1, 1.5)
+          }
         }
         // les mini-missiles laissent une traînée de fumée
         // (et l'obus en cloche une fumée plus grosse, là où il est à l'écran — en l'air)

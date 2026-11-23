@@ -8326,3 +8326,10 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     onde rouge s'ouvre et le rayon jaillit d'elle jusqu'au vaisseau en 0,15 s. L'équilibre : 1,05, puis 122 par seconde
     (128) : 0,98. Le test : elle vole 0,72 s sans rien brûler et se pose à 80 ; posée, le rayon brûle la cible et celle
     de sa ligne (~510 chacune), pas celle d'à côté. VU en capture : le rayon ; le vol en cloche, non (hors du cadre).
+  - TOUJOURS 4 S, ET PLUS VISIBLE SUR L'INSECTE (Keko : « un effet un petit peu plus visible sur l'ennemi traversé par le
+    rayon ; et j'ai l'impression que la durée de la balise est aléatoire »). LA CAUSE : le rayon s'éteignait quand le
+    vaisseau s'éloignait de la balise à plus de 1,8 portée (198), et on bouge sans cesse — la coupure (`rupture`) est
+    retirée ; un COMPTE À REBOURS autour de la balise, un arc rouge qui se vide en 4 s et clignote dans la dernière
+    seconde. L'INSECTE TRAVERSÉ : une lueur rouge plus large et plus forte, un cœur clair, un anneau rouge qui bat autour
+    de lui, cinq étincelles brisées plus longues (quatre à huit), et une gerbe de particules rouges qui s'en échappe.
+    L'équilibre ne bouge pas (0,98). Le test : le vaisseau parti à 400 d'elle, elle tient 4,02 s.
