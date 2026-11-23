@@ -11003,6 +11003,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   // (10 : à 8, on n'y lisait ni les ondes ni les arcs)
   const RAYON_DE_LA_SPHERE = 10
   const sphereTirA = new Map<number, number>()
+  /**
+   * L'INSTANT DE LA DERNIÈRE DÉCHARGE DE CHAQUE BOBINE TESLA (Keko, 23/11 : « au moment où l'arc électrique se produit,
+   * déclencher un petit effet visuel sur la périphérie : la faire pulser en bleu » — après des arcs qui jaillissaient de
+   * la boule, « très bizarre, on comprend pas trop », retirés) : le cercle de sa portée s'allume en bleu et s'élargit un
+   * instant, la boule gonfle un peu.
+   */
+  const bobineDechargeA = new Map<number, number>()
+  const DUREE_DU_POULS = 0.35
   /** L'instant du dernier « tsip » des petits traits (pas plus d'un tous les dixièmes). */
   let arcaneSonneA = -10
   /** LES TRAITS DU RAILGUN qui viennent de partir (voir l'événement `rail`) : un trait épais qui s'amincit et pâlit. */
@@ -11014,34 +11022,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** LES FOUDRES DE LA BOBINE TESLA (voir `Arme.sphere.foudre`) : un instant chacune, en fourche. */
   const foudresTesla: { x0: number; y0: number; x1: number; y1: number; t0: number; g: number }[] = []
   const DUREE_DE_LA_FOUDRE = 0.26
-  /**
-   * LES DÉCHARGES DE LA BOBINE (Keko, 23/11 : « visuellement, elle fait un peu médiocre ; au moment où elle décharge ses
-   * arcs électriques, émettre un petit effet de particules d'électricité, pour donner un peu de peps ») : à chaque
-   * décharge, SUR LA BOULE, un éclair blanc, une onde qui s'ouvre et six arcs courts qui jaillissent tout autour et
-   * grésillent (l'encre des éclairs du dépôt, `crackle`, dans le bleu de l'Empire) ; l'événement `foudre` y sème aussi une
-   * gerbe d'étincelles.
-   */
-  const dechargesTesla: { x: number; y: number; t0: number; g: number }[] = []
-  const DUREE_DE_LA_DECHARGE = 0.3
-  const TESLA_8 = N.fit(['#0a1430', '#1a3a8a', '#2a5ad0', '#3a7ae8', '#58a6ff', '#8ac8ff', '#e0f4ff', '#ffffff'], 8)
   /** Le bleu électrique de l'Empire, du sombre au blanc. */
   const TESLA = ['#0a1430', '#1a3a8a', '#3a7ae8', '#8ac8ff', '#e0f4ff'].map((c) => N.hex(c))
   /** Le cyan de la balle du railgun, du sombre au blanc (ses éclairs). */
   const CYAN_DU_RAILGUN = ['#0a1a30', '#1a4a8a', '#3a8ad8', '#7ad8ff', '#bfefff'].map((c) => N.hex(c))
   function dessinerLesSpheres(p: Peintre): void {
     for (let i = foudresTesla.length - 1; i >= 0; i--) if (t - foudresTesla[i].t0 > DUREE_DE_LA_FOUDRE) foudresTesla.splice(i, 1)
-    for (let i = dechargesTesla.length - 1; i >= 0; i--) if (t - dechargesTesla[i].t0 > DUREE_DE_LA_DECHARGE) dechargesTesla.splice(i, 1)
-    for (const d of dechargesTesla) {
-      const u = (t - d.t0) / DUREE_DE_LA_DECHARGE
-      const R2 = new N.Rng((d.g * 977 + Math.floor(t * 30) * 13) | 0)
-      if (u < 0.3) p.glow(d.x, d.y, 16, N.WHITE, 0.7 * (1 - u / 0.3))
-      p.ring(d.x, d.y, 4 + 20 * (1 - (1 - u) ** 3), u < 0.3 ? 2 : 1, u < 0.25 ? N.WHITE : TESLA[3], 0.85 * (1 - u))
-      for (let k = 0; k < 6; k++) {
-        const a = d.g + (k * Math.PI * 2) / 6 + R2.range(-0.4, 0.4)
-        const l1 = 10 + 12 * u + R2.range(0, 6)
-        crackle(p, zigzag(R2, d.x + Math.cos(a) * 4, d.y + Math.sin(a) * 4, d.x + Math.cos(a) * l1, d.y + Math.sin(a) * l1, 0.35, 0.2), 1 - u, TESLA_8, 0.5)
-      }
-    }
     // (LA FOUDRE : un trait brisé qui change de forme à chaque image, une fourche qui s'en détache, un point blanc à l'impact)
     // (… QUI FRAPPE PLUS FORT — Keko, 22/11 : « la bobine tesla manque de punch » : un cœur blanc dans un trait bleu de
     // trois pixels, deux fourches, plus longue à s'éteindre, et à l'impact un éclair rond qui s'ouvre)
@@ -11094,9 +11080,17 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         if (k <= 0) continue
         const bat = 0.5 + 0.5 * Math.sin(t * 22 + s.id)
         const flash = Math.max(0, 1 - (t - (sphereTirA.get(s.id) ?? -10)) / 0.15)
-        const Rb = (4 + bat) * k * zoneDuVol()
+        // (le pouls de la décharge : 1 à l'instant, 0 après `DUREE_DU_POULS`)
+        const pouls = Math.max(0, 1 - (t - (bobineDechargeA.get(s.id) ?? -10)) / DUREE_DU_POULS)
+        const Rb = (4 + bat) * k * zoneDuVol() * (1 + 0.25 * pouls)
         p.ring(s.x, s.y, sp.rayon, 1, TESLA[2], 0.12 * k)
-        p.glow(s.x, s.y, Rb * 3.5, TESLA[2], (0.35 + 0.35 * flash) * k)
+        // (LA PÉRIPHÉRIE PULSE EN BLEU : le cercle de la portée s'allume et s'ouvre d'un cran, puis se rendort)
+        if (pouls > 0) {
+          const ro = sp.rayon * (1 + 0.08 * (1 - pouls))
+          p.ring(s.x, s.y, ro, pouls > 0.6 ? 2 : 1, pouls > 0.75 ? TESLA[4] : TESLA[3], 0.75 * pouls * k)
+          p.ring(s.x, s.y, ro - 2, 1, TESLA[2], 0.35 * pouls * k)
+        }
+        p.glow(s.x, s.y, Rb * 3.5, TESLA[2], (0.35 + 0.35 * Math.max(flash, pouls)) * k)
         for (let e = 0; e < 3; e++) {
           const a = t * 5 + s.id + (e * 2 * Math.PI) / 3
           const ex = s.x + Math.cos(a) * (Rb + 4)
@@ -17249,15 +17243,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         case 'foudre':
           // (la bobine tesla foudroie : la foudre, un claquement — pas plus d'un tous les dixièmes)
           foudresTesla.push({ x0: ev.x0, y0: ev.y0, x1: ev.x1, y1: ev.y1, t0: t, g: Math.round(ev.x1 * 13 + ev.y1 * 7) })
-          // (la décharge sur la boule, une fois pour toutes ses foudres du même instant, et sa gerbe d'étincelles — voir
-          // `dechargesTesla`)
-          if (!dechargesTesla.some((d) => t - d.t0 < 0.05 && Math.hypot(d.x - ev.x0, d.y - ev.y0) < 4)) {
-            dechargesTesla.push({ x: ev.x0, y: ev.y0, t0: t, g: R.range(0, Math.PI * 2) })
-            for (let i = 0; i < 14; i++) {
-              const a = R.range(0, Math.PI * 2)
-              const vit = R.range(60, 150)
-              etincelles.ajouter('etincelle', ev.x0, ev.y0, Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.15, 0.35), [N.WHITE, TESLA[4], TESLA[3]][Math.floor(R.next() * 3)], 1, 2)
-            }
+          // (sa bobine pulse — voir `bobineDechargeA`)
+          {
+            const s = m.spheres.find((x) => Math.hypot(x.x - ev.x0, x.y - ev.y0) < 1)
+            if (s !== undefined) bobineDechargeA.set(s.id, t)
           }
           if (t - zapA > 0.1) {
             zapA = t
