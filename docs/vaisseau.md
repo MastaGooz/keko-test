@@ -8393,3 +8393,10 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   autres lasers partent quand même » : la rafale garde la cible de son premier tir — même hors de vue ensuite, même si
   une plus proche arrive — ; morte, les tirs suivants partent dans la dernière direction visée, tout droit. Le test : sa
   cible morte après le premier tir, les deux autres partent quand même, dans sa direction, pas vers la nouvelle.)
+  (… PUIS ENTRE LES AILES — Keko : « j'ai une meilleure idée : des rafales de 4 tirs en alternant aile gauche, aile
+  droite, et chacune des ailes va tirer 2 fois ; exactement le même fonctionnement que le laser normal, sauf qu'on tire 4
+  coups plus rapides et chaque coup peut avoir une cible différente » : la cible partagée est retirée ; une arme qui
+  tire à tour de rôle avec les autres ailes PARTAGE SA RAFALE avec elles (`Monde.rafaleDesAiles`) — après chaque tir,
+  l'autre aile tire 0,1 s plus tard ; au bout de quatre, toutes attendent la cadence d'une aile (2,2 s). Chaque tir
+  choisit sa cible comme un tir ordinaire. Chacun 77 % (69 au lieu de 90) : 276 toutes les 2,5 s, 110 par seconde contre
+  82 pour le laser seul — 135 %. Le test : huit tirs en 3 s, quatre à 0,1 s une aile puis l'autre, puis 2,2 s.)
