@@ -8459,3 +8459,6 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     (`impulsion`, synthe.ts) : un « whoum » électrique bref qui tombe de 320 à 110 Hz, un souffle qui s'ouvre, deux
     petits éclats aigus ; à chaque impact, et au départ de chaque rayon avec la Concentration. Mesuré (crête 0,22), PAS
     ÉCOUTÉ.
+    (… PLUS GRAVE — Keko : « on dirait un son de glace ; je veux un truc plus profond et grave, qui fasse vraiment
+    impulsion énergétique » : un coup sourd qui tombe de 90 à 38 Hz, saturé ; un bourdon qui ondule de 180 à 70 Hz ; un
+    souffle grave qui s'ouvre de 220 à 650 Hz ; aucune note aiguë.)

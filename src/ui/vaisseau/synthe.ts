@@ -1537,17 +1537,19 @@ const RECETTES = {
     },
   },
   /**
-   * L'IMPULSION DU CANON LASER (Keko, 23/11 : « donner un petit son à cette impulsion » — voir `Arme.zone.part`) : un
-   * « whoum » électrique bref — une note ronde qui tombe de 320 à 110 Hz, à peine saturée —, un souffle qui s'ouvre et se
-   * referme, et une pointe claire, deux petits éclats aigus qui pétillent juste après
+   * L'IMPULSION DU CANON LASER (Keko, 23/11 : « donner un petit son à cette impulsion » — voir `Arme.zone.part`) : d'abord
+   * un « whoum » électrique bref et des éclats aigus — « on dirait un son de glace ; je veux un truc plus profond et grave,
+   * qui fasse vraiment impulsion énergétique » — : UN COUP SOURD qui tombe de 90 à 38 Hz, saturé ; dessus, UN BOURDON qui
+   * ondule (180 → 70 Hz, harmoniques impaires, deux voix qui battent) ; et UN SOUFFLE GRAVE qui s'ouvre de 220 à 650 Hz
+   * puis retombe — l'onde qui part ; aucune note aiguë
    */
   impulsion: {
-    duree: 0.4, niveau: 0.22, salle: [0.25, 0.1], variantes: 4,
+    duree: 0.6, niveau: 0.3, salle: [0.4, 0.15], variantes: 4,
     faire: (m, h) => {
-      const f = 320 * (0.92 + 0.16 * h.next())
-      note(m, 0, 0.9, 0, { f, glisse: { vers: f * 0.34, en: 0.09 }, a: 0.003, d: 0.12, partiels: [[1, 1, 1], [2, 0.35, 0.7], [3, 0.15, 0.5]], sature: 1.4 })
-      souffle(m, h, 0, 0.45, 0, { f: 900, glisse: { vers: 2600, en: 0.06, droit: true }, q: 1.2, bande: true, a: 0.01, d: 0.1, large: true })
-      for (let i = 0; i < 2; i++) note(m, 0.02 + 0.03 * i + 0.02 * h.next(), 0.16, (h.next() - 0.5) * 0.6, { f: 2400 + 1600 * h.next(), a: 0.001, d: 0.05, partiels: [[1, 1, 1], [2.76, 0.4, 0.5]] })
+      const f = 90 * (0.94 + 0.12 * h.next())
+      note(m, 0, 1, 0, { f, glisse: { vers: f * 0.42, en: 0.18 }, a: 0.004, d: 0.3, partiels: CORPS, sature: 2.2 })
+      note(m, 0.005, 0.5, 0, { f: f * 2, glisse: { vers: f * 0.78, en: 0.15 }, a: 0.006, d: 0.25, battement: 9, partiels: [[1, 1, 1], [3, 0.45, 0.8], [5, 0.25, 0.6]], sature: 1.6 })
+      souffle(m, h, 0, 0.5, 0, { f: 220, glisse: { vers: 650, en: 0.08, droit: true }, q: 1.4, bande: true, a: 0.01, d: 0.22, large: true })
     },
   },
 } satisfies Record<string, Recette>
