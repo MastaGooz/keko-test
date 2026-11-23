@@ -3542,6 +3542,27 @@ for (const vortex of [true, false]) {
   verifier(`la corrosion gagne toutes les variations du laser (R rongé) : ${vu.map(([k, v]) => `${k} ${v} (${attendu[k]})`).join(', ')}`, vu.every(([k, v]) => v === attendu[k]))
 }
 
+// SEULE UNE ATTAQUE QUI RONGE RELANCE LA CORROSION (Keko, 23/11 : « si une attaque qui n'applique pas corrosion touche un
+// ennemi sous corrosion, ça ne relance pas la durée de corrosion ») : un insecte rongé jusqu'à 6 s ; un canon sans
+// corrosion le frappe à 2 s — la fin ne bouge pas ; un laser corrosif le frappe — elle repart à 6 s de ce coup
+{
+  const essai = (corrosif: boolean): number => {
+    const arme = { id: 'canon', cadence: 99, degats: 10, portee: 120, vitesse: 420, vie: 0.7, dispersion: 0, guide: false, tousSens: true, infaillible: true, ...(corrosif ? { corrosif: { duree: 3, bonus: 0.25 } } : {}) }
+    const cfg = { ...VAISSEAU, coque: 1e9, dureeDesEtats: 6, armes: [arme], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false } }
+    const w = nouveauMonde(cfg, 5)
+    w.invasion.prochainA = 1e9
+    w.t = 2
+    w.armesA = [0]
+    const e: Ennemi = { id: 2200, corps: { ...nouveauVaisseau(), x: 40, y: 0 }, pv: 1e6, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9, acide: { jusque: 6, dps: 0, bonus: 0.25 } }
+    w.ennemis.push(e)
+    let touche = -1
+    for (let i = 0; i < 60 && touche < 0; i++) if (avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements.some((x) => x.type === 'ennemiTouche')) touche = w.t
+    return (e.acide?.jusque ?? 0) - (corrosif ? touche : 0)
+  }
+  const [sans, avec] = [essai(false), essai(true)]
+  verifier(`seule une attaque qui ronge relance la corrosion : frappé sans corrosion, elle finit toujours à ${sans.toFixed(2)} (6) ; par un tir corrosif, à ${avec.toFixed(2)} s de ce coup (6)`, Math.abs(sans - 6) < 1e-9 && Math.abs(avec - 6) < 0.02)
+}
+
 // TOUCHÉ, ON TRAVERSE LES INSECTES (Keko, 22/11 : « quand on est touché on est invincible un court instant ; je voudrais
 // qu'on traverse aussi les ennemis ») : le temps qu'il clignote, un insecte posé sur lui ne l'écarte pas ; après, si ; une
 // roche l'arrête toujours

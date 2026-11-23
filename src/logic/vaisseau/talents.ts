@@ -187,6 +187,23 @@ const poseesDe = (a: Arme): { cle: (typeof POSEES)[number]; duree: number }[] =>
   return b !== undefined && typeof b.duree === 'number' && b.duree > 0 ? [{ cle, duree: b.duree }] : []
 })
 /** L'arme corrode-t-elle (son acide, ses mines, sa traînée) — et de combien rend-elle vulnérable. */
+/**
+ * LA CORROSION DU VORTEX MAJORE DE 25 % (Keko, 23/11 : « on va passer le bonus de dégâts de corrosion à 25 % au lieu de
+ * 35 % ») : toutes ses sources — la carte Corrosion du laser, l'acide, les mines, les traînées des vaisseaux — à 25 % ; la
+ * carte « Corrosion » grandit ce bonus ; le Nova Drifter garde les 35 % de ses fiches.
+ */
+export const CORROSION_DU_VORTEX = 0.25
+/** L'arme dont chaque corrosion vaut `bonus` (voir `CORROSION_DU_VORTEX`). */
+export function corrosionPosee(a: Arme, bonus: number): Arme {
+  return {
+    ...a,
+    ...(a.crachat !== undefined && a.crachat.acide.bonus > 0 ? { crachat: { ...a.crachat, acide: { ...a.crachat.acide, bonus } } } : {}),
+    ...(a.mine?.corrosion !== undefined ? { mine: { ...a.mine, corrosion: { ...a.mine.corrosion, bonus } } } : {}),
+    ...(a.givre?.corrosion !== undefined ? { givre: { ...a.givre, corrosion: { ...a.givre.corrosion, bonus } } } : {}),
+    ...(a.parasite?.acide !== undefined ? { parasite: { ...a.parasite, acide: { ...a.parasite.acide, bonus } } } : {}),
+    ...(a.corrosif !== undefined ? { corrosif: { ...a.corrosif, bonus } } : {}),
+  }
+}
 export const corrodeDe = (a: Arme): number[] => [a.crachat?.acide.bonus, a.mine?.corrosion?.bonus, a.givre?.corrosion?.bonus, a.parasite?.acide?.bonus, a.corrosif?.bonus].filter((b): b is number => b !== undefined && b > 0)
 
 /** LE POOL D'UNE ARME : le commun (dégâts, critique), puis ce qu'elle porte. */
@@ -399,7 +416,7 @@ export const MUTATIONS: Mutation[] = [
   // (CORROSIF, À LA PLACE DE CRYOGÉNIQUE — Keko, 23/11 : « plutôt que cryogénie, on va donner un effet corrosif au laser » :
   // ce qu'il touche est rongé 3 s, il perd 35 % de plus de toutes les sources — la corrosion des mines de la Vouivre ; voir
   // `Arme.corrosif`)
-  variation('laser-corrosif', 'laser', 'Corrosion', 'Les tirs appliquent corrosion.', changerA('laser', (a) => ({ ...a, corrosif: { duree: 3, bonus: 0.35 } }))),
+  variation('laser-corrosif', 'laser', 'Corrosion', 'Les tirs appliquent corrosion.', changerA('laser', (a) => ({ ...a, corrosif: { duree: 3, bonus: CORROSION_DU_VORTEX } }))),
   // LA MITRAILLEUSE
   variation('mitraille-jumelee', 'mitraille', 'Canons jumelés', 'Chaque tir part en double : deux balles côte à côte.', changerA('mitraille', V.gerbe(2, 0.12, 0.7))),
   variation('mitraille-tourelle', 'mitraille', 'Tourelle', 'Une mitrailleuse arrose tout autour du vaisseau.', ajouterA('mitraille', (a) => [ajoutee(a, 9, { cadence: a.cadence * 0.9, degats: fois(a, 0.6), portee: a.portee * 0.9 })])),

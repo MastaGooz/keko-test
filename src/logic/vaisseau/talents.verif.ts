@@ -1,7 +1,7 @@
 /**
  * Vérifications des talents du jeu du vortex, sans navigateur.
  */
-import { aUneZone, armeDeFaction, ARMES_DE_FACTION, type Mutation, NIVEAU_SPECIAL, carteSpeciale, MUTATIONS, mutationsPrises, ajouterLeBonus, apresUnChoix, armeAmelioree, avecLesBonus, carte, factionAmelioree, type Bonus, ouvrirLeChoix, proposer, RARETES, rareteTiree, reserveApresLeDelai, STATS_DE_FACTION, statsDeLArme } from './talents.ts'
+import { aUneZone, corrosionPosee, CORROSION_DU_VORTEX, armeDeFaction, ARMES_DE_FACTION, type Mutation, NIVEAU_SPECIAL, carteSpeciale, MUTATIONS, mutationsPrises, ajouterLeBonus, apresUnChoix, armeAmelioree, avecLesBonus, carte, factionAmelioree, type Bonus, ouvrirLeChoix, proposer, RARETES, rareteTiree, reserveApresLeDelai, STATS_DE_FACTION, statsDeLArme } from './talents.ts'
 import { VAISSEAU as C, type Arme, type ConfigVaisseau } from './jeu.ts'
 
 let echecs = 0
@@ -154,6 +154,15 @@ verifier('le délai passé, ce qui restait à choisir part en réserve', reserve
   const sans = tirees(nu).filter((x) => ['feu', 'corrosion', 'givre'].includes(x.stat)).length
   const entier = carte({ sorte: 'armes' }, 'corrosion', 'rare').bonus === carte({ sorte: 'arme', arme: 'laser' }, 'degats', 'rare').bonus
   verifier(`les états à toutes les armes : à une arme ${aUneArme} (0), corrosion de toutes ${aToutes} (plus de 0, au bonus entier : ${entier}), feu ou givre ${autres} (0) ; un laser nu, ${sans} (0)`, aUneArme === 0 && aToutes > 0 && entier && autres === 0 && sans === 0)
+}
+{
+  // LA CORROSION DU VORTEX À 25 % (Keko, 23/11) : la carte Corrosion du laser la pose ; `corrosionPosee` met chaque source
+  // d'une arme (acide, mines, traînée, parasites, laser) à ce bonus
+  const laser = { id: 'laser', cadence: 2.2, degats: 90, portee: 120, vitesse: 420, vie: 0.7, dispersion: 0, guide: false } as Arme
+  const corrode = MUTATIONS.find((x) => x.id === 'laser-corrosif')!.appliquer({ ...C, armes: [laser] }).armes[0].corrosif?.bonus
+  const vouivre = { ...laser, crachat: { cone: 1, duree: 3, acide: { duree: 3, dps: 0, bonus: 0.35 } }, mine: { corrosion: { duree: 4, bonus: 0.35 } } } as unknown as Arme
+  const posee = corrosionPosee(vouivre, CORROSION_DU_VORTEX)
+  verifier(`la corrosion du vortex : la carte du laser ${corrode} (0,25) ; posée, l'acide ${posee.crachat?.acide.bonus}, les mines ${posee.mine?.corrosion?.bonus} (0,25)`, corrode === 0.25 && posee.crachat?.acide.bonus === 0.25 && posee.mine?.corrosion?.bonus === 0.25)
 }
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)
 console.log('Tout passe.')

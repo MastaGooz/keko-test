@@ -8625,3 +8625,11 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   « +12 % de dégâts du feu », « +12 % de ralentissement ». La variation Incendiaires de la mitrailleuse ne dit plus « ils
   brûlent trois secondes » (c'est six). `&montrer` montre aussi une carte de toutes les armes : `armes:<stat>` (rare, ou
   à `&rarete=R`). VU en capture.
+- LA CORROSION DU VORTEX MAJORE DE 25 % (Keko, 23/11 : « on va passer le bonus de dégâts de corrosion à 25 % au lieu de
+  35 % ») : `CORROSION_DU_VORTEX`, posé sur toutes les sources d'une arme au vortex (`corrosionPosee` : l'acide, les mines,
+  les traînées, les parasites) et par la carte Corrosion du laser ; la carte « Corrosion » le grandit (légendaire : 31,25 %) ;
+  le Nova Drifter garde les 35 % de ses fiches.
+- SEULE UNE ATTAQUE QUI RONGE RELANCE LA CORROSION (Keko, 23/11 : « si une attaque qui n'applique pas corrosion touche un
+  ennemi sous corrosion, ça ne relance pas la durée ») : VÉRIFIÉ, c'était déjà la règle — seul `ronger` repousse la fin, et
+  seules les attaques corrosives l'appellent (le tir, le rebond, l'explosion, la zone d'une arme corrosive). Un test la
+  garde : frappé par un canon sans corrosion, la fin ne bouge pas ; par un tir corrosif, elle repart à 6 s.
