@@ -8220,4 +8220,4 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     surblindage. ») ; la carte Récupération, « de chance de trouver une plaque » (« … aux astéroïdes »).
   - Le test : la chance grandit du moucheron au cuirassier, la Récupération la multiplie ; 2 000 cornus en lâchent 35
     (32 attendues), sans plaques au vaisseau aucune, 2 000 grosses roches aucune.
-  - (… PLUS COURT — Keko : « un peu trop long, ça fait trois lignes » : « Vous pouvez ramasser des plaques blindées. », puis « … renforcées. »)
+  - (… PLUS COURT — Keko : « un peu trop long, ça fait trois lignes » : « Vous pouvez ramasser des plaques blindées. », puis « … renforcées. », puis « … surblindées. »)
