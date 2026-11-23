@@ -376,7 +376,10 @@ export const MUTATIONS: Mutation[] = [
   // déclenche en cas de coup critique : une explosion dans la zone, 200 % des dégâts du critique, qui peut elle aussi être
   // critique » : 24 de rayon, la carte « Portée » l'agrandit — voir `Arme.detonation`)
   variation('laser-detonation', 'laser', 'Détonation', 'Les coups critiques libèrent une puissante explosion.', changerA('laser', (a) => ({ ...a, detonation: { rayon: 24, part: 2 } }))),
-  variation('laser-perforant', 'laser', 'Perforant', 'Les lasers traversent les ennemis et touchent toute leur ligne.', changerA('laser', V.perforant)),
+  // (LE TIR DOUBLE, À LA PLACE DE PERFORANT — Keko, 23/11 : « pas fan de la perforation » ; « une variation où, à chaque
+  // fois qu'on tire, les deux canons des deux ailes tirent en même temps » — voir `Arme.jumele` ; le Balayage, essayé
+  // avant, ajoutait une attaque à côté : retiré)
+  variation('laser-double', 'laser', 'Tir double', 'Les deux canons tirent en même temps.', changerA('laser', (a) => ({ ...a, jumele: true }))),
   variation('laser-ricochet', 'laser', 'Ricochet', 'Les tirs rebondissent sur les ennemis proches.', changerA('laser', V.ricochet)),
   // (LE LASER CONCENTRÉ, À LA PLACE DE LA RAFALE — Keko, 23/11 : la rafale « pas fou » — trois lasers en éventail, puis trois
   // à la suite sur une même cible, puis quatre d'une aile à l'autre, voir `Arme.rafale`, gardée — ; « à la place d'un tir

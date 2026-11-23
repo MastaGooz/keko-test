@@ -8520,3 +8520,11 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   devant le nez (`Arme.fauche`, commit 8d5ddc76, retiré par le suivant). LA RÈGLE QUI EN SORT : UNE VARIATION CHANGE LA
   FAÇON DONT L'ARME TIRE OU CE QUE SON TIR FAIT — elle n'ajoute pas une attaque à côté, avec son propre rythme. Perforant
   reste en place en attendant son remplaçant.
+- LE TIR DOUBLE, À LA PLACE DE PERFORANT (Keko, 23/11 : « et si on faisait une variation où, à chaque fois qu'on tire,
+  les deux canons des deux ailes tirent en même temps ? ») : au vortex, les deux ailes portent la même arme à cadence
+  double et tirent À TOUR DE RÔLE (`alternance`) — un tir toutes les 1,1 s pour le laser, une aile puis l'autre. Jumelées
+  (`Arme.jumele`, `laser-double`), AU MÊME RYTHME, LES DEUX AILES TIRENT ENSEMBLE, chacune sur sa cible : la première qui
+  tire entraîne les autres (`Monde.salveDesAiles`), une aile qui ne l'est pas garde son tour. C'EST DEUX FOIS PLUS DE
+  TIRS, donc deux fois les dégâts du laser — fait tel que demandé, sans compensation (les « Canons jumelés » de la
+  mitrailleuse, eux, tirent deux balles à 70 %). Le test : en 3 s, à tour de rôle 0,02 / 1,12 / 2,23 ; jumelées les mêmes
+  instants, par paires. Texte (de moi) : « Les deux canons tirent en même temps. » VU en capture : les traits par deux.

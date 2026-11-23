@@ -116,7 +116,7 @@ verifier('le délai passé, ce qui restait à choisir part en réserve', reserve
   const quatre = proposer(9, 30, 0, laser, 'humains', ['arme-railgun', 'arme-tesla'], armesDe(['railgun', 'tesla', 'obusier']))
   const n40 = proposer(9, 40, 0, laser, 'humains', ['arme-railgun', 'laser-corrosif', 'laser-ricochet'], armesDe(['railgun']))
   // (une arme seule, cinq de ses six variations prises : la dernière, et deux cartes ordinaires pour faire trois)
-  const presque = proposer(9, 60, 0, laser, 'humains', ['laser-impulsion', 'laser-detonation', 'laser-perforant', 'laser-ricochet', 'laser-concentre'])
+  const presque = proposer(9, 60, 0, laser, 'humains', ['laser-impulsion', 'laser-detonation', 'laser-double', 'laser-ricochet', 'laser-concentre'])
   verifier(`moins de trois spéciales qui restent : des ordinaires complètent (${presque.map((x) => x.mutation ?? x.stat).join(', ')})`, presque.length === 3 && presque[0].mutation === 'laser-corrosif' && presque.slice(1).every((x) => x.rarete !== 'speciale'))
   verifier(`quatre armes portées : plus que des variations (${sortes(quatre).join(', ')}) ; au 40, trois variations des armes portées (${n40.map((x) => x.mutation).join(', ')})`, quatre.length > 0 && sortes(quatre).every((x) => x === 'variation') && n40.length === 3 && n40.every((x) => mu(x.mutation!).sorte === 'variation' && ['laser', 'railgun'].includes(mu(x.mutation!).arme) && !['laser-corrosif', 'laser-ricochet'].includes(x.mutation!)))
   // (une nouvelle arme a SON pool : ses cartes ordinaires reviennent avec celles du laser)

@@ -3406,6 +3406,25 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   verifier(`la détonation : tout critique, ${avec.map((x) => x.toFixed(0)).join(' / ')} (${(100 * f).toFixed(0)} / ${(200 * f * f).toFixed(0)} / 0) ; sans critique, ${sans.map((x) => x.toFixed(0)).join(' / ')} (100 / 0 / 0)`, f > 1 && Math.abs(avec[1] - 200 * f * f) < 0.5 && avec[2] === 0 && sans[0] === 100 && sans[1] === 0 && sans[2] === 0)
 }
 
+// LE TIR DOUBLE (Keko, 23/11 : « à chaque fois qu'on tire, les deux canons des deux ailes tirent en même temps » — voir
+// `Arme.jumele`) : en 3 s, les ailes à tour de rôle tirent 3 fois, une à la fois ; jumelées, 6 fois, par paires du même
+// instant (à une image près), au même rythme
+{
+  const essai = (jumele: boolean): number[] => {
+    const aile = (y: number) => ({ id: 'laser', cadence: 2.2, degats: 100, portee: 120, vitesse: 420, vie: 0.7, dispersion: 0, guide: false, tousSens: true, infaillible: true, bouche: { x: 0, y }, ...(jumele ? { jumele: true } : {}) })
+    const cfg = { ...VAISSEAU, coque: 1e9, alternance: true, armes: [aile(-6), aile(6)], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false }, passifs: { ...VAISSEAU.passifs, critique: 0 } }
+    const w = nouveauMonde(cfg, 5)
+    w.invasion.prochainA = 1e9
+    w.ennemis.push({ id: 1500, corps: { ...nouveauVaisseau(), x: 0, y: -60 }, pv: 1e6, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9 })
+    const tirs: number[] = []
+    for (let i = 0; i < 180; i++) for (const e of avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements) if (e.type === 'obus') tirs.push(w.t)
+    return tirs
+  }
+  const [seul, double] = [essai(false), essai(true)]
+  const parPaires = double.length % 2 === 0 && double.every((t, k) => k % 2 === 1 || double[k + 1] - t <= 1 / 60 + 1e-9)
+  verifier(`le tir double : à tour de rôle ${seul.map((t) => t.toFixed(2)).join(', ')} ; jumelées ${double.map((t) => t.toFixed(2)).join(', ')}`, seul.length === 3 && double.length === 6 && parPaires && Math.abs(double[2] - double[0] - (seul[1] - seul[0])) < 0.05)
+}
+
 // TOUCHÉ, ON TRAVERSE LES INSECTES (Keko, 22/11 : « quand on est touché on est invincible un court instant ; je voudrais
 // qu'on traverse aussi les ennemis ») : le temps qu'il clignote, un insecte posé sur lui ne l'écarte pas ; après, si ; une
 // roche l'arrête toujours
