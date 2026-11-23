@@ -8263,3 +8263,9 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   - L'ÉQUILIBRE : sans chasser, 0,85 ; 24 de dégâts (20) la ramènent à 1,02. Sa description : « Deux mini-avions en
     formation, qui mitraillent les ennemis de loin. »
   - Le test : un insecte à 76, l'ailier le regarde, reste à sa place et le touche. VU en capture.
+- **23/11, LES ROQUETTES MISES DE CÔTÉ.** Keko : « on va enlever les mini-roquettes, car ça, on va plutôt le mettre comme
+  amélioration des missiles, qui pourront éventuellement lancer des petites roquettes supplémentaires ; on va le virer,
+  le garder sous le coude, et il va nous falloir une nouvelle idée pour la sixième arme de l'Empire ». L'arme et ses six
+  variations passent dans `ARMES_EN_RESERVE` et `VARIATIONS_EN_RESERVE` (talents.ts) : plus aucune carte ne les
+  propose ; leur règle (`essaim`), leur dessin, leur icône et leur son restent. L'Empire a CINQ armes en attendant la
+  sixième (le test le dit).

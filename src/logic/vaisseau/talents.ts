@@ -338,12 +338,6 @@ export const ARMES_DE_FACTION: ArmeDeFaction[] = [
   // (TIRÉ EN CLOCHE — Keko, 23/11 : « pour le distinguer un peu des missiles » : il passe au-dessus des insectes et
   // explose en retombant, là où sera sa cible — voir `Arme.cloche`)
   { id: 'obusier', nom: 'Obusier', dit: 'De lourds obus tirés en cloche, qui explosent en retombant sur une large zone.', race: 'humains', icone: 'imp-obusier', armes: () => [nouvelle({ id: 'obusier', cadence: 2.4, degats: 86, portee: 150, vitesse: 110, vie: 2.2, dispersion: 0.05, zone: { rayon: 40 }, cloche: { vol: 0.8 } })] },
-  { id: 'roquettes', nom: 'Roquettes', dit: 'Six petites roquettes à la fois, qui explosent chacune sur une petite zone.', race: 'humains', icone: 'imp-roquettes', armes: () => [nouvelle({ id: 'roquettes', cadence: 3, degats: 21, portee: 130, vitesse: 60, vie: 2, zone: { rayon: 11 }, essaim: { nombre: 6, eventail: 2.4, acces: 60, pointe: 90, braquage: 5, chaos: 1.6, pas: 0.32, calme: 1.4, reprise: 45 } })] },
-  // (LES ROQUETTES, PLUS LENTES QUE LES MISSILES DU CHASSEUR — Keko, 22/11 : « une version plus lente que les missiles,
-  // pour la distinguer » : elles partent à 60, plafonnent à 90 — les missiles volent à 110, guidés —, zigzaguent moins)
-  // (… ET PLUS PETITES — Keko, 23/11 : « les multi-roquettes doivent être plus petites que les missiles, et l'obus plus
-  // gros que le missile ; une cohérence et un équilibre entre les trois » : six à la fois, chacune explose sur 11 — les
-  // missiles sur 18, l'obus sur 40 —, dessinées plus petites que le missile)
   // (LA BOBINE TESLA — Keko, 22/11 : « l'arc tesla, c'est une chaîne d'éclair bis » : une boule de foudre lente qui
   // traverse la mêlée en foudroyant les trois insectes les plus proches toutes les 0,6 s ; l'identifiant reste `tesla`)
   { id: 'tesla', nom: 'Bobine tesla', dit: 'Une boule de foudre lente qui foudroie les ennemis autour d’elle.', race: 'humains', icone: 'imp-tesla', armes: () => [nouvelle({ id: 'tesla', cadence: 2.6, degats: 58, portee: 120, sphere: { vitesse: 45, duree: 3, rayon: 42, periode: 0.6, vitesseTir: 0, foudre: { cibles: 3 } } })] },
@@ -401,15 +395,6 @@ export const MUTATIONS: Mutation[] = [
   variation('obusier-salve', 'obusier', 'Salve', 'Chaque tir lâche trois obus en éventail.', changerA('obusier', V.gerbe(3, 0.3, 0.55))),
   variation('obusier-drones', 'obusier', 'Drones', 'Deux drones en orbite tirent des obus sur les ennemis proches.', ajouterA('obusier', (a) => drones(a, { cadence: 2.2, degats: fois(a, 0.5), portee: 90, vie: 1 }))),
   variation('obusier-lourd', 'obusier', 'Gros calibre', 'Des obus plus lents à venir, plus forts, qui explosent plus large.', changerA('obusier', V.lourd)),
-  // L'ESSAIM DE ROQUETTES
-  variation('roquettes-nuee', 'roquettes', 'Nuée', 'Deux fois plus de roquettes, un peu moins fortes.', changerA('roquettes', (a) => ({ ...a, essaim: a.essaim === undefined ? undefined : { ...a.essaim, nombre: a.essaim.nombre * 2 }, degats: fois(a, 0.6) }))),
-  // (elles explosent déjà toutes — Keko, 22/11 : « une version plus lente et plus grosse zone que les missiles » —, la
-  // carte « Explosives » est devenue « Gros calibre », et « Perforantes », qui perdait l'explosion, « Fragmentation »)
-  variation('roquettes-lourdes', 'roquettes', 'Gros calibre', 'Des roquettes plus lentes à venir, plus fortes, qui explosent plus large.', changerA('roquettes', V.lourd)),
-  variation('roquettes-incendiaires', 'roquettes', 'Incendiaires', 'Les roquettes enflamment ce qu’elles touchent.', changerA('roquettes', V.incendiaire)),
-  variation('roquettes-cryo', 'roquettes', 'Cryogéniques', 'Les roquettes gèlent ce qu’elles touchent.', changerA('roquettes', V.cryo)),
-  variation('roquettes-fragmentation', 'roquettes', 'Fragmentation', 'Chaque explosion projette six éclats brûlants tout autour.', changerA('roquettes', V.fragments)),
-  variation('roquettes-ricochet', 'roquettes', 'Ricochet', 'Chaque roquette rebondit sur deux autres ennemis.', changerA('roquettes', V.ricochet)),
   // L'ARC TESLA
   variation('tesla-rebonds', 'tesla', 'Orage', 'La bobine foudroie trois ennemis de plus à chaque décharge.', changerA('tesla', (a) => ({ ...a, sphere: a.sphere === undefined ? undefined : { ...a.sphere, foudre: { cibles: (a.sphere.foudre?.cibles ?? 3) + 3 } } }))),
   variation('tesla-incendiaire', 'tesla', 'Incendiaire', 'Ce que la foudre touche s’enflamme.', changerA('tesla', V.incendiaire)),
@@ -431,6 +416,31 @@ export const MUTATIONS: Mutation[] = [
   variation('escorte-cryo', 'escorte', 'Cryogéniques', 'Les balles des mini-avions gèlent les ennemis.', changerA('escorte', V.cryo)),
   variation('escorte-ricochet', 'escorte', 'Ricochet', 'Chaque balle des mini-avions rebondit sur deux autres ennemis.', changerA('escorte', V.ricochet)),
   variation('escorte-roquettes', 'escorte', 'Roquettes', 'Les mini-avions tirent des roquettes qui explosent.', changerA('escorte', (a) => ({ ...V.explosif(a), cadence: a.cadence * 2.5, degats: fois(a, 2) }))),
+]
+/**
+ * LES ROQUETTES, MISES DE CÔTÉ (Keko, 23/11 : « on va enlever les mini-roquettes, car ça, on va plutôt le mettre comme
+ * amélioration des missiles, qui pourront éventuellement lancer des petites roquettes supplémentaires ; on va le virer,
+ * le garder sous le coude ») : l'arme et ses six variations, hors des cartes — rien ne les propose. Leur règle (`essaim`),
+ * leur dessin et leur son restent.
+ */
+export const ARMES_EN_RESERVE: ArmeDeFaction[] = [
+  { id: 'roquettes', nom: 'Roquettes', dit: 'Six petites roquettes à la fois, qui explosent chacune sur une petite zone.', race: 'humains', icone: 'imp-roquettes', armes: () => [nouvelle({ id: 'roquettes', cadence: 3, degats: 21, portee: 130, vitesse: 60, vie: 2, zone: { rayon: 11 }, essaim: { nombre: 6, eventail: 2.4, acces: 60, pointe: 90, braquage: 5, chaos: 1.6, pas: 0.32, calme: 1.4, reprise: 45 } })] },
+  // (LES ROQUETTES, PLUS LENTES QUE LES MISSILES DU CHASSEUR — Keko, 22/11 : « une version plus lente que les missiles,
+  // pour la distinguer » : elles partent à 60, plafonnent à 90 — les missiles volent à 110, guidés —, zigzaguent moins)
+  // (… ET PLUS PETITES — Keko, 23/11 : « les multi-roquettes doivent être plus petites que les missiles, et l'obus plus
+  // gros que le missile ; une cohérence et un équilibre entre les trois » : six à la fois, chacune explose sur 11 — les
+  // missiles sur 18, l'obus sur 40 —, dessinées plus petites que le missile)
+]
+export const VARIATIONS_EN_RESERVE: Mutation[] = [
+  // L'ESSAIM DE ROQUETTES
+  variation('roquettes-nuee', 'roquettes', 'Nuée', 'Deux fois plus de roquettes, un peu moins fortes.', changerA('roquettes', (a) => ({ ...a, essaim: a.essaim === undefined ? undefined : { ...a.essaim, nombre: a.essaim.nombre * 2 }, degats: fois(a, 0.6) }))),
+  // (elles explosent déjà toutes — Keko, 22/11 : « une version plus lente et plus grosse zone que les missiles » —, la
+  // carte « Explosives » est devenue « Gros calibre », et « Perforantes », qui perdait l'explosion, « Fragmentation »)
+  variation('roquettes-lourdes', 'roquettes', 'Gros calibre', 'Des roquettes plus lentes à venir, plus fortes, qui explosent plus large.', changerA('roquettes', V.lourd)),
+  variation('roquettes-incendiaires', 'roquettes', 'Incendiaires', 'Les roquettes enflamment ce qu’elles touchent.', changerA('roquettes', V.incendiaire)),
+  variation('roquettes-cryo', 'roquettes', 'Cryogéniques', 'Les roquettes gèlent ce qu’elles touchent.', changerA('roquettes', V.cryo)),
+  variation('roquettes-fragmentation', 'roquettes', 'Fragmentation', 'Chaque explosion projette six éclats brûlants tout autour.', changerA('roquettes', V.fragments)),
+  variation('roquettes-ricochet', 'roquettes', 'Ricochet', 'Chaque roquette rebondit sur deux autres ennemis.', changerA('roquettes', V.ricochet)),
 ]
 /** La carte d'une spéciale. */
 export const carteSpeciale = (mu: Mutation): Talent => ({ id: `mutation:${mu.id}`, cible: { sorte: 'arme', arme: mu.arme }, stat: 'mutation', rarete: 'speciale', bonus: 0, mutation: mu.id })
