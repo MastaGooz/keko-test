@@ -1536,23 +1536,6 @@ const RECETTES = {
       note(m, 0, 0.45, 0, { f: 900, glisse: { vers: 260, en: 0.18 }, a: 0.001, d: 0.25, battement: 14, partiels: [[1, 1, 1], [2.76, 0.4, 0.5]] })
     },
   },
-  /**
-   * LE RAYON DE LA BALISE LASER BRÛLE UN INSECTE (Keko, 23/11 : « un petit bruit de crépitement sur les ennemis touchés
-   * par le laser, pour signifier que les dégâts sont infligés » — voir `Arme.lien`) : trois ou quatre petits claquements
-   * secs, aigus, serrés en 50 ms — un grésillement électrique —, sur un bourdon grave à peine saturé qui s'éteint vite
-   * (… PLUS GRAVE, UN LASER QUI BRÛLE — Keko, 23/11 : « on dirait un bruit d'insectes qui grignotent ; je voyais plutôt un
-   * bruit un peu plus grave, genre laser qui brûle » : plus de claquements aigus ; un bourdon électrique bas et saturé, aux
-   * harmoniques impaires, qui descend un peu, sous un souffle brûlant dans les médiums qui retombe — un « bzzhhh » bref)
-   */
-  crepitement: {
-    duree: 0.22, niveau: 0.2, salle: [0.2, 0.08], variantes: 6,
-    faire: (m, h) => {
-      const f = 170 * (0.9 + 0.2 * h.next())
-      note(m, 0, 0.8, 0, { f, glisse: { vers: f * 0.8, en: 0.15 }, a: 0.006, d: 0.16, battement: 7, partiels: [[1, 1, 1], [3, 0.55, 0.9], [5, 0.35, 0.8], [7, 0.2, 0.7]], sature: 2.2 })
-      souffle(m, h, 0, 0.7, 0, { f: 1300 * (0.9 + 0.2 * h.next()), glisse: { vers: 650, en: 0.16 }, q: 1.1, bande: true, a: 0.006, d: 0.17, large: true })
-      souffle(m, h, 0, 0.2, 0, { f: 2600, q: 0.8, a: 0.004, d: 0.07 })
-    },
-  },
 } satisfies Record<string, Recette>
 
 export type Son = keyof typeof RECETTES

@@ -11581,8 +11581,21 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * lueur rouge grandit sur lui ; CASSÉ, les deux bouts du câble se détendent et s'éteignent.
    */
   const cassuresDuHarpon: { x0: number; y0: number; x1: number; y1: number; t0: number }[] = []
-  /** Le dernier crépitement du rayon d'une balise laser (voir « les insectes que brûle le rayon d'une balise laser »). */
-  let crepiteA = -10
+  /**
+   * LE SON DU RAYON QUI BRÛLE (Keko, 23/11 : « un petit bruit pour signifier que les dégâts sont infligés, qui ne se
+   * répète pas trop si beaucoup d'ennemis sont touchés, et qui dépende de la distance du vaisseau » ; puis « un son un peu
+   * continu, qui évoque un laser électrique » : voir `voixDuLaser`, dans sons.ts) : null si aucun rayon ne brûle rien ;
+   * sinon une seule voix pour toutes les balises — un peu plus forte avec le nombre d'insectes brûlés, jusqu'à quatre —,
+   * placée sur le plus proche du vaisseau.
+   */
+  function laserQuiBrule(): { fort: number; dx: number; dy: number } | null {
+    if (enApercu || m.balisesLaser.length === 0) return null
+    const touches = m.balisesLaser.flatMap((b) => ennemisDuLien(CONF, m, b))
+    if (touches.length === 0) return null
+    let proche = touches[0]
+    for (const e of touches) if (Math.hypot(e.corps.x - v.x, e.corps.y - v.y) < Math.hypot(proche.corps.x - v.x, proche.corps.y - v.y)) proche = e
+    return { fort: Math.min(1, 0.7 + 0.1 * (touches.length - 1)), dx: proche.corps.x - v.x, dy: proche.corps.y - v.y }
+  }
   const DUREE_DE_LA_CASSURE = 0.25
   function dessinerLesHarpons(p: Peintre): void {
     for (let i = cassuresDuHarpon.length - 1; i >= 0; i--) if (t - cassuresDuHarpon[i].t0 > DUREE_DE_LA_CASSURE) cassuresDuHarpon.splice(i, 1)
@@ -17957,17 +17970,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         // les insectes que brûle le rayon d'une balise laser : UNE PETITE GERBE D'ÉTINCELLES ROUGES AU POINT DE TOUCHE (Keko,
         // 23/11 : « une petite gerbe de particules rouges en mode étincelle sur la touche ») — là où le rayon le traverse,
         // jaillies de part et d'autre du rayon (voir `dessinerLesBalisesLaser`)
-        // (… ET SON CRÉPITEMENT — Keko, 23/11 : « un petit bruit de crépitement sur les ennemis touchés, sans qu'il se répète
-        // trop si beaucoup sont touchés en même temps, et qui dépende de la distance du vaisseau » : un seul pour toutes les
-        // balises et tous les insectes, toutes les 0,11 s au plus, sur un insecte touché tiré au hasard — `jouer` l'éloigne)
-        if (t - crepiteA >= 0.11) {
-          const touches = m.balisesLaser.flatMap((b) => ennemisDuLien(CONF, m, b))
-          if (touches.length > 0) {
-            const e = touches[Math.floor(R.next() * touches.length)]
-            crepiteA = t
-            jouer('crepitement', { dx: e.corps.x - v.x, dy: e.corps.y - v.y })
-          }
-        }
         for (const b of m.balisesLaser) {
           const L0 = Math.hypot(b.x - v.x, b.y - v.y) || 1
           const ux = (b.x - v.x) / L0
@@ -18125,7 +18127,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // de l'extraction monte avec l'arc d'or (et se tait quand le compte est au bout : le son de l'extraction la relève)
       if (m.extraction !== compteVu) compteMonte = m.extraction > compteVu
       compteVu = m.extraction
-      regler(m.phase === 'vol' ? Math.max(flamme, 0.6 * v.poussee) : 0, m.phase === 'vol' && (m.forage !== null || m.canal !== null), m.phase === 'vol' ? m.extraction / CONF.extraction.duree : 0, compteMonte, m.phase === 'vol' && m.crache, genreDePropulsion(), bourdonDeLaNuee())
+      regler(m.phase === 'vol' ? Math.max(flamme, 0.6 * v.poussee) : 0, m.phase === 'vol' && (m.forage !== null || m.canal !== null), m.phase === 'vol' ? m.extraction / CONF.extraction.duree : 0, compteMonte, m.phase === 'vol' && m.crache, genreDePropulsion(), bourdonDeLaNuee(), m.phase === 'vol' ? laserQuiBrule() : null)
       if (m.phase === 'vol') annoncerLesSons()
       for (const e of m.ennemis) {
         const f = flammesEnnemies.get(e.id) ?? 0

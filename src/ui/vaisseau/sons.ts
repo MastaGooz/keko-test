@@ -241,6 +241,60 @@ let charge: (Voix & { notes: OscillatorNode[]; lfo: OscillatorNode }) | null = n
 let chargeMuette = true
 let flamme: Voix | null = null
 let bourdon: Voix | null = null
+let laser: (Voix & { pan: StereoPannerNode }) | null = null
+
+/**
+ * LE RAYON DE LA BALISE LASER QUI BRÛLE, UNE VOIX CONTINUE (Keko, 23/11 : « trop percutant, plein de petites
+ * percussions ; il faudrait plutôt un son un peu continu qui évoque un laser électrique » — c'était un son court, rejoué
+ * toutes les 0,11 s ; voir `Arme.lien`) : deux dents de scie graves à la quinte (98 et 147 Hz, un peu désaccordées, qui
+ * battent), une carrée à l'octave, à peine, dans un passe-bande vers 900 Hz ; dessus, un grésillement — du bruit en
+ * boucle, passe-bande vers 1 800 Hz — ; le tout tremble à 33 Hz, électrique. Il ne sonne que tant que le rayon brûle
+ * quelque chose : il monte en 30 ms, retombe en 100 ; placé et éloigné comme les sons ponctuels.
+ */
+function voixDuLaser(ctx: AudioContext): Voix & { pan: StereoPannerNode } {
+  const filtre = ctx.createBiquadFilter()
+  filtre.type = 'bandpass'
+  filtre.frequency.value = 900
+  filtre.Q.value = 0.9
+  const tremolo = ctx.createGain()
+  tremolo.gain.value = 0.8
+  const lfo = ctx.createOscillator()
+  lfo.frequency.value = 33
+  const profondeur = ctx.createGain()
+  profondeur.gain.value = 0.2
+  lfo.connect(profondeur).connect(tremolo.gain)
+  for (const [type, f, cents, v] of [['sawtooth', 98, 0, 0.5], ['sawtooth', 147, 6, 0.4], ['square', 196, -4, 0.12]] as const) {
+    const o = ctx.createOscillator()
+    o.type = type
+    o.frequency.value = f
+    o.detune.value = cents
+    const g = ctx.createGain()
+    g.gain.value = v
+    o.connect(g).connect(filtre)
+    o.start()
+  }
+  const n = ctx.sampleRate
+  const b = ctx.createBuffer(1, n, n)
+  const d = b.getChannelData(0)
+  for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1
+  const bruit = ctx.createBufferSource()
+  bruit.buffer = b
+  bruit.loop = true
+  const grain = ctx.createBiquadFilter()
+  grain.type = 'bandpass'
+  grain.frequency.value = 1800
+  grain.Q.value = 1.5
+  const gBruit = ctx.createGain()
+  gBruit.gain.value = 0.25
+  bruit.connect(grain).connect(gBruit).connect(tremolo)
+  bruit.start()
+  const gain = ctx.createGain()
+  gain.gain.value = 0
+  const pan = new StereoPannerNode(ctx, { pan: 0 })
+  filtre.connect(tremolo).connect(gain).connect(pan).connect(ctx.destination)
+  lfo.start()
+  return { gain, filtre, lfo, pan }
+}
 
 /**
  * LA NUÉE, UN BOURDONNEMENT CONTINU (Keko, 20/11 : « change le bruit de l'essaim, c'est un peu bizarre ; pas un son par
@@ -604,7 +658,7 @@ function voixDeCharge(ctx: AudioContext): NonNullable<typeof charge> {
  * Règle les sons continus, à chaque image : la poussée du vaisseau (0 à 1), si la foreuse creuse, où en est le compte
  * de l'extraction (`compte`, de 0 à 1) et s'il monte (à quai) ou redescend (hors du parvis).
  */
-export function regler(poussee: number, creuse: boolean, compte: number, monte: boolean, crache = false, genre: GenreDePropulsion = 'souffle', nuee: { taille: number; mord: boolean } | null = null): void {
+export function regler(poussee: number, creuse: boolean, compte: number, monte: boolean, crache = false, genre: GenreDePropulsion = 'souffle', nuee: { taille: number; mord: boolean } | null = null, brule: { fort: number; dx: number; dy: number } | null = null): void {
   try {
     const ctx = ZZFX.audioContext
     if (ctx.state !== 'running') return
@@ -617,7 +671,16 @@ export function regler(poussee: number, creuse: boolean, compte: number, monte: 
     if (charge === null && compte > 0) charge = voixDeCharge(ctx)
     if (flamme === null && crache) flamme = voixDeFlamme(ctx)
     if (bourdon === null && nuee !== null) bourdon = voixDeLaNuee(ctx)
+    if (laser === null && brule !== null) laser = voixDuLaser(ctx)
     const t = ctx.currentTime
+    // (le rayon de la balise laser : tant qu'il brûle, éloigné et placé comme un son ponctuel ; il se tait sans lui)
+    if (laser !== null) {
+      const d = brule === null ? PORTEE : Math.hypot(brule.dx, brule.dy)
+      const loin = d >= PORTEE ? 0 : (1 - d / PORTEE) ** 2
+      const fort = brule === null ? 0 : ZZFX.volume * 0.14 * brule.fort * loin
+      laser.gain.gain.setTargetAtTime(fort, t, fort > 0 ? 0.03 : 0.1)
+      if (brule !== null) laser.pan.pan.setTargetAtTime(Math.max(-1, Math.min(1, brule.dx / 160)), t, 0.05)
+    }
     // (la nuée : à peine au repos, un peu plus quand elle mord, et avec sa taille ; elle se tait sans nuée)
     if (bourdon !== null) {
       const fort = nuee === null ? 0 : (nuee.mord ? 0.09 : 0.035) * (1 + 0.4 * nuee.taille)

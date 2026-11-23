@@ -8363,3 +8363,13 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   (… PLUS GRAVE — Keko : « on dirait un bruit d'insectes qui grignotent ; je voyais plutôt un bruit un peu plus grave,
   genre laser qui brûle » : plus de claquements aigus ; un bourdon électrique bas et saturé (170 Hz, harmoniques
   impaires) qui descend un peu, sous un souffle brûlant dans les médiums qui retombe de 1 300 à 650 Hz — 0,22 s.)
+  (… PUIS UNE VOIX CONTINUE — Keko : « ça fait mieux, mais c'est trop percutant, plein de petites percussions ; il
+  faudrait plutôt un son un peu continu qui évoque un laser électrique » : le son court rejoué toutes les 0,11 s est
+  retiré (`crepitement`) ; À SA PLACE, une voix continue comme le lance-flammes ou la nuée (`voixDuLaser`, sons.ts ;
+  réglée par `regler`, son dernier paramètre ; `laserQuiBrule` dans la page) — deux dents de scie graves à la quinte (98
+  et 147 Hz, un peu désaccordées), une carrée à l'octave, dans un passe-bande vers 900 Hz, et un grésillement (du bruit
+  passe-bande vers 1 800 Hz) ; le tout tremble à 33 Hz. Elle ne sonne QUE TANT QUE LE RAYON BRÛLE QUELQUE CHOSE : monte
+  en 30 ms, retombe en 100 ; une seule pour toutes les balises, un peu plus forte avec le nombre d'insectes brûlés
+  (jusqu'à quatre), placée sur le plus proche du vaisseau et atténuée avec sa distance comme un son ponctuel ; elle se
+  tait en pause, au hangar, hors du vol. PAS ÉCOUTÉE : une copie hors du jeu (les mêmes oscillateurs, filtres et
+  tremblement, rendus par un script) a été envoyée à Keko.)
