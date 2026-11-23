@@ -8434,3 +8434,4 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   de celui-là au suivant, à 49 % ; refait à chaque image, la chaîne suit la mêlée (`Faisceau.chaine`). Le dessin : le
   même rayon vert de proche en proche, plus pâle à chaque rebond, une lueur et des étincelles sur chaque insecte touché.
   Le test : trois insectes, 100 / 70 / 49. En capture, la mêlée trop dense pour juger les rebonds.
+  VALIDÉ (Keko : « les deux fonctionnent bien ensemble »).
