@@ -3312,6 +3312,27 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   verifier(`la rafale des ailes : ${tirs.length} tirs en 3 s (8) ; écarts ${ecarts.map((x) => x.toFixed(2)).join(', ')} (0,1 ×3, puis 2,2) ; une aile puis l'autre (${alterne})`, tirs.length === 8 && ecarts.slice(0, 3).every((x) => Math.abs(x - 0.1) < 0.02) && Math.abs(ecarts[3] - 2.2) < 0.03 && alterne)
 }
 
+// LE LASER CONCENTRÉ (Keko, 23/11 : « on concentre un rayon pendant un court instant sur la cible ; le temps total de
+// concentration inflige plus de dégâts qu'un seul tir » — voir `Arme.concentre`) : un tir, un rayon de 0,5 s qui ronge 122
+// en tout, réparti sur sa durée ; il s'éteint seul
+{
+  const laser = { id: 'laser', cadence: 9, degats: 122, portee: 120, vitesse: 420, vie: 0.7, dispersion: 0, guide: false, tousSens: true, concentre: { duree: 0.5 } }
+  const cfg = { ...VAISSEAU, coque: 1e9, armes: [laser], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false }, passifs: { ...VAISSEAU.passifs, critique: 0 } }
+  const w = nouveauMonde(cfg, 5)
+  w.invasion.prochainA = 1e9
+  const e: Ennemi = { id: 990, corps: { ...nouveauVaisseau(), x: 60, y: 0 }, pv: 1e6, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9 }
+  w.ennemis.push(e)
+  let mi = -1
+  let fin = -1
+  let pvMi = 0
+  for (let i = 0; i < 60 * 1.2; i++) {
+    avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+    if (w.faisceaux.length > 0 && mi < 0 && w.t - w.faisceaux[0].nee >= 0.25) (mi = w.t), (pvMi = 1e6 - e.pv)
+    if (mi > 0 && fin < 0 && w.faisceaux.length === 0) fin = w.t
+  }
+  verifier(`le laser concentré : à mi-course ${pvMi.toFixed(0)} rongés (~61), en tout ${(1e6 - e.pv).toFixed(0)} (122), aucun obus (${w.obus.length}) ; il s'éteint seul (${fin > 0})`, Math.abs(1e6 - e.pv - 122) < 0.5 && pvMi > 50 && pvMi < 72 && w.obus.length === 0 && fin > 0)
+}
+
 // TOUCHÉ, ON TRAVERSE LES INSECTES (Keko, 22/11 : « quand on est touché on est invincible un court instant ; je voudrais
 // qu'on traverse aussi les ennemis ») : le temps qu'il clignote, un insecte posé sur lui ne l'écarte pas ; après, si ; une
 // roche l'arrête toujours

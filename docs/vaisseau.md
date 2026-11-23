@@ -8400,3 +8400,17 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   l'autre aile tire 0,1 s plus tard ; au bout de quatre, toutes attendent la cadence d'une aile (2,2 s). Chaque tir
   choisit sa cible comme un tir ordinaire. Chacun 77 % (69 au lieu de 90) : 276 toutes les 2,5 s, 110 par seconde contre
   82 pour le laser seul — 135 %. Le test : huit tirs en 3 s, quatre à 0,1 s une aile puis l'autre, puis 2,2 s.)
+- **23/11, LE LASER CONCENTRÉ, À LA PLACE DE LA RAFALE.** Keko : « finalement je trouve que c'est pas fou ; je propose
+  autre chose : le laser concentré ; plutôt qu'un seul tir de laser, un laser un peu comme celui du Prisme, mais qui dure
+  un temps limité ; on concentre un rayon pendant un court instant sur la cible, et le temps total de concentration
+  inflige plus de dégâts qu'un seul tir de laser sans l'amélioration ».
+  - LA RÈGLE (`Arme.concentre` : `{ duree }`, `Monde.faisceaux`, `concentrerLesFaisceaux`) : au même rythme que le laser
+    (une aile puis l'autre), chaque tir n'envoie plus d'obus mais accroche UN RAYON de la bouche de l'aile à sa cible,
+    0,5 s ; il la ronge de 135 % d'un tir (122 au lieu de 90), répartis sur sa durée ; il s'éteint plus tôt si elle
+    meurt ou passe à plus d'une fois et demie la portée ; le feu et le gel de ses cartes la prennent tant qu'il tient.
+    La carte « Rafale » (`laser-rafale`) devient « Laser concentré » (`laser-concentre`) ; la règle de la rafale
+    (`Arme.rafale`, `Monde.rafaleDesAiles`) reste, sans carte, avec son test.
+  - LE DESSIN : un rayon vert, aux couleurs du canon laser — une lueur tout du long, un liseré de chaque côté, un cœur
+    presque blanc qui frémit —, qui s'allume en 0,04 s et s'éteint dans son dernier cinquième ; sur la cible, un éclat
+    vert qui bat, des étincelles vertes qui en jaillissent ; au départ, le son du laser.
+  - Le test : un tir, à mi-course 61 rongés, en tout 122, aucun obus ; il s'éteint seul. VU en capture.

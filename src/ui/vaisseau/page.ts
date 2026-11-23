@@ -11729,10 +11729,41 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // particules, voir « les insectes que brûle le rayon d'une balise laser »)
     }
   }
+  /**
+   * LE LASER CONCENTRÉ (Keko, 23/11 — voir `Arme.concentre`) : un rayon vert, aux couleurs du canon laser, de la bouche de
+   * l'aile à sa cible — une lueur tout du long, un liseré vert de chaque côté, un cœur presque blanc qui frémit —, qui
+   * s'allume en 0,04 s et s'éteint dans son dernier cinquième ; sur la cible, un éclat vert qui bat (les étincelles sont
+   * semées avec les autres particules)
+   */
+  function dessinerLesFaisceaux(p: Peintre): void {
+    for (const f of m.faisceaux) {
+      const a = CONF.armes[f.arme]
+      const co = a?.concentre
+      const e = m.ennemis.find((x) => x.id === f.cible)
+      if (a === undefined || co === undefined || e === undefined) continue
+      const age = m.t - f.nee
+      const k = Math.max(0, Math.min(1, age / 0.04) * Math.min(1, (co.duree - age) / (co.duree * 0.2)))
+      const bo = a.bouche
+      const x0 = bo === undefined ? v.x : v.x + Math.cos(v.cap) * bo.x - Math.sin(v.cap) * bo.y
+      const y0 = bo === undefined ? v.y : v.y + Math.sin(v.cap) * bo.x + Math.cos(v.cap) * bo.y
+      const L = Math.hypot(e.corps.x - x0, e.corps.y - y0) || 1
+      const ux = (e.corps.x - x0) / L
+      const uy = (e.corps.y - y0) / L
+      const nx = -uy
+      const ny = ux
+      const fremit = 0.8 + 0.2 * Math.sin(t * 80 + f.nee * 17)
+      for (let d = 3; d < L; d += 8) p.glow(x0 + ux * d, y0 + uy * d, 4, LASER_VERT[2], 0.25 * k * fremit)
+      for (const o of [-1, 1]) p.line(x0 + nx * o, y0 + ny * o, e.corps.x + nx * o, e.corps.y + ny * o, LASER_VERT[2], 0.75 * k * fremit)
+      p.line(x0, y0, e.corps.x, e.corps.y, LASER_VERT[4], k)
+      p.glow(x0, y0, 5, LASER_VERT[3], 0.6 * k)
+      p.glow(e.corps.x, e.corps.y, 6 + 2 * Math.sin(t * 40 + f.nee), LASER_VERT[3], 0.7 * k)
+      p.dot(e.corps.x, e.corps.y, N.WHITE, k)
+    }
+  }
   function dessinerLePlasma(p: Peintre): void {
     for (let i = eclatsDePlasma.length - 1; i >= 0; i--) if (t - eclatsDePlasma[i].t0 > DUREE_DE_L_ECLAT) eclatsDePlasma.splice(i, 1)
     const orbes = m.obus.filter((o) => o.arme === 'plasma')
-    if (orbes.length === 0 && m.balisesLaser.length === 0 && m.harpons.length === 0 && cassuresDuHarpon.length === 0 && eclatsDePlasma.length === 0 && rubans.size === 0 && popsDEssaim.length === 0 && m.spheres.length === 0 && m.puits.length === 0 && effondrements.length === 0 && traitsDuRail.length === 0 && trainesDuRailgun.size === 0 && !m.obus.some((o) => o.arme === 'essaim' || o.arme === 'arcane' || o.arme === 'railgun')) return
+    if (orbes.length === 0 && m.faisceaux.length === 0 && m.balisesLaser.length === 0 && m.harpons.length === 0 && cassuresDuHarpon.length === 0 && eclatsDePlasma.length === 0 && rubans.size === 0 && popsDEssaim.length === 0 && m.spheres.length === 0 && m.puits.length === 0 && effondrements.length === 0 && traitsDuRail.length === 0 && trainesDuRailgun.size === 0 && !m.obus.some((o) => o.arme === 'essaim' || o.arme === 'arcane' || o.arme === 'railgun')) return
     p.place(W / 2 - camera.x, centreY() - camera.y)
     dessinerLesSpheres(p)
     dessinerLesPuits(p)
@@ -11741,6 +11772,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     dessinerLesTrainesDuRailgun(p)
     dessinerLesHarpons(p)
     dessinerLesBalisesLaser(p)
+    dessinerLesFaisceaux(p)
     for (const o of orbes) {
       const l = Math.hypot(o.vx, o.vy) || 1
       const ux = o.vx / l
@@ -17966,6 +17998,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           if (o.arme !== 'napalm' || R.next() > 0.5) continue
           const u = 1 - o.vie / Math.max(0.01, o.vie0 ?? 1)
           flammesDesBrules.push({ x: o.x, y: o.y - Math.sin(Math.PI * Math.max(0, Math.min(1, u))) * 12, vx: -o.vx * 0.1, vy: -o.vy * 0.1 - 6, t0: t, vie: R.range(0.15, 0.3) })
+        }
+        // l'insecte que ronge un laser concentré : des étincelles vertes qui en jaillissent (voir `dessinerLesFaisceaux`)
+        for (const f of m.faisceaux) {
+          const e = m.ennemis.find((x) => x.id === f.cible)
+          if (e === undefined || R.next() > 0.6) continue
+          const a = R.range(0, Math.PI * 2)
+          const vit = R.range(40, 100)
+          etincelles.ajouter('etincelle', e.corps.x, e.corps.y, Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.12, 0.25), [LASER_VERT[3], LASER_VERT[4], N.WHITE][Math.floor(R.next() * 3)], 1, 1.5)
         }
         // les insectes que brûle le rayon d'une balise laser : UNE PETITE GERBE D'ÉTINCELLES ROUGES AU POINT DE TOUCHE (Keko,
         // 23/11 : « une petite gerbe de particules rouges en mode étincelle sur la touche ») — là où le rayon le traverse,

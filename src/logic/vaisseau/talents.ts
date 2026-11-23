@@ -369,12 +369,12 @@ export const MUTATIONS: Mutation[] = [
   variation('laser-drones', 'laser', 'Drones', 'Deux drones en orbite tirent des lasers sur les ennemis proches.', ajouterA('laser', (a) => drones(a, { cadence: 1.4, degats: fois(a, 0.45), portee: 70, vie: 0.5 }))),
   variation('laser-perforant', 'laser', 'Perforant', 'Les lasers traversent les ennemis et touchent toute leur ligne.', changerA('laser', V.perforant)),
   variation('laser-ricochet', 'laser', 'Ricochet', 'Chaque laser rebondit sur deux autres ennemis proches.', changerA('laser', V.ricochet)),
-  // (EN RAFALE, PLUS EN ÉVENTAIL — Keko, 23/11 : « à la place de tirer un seul gros laser, l'avion va tirer des rafales de
-  // trois lasers ; le total doit faire plus de dégâts que le laser seul, c'est une amélioration » ; puis « des rafales de 4
-  // tirs en alternant aile gauche, aile droite, chacune des ailes tire 2 fois ; chaque coup peut avoir une cible
-  // différente » : quatre tirs à 0,1 s, une aile puis l'autre, puis la cadence d'une aile (2,2 s) — une rafale toutes les
-  // 2,5 s au lieu de deux lasers ; chacun 77 % : 4 × 0,77 / 2,5 s contre 1 / 1,1 s, 135 % des dégâts ; voir `Arme.rafale`)
-  variation('laser-rafale', 'laser', 'Rafale', 'Des rafales de quatre lasers, d’une aile puis de l’autre.', changerA('laser', (a) => ({ ...a, rafale: { nombre: 4, intervalle: 0.1 }, degats: fois(a, 0.77) }))),
+  // (LE LASER CONCENTRÉ, À LA PLACE DE LA RAFALE — Keko, 23/11 : la rafale « pas fou » — trois lasers en éventail, puis trois
+  // à la suite sur une même cible, puis quatre d'une aile à l'autre, voir `Arme.rafale`, gardée — ; « à la place d'un tir
+  // de laser unique, on concentre un rayon pendant un court instant sur la cible, et le temps total de concentration
+  // inflige plus de dégâts qu'un seul tir » : chaque tir devient un rayon accroché 0,5 s, qui ronge 135 % d'un tir — voir
+  // `Arme.concentre`)
+  variation('laser-concentre', 'laser', 'Laser concentré', 'Chaque tir devient un rayon concentré un instant sur sa cible.', changerA('laser', (a) => ({ ...a, concentre: { duree: 0.5 }, degats: fois(a, 1.35) }))),
   variation('laser-cryo', 'laser', 'Cryogénique', 'Les lasers gèlent ce qu’ils touchent et le ralentissent.', changerA('laser', V.cryo)),
   // LA MITRAILLEUSE
   variation('mitraille-jumelee', 'mitraille', 'Canons jumelés', 'Chaque tir part en double : deux balles côte à côte.', changerA('mitraille', V.gerbe(2, 0.12, 0.7))),
