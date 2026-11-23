@@ -3349,6 +3349,26 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   verifier(`le laser concentré qui ricoche : ${pris.map((x) => x.toFixed(1)).join(' / ')} (100, 70, 49)`, Math.abs(pris[0] - 100) < 0.5 && Math.abs(pris[1] - 70) < 0.5 && Math.abs(pris[2] - 49) < 0.5)
 }
 
+// L'IMPULSION (Keko, 23/11 : « une petite zone de dégâts autour des cibles du laser ; la zone inflige un pourcentage des
+// dégâts ; avec la concentration, une zone continue tout le temps du laser » — voir `Arme.zone.part`) : un tir sur un
+// insecte, son voisin à 10 perd la moitié, le lointain rien ; avec la concentration, pareil sur la durée du rayon
+{
+  const essai = (concentre: boolean): number[] => {
+    const laser = { id: 'laser', cadence: 9, degats: 100, portee: 120, vitesse: 420, vie: 0.7, dispersion: 0, guide: false, tousSens: true, infaillible: true, zone: { rayon: 16, part: 0.5 }, ...(concentre ? { concentre: { duree: 0.5 } } : {}) }
+    const cfg = { ...VAISSEAU, coque: 1e9, armes: [laser], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false }, passifs: { ...VAISSEAU.passifs, critique: 0 } }
+    const w = nouveauMonde(cfg, 5)
+    w.invasion.prochainA = 1e9
+    const ins = [[60, 0], [60, 10], [60, 60]].map(([x, y], k): Ennemi => ({ id: 1100 + k, corps: { ...nouveauVaisseau(), x, y }, pv: 1e6, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9 }))
+    w.ennemis.push(...ins)
+    w.verrou = ins[0].id
+    for (let i = 0; i < 60; i++) avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+    return ins.map((e) => 1e6 - e.pv)
+  }
+  const [tir, rayon] = [essai(false), essai(true)]
+  const txt = (v: number[]): string => v.map((x) => x.toFixed(1)).join(' / ')
+  verifier(`l'impulsion : un tir, ${txt(tir)} (100 / 50 / 0) ; concentré, ${txt(rayon)} (100 / 50 / 0)`, [tir, rayon].every((v) => Math.abs(v[0] - 100) < 0.5 && Math.abs(v[1] - 50) < 0.5 && v[2] === 0))
+}
+
 // TOUCHÉ, ON TRAVERSE LES INSECTES (Keko, 22/11 : « quand on est touché on est invincible un court instant ; je voudrais
 // qu'on traverse aussi les ennemis ») : le temps qu'il clignote, un insecte posé sur lui ne l'écarte pas ; après, si ; une
 // roche l'arrête toujours

@@ -365,7 +365,12 @@ export const MUTATIONS: Mutation[] = [
   // LES NOUVELLES ARMES (une carte chacune)
   ...ARMES_DE_FACTION.map((af): Mutation => ({ id: `arme-${af.id}`, arme: af.id, sorte: 'arme', nom: af.nom, dit: af.dit, race: af.race, appliquer: (c) => (c.armes.some((a) => a.id === af.id) ? c : { ...c, armes: [...c.armes, ...af.armes()] }) })),
   // LE CANON LASER
-  variation('laser-tourelle', 'laser', 'Tourelle', 'Une tourelle tire des lasers tout autour du vaisseau.', ajouterA('laser', V.tourelle)),
+  // (L'IMPULSION, À LA PLACE DE LA TOURELLE — Keko, 23/11 : « on va enlever la tourelle et rajouter une variation qui
+  // s'appelle Impulsion : une petite zone de dégâts autour des cibles du laser, avec un petit effet d'onde verte, qui fait
+  // que tous les ennemis à portée sont touchés ; l'effet de portée du laser se répercute sur la taille de la zone » ; « la
+  // zone inflige un pourcentage des dégâts » : 16 de rayon — la carte « Portée » l'agrandit —, la moitié des dégâts du tir ;
+  // avec Concentration, une zone continue tout le temps du rayon — voir `Arme.zone.part`, `Arme.concentre`)
+  variation('laser-impulsion', 'laser', 'Impulsion', 'Chaque laser libère une onde qui touche aussi les ennemis autour de sa cible.', changerA('laser', (a) => ({ ...a, zone: { rayon: 16, part: 0.5 } }))),
   variation('laser-drones', 'laser', 'Drones', 'Deux drones en orbite tirent des lasers sur les ennemis proches.', ajouterA('laser', (a) => drones(a, { cadence: 1.4, degats: fois(a, 0.45), portee: 70, vie: 0.5 }))),
   variation('laser-perforant', 'laser', 'Perforant', 'Les lasers traversent les ennemis et touchent toute leur ligne.', changerA('laser', V.perforant)),
   variation('laser-ricochet', 'laser', 'Ricochet', 'Chaque laser rebondit sur deux autres ennemis proches.', changerA('laser', V.ricochet)),

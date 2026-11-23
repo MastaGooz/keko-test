@@ -11754,7 +11754,17 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * s'allume en 0,04 s et s'éteint dans son dernier cinquième ; sur la cible, un éclat vert qui bat (les étincelles sont
    * semées avec les autres particules)
    */
+  /** LES ONDES VERTES DE L'IMPULSION (voir l'événement `explosionDeZone` du laser) : un anneau qui s'ouvre jusqu'au bord de la zone en 0,25 s, une lueur qui pâlit. */
+  const impulsionsVertes: { x: number; y: number; t0: number; r: number }[] = []
+  const DUREE_DE_L_IMPULSION = 0.25
   function dessinerLesFaisceaux(p: Peintre): void {
+    for (let i = impulsionsVertes.length - 1; i >= 0; i--) if (t - impulsionsVertes[i].t0 > DUREE_DE_L_IMPULSION) impulsionsVertes.splice(i, 1)
+    for (const o of impulsionsVertes) {
+      const u = (t - o.t0) / DUREE_DE_L_IMPULSION
+      const r = o.r * (1 - (1 - u) ** 3)
+      p.glow(o.x, o.y, r, LASER_VERT[2], 0.3 * (1 - u))
+      p.ring(o.x, o.y, r, u < 0.4 ? 2 : 1, u < 0.3 ? LASER_VERT[4] : LASER_VERT[3], 0.9 * (1 - u))
+    }
     for (const f of m.faisceaux) {
       const a = CONF.armes[f.arme]
       const co = a?.concentre
@@ -11777,6 +11787,17 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.glow(x0, y0, 5, LASER_VERT[3], 0.6 * k)
       p.glow(e.corps.x, e.corps.y, 6 + 2 * Math.sin(t * 40 + f.nee), LASER_VERT[3], 0.7 * k)
       p.dot(e.corps.x, e.corps.y, N.WHITE, k)
+      // (SA ZONE CONTINUE — la carte Impulsion, voir `Arme.concentre` : un anneau vert qui bat autour de chaque insecte rongé,
+      // des ondes qui s'en échappent)
+      const zoneDe = (x: number, y: number, kk: number): void => {
+        if (a.zone === undefined) return
+        const r = a.zone.rayon
+        const bat = (t * 4 + f.nee) % 1
+        p.glow(x, y, r, LASER_VERT[2], 0.18 * kk)
+        p.ring(x, y, r * (0.92 + 0.08 * Math.sin(t * 25 + f.nee)), 1, LASER_VERT[3], 0.6 * kk)
+        p.ring(x, y, r * bat, 1, LASER_VERT[4], 0.5 * (1 - bat) * kk)
+      }
+      zoneDe(e.corps.x, e.corps.y, k)
       // (SES REBONDS — la carte Ricochet, voir `Arme.concentre` : le même rayon, de proche en proche, plus pâle à chaque fois)
       let ici = e
       let pale = 1
@@ -11788,6 +11809,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         p.line(ici.corps.x, ici.corps.y, g.corps.x, g.corps.y, LASER_VERT[2], 0.8 * kk * fremit)
         p.line(ici.corps.x, ici.corps.y, g.corps.x, g.corps.y, LASER_VERT[4], kk)
         p.glow(g.corps.x, g.corps.y, 5, LASER_VERT[3], 0.6 * kk)
+        zoneDe(g.corps.x, g.corps.y, kk)
         ici = g
       }
     }
@@ -11795,7 +11817,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   function dessinerLePlasma(p: Peintre): void {
     for (let i = eclatsDePlasma.length - 1; i >= 0; i--) if (t - eclatsDePlasma[i].t0 > DUREE_DE_L_ECLAT) eclatsDePlasma.splice(i, 1)
     const orbes = m.obus.filter((o) => o.arme === 'plasma')
-    if (orbes.length === 0 && m.faisceaux.length === 0 && m.balisesLaser.length === 0 && m.harpons.length === 0 && cassuresDuHarpon.length === 0 && eclatsDePlasma.length === 0 && rubans.size === 0 && popsDEssaim.length === 0 && m.spheres.length === 0 && m.puits.length === 0 && effondrements.length === 0 && traitsDuRail.length === 0 && trainesDuRailgun.size === 0 && !m.obus.some((o) => o.arme === 'essaim' || o.arme === 'arcane' || o.arme === 'railgun')) return
+    if (orbes.length === 0 && m.faisceaux.length === 0 && impulsionsVertes.length === 0 && m.balisesLaser.length === 0 && m.harpons.length === 0 && cassuresDuHarpon.length === 0 && eclatsDePlasma.length === 0 && rubans.size === 0 && popsDEssaim.length === 0 && m.spheres.length === 0 && m.puits.length === 0 && effondrements.length === 0 && traitsDuRail.length === 0 && trainesDuRailgun.size === 0 && !m.obus.some((o) => o.arme === 'essaim' || o.arme === 'arcane' || o.arme === 'railgun')) return
     p.place(W / 2 - camera.x, centreY() - camera.y)
     dessinerLesSpheres(p)
     dessinerLesPuits(p)
@@ -16797,6 +16819,17 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           break
         }
         case 'explosionDeZone': {
+          // (L'IMPULSION DU CANON LASER — Keko, 23/11 : « un petit effet d'onde verte » : pas de feu ; une onde verte qui
+          // s'ouvre jusqu'au bord de la zone, quelques étincelles vertes — voir `impulsionsVertes`)
+          if (ev.arme === 'laser') {
+            impulsionsVertes.push({ x: ev.x, y: ev.y, t0: t, r: ev.rayon })
+            for (let i = 0; i < 6; i++) {
+              const a = R.range(0, Math.PI * 2)
+              const vit = R.range(30, 70)
+              etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.1, 0.22), R.next() < 0.5 ? LASER_VERT[3] : LASER_VERT[4], 1, 1.5)
+            }
+            break
+          }
           // (L'ORBE DE PLASMA ÉCLATE : sa gerbe à elle, violette et bleue, son « zap », des étincelles — pas de feu)
           if (ev.arme === 'plasma') {
             jouer('eclatPlasma', { dx: ev.x - v.x, dy: ev.y - v.y })

@@ -605,7 +605,10 @@ export type Arme = {
   // (… LES MÊMES DÉGÂTS DANS TOUTE LA ZONE — Keko, 20/11 : « ne sépare pas les dégâts du missile et les dégâts de zone ;
   // les mêmes dégâts dans toute la zone, peu importe que l'ennemi soit touché directement ou par la zone » : plus de
   // `degats` à elle, ce sont ceux de l'arme)
-  zone?: { rayon: number }
+  // (… OU UNE PART DE SES DÉGÂTS — la carte « Impulsion » du canon laser, Keko, 23/11 : « une petite zone de dégâts autour des
+  // cibles du laser ; la zone inflige un pourcentage des dégâts du projectile ou de la concentration totale du laser » :
+  // `part`, ce que la zone inflige des dégâts du tir — tout, sans elle)
+  zone?: { rayon: number; part?: number }
   /**
    * DU NAPALM (la Salamandre, Keko, 15/11) : le tir est une boule de gel LANCÉE EN CLOCHE vers la cible — elle passe
    * au-dessus des insectes et retombe là où la cible sera — et y laisse UNE FLAQUE DE FEU (`Monde.flaques`) de `rayon`,
@@ -5021,7 +5024,20 @@ function concentrerLesFaisceaux(c: ConfigVaisseau, m: Monde, dt: number, ev: Eve
       if (a.gel !== undefined) geler(m, x, 0.3, a.gel.ralenti, ev)
       if (a.incendiaire !== undefined) enflammer(m, x, a.incendiaire)
     }
+    // (SA ZONE, CONTINUE — la carte « Impulsion », Keko, 23/11 : « si on a déjà la concentration, la zone autour de
+    // l'ennemi touché devient une zone continue qui dure tout le temps du laser » : tout ce qui est autour d'un insecte que le
+    // rayon ronge perd `zone.part` de ce qu'il ronge)
+    const zonePerdue: Ennemi[] = []
+    const autour = (x: Ennemi, part: number): void => {
+      if (a.zone === undefined) return
+      for (const g of m.ennemis) {
+        if (g === x || Math.hypot(g.corps.x - x.corps.x, g.corps.y - x.corps.y) > a.zone.rayon + rayonDe(c, g)) continue
+        g.pv -= ronge * part * (a.zone.part ?? 1)
+        zonePerdue.push(g)
+      }
+    }
     toucher(e, 1)
+    autour(e, 1)
     // (LE RAYON QUI RICOCHE — voir `Arme.concentre` : de proche en proche, jamais sur celui qu'il quitte)
     f.chaine = []
     if (a.ricochet !== undefined) {
@@ -5038,11 +5054,12 @@ function concentrerLesFaisceaux(c: ConfigVaisseau, m: Monde, dt: number, ev: Eve
         if (suite === null) break
         part *= a.ricochet.part
         toucher(suite, part)
+        autour(suite, part)
         f.chaine.push(suite.id)
         ici = suite
       }
     }
-    for (const x of [e, ...f.chaine.map((id) => m.ennemis.find((g) => g.id === id))]) if (x !== undefined && x.pv <= 0) abattreLEnnemi(c, m, x, ev)
+    for (const x of [e, ...f.chaine.map((id) => m.ennemis.find((g) => g.id === id)), ...zonePerdue]) if (x !== undefined && x.pv <= 0) abattreLEnnemi(c, m, x, ev)
     return e.pv > 0
   })
 }
@@ -5385,7 +5402,7 @@ function distanceAuSegment(x: number, y: number, x0: number, y0: number, x1: num
 /** CE QU'UN TIR EMPORTE DE SON ARME : sa zone, et ce que les cartes spéciales lui ont donné (voir `Arme.ajoutee`). */
 function effetsDuTir(a: Arme): Partial<Obus> {
   return {
-    ...(a.zone === undefined ? {} : { zone: { rayon: a.zone.rayon, degats: a.degats } }),
+    ...(a.zone === undefined ? {} : { zone: { rayon: a.zone.rayon, degats: a.degats * (a.zone.part ?? 1) } }),
     ...(a.perforant === true ? { perce: [] } : {}),
     ...(a.balle === undefined ? {} : { balle: { ...a.balle } }),
     ...(a.ricochet === undefined ? {} : { rebonds: { n: a.ricochet.rebonds, portee: a.ricochet.portee, part: a.ricochet.part } }),
@@ -6203,6 +6220,12 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
             if (d < ds) (ds = d), (suite = f)
           }
           if (suite !== null) {
+            // (SA ZONE ÉCLATE À CHAQUE IMPACT, REBONDS COMPRIS — la carte « Impulsion » avec le ricochet : il partait sans
+            // éclater ; la zone s'affaiblit avec lui)
+            if (o.zone !== undefined) {
+              exploser(c, m, o.x, o.y, o.zone, e, ev, o.arme)
+              o.zone = { ...o.zone, degats: o.zone.degats * o.rebonds.part }
+            }
             fini = false
             const vit = Math.hypot(o.vx, o.vy) || 1
             o.vx = ((suite.corps.x - o.x) / (ds || 1)) * vit

@@ -8436,3 +8436,19 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   Le test : trois insectes, 100 / 70 / 49. En capture, la mêlée trop dense pour juger les rebonds.
   VALIDÉ (Keko : « les deux fonctionnent bien ensemble »).
   (LE NOM — Keko : « plutôt que laser concentré, on va l'appeler Concentration » : la carte s'appelle « Concentration » ; son identifiant reste `laser-concentre`.)
+- **23/11, L'IMPULSION À LA PLACE DE LA TOURELLE.** Keko : « on va enlever la tourelle et rajouter une variation qui va
+  s'appeler Impulsion : une petite zone de dégâts autour des cibles du laser, avec un petit effet d'onde verte, qui fait
+  que tous les ennemis à portée sont touchés ; l'effet de portée du laser se répercute sur la taille de la zone » ; puis
+  « si on a déjà la concentration, la zone autour de l'ennemi touché devient une zone continue qui dure tout le temps du
+  laser ; la zone inflige un pourcentage des dégâts du projectile ou de la concentration totale du laser ».
+  - LA RÈGLE : `laser-impulsion` donne au laser une zone de 16 qui inflige LA MOITIÉ de ses dégâts (`Arme.zone.part`,
+    nouveau — la zone infligeait tous les dégâts du tir) ; LA CARTE « PORTÉE » L'AGRANDIT, comme toute zone. Elle éclate
+    À CHAQUE IMPACT, REBONDS DU RICOCHET COMPRIS (le ricochet partait sans éclater ; la zone s'affaiblit avec lui). AVEC
+    CONCENTRATION, la zone est CONTINUE : tout ce qui est autour d'un insecte rongé — rebonds compris — perd la moitié de
+    ce que le rayon ronge, tout le temps du rayon.
+  - LE DESSIN : à l'impact, pas de feu — une onde verte qui s'ouvre jusqu'au bord de la zone en 0,25 s, une lueur, six
+    étincelles vertes ; avec Concentration, autour de chaque insecte rongé, un anneau vert qui bat, une lueur, des
+    ondes qui s'en échappent.
+  - La Tourelle (`laser-tourelle`) est retirée ; le test qui s'en servait pour vérifier qu'une variation ajoute une
+    arme prend les Drones. Le test : un tir, la cible 100, son voisin à 10 la moitié, le lointain rien ; concentré, pareil
+    sur la durée du rayon. VU en capture.
