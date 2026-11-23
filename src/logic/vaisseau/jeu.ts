@@ -5100,6 +5100,8 @@ function concentrerLesFaisceaux(c: ConfigVaisseau, m: Monde, dt: number, ev: Eve
       for (const g of m.ennemis) {
         if (g === x || Math.hypot(g.corps.x - x.corps.x, g.corps.y - x.corps.y) > a.zone.rayon + rayonDe(c, g)) continue
         g.pv -= ronge * part * (a.zone.part ?? 1)
+        // (la zone continue ronge aussi, avec la Corrosion — Keko, 23/11)
+        if (a.corrosif !== undefined) ronger(c, m, g, { ...a.corrosif, dps: 0 }, ev)
         zonePerdue.push(g)
       }
     }
@@ -5519,10 +5521,14 @@ function fragmenter(m: Monde, x: number, y: number, f: { nombre: number; degats:
 function exploser(c: ConfigVaisseau, m: Monde, x: number, y: number, zone: { rayon: number; degats: number }, touche: Ennemi | null, ev: Evenement[], arme?: string, detonation = false): void {
   // (une détonation sur coup critique a son événement à elle — voir `Arme.detonation`)
   ev.push(detonation ? { type: 'detonation', x, y, rayon: zone.rayon } : { type: 'explosionDeZone', x, y, rayon: zone.rayon, ...(arme === undefined ? {} : { arme }) })
+  const a = c.armes.find((x) => x.id === arme)
   for (const e of [...m.ennemis]) {
     if (e === touche || Math.hypot(e.corps.x - x, e.corps.y - y) > zone.rayon + rayonDe(c, e)) continue
-    const critique = critiqueTire(c, m, c.armes.find((x) => x.id === arme))
-    e.pv -= zone.degats * (critique ? facteurDeCritique(c, c.armes.find((x) => x.id === arme)) : 1)
+    // (L'ARME QUI RONGE RONGE AUSSI PAR SES EXPLOSIONS — Keko, 23/11 : « toutes les variations du laser appliquent corrosion
+    // si on a la variation Corrosion » : l'onde de l'Impulsion, à chaque impact et à chaque rebond, la Détonation)
+    if (a?.corrosif !== undefined) ronger(c, m, e, { ...a.corrosif, dps: 0 }, ev)
+    const critique = critiqueTire(c, m, a)
+    e.pv -= zone.degats * (critique ? facteurDeCritique(c, a) : 1)
     ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })
     if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
   }

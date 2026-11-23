@@ -8608,3 +8608,10 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   et s'éteint, des crépitements secs qui s'espacent ; mesuré, PAS ÉCOUTÉ. Texte (de moi) : « La balle laisse un sillon
   électrique qui blesse les ennemis. » Le test : une seconde dans le sillon, 30 (le tiers de 100) ; avec le gel, gelé.
   VU en capture, avec et sans Cryogénique.
+- LA CORROSION GAGNE TOUTES LES VARIATIONS DU LASER (Keko, 23/11 : « assure-toi que toutes les variations du laser
+  appliquent corrosion si on a la variation Corrosion — ricochet, explosions etc. ») : VÉRIFIÉ — le tir, ses rebonds, le
+  Double laser, le rayon concentré et sa chaîne rongeaient ; NI LES EXPLOSIONS (l'onde de l'Impulsion, à chaque impact et
+  rebond ; la Détonation) NI LA ZONE CONTINUE de l'Impulsion sous Concentration ne rongeaient. Maintenant `exploser` ronge
+  tout ce qu'elle touche quand son arme est corrosive, et la zone continue aussi. Le test, sept cas (la cible, un voisin
+  dans l'onde, un troisième atteint par la détonation ou le second rebond) : tir R--, Impulsion RR-, Ricochet RRR,
+  Détonation RRR, Concentration R--, Concentration + Impulsion RR-, Concentration + Ricochet RRR.

@@ -3515,6 +3515,31 @@ for (const vortex of [true, false]) {
   verifier(`le sillon : une seconde dedans, ${sec.perdu % 1000} (30) ; après, ${Math.floor(sec.perdu / 1000)} de plus (au plus la fin du sillon) ; sans gel, gelé ${sec.gele} ; avec, gelé ${gele.gele}`, Math.abs((sec.perdu % 1000) - 30) <= 1 && Math.floor(sec.perdu / 1000) <= 30 && !sec.gele && gele.gele)
 }
 
+// LA CORROSION GAGNE TOUTES LES VARIATIONS DU LASER (Keko, 23/11 : « toutes les variations du laser appliquent corrosion si
+// on a la variation Corrosion — ricochet, explosions… ») : la cible, un voisin dans l'onde de l'Impulsion, un insecte plus
+// loin où le Ricochet rebondit ; le tir, le rayon concentré, la Détonation (tout critique) — chacun ronge tous ceux qu'il
+// touche
+{
+  const ronges = (sorte: string): string => {
+    const laser = { id: 'laser', cadence: 99, degats: 100, portee: 120, vitesse: 420, vie: 0.7, dispersion: 0, guide: false, tousSens: true, infaillible: true, corrosif: { duree: 3, bonus: 0.35 }, ...(sorte === 'impulsion' || sorte === 'concentre-impulsion' ? { zone: { rayon: 16, part: 0.5 } } : {}), ...(sorte === 'ricochet' || sorte === 'concentre-ricochet' ? { ricochet: { rebonds: 2, portee: 80, part: 0.7 } } : {}), ...(sorte.startsWith('concentre') ? { concentre: { duree: 0.5 } } : {}), ...(sorte === 'detonation' ? { detonation: { rayon: 24, part: 2 } } : {}) }
+    const cfg = { ...VAISSEAU, coque: 1e9, armes: [laser], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false }, passifs: { ...VAISSEAU.passifs, critique: sorte === 'detonation' ? 1 : 0 } }
+    const w = nouveauMonde(cfg, 5)
+    w.invasion.prochainA = 1e9
+    // (la cible ; un voisin à 12, dans l'onde et la détonation ; un troisième à 23 d'elle — hors de l'onde, 16 + 4, dans la
+    // détonation, 24 + 4 —, à 11 du voisin : le rebond y va, plutôt que de revenir sur la cible, à 12)
+    const ins = [[60, 0], [60, 12], [60, 23]].map(([x, y], k): Ennemi => ({ id: 2100 + k, corps: { ...nouveauVaisseau(), x, y }, pv: 1e6, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9 }))
+    w.ennemis.push(...ins)
+    w.verrou = 2100
+    for (let i = 0; i < 40; i++) avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+    return ins.map((e) => (e.acide !== undefined && e.acide.jusque > w.t ? 'R' : '-')).join('')
+  }
+  // (ce qu'on attend : la cible toujours ; le voisin par l'onde, la détonation ou le rebond ; le troisième par la détonation
+  // ou le second rebond)
+  const attendu: Record<string, string> = { tir: 'R--', impulsion: 'RR-', ricochet: 'RRR', detonation: 'RRR', concentre: 'R--', 'concentre-impulsion': 'RR-', 'concentre-ricochet': 'RRR' }
+  const vu = Object.keys(attendu).map((k) => [k, ronges(k)] as const)
+  verifier(`la corrosion gagne toutes les variations du laser (R rongé) : ${vu.map(([k, v]) => `${k} ${v} (${attendu[k]})`).join(', ')}`, vu.every(([k, v]) => v === attendu[k]))
+}
+
 // TOUCHÉ, ON TRAVERSE LES INSECTES (Keko, 22/11 : « quand on est touché on est invincible un court instant ; je voudrais
 // qu'on traverse aussi les ennemis ») : le temps qu'il clignote, un insecte posé sur lui ne l'écarte pas ; après, si ; une
 // roche l'arrête toujours
