@@ -384,7 +384,7 @@ export const MUTATIONS: Mutation[] = [
   // (CORROSIF, À LA PLACE DE CRYOGÉNIQUE — Keko, 23/11 : « plutôt que cryogénie, on va donner un effet corrosif au laser » :
   // ce qu'il touche est rongé 3 s, il perd 35 % de plus de toutes les sources — la corrosion des mines de la Vouivre ; voir
   // `Arme.corrosif`)
-  variation('laser-corrosif', 'laser', 'Corrosif', 'Les lasers rongent ce qu’ils touchent, qui subit plus de dégâts de toutes parts.', changerA('laser', (a) => ({ ...a, corrosif: { duree: 3, bonus: 0.35 } }))),
+  variation('laser-corrosif', 'laser', 'Corrosion', 'Les lasers rongent ce qu’ils touchent, qui subit plus de dégâts de toutes parts.', changerA('laser', (a) => ({ ...a, corrosif: { duree: 3, bonus: 0.35 } }))),
   // LA MITRAILLEUSE
   variation('mitraille-jumelee', 'mitraille', 'Canons jumelés', 'Chaque tir part en double : deux balles côte à côte.', changerA('mitraille', V.gerbe(2, 0.12, 0.7))),
   variation('mitraille-tourelle', 'mitraille', 'Tourelle', 'Une mitrailleuse arrose tout autour du vaisseau.', ajouterA('mitraille', (a) => [ajoutee(a, 9, { cadence: a.cadence * 0.9, degats: fois(a, 0.6), portee: a.portee * 0.9 })])),
