@@ -2293,6 +2293,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    */
   function cartesDuChoix(ch: Choix, autre: Autre | null): Talent[] {
     if (estInvite) return distant.choix?.enCours.find((x) => x.k === maPlace)?.cartes ?? []
+    // (`&montrer=id,id,id` : CES CARTES SPÉCIALES à chaque choix, pour les juger — Keko, 23/11 : « t'es sûr que ça loge
+    // sur les cartes ? »)
+    const montrees = (parametres.get('montrer') ?? '').split(',').map((id) => MUTATIONS.find((x) => x.id === id.trim())).filter((mu) => mu !== undefined)
+    if (montrees.length > 0) return montrees.map((mu) => carteSpeciale(mu))
     const conf = autre !== null ? autre.ecran.CONF : CONF
     const modele = autre !== null ? autre.modele : flotte.actif
     // (LES SPÉCIALES DÉJÀ PRISES par ce pilote — voir `MUTATIONS` ; `&speciale` : une spéciale due à chaque premier choix, pour les juger)

@@ -371,23 +371,23 @@ export const MUTATIONS: Mutation[] = [
   // que tous les ennemis à portée sont touchés ; l'effet de portée du laser se répercute sur la taille de la zone » ; « la
   // zone inflige un pourcentage des dégâts » : 16 de rayon — la carte « Portée » l'agrandit —, la moitié des dégâts du tir ;
   // avec Concentration, une zone continue tout le temps du rayon — voir `Arme.zone.part`, `Arme.concentre`)
-  variation('laser-impulsion', 'laser', 'Impulsion', 'Chaque laser libère une onde qui touche aussi les ennemis autour de sa cible.', changerA('laser', (a) => ({ ...a, zone: { rayon: 16, part: 0.5 } }))),
+  variation('laser-impulsion', 'laser', 'Impulsion', 'Chaque tir libère une onde de choc.', changerA('laser', (a) => ({ ...a, zone: { rayon: 16, part: 0.5 } }))),
   // (LA DÉTONATION, À LA PLACE DES DRONES — Keko, 23/11 : « pas fan du drone » ; « dans chaque variation d'armes, une qui se
   // déclenche en cas de coup critique : une explosion dans la zone, 200 % des dégâts du critique, qui peut elle aussi être
   // critique » : 24 de rayon, la carte « Portée » l'agrandit — voir `Arme.detonation`)
-  variation('laser-detonation', 'laser', 'Détonation', 'Un coup critique du laser détone : une explosion d’énergie frappe tout autour de deux fois ses dégâts.', changerA('laser', (a) => ({ ...a, detonation: { rayon: 24, part: 2 } }))),
+  variation('laser-detonation', 'laser', 'Détonation', 'Les coups critiques libèrent une puissante explosion.', changerA('laser', (a) => ({ ...a, detonation: { rayon: 24, part: 2 } }))),
   variation('laser-perforant', 'laser', 'Perforant', 'Les lasers traversent les ennemis et touchent toute leur ligne.', changerA('laser', V.perforant)),
-  variation('laser-ricochet', 'laser', 'Ricochet', 'Chaque laser rebondit sur deux autres ennemis proches.', changerA('laser', V.ricochet)),
+  variation('laser-ricochet', 'laser', 'Ricochet', 'Les tirs rebondissent sur les ennemis proches.', changerA('laser', V.ricochet)),
   // (LE LASER CONCENTRÉ, À LA PLACE DE LA RAFALE — Keko, 23/11 : la rafale « pas fou » — trois lasers en éventail, puis trois
   // à la suite sur une même cible, puis quatre d'une aile à l'autre, voir `Arme.rafale`, gardée — ; « à la place d'un tir
   // de laser unique, on concentre un rayon pendant un court instant sur la cible, et le temps total de concentration
   // inflige plus de dégâts qu'un seul tir » : chaque tir devient un rayon accroché 0,5 s, qui ronge 135 % d'un tir — voir
   // `Arme.concentre`)
-  variation('laser-concentre', 'laser', 'Concentration', 'Chaque tir devient un rayon concentré un instant sur sa cible.', changerA('laser', (a) => ({ ...a, concentre: { duree: 0.5 }, degats: fois(a, 1.35) }))),
+  variation('laser-concentre', 'laser', 'Concentration', 'Transforme le tir en un rayon puissant.', changerA('laser', (a) => ({ ...a, concentre: { duree: 0.5 }, degats: fois(a, 1.35) }))),
   // (CORROSIF, À LA PLACE DE CRYOGÉNIQUE — Keko, 23/11 : « plutôt que cryogénie, on va donner un effet corrosif au laser » :
   // ce qu'il touche est rongé 3 s, il perd 35 % de plus de toutes les sources — la corrosion des mines de la Vouivre ; voir
   // `Arme.corrosif`)
-  variation('laser-corrosif', 'laser', 'Corrosion', 'Les lasers rongent ce qu’ils touchent, qui subit plus de dégâts de toutes parts.', changerA('laser', (a) => ({ ...a, corrosif: { duree: 3, bonus: 0.35 } }))),
+  variation('laser-corrosif', 'laser', 'Corrosion', 'Les tirs appliquent corrosion.', changerA('laser', (a) => ({ ...a, corrosif: { duree: 3, bonus: 0.35 } }))),
   // LA MITRAILLEUSE
   variation('mitraille-jumelee', 'mitraille', 'Canons jumelés', 'Chaque tir part en double : deux balles côte à côte.', changerA('mitraille', V.gerbe(2, 0.12, 0.7))),
   variation('mitraille-tourelle', 'mitraille', 'Tourelle', 'Une mitrailleuse arrose tout autour du vaisseau.', ajouterA('mitraille', (a) => [ajoutee(a, 9, { cadence: a.cadence * 0.9, degats: fois(a, 0.6), portee: a.portee * 0.9 })])),

@@ -8495,3 +8495,10 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     secousse, une vibration. LE SON (`detonation`) : un coup grave saturé qui tombe de 140 à 40 Hz, un zap électrique qui
     plonge de 1 800 à 180 Hz, un claquement d'air, un grésillement qui s'espace ; mesuré (crête 0,42), PAS ÉCOUTÉ.
   - Les Drones (`laser-drones`) sont retirés. VU en capture (critique forcé) : les explosions vertes, 135 puis 405.
+  - LES TEXTES DES CARTES DU LASER, COURTS (Keko, 23/11 : « t'es sûr que ça loge sur les cartes ? ») : VU en capture,
+    Impulsion, Détonation et Corrosion étaient coupés (une carte tient cinq lignes d'une quinzaine de lettres). Les
+    textes de Keko : Impulsion « Chaque tir libère une onde de choc. », Détonation « Les coups critiques libèrent une
+    puissante explosion. », Ricochet « Les tirs rebondissent sur les ennemis proches. », Concentration « Transforme le
+    tir en un rayon puissant. », Corrosion « Les tirs appliquent corrosion. » ; Perforant garde le sien. Les six
+    revues en capture : toutes tiennent. `&montrer=id,id,id` (avec `&choix`) force ces cartes spéciales à chaque choix,
+    pour juger leur texte.
