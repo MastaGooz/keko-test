@@ -1160,17 +1160,6 @@ export type Arme = {
    * fois ; refait à chaque image, la chaîne suit la mêlée.)
    */
   concentre?: { duree: number }
-  /**
-   * LE BALAYAGE (la carte « Balayage » du canon laser, à la place de « Perforant » — Keko, 23/11 : « OK pour le balayage,
-   * mais je veux qu'un laser parte de chaque aile et fasse un arc de cercle devant le vaisseau ») : toutes les `tous`
-   * secondes au plus, dès que quelque chose est à portée devant le nez, UNE LAME LASER PART DE CHAQUE AILE — de la bouche
-   * du laser de ce côté — et tourne en `duree` secondes, de son flanc jusqu'au-delà du nez (`croise`, en radians : les deux
-   * lames se croisent un peu devant), à la portée de l'arme (la carte « Portée » l'allonge). Tout ce qu'une lame balaie
-   * perd `part` fois les dégâts de l'arme, une fois par lame ; chaque coup peut être critique (et détoner, voir
-   * `detonation`), et ronge, gèle ou brûle comme un tir. L'état est `Monde.fauches` (le nom `balayage` est pris par le
-   * rayon thermique).
-   */
-  fauche?: { tous: number; duree: number; part: number; croise: number }
   perforant?: boolean
   /**
    * LE RAILGUN DE L'EMPIRE (Keko, 22/11 : « un projectile très rapide qui laisse une traînée — juste visuelle — et qui
@@ -1413,9 +1402,6 @@ export type Monde = {
   rafaleDesAiles: number
   /** LES RAYONS CONCENTRÉS (voir `Arme.concentre`) : leur arme, leur cible, leur naissance, ce qu'ils rongent par seconde. */
   faisceaux: { arme: number; cible: number; nee: number; dps: number; /** Ses rebonds de l'image (voir `Arme.concentre`). */ chaine?: number[] }[]
-  /** LES LAMES DU BALAYAGE (voir `Arme.fauche`), et l'instant où le prochain peut partir. */
-  fauches: Fauche[]
-  faucheA: number
   /** LES SCIES EN VOL (voir `Arme.scie`) ; une arme dont la scie n'y est pas l'a à bord. */
   scies: Scie[]
   /** LES BALISES POSÉES (voir `Arme.balise`). */
@@ -1587,8 +1573,6 @@ export type Evenement =
   | { type: 'harponPlante'; x: number; y: number; id: number }
   /** Un coup critique détone (voir `Arme.detonation`). */
   | { type: 'detonation'; x: number; y: number; rayon: number }
-  /** Les lames du balayage partent (voir `Arme.fauche`). */
-  | { type: 'fauche'; x: number; y: number }
   | { type: 'harponCasse'; x: number; y: number }
   /** La balle du railgun traverse un insecte (voir `Arme.balle`), là où il est, filant à `cap`. */
   | { type: 'balleTraverse'; x: number; y: number; cap: number }
@@ -1667,7 +1651,7 @@ export function nouveauVaisseau(): Vaisseau {
 }
 
 export function nouveauMonde(c: ConfigVaisseau = VAISSEAU, graine = 1): Monde {
-  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, coqueMax: c.coque, tableau: tableauVide(), bouclier: c.bouclier.points, plaques: Array.from({ length: c.plaques }, () => true), intouchableJusque: -1, corruption: 0, dephaseJusque: -100, plaqueCasseeA: 0, renaitJusque: -100, rochesPrises: [], toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, prochaineDeriveA: c.derive.premier, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, vies: c.invasion.vies, miniBoss: 0, boss: 0, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, harpons: [], rafales: [], rafaleDesAiles: 0, faisceaux: [], fauches: [], faucheA: 0, balisesLaser: [], scies: [], balises: [], givres: [], tornades: [], novas: [], echardes: [], spheres: [], puits: [], meteores: [], tentacules: [], nuees: [], rejetons: [], flaquesAcides: [], mines: [], fleaux: [], parasites: [], vrilles: [], liens: [], oeufs: [], brochettes: [], miniVers: [], hypercubes: [], des: [], coupes: [], rayonVu: null }
+  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, coqueMax: c.coque, tableau: tableauVide(), bouclier: c.bouclier.points, plaques: Array.from({ length: c.plaques }, () => true), intouchableJusque: -1, corruption: 0, dephaseJusque: -100, plaqueCasseeA: 0, renaitJusque: -100, rochesPrises: [], toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, prochaineDeriveA: c.derive.premier, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, vies: c.invasion.vies, miniBoss: 0, boss: 0, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, harpons: [], rafales: [], rafaleDesAiles: 0, faisceaux: [], balisesLaser: [], scies: [], balises: [], givres: [], tornades: [], novas: [], echardes: [], spheres: [], puits: [], meteores: [], tentacules: [], nuees: [], rejetons: [], flaquesAcides: [], mines: [], fleaux: [], parasites: [], vrilles: [], liens: [], oeufs: [], brochettes: [], miniVers: [], hypercubes: [], des: [], coupes: [], rayonVu: null }
 }
 
 /** Un hachage entier déterministe (celui de pixelfx), et un réel dans [0, 1) qui en sort. */
@@ -5099,89 +5083,6 @@ function concentrerLesFaisceaux(c: ConfigVaisseau, m: Monde, dt: number, ev: Eve
     return e.pv > 0
   })
 }
-/**
- * UNE LAME DU BALAYAGE (voir `Arme.fauche`) : son arme, son côté (−1 l'aile gauche, 1 la droite), sa bouche en unités du
- * vaisseau (x vers le nez, y vers la droite), sa naissance, et ce qu'elle a déjà touché — une fois par lame.
- */
-export type Fauche = { arme: number; cote: number; aile: Vecteur; nee: number; touches: number[] }
-/** L'ANGLE D'UNE LAME par rapport au nez, à `age` de sa naissance : de son flanc, elle tourne jusqu'à croiser l'autre devant. */
-export function angleDeLaFauche(fa: NonNullable<Arme['fauche']>, cote: number, age: number): number {
-  const u = Math.max(0, Math.min(1, age / fa.duree))
-  return cote * (Math.PI / 2 - (Math.PI / 2 + fa.croise) * u * u * (3 - 2 * u))
-}
-/** LA LAME D'UN BALAYAGE À CET INSTANT (voir `Arme.fauche`) : de sa bouche, à la portée de l'arme, et son angle par rapport au nez ; `null` finie. */
-export function lameDeLaFauche(c: ConfigVaisseau, m: Monde, f: Fauche): { x0: number; y0: number; x1: number; y1: number; angle: number; u: number } | null {
-  const a = c.armes[f.arme]
-  const fa = a?.fauche
-  if (a === undefined || fa === undefined || m.t - f.nee > fa.duree) return null
-  const v = m.vaisseau
-  const x0 = v.x + Math.cos(v.cap) * f.aile.x - Math.sin(v.cap) * f.aile.y
-  const y0 = v.y + Math.sin(v.cap) * f.aile.x + Math.cos(v.cap) * f.aile.y
-  const angle = angleDeLaFauche(fa, f.cote, m.t - f.nee)
-  return { x0, y0, x1: x0 + Math.cos(v.cap + angle) * a.portee, y1: y0 + Math.sin(v.cap + angle) * a.portee, angle, u: (m.t - f.nee) / fa.duree }
-}
-/** LE BALAYAGE DU LASER (voir `Arme.fauche`) : les lames fauchent ce qu'elles balaient ; prêtes, et quelque chose devant, elles partent. */
-function faucherAuLaser(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]): void {
-  const v = m.vaisseau
-  const lasers = c.armes.flatMap((a, i) => (a.fauche === undefined ? [] : [i]))
-  if (lasers.length === 0 || m.phase !== 'vol') {
-    m.fauches = []
-    return
-  }
-  // (CE QUE CHAQUE LAME A BALAYÉ DEPUIS L'IMAGE D'AVANT : l'angle de l'insecte, vu de sa bouche, entre ses deux angles — à
-  // son rayon près —, et à sa portée ; une fois par lame)
-  const touches: Ennemi[] = []
-  for (const f of m.fauches) {
-    const a = c.armes[f.arme]
-    const fa = a?.fauche
-    if (a === undefined || fa === undefined) continue
-    const age = m.t - f.nee
-    const avant = angleDeLaFauche(fa, f.cote, age - dt)
-    const ici = angleDeLaFauche(fa, f.cote, age)
-    const bas = Math.min(avant, ici)
-    const haut = Math.max(avant, ici)
-    const x0 = v.x + Math.cos(v.cap) * f.aile.x - Math.sin(v.cap) * f.aile.y
-    const y0 = v.y + Math.sin(v.cap) * f.aile.x + Math.cos(v.cap) * f.aile.y
-    for (const e of [...m.ennemis]) {
-      if (f.touches.includes(e.id) || e.pv <= 0 || !m.ennemis.includes(e)) continue
-      const r = rayonDe(c, e)
-      const d = Math.hypot(e.corps.x - x0, e.corps.y - y0)
-      if (d > a.portee + r) continue
-      const marge = d <= r ? Math.PI : Math.asin(r / d)
-      const psi = ecartDAngle(v.cap, Math.atan2(e.corps.y - y0, e.corps.x - x0))
-      if (psi < bas - marge || psi > haut + marge) continue
-      f.touches.push(e.id)
-      const critique = critiqueTire(c, m, a)
-      const degats = a.degats * fa.part * (critique ? facteurDeCritique(c, a) : 1)
-      if (a.gel !== undefined) geler(m, e, a.gel.duree, a.gel.ralenti, ev)
-      if (a.incendiaire !== undefined) enflammer(m, e, a.incendiaire)
-      if (a.corrosif !== undefined) ronger(m, e, { ...a.corrosif, dps: 0 }, ev)
-      e.pv -= degats
-      ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })
-      touches.push(e)
-      if (critique && a.detonation !== undefined) exploser(c, m, e.corps.x, e.corps.y, { rayon: a.detonation.rayon, degats: degats * a.detonation.part }, e, ev, a.id, true)
-    }
-  }
-  for (const e of touches) if (e.pv <= 0 && m.ennemis.includes(e)) abattreLEnnemi(c, m, e, ev)
-  m.fauches = m.fauches.filter((f) => {
-    const fa = c.armes[f.arme]?.fauche
-    return fa !== undefined && m.t - f.nee < fa.duree
-  })
-  // (PRÊTES, ET QUELQUE CHOSE À PORTÉE DEVANT LE NEZ : une lame de chaque aile — de la bouche du laser de ce côté ; un seul
-  // laser, sa bouche en miroir de l'autre côté)
-  const a0 = c.armes[lasers[0]]
-  const fa0 = a0.fauche!
-  if (m.fauches.length > 0 || m.t < m.faucheA) return
-  if (!m.ennemis.some((e) => Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= a0.portee + rayonDe(c, e) && Math.abs(ecartDAngle(v.cap, Math.atan2(e.corps.y - v.y, e.corps.x - v.x))) <= Math.PI / 2)) return
-  for (const cote of [-1, 1]) {
-    const i = lasers.find((j) => Math.sign(c.armes[j].bouche?.y ?? 0) === cote) ?? lasers[0]
-    const bo = c.armes[i].bouche
-    const aile = bo !== undefined && Math.sign(bo.y) === cote ? { x: bo.x, y: bo.y } : { x: bo?.x ?? 0, y: cote * Math.max(Math.abs(bo?.y ?? 0), c.rayon * 0.6) }
-    m.fauches.push({ arme: i, cote, aile, nee: m.t, touches: [] })
-  }
-  m.faucheA = m.t + fa0.tous
-  ev.push({ type: 'fauche', x: v.x, y: v.y })
-}
 /** Une balise laser de l'Empire (voir `Arme.lien`) : en vol, son élan et son temps de vol ; posée, l'instant où elle s'est posée. */
 export type BaliseLaser = { arme: number; x: number; y: number; vx: number; vy: number; nee: number; vol: number; posee: number | null }
 /** CE QUE LE RAYON D'UNE BALISE LASER TRAVERSE (voir `Arme.lien`) : du vaisseau à elle, à son épaisseur. */
@@ -6089,7 +5990,6 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   canaliserLeRayon(c, m, dt, ev)
   harponner(c, m, dt, ev)
   concentrerLesFaisceaux(c, m, dt, ev)
-  faucherAuLaser(c, m, dt, ev)
   menerLesBalisesLaser(c, m, dt, ev)
   mener_L_Electricite(c, m, dt, ev)
   menerLesScies(c, m, dt, ev)
@@ -6600,7 +6500,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
  * La règle d'un vaisseau ne change pas : le pilote dont c'est le tour est DANS le monde — ses champs sont ceux de
  * `Monde` —, les autres attendent dans `equipage.pilotes` ; `prendreLaMain` les échange.
  */
-export const CHAMPS_DU_PILOTE = ['phase', 'vaisseau', 'coque', 'coqueMax', 'tableau', 'bouclier', 'plaques', 'intouchableJusque', 'corruption', 'dephaseJusque', 'plaqueCasseeA', 'renaitJusque', 'toucheA', 'forage', 'forages', 'tirs', 'obus', 'armesA', 'extraction', 'sorti', 'boostA', 'bombes', 'charges', 'verrou', 'crache', 'drones', 'tourelles', 'flaques', 'balayage', 'rayonVu', 'canal', 'harpons', 'rafales', 'rafaleDesAiles', 'faisceaux', 'fauches', 'faucheA', 'balisesLaser', 'scies', 'balises', 'givres', 'tornades', 'novas', 'echardes', 'spheres', 'puits', 'meteores', 'tentacules', 'nuees', 'rejetons', 'flaquesAcides', 'mines', 'fleaux', 'parasites', 'brochettes', 'hypercubes', 'coupes', 'des', 'oeufs', 'miniVers', 'liens', 'vrilles'] as const
+export const CHAMPS_DU_PILOTE = ['phase', 'vaisseau', 'coque', 'coqueMax', 'tableau', 'bouclier', 'plaques', 'intouchableJusque', 'corruption', 'dephaseJusque', 'plaqueCasseeA', 'renaitJusque', 'toucheA', 'forage', 'forages', 'tirs', 'obus', 'armesA', 'extraction', 'sorti', 'boostA', 'bombes', 'charges', 'verrou', 'crache', 'drones', 'tourelles', 'flaques', 'balayage', 'rayonVu', 'canal', 'harpons', 'rafales', 'rafaleDesAiles', 'faisceaux', 'balisesLaser', 'scies', 'balises', 'givres', 'tornades', 'novas', 'echardes', 'spheres', 'puits', 'meteores', 'tentacules', 'nuees', 'rejetons', 'flaquesAcides', 'mines', 'fleaux', 'parasites', 'brochettes', 'hypercubes', 'coupes', 'des', 'oeufs', 'miniVers', 'liens', 'vrilles'] as const
 /** Un pilote qui attend son tour : ses champs du monde, l'instant de son retour s'il est abattu, les morsures qu'il doit encaisser. */
 export type Pilote = Pick<Monde, (typeof CHAMPS_DU_PILOTE)[number]> & { retourA: number; morsures: { x: number; y: number; degats: number }[] }
 /** Les pilotes (celui dont c'est le tour, `actif`, a sa place gardée mais périmée : il est dans le monde). */

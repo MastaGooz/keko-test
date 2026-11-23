@@ -1571,22 +1571,6 @@ const RECETTES = {
       }
     },
   },
-  /**
-   * LE BALAYAGE DU LASER (Keko, 23/11 — voir `Arme.fauche`) : deux lames, une à gauche, une à droite : chacune s'allume
-   * d'un « zing » électrique qui monte (260 → 780 Hz, ses harmoniques qui battent) et fend l'air d'un souffle qui s'ouvre
-   * puis retombe, comme une lame qui passe ; un coup grave dessous
-   */
-  fauche: {
-    duree: 0.8, niveau: 0.34, salle: [0.35, 0.14], variantes: 3,
-    faire: (m, h) => {
-      note(m, 0, 0.35, 0, { f: 110, glisse: { vers: 55, en: 0.12 }, a: 0.003, d: 0.15, partiels: CORPS, sature: 1.8 })
-      for (const pan of [-0.55, 0.55]) {
-        const f = 260 * (0.95 + 0.1 * h.next())
-        note(m, 0.01, 0.7, pan, { f, glisse: { vers: f * 3, en: 0.35, droit: true }, a: 0.04, d: 0.5, battement: 12, partiels: [[1, 1, 1], [2, 0.5, 0.8], [3, 0.3, 0.6]] })
-        souffle(m, h, 0, 0.9, pan, { f: 500, glisse: { vers: 3200, en: 0.3, droit: true }, q: 1.2, bande: true, a: 0.12, d: 0.35 })
-      }
-    },
-  },
 } satisfies Record<string, Recette>
 
 export type Son = keyof typeof RECETTES

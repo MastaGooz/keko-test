@@ -376,10 +376,7 @@ export const MUTATIONS: Mutation[] = [
   // déclenche en cas de coup critique : une explosion dans la zone, 200 % des dégâts du critique, qui peut elle aussi être
   // critique » : 24 de rayon, la carte « Portée » l'agrandit — voir `Arme.detonation`)
   variation('laser-detonation', 'laser', 'Détonation', 'Les coups critiques libèrent une puissante explosion.', changerA('laser', (a) => ({ ...a, detonation: { rayon: 24, part: 2 } }))),
-  // (LE BALAYAGE, À LA PLACE DE PERFORANT — Keko, 23/11 : « pas fan de la perforation » ; « OK pour le balayage, mais je
-  // veux qu'un laser parte de chaque aile et fasse un arc de cercle devant le vaisseau » : toutes les 6 s, deux lames qui
-  // se croisent devant en 0,45 s, deux fois les dégâts du laser — voir `Arme.fauche`)
-  variation('laser-balayage', 'laser', 'Balayage', 'Toutes les 6 s, deux lasers balaient tout ce qui est devant.', changerA('laser', (a) => ({ ...a, fauche: { tous: 6, duree: 0.45, part: 2, croise: 0.2 } }))),
+  variation('laser-perforant', 'laser', 'Perforant', 'Les lasers traversent les ennemis et touchent toute leur ligne.', changerA('laser', V.perforant)),
   variation('laser-ricochet', 'laser', 'Ricochet', 'Les tirs rebondissent sur les ennemis proches.', changerA('laser', V.ricochet)),
   // (LE LASER CONCENTRÉ, À LA PLACE DE LA RAFALE — Keko, 23/11 : la rafale « pas fou » — trois lasers en éventail, puis trois
   // à la suite sur une même cible, puis quatre d'une aile à l'autre, voir `Arme.rafale`, gardée — ; « à la place d'un tir

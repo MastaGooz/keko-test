@@ -3406,26 +3406,6 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   verifier(`la détonation : tout critique, ${avec.map((x) => x.toFixed(0)).join(' / ')} (${(100 * f).toFixed(0)} / ${(200 * f * f).toFixed(0)} / 0) ; sans critique, ${sans.map((x) => x.toFixed(0)).join(' / ')} (100 / 0 / 0)`, f > 1 && Math.abs(avec[1] - 200 * f * f) < 0.5 && avec[2] === 0 && sans[0] === 100 && sans[1] === 0 && sans[2] === 0)
 }
 
-// LE BALAYAGE (Keko, 23/11 : « un laser part de chaque aile et fait un arc de cercle devant le vaisseau » — voir
-// `Arme.fauche`) : devant à gauche et devant à droite, deux fois les dégâts, une fois chacun ; droit devant, les deux lames ;
-// derrière et trop loin, rien ;
-// pas de second balayage avant 6 s
-{
-  const aile = (y: number) => ({ id: 'laser', cadence: 2.2, degats: 100, portee: 120, vitesse: 420, vie: 0.7, dispersion: 0, guide: false, infaillible: true, bouche: { x: 0, y }, fauche: { tous: 6, duree: 0.45, part: 2, croise: 0.2 } })
-  const cfg = { ...VAISSEAU, coque: 1e9, armes: [aile(-4), aile(4)], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false }, passifs: { ...VAISSEAU.passifs, critique: 0 } }
-  const w = nouveauMonde(cfg, 5)
-  w.invasion.prochainA = 1e9
-  w.armesA = [1e9, 1e9]
-  // (le nez vers la droite ; le plus proche droit devant, pour qu'il y reste — les deux lames s'y croisent)
-  w.vaisseau.cap = 0
-  const ins = [[60, -30], [60, 30], [-100, 0], [200, 0], [40, 0]].map(([x, y], k): Ennemi => ({ id: 1400 + k, corps: { ...nouveauVaisseau(), x, y }, pv: 1e6, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9 }))
-  w.ennemis.push(...ins)
-  let lames = 0
-  for (let i = 0; i < 180; i++) lames += avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements.filter((e) => e.type === 'fauche').length
-  const perdu = ins.map((e) => 1e6 - e.pv)
-  verifier(`le balayage : ${perdu.join(' / ')} (200 / 200 / 0 / 0 / 400 — droit devant, les deux lames), ${lames} balayage en 3 s`, perdu[0] === 200 && perdu[1] === 200 && perdu[2] === 0 && perdu[3] === 0 && perdu[4] === 400 && lames === 1)
-}
-
 // TOUCHÉ, ON TRAVERSE LES INSECTES (Keko, 22/11 : « quand on est touché on est invincible un court instant ; je voudrais
 // qu'on traverse aussi les ennemis ») : le temps qu'il clignote, un insecte posé sur lui ne l'écarte pas ; après, si ; une
 // roche l'arrête toujours

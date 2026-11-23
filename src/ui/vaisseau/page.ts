@@ -12,7 +12,7 @@
  */
 import './vaisseau.css'
 import * as noyau from 'pixelfx'
-import { ennemisDuLien, lameDeLaFauche, angleDeLaFauche, ajouterUnPilote, avancerLEquipage, prendreLaMain, type SorteDInsecte, SORTES_D_INSECTES, gabaritDInsecte, gemmesDuButin, butinDeLaRoche, pointDeRetour, rayonDe, rocheDeLaTempete, vieMultipliee, degatsMultiplies, placeDeLEcharde, frontDeLaNova, ancreDansLeMonde, zoneDuDe, coupeDUnCube, formeDeLaCoupe, liesAuDrain, encaisser, type Ennemi, type Evenement, type Monde, impactDuRayon, asteroidesVisibles, avancerLeMonde, finDuTrio, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur, xpDuNiveau, ennemiLePlusProche, ennemiVerrouille, verrouiller, angleDuBalayage, aPlusieurs, alliesAuRetour, recompenseDeFin, type LigneDeRecompense } from '../../logic/vaisseau/jeu.ts'
+import { ennemisDuLien, ajouterUnPilote, avancerLEquipage, prendreLaMain, type SorteDInsecte, SORTES_D_INSECTES, gabaritDInsecte, gemmesDuButin, butinDeLaRoche, pointDeRetour, rayonDe, rocheDeLaTempete, vieMultipliee, degatsMultiplies, placeDeLEcharde, frontDeLaNova, ancreDansLeMonde, zoneDuDe, coupeDUnCube, formeDeLaCoupe, liesAuDrain, encaisser, type Ennemi, type Evenement, type Monde, impactDuRayon, asteroidesVisibles, avancerLeMonde, finDuTrio, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur, xpDuNiveau, ennemiLePlusProche, ennemiVerrouille, verrouiller, angleDuBalayage, aPlusieurs, alliesAuRetour, recompenseDeFin, type LigneDeRecompense } from '../../logic/vaisseau/jeu.ts'
 import { PIECES, ETALONS as ETALONS_DU_BANC, acheter, ajouterLesPiecesDEssai, capacite, poidsTotal, POIDS_SERIE, configDuHangar, demonter, demonterA, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, montantCourt, monteeA, monter, monterA, peutAcheter, peutMonter, perdreLesMontees, estDeBase, exemplaires, libres, pieceDe, piecesDe, placeLourde, possede, aimantMonte, radarMonte, type Jauge, type Piece, type Sorte } from '../../logic/vaisseau/hangar.ts'
 import { drawWord, spell } from 'pixelfx/fx/ui/_lib'
 import { firePuff, hotFirst, smokePuff } from 'pixelfx/fx/fire/_lib'
@@ -11820,40 +11820,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.ring(o.x, o.y, r, u < 0.4 ? 2 : 1, u < 0.3 ? LASER_VERT[4] : LASER_VERT[3], 0.9 * (1 - u))
       petiller(p, o.x, o.y, o.r, o.g, Math.max(4, Math.round(o.r / 3)), u, DUREE_DE_L_IMPULSION, 1)
     }
-    // LES LAMES DU BALAYAGE (Keko, 23/11 — voir `Arme.fauche`) : de chaque aile, un trait vert épais au cœur blanc qui tourne
-    // jusqu'à croiser l'autre devant ; derrière lui, son sillage — l'arc de cercle qu'il trace au bout de sa portée, qui
-    // pâlit — et des lames fantômes qui le suivent ; il s'allume vite et s'éteint en finissant
-    for (const f of m.fauches) {
-      const l = lameDeLaFauche(CONF, m, f)
-      const fa = CONF.armes[f.arme]?.fauche
-      if (l === null || fa === undefined) continue
-      const L = Math.hypot(l.x1 - l.x0, l.y1 - l.y0) || 1
-      const k = Math.min(1, l.u / 0.08) * Math.min(1, (1 - l.u) / 0.2)
-      const depart = v.cap + angleDeLaFauche(fa, f.cote, 0)
-      const ici = v.cap + l.angle
-      // (le sillage : l'arc parcouru, au bout de la lame, de plus en plus pâle vers son départ)
-      const pas = 0.025
-      const n = Math.max(1, Math.ceil(Math.abs(ici - depart) / pas))
-      for (let j = 0; j <= n; j++) {
-        const an = depart + ((ici - depart) * j) / n
-        const kk = k * (j / n) ** 1.5
-        for (const r of [L, L - 2, L - 4]) p.dot(l.x0 + Math.cos(an) * r, l.y0 + Math.sin(an) * r, r === L ? LASER_VERT[4] : LASER_VERT[3], kk * (r === L ? 0.9 : 0.5))
-        if (j % 4 === 0) p.glow(l.x0 + Math.cos(an) * L, l.y0 + Math.sin(an) * L, 4, LASER_VERT[2], 0.25 * kk)
-      }
-      // (les lames fantômes, juste derrière)
-      for (let g = 1; g <= 3; g++) {
-        const an = v.cap + angleDeLaFauche(fa, f.cote, m.t - f.nee - g * 0.025)
-        p.line(l.x0, l.y0, l.x0 + Math.cos(an) * L, l.y0 + Math.sin(an) * L, LASER_VERT[2], 0.35 * k * (1 - g / 4))
-      }
-      // (la lame : un halo le long, deux bords verts, un cœur blanc)
-      const ux = (l.x1 - l.x0) / L
-      const uy = (l.y1 - l.y0) / L
-      for (let d = 4; d < L; d += 9) p.glow(l.x0 + ux * d, l.y0 + uy * d, 4, LASER_VERT[2], 0.28 * k)
-      for (const o of [-1, 1]) p.line(l.x0 - uy * o, l.y0 + ux * o, l.x1 - uy * o, l.y1 + ux * o, LASER_VERT[3], 0.85 * k)
-      p.line(l.x0, l.y0, l.x1, l.y1, N.WHITE, k)
-      p.glow(l.x0, l.y0, 6, LASER_VERT[3], 0.7 * k)
-      p.glow(l.x1, l.y1, 5, LASER_VERT[4], 0.6 * k)
-    }
     for (const f of m.faisceaux) {
       const a = CONF.armes[f.arme]
       const co = a?.concentre
@@ -11909,7 +11875,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   function dessinerLePlasma(p: Peintre): void {
     for (let i = eclatsDePlasma.length - 1; i >= 0; i--) if (t - eclatsDePlasma[i].t0 > DUREE_DE_L_ECLAT) eclatsDePlasma.splice(i, 1)
     const orbes = m.obus.filter((o) => o.arme === 'plasma')
-    if (orbes.length === 0 && m.faisceaux.length === 0 && m.fauches.length === 0 && impulsionsVertes.length === 0 && m.balisesLaser.length === 0 && m.harpons.length === 0 && cassuresDuHarpon.length === 0 && eclatsDePlasma.length === 0 && rubans.size === 0 && popsDEssaim.length === 0 && m.spheres.length === 0 && m.puits.length === 0 && effondrements.length === 0 && traitsDuRail.length === 0 && trainesDuRailgun.size === 0 && !m.obus.some((o) => o.arme === 'essaim' || o.arme === 'arcane' || o.arme === 'railgun')) return
+    if (orbes.length === 0 && m.faisceaux.length === 0 && impulsionsVertes.length === 0 && m.balisesLaser.length === 0 && m.harpons.length === 0 && cassuresDuHarpon.length === 0 && eclatsDePlasma.length === 0 && rubans.size === 0 && popsDEssaim.length === 0 && m.spheres.length === 0 && m.puits.length === 0 && effondrements.length === 0 && traitsDuRail.length === 0 && trainesDuRailgun.size === 0 && !m.obus.some((o) => o.arme === 'essaim' || o.arme === 'arcane' || o.arme === 'railgun')) return
     p.place(W / 2 - camera.x, centreY() - camera.y)
     dessinerLesSpheres(p)
     dessinerLesPuits(p)
@@ -17619,11 +17585,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
             const a = R.range(0, Math.PI * 2)
             etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(30, 70), Math.sin(a) * R.range(30, 70), R.range(0.12, 0.25), R.next() < 0.5 ? N.WHITE : PLASMA_V[3], 1, 1.5)
           }
-          break
-        case 'fauche':
-          // (LES LAMES DU BALAYAGE PARTENT — voir `Arme.fauche` : leur son, une petite secousse)
-          jouer('fauche', { dx: ev.x - v.x, dy: ev.y - v.y })
-          secousse = Math.max(secousse, 0.15)
           break
         case 'detonation':
           // (UN COUP CRITIQUE DU LASER DÉTONE — Keko, 23/11, voir `Arme.detonation` : l'explosion d'énergie verte —

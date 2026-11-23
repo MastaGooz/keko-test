@@ -8515,20 +8515,8 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     le dégradé de la rareté jusqu'au blanc, un contour d'encre, l'éclat qui passe — `titreEnRelief`), sur les spéciales
     comme sur les cartes de stats ; le sous-titre (« Canon laser », « Nouvelle arme ») passe à plat, d'un ton de la
     rareté éteint vers l'acier. VU en capture.
-- LE BALAYAGE, À LA PLACE DE PERFORANT (Keko, 23/11 : « pas fan de la perforation » ; parmi cinq idées — Surchauffe, Coup
-  de grâce, Surcharge, Éclatement, Balayage — : « OK pour le balayage, mais je veux qu'un laser parte de chaque aile et
-  fasse un arc de cercle devant le vaisseau »).
-  - LA RÈGLE (`Arme.fauche` : `{ tous: 6, duree: 0.45, part: 2, croise: 0.2 }`, `laser-balayage`, `faucherAuLaser`,
-    `Monde.fauches`, `faucheA` ; le nom `balayage` était pris par le rayon thermique) : toutes les 6 s au plus, dès que
-    quelque chose est à portée devant le nez, UNE LAME PART DE CHAQUE AILE — de la bouche du laser de ce côté — et tourne
-    en 0,45 s de son flanc jusqu'au-delà du nez : les deux lames se croisent un peu devant (0,2 rad). Longue de la portée
-    de l'arme (la carte « Portée » l'allonge). Ce qu'une lame balaie perd deux fois les dégâts du laser, une fois par
-    lame (droit devant, les deux) ; critique possible (la Détonation détone), la Corrosion ronge. Ni l'Impulsion ni le
-    Ricochet. Le test : devant à gauche 200, devant à droite 200, droit devant 400, derrière et trop loin rien, un seul
-    balayage en 3 s.
-  - LE DESSIN : chaque lame, un trait au cœur blanc bordé de vert et un halo ; derrière elle trois lames fantômes et son
-    SILLAGE — l'arc de cercle tracé au bout de sa portée, qui pâlit vers son départ. LE SON (`fauche`) : deux « zing »
-    électriques qui montent (260 → 780 Hz), un à gauche, un à droite, et un souffle qui s'ouvre comme une lame qui passe,
-    sur un coup grave léger ; mesuré (crête 0,34, il tient les 0,45 s du geste), PAS ÉCOUTÉ. Une petite secousse.
-  - Texte de la carte (de moi, à rejuger) : « Toutes les 6 s, deux lasers balaient tout ce qui est devant. » — il tient.
-    VU en capture : les deux lames qui partent des ailes et se referment devant le nez.
+- LE BALAYAGE, ESSAYÉ PUIS RETIRÉ (Keko, 23/11 : « c'est une mauvaise idée ; ça revient à créer une nouvelle arme, pas à
+  faire une variation de l'arme actuelle ; rollback ») : toutes les 6 s, une lame laser partait de chaque aile et fauchait
+  devant le nez (`Arme.fauche`, commit 8d5ddc76, retiré par le suivant). LA RÈGLE QUI EN SORT : UNE VARIATION CHANGE LA
+  FAÇON DONT L'ARME TIRE OU CE QUE SON TIR FAIT — elle n'ajoute pas une attaque à côté, avec son propre rythme. Perforant
+  reste en place en attendant son remplaçant.
