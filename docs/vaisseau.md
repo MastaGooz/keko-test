@@ -8550,3 +8550,5 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   ENTIER de sa rareté — les autres cartes « toutes les armes » restent à la moitié (de moi, à rejuger). Le test : un laser
   corrosif sur 400 choix — aucune carte d'état à une arme, 78 corrosions de toutes les armes, ni feu ni givre ; un laser nu,
   aucune.
+- « TIR DOUBLE » S'APPELLE « DOUBLE LASER » (Keko, 23/11 : « tu peux renommer tir double pour double laser ? ») ;
+  l'identifiant reste `laser-double`.

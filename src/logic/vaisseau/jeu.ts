@@ -1161,7 +1161,7 @@ export type Arme = {
    */
   concentre?: { duree: number }
   /**
-   * LES DEUX AILES À LA FOIS (la carte « Tir double » du canon laser, à la place de « Perforant » — Keko, 23/11 : « une
+   * LES DEUX AILES À LA FOIS (la carte « Double laser » — d'abord « Tir double » — du canon laser, à la place de « Perforant » — Keko, 23/11 : « une
    * variation où, à chaque fois qu'on tire, les deux canons des deux ailes tirent en même temps ») : les ailes ne tirent
    * plus à tour de rôle (voir `ConfigVaisseau.alternance`) — au rythme où l'une puis l'autre tirait, TOUTES LES AILES
    * JUMELÉES TIRENT ENSEMBLE, chacune sur sa cible, avec tout ce que le tir porte. La première qui tire entraîne les autres
