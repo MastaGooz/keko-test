@@ -585,7 +585,10 @@ export type Arme = {
   // (… OU EN FORMATION — l'Escorte de l'Empire, Keko, 23/11 : « au lieu de tourner autour du chasseur, qu'elle vole à ses
   // côtés et suive son orientation quand il n'y a pas d'ennemis » : `formation`, sa place au repos dans le repère du
   // vaisseau — x vers le nez, y vers la droite —, qui tourne avec lui ; l'orbite ne sert plus)
-  orbite?: { rayon: number; vitesse: number; phase: number; laisse?: number; vol?: number; braquage?: number; autour?: number; tour?: number; formation?: Vecteur }
+  // (… ET DES AILIERS QUI NE LE QUITTENT PAS — Keko, 23/11, pour la distinguer des drones de la Sentinelle : « on essaie »
+  // l'escorte qui reste toujours en formation, pivote vers sa cible et tire de plus loin, sans partir chasser : `ailier`
+  // — il tient sa place même en combat ; sa cible est un insecte à SA portée de tir, mesurée de lui)
+  orbite?: { rayon: number; vitesse: number; phase: number; laisse?: number; vol?: number; braquage?: number; autour?: number; tour?: number; formation?: Vecteur; ailier?: boolean }
   /**
    * DES TOURELLES POSÉES (l'Ingénieur, Keko, 15/11 : « quelque chose de mécanique, carré, qui pose des petites tours sur
    * son passage ») : l'arme n'est pas sur le vaisseau, il la POSE dans le monde (`Monde.tourelles`, `menerLesTourelles`)
@@ -5288,7 +5291,8 @@ function menerLesDrones(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]
     const d = m.drones[k]
     const o = a.orbite!
     const laisse = o.laisse ?? 120
-    const aLaLaisse = (e: Ennemi): boolean => Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= laisse
+    // (un ailier ne choisit qu'à sa portée de tir, mesurée de lui — voir `orbite.ailier`)
+    const aLaLaisse = (e: Ennemi): boolean => (o.ailier === true ? Math.hypot(e.corps.x - d.x, e.corps.y - d.y) <= a.portee : Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= laisse)
     let cible: Ennemi | undefined = d.cible === null ? undefined : m.ennemis.find((e) => e.id === d.cible && aLaLaisse(e))
     const ve = ennemiVerrouille(m)
     if (ve !== null && aLaLaisse(ve)) cible = ve
@@ -5310,7 +5314,7 @@ function menerLesDrones(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]
     // où il vole : autour de sa cible, ou à sa place (qu'il rejoint en suivant le vaisseau)
     let px: number
     let py: number
-    if (cible !== undefined) {
+    if (cible !== undefined && o.ailier !== true) {
       const an = m.t * (o.tour ?? 3) + (k * 2 * Math.PI) / armes.length
       px = cible.corps.x + Math.cos(an) * (o.autour ?? 13)
       py = cible.corps.y + Math.sin(an) * (o.autour ?? 13)
@@ -5323,8 +5327,9 @@ function menerLesDrones(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]
     const dy = py - d.y
     const l = Math.hypot(dx, dy) || 1
     const vit = Math.min(o.vol ?? 170, l * 6)
-    const wx = (dx / l) * vit + (cible === undefined ? v.vx : 0)
-    const wy = (dy / l) * vit + (cible === undefined ? v.vy : 0)
+    const suit = cible === undefined || o.ailier === true
+    const wx = (dx / l) * vit + (suit ? v.vx : 0)
+    const wy = (dy / l) * vit + (suit ? v.vy : 0)
     const kb = Math.min(1, dt * (o.braquage ?? 7))
     d.vx += (wx - d.vx) * kb
     d.vy += (wy - d.vy) * kb

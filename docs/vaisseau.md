@@ -8253,3 +8253,13 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     autour d'un insecte, ils tiraient de côté).
   - Équilibre inchangé : 1,03. Le test : vaisseau tourné vers le bas, le mini-avion de droite tient l'aile droite, le
     nez comme lui ; un insecte à portée, il le regarde. VU en capture.
+- **23/11, L'ESCORTE DEVIENT DES AILIERS.** Keko : « qu'est-ce qui est le plus puissant entre l'escorte du chasseur et les
+  drones de la Sentinelle ? Comment les distinguer ? ». Mesuré : à égalité (drones 1,10, escorte 1,03), le même rôle —
+  partir chasser ce qui approche —, l'aspect seul les séparait. Deux pistes proposées (des ailiers qui ne quittent pas
+  le vaisseau ; des passes de mitraillage) ; Keko : « on essaie la proposition numéro 1 ».
+  - LA RÈGLE (`orbite.ailier`) : l'ailier tient sa place dans la formation MÊME EN COMBAT ; sa cible est un insecte à SA
+    portée de tir, mesurée de lui (le verrouillé d'abord) ; il pivote vers elle et tire de là. Portée 110 (70).
+    Les drones de la Sentinelle partent au contact ; l'escorte reste à vos ailes et tire de loin.
+  - L'ÉQUILIBRE : sans chasser, 0,85 ; 24 de dégâts (20) la ramènent à 1,02. Sa description : « Deux mini-avions en
+    formation, qui mitraillent les ennemis de loin. »
+  - Le test : un insecte à 76, l'ailier le regarde, reste à sa place et le touche. VU en capture.

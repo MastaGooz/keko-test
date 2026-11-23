@@ -3209,9 +3209,9 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
 // L'ESCORTE EN FORMATION (Keko, 23/11 : « qu'elle fasse face aux ennemis sur lesquels elle tire ; au lieu de tourner
 // autour du chasseur, qu'elle vole à ses côtés et suive son orientation quand il n'y a pas d'ennemis ») : sans insecte, le
 // mini-avion de droite tient sa place à l'aile droite, le nez comme le vaisseau, même tourné ; un insecte à portée, il
-// part et le regarde
+// le regarde ET RESTE À SA PLACE (un ailier, Keko, 23/11 — voir `orbite.ailier`), et le touche
 {
-  const escorte = { id: 'escorte', cadence: 0.45, degats: 20, portee: 70, vitesse: 320, vie: 0.5, dispersion: 0, guide: false, tousSens: true, orbite: { rayon: 30, vitesse: 2.6, phase: 0, laisse: 120, vol: 230, braquage: 9, autour: 34, tour: 2, formation: { x: -5, y: 16 } } }
+  const escorte = { id: 'escorte', cadence: 0.45, degats: 24, portee: 110, vitesse: 320, vie: 0.5, dispersion: 0, guide: false, tousSens: true, orbite: { rayon: 30, vitesse: 2.6, phase: 0, laisse: 120, vol: 230, braquage: 9, autour: 34, tour: 2, formation: { x: -5, y: 16 }, ailier: true } }
   const cfg = { ...VAISSEAU, coque: 1e9, armes: [escorte], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false } }
   const w = nouveauMonde(cfg, 5)
   w.invasion.prochainA = 1e9
@@ -3226,7 +3226,8 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   for (let i = 0; i < 90; i++) avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
   const versLui = Math.atan2(e.corps.y - d.y, e.corps.x - d.x)
   const leRegarde = Math.abs(((d.cap ?? 9) - versLui + Math.PI * 3) % (Math.PI * 2) - Math.PI) < 0.15
-  verifier(`l'escorte, vaisseau tourné vers le bas : à sa place à l'aile droite (${aSaPlace}, ${ici.x.toFixed(0)} ; ${ici.y.toFixed(0)}), le nez comme lui (${memeNez}) ; un insecte à portée, elle le regarde (${leRegarde})`, aSaPlace && memeNez && leRegarde)
+  const resteLa = Math.hypot(d.x - ici.x, d.y - ici.y) < 2
+  verifier(`l'escorte, vaisseau tourné vers le bas : à sa place à l'aile droite (${aSaPlace}, ${ici.x.toFixed(0)} ; ${ici.y.toFixed(0)}), le nez comme lui (${memeNez}) ; un insecte à 76, elle le regarde (${leRegarde}), reste à sa place (${resteLa}) et le touche (${1e9 - e.pv})`, aSaPlace && memeNez && leRegarde && resteLa && e.pv < 1e9)
 }
 
 // TOUCHÉ, ON TRAVERSE LES INSECTES (Keko, 22/11 : « quand on est touché on est invincible un court instant ; je voudrais

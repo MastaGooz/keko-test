@@ -354,10 +354,12 @@ export const ARMES_DE_FACTION: ArmeDeFaction[] = [
   { id: 'grenades', nom: 'Lance-grenades', dit: 'Trois grenades à retardement, qui explosent au bout d’un instant.', race: 'humains', icone: 'imp-grenades', armes: () => [nouvelle({ id: 'grenades', cadence: 1.5, degats: 34, portee: 110, vitesse: 150, vie: 1.2, dispersion: 0.08, zone: { rayon: 28 }, gerbe: { nombre: 3, ecart: 0.3 }, minuterie: { duree: 1.2, frein: 3 } })] },
   // (DES MINI-AVIONS, PAS DES DRONES — Keko, 22/11 : « on a déjà les drones de la Sentinelle » : l'orbite des drones, plus
   // large et plus vive ; la page les dessine en petits chasseurs)
-  { id: 'escorte', nom: 'Escorte', dit: 'Deux mini-avions qui mitraillent les ennemis autour du vaisseau.', race: 'humains', icone: 'imp-escorte', armes: () => [0, 1].map((k) => ({ ...nouvelle({ id: 'escorte', cadence: 0.45, degats: 20, portee: 70, vitesse: 320, vie: 0.5, dispersion: 0.05 }), place: 20 + k, orbite: { ...ORBITE_DES_DRONES, rayon: 30, vitesse: 2.6, vol: 230, braquage: 9, autour: 34, phase: k * Math.PI, formation: { x: -5, y: k === 0 ? -16 : 16 } } })) },
+  { id: 'escorte', nom: 'Escorte', dit: 'Deux mini-avions en formation, qui mitraillent les ennemis de loin.', race: 'humains', icone: 'imp-escorte', armes: () => [0, 1].map((k) => ({ ...nouvelle({ id: 'escorte', cadence: 0.45, degats: 24, portee: 110, vitesse: 320, vie: 0.5, dispersion: 0.05 }), place: 20 + k, orbite: { ...ORBITE_DES_DRONES, rayon: 30, vitesse: 2.6, vol: 230, braquage: 9, autour: 34, phase: k * Math.PI, formation: { x: -5, y: k === 0 ? -16 : 16 }, ailier: true } })) },
   // (EN FORMATION, FACE À LEUR CIBLE — Keko, 23/11 : « qu'elle fasse face aux ennemis sur lesquels elle tire ; au lieu de
   // tourner autour du chasseur, qu'elle vole à ses côtés et suive son orientation quand il n'y a pas d'ennemis » : les
   // deux mini-avions à ses ailes, un peu en arrière — voir `orbite.formation`, `Drone.cap`)
+  // (… DES AILIERS — Keko, 23/11 : pour la distinguer des drones de la Sentinelle, qui partent chasser au contact : ils
+  // ne quittent plus leur place, pivotent vers leur cible et tirent de plus loin, 110 au lieu de 70 — `orbite.ailier`)
 ]
 export const armeDeFaction = (id: string): ArmeDeFaction | undefined => ARMES_DE_FACTION.find((x) => x.id === id)
 
