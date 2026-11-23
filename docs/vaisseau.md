@@ -8383,3 +8383,9 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   leur dernier volume. Page cachée ou quittée (`visibilitychange`, `pagehide`), `taireLesVoix` (sons.ts) les met toutes
   à zéro sur-le-champ et suspend le contexte audio ; revenue, `reveiller` le reprend, et les voix se règlent à l'image
   suivante. PAS VÉRIFIÉ sur téléphone.
+- **23/11, LA CARTE « RAFALE » DU CANON LASER TIRE EN RAFALE.** Keko : « à la place de tirer un seul gros laser, l'avion
+  va tirer des rafales de trois lasers ; il faut que le total des trois fasse plus de dégâts que le laser seul, car il
+  s'agit d'une amélioration ». C'était trois lasers EN ÉVENTAIL à 50 % chacun (`gerbe`) ; c'est maintenant TROIS TIRS À
+  LA SUITE (`Arme.rafale` : `{ nombre: 3, intervalle: 0,09 }`, `Monde.rafales`), chacun visant sa cible à nouveau, à
+  45 % chacun — 135 % à eux trois (41 × 3 = 123 au lieu de 90) — ; puis la cadence de l'arme. Les ailes alternent à la
+  fin d'une rafale, pas entre ses tirs. Le test : six tirs en 2,4 s, écarts 0,10 (l'image), 0,10, 1,10, 0,10, 0,10.

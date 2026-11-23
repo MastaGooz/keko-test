@@ -3296,6 +3296,20 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   verifier(`le vaisseau parti à 400 de sa balise, elle tient ${(finieA - poseeA2).toFixed(2)} s (4)`, poseeA2 > 0 && Math.abs(finieA - poseeA2 - 4) < 0.04)
 }
 
+// LA RAFALE (Keko, 23/11 : « des rafales de trois lasers » — voir `Arme.rafale`) : trois tirs à 0,09 s l'un de l'autre,
+// puis la cadence de l'arme avant la rafale suivante
+{
+  const laser = { id: 'laser', cadence: 1.1, degats: 41, portee: 120, vitesse: 420, vie: 0.7, dispersion: 0, guide: false, tousSens: true, rafale: { nombre: 3, intervalle: 0.09 } }
+  const cfg = { ...VAISSEAU, coque: 1e9, armes: [laser], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false } }
+  const w = nouveauMonde(cfg, 5)
+  w.invasion.prochainA = 1e9
+  w.ennemis.push({ id: 970, corps: { ...nouveauVaisseau(), x: 60, y: 0 }, pv: 1e9, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9 })
+  const tirs: number[] = []
+  for (let i = 0; i < 60 * 2.4; i++) for (const ev of avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements) if (ev.type === 'obus') tirs.push(w.t)
+  const ecarts = tirs.slice(1).map((x, k) => x - tirs[k])
+  verifier(`la rafale : ${tirs.length} tirs en 2,4 s (6) ; écarts ${ecarts.map((x) => x.toFixed(2)).join(', ')} (0,09, 0,09, 1,1, 0,09, 0,09)`, tirs.length === 6 && Math.abs(ecarts[0] - 0.09) < 0.02 && Math.abs(ecarts[1] - 0.09) < 0.02 && Math.abs(ecarts[2] - 1.1) < 0.02 && Math.abs(ecarts[3] - 0.09) < 0.02)
+}
+
 // TOUCHÉ, ON TRAVERSE LES INSECTES (Keko, 22/11 : « quand on est touché on est invincible un court instant ; je voudrais
 // qu'on traverse aussi les ennemis ») : le temps qu'il clignote, un insecte posé sur lui ne l'écarte pas ; après, si ; une
 // roche l'arrête toujours

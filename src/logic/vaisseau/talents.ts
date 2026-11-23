@@ -369,7 +369,10 @@ export const MUTATIONS: Mutation[] = [
   variation('laser-drones', 'laser', 'Drones', 'Deux drones en orbite tirent des lasers sur les ennemis proches.', ajouterA('laser', (a) => drones(a, { cadence: 1.4, degats: fois(a, 0.45), portee: 70, vie: 0.5 }))),
   variation('laser-perforant', 'laser', 'Perforant', 'Les lasers traversent les ennemis et touchent toute leur ligne.', changerA('laser', V.perforant)),
   variation('laser-ricochet', 'laser', 'Ricochet', 'Chaque laser rebondit sur deux autres ennemis proches.', changerA('laser', V.ricochet)),
-  variation('laser-rafale', 'laser', 'Rafale', 'Chaque tir part en trois lasers, en éventail.', changerA('laser', V.gerbe(3, 0.22, 0.5))),
+  // (EN RAFALE, PLUS EN ÉVENTAIL — Keko, 23/11 : « à la place de tirer un seul gros laser, l'avion va tirer des rafales de
+  // trois lasers ; le total des trois doit faire plus de dégâts que le laser seul, c'est une amélioration » : trois tirs à
+  // 0,09 s, chacun 45 % — 135 % à eux trois ; voir `Arme.rafale`)
+  variation('laser-rafale', 'laser', 'Rafale', 'Chaque tir part en rafale de trois lasers.', changerA('laser', (a) => ({ ...a, rafale: { nombre: 3, intervalle: 0.09 }, degats: fois(a, 0.45) }))),
   variation('laser-cryo', 'laser', 'Cryogénique', 'Les lasers gèlent ce qu’ils touchent et le ralentissent.', changerA('laser', V.cryo)),
   // LA MITRAILLEUSE
   variation('mitraille-jumelee', 'mitraille', 'Canons jumelés', 'Chaque tir part en double : deux balles côte à côte.', changerA('mitraille', V.gerbe(2, 0.12, 0.7))),
