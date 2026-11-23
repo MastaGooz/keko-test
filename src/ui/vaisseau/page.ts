@@ -46,7 +46,7 @@ import { RASSEMBLE as TELEPORTE_A } from '../pixelfx/fx/keko/teleportation.js'
 import * as MATERIALISATION from '../pixelfx/fx/keko/materialisation.js'
 import * as QUETE_TERMINEE from '../pixelfx/fx/keko/quete-terminee.js'
 import * as VORTEX_FX from '../pixelfx/fx/keko/vortex.js'
-import { aUneZone, carteSpeciale, armeDeFaction, NIVEAU_SPECIAL, MUTATIONS, mutationsPrises, ajouterLeBonus, apresUnChoix, avecLesBonus, carte, DUREE_DU_CHOIX, type Bonus, ouvrirLeChoix, proposer, RARETES, reserveApresLeDelai, type Choix, type Rarete, type Talent } from '../../logic/vaisseau/talents.ts'
+import { aUneZone, ETATS, type StatDArme, carteSpeciale, armeDeFaction, NIVEAU_SPECIAL, MUTATIONS, mutationsPrises, ajouterLeBonus, apresUnChoix, avecLesBonus, carte, DUREE_DU_CHOIX, type Bonus, ouvrirLeChoix, proposer, RARETES, reserveApresLeDelai, type Choix, type Rarete, type Talent } from '../../logic/vaisseau/talents.ts'
 import { depuisTexte, ordreVuDu, retirerLesPilotes, retirerUnPilote, versTexte, vuDu } from '../../logic/vaisseau/reseau.ts'
 import { compresser, decompresser, ouvrirLeSalon, rejoindreLeSalon, type EtatDeLaLiaison, type Liaison } from './reseau.ts'
 import { APPARAIT as ARRIVE_A, REFROIDI as REFROIDI_A } from '../pixelfx/fx/keko/materialisation.js'
@@ -2246,7 +2246,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     ly += 14
     // ce qu'il change — LA CATÉGORIE NE S'ÉCRIT PAS, L'ICÔNE SUFFIT ; une carte d'arme nomme son arme (Keko, 21/11 : « ne
     // marque pas textuellement le type, l'icône suffit ; par contre pour l'arme précise : cadence de "nom de l'arme" »)
-    const nomDeLArme = ta.cible.sorte === 'arme' ? armeDeLaCarte(ta.cible.arme).nom : ta.cible.sorte === 'armes' ? 'toutes les armes' : ''
+    // (UN ÉTAT NE DIT PAS « DE TOUTES LES ARMES » — Keko, 23/11 : « c'est inutile ; si on dit augmente les effets de corrosion
+    // de tant de %, on comprend que c'est les effets de corrosion généraux » — voir `ETATS`)
+    const nomDeLArme = ta.cible.sorte === 'arme' ? armeDeLaCarte(ta.cible.arme).nom : ta.cible.sorte === 'armes' && !ETATS.has(ta.stat as StatDArme) ? 'toutes les armes' : ''
     const effet = nomDeLArme === '' ? st.effet : `${st.effet} ${/^[aeiouyàâéèêëîïôœûüh]/i.test(nomDeLArme) ? 'd’' : 'de '}${nomDeLArme}`
     // (DEUX LIGNES NE SE TOUCHENT PAS — Keko, 21/11 : dix pixels d'une ligne à l'autre, huit d'abord : les accents de
     // l'une touchaient les jambages de l'autre)
@@ -2307,8 +2309,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (estInvite) return distant.choix?.enCours.find((x) => x.k === maPlace)?.cartes ?? []
     // (`&montrer=id,id,id` : CES CARTES SPÉCIALES à chaque choix, pour les juger — Keko, 23/11 : « t'es sûr que ça loge
     // sur les cartes ? »)
-    const montrees = (parametres.get('montrer') ?? '').split(',').map((id) => MUTATIONS.find((x) => x.id === id.trim())).filter((mu) => mu !== undefined)
-    if (montrees.length > 0) return montrees.map((mu) => carteSpeciale(mu))
+    // (… et `armes:<stat>`, une carte de toutes les armes, rare — ou à `&rarete=R`)
+    const montrees = (parametres.get('montrer') ?? '').split(',').map((id): Talent | undefined => {
+      const mu = MUTATIONS.find((x) => x.id === id.trim())
+      if (mu !== undefined) return carteSpeciale(mu)
+      const stat = /^armes:(\w+)$/.exec(id.trim())?.[1]
+      return stat === undefined ? undefined : carte({ sorte: 'armes' }, stat as StatDArme, RARETES.find((r) => r.id === parametres.get('rarete'))?.id ?? 'rare')
+    }).filter((ta) => ta !== undefined)
+    if (montrees.length > 0) return montrees
     const conf = autre !== null ? autre.ecran.CONF : CONF
     const modele = autre !== null ? autre.modele : flotte.actif
     // (LES SPÉCIALES DÉJÀ PRISES par ce pilote — voir `MUTATIONS` ; `&speciale` : une spéciale due à chaque premier choix, pour les juger)

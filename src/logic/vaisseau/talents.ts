@@ -403,7 +403,7 @@ export const MUTATIONS: Mutation[] = [
   // LA MITRAILLEUSE
   variation('mitraille-jumelee', 'mitraille', 'Canons jumelés', 'Chaque tir part en double : deux balles côte à côte.', changerA('mitraille', V.gerbe(2, 0.12, 0.7))),
   variation('mitraille-tourelle', 'mitraille', 'Tourelle', 'Une mitrailleuse arrose tout autour du vaisseau.', ajouterA('mitraille', (a) => [ajoutee(a, 9, { cadence: a.cadence * 0.9, degats: fois(a, 0.6), portee: a.portee * 0.9 })])),
-  variation('mitraille-incendiaire', 'mitraille', 'Incendiaires', 'Les balles enflamment les ennemis : ils brûlent trois secondes.', changerA('mitraille', V.incendiaire)),
+  variation('mitraille-incendiaire', 'mitraille', 'Incendiaires', 'Les balles enflamment les ennemis.', changerA('mitraille', V.incendiaire)),
   variation('mitraille-drones', 'mitraille', 'Drones', 'Deux drones en orbite mitraillent les ennemis proches.', ajouterA('mitraille', (a) => drones(a, { cadence: 0.3, degats: fois(a, 0.6), portee: 70 }))),
   variation('mitraille-perforante', 'mitraille', 'Perforantes', 'Les balles traversent les ennemis.', changerA('mitraille', V.perforant)),
   variation('mitraille-explosive', 'mitraille', 'Explosives', 'Chaque balle explose à l’impact.', changerA('mitraille', V.explosif)),

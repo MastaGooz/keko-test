@@ -8620,3 +8620,8 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   qui heurte une roche qui dérive (`heurterLesRoches`), ou un choc contre une roche du champ, est marqué `horsArmeA` —
   comme la tempête et l'explosion du retour — et la page n'en écrit pas le chiffre. Le test : poussé dans une roche,
   l'insecte est marqué hors arme.
+- LES CARTES D'ÉTAT NE DISENT PLUS « DE TOUTES LES ARMES » (Keko, 23/11 : « c'est inutile ; si on dit augmente les effets
+  de corrosion de tant de %, on comprend que c'est les effets de corrosion généraux ») : « +12 % d'effet corrosif »,
+  « +12 % de dégâts du feu », « +12 % de ralentissement ». La variation Incendiaires de la mitrailleuse ne dit plus « ils
+  brûlent trois secondes » (c'est six). `&montrer` montre aussi une carte de toutes les armes : `armes:<stat>` (rare, ou
+  à `&rarete=R`). VU en capture.
