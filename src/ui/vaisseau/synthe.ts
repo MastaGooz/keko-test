@@ -761,17 +761,23 @@ const RECETTES = {
    */
   // (… PLUS LOURD — Keko, 22/11 : « le railgun manque de punch » : sous le coup de fouet, un coup de canon grave et saturé
   // qui s'enfonce et un souffle bas, plus fort en tout)
+  // (… PLUS PERCUTANT — Keko, 23/11 : « un son un petit peu plus percutant au moment où le railgun est tiré » : le coup
+  // tombait 36 ms après le tir, derrière la charge de la bobine, et ne durait qu'un dixième. Il part À L'INSTANT — un
+  // claquement large et sec, un coup grave très saturé, un sous-grave qui pousse —, la bobine n'est plus qu'un grésillement
+  // dessous ; le corps grave dure deux fois plus longtemps, plus fort au total, et l'acier tinte un peu plus)
   railgun: {
-    duree: 0.7, niveau: 0.42, salle: [0.4, 0.15], variantes: 3,
+    duree: 0.8, niveau: 0.5, salle: [0.4, 0.15], variantes: 3,
     faire: (m, h) => {
-      note(m, 0, 0.3, 0, { f: 140, glisse: { vers: 420, en: 0.035, droit: true }, a: 0.002, d: 0.04, partiels: [[1, 1, 1], [3, 0.6, 1], [5, 0.4, 1], [7, 0.25, 1]] })
-      souffle(m, h, 0.035, 1, 0, { f: 6500, glisse: { vers: 2600, en: 0.02 }, q: 1.2, bande: true, a: 0.0005, d: 0.03 })
+      souffle(m, h, 0, 1, 0, { f: 5200, glisse: { vers: 1800, en: 0.02 }, q: 0.8, bande: true, a: 0.0003, d: 0.025, large: true })
+      souffle(m, h, 0, 0.7, 0, { f: 2200, q: 0.6, a: 0.0002, d: 0.01 })
+      note(m, 0, 0.18, 0, { f: 280, glisse: { vers: 520, en: 0.02, droit: true }, a: 0.001, d: 0.03, partiels: [[1, 1, 1], [3, 0.6, 1], [5, 0.4, 1], [7, 0.25, 1]] })
       const f = 2600 * (0.95 + 0.1 * h.next())
-      note(m, 0.036, 0.45, 0, { f, glisse: { vers: f * 0.3, en: 0.05 }, a: 0.001, d: 0.09, partiels: [[1, 1, 1], [2, 0.2, 0.5]] })
-      note(m, 0.036, 0.9, 0, { f: 150, glisse: { vers: 60, en: 0.05 }, a: 0.001, d: 0.1, partiels: CORPS, sature: 1.8 })
-      note(m, 0.036, 0.8, 0, { f: 95, glisse: { vers: 38, en: 0.12 }, a: 0.001, d: 0.22, partiels: CORPS, sature: 2.2 })
-      souffle(m, h, 0.036, 0.5, 0, { f: 900, glisse: { vers: 160, en: 0.15 }, q: 0.8, a: 0.001, d: 0.2, large: true })
-      note(m, 0.05, 0.12, 0.3, { f: 3100, a: 0.002, d: 0.25, partiels: [[1, 1, 1], [2.76, 0.4, 0.5], [5.4, 0.15, 0.3]] })
+      note(m, 0.002, 0.45, 0, { f, glisse: { vers: f * 0.3, en: 0.05 }, a: 0.001, d: 0.09, partiels: [[1, 1, 1], [2, 0.2, 0.5]] })
+      note(m, 0, 1, 0, { f: 180, glisse: { vers: 55, en: 0.05 }, a: 0.0005, d: 0.16, partiels: CORPS, sature: 2.8 })
+      note(m, 0, 0.9, 0, { f: 90, glisse: { vers: 34, en: 0.18 }, a: 0.001, d: 0.4, partiels: CORPS, sature: 2.4 })
+      note(m, 0.004, 0.5, 0, { f: 52, glisse: { vers: 30, en: 0.3 }, a: 0.004, d: 0.4 })
+      souffle(m, h, 0, 0.6, 0, { f: 1100, glisse: { vers: 140, en: 0.2 }, q: 0.8, a: 0.001, d: 0.3, large: true })
+      note(m, 0.015, 0.16, 0.3, { f: 3100, a: 0.002, d: 0.3, partiels: [[1, 1, 1], [2.76, 0.4, 0.5], [5.4, 0.15, 0.3]] })
     },
   },
   /**

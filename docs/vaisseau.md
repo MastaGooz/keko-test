@@ -8221,3 +8221,9 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   - Le test : la chance grandit du moucheron au cuirassier, la Récupération la multiplie ; 2 000 cornus en lâchent 35
     (32 attendues), sans plaques au vaisseau aucune, 2 000 grosses roches aucune.
   - (… PLUS COURT — Keko : « un peu trop long, ça fait trois lignes » : « Vous pouvez ramasser des plaques blindées. », puis « … renforcées. », puis « … surblindées. », puis « Vous pouvez ramasser du surblindage. »)
+- **23/11, LE TIR DU RAILGUN PLUS PERCUTANT.** Keko : « un son un petit peu plus percutant au moment où le railgun est
+  tiré ». Mesuré : le coup tombait 36 ms APRÈS le tir, derrière la charge de la bobine, et ne durait qu'un dixième. Il
+  part à l'instant (crête à 1 ms) — un claquement large et sec, un coup grave très saturé (`sature` 2,8), un sous-grave
+  à 52 Hz qui pousse — ; la bobine n'est plus qu'un grésillement dessous ; le corps grave dure 0,4 s (0,22) ; niveau
+  0,5 (0,42). L'efficace des 30 premières millisecondes : 0,14 (0,012) ; de 100 à 300 ms : 0,013 (0,008). Mesuré, PAS
+  ÉCOUTÉ.
