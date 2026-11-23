@@ -8344,3 +8344,9 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   du feu ; des particules crépitantes d'énergie rouge ») des points rouges d'un pixel, quelques-uns en petite croix,
   autour de lui et à sa taille, qui changent à chaque image ; la gerbe qui s'en échappe, plus rare, lente, brève,
   rouge seulement.
+- **23/11, LA TOUCHE DE LA BALISE LASER : UNE GERBE, RIEN DE PLUS.** Keko : « on peut changer l'effet du laser sur les
+  touches, je trouve ça un peu bizarre finalement ; on peut pas juste générer une petite gerbe de particules rouges en mode
+  étincelle sur la touche ? ». Sur l'insecte traversé, plus rien n'est dessiné (ni lueur, ni anneau, ni crépitement, ni
+  points) ; AU POINT OÙ LE RAYON LE TRAVERSE (le pied de sa perpendiculaire sur le rayon), une petite gerbe d'étincelles
+  rouges — trois rouges, sept fois sur dix par image —, jaillies de part et d'autre du rayon, en éventail autour de sa
+  normale, brèves (0,12 à 0,25 s).

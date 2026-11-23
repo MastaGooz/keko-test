@@ -11645,6 +11645,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * rouge de chaque côté, des lueurs le long, qui frémit — ; et SUR TOUT CE QU'IL TRAVERSE, UN PETIT CRÉPITEMENT ROUGE (Keko)
    * : de courtes étincelles brisées autour de lui, qui changent à chaque image, et une lueur rouge. Il s'allume en un
    * dixième, s'éteint en un quart de seconde.
+   * (… PUIS UNE SIMPLE GERBE — Keko, 23/11 : « je trouve ça un peu bizarre finalement ; on peut pas juste générer une petite
+   * gerbe de particules rouges en mode étincelle sur la touche ? » : la lueur, l'anneau, le crépitement et les points
+   * retirés ; au point où le rayon le traverse, une petite gerbe d'étincelles rouges, de part et d'autre du rayon)
    * (EN DEUX TEMPS — Keko, 23/11 : « un temps où on pose la balise, un temps où le rayon se déclenche » : EN VOL, la balise
    * monte en cloche au-dessus de son ombre, son œil éteint ; POSÉE, trois pieds se déploient, une onde rouge s'ouvre, et le
    * rayon jaillit d'elle jusqu'au vaisseau en 0,15 s)
@@ -11707,44 +11710,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.circle(b.x, b.y, 2, COQUE[3])
       p.circle(b.x - 0.5, b.y - 0.5, 1, COQUE[5])
       p.dot(b.x, b.y, Math.floor(t * 6 + b.nee * 7) % 2 === 0 ? ROUGE_LASER[4] : ROUGE_LASER[2])
-      // (le crépitement rouge sur ce qu'il traverse)
-      if (k < 0.2) continue
-      const R2 = new N.Rng((Math.floor(t * 20) * 977 + Math.round(b.nee * 1000)) | 0)
-      // (… PLUS VISIBLE — Keko, 23/11 : « un effet un petit peu plus visible sur l'ennemi traversé » : une lueur plus large
-      // et plus forte, un anneau rouge qui bat autour de lui, cinq étincelles plus longues, et une gerbe de particules
-      // rouges qui s'en échappe — semée avec les autres particules, « les insectes que brûle le rayon d'une balise »)
-      for (const e of ennemisDuLien(CONF, m, b)) {
-        const r = rayonDe(CONF, e)
-        p.glow(e.corps.x, e.corps.y, r + 9, ROUGE_LASER[2], 0.65 * k)
-        p.glow(e.corps.x, e.corps.y, r * 0.8, ROUGE_LASER[4], 0.45 * k)
-        p.ring(e.corps.x, e.corps.y, r + 2 + Math.sin(t * 30 + e.id) * 1.2, 1, ROUGE_LASER[3], 0.7 * k)
-        // (… ET DE PETITES ÉTINCELLES — Keko, 23/11 : « assez discrètes, des petites particules rouges, pas du feu ; des
-        // particules crépitantes d'énergie rouge » : des points rouges d'un pixel, quelques-uns en petite croix, autour de
-        // lui, à sa taille, qui changent à chaque image — elles crépitent)
-        for (let s3 = 0; s3 < Math.max(3, Math.round(r / 1.5)); s3++) {
-          const a = R2.range(0, Math.PI * 2)
-          const d0 = r * R2.range(0.3, 1.3)
-          const px0 = Math.round(e.corps.x + Math.cos(a) * d0)
-          const py0 = Math.round(e.corps.y + Math.sin(a) * d0)
-          const c = R2.next() < 0.3 ? ROUGE_LASER[4] : ROUGE_LASER[3]
-          p.dot(px0, py0, c, R2.range(0.5, 1) * k)
-          if (R2.next() < 0.25) for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) p.dot(px0 + dx, py0 + dy, ROUGE_LASER[2], 0.6 * k)
-        }
-        for (let s2 = 0; s2 < 5; s2++) {
-          const a = R2.range(0, Math.PI * 2)
-          const d0 = r * R2.range(0.2, 0.9)
-          const l = R2.range(4, 8)
-          const xa = e.corps.x + Math.cos(a) * d0
-          const ya = e.corps.y + Math.sin(a) * d0
-          const am = a + R2.range(-0.9, 0.9)
-          const xm = xa + Math.cos(am) * l * 0.5
-          const ym = ya + Math.sin(am) * l * 0.5
-          const xb = xm + Math.cos(a) * l * 0.5
-          const yb = ym + Math.sin(a) * l * 0.5
-          p.line(xa, ya, xm, ym, ROUGE_LASER[3], k)
-          p.line(xm, ym, xb, yb, ROUGE_LASER[4], k)
-        }
-      }
+      // (L'INSECTE TRAVERSÉ : rien sur lui — sa gerbe d'étincelles rouges, au point de touche, est semée avec les autres
+      // particules, voir « les insectes que brûle le rayon d'une balise laser »)
     }
   }
   function dessinerLePlasma(p: Peintre): void {
@@ -17985,14 +17952,22 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           const u = 1 - o.vie / Math.max(0.01, o.vie0 ?? 1)
           flammesDesBrules.push({ x: o.x, y: o.y - Math.sin(Math.PI * Math.max(0, Math.min(1, u))) * 12, vx: -o.vx * 0.1, vy: -o.vy * 0.1 - 6, t0: t, vie: R.range(0.15, 0.3) })
         }
-        // les insectes que brûle le rayon d'une balise laser : une gerbe de particules rouges (voir `dessinerLesBalisesLaser`)
+        // les insectes que brûle le rayon d'une balise laser : UNE PETITE GERBE D'ÉTINCELLES ROUGES AU POINT DE TOUCHE (Keko,
+        // 23/11 : « une petite gerbe de particules rouges en mode étincelle sur la touche ») — là où le rayon le traverse,
+        // jaillies de part et d'autre du rayon (voir `dessinerLesBalisesLaser`)
         for (const b of m.balisesLaser) {
+          const L0 = Math.hypot(b.x - v.x, b.y - v.y) || 1
+          const ux = (b.x - v.x) / L0
+          const uy = (b.y - v.y) / L0
           for (const e of ennemisDuLien(CONF, m, b)) {
-            // (discrètes, rouges, pas du feu — Keko, 23/11 : peu, lentes, brèves, sans blanc)
-            if (R.next() > 0.25) continue
-            const a = R.range(0, Math.PI * 2)
-            const vit = R.range(15, 40)
-            etincelles.ajouter('etincelle', e.corps.x, e.corps.y, Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.1, 0.2), R.next() < 0.5 ? ROUGE_LASER[2] : ROUGE_LASER[3], 1, 1)
+            if (R.next() > 0.7) continue
+            const q = Math.max(0, Math.min(L0, (e.corps.x - v.x) * ux + (e.corps.y - v.y) * uy))
+            const tx = v.x + ux * q
+            const ty = v.y + uy * q
+            // (la normale au rayon, d'un côté ou de l'autre, et un éventail autour)
+            const a = (R.next() < 0.5 ? Math.atan2(ux, -uy) : Math.atan2(-ux, uy)) + R.range(-0.8, 0.8)
+            const vit = R.range(40, 90)
+            etincelles.ajouter('etincelle', tx, ty, Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.12, 0.25), [ROUGE_LASER[2], ROUGE_LASER[3], ROUGE_LASER[4]][Math.floor(R.next() * 3)], 1, 1.5)
           }
         }
         // les mini-missiles laissent une traînée de fumée
