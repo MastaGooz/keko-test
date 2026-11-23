@@ -8427,3 +8427,10 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   il n'exclut plus que celui qu'il quitte : entre deux insectes, il fait l'aller-retour. Vaut pour tous les ricochets
   (le laser, l'escorte, les roquettes mises de côté). Le test : deux insectes, le premier perd 10 puis 4,9 au retour,
   le second 7.
+  VALIDÉ (Keko : « ok, super, on valide »).
+- **23/11, LE LASER CONCENTRÉ QUI RICOCHE.** Keko : « donne-moi les deux améliorations ensemble, le laser sur la durée et
+  le ricochet ». Sans obus, le ricochet ne faisait rien au rayon. Avec les deux cartes, LE RAYON REBONDIT : de sa cible
+  vers l'insecte le plus proche à 80 — jamais celui qu'il quitte, la règle du ricochet —, à 70 % de ce qu'il ronge, puis
+  de celui-là au suivant, à 49 % ; refait à chaque image, la chaîne suit la mêlée (`Faisceau.chaine`). Le dessin : le
+  même rayon vert de proche en proche, plus pâle à chaque rebond, une lueur et des étincelles sur chaque insecte touché.
+  Le test : trois insectes, 100 / 70 / 49. En capture, la mêlée trop dense pour juger les rebonds.

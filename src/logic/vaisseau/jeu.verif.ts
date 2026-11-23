@@ -3333,6 +3333,22 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   verifier(`le laser concentré : à mi-course ${pvMi.toFixed(0)} rongés (~61), en tout ${(1e6 - e.pv).toFixed(0)} (122), aucun obus (${w.obus.length}) ; il s'éteint seul (${fin > 0})`, Math.abs(1e6 - e.pv - 122) < 0.5 && pvMi > 50 && pvMi < 72 && w.obus.length === 0 && fin > 0)
 }
 
+// LE LASER CONCENTRÉ QUI RICOCHE (Keko, 23/11 : « les deux améliorations ensemble » — voir `Arme.concentre`) : trois
+// insectes en ligne, le rayon tient sur le premier et rebondit sur le deuxième (70 %), puis sur le troisième (49 %) — le
+// troisième plus près du deuxième que le premier
+{
+  const laser = { id: 'laser', cadence: 9, degats: 100, portee: 120, vitesse: 420, vie: 0.7, dispersion: 0, guide: false, tousSens: true, concentre: { duree: 0.5 }, ricochet: { rebonds: 2, portee: 80, part: 0.7 } }
+  const cfg = { ...VAISSEAU, coque: 1e9, armes: [laser], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false }, passifs: { ...VAISSEAU.passifs, critique: 0 } }
+  const w = nouveauMonde(cfg, 5)
+  w.invasion.prochainA = 1e9
+  const ins = [[60, 0], [60, 40], [60, 70]].map(([x, y], k): Ennemi => ({ id: 995 + k, corps: { ...nouveauVaisseau(), x, y }, pv: 1e6, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9 }))
+  w.ennemis.push(...ins)
+  w.verrou = ins[0].id
+  for (let i = 0; i < 60; i++) avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+  const pris = ins.map((e) => 1e6 - e.pv)
+  verifier(`le laser concentré qui ricoche : ${pris.map((x) => x.toFixed(1)).join(' / ')} (100, 70, 49)`, Math.abs(pris[0] - 100) < 0.5 && Math.abs(pris[1] - 70) < 0.5 && Math.abs(pris[2] - 49) < 0.5)
+}
+
 // TOUCHÉ, ON TRAVERSE LES INSECTES (Keko, 22/11 : « quand on est touché on est invincible un court instant ; je voudrais
 // qu'on traverse aussi les ennemis ») : le temps qu'il clignote, un insecte posé sur lui ne l'écarte pas ; après, si ; une
 // roche l'arrête toujours

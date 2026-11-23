@@ -1151,6 +1151,10 @@ export type Arme = {
    * au lieu d'un obus, chaque tir accroche UN RAYON de la bouche de l'arme à sa cible, pendant `duree` secondes ; il la
    * ronge de `degats` EN TOUT, répartis sur sa durée ; il s'éteint plus tôt si elle meurt ou passe à plus d'une fois et
    * demie la portée. L'état est `Monde.faisceaux`.
+   * (… QUI RICOCHE — Keko, 23/11 : « les deux améliorations ensemble, le laser sur la durée et le ricochet » : sans obus,
+   * le ricochet ne faisait rien ; avec `ricochet`, LE RAYON REBONDIT de sa cible vers l'insecte le plus proche à `portee`
+   * — pas celui qu'il quitte, comme le ricochet d'un tir —, à `part` de ce qu'il ronge, puis de celui-là au suivant, `rebonds`
+   * fois ; refait à chaque image, la chaîne suit la mêlée.)
    */
   concentre?: { duree: number }
   perforant?: boolean
@@ -1377,7 +1381,7 @@ export type Monde = {
   rafales: number[]
   rafaleDesAiles: number
   /** LES RAYONS CONCENTRÉS (voir `Arme.concentre`) : leur arme, leur cible, leur naissance, ce qu'ils rongent par seconde. */
-  faisceaux: { arme: number; cible: number; nee: number; dps: number }[]
+  faisceaux: { arme: number; cible: number; nee: number; dps: number; /** Ses rebonds de l'image (voir `Arme.concentre`). */ chaine?: number[] }[]
   /** LES SCIES EN VOL (voir `Arme.scie`) ; une arme dont la scie n'y est pas l'a à bord. */
   scies: Scie[]
   /** LES BALISES POSÉES (voir `Arme.balise`). */
@@ -5011,14 +5015,35 @@ function concentrerLesFaisceaux(c: ConfigVaisseau, m: Monde, dt: number, ev: Eve
     if (a === undefined || co === undefined || m.phase !== 'vol' || m.t - f.nee >= co.duree) return false
     const e = m.ennemis.find((x) => x.id === f.cible)
     if (e === undefined || Math.hypot(e.corps.x - v.x, e.corps.y - v.y) > a.portee * 1.5 + rayonDe(c, e)) return false
-    e.pv -= f.dps * Math.min(dt, co.duree - (m.t - dt - f.nee))
-    if (a.gel !== undefined) geler(m, e, 0.3, a.gel.ralenti, ev)
-    if (a.incendiaire !== undefined) enflammer(m, e, a.incendiaire)
-    if (e.pv <= 0) {
-      abattreLEnnemi(c, m, e, ev)
-      return false
+    const ronge = f.dps * Math.min(dt, co.duree - (m.t - dt - f.nee))
+    const toucher = (x: Ennemi, part: number): void => {
+      x.pv -= ronge * part
+      if (a.gel !== undefined) geler(m, x, 0.3, a.gel.ralenti, ev)
+      if (a.incendiaire !== undefined) enflammer(m, x, a.incendiaire)
     }
-    return true
+    toucher(e, 1)
+    // (LE RAYON QUI RICOCHE — voir `Arme.concentre` : de proche en proche, jamais sur celui qu'il quitte)
+    f.chaine = []
+    if (a.ricochet !== undefined) {
+      let ici = e
+      let part = 1
+      for (let n = 0; n < a.ricochet.rebonds; n++) {
+        let suite: Ennemi | null = null
+        let ds = a.ricochet.portee
+        for (const g of m.ennemis) {
+          if (g === ici || g.asteroide !== undefined) continue
+          const d = Math.hypot(g.corps.x - ici.corps.x, g.corps.y - ici.corps.y)
+          if (d < ds) (ds = d), (suite = g)
+        }
+        if (suite === null) break
+        part *= a.ricochet.part
+        toucher(suite, part)
+        f.chaine.push(suite.id)
+        ici = suite
+      }
+    }
+    for (const x of [e, ...f.chaine.map((id) => m.ennemis.find((g) => g.id === id))]) if (x !== undefined && x.pv <= 0) abattreLEnnemi(c, m, x, ev)
+    return e.pv > 0
   })
 }
 /** Une balise laser de l'Empire (voir `Arme.lien`) : en vol, son élan et son temps de vol ; posée, l'instant où elle s'est posée. */

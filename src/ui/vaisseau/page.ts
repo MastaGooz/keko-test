@@ -11777,6 +11777,19 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.glow(x0, y0, 5, LASER_VERT[3], 0.6 * k)
       p.glow(e.corps.x, e.corps.y, 6 + 2 * Math.sin(t * 40 + f.nee), LASER_VERT[3], 0.7 * k)
       p.dot(e.corps.x, e.corps.y, N.WHITE, k)
+      // (SES REBONDS — la carte Ricochet, voir `Arme.concentre` : le même rayon, de proche en proche, plus pâle à chaque fois)
+      let ici = e
+      let pale = 1
+      for (const id of f.chaine ?? []) {
+        const g = m.ennemis.find((x) => x.id === id)
+        if (g === undefined) break
+        pale *= 0.75
+        const kk = k * pale
+        p.line(ici.corps.x, ici.corps.y, g.corps.x, g.corps.y, LASER_VERT[2], 0.8 * kk * fremit)
+        p.line(ici.corps.x, ici.corps.y, g.corps.x, g.corps.y, LASER_VERT[4], kk)
+        p.glow(g.corps.x, g.corps.y, 5, LASER_VERT[3], 0.6 * kk)
+        ici = g
+      }
     }
   }
   function dessinerLePlasma(p: Peintre): void {
@@ -18020,11 +18033,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         }
         // l'insecte que ronge un laser concentré : des étincelles vertes qui en jaillissent (voir `dessinerLesFaisceaux`)
         for (const f of m.faisceaux) {
-          const e = m.ennemis.find((x) => x.id === f.cible)
-          if (e === undefined || R.next() > 0.6) continue
-          const a = R.range(0, Math.PI * 2)
-          const vit = R.range(40, 100)
-          etincelles.ajouter('etincelle', e.corps.x, e.corps.y, Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.12, 0.25), [LASER_VERT[3], LASER_VERT[4], N.WHITE][Math.floor(R.next() * 3)], 1, 1.5)
+          for (const id of [f.cible, ...(f.chaine ?? [])]) {
+            const e = m.ennemis.find((x) => x.id === id)
+            if (e === undefined || R.next() > 0.6) continue
+            const a = R.range(0, Math.PI * 2)
+            const vit = R.range(40, 100)
+            etincelles.ajouter('etincelle', e.corps.x, e.corps.y, Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.12, 0.25), [LASER_VERT[3], LASER_VERT[4], N.WHITE][Math.floor(R.next() * 3)], 1, 1.5)
+          }
         }
         // les insectes que brûle le rayon d'une balise laser : UNE PETITE GERBE D'ÉTINCELLES ROUGES AU POINT DE TOUCHE (Keko,
         // 23/11 : « une petite gerbe de particules rouges en mode étincelle sur la touche ») — là où le rayon le traverse,
