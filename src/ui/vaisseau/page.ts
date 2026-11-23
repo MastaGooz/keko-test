@@ -11574,16 +11574,82 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       for (let d = 1; d <= n; d++) for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) p.px(x + dx * d, y + dy * d, d > n * 0.6 ? GLACE[5] : N.WHITE)
     }
   }
+  /**
+   * LE HARPON DE L'EMPIRE (Keko, 23/11 — voir `Arme.harpon`) : LE CÂBLE, du vaisseau au harpon — qui ondule en se
+   * déroulant, tendu et vibrant une fois planté — ; LA TÊTE, une pointe d'acier à deux barbillons ; planté, DES IMPULSIONS
+   * ROUGES courent le long du câble vers l'insecte, de plus en plus vite et vives à mesure que ses dégâts montent, et une
+   * lueur rouge grandit sur lui ; CASSÉ, les deux bouts du câble se détendent et s'éteignent.
+   */
+  const cassuresDuHarpon: { x0: number; y0: number; x1: number; y1: number; t0: number }[] = []
+  const DUREE_DE_LA_CASSURE = 0.25
+  function dessinerLesHarpons(p: Peintre): void {
+    for (let i = cassuresDuHarpon.length - 1; i >= 0; i--) if (t - cassuresDuHarpon[i].t0 > DUREE_DE_LA_CASSURE) cassuresDuHarpon.splice(i, 1)
+    for (const c of cassuresDuHarpon) {
+      const u = (t - c.t0) / DUREE_DE_LA_CASSURE
+      const dx = c.x1 - c.x0
+      const dy = c.y1 - c.y0
+      p.line(c.x0, c.y0, c.x0 + dx * 0.5 * (1 - u), c.y0 + dy * 0.5 * (1 - u), COQUE[3], 1 - u)
+      p.line(c.x1, c.y1, c.x1 - dx * 0.3 * (1 - u), c.y1 - dy * 0.3 * (1 - u), COQUE[3], 0.6 * (1 - u))
+      if (u < 0.4) p.glow(c.x0 + dx * 0.5, c.y0 + dy * 0.5, 6, N.WHITE, 0.6 * (1 - u / 0.4))
+    }
+    for (const h of m.harpons) {
+      const hp = CONF.armes[h.arme]?.harpon
+      if (hp === undefined) continue
+      const L0 = Math.hypot(h.x - v.x, h.y - v.y) || 1
+      const ux = (h.x - v.x) / L0
+      const uy = (h.y - v.y) / L0
+      const nx = -uy
+      const ny = ux
+      const x0 = v.x + ux * (CONF.rayon + 1)
+      const y0 = v.y + uy * (CONF.rayon + 1)
+      const L = Math.max(1, L0 - CONF.rayon - 1)
+      const tendu = h.plante !== null
+      const part = tendu ? Math.min(1, (m.t - h.plante!) / hp.montee) : 0
+      // (le câble : un trait sombre doublé d'un reflet d'acier ; il ondule en se déroulant, vibre une fois tendu)
+      let px = x0
+      let py = y0
+      for (let d = 3; d <= L + 0.01; d += 3) {
+        const q = Math.min(d, L)
+        const o = tendu ? Math.sin(q * 0.5 + t * 60) * 0.35 : Math.sin(q * 0.25 - t * 30) * 1.6 * (1 - q / L)
+        const qx = x0 + ux * q + nx * o
+        const qy = y0 + uy * q + ny * o
+        p.line(px, py, qx, qy, N.hex('#2a3044'))
+        p.line(px + nx * 0.5, py + ny * 0.5, qx + nx * 0.5, qy + ny * 0.5, tendu ? meler(COQUE[3], N.hex('#ff5a3a'), part * 0.5) : COQUE[3], 0.9)
+        px = qx
+        py = qy
+      }
+      // (planté : les impulsions qui courent vers l'insecte, plus vite et plus vives à mesure que les dégâts montent)
+      if (tendu) {
+        const n = 3
+        for (let k = 0; k < n; k++) {
+          const f = (t * (0.8 + 2.6 * part) + k / n) % 1
+          const qx = x0 + ux * f * L
+          const qy = y0 + uy * f * L
+          p.glow(qx, qy, 3 + 3 * part, N.hex('#ff3a2a'), 0.35 + 0.4 * part)
+          p.dot(qx, qy, part > 0.6 ? N.hex('#ffd0c0') : N.hex('#ff7a5a'))
+        }
+        p.glow(h.x, h.y, 6 + 6 * part, N.hex('#ff3a2a'), 0.25 + 0.4 * part)
+      }
+      // (la tête : la pointe d'acier, ses deux barbillons, cernée de sombre)
+      const pt = (a: number, b: number): number[] => [h.x + ux * a + nx * b, h.y + uy * a + ny * b]
+      p.poly([pt(4, 0), pt(-1, -1.4), pt(-1, 1.4)], N.hex('#2a3044'))
+      p.poly([pt(3.2, 0), pt(-0.4, -0.8), pt(-0.4, 0.8)], COQUE[5])
+      for (const sg of [-1, 1]) p.line(pt(0, sg * 1)[0], pt(0, sg * 1)[1], pt(-2.5, sg * 2.6)[0], pt(-2.5, sg * 2.6)[1], COQUE[4])
+      p.line(pt(-1, 0)[0], pt(-1, 0)[1], pt(-5, 0)[0], pt(-5, 0)[1], COQUE[3])
+      p.px(Math.round(pt(3, 0)[0]), Math.round(pt(3, 0)[1]), N.WHITE)
+    }
+  }
   function dessinerLePlasma(p: Peintre): void {
     for (let i = eclatsDePlasma.length - 1; i >= 0; i--) if (t - eclatsDePlasma[i].t0 > DUREE_DE_L_ECLAT) eclatsDePlasma.splice(i, 1)
     const orbes = m.obus.filter((o) => o.arme === 'plasma')
-    if (orbes.length === 0 && eclatsDePlasma.length === 0 && rubans.size === 0 && popsDEssaim.length === 0 && m.spheres.length === 0 && m.puits.length === 0 && effondrements.length === 0 && traitsDuRail.length === 0 && trainesDuRailgun.size === 0 && !m.obus.some((o) => o.arme === 'essaim' || o.arme === 'arcane' || o.arme === 'railgun')) return
+    if (orbes.length === 0 && m.harpons.length === 0 && cassuresDuHarpon.length === 0 && eclatsDePlasma.length === 0 && rubans.size === 0 && popsDEssaim.length === 0 && m.spheres.length === 0 && m.puits.length === 0 && effondrements.length === 0 && traitsDuRail.length === 0 && trainesDuRailgun.size === 0 && !m.obus.some((o) => o.arme === 'essaim' || o.arme === 'arcane' || o.arme === 'railgun')) return
     p.place(W / 2 - camera.x, centreY() - camera.y)
     dessinerLesSpheres(p)
     dessinerLesPuits(p)
     dessinerLEssaim(p)
     dessinerLeRailgun(p)
     dessinerLesTrainesDuRailgun(p)
+    dessinerLesHarpons(p)
     for (const o of orbes) {
       const l = Math.hypot(o.vx, o.vy) || 1
       const ux = o.vx / l
@@ -17253,6 +17319,22 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
             const a = R.range(0, Math.PI * 2)
             etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(30, 70), Math.sin(a) * R.range(30, 70), R.range(0.12, 0.25), R.next() < 0.5 ? N.WHITE : PLASMA_V[3], 1, 1.5)
           }
+          break
+        case 'harponPlante':
+          // (LE HARPON SE PLANTE — voir `Arme.harpon` : son choc, un éclair, une gerbe d'acier et de sang, une petite secousse)
+          jouer('harponPlante', { dx: ev.x - v.x, dy: ev.y - v.y })
+          flashs.push({ x: ev.x, y: ev.y, t0: t, r: 4 })
+          for (let i = 0; i < 8; i++) {
+            const a = R.range(0, Math.PI * 2)
+            const vit = R.range(40, 110)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.12, 0.3), [N.WHITE, COQUE[4], N.hex('#ff5a3a')][Math.floor(R.next() * 3)], 1, 2)
+          }
+          secousse = Math.max(secousse, 0.25)
+          break
+        case 'harponCasse':
+          // (le câble casse : son claquement, ses deux bouts qui se détendent)
+          jouer('harponCasse', { dx: ev.x - v.x, dy: ev.y - v.y })
+          cassuresDuHarpon.push({ x0: v.x, y0: v.y, x1: ev.x, y1: ev.y, t0: t })
           break
         case 'foudre':
           // (la bobine tesla foudroie : la foudre, un claquement — pas plus d'un tous les dixièmes)

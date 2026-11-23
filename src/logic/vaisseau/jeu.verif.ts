@@ -3230,6 +3230,32 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   verifier(`l'escorte, vaisseau tourné vers le bas : à sa place à l'aile droite (${aSaPlace}, ${ici.x.toFixed(0)} ; ${ici.y.toFixed(0)}), le nez comme lui (${memeNez}) ; un insecte à 76, elle le regarde (${leRegarde}), reste à sa place (${resteLa}) et le touche (${1e9 - e.pv})`, aSaPlace && memeNez && leRegarde && resteLa && e.pv < 1e9)
 }
 
+// LE HARPON (Keko, 23/11 : « on fait un test avec le harpon » — voir `Arme.harpon`) : entre un insecte proche et un plus
+// résistant plus loin, il harponne le plus résistant ; planté, il le frappe de quatre fois ses dégâts, puis le câble le
+// ronge de plus en plus fort — quatre fois plus vite au bout de la montée ; l'insecte emporté trop loin, le câble casse
+{
+  const harpon = { id: 'harpon', cadence: 0.6, degats: 20, portee: 130, vitesse: 0, vie: 0, dispersion: 0, guide: false, tousSens: true, harpon: { vitesse: 320, max: 4, montee: 3, rupture: 1.5, impact: 4 } }
+  const cfg = { ...VAISSEAU, coque: 1e9, armes: [harpon], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false }, passifs: { ...VAISSEAU.passifs, critique: 0 } }
+  const w = nouveauMonde(cfg, 5)
+  w.invasion.prochainA = 1e9
+  const [proche, dur] = [[40, 1e6], [100, 2e6]].map(([x, pv], k): Ennemi => ({ id: 900 + k, corps: { ...nouveauVaisseau(), x, y: 0 }, pv, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9 }))
+  w.ennemis.push(proche, dur)
+  let plante = -1
+  for (let i = 0; i < 60 && plante < 0; i++) for (const ev of avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements) if (ev.type === 'harponPlante') plante = ev.id
+  const apresImpact = 2e6 - dur.pv
+  const pv0 = dur.pv
+  for (let i = 0; i < 6; i++) avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+  const auDebut = (pv0 - dur.pv) / 0.1
+  for (let i = 0; i < 60 * 3; i++) avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+  const pv1 = dur.pv
+  for (let i = 0; i < 6; i++) avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+  const auBout = (pv1 - dur.pv) / 0.1
+  dur.corps.x = 130 * 1.5 + 20
+  let casse = false
+  for (const ev of avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements) if (ev.type === 'harponCasse') casse = true
+  verifier(`le harpon prend le plus résistant (${plante}, ${dur.id} attendu), l'insecte proche intact (${1e6 - proche.pv}) ; l'impact ${apresImpact} (80) ; le câble ${auDebut.toFixed(0)} par seconde au départ, ${auBout.toFixed(0)} au bout de la montée (80) ; emporté à ${dur.corps.x}, il casse (${casse})`, plante === dur.id && proche.pv === 1e6 && Math.abs(apresImpact - 80) < 1e-6 && auDebut > 18 && auDebut < 26 && Math.abs(auBout - 80) < 2 && casse && w.harpons.length === 0)
+}
+
 // TOUCHÉ, ON TRAVERSE LES INSECTES (Keko, 22/11 : « quand on est touché on est invincible un court instant ; je voudrais
 // qu'on traverse aussi les ennemis ») : le temps qu'il clignote, un insecte posé sur lui ne l'écarte pas ; après, si ; une
 // roche l'arrête toujours

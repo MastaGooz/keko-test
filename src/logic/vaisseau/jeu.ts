@@ -630,6 +630,18 @@ export type Arme = {
    */
   minuterie?: { duree: number; frein: number }
   /**
+   * UN HARPON (la sixième arme de l'Empire, Keko, 23/11 : « on fait un test avec le harpon » — proposé : « il harponne
+   * l'insecte le plus résistant à portée, le relie au vaisseau par un câble, et le câble lui inflige des dégâts qui
+   * augmentent tant qu'il tient ; il casse si l'insecte meurt ou s'éloigne trop » ; l'arme anti-boss de l'Empire) : le
+   * harpon part à `vitesse` vers sa cible — le verrouillé à portée, sinon L'INSECTE QUI A LE PLUS DE POINTS DE VIE à
+   * portée, une roche seulement sans insecte — et la suit ; planté, le câble la ronge de `degats` par seconde, qui montent
+   * en ligne droite jusqu'à `max` fois en `montee` secondes ; il casse quand elle meurt ou passe à plus de `rupture` fois
+   * la portée, ou s'il ne l'a pas atteinte avant de parcourir deux portées ; la cadence est son délai de relance, cassé.
+   * L'état est `Monde.harpons`. *Les chiffres sont de moi.* (EN SE PLANTANT, IL FRAPPE de `impact` fois ses dégâts : sans ce
+   * coup, la montée du câble faisait traîner chaque petit insecte — mesuré, 0,28 sur la vague.)
+   */
+  harpon?: { vitesse: number; max: number; montee: number; rupture: number; impact: number }
+  /**
    * UN RAYON QUI BALAIE (la Salamandre, Keko, 15/11 : « un rayon à haute énergie qui part au-dessus du vaisseau et
    * descend en décrivant un cercle autour de lui : il enflamme et fait de gros dégâts ») : toutes les `tous` secondes, si
    * un ennemi est à portée, un rayon de `longueur` part du vaisseau vers le haut (`depart`, un angle du monde) et en
@@ -1323,6 +1335,8 @@ export type Monde = {
   rayonVu: { x: number; y: number; t: number } | null
   /** LE RAYON CANALISÉ (voir `Arme.canalise`) : sa cible, depuis quand il est dessus, où elle est, sa chauffe (0 à 1) ; ou null. */
   canal: { arme: number; cible: number; depuis: number; x: number; y: number; chauffe: number } | null
+  /** LES HARPONS (voir `Arme.harpon`) : un par arme, en vol ou plantés (`plante`, l'instant où il s'est planté). */
+  harpons: Harpon[]
   /** LES SCIES EN VOL (voir `Arme.scie`) ; une arme dont la scie n'y est pas l'a à bord. */
   scies: Scie[]
   /** LES BALISES POSÉES (voir `Arme.balise`). */
@@ -1488,6 +1502,9 @@ export type Evenement =
   | { type: 'rail'; x0: number; y0: number; x1: number; y1: number; arme: string }
   /** La bobine tesla foudroie un insecte (voir `Arme.sphere.foudre`). */
   | { type: 'foudre'; x0: number; y0: number; x1: number; y1: number }
+  /** Un harpon se plante dans sa cible, ou son câble casse (voir `Arme.harpon`). */
+  | { type: 'harponPlante'; x: number; y: number; id: number }
+  | { type: 'harponCasse'; x: number; y: number }
   /** La balle du railgun traverse un insecte (voir `Arme.balle`), là où il est, filant à `cap`. */
   | { type: 'balleTraverse'; x: number; y: number; cap: number }
   /** Une tentacule s'étend vers un insecte, le pique (voir `Arme.tentacule`). */
@@ -1565,7 +1582,7 @@ export function nouveauVaisseau(): Vaisseau {
 }
 
 export function nouveauMonde(c: ConfigVaisseau = VAISSEAU, graine = 1): Monde {
-  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, coqueMax: c.coque, tableau: tableauVide(), bouclier: c.bouclier.points, plaques: Array.from({ length: c.plaques }, () => true), intouchableJusque: -1, corruption: 0, dephaseJusque: -100, plaqueCasseeA: 0, renaitJusque: -100, rochesPrises: [], toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, prochaineDeriveA: c.derive.premier, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, vies: c.invasion.vies, miniBoss: 0, boss: 0, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, scies: [], balises: [], givres: [], tornades: [], novas: [], echardes: [], spheres: [], puits: [], meteores: [], tentacules: [], nuees: [], rejetons: [], flaquesAcides: [], mines: [], fleaux: [], parasites: [], vrilles: [], liens: [], oeufs: [], brochettes: [], miniVers: [], hypercubes: [], des: [], coupes: [], rayonVu: null }
+  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, coqueMax: c.coque, tableau: tableauVide(), bouclier: c.bouclier.points, plaques: Array.from({ length: c.plaques }, () => true), intouchableJusque: -1, corruption: 0, dephaseJusque: -100, plaqueCasseeA: 0, renaitJusque: -100, rochesPrises: [], toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, prochaineDeriveA: c.derive.premier, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, vies: c.invasion.vies, miniBoss: 0, boss: 0, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, harpons: [], scies: [], balises: [], givres: [], tornades: [], novas: [], echardes: [], spheres: [], puits: [], meteores: [], tentacules: [], nuees: [], rejetons: [], flaquesAcides: [], mines: [], fleaux: [], parasites: [], vrilles: [], liens: [], oeufs: [], brochettes: [], miniVers: [], hypercubes: [], des: [], coupes: [], rayonVu: null }
 }
 
 /** Un hachage entier déterministe (celui de pixelfx), et un réel dans [0, 1) qui en sort. */
@@ -4942,6 +4959,88 @@ function canaliserLeRayon(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement
   }
 }
 
+/** Un harpon de l'Empire (voir `Arme.harpon`) : son arme, où il est, sa cible, l'instant où il s'est planté, ce qu'il peut encore voler. */
+export type Harpon = { arme: number; x: number; y: number; vx: number; vy: number; cible: number; plante: number | null; reste: number }
+/** LES HARPONS (voir `Arme.harpon`) : ils partent, suivent leur cible, s'y plantent, la rongent de plus en plus fort, cassent. */
+function harponner(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]): void {
+  const v = m.vaisseau
+  c.armes.forEach((a, i) => {
+    const hp = a.harpon
+    if (hp === undefined) return
+    const h = m.harpons.find((x) => x.arme === i)
+    if (h === undefined) {
+      if (m.phase !== 'vol' || m.t < (m.armesA[i] ?? 0)) return
+      // (sa cible : le verrouillé à portée ; sinon l'insecte qui a le plus de points de vie — un qu'aucun autre harpon ne
+      // tient, s'il y en a ; une roche sans insecte)
+      const aPortee = (e: Ennemi): boolean => Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= a.portee + rayonDe(c, e)
+      const tenus = new Set(m.harpons.map((x) => x.cible))
+      let cible: Ennemi | null = null
+      const ve = ennemiVerrouille(m)
+      if (ve !== null && aPortee(ve)) cible = ve
+      for (const libre of [true, false]) if (cible === null) for (const e of m.ennemis) if (e.asteroide === undefined && aPortee(e) && (!libre || !tenus.has(e.id)) && (cible === null || e.pv > cible.pv)) cible = e
+      if (cible === null) for (const e of m.ennemis) if (aPortee(e) && (cible === null || Math.hypot(e.corps.x - v.x, e.corps.y - v.y) < Math.hypot(cible.corps.x - v.x, cible.corps.y - v.y))) cible = e
+      if (cible === null) return
+      const an = Math.atan2(cible.corps.y - v.y, cible.corps.x - v.x)
+      const x0 = v.x + Math.cos(an) * (c.rayon + 2)
+      const y0 = v.y + Math.sin(an) * (c.rayon + 2)
+      m.harpons.push({ arme: i, x: x0, y: y0, vx: Math.cos(an) * hp.vitesse, vy: Math.sin(an) * hp.vitesse, cible: cible.id, plante: null, reste: a.portee * 2 })
+      ev.push({ type: 'obus', x: x0, y: y0, arme: a.id })
+      return
+    }
+    const e = m.ennemis.find((x) => x.id === h.cible)
+    const casse = (): void => {
+      m.harpons = m.harpons.filter((x) => x !== h)
+      m.armesA[i] = m.t + a.cadence
+      ev.push({ type: 'harponCasse', x: h.x, y: h.y })
+    }
+    if (e === undefined || m.phase !== 'vol') return casse()
+    if (h.plante === null) {
+      // (il file droit sur sa cible, là où elle est)
+      const dx = e.corps.x - h.x
+      const dy = e.corps.y - h.y
+      const d = Math.hypot(dx, dy) || 1
+      const pas = hp.vitesse * dt
+      if (d <= pas + rayonDe(c, e)) {
+        h.plante = m.t
+        h.x = e.corps.x
+        h.y = e.corps.y
+        ev.push({ type: 'harponPlante', x: e.corps.x, y: e.corps.y, id: e.id })
+        const critique = critiqueTire(c, m, a)
+        e.pv -= a.degats * hp.impact * (critique ? facteurDeCritique(c, a) : 1)
+        ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })
+        if (e.pv <= 0) {
+          if (a.fragments !== undefined) fragmenter(m, e.corps.x, e.corps.y, a.fragments, e)
+          abattreLEnnemi(c, m, e, ev)
+          casse()
+        }
+        return
+      }
+      h.vx = (dx / d) * hp.vitesse
+      h.vy = (dy / d) * hp.vitesse
+      h.x += h.vx * dt
+      h.y += h.vy * dt
+      h.reste -= pas
+      if (h.reste <= 0) casse()
+      return
+    }
+    h.x = e.corps.x
+    h.y = e.corps.y
+    if (Math.hypot(e.corps.x - v.x, e.corps.y - v.y) > a.portee * hp.rupture + rayonDe(c, e)) return casse()
+    const part = Math.min(1, (m.t - h.plante) / hp.montee)
+    e.pv -= a.degats * (1 + (hp.max - 1) * part) * dt
+    // (les cartes : le câble gèle et ralentit, enflamme ce qu'il tient ; à sa mort, des éclats)
+    if (a.gel !== undefined) geler(m, e, 0.3, a.gel.ralenti, ev)
+    if (a.incendiaire !== undefined) enflammer(m, e, a.incendiaire)
+    if (e.pv <= 0) {
+      if (a.fragments !== undefined) fragmenter(m, e.corps.x, e.corps.y, a.fragments, e)
+      abattreLEnnemi(c, m, e, ev)
+      casse()
+    }
+  })
+  // (une arme partie — l'équipement changé —, son harpon avec)
+  m.harpons = m.harpons.filter((h) => c.armes[h.arme]?.harpon !== undefined)
+}
+
 /** L'ANGLE DU RAYON (voir `Arme.balayage`), à l'instant du monde, pendant son tour ; son départ et son sens ; null hors d'un tour. */
 export function angleDuBalayage(c: ConfigVaisseau, m: Monde): { angle: number; part: number; longueur: number; depart: number; sens: number } | null {
   const b = m.balayage
@@ -5694,6 +5793,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   brulerLesFlaques(c, m, dt, ev)
   menerLeRayon(c, m, ev)
   canaliserLeRayon(c, m, dt, ev)
+  harponner(c, m, dt, ev)
   mener_L_Electricite(c, m, dt, ev)
   menerLesScies(c, m, dt, ev)
   menerLesBalises(c, m, dt, ev)
@@ -5723,7 +5823,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   menerLesTornades(c, m, dt, ev)
   c.armes.forEach((arme, i) => {
     if (arme.flamme !== undefined) return cracherLaFlamme(c, m, arme, arme.flamme, dt, ev)
-    if (arme.orbite !== undefined || arme.pose !== undefined || arme.balayage !== undefined || arme.canalise !== undefined || arme.chaine !== undefined || arme.aura !== undefined || arme.scie !== undefined || arme.balise !== undefined || arme.givre !== undefined || arme.nova !== undefined || arme.salve !== undefined || arme.condense !== undefined || arme.tornade !== undefined || arme.essaim !== undefined || arme.sphere !== undefined || arme.puits !== undefined || arme.meteore !== undefined || arme.rail !== undefined || arme.tentacule !== undefined || arme.nuee !== undefined || arme.rejeton !== undefined || arme.crachat !== undefined || arme.mine !== undefined || arme.fleau !== undefined || arme.parasite !== undefined || arme.drain !== undefined || arme.vrille !== undefined || arme.ponte !== undefined || arme.epines !== undefined || arme.hypercube !== undefined || arme.de !== undefined || arme.coupe !== undefined) return
+    if (arme.orbite !== undefined || arme.pose !== undefined || arme.balayage !== undefined || arme.canalise !== undefined || arme.harpon !== undefined || arme.chaine !== undefined || arme.aura !== undefined || arme.scie !== undefined || arme.balise !== undefined || arme.givre !== undefined || arme.nova !== undefined || arme.salve !== undefined || arme.condense !== undefined || arme.tornade !== undefined || arme.essaim !== undefined || arme.sphere !== undefined || arme.puits !== undefined || arme.meteore !== undefined || arme.rail !== undefined || arme.tentacule !== undefined || arme.nuee !== undefined || arme.rejeton !== undefined || arme.crachat !== undefined || arme.mine !== undefined || arme.fleau !== undefined || arme.parasite !== undefined || arme.drain !== undefined || arme.vrille !== undefined || arme.ponte !== undefined || arme.epines !== undefined || arme.hypercube !== undefined || arme.de !== undefined || arme.coupe !== undefined) return
     if (m.t < (m.armesA[i] ?? 0)) return
     // (les missiles aussi — Keko : « de toute façon ils suivent pareil, et s'il n'y a rien à suivre ils vont tout droit »)
     const aLaMain = manuel && regard !== undefined && Math.hypot(regard.x, regard.y) > 0.05
@@ -6154,7 +6254,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
  * La règle d'un vaisseau ne change pas : le pilote dont c'est le tour est DANS le monde — ses champs sont ceux de
  * `Monde` —, les autres attendent dans `equipage.pilotes` ; `prendreLaMain` les échange.
  */
-export const CHAMPS_DU_PILOTE = ['phase', 'vaisseau', 'coque', 'coqueMax', 'tableau', 'bouclier', 'plaques', 'intouchableJusque', 'corruption', 'dephaseJusque', 'plaqueCasseeA', 'renaitJusque', 'toucheA', 'forage', 'forages', 'tirs', 'obus', 'armesA', 'extraction', 'sorti', 'boostA', 'bombes', 'charges', 'verrou', 'crache', 'drones', 'tourelles', 'flaques', 'balayage', 'rayonVu', 'canal', 'scies', 'balises', 'givres', 'tornades', 'novas', 'echardes', 'spheres', 'puits', 'meteores', 'tentacules', 'nuees', 'rejetons', 'flaquesAcides', 'mines', 'fleaux', 'parasites', 'brochettes', 'hypercubes', 'coupes', 'des', 'oeufs', 'miniVers', 'liens', 'vrilles'] as const
+export const CHAMPS_DU_PILOTE = ['phase', 'vaisseau', 'coque', 'coqueMax', 'tableau', 'bouclier', 'plaques', 'intouchableJusque', 'corruption', 'dephaseJusque', 'plaqueCasseeA', 'renaitJusque', 'toucheA', 'forage', 'forages', 'tirs', 'obus', 'armesA', 'extraction', 'sorti', 'boostA', 'bombes', 'charges', 'verrou', 'crache', 'drones', 'tourelles', 'flaques', 'balayage', 'rayonVu', 'canal', 'harpons', 'scies', 'balises', 'givres', 'tornades', 'novas', 'echardes', 'spheres', 'puits', 'meteores', 'tentacules', 'nuees', 'rejetons', 'flaquesAcides', 'mines', 'fleaux', 'parasites', 'brochettes', 'hypercubes', 'coupes', 'des', 'oeufs', 'miniVers', 'liens', 'vrilles'] as const
 /** Un pilote qui attend son tour : ses champs du monde, l'instant de son retour s'il est abattu, les morsures qu'il doit encaisser. */
 export type Pilote = Pick<Monde, (typeof CHAMPS_DU_PILOTE)[number]> & { retourA: number; morsures: { x: number; y: number; degats: number }[] }
 /** Les pilotes (celui dont c'est le tour, `actif`, a sa place gardée mais périmée : il est dans le monde). */

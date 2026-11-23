@@ -8269,3 +8269,25 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   variations passent dans `ARMES_EN_RESERVE` et `VARIATIONS_EN_RESERVE` (talents.ts) : plus aucune carte ne les
   propose ; leur règle (`essaim`), leur dessin, leur icône et leur son restent. L'Empire a CINQ armes en attendant la
   sixième (le test le dit).
+- **23/11, LE HARPON, SIXIÈME ARME DE L'EMPIRE.** Proposés : le harpon (anti-boss), le leurre holographique, le canon à
+  impulsion, la frappe orbitale ; Keko : « on fait un test avec le harpon ».
+  - LA RÈGLE (`Arme.harpon`, `Monde.harpons`, `harponner`) : le harpon part à 320 vers sa cible — le verrouillé à
+    portée, sinon L'INSECTE QUI A LE PLUS DE POINTS DE VIE à portée (130), un qu'aucun autre harpon ne tient s'il y en a ;
+    une roche seulement sans insecte — et la suit ; en se plantant, il frappe de quatre fois ses dégâts (`impact` :
+    sans ce coup, la montée faisait traîner chaque petit insecte — 0,28 sur la vague) ; planté, le câble la ronge de 20
+    par seconde, jusqu'à quatre fois plus en 3 s (`max`, `montee`) ; il casse quand elle meurt ou passe à plus d'une fois
+    et demie la portée, ou s'il ne l'a pas atteinte en deux portées ; relancé 0,6 s après.
+  - L'ÉQUILIBRE : 1,69 au premier réglage (40 par seconde, sans impact), 1,30, puis 20 et l'impact : 1,01 — UN PROFIL
+    DE TIREUR SUR CIBLE, comme le laser : seule 1,69, boss 1,22, groupe 0,71, vague 0,45. *Chiffres de moi.*
+  - SES SIX CARTES : Barbelé (monte une fois et demie plus haut), Treuil (deux fois plus vite), Double harpon (un second,
+    sur un autre ennemi, à 70 %), Cryogénique (le câble gèle et ralentit), Incendiaire (il enflamme), Fragmentation (sa
+    proie morte projette six éclats).
+  - LE DESSIN : le câble du vaisseau au harpon — il ondule en se déroulant, tendu et vibrant une fois planté, de plus en
+    plus rouge ; planté, des impulsions rouges courent vers l'insecte, plus vite et plus vives à mesure que les dégâts
+    montent, une lueur rouge grandit sur lui ; la tête, une pointe d'acier à deux barbillons ; cassé, les deux bouts se
+    détendent. L'icône : une lance en travers, sa pointe, le câble enroulé.
+  - SES SONS (`synthe.ts`, en fin de table pour ne pas changer la graine des autres) : `harpon` (le coup pneumatique, le
+    câble qui siffle en se déroulant), `harponPlante` (un choc mat, l'acier qui se tend), `harponCasse` (un claquement, un
+    fouet qui se détend) ; mesurés (crêtes 0,26 à 0,38), PAS ÉCOUTÉS.
+  - Le test : entre un insecte proche et un plus résistant, il prend le plus résistant ; l'impact 80 ; le câble 21 par
+    seconde au départ, 80 au bout de la montée ; emporté trop loin, il casse. VU en capture.

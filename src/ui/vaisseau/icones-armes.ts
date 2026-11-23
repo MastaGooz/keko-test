@@ -480,6 +480,21 @@ export const ICONES_DES_ARMES: Record<string, readonly string[]> = {
     '..f...f...f.',
     '..y...y...y.',
   ],
+  // (le harpon : une lance d'acier en travers, sa pointe à barbillons, le câble enroulé à son pied)
+  'imp-harpon': [
+    '.........sww',
+    '.........sws',
+    '........mss.',
+    '.......mM.s.',
+    '......mM....',
+    '.....mM.....',
+    '....mM......',
+    '...mM.......',
+    '..eM........',
+    '.eEe........',
+    'eE.E........',
+    '.eE.........',
+  ],
   // (la bobine tesla : une tour de spires bleues, sa boule de foudre blanche, des étincelles)
   'imp-tesla': [
     '....cwwc....',

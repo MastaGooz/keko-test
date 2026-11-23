@@ -1488,6 +1488,41 @@ const RECETTES = {
       note(m, e + 0.12, 0.22, 0, { f: LA6, d: 0.3, partiels: VERRE })
     },
   },
+  // LE HARPON DE L'EMPIRE (Keko, 23/11 : « on fait un test avec le harpon » — voir `Arme.harpon`) ; ses trois sons en fin
+  // de table, pour ne pas changer la graine des autres
+  /**
+   * IL PART : un coup pneumatique sourd — un grave court saturé, un souffle d'air comprimé qui fuse —, puis le câble qui
+   * se déroule, un sifflement métallique qui descend
+   */
+  harpon: {
+    duree: 0.6, niveau: 0.38, salle: [0.3, 0.12], variantes: 3,
+    faire: (m, h) => {
+      note(m, 0, 0.9, 0, { f: 130, glisse: { vers: 60, en: 0.06 }, a: 0.001, d: 0.1, partiels: CORPS, sature: 2 })
+      souffle(m, h, 0, 0.8, 0, { f: 2600, glisse: { vers: 900, en: 0.08 }, q: 0.9, bande: true, a: 0.001, d: 0.09, large: true })
+      souffle(m, h, 0, 0.5, 0, { f: 3500, q: 0.7, a: 0.0003, d: 0.012 })
+      const f = 1500 * (0.95 + 0.1 * h.next())
+      note(m, 0.03, 0.22, 0.2, { f, glisse: { vers: f * 0.45, en: 0.3 }, a: 0.01, d: 0.32, battement: 22, partiels: [[1, 1, 1], [2.4, 0.4, 0.6]] })
+      souffle(m, h, 0.03, 0.25, 0.2, { f: 4800, glisse: { vers: 2000, en: 0.3 }, q: 4, bande: true, a: 0.01, d: 0.3 })
+    },
+  },
+  /** IL SE PLANTE : un choc mat dans la chair — un « tchouk » grave et sourd — et le câble qui se tend, un « dzoing » d'acier */
+  harponPlante: {
+    duree: 0.6, niveau: 0.34, salle: [0.25, 0.1], variantes: 3,
+    faire: (m, h) => {
+      const pan = (h.next() - 0.5) * 0.4
+      note(m, 0, 1, pan, { f: 210 * (0.92 + 0.16 * h.next()), glisse: { vers: 70, en: 0.05 }, a: 0.001, d: 0.09, partiels: CORPS, sature: 2.4 })
+      souffle(m, h, 0, 0.5, pan, { f: 700, glisse: { vers: 200, en: 0.06 }, q: 0.8, a: 0.001, d: 0.07 })
+      note(m, 0.02, 0.3, 0, { f: 180, glisse: { vers: 240, en: 0.08 }, a: 0.002, d: 0.4, battement: 9, partiels: [[1, 1, 1], [2.76, 0.5, 0.6], [5.4, 0.25, 0.4]] })
+    },
+  },
+  /** LE CÂBLE CASSE : un claquement sec et un fouet d'acier qui se détend, aigu et qui retombe */
+  harponCasse: {
+    duree: 0.45, niveau: 0.26, salle: [0.25, 0.1], variantes: 2,
+    faire: (m, h) => {
+      souffle(m, h, 0, 1, 0, { f: 4200, q: 1.2, bande: true, a: 0.0003, d: 0.02 })
+      note(m, 0, 0.45, 0, { f: 900, glisse: { vers: 260, en: 0.18 }, a: 0.001, d: 0.25, battement: 14, partiels: [[1, 1, 1], [2.76, 0.4, 0.5]] })
+    },
+  },
 } satisfies Record<string, Recette>
 
 export type Son = keyof typeof RECETTES
