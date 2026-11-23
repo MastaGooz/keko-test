@@ -8552,3 +8552,14 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   aucune.
 - « TIR DOUBLE » S'APPELLE « DOUBLE LASER » (Keko, 23/11 : « tu peux renommer tir double pour double laser ? ») ;
   l'identifiant reste `laser-double`.
+- LES VARIATIONS DU RAILGUN, PREMIER TRI (Keko, 23/11 : « on va travailler sur les 6 variations du railgun ») :
+  - GROS CALIBRE, VALIDÉE (la balle touche 2,5 fois plus large) ; CRYOGÉNIQUE, VALIDÉE, son texte est celui de la
+    Corrosion du laser, l'état changé : « Les tirs appliquent gel. ».
+  - INCENDIAIRE, RETIRÉE (« un seul élément par arme »).
+  - EXÉCUTION, SA CARTE SUR COUP CRITIQUE, À SA PLACE (« les coups critiques tuent instantanément les ennemis faibles ; un
+    coup critique au railgun détruit tous les monstres qui ne sont pas des mini-boss ou des boss » ; le texte est de Keko,
+    le nom de moi) : `Arme.execute` — un tir critique abat net chaque insecte qu'il touche, sauf un grand (`Ennemi.grand`,
+    mini-boss ou boss, qui prend le coup) ; une roche prend le coup aussi. Le critique se tire au départ du tir : une
+    balle critique exécute toute sa ligne. Le test : une balle critique traverse un insecte, un grand et un insecte — les
+    deux insectes abattus, le grand perd 100 ; sans critique, personne.
+  - Restent à revoir : Rail jumeau (une seconde arme à côté), Balle à éclats, Surcharge.

@@ -415,8 +415,11 @@ export const MUTATIONS: Mutation[] = [
   variation('missile-incendiaire', 'minimissile', 'Incendiaires', 'Les missiles enflamment ce qu’ils touchent.', changerA('minimissile', V.incendiaire)),
   variation('missile-cryo', 'minimissile', 'Cryogéniques', 'Les missiles gèlent ce qu’ils touchent et le ralentissent.', changerA('minimissile', V.cryo)),
   // LE RAILGUN
-  variation('railgun-incendiaire', 'railgun', 'Incendiaire', 'Tout ce que la balle traverse s’enflamme.', changerA('railgun', V.incendiaire)),
-  variation('railgun-cryo', 'railgun', 'Cryogénique', 'Tout ce que la balle traverse gèle.', changerA('railgun', V.cryo)),
+  // (L'EXÉCUTION, SA CARTE SUR COUP CRITIQUE, À LA PLACE D'INCENDIAIRE — Keko, 23/11 : « on ne fait pas incendiaire : un seul
+  // élément par arme » ; « les coups critiques tuent instantanément les ennemis faibles » — voir `Arme.execute`)
+  variation('railgun-execution', 'railgun', 'Exécution', 'Les coups critiques tuent instantanément les ennemis faibles.', changerA('railgun', (a) => ({ ...a, execute: true }))),
+  // (CRYOGÉNIQUE, SON ÉLÉMENT — Keko, 23/11 : « le même texte que le laser corrosif, en remplaçant corrosion par gel »)
+  variation('railgun-cryo', 'railgun', 'Cryogénique', 'Les tirs appliquent gel.', changerA('railgun', V.cryo)),
   variation('railgun-large', 'railgun', 'Gros calibre', 'Une balle deux fois et demie plus grosse, qui touche plus large.', changerA('railgun', (a) => ({ ...a, balle: a.balle === undefined ? undefined : { ...a.balle, calibre: a.balle.calibre * 2.5 } }))),
   variation('railgun-jumeau', 'railgun', 'Rail jumeau', 'Un second railgun, un peu moins fort, tire aussi.', ajouterA('railgun', (a) => [ajoutee(a, 21, { degats: fois(a, 0.6) })])),
   variation('railgun-eclats', 'railgun', 'Balle à éclats', 'Chaque ennemi traversé projette des éclats autour de lui.', changerA('railgun', (a) => ({ ...V.fragments(a), fragments: { nombre: 4, degats: fois(a, 0.2), vitesse: 160, vie: 0.2 } }))),
