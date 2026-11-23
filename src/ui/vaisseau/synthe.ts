@@ -1573,20 +1573,27 @@ const RECETTES = {
   },
   /**
    * L'EXÉCUTION DU RAILGUN (Keko, 23/11 : « un petit effet visuel avec un son pour l'exécution » — voir `Arme.execute`) :
-   * un « shing » d'acier — deux tranches d'air sèches, l'une après l'autre (la croix qui se taille), et une lame qui sonne,
-   * ses partiels de métal qui battent et s'éteignent — sur un coup sourd bref
+   * foudroyante, puis profonde — une frappe d'air, un grave qui plonge et tient, la lame qui résonne bas, et un roulement
+   * qui s'éteint en deux secondes (voir le détail dans la recette)
    */
   execution: {
-    duree: 0.9, niveau: 0.36, salle: [0.4, 0.16], variantes: 3,
+    duree: 2.4, niveau: 0.4, salle: [0.7, 0.35], variantes: 3,
     faire: (m, h) => {
-      // (PLUS GRAVE, MOINS CRIARD — Keko, 23/11 : « un petit peu trop aigu, un peu trop criard » : les tranches d'air de 5 200
-      // à 2 400 Hz, la lame de 1 650 Hz et ses partiels jusqu'à 8,9 fois — un centre à 2 500 Hz ; maintenant des tranches de
-      // 2 400 à 900 Hz, une lame à 620 Hz aux partiels doux, et le coup sourd devant)
-      souffle(m, h, 0, 0.6, -0.25, { f: 2400, glisse: { vers: 900, en: 0.06 }, q: 1.2, bande: true, a: 0.0008, d: 0.05 })
-      souffle(m, h, 0.06, 0.6, 0.25, { f: 2600, glisse: { vers: 1000, en: 0.06 }, q: 1.2, bande: true, a: 0.0008, d: 0.05 })
-      const f = 620 * (0.95 + 0.1 * h.next())
-      note(m, 0.06, 0.5, 0, { f, a: 0.002, d: 0.55, battement: 5, partiels: [[1, 1, 1], [2.76, 0.3, 0.6], [5.4, 0.1, 0.35]] })
-      note(m, 0, 0.8, 0, { f: 110, glisse: { vers: 48, en: 0.1 }, a: 0.001, d: 0.16, partiels: CORPS, sature: 2 })
+      // (FOUDROYANTE AU DÉBUT, LONGUE EN PROFONDEUR — Keko, 23/11 : « trop ponctuel ; quelque chose d'un peu plus profond et
+      // d'un peu plus long à s'éteindre, foudroyant au début et long en profondeur, un peu comme un coup de tonnerre — c'est
+      // un exemple » : d'abord trop aigu — un centre à 2 500 Hz —, puis grave mais bref, éteint en 300 ms. Maintenant : LA
+      // FRAPPE — un claquement large et une tranche d'air qui tombe, les deux entailles — ; LE CORPS — un grave saturé qui
+      // plonge de 95 à 32 Hz et tient plus d'une seconde, la lame qui résonne bas et longtemps — ; et LE ROULEMENT — des
+      // vagues de souffle grave qui s'espacent et pâlissent sur deux secondes)
+      souffle(m, h, 0, 1, 0, { f: 3000, glisse: { vers: 700, en: 0.04 }, q: 0.7, bande: true, a: 0.0004, d: 0.06, large: true })
+      souffle(m, h, 0.05, 0.6, 0.2, { f: 2200, glisse: { vers: 800, en: 0.06 }, q: 1.2, bande: true, a: 0.0008, d: 0.05 })
+      note(m, 0, 1, 0, { f: 95, glisse: { vers: 32, en: 0.5 }, a: 0.002, d: 1.3, partiels: CORPS, sature: 2.4 })
+      const f = 310 * (0.95 + 0.1 * h.next())
+      note(m, 0.04, 0.35, 0, { f, glisse: { vers: f * 0.85, en: 1.2 }, a: 0.004, d: 1.4, battement: 3, partiels: [[1, 1, 1], [2.76, 0.25, 0.5], [5.4, 0.08, 0.3]] })
+      for (let i = 0; i < 9; i++) {
+        const u = i / 9
+        souffle(m, h, 0.08 + 1.6 * u ** 1.4 + 0.04 * h.next(), 0.75 * (1 - u) ** 1.3, (h.next() - 0.5) * 0.6, { f: 160 + 140 * h.next(), glisse: { vers: 70, en: 0.4 }, q: 0.8, bande: true, a: 0.03, d: 0.45, large: true })
+      }
     },
   },
 } satisfies Record<string, Recette>

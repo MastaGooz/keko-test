@@ -8575,3 +8575,9 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   - … PLUS GRAVE (Keko, 23/11 : « un petit peu trop aigu, un peu trop criard ») : MESURÉ, son centre était à 2 508 Hz
     (la détonation 440, la balle du railgun 599) ; les tranches d'air passent de 5 200 → 2 400 Hz à 2 400 → 900 Hz, la lame
     de 1 650 Hz à 620 Hz aux partiels adoucis, le coup sourd monte devant : centre à 537 Hz. PAS ÉCOUTÉ.
+  - … FOUDROYANTE PUIS PROFONDE (Keko, 23/11 : « trop ponctuel ; un peu plus profond et un peu plus long à s'éteindre,
+    foudroyant au début et long en profondeur, un peu comme un coup de tonnerre — c'est un exemple ») : la frappe (un
+    claquement d'air large, une tranche qui tombe), le corps (un grave saturé de 95 à 32 Hz qui tient plus d'une seconde, la
+    lame qui résonne bas, 310 Hz, longtemps), le roulement (neuf vagues de souffle grave qui s'espacent et pâlissent sur
+    deux secondes), une salle plus grande. MESURÉ (efficace) : 100-300 ms 0,093 (avant 0,020), 300-600 ms 0,047, 600-1 000
+    ms 0,019, 1-1,5 s 0,007 ; pic à 3 ms ; centre 346 Hz. PAS ÉCOUTÉ.
