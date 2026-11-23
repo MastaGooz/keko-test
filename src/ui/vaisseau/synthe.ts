@@ -1574,25 +1574,25 @@ const RECETTES = {
   /**
    * L'EXÉCUTION DU RAILGUN (Keko, 23/11 : « un petit effet visuel avec un son pour l'exécution » — voir `Arme.execute`) :
    * foudroyante, puis profonde — une frappe d'air, un grave qui plonge et tient, la lame qui résonne bas, et un roulement
-   * qui s'éteint en deux secondes (voir le détail dans la recette)
+   * qui s'éteint en moins d'une seconde (voir le détail dans la recette)
    */
   execution: {
-    duree: 2.4, niveau: 0.4, salle: [0.7, 0.35], variantes: 3,
+    duree: 1.1, niveau: 0.4, salle: [0.55, 0.25], variantes: 3,
     faire: (m, h) => {
       // (FOUDROYANTE AU DÉBUT, LONGUE EN PROFONDEUR — Keko, 23/11 : « trop ponctuel ; quelque chose d'un peu plus profond et
       // d'un peu plus long à s'éteindre, foudroyant au début et long en profondeur, un peu comme un coup de tonnerre — c'est
       // un exemple » : d'abord trop aigu — un centre à 2 500 Hz —, puis grave mais bref, éteint en 300 ms. Maintenant : LA
       // FRAPPE — un claquement large et une tranche d'air qui tombe, les deux entailles — ; LE CORPS — un grave saturé qui
-      // plonge de 95 à 32 Hz et tient plus d'une seconde, la lame qui résonne bas et longtemps — ; et LE ROULEMENT — des
-      // vagues de souffle grave qui s'espacent et pâlissent sur deux secondes)
+      // plonge de 95 à 38 Hz, la lame qui résonne bas — ; et LE ROULEMENT — des vagues de souffle grave qui s'espacent et
+      // pâlissent. (… PLUS COURT — Keko, 23/11 : « beaucoup trop long » : il s'éteignait en deux secondes ; en moins d'une)
       souffle(m, h, 0, 1, 0, { f: 3000, glisse: { vers: 700, en: 0.04 }, q: 0.7, bande: true, a: 0.0004, d: 0.06, large: true })
       souffle(m, h, 0.05, 0.6, 0.2, { f: 2200, glisse: { vers: 800, en: 0.06 }, q: 1.2, bande: true, a: 0.0008, d: 0.05 })
-      note(m, 0, 1, 0, { f: 95, glisse: { vers: 32, en: 0.5 }, a: 0.002, d: 1.3, partiels: CORPS, sature: 2.4 })
+      note(m, 0, 1, 0, { f: 95, glisse: { vers: 38, en: 0.3 }, a: 0.002, d: 0.5, partiels: CORPS, sature: 2.4 })
       const f = 310 * (0.95 + 0.1 * h.next())
-      note(m, 0.04, 0.35, 0, { f, glisse: { vers: f * 0.85, en: 1.2 }, a: 0.004, d: 1.4, battement: 3, partiels: [[1, 1, 1], [2.76, 0.25, 0.5], [5.4, 0.08, 0.3]] })
-      for (let i = 0; i < 9; i++) {
-        const u = i / 9
-        souffle(m, h, 0.08 + 1.6 * u ** 1.4 + 0.04 * h.next(), 0.75 * (1 - u) ** 1.3, (h.next() - 0.5) * 0.6, { f: 160 + 140 * h.next(), glisse: { vers: 70, en: 0.4 }, q: 0.8, bande: true, a: 0.03, d: 0.45, large: true })
+      note(m, 0.04, 0.35, 0, { f, glisse: { vers: f * 0.88, en: 0.5 }, a: 0.004, d: 0.5, battement: 3, partiels: [[1, 1, 1], [2.76, 0.25, 0.5], [5.4, 0.08, 0.3]] })
+      for (let i = 0; i < 6; i++) {
+        const u = i / 6
+        souffle(m, h, 0.06 + 0.5 * u ** 1.3 + 0.03 * h.next(), 0.75 * (1 - u) ** 1.3, (h.next() - 0.5) * 0.6, { f: 160 + 140 * h.next(), glisse: { vers: 80, en: 0.25 }, q: 0.8, bande: true, a: 0.02, d: 0.22, large: true })
       }
     },
   },

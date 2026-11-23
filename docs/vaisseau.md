@@ -8581,3 +8581,6 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     lame qui résonne bas, 310 Hz, longtemps), le roulement (neuf vagues de souffle grave qui s'espacent et pâlissent sur
     deux secondes), une salle plus grande. MESURÉ (efficace) : 100-300 ms 0,093 (avant 0,020), 300-600 ms 0,047, 600-1 000
     ms 0,019, 1-1,5 s 0,007 ; pic à 3 ms ; centre 346 Hz. PAS ÉCOUTÉ.
+  - … PLUS COURT (Keko, 23/11 : « beaucoup trop long le son ») : la même frappe ; le grave (95 → 38 Hz) et la lame
+    s'éteignent en une demi-seconde, six vagues de roulement sur 0,6 s, une salle plus petite. MESURÉ : 100-300 ms 0,040,
+    300-600 ms 0,015, 600-1 000 ms 0,003 — éteint en moins d'une seconde (avant, deux). PAS ÉCOUTÉ.
