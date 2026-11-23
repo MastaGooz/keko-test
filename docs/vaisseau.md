@@ -8192,3 +8192,14 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
 - **23/11, `&seule` : UNE ARME DE CARTE TOUTE SEULE.** Keko : « un lien où j'ai uniquement la bobine tesla pour la
   tester ». Avec `&spe`, `&seule` retire les armes du vaisseau de sa configuration de base (`confSansTalents`) : il ne
   porte que celles des cartes, et les talents du vol ne les ramènent pas. VU en capture : seules les décharges frappent.
+- **23/11, L'ÉQUILIBRAGE ATTEND LES MINI-BOSS ; LA DÉCHARGE DE LA BOBINE.** Keko : « la bobine fait pas grand-chose, l'obus
+  est-il trop fort ? ». Mesuré : sur la vague, l'obus abat 3,5 fois plus que le laser, 2,5 fois plus que la
+  mitrailleuse, près de 2 fois plus que la bobine (1,24 / 0,35 / 0,50 / 0,67), à égalité avec les missiles (1,26) ;
+  l'indice les égale parce que la moitié de son poids est sur la cible seule et le boss. Keko garde cet indice : « plus
+  tard, des mini-boss très individuels, où les attaques de zone seront moins utiles » — on rejugera quand ils seront là.
+  Ce qui reste : la bobine n'a pas de point fort net (groupes serrés 2,05, ailleurs 0,67 à 1,02) ; deux pistes
+  proposées (défense rapprochée en orbite, ou anti-boss qui monte sur une même cible), non tranchées.
+  Keko : « visuellement elle fait un peu médiocre ; au moment où elle décharge ses arcs, un petit effet de particules
+  d'électricité, pour donner du peps » : à chaque décharge, SUR LA BOULE (`dechargesTesla`, 0,3 s, une fois pour les
+  foudres d'un même instant), un éclair blanc, une onde qui s'ouvre jusqu'à 24, six arcs courts qui jaillissent tout
+  autour et grésillent (`crackle` du dépôt dans le bleu de l'Empire, `TESLA_8`), et quatorze étincelles. VU en capture.
