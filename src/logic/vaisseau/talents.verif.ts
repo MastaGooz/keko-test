@@ -107,18 +107,18 @@ verifier('le délai passé, ce qui restait à choisir part en réserve', reserve
   const sortes = (cs: { mutation?: string }[]): string[] => cs.map((x) => mu(x.mutation!).sorte)
   const n9 = proposer(9, 9, 0, laser, 'humains')
   const n10 = proposer(9, 10, 0, laser, 'humains')
-  const n10b = proposer(9, 10, 1, laser, 'humains', ['laser-cryo'])
+  const n10b = proposer(9, 10, 1, laser, 'humains', ['laser-corrosif'])
   const n15 = proposer(9, 15, 0, laser, 'humains', ['arme-railgun'])
   const n15manque = proposer(9, 15, 0, laser, 'humains')
   verifier(`au niveau ${NIVEAU_SPECIAL}, trois spéciales, deux nouvelles armes et une variation du laser (${n10.map((x) => x.mutation).join(', ')}) ; pas au 9, ni au second choix une fois prise, ni au 15 si on l'a prise ; manquée, elle revient`, n9.every((x) => x.rarete !== 'speciale') && n10.length === 3 && sortes(n10).filter((x) => x === 'arme').length === 2 && n10.some((x) => mu(x.mutation!).sorte === 'variation' && mu(x.mutation!).arme === 'laser') && n10b.every((x) => x.rarete !== 'speciale') && n15.every((x) => x.rarete !== 'speciale') && n15manque.every((x) => x.rarete === 'speciale'))
   // (quatre armes : plus de nouvelle arme ; après le niveau 30, des variations des armes portées)
   const armesDe = (ids: string[]): Arme[] => [laser, ...ids.flatMap((id) => armeDeFaction(id)!.armes())]
   const quatre = proposer(9, 30, 0, laser, 'humains', ['arme-railgun', 'arme-tesla'], armesDe(['railgun', 'tesla', 'obusier']))
-  const n40 = proposer(9, 40, 0, laser, 'humains', ['arme-railgun', 'laser-cryo', 'laser-ricochet'], armesDe(['railgun']))
+  const n40 = proposer(9, 40, 0, laser, 'humains', ['arme-railgun', 'laser-corrosif', 'laser-ricochet'], armesDe(['railgun']))
   // (une arme seule, cinq de ses six variations prises : la dernière, et deux cartes ordinaires pour faire trois)
   const presque = proposer(9, 60, 0, laser, 'humains', ['laser-impulsion', 'laser-drones', 'laser-perforant', 'laser-ricochet', 'laser-concentre'])
-  verifier(`moins de trois spéciales qui restent : des ordinaires complètent (${presque.map((x) => x.mutation ?? x.stat).join(', ')})`, presque.length === 3 && presque[0].mutation === 'laser-cryo' && presque.slice(1).every((x) => x.rarete !== 'speciale'))
-  verifier(`quatre armes portées : plus que des variations (${sortes(quatre).join(', ')}) ; au 40, trois variations des armes portées (${n40.map((x) => x.mutation).join(', ')})`, quatre.length > 0 && sortes(quatre).every((x) => x === 'variation') && n40.length === 3 && n40.every((x) => mu(x.mutation!).sorte === 'variation' && ['laser', 'railgun'].includes(mu(x.mutation!).arme) && !['laser-cryo', 'laser-ricochet'].includes(x.mutation!)))
+  verifier(`moins de trois spéciales qui restent : des ordinaires complètent (${presque.map((x) => x.mutation ?? x.stat).join(', ')})`, presque.length === 3 && presque[0].mutation === 'laser-corrosif' && presque.slice(1).every((x) => x.rarete !== 'speciale'))
+  verifier(`quatre armes portées : plus que des variations (${sortes(quatre).join(', ')}) ; au 40, trois variations des armes portées (${n40.map((x) => x.mutation).join(', ')})`, quatre.length > 0 && sortes(quatre).every((x) => x === 'variation') && n40.length === 3 && n40.every((x) => mu(x.mutation!).sorte === 'variation' && ['laser', 'railgun'].includes(mu(x.mutation!).arme) && !['laser-corrosif', 'laser-ricochet'].includes(x.mutation!)))
   // (une nouvelle arme a SON pool : ses cartes ordinaires reviennent avec celles du laser)
   let cartesDuRail = 0
   for (let n = 41; n < 300; n++) for (const x of proposer(5, n, 1, laser, 'humains', Array.from({ length: 999 }, (_, k) => `deja-${k}`), armesDe(['railgun']))) if (x.cible.sorte === 'arme' && x.cible.arme === 'railgun') cartesDuRail++

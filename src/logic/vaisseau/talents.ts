@@ -179,7 +179,7 @@ const poseesDe = (a: Arme): { cle: (typeof POSEES)[number]; duree: number }[] =>
   return b !== undefined && typeof b.duree === 'number' && b.duree > 0 ? [{ cle, duree: b.duree }] : []
 })
 /** L'arme corrode-t-elle (son acide, ses mines, sa traînée) — et de combien rend-elle vulnérable. */
-export const corrodeDe = (a: Arme): number[] => [a.crachat?.acide.bonus, a.mine?.corrosion?.bonus, a.givre?.corrosion?.bonus, a.parasite?.acide?.bonus].filter((b): b is number => b !== undefined && b > 0)
+export const corrodeDe = (a: Arme): number[] => [a.crachat?.acide.bonus, a.mine?.corrosion?.bonus, a.givre?.corrosion?.bonus, a.parasite?.acide?.bonus, a.corrosif?.bonus].filter((b): b is number => b !== undefined && b > 0)
 
 /** LE POOL D'UNE ARME : le commun (dégâts, critique), puis ce qu'elle porte. */
 export function statsDeLArme(a: Arme): StatDArme[] {
@@ -224,6 +224,7 @@ export function armeAmelioree(a: Arme, stat: StatDArme, k: number): Arme {
         ...(a.mine?.corrosion !== undefined ? { mine: { ...a.mine, corrosion: { ...a.mine.corrosion, bonus: a.mine.corrosion.bonus * (1 + k) } } } : {}),
         ...(a.givre?.corrosion !== undefined ? { givre: { ...a.givre, corrosion: { ...a.givre.corrosion, bonus: a.givre.corrosion.bonus * (1 + k) } } } : {}),
         ...(a.parasite?.acide !== undefined ? { parasite: { ...a.parasite, acide: { ...a.parasite.acide, bonus: a.parasite.acide.bonus * (1 + k) } } } : {}),
+        ...(a.corrosif !== undefined ? { corrosif: { ...a.corrosif, bonus: a.corrosif.bonus * (1 + k) } } : {}),
       }
     case 'givre':
       return changer(a, CLES_DU_GIVRE, (v) => (v < 1 ? Math.max(0.1, 1 - (1 - v) * (1 + k)) : v))
@@ -380,7 +381,10 @@ export const MUTATIONS: Mutation[] = [
   // inflige plus de dégâts qu'un seul tir » : chaque tir devient un rayon accroché 0,5 s, qui ronge 135 % d'un tir — voir
   // `Arme.concentre`)
   variation('laser-concentre', 'laser', 'Concentration', 'Chaque tir devient un rayon concentré un instant sur sa cible.', changerA('laser', (a) => ({ ...a, concentre: { duree: 0.5 }, degats: fois(a, 1.35) }))),
-  variation('laser-cryo', 'laser', 'Cryogénique', 'Les lasers gèlent ce qu’ils touchent et le ralentissent.', changerA('laser', V.cryo)),
+  // (CORROSIF, À LA PLACE DE CRYOGÉNIQUE — Keko, 23/11 : « plutôt que cryogénie, on va donner un effet corrosif au laser » :
+  // ce qu'il touche est rongé 3 s, il perd 35 % de plus de toutes les sources — la corrosion des mines de la Vouivre ; voir
+  // `Arme.corrosif`)
+  variation('laser-corrosif', 'laser', 'Corrosif', 'Les lasers rongent ce qu’ils touchent, qui subit plus de dégâts de toutes parts.', changerA('laser', (a) => ({ ...a, corrosif: { duree: 3, bonus: 0.35 } }))),
   // LA MITRAILLEUSE
   variation('mitraille-jumelee', 'mitraille', 'Canons jumelés', 'Chaque tir part en double : deux balles côte à côte.', changerA('mitraille', V.gerbe(2, 0.12, 0.7))),
   variation('mitraille-tourelle', 'mitraille', 'Tourelle', 'Une mitrailleuse arrose tout autour du vaisseau.', ajouterA('mitraille', (a) => [ajoutee(a, 9, { cadence: a.cadence * 0.9, degats: fois(a, 0.6), portee: a.portee * 0.9 })])),

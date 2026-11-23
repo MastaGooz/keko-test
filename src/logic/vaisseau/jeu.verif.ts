@@ -3369,6 +3369,23 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   verifier(`l'impulsion : un tir, ${txt(tir)} (100 / 50 / 0) ; concentré, ${txt(rayon)} (100 / 50 / 0)`, [tir, rayon].every((v) => Math.abs(v[0] - 100) < 0.5 && Math.abs(v[1] - 50) < 0.5 && v[2] === 0))
 }
 
+// LE LASER CORROSIF (Keko, 23/11 : « un effet corrosif au laser » — voir `Arme.corrosif`) : deux tirs sur un insecte ; le
+// premier le ronge, le second le frappe de 35 % de plus ; concentré, pareil sur la durée du rayon
+{
+  const essai = (concentre: boolean): number => {
+    const laser = { id: 'laser', cadence: 0.6, degats: 100, portee: 120, vitesse: 420, vie: 0.7, dispersion: 0, guide: false, tousSens: true, infaillible: true, corrosif: { duree: 3, bonus: 0.35 }, ...(concentre ? { concentre: { duree: 0.5 } } : {}) }
+    const cfg = { ...VAISSEAU, coque: 1e9, armes: [laser], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false }, passifs: { ...VAISSEAU.passifs, critique: 0 } }
+    const w = nouveauMonde(cfg, 5)
+    w.invasion.prochainA = 1e9
+    const e: Ennemi = { id: 1200, corps: { ...nouveauVaisseau(), x: 60, y: 0 }, pv: 1e6, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9 }
+    w.ennemis.push(e)
+    for (let i = 0; i < 60; i++) avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+    return 1e6 - e.pv
+  }
+  const [tir, rayon] = [essai(false), essai(true)]
+  verifier(`le laser corrosif : deux tirs, ${tir.toFixed(1)} (100 + 135 = 235) ; deux rayons, ${rayon.toFixed(1)} (plus de 200 : le second rongé)`, Math.abs(tir - 235) < 0.5 && rayon > 220)
+}
+
 // TOUCHÉ, ON TRAVERSE LES INSECTES (Keko, 22/11 : « quand on est touché on est invincible un court instant ; je voudrais
 // qu'on traverse aussi les ennemis ») : le temps qu'il clignote, un insecte posé sur lui ne l'écarte pas ; après, si ; une
 // roche l'arrête toujours

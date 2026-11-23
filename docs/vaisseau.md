@@ -8462,3 +8462,9 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     (… PLUS GRAVE — Keko : « on dirait un son de glace ; je veux un truc plus profond et grave, qui fasse vraiment
     impulsion énergétique » : un coup sourd qui tombe de 90 à 38 Hz, saturé ; un bourdon qui ondule de 180 à 70 Hz ; un
     souffle grave qui s'ouvre de 220 à 650 Hz ; aucune note aiguë.)
+- **23/11, LE LASER CORROSIF À LA PLACE DU CRYOGÉNIQUE.** Keko : « plutôt que cryogénie, on va donner un effet corrosif
+  au laser ». `laser-cryo` devient `laser-corrosif` (« Corrosif ») : ce que le laser touche est RONGÉ 3 s — tout ce qu'il
+  perd d'autre, de toutes les sources, est majoré de 35 % (`Arme.corrosif`, nouveau ; `ronger`, la corrosion des mines
+  de la Vouivre), sans dégâts sur la durée ; ses tirs, ses rebonds et son rayon concentré rongent ; les cartes
+  « Corrosion » grandissent le bonus (`corrodeDe`). L'insecte rongé porte la tache d'acide qui fume, à sa taille, et le
+  grésillement de l'acide au premier contact. Le test : deux tirs de 100, 235 (le second rongé) ; deux rayons, 237.
