@@ -1318,7 +1318,7 @@ export type Ennemi = {
   /** Un grand qui est UN BOSS (sinon, un mini-boss) — voir `invasion.recompense`. */
   boss?: boolean
   /**
-   * L'instant où il a perdu de la vie AUTREMENT QUE PAR UNE ARME — la tempête, l'explosion du retour — : la page n'en fait
+   * L'instant où il a perdu de la vie AUTREMENT QUE PAR UNE ARME — la tempête, l'explosion du retour, une roche (23/11) — : la page n'en fait
    * pas un chiffre de dégâts (Keko, 22/11 : « des chiffres blancs énormes » — l'explosion du retour montrait toute la vie
    * qui restait aux insectes qu'elle abat, des milliers au niveau 60).
    */
@@ -2466,6 +2466,9 @@ function heurterLesRoches(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
       e.corps = { ...e.corps, x: r.corps.x + (dx / d) * min, y: r.corps.y + (dy / d) * min }
       if (m.t - (e.heurteA ?? -100) < c.invasion.heurteRoche) continue
       e.heurteA = m.t
+      // (UNE ROCHE N'EST PAS UNE ARME — Keko, 23/11 : « n'affiche pas les dégâts infligés par les astéroïdes aux ennemis ;
+      // c'est uniquement pour les attaques des vaisseaux du joueur et de ses alliés » — voir `horsArmeA`)
+      e.horsArmeA = m.t
       e.pv -= c.derive.chocInsecte
       ev.push({ type: 'ennemiTouche', id: e.id, x: (e.corps.x + r.corps.x) / 2, y: (e.corps.y + r.corps.y) / 2, critique: false })
       if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
@@ -3012,6 +3015,8 @@ function conduireLEnnemi(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number, ev:
   }
   // ses chocs lui coûtent des points, et abîment la roche
   for (const choc of r.chocs) {
+    // (un choc contre une roche non plus — voir `horsArmeA`)
+    e.horsArmeA = m.t
     e.pv -= coutDuChoc(c, choc, c.collision.degatsEnnemi)
     abimerLaRoche(c, m, choc, coutDuChoc(c, choc, c.collision.degatsRoche), ev)
   }

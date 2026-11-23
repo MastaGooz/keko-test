@@ -2941,6 +2941,8 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
       avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
     }
     verifier(`un insecte entré dans une roche la heurte : il en est sorti, et il perd ${VAISSEAU.derive.chocInsecte}, elle rien (Keko, 21/11) (lui ${120 - ins.pv}, elle ${500 - r.pv}), une fois`, ins.pv === 120 - VAISSEAU.derive.chocInsecte && r.pv === 500 && Math.hypot(ins.corps.x - 100, ins.corps.y) >= 15 - 1e-6)
+    // (… ET CE N'EST PAS UNE ARME : la page n'en fait pas de chiffre — Keko, 23/11 ; voir `Ennemi.horsArmeA`)
+    verifier(`le choc contre la roche n'est pas d'une arme : marqué hors arme (${ins.horsArmeA !== undefined})`, ins.horsArmeA !== undefined)
   }
   // (les roches traversent le champ autour du vaisseau)
   {

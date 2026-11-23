@@ -8615,3 +8615,8 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   tout ce qu'elle touche quand son arme est corrosive, et la zone continue aussi. Le test, sept cas (la cible, un voisin
   dans l'onde, un troisième atteint par la détonation ou le second rebond) : tir R--, Impulsion RR-, Ricochet RRR,
   Détonation RRR, Concentration R--, Concentration + Impulsion RR-, Concentration + Ricochet RRR.
+- LES ROCHES NE FONT PAS DE CHIFFRES (Keko, 23/11 : « n'affiche pas les dégâts infligés par les astéroïdes aux ennemis sous
+  forme de chiffres pop-up ; c'est uniquement pour les attaques des vaisseaux du joueur et de ses alliés ») : un insecte
+  qui heurte une roche qui dérive (`heurterLesRoches`), ou un choc contre une roche du champ, est marqué `horsArmeA` —
+  comme la tempête et l'explosion du retour — et la page n'en écrit pas le chiffre. Le test : poussé dans une roche,
+  l'insecte est marqué hors arme.
