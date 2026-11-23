@@ -10472,6 +10472,19 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   let ondesDeZone: { x: number; y: number; t0: number; r: number; s: number }[] = []
   /** Le rayon de l'explosion des missiles du Chasseur : l'étalon de la boule de feu (voir l'événement `explosionDeZone`). */
   const RAYON_DU_MISSILE = pieceDe('arme-minimissiles')?.arme?.zone?.rayon ?? 18
+  /**
+   * LA HAUTEUR D'UN OBUS EN CLOCHE (voir `Arme.cloche`), en pixels au-dessus de son ombre : nulle au départ et à
+   * l'arrivée, au plus haut au milieu de sa course, d'autant plus haute que le tir est long ; et sa vitesse de montée
+   * (`dh`, en pixels par seconde), pour que sa traîne suive la courbe à l'écran.
+   */
+  function hauteurEnCloche(o: { vie: number; vie0?: number; vx: number; vy: number; cloche?: boolean }): { h: number; dh: number } {
+    // (les obus des drones de l'obusier filent droit)
+    if (o.cloche !== true) return { h: 0, dh: 0 }
+    const vie0 = Math.max(0.01, o.vie0 ?? 1)
+    const u = Math.max(0, Math.min(1, 1 - o.vie / vie0))
+    const haut = Math.min(30, 6 + 0.14 * vie0 * Math.hypot(o.vx, o.vy))
+    return { h: Math.sin(Math.PI * u) * haut, dh: (Math.cos(Math.PI * u) * Math.PI * haut) / vie0 }
+  }
   function dessinerLesConsumes(p: Peintre): void {
     ondesDeZone = ondesDeZone.filter((o) => t - o.t0 < 0.25)
     for (const o of ondesDeZone) {
@@ -10995,7 +11008,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   let eclatementSonneA = -10
   /** LES FOUDRES DE LA BOBINE TESLA (voir `Arme.sphere.foudre`) : un instant chacune, en fourche. */
   const foudresTesla: { x0: number; y0: number; x1: number; y1: number; t0: number; g: number }[] = []
-  const DUREE_DE_LA_FOUDRE = 0.22
+  const DUREE_DE_LA_FOUDRE = 0.26
   /** Le bleu électrique de l'Empire, du sombre au blanc. */
   const TESLA = ['#0a1430', '#1a3a8a', '#3a7ae8', '#8ac8ff', '#e0f4ff'].map((c) => N.hex(c))
   /** Le cyan de la balle du railgun, du sombre au blanc (ses éclairs). */
@@ -11018,15 +11031,28 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         const j = k === n ? 0 : R2.range(-5, 5)
         points.push([f.x0 + (f.x1 - f.x0) * q + nx * j, f.y0 + (f.y1 - f.y0) * q + ny * j])
       }
+      // (… ET PLUS DE JUICE — Keko, 23/11 : « un petit peu plus de juice à ses décharges » : une lueur tout du long, un
+      // second liseré plus sombre, des fourches plus longues, un éclair au départ, à l'impact une lueur et un anneau qui
+      // s'ouvre plus large)
+      for (let k = 0; k < points.length; k += 1) p.glow(points[k][0], points[k][1], 6, TESLA[2], 0.3 * (1 - u))
+      for (const [dx, dy] of [[nx * 2, ny * 2], [-nx * 2, -ny * 2]]) for (let k = 1; k < points.length; k++) p.line(points[k - 1][0] + dx, points[k - 1][1] + dy, points[k][0] + dx, points[k][1] + dy, TESLA[1], 0.6 * (1 - u))
       for (const [dx, dy] of [[nx, ny], [-nx, -ny]]) for (let k = 1; k < points.length; k++) p.line(points[k - 1][0] + dx, points[k - 1][1] + dy, points[k][0] + dx, points[k][1] + dy, TESLA[2], 0.9 * (1 - u))
       for (let k = 1; k < points.length; k++) p.line(points[k - 1][0], points[k - 1][1], points[k][0], points[k][1], u < 0.5 ? N.WHITE : TESLA[4], 1 - u * 0.5)
-      for (const k of [Math.floor(n / 3), Math.floor((2 * n) / 3)]) {
+      for (const k of [Math.floor(n / 4), Math.floor(n / 2), Math.floor((3 * n) / 4)]) {
         if (k < 1) continue
         const [fx, fy] = points[k]
-        p.line(fx, fy, fx + nx * R2.range(-11, 11) + (f.x1 - f.x0) * 0.2, fy + ny * R2.range(-11, 11) + (f.y1 - f.y0) * 0.2, TESLA[3], 0.85 * (1 - u))
+        const bx = fx + nx * R2.range(-14, 14) + (f.x1 - f.x0) * 0.2
+        const by = fy + ny * R2.range(-14, 14) + (f.y1 - f.y0) * 0.2
+        const mx = (fx + bx) / 2 + nx * R2.range(-3, 3)
+        const my = (fy + by) / 2 + ny * R2.range(-3, 3)
+        p.line(fx, fy, mx, my, TESLA[3], 0.85 * (1 - u))
+        p.line(mx, my, bx, by, TESLA[3], 0.7 * (1 - u))
       }
-      p.glow(f.x1, f.y1, 9 + 6 * u, TESLA[3], 0.85 * (1 - u))
-      if (u < 0.35) p.circle(f.x1, f.y1, 2 + 5 * (u / 0.35), N.WHITE, 0.8 * (1 - u / 0.35))
+      if (u < 0.4) p.glow(f.x0, f.y0, 10, N.WHITE, 0.6 * (1 - u / 0.4))
+      p.glow(f.x1, f.y1, 14 + 8 * u, TESLA[2], 0.6 * (1 - u))
+      p.glow(f.x1, f.y1, 7, N.WHITE, 0.8 * (1 - u))
+      if (u < 0.5) p.circle(f.x1, f.y1, 2.5 + 6 * (u / 0.5), N.WHITE, 0.85 * (1 - u / 0.5))
+      p.ring(f.x1, f.y1, 3 + 10 * u, 1, TESLA[3], 0.8 * (1 - u))
       p.dot(f.x1, f.y1, N.WHITE)
     }
     for (const s of m.spheres) {
@@ -11197,7 +11223,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * de son départ vers son bout. Rien dans la règle : la page la tient, par balle.
    */
   const trainesDuRailgun = new Map<number, { x0: number; y0: number; x: number; y: number; nee: number; finA: number | null; s: number }>()
-  const DUREE_DE_LA_TRAINEE = 0.35
+  // (… QUI RESTE DANS LE CIEL ET SE DISSIPE — Keko, 23/11 : « un peu fade ; un peu plus de lumière, de juice, et une légère
+  // traînée dans son sillage, qui se dissipe progressivement » : la balle partie, le fil ne s'efface plus de son départ ; il
+  // reste 1,2 s, pâlit et ondule en s'éteignant, sous une brume bleue qui s'élargit ; ses anneaux s'écartent et s'éteignent)
+  const DUREE_DE_LA_TRAINEE = 1.2
   function dessinerLesTrainesDuRailgun(p: Peintre): void {
     const vivantes = new Set<number>()
     for (const o of m.obus) {
@@ -11222,19 +11251,31 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const ny = ux
       const u = tr.finA === null ? 0 : (t - tr.finA) / DUREE_DE_LA_TRAINEE
       const age = t - tr.nee
-      const efface = u * L
-      for (let d = efface; d < L; d += 1) {
-        const a = (1 - u) * (0.35 + 0.65 * (d / L))
-        p.dot(tr.x0 + ux * d, tr.y0 + uy * d, d > L - 4 ? N.WHITE : N.hex('#7ad8ff'), a)
+      // (elle s'éteint en douceur, le départ un peu avant le bout)
+      const reste = (d: number): number => Math.max(0, 1 - u * (1.25 - 0.25 * (d / L))) ** 1.4
+      // (la brume : des lueurs bleues le long du fil, de plus en plus larges et pâles)
+      for (let d = 3; d < L; d += 7) {
+        const r = reste(d)
+        if (r <= 0) continue
+        p.glow(tr.x0 + ux * d, tr.y0 + uy * d, (3 + 6 * u) * tr.s, CYAN_DU_RAILGUN[2], 0.45 * r)
+      }
+      // (le fil : blanc-bleu tant qu'il est neuf, puis bleu ; il ondule en se dissipant)
+      for (let d = 0; d < L; d += 1) {
+        const r = reste(d)
+        if (r <= 0) continue
+        const o2 = Math.sin(d * 0.3 + tr.x0) * u * 2.2
+        const c = d > L - 5 && tr.finA === null ? N.WHITE : u < 0.15 ? N.hex('#bfefff') : N.hex('#7ad8ff')
+        p.dot(tr.x0 + ux * d + nx * o2, tr.y0 + uy * d + ny * o2, c, r * (0.45 + 0.55 * (d / L)))
       }
       const pas = 9
       for (let d = pas; d < L - 4; d += pas) {
-        if (d < efface) continue
-        const ecart = (1.2 + 2.5 * Math.min(1, age / 0.3)) * tr.s
-        p.line(tr.x0 + ux * d - nx * ecart, tr.y0 + uy * d - ny * ecart, tr.x0 + ux * d + nx * ecart, tr.y0 + uy * d + ny * ecart, age < 0.12 ? N.hex('#bfefff') : N.hex('#3a8ad8'), 0.7 * (1 - u))
+        const r = reste(d)
+        if (r <= 0) continue
+        const ecart = (1.2 + 2.5 * Math.min(1, age / 0.3) + 2 * u) * tr.s
+        p.line(tr.x0 + ux * d - nx * ecart, tr.y0 + uy * d - ny * ecart, tr.x0 + ux * d + nx * ecart, tr.y0 + uy * d + ny * ecart, age < 0.12 ? N.hex('#bfefff') : N.hex('#3a8ad8'), 0.7 * r * (1 - u))
       }
       // (au départ, un éclair blanc tant qu'elle est jeune)
-      if (age < 0.12) p.glow(tr.x0, tr.y0, 8 * tr.s, N.WHITE, 0.7 * (1 - age / 0.12))
+      if (age < 0.15) p.glow(tr.x0, tr.y0, 14 * tr.s, N.WHITE, 0.85 * (1 - age / 0.15))
     }
   }
   function dessinerLeRailgun(p: Peintre): void {
@@ -14230,18 +14271,35 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         p.glow(o.x, o.y - hauteur, 6, FEU[4], 0.6)
       } else if (o.arme === 'railgun') {
         // (LA BALLE DU RAILGUN — voir `dessinerLesTrainesDuRailgun` : un court fuseau blanc, son cœur cyan, sa lueur)
+        // (… PLUS LUMINEUSE — Keko, 23/11 : « un peu fade » : une lueur double, un fuseau plus long, bordé de cyan)
         const k = (o.balle?.calibre ?? 2) / 2
-        p.glow(o.x, o.y, 6 * k, N.hex('#7ad8ff'), 0.7)
-        p.line(o.x - ux * 4 * k, o.y - uy * 4 * k, o.x, o.y, N.hex('#bfefff'))
+        p.glow(o.x, o.y, 12 * k, N.hex('#3a8ad8'), 0.55)
+        p.glow(o.x, o.y, 6 * k, N.hex('#bfefff'), 0.9)
+        for (const s2 of [-1, 1]) p.line(o.x - ux * 6 * k - uy * s2, o.y - uy * 6 * k + ux * s2, o.x - uy * s2, o.y + ux * s2, N.hex('#7ad8ff'), 0.8)
+        p.line(o.x - ux * 8 * k, o.y - uy * 8 * k, o.x, o.y, N.hex('#bfefff'))
+        p.line(o.x - ux * 3 * k, o.y - uy * 3 * k, o.x, o.y, N.WHITE)
         if (k > 1.5) p.circle(o.x, o.y, 0.8 * k, N.hex('#bfefff'))
         p.px(Math.round(o.x), Math.round(o.y), N.WHITE)
       } else if (o.arme === 'obusier') {
         // (UN OBUS — l'Obusier de l'Empire : une ogive d'acier sombre, sa pointe claire, une traîne de feu)
-        p.glow(o.x - ux * 3, o.y - uy * 3, 7, FEU[4], 0.5)
-        p.line(o.x - ux * 7, o.y - uy * 7, o.x - ux * 3, o.y - uy * 3, FEU[4])
-        p.circle(o.x, o.y, 2.4, COQUE[1])
-        p.circle(o.x - 0.5, o.y - 0.5, 1.4, COQUE[4])
-        p.px(Math.round(o.x + ux), Math.round(o.y + uy), N.WHITE)
+        // (… TIRÉ EN CLOCHE, PLUS GROS QUE LE MISSILE — Keko, 23/11 : « pour le distinguer des missiles » ; « l'obus doit être
+        // plus gros que le missile » : son ombre au sol, là où il est, qui pâlit quand il monte ; lui plus haut — d'autant
+        // plus qu'il est au milieu de sa course —, plus gros au sommet, et sa traîne suit la courbe à l'écran)
+        const { h, dh } = hauteurEnCloche(o)
+        const g = 1 + h / 45
+        const y = o.y - h
+        const ex = o.vx
+        const ey = o.vy - dh
+        const le = Math.hypot(ex, ey) || 1
+        const vx = ex / le
+        const vy = ey / le
+        p.circle(o.x, o.y, 2.8, N.hex('#0a0608'), 0.45 * (1 - h / 50))
+        p.glow(o.x - vx * 4 * g, y - vy * 4 * g, 9 * g, FEU[4], 0.55)
+        p.line(o.x - vx * 10 * g, y - vy * 10 * g, o.x - vx * 3 * g, y - vy * 3 * g, FEU[4])
+        p.line(o.x - vx * 5 * g, y - vy * 5 * g, o.x - vx * 3 * g, y - vy * 3 * g, N.hex('#fff2a8'))
+        p.circle(o.x, y, 3.3 * g, COQUE[1])
+        p.circle(o.x - 0.7 * g, y - 0.7 * g, 2 * g, COQUE[4])
+        p.px(Math.round(o.x + vx * 2 * g), Math.round(y + vy * 2 * g), N.WHITE)
       } else if (o.arme === 'grenades') {
         // (UNE GRENADE — le Lance-grenades de l'Empire : une petite boule kaki qui tourne, son voyant qui clignote)
         p.circle(o.x, o.y, 1.9, N.hex('#3d4a22'))
@@ -14254,16 +14312,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       } else if (o.arme === 'minimissile' || o.arme === 'roquettes') {
         // UN MISSILE (Keko, 15/11 : « il ressemble trop à une balle ») : un corps de six pixels sur deux, clair d'un côté,
         // ombré de l'autre, l'ogive rouge, deux ailerons à la queue, une flamme longue et sa lueur
-        // (LA ROQUETTE, PLUS LOURDE — Keko, 22/11 : « plus lente et plus grosse zone que les missiles » : le même dessin, une
-        // fois et demie plus grand, un corps de trois pixels, une flamme plus longue)
-        const k = o.arme === 'roquettes' ? 1.5 : 1
+        // (LA ROQUETTE, PLUS PETITE — Keko, 23/11 : « les multi-roquettes doivent être plus petites que les missiles, et
+        // l'obus plus gros » : le même dessin, aux deux tiers)
+        const k = o.arme === 'roquettes' ? 0.65 : 1
         const nx = -uy
         const ny = ux
         const qx = o.x - ux * 6 * k
         const qy = o.y - uy * 6 * k
         p.line(qx, qy, o.x - ux, o.y - uy, COQUE[5])
-        p.line(qx + nx, qy + ny, o.x - ux + nx, o.y - uy + ny, COQUE[3])
-        if (k > 1) p.line(qx - nx, qy - ny, o.x - ux - nx, o.y - uy - ny, COQUE[4])
+        if (k >= 1) p.line(qx + nx, qy + ny, o.x - ux + nx, o.y - uy + ny, COQUE[3])
         p.line(o.x - ux * 1.5 * k, o.y - uy * 1.5 * k, o.x + nx * 0.5, o.y + ny * 0.5, N.hex('#ff5a5a'))
         p.line(qx - nx * 1.6 * k, qy - ny * 1.6 * k, qx + nx * 2.6 * k, qy + ny * 2.6 * k, COQUE[4])
         const fl = (4 + Math.sin(t * 60 + o.id) * 1.2) * k
@@ -16509,7 +16566,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
             flashs.push({ x: ev.x, y: ev.y, t0: t, r: ev.rayon * 0.35 })
             secousse = Math.max(secousse, 0.7)
             if (typeof navigator.vibrate === 'function') vibrer(40)
-          } else secousse = Math.max(secousse, ev.arme === 'roquettes' ? 0.3 : 0.2)
+          } else secousse = Math.max(secousse, ev.arme === 'roquettes' ? 0.15 : 0.2)
           break
         }
         case 'tourelleLancee':
@@ -16573,8 +16630,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           // (LE RAILGUN ET L'OBUSIER PARTENT LOURD — Keko, 22/11 : « manquent de punch » : l'éclair de la bouche, une
           // gerbe, une secousse et une vibration au départ)
           if (ev.arme === 'railgun' || ev.arme === 'obusier') {
-            flashs.push({ x: ev.x, y: ev.y, t0: t, r: 3, ...(ev.arme === 'railgun' ? { c: CYAN_DU_RAILGUN } : {}) })
-            for (let i = 0; i < 6; i++) etincelles.ajouter('etincelle', ev.x, ev.y, R.range(-45, 45), R.range(-45, 45), R.range(0.1, 0.2), ev.arme === 'railgun' ? N.hex('#bfefff') : FEU[5], 1, 1.5)
+            // (le railgun, un éclair plus large — Keko, 23/11 : « un peu fade »)
+            flashs.push({ x: ev.x, y: ev.y, t0: t, r: ev.arme === 'railgun' ? 6 : 3, ...(ev.arme === 'railgun' ? { c: CYAN_DU_RAILGUN } : {}) })
+            for (let i = 0; i < (ev.arme === 'railgun' ? 10 : 6); i++) etincelles.ajouter('etincelle', ev.x, ev.y, R.range(-45, 45), R.range(-45, 45), R.range(0.1, 0.2), ev.arme === 'railgun' ? N.hex('#bfefff') : FEU[5], 1, 1.5)
             secousse = Math.max(secousse, 0.3)
             if (typeof navigator.vibrate === 'function') vibrer(20)
           }
@@ -16582,7 +16640,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         case 'balleTraverse':
           // (LA BALLE DU RAILGUN TRAVERSE UN INSECTE — Keko, 22/11 : « manque de punch » : un éclair à l'impact, une gerbe
           // projetée dans le sens de la balle, de l'autre côté de l'insecte, et le choc de l'acier)
-          flashs.push({ x: ev.x, y: ev.y, t0: t, r: 5, c: CYAN_DU_RAILGUN })
+          // (… un éclair plus large, et un choc blanc au cœur — Keko, 23/11 : « un peu fade »)
+          flashs.push({ x: ev.x, y: ev.y, t0: t, r: 8, c: CYAN_DU_RAILGUN })
+          flashs.push({ x: ev.x, y: ev.y, t0: t, r: -1 })
           jouer('balleRailgun', { dx: ev.x - v.x, dy: ev.y - v.y })
           for (let i = 0; i < 12; i++) {
             const a = ev.cap + R.range(-0.5, 0.5)
@@ -17152,11 +17212,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
             zapA = t
             jouer('foudre', { dx: ev.x1 - v.x, dy: ev.y1 - v.y })
             // (… et la décharge se sent — Keko, 22/11 : « manque de punch » : une petite secousse, une fois par décharge)
-            secousse = Math.max(secousse, 0.22)
+            // (… plus franche — Keko, 23/11 : « un peu plus de juice »)
+            secousse = Math.max(secousse, 0.28)
           }
-          for (let i = 0; i < 7; i++) {
+          for (let i = 0; i < 11; i++) {
             const a = R.range(0, Math.PI * 2)
-            const vit = R.range(40, 100)
+            const vit = R.range(40, 130)
             etincelles.ajouter('etincelle', ev.x1, ev.y1, Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.12, 0.28), [N.WHITE, TESLA[4], TESLA[3]][Math.floor(R.next() * 3)], 1, 1.5)
           }
           break
@@ -17662,6 +17723,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           flammesDesBrules.push({ x: o.x, y: o.y - Math.sin(Math.PI * Math.max(0, Math.min(1, u))) * 12, vx: -o.vx * 0.1, vy: -o.vy * 0.1 - 6, t0: t, vie: R.range(0.15, 0.3) })
         }
         // les mini-missiles laissent une traînée de fumée
+        // (et l'obus en cloche une fumée plus grosse, là où il est à l'écran — en l'air)
+        for (const o of m.obus) if (o.arme === 'obusier' && R.next() < 0.7) feuDesConsumes.spawn(N.P.SMOKE, o.x - o.vx * 0.04, o.y - hauteurEnCloche(o).h - o.vy * 0.04, R.range(-3, 3), R.range(-3, 3), R.range(0.4, 0.6), FUMEE_DU_FEU, R.range(1.3, 1.9))
         for (const o of m.obus) if ((o.arme === 'minimissile' || o.arme === 'roquettes') && R.next() < 0.6) feuDesConsumes.spawn(N.P.SMOKE, o.x - o.vx * 0.03, o.y - o.vy * 0.03, R.range(-3, 3), R.range(-3, 3), R.range(0.3, 0.5), FUMEE_DU_FEU, R.range(0.9, 1.4))
         // les insectes qui brûlent : de petites flammes naissent sur eux et montent
         for (const e of m.ennemis) {

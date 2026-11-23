@@ -334,11 +334,15 @@ export const ARMES_DE_FACTION: ArmeDeFaction[] = [
   // (UNE BALLE, PLUS UN TRAIT — Keko, 22/11 : « un projectile très rapide qui laisse une traînée, juste visuelle, et qui perd
   // en dégâts à chaque cible traversée » ; un quart à chaque insecte — voir `Arme.balle`)
   { id: 'railgun', nom: 'Railgun', dit: 'Une balle très rapide qui transperce les ennemis, un peu moins forte à chacun.', race: 'humains', icone: 'imp-railgun', armes: () => [nouvelle({ id: 'railgun', cadence: 3, degats: 160, portee: 190, vitesse: 900, vie: 190 / 900, perforant: true, balle: { part: 0.75, calibre: 2 } })] },
-  { id: 'obusier', nom: 'Obusier', dit: 'De lourds obus qui explosent sur une large zone.', race: 'humains', icone: 'imp-obusier', armes: () => [nouvelle({ id: 'obusier', cadence: 2.4, degats: 78, portee: 150, vitesse: 140, vie: 1.3, dispersion: 0.05, zone: { rayon: 40 } })] },
-  { id: 'roquettes', nom: 'Roquettes', dit: 'Quatre lourdes roquettes, lentes, qui explosent sur une large zone.', race: 'humains', icone: 'imp-roquettes', armes: () => [nouvelle({ id: 'roquettes', cadence: 3, degats: 20, portee: 130, vitesse: 60, vie: 2, zone: { rayon: 30 }, essaim: { nombre: 4, eventail: 2, acces: 60, pointe: 90, braquage: 5, chaos: 1.6, pas: 0.32, calme: 1.4, reprise: 45 } })] },
-  // (LES ROQUETTES, PLUS LENTES ET PLUS LARGES QUE LES MISSILES DU CHASSEUR — Keko, 22/11 : « une version plus lente et
-  // plus grosse zone que les missiles, pour la distinguer » : elles partent à 60, plafonnent à 90 — les missiles volent
-  // à 110, guidés —, zigzaguent moins, et chacune explose sur 30, les missiles sur 18)
+  // (TIRÉ EN CLOCHE — Keko, 23/11 : « pour le distinguer un peu des missiles » : il passe au-dessus des insectes et
+  // explose en retombant, là où sera sa cible — voir `Arme.cloche`)
+  { id: 'obusier', nom: 'Obusier', dit: 'De lourds obus tirés en cloche, qui explosent en retombant sur une large zone.', race: 'humains', icone: 'imp-obusier', armes: () => [nouvelle({ id: 'obusier', cadence: 2.4, degats: 62, portee: 150, vitesse: 140, vie: 1.3, dispersion: 0.05, zone: { rayon: 40 }, cloche: true })] },
+  { id: 'roquettes', nom: 'Roquettes', dit: 'Six petites roquettes à la fois, qui explosent chacune sur une petite zone.', race: 'humains', icone: 'imp-roquettes', armes: () => [nouvelle({ id: 'roquettes', cadence: 3, degats: 21, portee: 130, vitesse: 60, vie: 2, zone: { rayon: 11 }, essaim: { nombre: 6, eventail: 2.4, acces: 60, pointe: 90, braquage: 5, chaos: 1.6, pas: 0.32, calme: 1.4, reprise: 45 } })] },
+  // (LES ROQUETTES, PLUS LENTES QUE LES MISSILES DU CHASSEUR — Keko, 22/11 : « une version plus lente que les missiles,
+  // pour la distinguer » : elles partent à 60, plafonnent à 90 — les missiles volent à 110, guidés —, zigzaguent moins)
+  // (… ET PLUS PETITES — Keko, 23/11 : « les multi-roquettes doivent être plus petites que les missiles, et l'obus plus
+  // gros que le missile ; une cohérence et un équilibre entre les trois » : six à la fois, chacune explose sur 11 — les
+  // missiles sur 18, l'obus sur 40 —, dessinées plus petites que le missile)
   // (LA BOBINE TESLA — Keko, 22/11 : « l'arc tesla, c'est une chaîne d'éclair bis » : une boule de foudre lente qui
   // traverse la mêlée en foudroyant les trois insectes les plus proches toutes les 0,6 s ; l'identifiant reste `tesla`)
   { id: 'tesla', nom: 'Bobine tesla', dit: 'Une boule de foudre lente qui foudroie les ennemis autour d’elle.', race: 'humains', icone: 'imp-tesla', armes: () => [nouvelle({ id: 'tesla', cadence: 2.6, degats: 58, portee: 120, sphere: { vitesse: 45, duree: 3, rayon: 42, periode: 0.6, vitesseTir: 0, foudre: { cibles: 3 } } })] },

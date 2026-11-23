@@ -8133,3 +8133,25 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   - GRENADES 51 (32), ESCORTE 20 (12) : rien d'autre.
   VU en capture (l'obus sur toute sa zone, la balle et son impact, la foudre) ; les sons mesurés (crêtes 0,2 à 0,5,
   aucun NaN), PAS ÉCOUTÉS.
+- **23/11, ROQUETTES < MISSILE < OBUS, L'OBUS EN CLOCHE, LA TRAÎNÉE DU RAILGUN.** Keko : « les roquettes sont beaucoup trop
+  grosses ; on a les missiles : les multi-roquettes doivent être plus petites que les missiles, et l'obus plus gros que le
+  missile ; une cohérence et un équilibre entre les trois » ; « que l'obus soit tiré en cloche pour le distinguer un peu
+  des missiles » ; « le railgun, visuellement, toujours un peu fade : un peu plus de lumière, de juice, et une légère
+  traînée dans son sillage, qui se dissipe progressivement » ; « pour la bobine tesla, un petit peu plus de juice à ses
+  décharges ».
+  - LES TROIS TAILLES : roquette 11, missile 18, obus 40 (rayons d'explosion ; la boule de feu suit). LES ROQUETTES : six
+    à la fois (quatre), plus lentes que les missiles comme avant, chacune explose sur 11 (30), 21 de dégâts (20) ;
+    dessinées aux deux tiers du missile (une fois et demie), leur secousse plus légère (0,15).
+  - L'OBUS EN CLOCHE (`Arme.cloche`, comme la boule de napalm) : il vole juste le temps d'atteindre sa cible — là où
+    elle sera —, passe au-dessus des insectes et des roches, et n'explose qu'en retombant. Dessiné plus gros (une ogive
+    de 3,3 au lieu de 2,4), il monte jusqu'à 30 au-dessus de son ombre (`hauteurEnCloche` : d'autant plus haut que le tir
+    est long), grossit au sommet, sa traîne et sa fumée suivent la courbe à l'écran. Il ne se perdait plus sur l'insecte
+    de devant : mesuré à 1,18, ramené à 1,02 par ses dégâts, 62 (78). Les obus de ses drones filent droit. Un test le
+    garde : visant un insecte à 120, il épargne celui de 40 sur sa ligne et explose à 121.
+  - LE RAILGUN : la balle a une double lueur et un fuseau plus long bordé de cyan ; sa traînée NE S'EFFACE PLUS DE SON
+    DÉPART : elle reste 1,2 s (0,35), pâlit, ondule en se dissipant, sous une brume bleue qui s'élargit ; l'éclair du
+    départ et celui de chaque insecte traversé plus larges, un choc blanc au cœur.
+  - LA BOBINE : une lueur tout le long de la foudre, un second liseré plus sombre, trois fourches brisées (deux), un
+    éclair au départ, à l'impact une lueur et un anneau qui s'ouvre ; 0,26 s (0,22) ; onze étincelles (sept), une
+    secousse de 0,28 (0,22).
+  VU en capture : l'obus en l'air et sa fumée en courbe, les petites roquettes, la traînée qui reste et ondule, la foudre.
