@@ -8751,3 +8751,9 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   armes : la brûlure, la vulnérabilité, la chance d'arc, le ralenti (et l'aura glaciale par lui). Deux tests ; VU en
   capture : les quatre textes tiennent en trois lignes. PUIS « +X % À TOUS LES EFFETS ET DÉGÂTS LIÉS À … » (Keko, 24/11) :
   quatre lignes, la dernière que la carte montre — VU en capture.
+- LE SILLON DU RAILGUN EST D'ÉNERGIE (Keko, 24/11 : « enlève l'effet électrique au sillon de base ; il devient électrique
+  uniquement avec la carte Électrique du railgun ; sinon c'est juste un sillon d'énergie ») : sa carte dit « La balle
+  laisse un sillon d'énergie qui blesse les ennemis. » ; sans Électrique, `dessinerLesSillons` peint une bande droite de
+  lumière cyan qui respire, un fil clair, des grains de lumière qui s'en élèvent — pas d'éclair, pas d'étincelles — et il
+  est muet (le grésillement était électrique) ; avec Électrique, l'éclair qui serpente et son son reviennent, et il
+  électrocute (c'était déjà la règle). L'événement `sillon` dit `electrique`. VU en capture, les deux côte à côte.

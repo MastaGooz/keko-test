@@ -11364,6 +11364,24 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const halo = glace ? BLEU_DU_GIVRE : CYAN_DU_RAILGUN[2]
       const coeur = glace ? N.hex('#e8f8ff') : CYAN_DU_RAILGUN[4]
       const frappe = Math.floor(t * 15)
+      // (UN SILLON D'ÉNERGIE, S'IL N'EST NI ÉLECTRIQUE NI GELÉ — Keko, 24/11 : « il devient électrique uniquement avec la carte
+      // Électrique ; sinon, c'est juste un sillon d'énergie » : une bande droite de lumière cyan qui respire, un fil clair au
+      // milieu, des grains de lumière qui s'en élèvent — pas d'éclair, pas d'étincelles)
+      if (si.electrocution === undefined && !glace) {
+        const souffle = 0.85 + 0.15 * Math.sin(t * 6 + si.balle)
+        for (const [n, g] of si.segments.entries()) {
+          const L = Math.hypot(g.x1 - g.x0, g.y1 - g.y0)
+          if (L < 0.5) continue
+          p.glowLine(g.x0, g.y0, g.x1, g.y1, si.largeur * 1.2, CYAN_DU_RAILGUN[2], 0.28 * k * souffle)
+          p.line(g.x0, g.y0, g.x1, g.y1, CYAN_DU_RAILGUN[3], 0.65 * k * souffle)
+          for (let q = 0; q < 2; q++) {
+            const ph = (t * 1.2 + alea(si.balle + n, q, 3)) % 1
+            const d = alea(si.balle + n, q, 4) * L
+            p.dot(g.x0 + ((g.x1 - g.x0) / L) * d, g.y0 + ((g.y1 - g.y0) / L) * d - ph * 4, ph < 0.5 ? N.WHITE : CYAN_DU_RAILGUN[4], 0.8 * k * (1 - ph))
+          }
+        }
+        continue
+      }
       for (const [n, g] of si.segments.entries()) {
         const L = Math.hypot(g.x1 - g.x0, g.y1 - g.y0)
         if (L < 0.5) continue
@@ -17766,8 +17784,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           }
           break
         case 'sillon':
-          // (UNE BALLE LAISSE UN SILLON ÉLECTRIQUE — voir `Arme.sillon` : son grésillement)
-          jouer('sillon', { dx: ev.x - v.x, dy: ev.y - v.y })
+          // (UNE BALLE LAISSE UN SILLON — voir `Arme.sillon` : son grésillement, s'il est électrique ; d'énergie, il est muet)
+          if (ev.electrique || ev.gel) jouer('sillon', { dx: ev.x - v.x, dy: ev.y - v.y })
           break
         case 'execution':
           // (UN COUP CRITIQUE DU RAILGUN EXÉCUTE — voir `Arme.execute` et `dessinerLesExecutions` : la croix, son « shing »,

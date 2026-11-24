@@ -1641,7 +1641,7 @@ export type Evenement =
   /** Un coup critique détone (voir `Arme.detonation`). */
   | { type: 'detonation'; x: number; y: number; rayon: number }
   /** Une balle laisse un sillon électrique (voir `Arme.sillon`). */
-  | { type: 'sillon'; x: number; y: number; gel: boolean }
+  | { type: 'sillon'; x: number; y: number; gel: boolean; electrique: boolean }
   /** Un coup critique exécute un insecte qui en aurait réchappé (voir `Arme.execute`) : où, et sa taille. */
   | { type: 'execution'; x: number; y: number; rayon: number }
   | { type: 'harponCasse'; x: number; y: number }
@@ -6534,7 +6534,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
       if (si === undefined) {
         si = { balle: o.id, segments: [], nee: m.t, duree: o.sillon.duree, dps: o.sillon.dps, largeur: o.sillon.largeur, ...(o.sillon.gel === undefined ? {} : { gel: o.sillon.gel }), ...(o.sillon.electrocution === undefined ? {} : { electrocution: o.sillon.electrocution }) }
         m.sillons.push(si)
-        ev.push({ type: 'sillon', x: ox, y: oy, gel: o.sillon.gel !== undefined })
+        ev.push({ type: 'sillon', x: ox, y: oy, gel: o.sillon.gel !== undefined, electrique: o.sillon.electrocution !== undefined })
       }
       si.segments.push({ x0: ox, y0: oy, x1: o.x, y1: o.y })
     }
