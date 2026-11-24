@@ -11129,6 +11129,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const TESLA = ['#0a1430', '#1a3a8a', '#3a7ae8', '#8ac8ff', '#e0f4ff'].map((c) => N.hex(c))
   /** Le cyan de la balle du railgun, du sombre au blanc (ses éclairs). */
   const CYAN_DU_RAILGUN = ['#0a1a30', '#1a4a8a', '#3a8ad8', '#7ad8ff', '#bfefff'].map((c) => N.hex(c))
+  /**
+   * LE RAILGUN EST BLANC TANT QU'IL N'EST PAS ÉLECTRIQUE (Keko, 24/11 : « change la couleur des effets du railgun quand il
+   * n'y a pas la carte spéciale Électrique, afin qu'on ne pense pas que l'arme est électrique de base ; pas de lueur
+   * bleutée, une attaque un peu blanche, neutre ; pour le railgun et toutes ses cartes spéciales tant qu'il n'est pas
+   * électrifié ») : un acier pâle, du gris sombre au blanc ; le cyan revient avec la carte Électrique.
+   */
+  const BLANC_DU_RAILGUN = ['#16171c', '#4a4d58', '#9a9eaa', '#dde0e8', '#f6f7fa'].map((c) => N.hex(c))
+  const couleursDuRailgun = (): number[] => (CONF.armes.some((a) => a.id === 'railgun' && a.electrocution !== undefined) ? CYAN_DU_RAILGUN : BLANC_DU_RAILGUN)
   function dessinerLesSpheres(p: Peintre): void {
     for (let i = foudresTesla.length - 1; i >= 0; i--) if (t - foudresTesla[i].t0 > DUREE_DE_LA_FOUDRE) foudresTesla.splice(i, 1)
     // (LA FOUDRE : un trait brisé qui change de forme à chaque image, une fourche qui s'en détache, un point blanc à l'impact)
@@ -11399,12 +11407,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         for (const [n, g] of si.segments.entries()) {
           const L = Math.hypot(g.x1 - g.x0, g.y1 - g.y0)
           if (L < 0.5) continue
-          p.glowLine(g.x0, g.y0, g.x1, g.y1, si.largeur * 1.2, CYAN_DU_RAILGUN[2], 0.28 * k * souffle)
-          p.line(g.x0, g.y0, g.x1, g.y1, CYAN_DU_RAILGUN[3], 0.65 * k * souffle)
+          p.glowLine(g.x0, g.y0, g.x1, g.y1, si.largeur * 1.2, BLANC_DU_RAILGUN[2], 0.28 * k * souffle)
+          p.line(g.x0, g.y0, g.x1, g.y1, BLANC_DU_RAILGUN[3], 0.65 * k * souffle)
           for (let q = 0; q < 2; q++) {
             const ph = (t * 1.2 + alea(si.balle + n, q, 3)) % 1
             const d = alea(si.balle + n, q, 4) * L
-            p.dot(g.x0 + ((g.x1 - g.x0) / L) * d, g.y0 + ((g.y1 - g.y0) / L) * d - ph * 4, ph < 0.5 ? N.WHITE : CYAN_DU_RAILGUN[4], 0.8 * k * (1 - ph))
+            p.dot(g.x0 + ((g.x1 - g.x0) / L) * d, g.y0 + ((g.y1 - g.y0) / L) * d - ph * 4, ph < 0.5 ? N.WHITE : BLANC_DU_RAILGUN[4], 0.8 * k * (1 - ph))
           }
         }
         continue
@@ -11469,18 +11477,19 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const age = t - tr.nee
       // (elle s'éteint en douceur, le départ un peu avant le bout)
       const reste = (d: number): number => Math.max(0, 1 - u * (1.25 - 0.25 * (d / L))) ** 1.4
-      // (la brume : des lueurs bleues le long du fil, de plus en plus larges et pâles)
+      // (la brume : des lueurs le long du fil, de plus en plus larges et pâles — bleues s'il est électrique, sinon blanches)
+      const T = couleursDuRailgun()
       for (let d = 3; d < L; d += 7) {
         const r = reste(d)
         if (r <= 0) continue
-        p.glow(tr.x0 + ux * d, tr.y0 + uy * d, (3 + 6 * u) * tr.s, CYAN_DU_RAILGUN[2], 0.45 * r)
+        p.glow(tr.x0 + ux * d, tr.y0 + uy * d, (3 + 6 * u) * tr.s, T[2], 0.45 * r)
       }
       // (le fil : blanc-bleu tant qu'il est neuf, puis bleu ; il ondule en se dissipant)
       for (let d = 0; d < L; d += 1) {
         const r = reste(d)
         if (r <= 0) continue
         const o2 = Math.sin(d * 0.3 + tr.x0) * u * 2.2
-        const c = d > L - 5 && tr.finA === null ? N.WHITE : u < 0.15 ? N.hex('#bfefff') : N.hex('#7ad8ff')
+        const c = d > L - 5 && tr.finA === null ? N.WHITE : u < 0.15 ? T[4] : T[3]
         p.dot(tr.x0 + ux * d + nx * o2, tr.y0 + uy * d + ny * o2, c, r * (0.45 + 0.55 * (d / L)))
       }
       const pas = 9
@@ -11488,7 +11497,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         const r = reste(d)
         if (r <= 0) continue
         const ecart = (1.2 + 2.5 * Math.min(1, age / 0.3) + 2 * u) * tr.s
-        p.line(tr.x0 + ux * d - nx * ecart, tr.y0 + uy * d - ny * ecart, tr.x0 + ux * d + nx * ecart, tr.y0 + uy * d + ny * ecart, age < 0.12 ? N.hex('#bfefff') : N.hex('#3a8ad8'), 0.7 * r * (1 - u))
+        p.line(tr.x0 + ux * d - nx * ecart, tr.y0 + uy * d - ny * ecart, tr.x0 + ux * d + nx * ecart, tr.y0 + uy * d + ny * ecart, age < 0.12 ? T[4] : T[2], 0.7 * r * (1 - u))
       }
       // (au départ, un éclair blanc tant qu'elle est jeune)
       if (age < 0.15) p.glow(tr.x0, tr.y0, 14 * tr.s, N.WHITE, 0.85 * (1 - age / 0.15))
@@ -11978,7 +11987,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       if (age < 0.08) p.glow(ex.x, ex.y, ex.r * 2 + 6, N.WHITE, 0.7 * (1 - age / 0.08))
       // (l'anneau : il claque autour de l'insecte et s'ouvre)
       const ua = Math.min(1, age / 0.25)
-      if (ua < 1) p.ring(ex.x, ex.y, ex.r + 2 + ex.r * 2 * (1 - (1 - ua) ** 3), ua < 0.3 ? 2 : 1, ua < 0.25 ? N.WHITE : CYAN_DU_RAILGUN[3], 0.9 * (1 - ua))
+      if (ua < 1) p.ring(ex.x, ex.y, ex.r + 2 + ex.r * 2 * (1 - (1 - ua) ** 3), ua < 0.3 ? 2 : 1, ua < 0.25 ? N.WHITE : couleursDuRailgun()[3], 0.9 * (1 - ua))
       // (les deux entailles : chacune se taille d'un bout à l'autre en 0,05 s, la seconde 0,07 s après)
       for (const [k, d0] of [[0, 0], [1, 0.07]] as const) {
         const ag = age - d0
@@ -11993,8 +12002,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         const y0 = ex.y - uy * L
         const x1 = x0 + ux * 2 * L * trace
         const y1 = y0 + uy * 2 * L * trace
-        p.glowLine(x0, y0, x1, y1, 4, CYAN_DU_RAILGUN[2], 0.35 * k2)
-        for (const o of [-1, 1]) p.line(x0 - uy * o, y0 + ux * o, x1 - uy * o, y1 + ux * o, CYAN_DU_RAILGUN[3], 0.85 * k2)
+        p.glowLine(x0, y0, x1, y1, 4, couleursDuRailgun()[2], 0.35 * k2)
+        for (const o of [-1, 1]) p.line(x0 - uy * o, y0 + ux * o, x1 - uy * o, y1 + ux * o, couleursDuRailgun()[3], 0.85 * k2)
         p.line(x0, y0, x1, y1, N.WHITE, k2)
         if (trace < 1) p.glow(x1, y1, 3, N.WHITE, 0.9)
       }
@@ -17242,8 +17251,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           // gerbe, une secousse et une vibration au départ)
           if (ev.arme === 'railgun' || ev.arme === 'obusier') {
             // (le railgun, un éclair plus large — Keko, 23/11 : « un peu fade »)
-            flashs.push({ x: ev.x, y: ev.y, t0: t, r: ev.arme === 'railgun' ? 6 : 3, ...(ev.arme === 'railgun' ? { c: CYAN_DU_RAILGUN } : {}) })
-            for (let i = 0; i < (ev.arme === 'railgun' ? 10 : 6); i++) etincelles.ajouter('etincelle', ev.x, ev.y, R.range(-45, 45), R.range(-45, 45), R.range(0.1, 0.2), ev.arme === 'railgun' ? N.hex('#bfefff') : FEU[5], 1, 1.5)
+            flashs.push({ x: ev.x, y: ev.y, t0: t, r: ev.arme === 'railgun' ? 6 : 3, ...(ev.arme === 'railgun' ? { c: couleursDuRailgun() } : {}) })
+            for (let i = 0; i < (ev.arme === 'railgun' ? 10 : 6); i++) etincelles.ajouter('etincelle', ev.x, ev.y, R.range(-45, 45), R.range(-45, 45), R.range(0.1, 0.2), ev.arme === 'railgun' ? couleursDuRailgun()[4] : FEU[5], 1, 1.5)
             secousse = Math.max(secousse, 0.3)
             if (typeof navigator.vibrate === 'function') vibrer(20)
           }
@@ -17252,13 +17261,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           // (LA BALLE DU RAILGUN TRAVERSE UN INSECTE — Keko, 22/11 : « manque de punch » : un éclair à l'impact, une gerbe
           // projetée dans le sens de la balle, de l'autre côté de l'insecte, et le choc de l'acier)
           // (… un éclair plus large, et un choc blanc au cœur — Keko, 23/11 : « un peu fade »)
-          flashs.push({ x: ev.x, y: ev.y, t0: t, r: 8, c: CYAN_DU_RAILGUN })
+          flashs.push({ x: ev.x, y: ev.y, t0: t, r: 8, c: couleursDuRailgun() })
           flashs.push({ x: ev.x, y: ev.y, t0: t, r: -1 })
           jouer('balleRailgun', { dx: ev.x - v.x, dy: ev.y - v.y })
           for (let i = 0; i < 12; i++) {
             const a = ev.cap + R.range(-0.5, 0.5)
             const vit = R.range(60, 160)
-            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.12, 0.3), [N.WHITE, N.hex('#bfefff'), N.hex('#7ad8ff')][Math.floor(R.next() * 3)], 1, 2)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.12, 0.3), [N.WHITE, couleursDuRailgun()[4], couleursDuRailgun()[3]][Math.floor(R.next() * 3)], 1, 2)
           }
           secousse = Math.max(secousse, 0.35)
           break
