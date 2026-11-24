@@ -14882,6 +14882,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
     // les obus du joueur : canon, un fuseau cyan ; mitrailleuse, un tiret court ; missile, un corps clair à pointe rouge et sa flamme
     for (const o of m.obus) {
+      // (la seconde explosion d'une grenade attend au sol, invisible — voir `Arme.double`)
+      if (o.echo === true) continue
       const l = Math.hypot(o.vx, o.vy) || 1
       const ux = o.vx / l
       const uy = o.vy / l

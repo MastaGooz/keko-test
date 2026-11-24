@@ -9014,3 +9014,12 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
 - « BARRAGE » (Keko, 24/11 : « change le nom Rafale par autre chose, parce que ce n'est pas vraiment une rafale » ; parmi
   Éventail, Tir de barrage, Arrosage, Demi-lune, il a choisi « Barrage ») : la carte des six grenades en demi-cercle.
   L'identifiant reste `grenades-rafale`.
+- DOUBLE EXPLOSION, À LA PLACE DE GROS CALIBRE (Keko, 24/11 : Gros calibre faisait doublon avec les cartes « Dégâts » et
+  « Zone et portée » ; parmi Leurre, Pièges, Charge lente, Détonation en chaîne et Écho : « la double explosion est ce que
+  tu as proposé de meilleur ; les autres recoupent trop avec le Téléguidage — que les ennemis aillent vers la grenade rend
+  Téléguidage inutile — ; les mines, on en a déjà pour d'autres vaisseaux ; la double explosion apporte vraiment quelque
+  chose ») : « Chaque grenade explose deux fois de suite. » ; `Arme.double` = { delai 0,5, part 0,5 } — la seconde
+  (`Obus.echo`, invisible, qui attend au sol) explose au même endroit à 50 %, avec l'élément, les éclats et les
+  critiques (donc l'Étourdissement) ; elle ne chasse pas et n'en appelle pas d'autre. Un test (34 puis 17, à 0,5 s, au
+  même endroit) ; VU en capture (givrées : deux explosions de glace). LE LANCE-GRENADES A SES SIX : Grenades givrées,
+  Fragmentation, Téléguidage, Étourdissement, Barrage, Double explosion.

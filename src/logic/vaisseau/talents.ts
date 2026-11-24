@@ -552,7 +552,10 @@ export const MUTATIONS: Mutation[] = [
   // des dégâts critiques des grenades sont étourdis » ; 1 s, la place : Keko ; l'explosion seule, pas les éclats — voir
   // `Arme.etourdissement`)
   variation('grenades-etourdissement', 'grenades', 'Étourdissement', 'Les coups critiques des explosions étourdissent les ennemis.', changerA('grenades', (a) => ({ ...a, etourdissement: { duree: 1 } }))),
-  variation('grenades-lourdes', 'grenades', 'Gros calibre', 'Des grenades plus lentes, plus fortes, qui explosent plus large.', changerA('grenades', V.lourd)),
+  // (« DOUBLE EXPLOSION », À LA PLACE DE « GROS CALIBRE » — Keko, 24/11 : Gros calibre faisait doublon avec les cartes
+  // « Dégâts » et « Zone et portée » ; « la double explosion, ça apporte vraiment quelque chose » — Leurre et Pièges
+  // recoupaient Téléguidage ; 0,5 s, 50 % — voir `Arme.double`)
+  variation('grenades-double', 'grenades', 'Double explosion', 'Chaque grenade explose deux fois de suite.', changerA('grenades', (a) => ({ ...a, double: { delai: 0.5, part: 0.5 } }))),
   // LA BALISE LASER
   variation('lien-double', 'lien', 'Deux balises', 'Une seconde balise, son propre rayon.', ajouterA('lien', (a) => [ajoutee(a, (a.place ?? 20) + 1, { degats: fois(a, 0.7) })])),
   variation('lien-longue', 'lien', 'Longue vie', 'Les balises restent actives bien plus longtemps.', changerA('lien', (a) => ({ ...a, lien: a.lien === undefined ? undefined : { ...a.lien, duree: a.lien.duree * 1.6 } }))),
