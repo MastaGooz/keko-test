@@ -2030,9 +2030,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     cadence: { nom: 'Cadence', effet: 'de cadence' },
     portee: { nom: 'Portée', effet: 'de portée' },
     pose: { nom: 'Durée', effet: 'de durée' },
-    feu: { nom: 'Feu', effet: 'de dégâts du feu' },
-    corrosion: { nom: 'Corrosion', effet: 'd’effet corrosif' },
-    givre: { nom: 'Givre', effet: 'de ralentissement' },
+    // (LES ÉTATS DISENT CE QU'ILS FONT — Keko, 24/11 : « +X % de dégâts infligés aux ennemis affectés par corrosion », « +X %
+    // de ralentissement aux ennemis affectés par givre », « +X % de dégâts de l'effet de brûlure » ; le feu s'appelle Brûlure ;
+    // les deux premiers prenaient cinq lignes, Keko a choisi de les raccourcir : « sous corrosion », « sous givre »)
+    feu: { nom: 'Brûlure', effet: 'de dégâts de l’effet de brûlure' },
+    corrosion: { nom: 'Corrosion', effet: 'de dégâts aux ennemis sous corrosion' },
+    givre: { nom: 'Givre', effet: 'de ralentissement aux ennemis sous givre' },
     blindage: { nom: 'Blindage', effet: 'de blindage' },
     moteur: { nom: 'Vitesse', effet: 'de vitesse' },
     maniabilite: { nom: 'Maniabilité', effet: 'de maniabilité' },
@@ -3393,10 +3396,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       if (g.ralenti < 1) ralentit(g.ralenti)
     } else if (a.nova !== undefined) {
       const v = a.nova
-      ligne('Dégâts', ent(a.degats)), cadence(a.cadence), zone(v.rayon), ligne('Gel', sec(v.gel.duree)), ralentit(v.gel.ralenti), ligne('Verglas', ent(v.plaque.dps)), ligne('Durée du verglas', sec(v.plaque.duree))
+      ligne('Dégâts', ent(a.degats)), cadence(a.cadence), zone(v.rayon), ligne('Givre', sec(v.gel.duree)), ralentit(v.gel.ralenti), ligne('Verglas', ent(v.plaque.dps)), ligne('Durée du verglas', sec(v.plaque.duree))
     } else if (a.condense !== undefined) {
       ligne('Dégâts', ent(a.degats)), cadence(a.cadence), portee(), ligne('Projectiles', ent(a.condense.max))
-      if (a.gel !== undefined) ligne('Gel', sec(a.gel.duree)), ralentit(a.gel.ralenti)
+      if (a.gel !== undefined) ligne('Givre', sec(a.gel.duree)), ralentit(a.gel.ralenti)
     } else if (a.tornade !== undefined) {
       const to = a.tornade
       ligne('Dégâts', ent(to.dps)), cadence(a.cadence), portee(), zone(to.rayon), ligne('Durée', sec(to.duree)), ralentit(to.ralenti)
@@ -3463,7 +3466,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       if (a.salve !== undefined) ligne('Projectiles', ent(a.salve.nombre))
       if (a.zone !== undefined) zone(a.zone.rayon)
       if (a.plasma !== undefined) zone(a.plasma.rayon), ligne('Dégâts de zone', ent(a.plasma.degats))
-      if (a.chaine === undefined && a.gel !== undefined) ligne('Gel', sec(a.gel.duree)), ralentit(a.gel.ralenti)
+      if (a.chaine === undefined && a.gel !== undefined) ligne('Givre', sec(a.gel.duree)), ralentit(a.gel.ralenti)
     }
     return l
   }

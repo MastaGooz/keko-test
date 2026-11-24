@@ -8636,3 +8636,9 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
 - LA CORROSION DU VORTEX MAJORE DE 20 % (Keko, 24/11 : « passe l'augmentation des dégâts subis par corrosion à 20 % au
   lieu de 25 % ») : `CORROSION_DU_VORTEX` = 0,2, toutes ses sources comme ci-dessus ; la carte « Corrosion » légendaire
   la porte à 25 %. Le Nova Drifter garde ses 35 %.
+- LES CARTES D'ÉTAT DISENT CE QU'ELLES FONT (Keko, 24/11) : « +X % de dégâts aux ennemis sous corrosion », « +X % de
+  ralentissement aux ennemis sous givre », « +X % de dégâts de l'effet de brûlure ». Keko avait écrit « infligés aux
+  ennemis affectés par corrosion / givre » : cinq lignes, la cinquième coupée (VU en capture) ; il a choisi de raccourcir.
+  LES NOMS DES ÉTATS : la carte du feu s'appelle « Brûlure » (les fiches disaient déjà « Brûlure ») ; le gel s'appelle
+  « Givre » partout — Cryogénique dit « Les tirs appliquent givre. », les fiches des armes « Givre » au lieu de « Gel ».
+  Les verbes restent (« gèlent », « enflamment ») ; les variations « Incendiaire(s) » gardent leur nom.

@@ -436,7 +436,8 @@ export const MUTATIONS: Mutation[] = [
   // élément par arme » ; « les coups critiques tuent instantanément les ennemis faibles » — voir `Arme.execute`)
   variation('railgun-execution', 'railgun', 'Exécution', 'Les coups critiques tuent instantanément les ennemis faibles.', changerA('railgun', (a) => ({ ...a, execute: true }))),
   // (CRYOGÉNIQUE, SON ÉLÉMENT — Keko, 23/11 : « le même texte que le laser corrosif, en remplaçant corrosion par gel »)
-  variation('railgun-cryo', 'railgun', 'Cryogénique', 'Les tirs appliquent gel.', changerA('railgun', V.cryo)),
+  // (puis « givre » : l'état s'appelle Givre partout — Keko, 24/11)
+  variation('railgun-cryo', 'railgun', 'Cryogénique', 'Les tirs appliquent givre.', changerA('railgun', V.cryo)),
   variation('railgun-large', 'railgun', 'Gros calibre', 'Une balle deux fois et demie plus grosse, qui touche plus large.', changerA('railgun', (a) => ({ ...a, balle: a.balle === undefined ? undefined : { ...a.balle, calibre: a.balle.calibre * 2.5 } }))),
   // (LE SILLON, À LA PLACE DU RAIL JUMEAU — Keko, 23/11 : « la traînée du railgun laisse un sillon électrique, et de gel si
   // on a Cryogénie » ; le Rail jumeau ajoutait une arme à côté au lieu de changer le tir : 2 s, 30 % des dégâts par
