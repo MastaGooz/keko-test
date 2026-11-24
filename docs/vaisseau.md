@@ -9057,3 +9057,7 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   coins rouges autour. VU en capture.
 - LA CIBLE DE LA DÉSIGNATION EN ROUGE (Keko, 24/11 : « on peut mettre la cible rouge ? ») : l'anneau `#ff3a3a`, cerné de
   sombre, le point rose clair.
+- LA DÉSIGNATION NE PROFITE PAS À L'ESCORTE (Keko, 24/11 : « il ne faut pas que la désignation augmente les chances de
+  critique des avions eux-mêmes, sinon c'est une boucle ») : `designe(m, e, designante)` rend 0 pour une arme qui
+  désigne (`critiqueSur` le lit sur l'arme, `coupDObus` sur l'obus). Le test le vérifie (l'escorte à 0 % : 0 % sur un
+  désigné ; une autre arme : 24 %).

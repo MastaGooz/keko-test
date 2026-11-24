@@ -730,8 +730,9 @@ export type Arme = {
   double?: { delai: number; part: number }
   /**
    * LA DÉSIGNATION (la variation sur coup critique de l'Escorte, Keko, 24/11, proposée : « l'escorte repère les cibles et
-   * le reste les abat ») : un critique de l'arme marque l'insecte `duree` secondes ; TOUTES LES ARMES ont `bonus` points
-   * de chance critique de plus sur lui (3 s, +25 points). Un nouveau critique relance la marque.
+   * le reste les abat ») : un critique de l'arme marque l'insecte `duree` secondes ; LES AUTRES ARMES ont `bonus` points
+   * de chance critique de plus sur lui (3 s, +25 points) — pas elle-même : ce serait une boucle (Keko). Un nouveau
+   * critique relance la marque.
    */
   designation?: { duree: number; bonus: number }
   /**
@@ -2761,8 +2762,12 @@ const facteurDeCritique = (c: ConfigVaisseau, a: Arme | undefined): number => c.
 export const ELEMENTAIRES = { gelure: { chance: 0.15, duree: 1.5 }, incendie: { ecart: 6, periode: 1 }, vulnerabilite: { chance: 0.25, facteur: 0.5 }, foudre: { chance: 0.1, degats: 150, rayon: 20, part: 0.5 }, dissolution: { taille: 1.5, duree: 3, dps: 30 }, combustion: { degats: 60, taille: 3 }, auraGlaciale: { rayon: 50, ralenti: 0.5 }, affaiblissement: { reduction: 0.3, max: 0.6 } }
 /** UN INSECTE VULNÉRABLE (« Point faible ») : rongé, il prend plus de critiques, et plus forts. */
 const vulnerable = (c: ConfigVaisseau, m: Monde, e: Ennemi | undefined): boolean => e !== undefined && c.elementaires.vulnerabilite && e.acide !== undefined && e.acide.jusque > m.t
-/** Les points de chance critique qu'un insecte DÉSIGNÉ donne à toutes les armes (voir `Arme.designation`). */
-const designe = (m: Monde, e: Ennemi | undefined): number => (e !== undefined && (e.designeA ?? -1) > m.t ? (e.designeBonus ?? 0) : 0)
+/**
+ * Les points de chance critique qu'un insecte DÉSIGNÉ donne aux AUTRES armes (voir `Arme.designation`) — pas à celle qui
+ * désigne (Keko, 24/11 : « il ne faut pas que la désignation augmente les chances de critique des avions eux-mêmes,
+ * sinon c'est une boucle » : un critique en appelait un autre, la marque ne tombait plus).
+ */
+const designe = (m: Monde, e: Ennemi | undefined, designante: boolean): number => (!designante && e !== undefined && (e.designeA ?? -1) > m.t ? (e.designeBonus ?? 0) : 0)
 /** Un critique d'une arme qui désigne marque sa cible (voir `Arme.designation`). */
 function designer(m: Monde, e: Ennemi, d: { duree: number; bonus: number } | undefined, ev: Evenement[]): void {
   if (d === undefined || e.asteroide !== undefined || e.pv <= 0) return
@@ -2772,7 +2777,7 @@ function designer(m: Monde, e: Ennemi, d: { duree: number; bonus: number } | und
 }
 /** UN COUP CRITIQUE SUR `e` ? Sa chance, celle de l'arme et du vaisseau, et de `e` s'il est vulnérable ou désigné ; `u` n'est tiré que si elle n'est pas nulle. */
 const critiqueSur = (c: ConfigVaisseau, m: Monde, a: Arme | undefined, e: Ennemi | undefined, u: () => number): boolean => {
-  const ch = chanceDeCritique(c, a) + (vulnerable(c, m, e) ? ELEMENTAIRES.vulnerabilite.chance * (1 + c.renforts.corrosion) : 0) + designe(m, e)
+  const ch = chanceDeCritique(c, a) + (vulnerable(c, m, e) ? ELEMENTAIRES.vulnerabilite.chance * (1 + c.renforts.corrosion) : 0) + designe(m, e, a?.designation !== undefined)
   return ch > 0 && u() < ch
 }
 /** Le facteur d'un coup critique sur `e` (voir `critiqueSur`). */
@@ -4347,7 +4352,7 @@ function ronger(c: ConfigVaisseau, m: Monde, e: Ennemi, ac: { duree: number; dps
 function coupDObus(c: ConfigVaisseau, m: Monde, o: Obus, e: Ennemi): { degats: number; critique: boolean } {
   const vu = vulnerable(c, m, e)
   // (DÉSIGNÉ : sa chance de plus, tirée à l'impact — voir `Arme.designation`)
-  const d = designe(m, e)
+  const d = designe(m, e, o.designation !== undefined)
   if (!vu && d === 0) return { degats: o.degats, critique: o.critique === true }
   const a = c.armes.find((x) => x.id === o.arme)
   const f = facteurDeCritique(c, a)

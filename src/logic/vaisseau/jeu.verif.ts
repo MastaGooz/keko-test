@@ -3257,8 +3257,8 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   for (let i = 0; i < 20; i++) avancerLeMonde(cm, wm, 1 / 60, { x: 0, y: 0 })
   const marque = (em.designeA ?? -1) - wm.t
   // (le taux de critiques d'une autre arme sur un désigné, et sur un insecte sain)
-  const taux = (designe: boolean): number => {
-    const ca = cfgDe({ id: 'canon' }, 0)
+  const taux = (designe: boolean, elleMeme = false): number => {
+    const ca = cfgDe(elleMeme ? { designation: { duree: 3, bonus: 0.25 } } : { id: 'canon' }, 0)
     const w = nouveauMonde(ca, 7)
     w.invasion.prochainA = 1e9
     const e = insecte()
@@ -3271,8 +3271,9 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
     }
     return crits / Math.max(1, coups)
   }
-  const [avec, sans] = [taux(true), taux(false)]
-  verifier(`la désignation : un critique marque l'insecte (${marque.toFixed(2)} s qui restent, vers 3) ; une autre arme à 0 % y fait ${(avec * 100).toFixed(0)} % de critiques (vers 25), ${(sans * 100).toFixed(0)} % sur un insecte sain (0)`, marque > 2.5 && marque <= 3 && Math.abs(avec - 0.25) < 0.06 && sans === 0)
+  const [avec, sans, boucle] = [taux(true), taux(false), taux(true, true)]
+  // (… PAS L'ARME QUI DÉSIGNE — Keko, 24/11 : « sinon c'est une boucle »)
+  verifier(`la désignation : un critique marque l'insecte (${marque.toFixed(2)} s qui restent, vers 3) ; une autre arme à 0 % y fait ${(avec * 100).toFixed(0)} % de critiques (vers 25), ${(sans * 100).toFixed(0)} % sur un insecte sain (0) ; l'escorte elle-même, ${(boucle * 100).toFixed(0)} % (0)`, marque > 2.5 && marque <= 3 && Math.abs(avec - 0.25) < 0.06 && sans === 0 && boucle === 0)
 }
 
 // LA BALLE PERFORANTE RONGE (Keko, 24/11 : « l'élément s'applique à toutes les variations ») : une balle acide qui
