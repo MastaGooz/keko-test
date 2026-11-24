@@ -2039,12 +2039,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // de ralentissement aux ennemis affectés par givre », « +X % de dégâts de l'effet de brûlure » ; le feu s'appelle Brûlure ;
     // les deux premiers prenaient cinq lignes, Keko a choisi de les raccourcir : « sous corrosion », « sous givre »)
     // (… PUIS « À TOUS LES EFFETS LIÉS À » L'ÉTAT — Keko, 24/11 : « on reste vague et on peut inclure la totalité des
-    // effets » : la carte grandit aussi ceux des cartes spéciales — voir `ConfigVaisseau.renforts`)
-    feu: { nom: 'Brûlure', effet: 'à tous les effets liés à la brûlure' },
-    corrosion: { nom: 'Corrosion', effet: 'à tous les effets liés à la corrosion' },
-    givre: { nom: 'Givre', effet: 'à tous les effets liés au givre' },
+    // effets » : la carte grandit aussi ceux des cartes spéciales — voir `ConfigVaisseau.renforts` ; « effets et dégâts », Keko, 24/11)
+    feu: { nom: 'Brûlure', effet: 'à tous les effets et dégâts liés à la brûlure' },
+    corrosion: { nom: 'Corrosion', effet: 'à tous les effets et dégâts liés à la corrosion' },
+    givre: { nom: 'Givre', effet: 'à tous les effets et dégâts liés au givre' },
     // (Keko, 24/11 : « une carte électrocution avec +X % de chance de déclencher l'effet d'électrocution »)
-    electrocution: { nom: 'Électrocution', effet: 'à tous les effets liés à l’électrocution' },
+    electrocution: { nom: 'Électrocution', effet: 'à tous les effets et dégâts liés à l’électrocution' },
     blindage: { nom: 'Blindage', effet: 'de blindage' },
     moteur: { nom: 'Vitesse', effet: 'de vitesse' },
     maniabilite: { nom: 'Maniabilité', effet: 'de maniabilité' },

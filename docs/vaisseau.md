@@ -8749,4 +8749,5 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   combustion ; CORROSION, la flaque de la dissolution, la chance et le facteur du point faible ; ÉLECTROCUTION, l'arc (sa
   surtension comprise) et la foudre ; GIVRE, la chance du gel profond. Ce que ces cartes grandissaient déjà reste aux
   armes : la brûlure, la vulnérabilité, la chance d'arc, le ralenti (et l'aura glaciale par lui). Deux tests ; VU en
-  capture : les quatre textes tiennent en trois lignes.
+  capture : les quatre textes tiennent en trois lignes. PUIS « +X % À TOUS LES EFFETS ET DÉGÂTS LIÉS À … » (Keko, 24/11) :
+  quatre lignes, la dernière que la carte montre — VU en capture.
