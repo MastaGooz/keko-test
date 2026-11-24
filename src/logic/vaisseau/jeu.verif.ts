@@ -3229,6 +3229,27 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   verifier(`la grappe : ${g.zones.length} explosions (4), trois de 20 à ${ecarts.map((d) => d.toFixed(0)).join(', ')} de la grande (40), en même temps (${minis.every((z) => Math.abs(z.t - (grande?.t ?? -9)) < 0.05)}) ; la cible prend ${g.pris} (60, et 24 par mini-obus qui l'atteint)`, g.zones.length === 4 && grande !== undefined && minis.length === 3 && ecarts.every((d) => Math.abs(d - 40) < 3) && minis.every((z) => Math.abs(z.t - grande.t) < 0.05) && g.pris >= 60)
   const r = essai({ replique: { rayon: 15, part: 0.3 } }, 1)
   const sans = essai({ replique: { rayon: 15, part: 0.3 } }, 0)
+  // (L'ÉLÉMENT DANS TOUTES LES VARIATIONS — Keko, 24/11 : « la réplique ou la fragmentation de l'obus doit infliger brûlure
+  // si on a Incendiaires » : douze insectes en couronne à 52 de la cible, hors de la grande zone — avec la grappe, ceux que
+  // les mini-obus atteignent brûlent ; sans, aucun ; un insecte à 55, à 17 d'un voisin critiqué : la réplique l'enflamme)
+  const enFeu = (a: Partial<Arme>, critique: number, places: [number, number][]): boolean[] => {
+    const obusier = { id: 'obusier', cadence: 99, degats: 60, portee: 150, vitesse: 110, vie: 2.2, dispersion: 0, guide: false, tousSens: true, zone: { rayon: 40 }, cloche: { vol: 0.8 }, incendiaire: { duree: 3, dps: 10 }, ...a }
+    const cfg = { ...VAISSEAU, coque: 1e9, armes: [obusier], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false }, passifs: { ...VAISSEAU.passifs, critique } }
+    const w = nouveauMonde(cfg, 5)
+    w.invasion.prochainA = 1e9
+    const es = [[120, 0] as [number, number], ...places].map(([x, y], k): Ennemi => ({ id: 670 + k, corps: { ...nouveauVaisseau(), x, y }, pv: 1e6, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9 }))
+    w.ennemis.push(...es)
+    w.verrou = es[0].id
+    let explose = false
+    for (let i = 0; i < 400 && !explose; i++) for (const ev of avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements) if (ev.type === 'explosionDeZone') explose = true
+    return es.slice(1).map((e) => (e.bruleA ?? -1) > w.t)
+  }
+  const couronne = Array.from({ length: 12 }, (_, k): [number, number] => [120 + Math.cos((k / 12) * Math.PI * 2) * 52, Math.sin((k / 12) * Math.PI * 2) * 52])
+  const grappeEnFeu = enFeu({ grappe: { nombre: 3, part: 0.4, zone: 0.5, ecart: 1 } }, 0, couronne).filter(Boolean).length
+  const seulEnFeu = enFeu({}, 0, couronne).filter(Boolean).length
+  const [, repliqueEnFeu] = enFeu({ replique: { rayon: 15, part: 0.3 } }, 1, [[120, 38], [120, 55]])
+  const [, sansRepliqueEnFeu] = enFeu({}, 1, [[120, 38], [120, 55]])
+  verifier(`Incendiaires dans les variations : la grappe enflamme ${grappeEnFeu} insectes de la couronne (3 au moins ; ${seulEnFeu} sans elle) ; la réplique enflamme celui à 55 (${repliqueEnFeu} ; ${sansRepliqueEnFeu} sans elle)`, grappeEnFeu >= 3 && seulEnFeu === 0 && repliqueEnFeu && !sansRepliqueEnFeu)
   const f = VAISSEAU.passifs.critiqueFacteur
   verifier(`la réplique : tout critique, une explosion de zone (${r.zones.length}) et ${r.petites} petites (2) ; chacun prend ${r.pris} et ${r.voisin} (${60 * f + 18 * f} : 60 et 18, critiques) ; sans critique, ${sans.petites} petite (0)`, r.zones.length === 1 && r.petites === 2 && r.pris === 60 * f + 18 * f && r.voisin === r.pris && sans.petites === 0 && sans.pris === 60)
 }

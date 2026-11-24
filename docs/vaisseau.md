@@ -8901,3 +8901,18 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   16 : la moitié d'un objet, plus 8 de tolérance (de moi, à rejuger). Le test du ramassage refait (pris à la coque + 15,
   pas à + 18) ; VU en capture (`&vitrine`). Rappel : une plaque ne se prend que si une plaque manque, un soin que si le
   blindage n'est pas plein — sinon on passe dessus sans la prendre, c'est voulu.
+- L'ÉLÉMENT D'UNE ARME VAUT POUR TOUTES SES VARIATIONS (Keko, 24/11 : « que ce soit pour le railgun, l'obus ou la bobine
+  Tesla, quand on applique un élément, il s'applique à toutes les variations de cette arme ; la réplique ou la
+  fragmentation de l'obus doit infliger brûlure si on a Incendiaires ») — vérifié une à une :
+  - le RAILGUN (Électrique) : la balle, Triple rail (ses deux balles tirent `effetsDuTir`), Sillon (électrique avec la
+    carte), Amplification, Exécution, Gros calibre — tout électrocute déjà ;
+  - la BOBINE (électrocution d'office) : l'éclair, Orage, Conduction (`frapper` → `effetsDuCoup`), Haute tension (la
+    traînée porte l'électrocution), Court-circuit (`effetsDuCoup`) — déjà ; Magnétisme ne frappe pas ;
+  - l'OBUSIER (Incendiaires) : la grande explosion et les mini-obus de la grappe (qui copient l'obus) enflammaient déjà
+    leur zone ; DEUX TROUS CORRIGÉS — les petites explosions de la RÉPLIQUE n'enflammaient rien, et les obus des DRONES,
+    qui éclatent au contact, n'enflammaient que l'insecte touché. `elementsDansLaZone` porte le feu, le gel et
+    l'électrocution d'un tir sur tout son rayon ; `repliquer` l'appelle pour chaque petite explosion ; `Obus.embrase`
+    (une arme à cloche, ses drones compris) le fait aussi au contact, avec la réplique. Les missiles et le reste ne
+    changent pas (ils enflamment ce qu'ils touchent). Un test (la grappe enflamme 6 insectes d'une couronne hors de la
+    grande zone, 0 sans elle ; la réplique enflamme un insecte à 17 d'un voisin critiqué) ; les drones, sans test — la
+    carte est à remplacer.
