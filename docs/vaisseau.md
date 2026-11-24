@@ -8869,3 +8869,16 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   test (la cible et le voisin à 30 perdent 62 et brûlent, celui à 70 rien). CRYOGÉNIQUES RETIRÉE : l'obusier n'a que
   CINQ variations tant qu'elle n'est pas remplacée (le test du compte le sait). Restent pour lui : une variation sur
   coup critique, et Drones à remplacer (elle ajoute une attaque à côté au lieu de changer le tir).
+- FRAGMENTATION EN GRAPPE (Keko, 24/11 : « l'obus lâche 3 autres mini-obus quand il est en haut de sa cloche, qui font
+  le même effet mais réduit ») : « En l'air, l'obus lâche trois mini-obus. » ; `Arme.grappe` — au sommet de sa cloche,
+  l'obus lâche trois mini-obus qui retombent EN MÊME TEMPS que lui, en triangle autour de son point de chute, à un rayon
+  de zone ; chacun explose sur la moitié de la zone (20) pour 40 % des dégâts, avec ses autres effets (Incendiaires
+  comprise) — « autour de l'impact », « 40 %, ½ zone » : Keko. Un éclair et des étincelles là-haut quand la grappe
+  s'ouvre, des mini-obus à 0,6 de la taille. Les six éclats restent aux autres armes. Un test (quatre explosions
+  ensemble, les petites à 40 de la grande) ; VU en capture.
+- RÉPLIQUE, LA VARIATION SUR COUP CRITIQUE DE L'OBUSIER, À LA PLACE DE CRYOGÉNIQUES (Keko, 24/11, parmi quatre idées :
+  Réplique, Réaction en chaîne, Gros impact, Barrage) : « Une explosion critique se répète peu après. » ;
+  `Arme.replique` — une explosion qui a fait au moins un critique (chaque insecte tire le sien, `exploser` le dit
+  maintenant) se répète 0,4 s plus tard, au même endroit, avec la même force ; la réplique n'en appelle pas d'autre (une
+  `echo`, invisible, qui attend au sol). Un test (deux explosions à 0,4 s ; sans critique, une). L'OBUSIER A SES SIX :
+  Fragmentation, Incendiaires, Réplique, Salve, Drones (à remplacer), Gros calibre. Textes VUS en capture, raccourcis.

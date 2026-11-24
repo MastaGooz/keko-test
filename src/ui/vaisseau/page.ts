@@ -14774,6 +14774,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
     // les obus du joueur : canon, un fuseau cyan ; mitrailleuse, un tiret court ; missile, un corps clair à pointe rouge et sa flamme
     for (const o of m.obus) {
+      // (une réplique attend au sol, invisible : on ne voit que sa seconde explosion — voir `Arme.replique`)
+      if (o.echo === true) continue
       const l = Math.hypot(o.vx, o.vy) || 1
       const ux = o.vx / l
       const uy = o.vy / l
@@ -14822,7 +14824,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         // plus gros que le missile » : son ombre au sol, là où il est, qui pâlit quand il monte ; lui plus haut — d'autant
         // plus qu'il est au milieu de sa course —, plus gros au sommet, et sa traîne suit la courbe à l'écran)
         const { h, dh } = hauteurEnCloche(o)
-        const g = 1 + h / 80
+        // (un mini-obus de la grappe est plus petit — voir `Arme.grappe`)
+        const g = (1 + h / 80) * (o.taille ?? 1)
         const y = o.y - h
         const ex = o.vx
         const ey = o.vy - dh
@@ -18052,6 +18055,18 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           secousse = Math.max(secousse, 0.4)
           break
         }
+        case 'grappe': {
+          // (LA GRAPPE S'OUVRE au sommet de la cloche — voir `Arme.grappe` : un petit éclair là-haut, des étincelles, un
+          // claquement sec)
+          const hy = ev.y - Math.min(70, 26 * ev.vie0)
+          flashs.push({ x: ev.x, y: hy, t0: t, r: 5 })
+          for (let i = 0; i < 8; i++) {
+            const a = R.range(0, Math.PI * 2)
+            etincelles.ajouter('etincelle', ev.x, hy, Math.cos(a) * R.range(25, 60), Math.sin(a) * R.range(25, 60), R.range(0.12, 0.25), R.next() < 0.5 ? N.WHITE : FEU[4], 1, 2)
+          }
+          jouer('lance', { dx: ev.x - v.x, dy: ev.y - v.y })
+          break
+        }
         case 'sphereChargee':
           // (« ACCUMULATEUR » : la boule se charge d'un critique — un claquement, des étincelles blanches)
           if (t - zapA > 0.06) {
@@ -18521,7 +18536,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         }
         // les mini-missiles laissent une traînée de fumée
         // (et l'obus en cloche une fumée plus grosse, là où il est à l'écran — en l'air)
-        for (const o of m.obus) if (o.arme === 'obusier' && R.next() < 0.7) feuDesConsumes.spawn(N.P.SMOKE, o.x - o.vx * 0.04, o.y - hauteurEnCloche(o).h - o.vy * 0.04, R.range(-3, 3), R.range(-3, 3), R.range(0.4, 0.6), FUMEE_DU_FEU, R.range(1.3, 1.9))
+        for (const o of m.obus) if (o.arme === 'obusier' && o.echo !== true && R.next() < 0.7) feuDesConsumes.spawn(N.P.SMOKE, o.x - o.vx * 0.04, o.y - hauteurEnCloche(o).h - o.vy * 0.04, R.range(-3, 3), R.range(-3, 3), R.range(0.4, 0.6), FUMEE_DU_FEU, R.range(1.3, 1.9) * (o.taille ?? 1))
         for (const o of m.obus) if ((o.arme === 'minimissile' || o.arme === 'roquettes') && R.next() < 0.6) feuDesConsumes.spawn(N.P.SMOKE, o.x - o.vx * 0.03, o.y - o.vy * 0.03, R.range(-3, 3), R.range(-3, 3), R.range(0.3, 0.5), FUMEE_DU_FEU, R.range(0.9, 1.4))
         // les insectes rongés : des gouttes d'acide naissent sur eux et s'évaporent (plus sur un gros — voir `gouttesDAcide`)
         for (const e of m.ennemis) {

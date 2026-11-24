@@ -654,6 +654,20 @@ export type Arme = {
   // prend son temps — ; sa vitesse au sol en découle, pour retomber pile là où sera la cible)
   cloche?: { vol: number }
   /**
+   * EN GRAPPE (la Fragmentation de l'Obusier, Keko, 24/11 : « l'obus lâche 3 autres mini-obus quand il est en haut de sa
+   * cloche, qui font le même effet mais réduit ») : au sommet de sa course, un obus en cloche lâche `nombre` mini-obus qui
+   * retombent en même temps que lui, en triangle autour de son point de chute, à `ecart` fois son rayon de zone ; chacun
+   * explose à `zone` fois son rayon pour `part` de ses dégâts, avec ses autres effets (« autour de l'impact », « 40 %
+   * des dégâts, la moitié de la zone » : Keko).
+   */
+  grappe?: { nombre: number; part: number; zone: number; ecart: number }
+  /**
+   * LA RÉPLIQUE (la variation sur coup critique de l'Obusier, Keko, 24/11) : une explosion qui a fait au moins un coup
+   * critique explose une seconde fois, `delai` secondes plus tard, au même endroit et avec la même force ; la réplique
+   * n'en appelle pas d'autre (« 0,4 s, la même force » : Keko).
+   */
+  replique?: { delai: number }
+  /**
    * À RETARDEMENT (le Lance-grenades de l'Empire, Keko, 23/11 : « l'idée du compte à rebours me plaît beaucoup : trois
    * petites grenades, qui clignotent en rouge pour indiquer le timer, et leur clignotement s'intensifie jusqu'à
    * exploser » — sans rebond : « on est dans l'espace ; seul l'hypercube peut rebondir sur l'espace-temps ») : le tir ne
@@ -1328,7 +1342,7 @@ export type Choc = { x: number; y: number; force: number; asteroide: number; /**
 /** (un trait du rival armé porte les dégâts de son arme, son nom, et s'il est guidé — absents : le trait d'avant, un point) */
 export type Tir = { id: number; x: number; y: number; vx: number; vy: number; vie: number; degats?: number; guide?: boolean; arme?: string }
 /** Un obus du joueur : un trait qui porte des dégâts, de l'arme qui l'a tiré ; guidé, il tourne vers le rival. */
-export type Obus = Tir & { degats: number; guide: boolean; arme: string; /** Ses ricochets qui restent (voir `Arme.ricochet`), ceux qu'il a déjà touchés (il ne les retouche pas en repartant). */ rebonds?: { n: number; portee: number; part: number }; deja?: number[]; /** Ses dégâts sans le coup critique : un rebond retire le sien (voir `Arme.ricochet`). */ brut?: number; /** Ce qu'il enflamme (voir `Arme.incendiaire`). */ brule?: { duree: number; dps: number }; /** Les éclats de son explosion (voir `Arme.fragments`). */ fragments?: { nombre: number; degats: number; vitesse: number; vie: number }; /** L'insecte auquel il est accroché (voir `Arme.infaillible`). */ verrou?: number; /** Un coup critique (le passif du labo) : ses dégâts sont déjà multipliés. */ critique?: boolean; /** Il explose (voir `Arme.zone`). */ zone?: { rayon: number; degats: number }; /** Il gèle ce qu'il touche (voir `Arme.gel`). */ gel?: { duree: number; ralenti: number }; /** Il ronge ce qu'il touche (voir `Arme.corrosif`). */ ronge?: { duree: number; bonus: number }; /** Il électrocute ce qu'il touche (voir `Arme.electrocution`). */ electrocution?: { duree: number; chance: number; degats: number; saut: number }; /** Il détone sur un coup critique (voir `Arme.detonation`). */ detonation?: { rayon: number; part: number }; /** Critique, il exécute (voir `Arme.execute`). */ execute?: boolean; /** Il laisse un sillon (voir `Arme.sillon`) : sa durée, ce qu'il fait par seconde, sa largeur, son gel. */ sillon?: { duree: number; dps: number; largeur: number; gel?: { duree: number; ralenti: number }; electrocution?: { duree: number; chance: number; degats: number; saut: number } }; /** Il traverse (voir `Arme.salve`) : les insectes déjà touchés. */ perce?: number[]; /** Une balle de railgun (voir `Arme.balle`) : la part de ses dégâts qu'elle garde à chaque insecte traversé, son calibre. */ balle?: { part: number; calibre: number }; /** Il se brise au premier insecte touché en petits fragments, en cône derrière lui (voir `Arme.salve`). */ eclatement?: { nombre: number; cone: number; vitesse: number; vie: number; degats: number }; /** Un missile d'essaim (voir `Arme.essaim`) : sa cible, sa naissance, sa vitesse de départ, et comment il fonce. */ traque?: { cible: number; nee: number; v0: number; acces: number; pointe: number; braquage: number; chaos: number; pas: number; calme: number; reprise: number; /** L'instant où il a repris une autre cible (la sienne morte) : son chaos repart de là. */ depuis?: number }; /** Une boule de napalm, lancée en cloche (voir `Arme.napalm`) : sa durée de vol au départ ; elle ne touche rien en vol. */ napalm?: { rayon: number; duree: number; dps: number; brulure: number; dpsBrulure: number }; vie0?: number; /** Un obus tiré en cloche (voir `Arme.cloche`) : il ne touche rien en vol, il explose en retombant. */ cloche?: boolean; /** Une grenade à retardement (voir `Arme.minuterie`) : son frein par seconde ; elle ne touche rien, elle explose au bout de sa vie. */ minuterie?: number }
+export type Obus = Tir & { degats: number; guide: boolean; arme: string; /** Ses ricochets qui restent (voir `Arme.ricochet`), ceux qu'il a déjà touchés (il ne les retouche pas en repartant). */ rebonds?: { n: number; portee: number; part: number }; deja?: number[]; /** Ses dégâts sans le coup critique : un rebond retire le sien (voir `Arme.ricochet`). */ brut?: number; /** Ce qu'il enflamme (voir `Arme.incendiaire`). */ brule?: { duree: number; dps: number }; /** Les éclats de son explosion (voir `Arme.fragments`). */ fragments?: { nombre: number; degats: number; vitesse: number; vie: number }; /** L'insecte auquel il est accroché (voir `Arme.infaillible`). */ verrou?: number; /** Un coup critique (le passif du labo) : ses dégâts sont déjà multipliés. */ critique?: boolean; /** Il explose (voir `Arme.zone`). */ zone?: { rayon: number; degats: number }; /** Il gèle ce qu'il touche (voir `Arme.gel`). */ gel?: { duree: number; ralenti: number }; /** Il ronge ce qu'il touche (voir `Arme.corrosif`). */ ronge?: { duree: number; bonus: number }; /** Il électrocute ce qu'il touche (voir `Arme.electrocution`). */ electrocution?: { duree: number; chance: number; degats: number; saut: number }; /** Il détone sur un coup critique (voir `Arme.detonation`). */ detonation?: { rayon: number; part: number }; /** Critique, il exécute (voir `Arme.execute`). */ execute?: boolean; /** Il laisse un sillon (voir `Arme.sillon`) : sa durée, ce qu'il fait par seconde, sa largeur, son gel. */ sillon?: { duree: number; dps: number; largeur: number; gel?: { duree: number; ralenti: number }; electrocution?: { duree: number; chance: number; degats: number; saut: number } }; /** Il traverse (voir `Arme.salve`) : les insectes déjà touchés. */ perce?: number[]; /** Une balle de railgun (voir `Arme.balle`) : la part de ses dégâts qu'elle garde à chaque insecte traversé, son calibre. */ balle?: { part: number; calibre: number }; /** Il se brise au premier insecte touché en petits fragments, en cône derrière lui (voir `Arme.salve`). */ eclatement?: { nombre: number; cone: number; vitesse: number; vie: number; degats: number }; /** Un missile d'essaim (voir `Arme.essaim`) : sa cible, sa naissance, sa vitesse de départ, et comment il fonce. */ traque?: { cible: number; nee: number; v0: number; acces: number; pointe: number; braquage: number; chaos: number; pas: number; calme: number; reprise: number; /** L'instant où il a repris une autre cible (la sienne morte) : son chaos repart de là. */ depuis?: number }; /** Une boule de napalm, lancée en cloche (voir `Arme.napalm`) : sa durée de vol au départ ; elle ne touche rien en vol. */ napalm?: { rayon: number; duree: number; dps: number; brulure: number; dpsBrulure: number }; vie0?: number; /** Un obus tiré en cloche (voir `Arme.cloche`) : il ne touche rien en vol, il explose en retombant. */ cloche?: boolean; /** Une grenade à retardement (voir `Arme.minuterie`) : son frein par seconde ; elle ne touche rien, elle explose au bout de sa vie. */ minuterie?: number; /** Il lâche des mini-obus au sommet de sa cloche (voir `Arme.grappe`). */ grappe?: { nombre: number; part: number; zone: number; ecart: number }; /** Son explosion critique se répète (voir `Arme.replique`). */ replique?: { delai: number }; /** Une réplique (voir `Arme.replique`) : rien ne se dessine, son explosion attend au sol. */ echo?: boolean; /** Sa taille à l'écran (un mini-obus de la grappe : 0,6). */ taille?: number }
 /** Une bombe en vol (la capacité active d'essai). */
 export type Bombe = Tir
 /** Le rival : un vaisseau comme l'autre, des points, ce qu'il fait, sa roche, son laser, son prochain tir, son butin. */
@@ -1739,6 +1753,8 @@ export type Evenement =
   /** Un insecte mort rongé laisse une flaque d'acide (« Dissolution » — voir `ELEMENTAIRES`). */
   | { type: 'flaqueDAcide'; x: number; y: number; rayon: number }
   | { type: 'feuPropage'; de: number; vers: number; x0: number; y0: number; x1: number; y1: number }
+  /** Un obus en grappe lâche ses mini-obus au sommet de sa cloche (voir `Arme.grappe`). */
+  | { type: 'grappe'; x: number; y: number; vie0: number }
   /** Une boule tesla finit en décharge (« Court-circuit » — voir `Arme.sphere.court`). */
   | { type: 'courtCircuit'; x: number; y: number; rayon: number }
   /** Une boule tesla se charge d'un coup critique (« Accumulateur » — voir `Arme.sphere.accumulateur`). */
@@ -5913,6 +5929,8 @@ function effetsDuTir(a: Arme): Partial<Obus> {
     ...(a.ricochet === undefined ? {} : { rebonds: { n: a.ricochet.rebonds, portee: a.ricochet.portee, part: a.ricochet.part } }),
     ...(a.incendiaire === undefined ? {} : { brule: { ...a.incendiaire } }),
     ...(a.fragments === undefined ? {} : { fragments: { ...a.fragments } }),
+    ...(a.grappe === undefined ? {} : { grappe: { ...a.grappe } }),
+    ...(a.replique === undefined ? {} : { replique: { ...a.replique } }),
     ...(a.gel === undefined ? {} : { gel: { ...a.gel } }),
     ...(a.corrosif === undefined ? {} : { ronge: { ...a.corrosif } }),
     ...(a.electrocution === undefined ? {} : { electrocution: { ...a.electrocution } }),
@@ -5944,20 +5962,24 @@ function fragmenter(m: Monde, x: number, y: number, f: { nombre: number; degats:
     m.obus.push({ id: m.prochainId++, x, y, vx: Math.cos(an) * f.vitesse, vy: Math.sin(an) * f.vitesse, vie: f.vie, degats: f.degats, guide: false, arme: 'mitraille', perce: deja })
   }
 }
-function exploser(c: ConfigVaisseau, m: Monde, x: number, y: number, zone: { rayon: number; degats: number }, touche: Ennemi | null, ev: Evenement[], arme?: string, detonation = false): void {
+/** Une explosion de zone ; elle dit si elle a fait au moins un coup critique (voir `Arme.replique`). */
+function exploser(c: ConfigVaisseau, m: Monde, x: number, y: number, zone: { rayon: number; degats: number }, touche: Ennemi | null, ev: Evenement[], arme?: string, detonation = false): boolean {
   // (une détonation sur coup critique a son événement à elle — voir `Arme.detonation`)
   ev.push(detonation ? { type: 'detonation', x, y, rayon: zone.rayon } : { type: 'explosionDeZone', x, y, rayon: zone.rayon, ...(arme === undefined ? {} : { arme }) })
   const a = c.armes.find((x) => x.id === arme)
+  let critiques = false
   for (const e of [...m.ennemis]) {
     if (e === touche || Math.hypot(e.corps.x - x, e.corps.y - y) > zone.rayon + rayonDe(c, e)) continue
     // (L'ARME QUI RONGE RONGE AUSSI PAR SES EXPLOSIONS — Keko, 23/11 : « toutes les variations du laser appliquent corrosion
     // si on a la variation Corrosion » : l'onde de l'Impulsion, à chaque impact et à chaque rebond, la Détonation)
     if (a?.corrosif !== undefined) ronger(c, m, e, { ...a.corrosif, dps: 0 }, ev)
     const critique = critiqueTire(c, m, a, e)
+    if (critique) critiques = true
     e.pv -= zone.degats * (critique ? facteurSur(c, m, a, e) : 1)
     ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })
     if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
   }
+  return critiques
 }
 
 /** LA PLACE D'UN DRONE au repos, à l'instant du monde : sur son orbite autour du vaisseau — ou à sa place dans la formation. */
@@ -6692,6 +6714,25 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
         o.vie = Math.max(o.vie, dt)
       }
     }
+    // (EN GRAPPE : au sommet de sa cloche, il lâche ses mini-obus, qui retombent avec lui autour de son point de chute —
+    // voir `Arme.grappe`)
+    const gr = o.grappe
+    if (gr !== undefined && o.cloche === true && o.vie0 !== undefined && o.vie <= o.vie0 / 2 && o.zone !== undefined) {
+      delete o.grappe
+      const reste = Math.max(o.vie, 0.01)
+      const cx = o.x + o.vx * reste
+      const cy = o.y + o.vy * reste
+      const a0 = tire(m.graine, o.id, 72) * Math.PI * 2
+      for (let k = 0; k < gr.nombre; k++) {
+        const an = a0 + (k / gr.nombre) * Math.PI * 2
+        const tx = cx + Math.cos(an) * o.zone.rayon * gr.ecart
+        const ty = cy + Math.sin(an) * o.zone.rayon * gr.ecart
+        const mini: Obus = { ...o, id: m.prochainId++, vx: (tx - o.x) / reste, vy: (ty - o.y) / reste, vie: reste, degats: o.degats * gr.part, zone: { rayon: o.zone.rayon * gr.zone, degats: o.zone.degats * gr.part }, taille: 0.6 }
+        delete mini.verrou
+        m.obus.push(mini)
+      }
+      ev.push({ type: 'grappe', x: o.x, y: o.y, vie0: o.vie0 })
+    }
     const ox = o.x
     const oy = o.y
     // (une grenade à retardement freine — voir `Arme.minuterie`)
@@ -6867,8 +6908,17 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
           if (o.electrocution !== undefined) electrocuter(c, m, e, o.electrocution, ev, true)
         }
       }
-      exploser(c, m, o.x, o.y, o.zone, null, ev, o.arme)
+      const critiques = exploser(c, m, o.x, o.y, o.zone, null, ev, o.arme)
       if (o.fragments !== undefined) fragmenter(m, o.x, o.y, o.fragments, null)
+      // (LA RÉPLIQUE : critique, l'explosion se répète au même endroit — une réplique n'en appelle pas d'autre ; voir
+      // `Arme.replique`)
+      if (critiques && o.replique !== undefined && o.echo !== true) {
+        const echo: Obus = { ...o, id: m.prochainId++, vx: 0, vy: 0, vie: o.replique.delai, vie0: o.replique.delai, echo: true }
+        delete echo.replique
+        delete echo.grappe
+        delete echo.verrou
+        m.obus.push(echo)
+      }
     }
     if (fini) m.obus.splice(i, 1)
   }
