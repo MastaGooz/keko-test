@@ -144,6 +144,8 @@ export function avecLesBonus(base: ConfigVaisseau, b: Bonus): ConfigVaisseau {
     // (le critique de toutes les armes est celui du vaisseau, que chaque arme ajoute au sien)
     if (stat === 'critique') c = { ...c, passifs: { ...c.passifs, critique: c.passifs.critique + x.somme } }
     else if (stat === 'critiques') c = { ...c, passifs: { ...c.passifs, critiqueFacteur: c.passifs.critiqueFacteur + x.somme } }
+    // (la brûlure unique du vortex grandit avec la carte « Brûlure » — voir `ConfigVaisseau.brulureDesEtats`)
+    else if (stat === 'feu' && c.brulureDesEtats > 0) c = { ...c, brulureDesEtats: c.brulureDesEtats * (1 + x.somme), armes: c.armes.map((a) => (statsDeLArme(a).includes(stat) ? armeAmelioree(a, stat, x.somme) : a)) }
     else c = { ...c, armes: c.armes.map((a) => (statsDeLArme(a).includes(stat) ? armeAmelioree(a, stat, x.somme) : a)) }
   }
   return c
@@ -210,7 +212,9 @@ export function corrosionPosee(a: Arme, bonus: number): Arme {
  * les drones à arcs, la chaîne d'éclairs, la tempête. *Chiffres de moi, à rejuger* : 20 % de chance par coup direct, un
  * arc de 20 (les dégâts d'un arc de drone) à 45 au plus (le saut de la chaîne) ; la durée, celle des états (6 s).
  */
-export const ELECTROCUTION_DU_VORTEX = { duree: 6, chance: 0.2, degats: 20, saut: 45 }
+// (L'ARC À 60, LE MÊME PARTOUT — Keko, 24/11 : « 20 me paraît trop faible comparé aux dégâts de brûlure » — voir
+// `ConfigVaisseau.arcDElectrocution`, qui le tient)
+export const ELECTROCUTION_DU_VORTEX = { duree: 6, chance: 0.2, degats: 60, saut: 45 }
 /** L'arme électrique de la Sentinelle électrocute (voir `ELECTROCUTION_DU_VORTEX`) ; les autres, telles quelles. */
 export const electrocutionPosee = (a: Arme): Arme => (a.eclair === true || a.chaine !== undefined || a.aura !== undefined ? { ...a, electrocution: { ...ELECTROCUTION_DU_VORTEX } } : a)
 export const corrodeDe = (a: Arme): number[] => [a.crachat?.acide.bonus, a.mine?.corrosion?.bonus, a.givre?.corrosion?.bonus, a.parasite?.acide?.bonus, a.corrosif?.bonus].filter((b): b is number => b !== undefined && b > 0)

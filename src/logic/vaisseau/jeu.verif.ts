@@ -3517,6 +3517,27 @@ for (const vortex of [true, false]) {
   verifier(`le sillon : une seconde dedans, ${sec.perdu % 1000} (30) ; après, ${Math.floor(sec.perdu / 1000)} de plus (au plus la fin du sillon) ; sans gel, gelé ${sec.gele} ; avec, gelé ${gele.gele}`, Math.abs((sec.perdu % 1000) - 30) <= 1 && Math.floor(sec.perdu / 1000) <= 30 && !sec.gele && gele.gele)
 }
 
+// LA BRÛLURE ET L'ARC, LES MÊMES QUELLE QUE SOIT LA SOURCE (Keko, 24/11 — voir `ConfigVaisseau.brulureDesEtats`) : un
+// canon incendiaire qui brûlerait à 300 par seconde brûle à 20 au vortex, à 300 ailleurs ; un arc d'électrocution qui
+// porterait 20 fait 60 au vortex
+{
+  const essai = (vortex: boolean): { brule: number; arc: number } => {
+    const arme = { id: 'canon', cadence: 99, degats: 10, portee: 120, vitesse: 420, vie: 0.7, dispersion: 0, guide: false, tousSens: true, infaillible: true, incendiaire: { duree: 3, dps: 300 }, electrocution: { duree: 6, chance: 1, degats: 20, saut: 45 } }
+    const cfg = { ...VAISSEAU, coque: 1e9, dureeDesEtats: 6, brulureDesEtats: vortex ? 20 : 0, arcDElectrocution: vortex ? 60 : 0, armes: [arme], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false } }
+    const w = nouveauMonde(cfg, 5)
+    w.invasion.prochainA = 1e9
+    w.t = 2
+    w.armesA = [0]
+    const e: Ennemi = { id: 2400, corps: { ...nouveauVaisseau(), x: 40, y: 0 }, pv: 1e6, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9, electrocute: { jusque: 8, chance: 1, degats: 20, saut: 45 } }
+    const o: Ennemi = { id: 2401, corps: { ...nouveauVaisseau(), x: 40, y: 30 }, pv: 1000, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9 }
+    w.ennemis.push(e, o)
+    for (let i = 0; i < 40; i++) avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+    return { brule: e.dpsBrulure ?? 0, arc: 1000 - o.pv }
+  }
+  const [v, n] = [essai(true), essai(false)]
+  verifier(`la brûlure et l'arc, les mêmes partout au vortex : une source à 300 brûle à ${v.brule} (20), ailleurs à ${n.brule} (300) ; l'arc fait ${v.arc} (60), ailleurs ${n.arc} (20)`, v.brule === 20 && n.brule === 300 && v.arc === 60 && n.arc === 20)
+}
+
 // LE RAILGUN ÉLECTRIQUE (Keko, 24/11 : la carte Cryogénique « applique l'état d'électricité » à la place) : la balle
 // électrocute ce qu'elle traverse, et son sillon ce qui y passe
 {

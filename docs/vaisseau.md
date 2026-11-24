@@ -8678,3 +8678,14 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   (`ELECTROCUTION_DU_VORTEX`). La balle électrocute ce qu'elle traverse (`Obus.electrocution`), son SILLON aussi ce qui y
   passe (comme il gelait avec Cryogénique) ; le railgun garde UN SEUL ÉLÉMENT. La carte « Électrocution » paraît donc
   aussi pour l'Empire. VU en capture : les deux cartes tiennent. Un test.
+- LA BRÛLURE ET L'ARC, LES MÊMES QUELLE QUE SOIT LA SOURCE (Keko, 24/11 : « je veux que les dégâts de brûlure soient
+  toujours les mêmes quelle que soit la source ; pareil pour électrocution ») : `ConfigVaisseau.brulureDesEtats` et
+  `arcDElectrocution`, comme `dureeDesEtats` — 0, ceux de la source (le Nova Drifter) ; le vortex pose 20 et 60.
+  - LA BRÛLURE À 20 PAR SECONDE (choisie parmi 15, 20, 30) : 120 sur 6 s, de quoi tuer juste un insecte de base. Avant :
+    le lance-flammes 20, l'impact du rayon thermique 15, ses flaques 25, le napalm 30, les « Incendiaire(s) » 60 % du
+    coup de l'arme. La carte « Brûlure » la grandit (`avecLesBonus` : légendaire, 25) ; les cartes « Dégâts » non. Les
+    fiches des armes disent 20 et 6 s au vortex (elles disaient la brûlure et la durée de la source).
+  - L'ARC À 60 (Keko : « 20 me paraît trop faible comparé aux dégâts de brûlure » — une brûlure rend 120 à coup sûr, un
+    arc à 20 % de chance n'ajoutait que 4 en moyenne par coup électrique ; à 60, 12) : la moitié d'un insecte de base ;
+    `ELECTROCUTION_DU_VORTEX.degats` suit. Les cartes « Dégâts » d'une arme ne le grandissent plus.
+  - Deux tests : une source à 300 brûle à 20 au vortex, à 300 ailleurs ; l'arc fait 60 ; la carte « Brûlure » mène à 25.

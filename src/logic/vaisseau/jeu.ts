@@ -161,6 +161,14 @@ export const VAISSEAU = {
    */
   dureeDesEtats: 0 as number,
   /**
+   * LA BRÛLURE ET L'ARC D'ÉLECTROCUTION, LES MÊMES QUELLE QUE SOIT LEUR SOURCE (le vortex — Keko, 24/11 : « je veux que les
+   * dégâts de brûlure soient toujours les mêmes quelle que soit la source ; pareil pour électrocution ») : ce qu'un insecte
+   * brûlé perd par seconde, ce qu'un arc fait ; 0, ceux de la source (le Nova Drifter). Le vortex pose 20 et 60 ; la carte
+   * « Brûlure » grandit la brûlure (voir `avecLesBonus`), les cartes « Dégâts » d'une arme ne touchent ni l'une ni l'autre.
+   */
+  brulureDesEtats: 0 as number,
+  arcDElectrocution: 0 as number,
+  /**
    * L'ARC DE TIR (le jeu du vortex — Keko, 15/11 : « limiter les tirs du canon à un angle qui va devant le vaisseau ;
    * pas forcément tout droit, mais les empêcher de tirer en angle droit sur les côtés et en arrière, pour forcer le
    * joueur à se positionner face aux ennemis ») : le demi-angle, en radians, de part et d'autre du nez ; une arme ne
@@ -3428,9 +3436,11 @@ function brulerAuContact(c: ConfigVaisseau, m: Monde, e: Ennemi, brulure: number
   if (brulure <= 0) return
   const d = dureeDEtat(c, brulure)
   e.bruleA = m.t + d
-  e.dpsBrulure = dps
+  e.dpsBrulure = brulureDEtat(c, dps)
   e.dureeBrulure = d
 }
+/** CE QU'UNE BRÛLURE FAIT PAR SECONDE (voir `ConfigVaisseau.brulureDesEtats`) : au vortex, la même partout ; ailleurs, celle de la source. */
+const brulureDEtat = (c: ConfigVaisseau, dps: number): number => (c.brulureDesEtats > 0 ? c.brulureDesEtats : dps)
 
 /** LES TORNADES DE GIVRE (voir `Arme.tornade`) : le départ, la poursuite, la zone qui gèle et ronge, la fin. */
 function menerLesTornades(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]): void {
@@ -4043,7 +4053,8 @@ function propagerLElectrocution(c: ConfigVaisseau, m: Monde, ev: Evenement[]): v
     arcs++
     ev.push({ type: 'arcDElectrocution', de: x.id, vers: proche.id, x0: x.x, y0: x.y, x1: proche.corps.x, y1: proche.corps.y })
     electrocuter(c, m, proche, { duree: Math.max(0, x.jusque - m.t), chance: x.chance, degats: x.degats, saut: x.saut }, ev)
-    proche.pv -= x.degats
+    // (au vortex, l'arc fait partout la même chose — voir `ConfigVaisseau.arcDElectrocution`)
+    proche.pv -= c.arcDElectrocution > 0 ? c.arcDElectrocution : x.degats
     ev.push({ type: 'ennemiTouche', id: proche.id, x: proche.corps.x, y: proche.corps.y, critique: false })
     if (proche.pv <= 0) abattreLEnnemi(c, m, proche, ev)
   }
@@ -5586,7 +5597,7 @@ function effetsDuCoup(c: ConfigVaisseau, m: Monde, a: Arme, e: Ennemi, ev: Evene
 /** Un ennemi touché par un tir qui enflamme (voir `Arme.incendiaire`) : il brûle, le plus fort l'emporte. */
 function enflammer(c: ConfigVaisseau, m: Monde, e: Ennemi, b: { duree: number; dps: number }): void {
   const brule = (e.bruleA ?? -1) > m.t
-  e.dpsBrulure = brule ? Math.max(e.dpsBrulure ?? 0, b.dps) : b.dps
+  e.dpsBrulure = brule ? Math.max(e.dpsBrulure ?? 0, brulureDEtat(c, b.dps)) : brulureDEtat(c, b.dps)
   e.bruleA = Math.max(e.bruleA ?? -1, m.t + dureeDEtat(c, b.duree))
   e.dureeBrulure = dureeDEtat(c, b.duree)
 }

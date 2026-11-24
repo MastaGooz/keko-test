@@ -173,5 +173,11 @@ verifier('le délai passé, ce qui restait à choisir part en réserve', reserve
   const plus = armeAmelioree(posee, 'electrocution', 0.25)
   verifier(`l'électrocution : la chaîne électrocute (${posee.electrocution?.chance}), le canon non (${nue.electrocution === undefined}) ; une carte de +25 % : ${plus.electrocution?.chance} (0,25) ; à toutes les armes seulement (${ETATS.has('electrocution') && statsDeLArme(posee).includes('electrocution')})`, posee.electrocution?.chance === 0.2 && nue.electrocution === undefined && Math.abs((plus.electrocution?.chance ?? 0) - 0.25) < 1e-9 && ETATS.has('electrocution'))
 }
+{
+  // LA BRÛLURE UNIQUE DU VORTEX GRANDIT AVEC LA CARTE « BRÛLURE » (Keko, 24/11) : 20 par seconde, +25 % → 25
+  const flammes = { id: 'flammes', cadence: 0.1, degats: 60, portee: 40, vitesse: 0, vie: 0, dispersion: 0, guide: false, flamme: { cone: 0.5, brulure: 2, dpsBrulure: 20 } } as Arme
+  const cv = avecLesBonus({ ...C, brulureDesEtats: 20, armes: [flammes] }, [{ id: 'armes:feu', cible: { sorte: 'armes' }, stat: 'feu', somme: 0.25 }])
+  verifier(`la brûlure du vortex : 20, une carte de +25 %, ${cv.brulureDesEtats} (25)`, cv.brulureDesEtats === 25)
+}
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)
 console.log('Tout passe.')

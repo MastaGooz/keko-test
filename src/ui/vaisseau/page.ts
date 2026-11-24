@@ -1054,6 +1054,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       if (VORTEX) conf = { ...conf, armes: conf.armes.map((a) => degatsMultiplies(a, ECHELLE_DU_VORTEX)), collision: { ...conf.collision, degatsEnnemi: conf.collision.degatsEnnemi * ECHELLE_DU_VORTEX } }
       // (LES ÉTATS DU VORTEX DURENT 6 S, QUELLE QUE SOIT LEUR SOURCE — Keko, 23/11 — voir `ConfigVaisseau.dureeDesEtats`)
       if (VORTEX) conf = { ...conf, dureeDesEtats: 6 }
+      // (… ET LEUR BRÛLURE, 20 PAR SECONDE, ET L'ARC D'ÉLECTROCUTION, 60, QUELLE QUE SOIT LEUR SOURCE — Keko, 24/11 — voir
+      // `ConfigVaisseau.brulureDesEtats`)
+      if (VORTEX) conf = { ...conf, brulureDesEtats: 20, arcDElectrocution: 60 }
       // (SA CORROSION MAJORE DE 20 % — Keko, 24/11 — voir `CORROSION_DU_VORTEX`)
       if (VORTEX) conf = { ...conf, armes: conf.armes.map((a) => corrosionPosee(a, CORROSION_DU_VORTEX)) }
       // (SES ARMES ÉLECTRIQUES ÉLECTROCUTENT — Keko, 24/11 — voir `ELECTROCUTION_DU_VORTEX` ; après l'échelle : ses dégâts y sont)
@@ -3356,23 +3359,26 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // (un ralenti est la part de vitesse qui reste : on montre ce qu'il retire)
     const ralentit = (ralenti: number): void => ligne('Ralentissement', pct(1 - ralenti))
     const ouverture = (demi: number): void => ligne('Ouverture', `${Math.round((2 * demi * 180) / Math.PI)} degrés`)
+    // (AU VORTEX, LA BRÛLURE EST LA MÊME PARTOUT, ET DURE 6 S — Keko, 23-24/11 — voir `ConfigVaisseau.brulureDesEtats` : la fiche le dit)
+    const brulureVue = (dps: number): number => (VORTEX ? 20 : dps)
+    const dureeVue = (d: number): number => (VORTEX ? 6 : d)
     if (a.flamme !== undefined) {
       ligne('Dégâts', ent(a.degats)), portee(), ouverture(a.flamme.cone)
-      if (a.flamme.dpsBrulure > 0) ligne('Brûlure', ent(a.flamme.dpsBrulure)), ligne('Durée de brûlure', sec(a.flamme.brulure))
+      if (a.flamme.dpsBrulure > 0) ligne('Brûlure', ent(brulureVue(a.flamme.dpsBrulure))), ligne('Durée de brûlure', sec(dureeVue(a.flamme.brulure)))
     } else if (a.napalm !== undefined) {
       const f = a.napalm
       ligne('Dégâts', ent(f.dps)), cadence(a.cadence), portee(), zone(f.rayon), ligne('Durée', sec(f.duree))
-      if (f.dpsBrulure > 0) ligne('Brûlure', ent(f.dpsBrulure)), ligne('Durée de brûlure', sec(f.brulure))
+      if (f.dpsBrulure > 0) ligne('Brûlure', ent(brulureVue(f.dpsBrulure))), ligne('Durée de brûlure', sec(dureeVue(f.brulure)))
     } else if (a.balayage !== undefined) {
       const b = a.balayage
       ligne('Dégâts', ent(b.degats)), cadence(b.tous), portee(b.longueur)
       if (b.trace !== undefined) zone(b.trace.rayon)
-      if (b.dpsBrulure > 0) ligne('Brûlure', ent(b.dpsBrulure)), ligne('Durée de brûlure', sec(b.brulure))
+      if (b.dpsBrulure > 0) ligne('Brûlure', ent(brulureVue(b.dpsBrulure))), ligne('Durée de brûlure', sec(dureeVue(b.brulure)))
       if (b.trainee !== undefined) ligne('Traînée de feu', ent(b.trainee.dps)), ligne('Durée de la traînée', sec(b.trainee.duree))
     } else if (a.canalise !== undefined) {
       const c = a.canalise
       ligne('Dégâts', ent(c.dps)), portee()
-      if (c.dpsBrulure > 0) ligne('Brûlure', ent(c.dpsBrulure)), ligne('Durée de brûlure', sec(c.brulure))
+      if (c.dpsBrulure > 0) ligne('Brûlure', ent(brulureVue(c.dpsBrulure))), ligne('Durée de brûlure', sec(dureeVue(c.brulure)))
     } else if (a.orbite !== undefined) {
       // (les drones : chacun tire à sa cadence ; ils partent sur un insecte à `laisse` du vaisseau)
       partie('Vaisseau'), ligne('Drones', ent(CONF.armes.length)), portee(a.orbite.laisse ?? a.portee)
