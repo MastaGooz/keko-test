@@ -916,9 +916,13 @@ export type Arme = {
   // (`magnetisme` : MAGNÉTISME — Keko, 24/11 : « attire les ennemis ET les pépites » — les cristaux : les insectes à `rayon` de
   // la boule glissent vers elle à `vitesse`, sans s'y coller ; les cristaux à `rayon` d'elle volent vers elle à `cristaux`
   // et comptent dès qu'ils l'atteignent ; ni les plaques, ni les soins, ni l'aimant)
+  // (… PAR SON ANNEAU — Keko, 24/11 : « quand le cercle extérieur se contracte, c'est quand il touche qu'il ramasse les
+  // pépites, et qu'il donne aux ennemis une petite impulsion vers l'intérieur » : toutes les `periode` secondes, un anneau
+  // part de `rayon` et se referme sur la boule (`anneauMagnetique`) ; un cristal qu'il touche est emporté avec lui et compte
+  // au centre ; un insecte qu'il touche fait un bond de `impulsion` vers elle)
   // (`accumulateur` : ACCUMULATEUR — Keko, 24/11 : « les coups critiques de la bobine augmentent ses dégâts de X % pour toute
   // sa durée restante » : chaque critique d'une boule lui ajoute cette part de dégâts, jusqu'à sa fin — +20 %, cumulable)
-  sphere?: { vitesse: number; duree: number; rayon: number; periode: number; vitesseTir: number; foudre?: { cibles: number; rebonds?: { n: number; saut: number; attenuation: number } }; accumulateur?: number; magnetisme?: { rayon: number; vitesse: number; cristaux: number } }
+  sphere?: { vitesse: number; duree: number; rayon: number; periode: number; vitesseTir: number; foudre?: { cibles: number; rebonds?: { n: number; saut: number; attenuation: number } }; accumulateur?: number; magnetisme?: { rayon: number; periode: number; impulsion: number } }
   /**
    * UN PUITS DE PLASMA (la troisième arme du Pulsar, Keko, 16/11 : « on va tenter le puits » — une petite singularité lancée
    * au milieu de la nuée, qui aspire les insectes vers son centre puis éclate) : à la cadence, un insecte à portée, il part
@@ -1312,7 +1316,7 @@ export const totalDe = (c: Cargaison): number => c.fer + c.or + c.cristal
 export type Asteroide = { id: number; x: number; y: number; rayon: number; graine: number; angle0: number; vitesseAngulaire: number; minerai: Minerai; richesse: number }
 /** Un laser posé sur sa roche : laquelle, le point d'impact, la part déjà creusée (0 à 1). *Il a visé le rival un temps ; la foreuse ne sert plus qu'aux roches (Keko).* */
 export type Forage = { sorte: 'roche'; cible: number; x: number; y: number; part: number }
-export type Pepite = { id: number; x: number; y: number; vx: number; vy: number; graine: number; minerai: Minerai; /** Sa valeur (au vortex, en points d'expérience) : 1, 3 ou 10 — une petite, une moyenne, une grosse ; 1 si absente. */ valeur?: number; /** L'AIMANT (voir `invasion.aimant`) : pris, il attire toutes les pépites. */ aimant?: boolean; /** UNE PLAQUE (voir `recuperation`) : prise, elle restaure une plaque cassée ; personne n'en manque, elle attend. */ plaque?: boolean; /** UN SOIN (voir `invasion.soin`) : pris, il rend du blindage ; personne n'est blessé, il attend. */ soin?: boolean; /** L'instant où l'aimant du JOUEUR l'a prise : elle ne le lâche plus (voir plus bas, « une pépite aimantée »). */ aimanteeA?: number; /** À plusieurs : le pilote qui l'aimante (voir `avancerLEquipage`). */ par?: number }
+export type Pepite = { id: number; x: number; y: number; vx: number; vy: number; graine: number; minerai: Minerai; /** Sa valeur (au vortex, en points d'expérience) : 1, 3 ou 10 — une petite, une moyenne, une grosse ; 1 si absente. */ valeur?: number; /** EMPORTÉ PAR L'ANNEAU D'UNE BOULE MAGNÉTIQUE (son id — voir `Arme.sphere.magnetisme`) : il se referme avec lui, et compte au centre. */ emportee?: number; /** L'AIMANT (voir `invasion.aimant`) : pris, il attire toutes les pépites. */ aimant?: boolean; /** UNE PLAQUE (voir `recuperation`) : prise, elle restaure une plaque cassée ; personne n'en manque, elle attend. */ plaque?: boolean; /** UN SOIN (voir `invasion.soin`) : pris, il rend du blindage ; personne n'est blessé, il attend. */ soin?: boolean; /** L'instant où l'aimant du JOUEUR l'a prise : elle ne le lâche plus (voir plus bas, « une pépite aimantée »). */ aimanteeA?: number; /** À plusieurs : le pilote qui l'aimante (voir `avancerLEquipage`). */ par?: number }
 /** Un choc contre un astéroïde : où, et avec quelle vitesse normale (pour l'étincelle et la vibration). */
 export type Choc = { x: number; y: number; force: number; asteroide: number; /** Le vaisseau a TRAVERSÉ la roche, trop légère pour lui : la part de sa vitesse qu'il y a laissée (roche ÷ vaisseau). */ perce?: number }
 /** Un trait tiré par l'ennemi. */
@@ -1553,7 +1557,8 @@ export type Tentacule = { arme: number; ancre: number; fait: 'repos' | 'aller' |
 
 /** Une sphère de plasma (voir `Arme.sphere`) : son arme, où, sa vitesse, quand elle est née, quand elle tire. */
 // (`charge` : ce que ses coups critiques lui ont ajouté — voir `Arme.sphere.accumulateur`)
-export type Sphere = { id: number; arme: number; x: number; y: number; vx: number; vy: number; nee: number; tirA: number; charge?: number }
+// (`pousses` : les insectes que l'anneau de ce tour a déjà poussés — voir `Arme.sphere.magnetisme` ; `tour`, son rang)
+export type Sphere = { id: number; arme: number; x: number; y: number; vx: number; vy: number; nee: number; tirA: number; charge?: number; tour?: number; pousses?: number[] }
 /** Un puits de plasma (voir `Arme.puits`) : son arme, d'où il part, où il s'ouvre, où il est ; quand il arrive ; ouvert ou en vol. */
 export type Puits = { id: number; arme: number; x0: number; y0: number; cx: number; cy: number; x: number; y: number; lance: number; arrive: number; ouvert: boolean }
 
@@ -3750,6 +3755,12 @@ export function boucheDansLeMonde(v: Vaisseau, a: Arme): Vecteur {
 }
 
 /** LES SPHÈRES DE PLASMA (voir `Arme.sphere`) : le lancer, le vol tout droit, les petits tirs sur les insectes proches, l'extinction. */
+/** LE RAYON DE L'ANNEAU D'UNE BOULE MAGNÉTIQUE (voir `Arme.sphere.magnetisme`), `age` secondes après sa naissance : il part du bord, se referme de plus en plus vite sur elle, et renaît au bord. */
+export function anneauMagnetique(mg: { rayon: number; periode: number }, age: number): number {
+  const u = (Math.max(0, age) % mg.periode) / mg.periode
+  return mg.rayon * (1 - u * u)
+}
+
 function menerLesSpheres(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]): void {
   const v = m.vaisseau
   c.armes.forEach((a, i) => {
@@ -3784,38 +3795,53 @@ function menerLesSpheres(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[
     }
     s.x += s.vx * dt
     s.y += s.vy * dt
-    // (MAGNÉTISME : elle attire les insectes et aimante les cristaux — voir `Arme.sphere.magnetisme`)
+    // (MAGNÉTISME : son anneau se referme, emporte les cristaux et pousse les insectes vers elle — voir `Arme.sphere.magnetisme`)
     const mg = sp.magnetisme
     if (mg !== undefined && m.phase === 'vol') {
+      const age = m.t - s.nee
+      const ici = anneauMagnetique(mg, age)
+      const avant = anneauMagnetique(mg, Math.max(0, age - dt))
+      // (le balayage de ce pas : de `avant` à `ici` ; un anneau qui renaît au bord ne balaie rien)
+      const balaye = (d: number): boolean => ici < avant && d <= avant && d >= ici
+      // (UNE IMPULSION PAR TOUR : poussé, l'insecte était rattrapé par l'anneau à l'image suivante, et emporté jusqu'à la
+      // boule — mesuré, 44 en une seconde)
+      const tour = Math.floor(Math.max(0, age) / mg.periode)
+      if (s.tour !== tour) (s.tour = tour), (s.pousses = [])
       for (const e of m.ennemis) {
         if (e.asteroide !== undefined) continue
         const dx = s.x - e.corps.x
         const dy = s.y - e.corps.y
         const d = Math.hypot(dx, dy)
-        if (d > mg.rayon + rayonDe(c, e) || d <= rayonDe(c, e)) continue
-        const pas = Math.min(mg.vitesse * dt, d - rayonDe(c, e))
+        if (d < 1 || s.pousses!.includes(e.id) || (!balaye(d - rayonDe(c, e)) && !balaye(d))) continue
+        s.pousses!.push(e.id)
+        // (UN PETIT BOND vers elle, pas un élan : la pointe d'un insecte l'aurait bu à l'image suivante — mesuré, le test ne
+        // le voyait pas bouger ; jamais jusque dans la boule)
+        const pas = Math.min(mg.impulsion, Math.max(0, d - rayonDe(c, e) - 2))
         e.corps = { ...e.corps, x: e.corps.x + (dx / d) * pas, y: e.corps.y + (dy / d) * pas }
       }
-      // (LES CRISTAUX VONT À LA BOULE, ET COMPTENT DÈS QU'ILS L'ATTEIGNENT — Keko, 24/11 : « attirés vers la bobine et
-      // automatiquement ajoutés à l'XP, pas envoyés sur le vaisseau » : d'abord aimantés vers le vaisseau ; ni les plaques,
-      // ni les soins, ni l'aimant ; ceux que le vaisseau aimante déjà restent à lui)
-      // (l'expérience n'est qu'au vortex : ailleurs, les cristaux sont du minerai, ils restent au vaisseau)
+      // (LES CRISTAUX : touchés, emportés avec l'anneau ; au centre, ils comptent en expérience — Keko, 24/11 : « ajoutés à
+      // l'XP, pas envoyés sur le vaisseau » ; ni les plaques, ni les soins, ni l'aimant, ni ceux que le vaisseau aimante déjà ;
+      // l'expérience n'est qu'au vortex : ailleurs, les cristaux sont du minerai, ils restent au vaisseau)
       for (let n = c.invasion.active ? m.pepites.length - 1 : -1; n >= 0; n--) {
         const q = m.pepites[n]
         if (q.aimanteeA !== undefined || q.aimant === true || q.plaque === true || q.soin === true) continue
-        const dx = s.x - q.x
-        const dy = s.y - q.y
+        const dx = q.x - s.x
+        const dy = q.y - s.y
         const d = Math.hypot(dx, dy)
-        if (d > mg.rayon) continue
-        if (d <= 3) {
+        if (q.emportee !== s.id) {
+          if (q.emportee !== undefined || !balaye(d)) continue
+          q.emportee = s.id
+        }
+        // (l'anneau renaît au bord, ou il a atteint la boule : le cristal compte)
+        if (ici >= avant || ici <= 3 || d <= 3) {
           m.pepites.splice(n, 1)
           gagnerLaPepite(c, m, q, ev)
           ev.push({ type: 'ramasse', x: s.x, y: s.y, par: 'joueur', minerai: q.minerai })
           continue
         }
-        const pas = Math.min(mg.cristaux * dt, d)
-        q.x += (dx / d) * pas
-        q.y += (dy / d) * pas
+        const r = Math.min(d, ici)
+        q.x = s.x + (d > 0 ? (dx / d) * r : 0)
+        q.y = s.y + (d > 0 ? (dy / d) * r : 0)
         q.vx = 0
         q.vy = 0
       }
@@ -6880,6 +6906,11 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   const autres = m.equipage === undefined ? [] : vaisseauxEnVol(m).filter((x) => x.k !== ici)
   for (let i = m.pepites.length - 1; i >= 0; i--) {
     const p = m.pepites[i]
+    // (EMPORTÉE PAR L'ANNEAU D'UNE BOULE : c'est elle qui la mène — voir `menerLesSpheres` ; la boule partie, elle est relâchée)
+    if (p.emportee !== undefined) {
+      if (m.spheres.some((s) => s.id === p.emportee)) continue
+      delete p.emportee
+    }
     // (UNE PLAQUE, UN SOIN NE VONT QU'À QUI EN MANQUE — voir `recuperation`, `invasion.soin` : à plusieurs, au plus proche
     // de ceux-là ; personne n'en manque, ils flottent, au plus proche de tous)
     const reserve = p.plaque === true || p.soin === true

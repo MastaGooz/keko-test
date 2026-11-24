@@ -8812,6 +8812,14 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     PLUS DE CERCLE FIXE AU BORD (Keko, 24/11 : « que le cercle extérieur ne reste pas en place ; il se contracte, puis
     réapparaît, se contracte… ») : le cercle de 60 ne reste plus ; c'est lui qui se contracte, et il renaît au bord en
     s'allumant. Reste, à peine marqué, le cercle de la portée de la boule (son rayon de foudre, 42), qui était là avant.
+    C'EST L'ANNEAU QUI AGIT (Keko, 24/11 : « quand le cercle extérieur se contracte, c'est quand il touche qu'il ramasse
+    les pépites, et qu'il donne aux ennemis une petite impulsion vers l'intérieur ») : `anneauMagnetique` (le même rayon
+    pour la règle et le dessin, sur le temps du monde) ; à chaque pas, ce que l'anneau balaie en se refermant —
+    UN CRISTAL est emporté avec lui (`Pepite.emportee`, la règle des cristaux ne le mène plus) et compte en expérience
+    quand il atteint la boule ou renaît au bord ; UN INSECTE fait un bond de 10 vers elle, UNE FOIS PAR TOUR (`Sphere.tour`,
+    `pousses` : poussé, il était rattrapé à l'image suivante et emporté jusqu'à la boule — mesuré, 44 en une seconde) ; un
+    élan ne servait à rien, sa pointe le buvait aussitôt (mesuré : le test ne le voyait pas bouger). Plus de glissement
+    continu ni d'aimantation. Un test (le bond de 10, le cristal compté).
   - Restent, de l'ancienne liste : Surtension, Grande bobine.
 - « CRISTAUX » À LA PLACE DE « PÉPITES » (Keko, 24/11 : « remplace partout dans le jeu le mot pépite par cristaux ») :
   dans le vortex, un seul texte le disait, la carte Expérience — « d'expérience par cristal ». Le code, les commentaires

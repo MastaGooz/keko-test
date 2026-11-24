@@ -3770,11 +3770,11 @@ for (const vortex of [true, false]) {
   verifier(`accumulateur : la boule frappe ${oui.join(', ')} avant critique (58, 69.6, 81.2) ; sans la carte ${non.join(', ')} (58, 58, 58)`, oui.slice(0, 3).join() === '58,69.6,81.2' && non.slice(0, 3).join() === '58,58,58')
 }
 
-// MAGNÉTISME (Keko, 24/11 — voir `Arme.sphere.magnetisme`) : un insecte à 50 de la boule glisse vers elle (environ 30 en
-// une seconde), un autre à 120 ne bouge pas ; un cristal à 40 d'elle vole jusqu'à elle et compte en expérience, un à 120
-// reste là
+// MAGNÉTISME (Keko, 24/11 — voir `Arme.sphere.magnetisme`) : son anneau se referme toutes les 0,9 s — l'insecte à 50 de
+// la boule, touché, est poussé vers elle ; celui à 120 jamais ; le cristal à 40 est emporté et compte au centre ; celui à
+// 120 reste là
 {
-  const tesla = { id: 'tesla', cadence: 2.6, degats: 0, portee: 120, vitesse: 0, vie: 0, dispersion: 0, guide: false, sphere: { vitesse: 0, duree: 5, rayon: 1, periode: 99, vitesseTir: 0, foudre: { cibles: 0 }, magnetisme: { rayon: 60, vitesse: 30, cristaux: 90 } } }
+  const tesla = { id: 'tesla', cadence: 2.6, degats: 0, portee: 120, vitesse: 0, vie: 0, dispersion: 0, guide: false, sphere: { vitesse: 0, duree: 5, rayon: 1, periode: 99, vitesseTir: 0, foudre: { cibles: 0 }, magnetisme: { rayon: 60, periode: 0.9, impulsion: 10 } } }
   const cfg: ConfigVaisseau = { ...VAISSEAU, coque: 1e9, armes: [tesla], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false } }
   const w = nouveauMonde(cfg, 5)
   w.invasion.prochainA = 1e9
@@ -3788,7 +3788,7 @@ for (const vortex of [true, false]) {
   const xp0 = w.invasion.xp
   for (let i = 0; i < 60; i++) avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
   const restants = w.pepites.map((p) => Math.round(p.y))
-  verifier(`magnétisme : l'insecte proche glisse de ${(250 - pres.corps.x).toFixed(1)} (environ 30), le lointain de ${(320 - loin.corps.x).toFixed(1)} (0) ; le cristal proche compte (${w.invasion.xp - xp0} d'expérience), restent ${restants.join(', ')} (−120)`, Math.abs(250 - pres.corps.x - 30) < 2 && Math.abs(320 - loin.corps.x) < 1e-6 && w.invasion.xp > xp0 && restants.join() === '-120')
+  verifier(`magnétisme : l'insecte proche, touché par l'anneau, s'est rapproché de ${(250 - pres.corps.x).toFixed(1)} (10, ou 20 s'il a pris deux tours), le lointain de ${(320 - loin.corps.x).toFixed(1)} (0) ; le cristal proche compte (${w.invasion.xp - xp0} d'expérience), restent ${restants.join(', ')} (−120)`, 250 - pres.corps.x >= 9 && 250 - pres.corps.x <= 21 && Math.abs(320 - loin.corps.x) < 1e-6 && w.invasion.xp > xp0 && restants.join() === '-120')
 }
 
 // LE RAILGUN ÉLECTRIQUE (Keko, 24/11 : la carte Cryogénique « applique l'état d'électricité » à la place) : la balle
