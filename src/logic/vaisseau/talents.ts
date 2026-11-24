@@ -529,9 +529,11 @@ export const MUTATIONS: Mutation[] = [
   // « Dégâts » ; voir `Arme.sphere.court`)
   variation('tesla-court-circuit', 'tesla', 'Court-circuit', 'À sa fin, la boule explose en une décharge d’énergie.', changerA('tesla', (a) => ({ ...a, sphere: a.sphere === undefined ? undefined : { ...a.sphere, court: { part: 150 / 58, taille: 1.5 } } }))),
   // LE LANCE-GRENADES
-  variation('grenades-fragmentation', 'grenades', 'Fragmentation', 'Chaque explosion projette six éclats brûlants tout autour.', changerA('grenades', V.fragments)),
-  variation('grenades-incendiaires', 'grenades', 'Incendiaires', 'Les grenades enflamment ce qu’elles touchent.', changerA('grenades', V.incendiaire)),
-  variation('grenades-cryo', 'grenades', 'Cryogéniques', 'Les grenades gèlent ce qu’elles touchent.', changerA('grenades', V.cryo)),
+  variation('grenades-fragmentation', 'grenades', 'Fragmentation', 'Chaque explosion projette six éclats tout autour.', changerA('grenades', V.fragments)),
+  // (« GRENADES GIVRÉES », SON ÉLÉMENT, À LA PLACE DE « CRYOGÉNIQUES » — Keko, 24/11 : la grenade à retardement ne touche rien
+  // en vol, elle givre toute sa zone en explosant, et ses éclats aussi ; Incendiaires RETIRÉE — un seul élément par arme ;
+  // le lance-grenades n'a que cinq variations en attendant)
+  variation('grenades-givrees', 'grenades', 'Grenades givrées', 'L’explosion applique givre à tous les ennemis touchés.', changerA('grenades', V.cryo)),
   variation('grenades-rafale', 'grenades', 'Rafale', 'Cinq grenades à chaque tir.', changerA('grenades', (a) => ({ ...a, gerbe: { nombre: 5, ecart: 0.22 }, degats: fois(a, 0.7) }))),
   variation('grenades-drones', 'grenades', 'Drones', 'Deux drones en orbite lancent des grenades sur les ennemis proches.', ajouterA('grenades', (a) => drones(a, { cadence: 1.8, degats: fois(a, 0.6), portee: 80, gerbe: undefined }))),
   variation('grenades-lourdes', 'grenades', 'Gros calibre', 'Des grenades plus lentes, plus fortes, qui explosent plus large.', changerA('grenades', V.lourd)),

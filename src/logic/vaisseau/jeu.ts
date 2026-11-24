@@ -5761,7 +5761,7 @@ function harponner(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]): vo
         e.pv -= a.degats * hp.impact * (critique ? facteurSur(c, m, a, e) : 1)
         ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })
         if (e.pv <= 0) {
-          if (a.fragments !== undefined) fragmenter(m, e.corps.x, e.corps.y, a.fragments, e)
+          if (a.fragments !== undefined) fragmenter(m, e.corps.x, e.corps.y, a.fragments, e, elementDe(a))
           abattreLEnnemi(c, m, e, ev)
           casse()
         }
@@ -5784,7 +5784,7 @@ function harponner(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]): vo
     if (a.gel !== undefined) geler(c, m, e, 0.3, a.gel.ralenti, ev)
     if (a.incendiaire !== undefined) enflammer(c, m, e, a.incendiaire)
     if (e.pv <= 0) {
-      if (a.fragments !== undefined) fragmenter(m, e.corps.x, e.corps.y, a.fragments, e)
+      if (a.fragments !== undefined) fragmenter(m, e.corps.x, e.corps.y, a.fragments, e, elementDe(a))
       abattreLEnnemi(c, m, e, ev)
       casse()
     }
@@ -6000,7 +6000,7 @@ function effetsDuCoup(c: ConfigVaisseau, m: Monde, a: Arme, e: Ennemi, ev: Evene
   if (a.incendiaire !== undefined) enflammer(c, m, e, a.incendiaire)
   if (a.gel !== undefined) geler(c, m, e, a.gel.duree, a.gel.ralenti, ev, true)
   if (a.electrocution !== undefined) electrocuter(c, m, e, a.electrocution, ev, true)
-  if (a.fragments !== undefined) fragmenter(m, e.corps.x, e.corps.y, a.fragments, e)
+  if (a.fragments !== undefined) fragmenter(m, e.corps.x, e.corps.y, a.fragments, e, elementDe(a))
 }
 /** Un ennemi touché par un tir qui enflamme (voir `Arme.incendiaire`) : il brûle, le plus fort l'emporte. */
 function enflammer(c: ConfigVaisseau, m: Monde, e: Ennemi, b: { duree: number; dps: number }): void {
@@ -6009,13 +6009,19 @@ function enflammer(c: ConfigVaisseau, m: Monde, e: Ennemi, b: { duree: number; d
   e.bruleA = Math.max(e.bruleA ?? -1, m.t + dureeDEtat(c, b.duree))
   e.dureeBrulure = dureeDEtat(c, b.duree)
 }
-/** LES ÉCLATS D'UNE EXPLOSION (voir `Arme.fragments`) : tout autour, des balles brûlantes qui traversent, une fois chacun. */
-function fragmenter(m: Monde, x: number, y: number, f: { nombre: number; degats: number; vitesse: number; vie: number }, touche: Ennemi | null): void {
+/** L'élément d'une arme, tel qu'un tir le porte (voir `fragmenter`). */
+const elementDe = (a: Arme): Pick<Obus, 'gel' | 'brule' | 'electrocution'> => ({ ...(a.gel === undefined ? {} : { gel: a.gel }), ...(a.incendiaire === undefined ? {} : { brule: a.incendiaire }), ...(a.electrocution === undefined ? {} : { electrocution: a.electrocution }) })
+/**
+ * LES ÉCLATS D'UNE EXPLOSION (voir `Arme.fragments`) : tout autour, des balles brûlantes qui traversent, une fois chacun —
+ * AVEC L'ÉLÉMENT DU TIR (`el` ; Keko, 24/11 : « quand on applique un élément, il s'applique à toutes les variations de
+ * cette arme » : les éclats des grenades givrées givrent).
+ */
+function fragmenter(m: Monde, x: number, y: number, f: { nombre: number; degats: number; vitesse: number; vie: number }, touche: Ennemi | null, el: Pick<Obus, 'gel' | 'brule' | 'electrocution'> = {}): void {
   const deja = touche === null ? [] : [touche.id]
   const a0 = tire(m.graine, m.prochainId, 71) * Math.PI * 2
   for (let k = 0; k < f.nombre; k++) {
     const an = a0 + (k / f.nombre) * Math.PI * 2
-    m.obus.push({ id: m.prochainId++, x, y, vx: Math.cos(an) * f.vitesse, vy: Math.sin(an) * f.vitesse, vie: f.vie, degats: f.degats, guide: false, arme: 'mitraille', perce: deja })
+    m.obus.push({ id: m.prochainId++, x, y, vx: Math.cos(an) * f.vitesse, vy: Math.sin(an) * f.vitesse, vie: f.vie, degats: f.degats, guide: false, arme: 'mitraille', perce: deja, ...el })
   }
 }
 /**
@@ -6910,7 +6916,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
         // (la balle perd une part de ses dégâts ; ses éclats partent de l'insecte traversé)
         if (ba !== undefined) {
           ev.push({ type: 'balleTraverse', x: e.corps.x, y: e.corps.y, cap: Math.atan2(o.vy, o.vx) })
-          if (o.fragments !== undefined) fragmenter(m, e.corps.x, e.corps.y, o.fragments, e)
+          if (o.fragments !== undefined) fragmenter(m, e.corps.x, e.corps.y, o.fragments, e, { ...(o.gel === undefined ? {} : { gel: o.gel }), ...(o.brule === undefined ? {} : { brule: o.brule }), ...(o.electrocution === undefined ? {} : { electrocution: o.electrocution }) })
           o.degats = Math.max(1, Math.round(o.degats * ba.part))
         }
         if (e.pv <= 0) abattre(e)
@@ -6980,7 +6986,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
         // (UN OBUS DE L'OBUSIER QUI ÉCLATE AU CONTACT — ses drones — porte aussi son élément sur toute sa zone, et sa réplique)
         if (o.zone !== undefined && o.embrase === true) elementsDansLaZone(c, m, o, o.x, o.y, o.zone.rayon, ev)
         if (o.zone !== undefined) repliquer(c, m, o, exploser(c, m, o.x, o.y, o.zone, e, ev, o.arme), ev)
-        if (o.zone !== undefined && o.fragments !== undefined) fragmenter(m, o.x, o.y, o.fragments, e)
+        if (o.zone !== undefined && o.fragments !== undefined) fragmenter(m, o.x, o.y, o.fragments, e, { ...(o.gel === undefined ? {} : { gel: o.gel }), ...(o.brule === undefined ? {} : { brule: o.brule }), ...(o.electrocution === undefined ? {} : { electrocution: o.electrocution }) })
         // (UN ÉCLAT QUI SE BRISE : ses petits fragments filent en cône derrière l'insecte, sans le retoucher)
         if (o.eclatement !== undefined) {
           const ec = o.eclatement
@@ -7013,7 +7019,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
       // sans contact, le feu et le gel de ses cartes ne prendraient nulle part)
       if (o.cloche === true || o.minuterie !== undefined || o.embrase === true) elementsDansLaZone(c, m, o, o.x, o.y, o.zone.rayon, ev)
       const critiques = exploser(c, m, o.x, o.y, o.zone, null, ev, o.arme)
-      if (o.fragments !== undefined) fragmenter(m, o.x, o.y, o.fragments, null)
+      if (o.fragments !== undefined) fragmenter(m, o.x, o.y, o.fragments, null, { ...(o.gel === undefined ? {} : { gel: o.gel }), ...(o.brule === undefined ? {} : { brule: o.brule }), ...(o.electrocution === undefined ? {} : { electrocution: o.electrocution }) })
       repliquer(c, m, o, critiques, ev)
       // (L'ONDE DE CHOC part de l'explosion — voir `Arme.onde`)
       const od = o.onde

@@ -8955,3 +8955,12 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   roulent vers l'extérieur et restent un instant derrière (`semerLaPoussiereDesOndes`, quatorze au plus par image).
   GRISE (`POUSSIERE_DE_L_ONDE`, un gris de roche à peine violet) ; AUX TONS DU FEU avec Incendiaires (`ONDE_EN_FEU`). Le
   test refait (l'insecte à 80 touché au bout de 0,65 s) ; VU en capture, les deux.
+- LE LANCE-GRENADES, SON ÉLÉMENT EST LE GIVRE (Keko, 24/11 : « on met Fragmentation, et Grenades givrées à la place de
+  Cryogéniques » — le givre, le seul élément qui manquait à l'Empire : le feu à l'obusier, la corrosion au laser,
+  l'électricité au railgun et à la bobine) : « L'explosion applique givre à tous les ennemis touchés. » (`grenades-givrees`,
+  le gel de `V.cryo` ; la grenade à retardement ne touche rien en vol, `elementsDansLaZone` givre toute sa zone).
+  INCENDIAIRES RETIRÉE (un seul élément par arme) : cinq variations en attendant, le test du compte le sait.
+  FRAGMENTATION GARDÉE, ses éclats PORTENT L'ÉLÉMENT DU TIR (`fragmenter(…, el)`, `elementDe` — pour toutes les armes :
+  les éclats d'un missile incendiaire brûlent, ceux du harpon aussi) ; son texte perd « brûlants » pour le lance-grenades.
+  Un test (une couronne hors de la zone : 6 givrés par les éclats, 0 sans eux) ; les cartes VUES en capture. Restent à
+  trancher : Rafale, Drones (une attaque à côté), Gros calibre, et la variation critique.

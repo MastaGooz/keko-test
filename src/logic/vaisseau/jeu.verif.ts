@@ -3219,6 +3219,30 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   verifier(`l'épicentre : la cible prend ${avec[0]} (180), le voisin à 30 ${avec[1]} (60) ; sans la carte, ${sans.join(' et ')} (60 et 60)`, avec[0] === 180 && avec[1] === 60 && sans[0] === 60 && sans[1] === 60)
 }
 
+// LES GRENADES GIVRÉES (Keko, 24/11) : l'explosion givre toute sa zone ; avec Fragmentation, ses éclats aussi — douze
+// insectes en couronne à 36, hors de la zone (28) : sans les éclats, aucun n'est givré ; avec, plusieurs
+{
+  const givres = (fragments: boolean): { cible: boolean; couronne: number } => {
+    const grenades = { id: 'grenades', cadence: 99, degats: 34, portee: 110, vitesse: 150, vie: 1.2, dispersion: 0, guide: false, tousSens: true, zone: { rayon: 28 }, minuterie: { duree: 1.2, frein: 3 }, gel: { duree: 1.5, ralenti: 0.5 }, ...(fragments ? { fragments: { nombre: 6, degats: 8, vitesse: 160, vie: 0.25 } } : {}) }
+    const cfg = { ...VAISSEAU, coque: 1e9, armes: [grenades], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false }, passifs: { ...VAISSEAU.passifs, critique: 0 } }
+    const w = nouveauMonde(cfg, 5)
+    w.invasion.prochainA = 1e9
+    const places: [number, number][] = [[90, 0], ...Array.from({ length: 12 }, (_, k): [number, number] => [90 + Math.cos((k / 12) * Math.PI * 2) * 36, Math.sin((k / 12) * Math.PI * 2) * 36])]
+    const es = places.map(([x, y], k): Ennemi => ({ id: 760 + k, corps: { ...nouveauVaisseau(), x, y }, pv: 1e6, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9 }))
+    w.ennemis.push(...es)
+    w.verrou = es[0].id
+    let explose = -1
+    for (let i = 0; i < 400; i++) {
+      for (const ev of avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements) if (ev.type === 'explosionDeZone' && explose < 0) explose = w.t
+      if (explose > 0 && w.t > explose + 0.4) break
+    }
+    const gele = (e: Ennemi): boolean => (e.geleA ?? -1) > w.t
+    return { cible: gele(es[0]), couronne: es.slice(1).filter(gele).length }
+  }
+  const [avec, sans] = [givres(true), givres(false)]
+  verifier(`les grenades givrées : la cible est givrée (${avec.cible}) ; la couronne hors de la zone, ${avec.couronne} givrés par les éclats (plusieurs), ${sans.couronne} sans eux (0)`, avec.cible && sans.cible && avec.couronne >= 3 && sans.couronne === 0)
+}
+
 // L'ONDE DE CHOC (Keko, 24/11 — voir `Arme.onde`) : l'explosion de 60 sur 40 libère une onde jusqu'à 120 (3 × 40) en
 // 1 s, à 30 % : la cible prend 60 + 18 ; un insecte à 80, hors de l'explosion, 18, un peu après, et il brûle
 // (Incendiaires) ; un à 140, rien ; l'onde s'éteint
