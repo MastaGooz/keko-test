@@ -11184,8 +11184,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         const flash = Math.max(0, 1 - (t - (sphereTirA.get(s.id) ?? -10)) / 0.15)
         // (le pouls de la décharge : 1 à l'instant, 0 après `DUREE_DU_POULS`)
         const pouls = Math.max(0, 1 - (t - (bobineDechargeA.get(s.id) ?? -10)) / DUREE_DU_POULS)
-        const Rb = (4 + bat) * k * zoneDuVol() * (1 + 0.25 * pouls)
+        // (CHARGÉE — « Accumulateur », Keko, 24/11 : ses coups critiques la renforcent ; elle grossit d'autant, jusqu'à moitié
+        // plus, et un cœur blanc s'y allume — voir `Arme.sphere.accumulateur`)
+        const charge = Math.min(2, s.charge ?? 0)
+        const Rb = (4 + bat) * k * zoneDuVol() * (1 + 0.25 * pouls) * (1 + 0.25 * charge)
         p.ring(s.x, s.y, sp.rayon, 1, TESLA[2], 0.12 * k)
+        if (charge > 0) p.glow(s.x, s.y, Rb * 2.2, TESLA[4], Math.min(0.55, 0.2 + 0.15 * charge) * k)
         // (LA PÉRIPHÉRIE PULSE EN BLEU : le cercle de la portée s'allume et s'ouvre d'un cran, puis se rendort)
         if (pouls > 0) {
           const ro = sp.rayon * (1 + 0.08 * (1 - pouls))
@@ -17990,6 +17994,17 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           for (let i = 0; i < 6; i++) {
             const a = R.range(0, Math.PI * 2)
             etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(15, 35), Math.sin(a) * R.range(15, 35), R.range(0.15, 0.3), R.next() < 0.5 ? MIASME[7] : MIASME[5], 1, 1.5)
+          }
+          break
+        case 'sphereChargee':
+          // (« ACCUMULATEUR » : la boule se charge d'un critique — un claquement, des étincelles blanches)
+          if (t - zapA > 0.06) {
+            zapA = t
+            jouer('zap', { dx: ev.x - v.x, dy: ev.y - v.y })
+          }
+          for (let i = 0; i < 5; i++) {
+            const a = R.range(0, Math.PI * 2)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(25, 55), Math.sin(a) * R.range(25, 55), R.range(0.12, 0.25), N.WHITE, 1, 1.5)
           }
           break
         case 'foudreDuCiel':

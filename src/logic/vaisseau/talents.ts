@@ -493,7 +493,9 @@ export const MUTATIONS: Mutation[] = [
   // (« CONDUCTION », À LA PLACE D'« INCENDIAIRE » — Keko, 24/11 : « l'arc rebondit sur 2 autres cibles, en mode chaîne
   // d'éclair » ; −20 % par bond, comme la chaîne de la Sentinelle ; la bobine n'a plus qu'un élément — voir `Arme.sphere`)
   variation('tesla-conduction', 'tesla', 'Conduction', 'Chaque éclair rebondit sur deux autres ennemis.', changerA('tesla', (a) => ({ ...a, sphere: a.sphere === undefined ? undefined : { ...a.sphere, foudre: { cibles: a.sphere.foudre?.cibles ?? 3, ...a.sphere.foudre, rebonds: { n: 2, saut: 45, attenuation: 0.8 } } } }))),
-  variation('tesla-cryo', 'tesla', 'Cryogénique', 'Ce que la foudre touche gèle.', changerA('tesla', V.cryo)),
+  // (« ACCUMULATEUR », SA VARIATION SUR COUP CRITIQUE, À LA PLACE DE « CRYOGÉNIQUE » — Keko, 24/11 : « les coups critiques de la
+  // bobine augmentent ses dégâts de X % pour toute sa durée restante » ; +20 %, cumulable — voir `Arme.sphere.accumulateur`)
+  variation('tesla-accumulateur', 'tesla', 'Accumulateur', 'Chaque coup critique renforce la boule jusqu’à sa fin.', changerA('tesla', (a) => ({ ...a, sphere: a.sphere === undefined ? undefined : { ...a.sphere, accumulateur: 0.2 } }))),
   variation('tesla-surtension', 'tesla', 'Surtension', 'La bobine décharge deux fois plus souvent.', changerA('tesla', (a) => ({ ...a, sphere: a.sphere === undefined ? undefined : { ...a.sphere, periode: a.sphere.periode * 0.5 } }))),
   variation('tesla-champ', 'tesla', 'Champ tesla', 'Un champ électrique blesse les ennemis tout près.', changerA('tesla', (a) => ({ ...a, aura: { rayon: 34, dps: fois(a, 0.4) } }))),
   variation('tesla-jumeau', 'tesla', 'Grande bobine', 'Une boule plus grande, qui dure plus longtemps.', changerA('tesla', (a) => ({ ...a, sphere: a.sphere === undefined ? undefined : { ...a.sphere, rayon: a.sphere.rayon * 1.5, duree: a.sphere.duree * 1.4 } }))),

@@ -913,7 +913,9 @@ export type Arme = {
   // (`foudre.rebonds` : CONDUCTION — Keko, 24/11 : « l'arc rebondit sur 2 autres cibles, en mode chaîne d'éclair » : chaque
   // éclair saute ensuite `n` fois d'ennemi en ennemi, à `saut` au plus, perdant `attenuation` à chaque bond, jamais deux fois
   // sur le même dans sa chaîne)
-  sphere?: { vitesse: number; duree: number; rayon: number; periode: number; vitesseTir: number; foudre?: { cibles: number; rebonds?: { n: number; saut: number; attenuation: number } } }
+  // (`accumulateur` : ACCUMULATEUR — Keko, 24/11 : « les coups critiques de la bobine augmentent ses dégâts de X % pour toute
+  // sa durée restante » : chaque critique d'une boule lui ajoute cette part de dégâts, jusqu'à sa fin — +20 %, cumulable)
+  sphere?: { vitesse: number; duree: number; rayon: number; periode: number; vitesseTir: number; foudre?: { cibles: number; rebonds?: { n: number; saut: number; attenuation: number } }; accumulateur?: number }
   /**
    * UN PUITS DE PLASMA (la troisième arme du Pulsar, Keko, 16/11 : « on va tenter le puits » — une petite singularité lancée
    * au milieu de la nuée, qui aspire les insectes vers son centre puis éclate) : à la cadence, un insecte à portée, il part
@@ -1547,7 +1549,8 @@ export type Rejeton = { id: number; arme: number; x: number; y: number; vx: numb
 export type Tentacule = { arme: number; ancre: number; fait: 'repos' | 'aller' | 'plantee' | 'retour'; depuis: number; cible: number | null; tx: number; ty: number; u: number; virage: number }
 
 /** Une sphère de plasma (voir `Arme.sphere`) : son arme, où, sa vitesse, quand elle est née, quand elle tire. */
-export type Sphere = { id: number; arme: number; x: number; y: number; vx: number; vy: number; nee: number; tirA: number }
+// (`charge` : ce que ses coups critiques lui ont ajouté — voir `Arme.sphere.accumulateur`)
+export type Sphere = { id: number; arme: number; x: number; y: number; vx: number; vy: number; nee: number; tirA: number; charge?: number }
 /** Un puits de plasma (voir `Arme.puits`) : son arme, d'où il part, où il s'ouvre, où il est ; quand il arrive ; ouvert ou en vol. */
 export type Puits = { id: number; arme: number; x0: number; y0: number; cx: number; cy: number; x: number; y: number; lance: number; arrive: number; ouvert: boolean }
 
@@ -1723,6 +1726,8 @@ export type Evenement =
   /** Un insecte mort rongé laisse une flaque d'acide (« Dissolution » — voir `ELEMENTAIRES`). */
   | { type: 'flaqueDAcide'; x: number; y: number; rayon: number }
   | { type: 'feuPropage'; de: number; vers: number; x0: number; y0: number; x1: number; y1: number }
+  /** Une boule tesla se charge d'un coup critique (« Accumulateur » — voir `Arme.sphere.accumulateur`). */
+  | { type: 'sphereChargee'; x: number; y: number; charge: number }
   /** Un coup électrique sur un insecte déjà électrocuté : il tire sa chance de faire sauter un arc (voir `propagerLElectrocution`). */
   | { type: 'coupElectrique'; id: number; x: number; y: number; jusque: number; chance: number; degats: number; saut: number }
   /** Une nova de givre part du vaisseau (voir `Arme.nova`). */
@@ -3785,7 +3790,12 @@ function menerLesSpheres(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[
       const frapper = (e: Ennemi, de: { x: number; y: number }, part: number): void => {
         const critique = critiqueTire(c, m, a, e)
         effetsDuCoup(c, m, a, e, ev)
-        e.pv -= a.degats * part * (critique ? facteurSur(c, m, a, e) : 1)
+        e.pv -= a.degats * (1 + (s.charge ?? 0)) * part * (critique ? facteurSur(c, m, a, e) : 1)
+        // (ACCUMULATEUR : un critique la charge pour la suite — voir `Arme.sphere.accumulateur`)
+        if (critique && sp.accumulateur !== undefined) {
+          s.charge = (s.charge ?? 0) + sp.accumulateur
+          ev.push({ type: 'sphereChargee', x: s.x, y: s.y, charge: s.charge })
+        }
         ev.push({ type: 'foudre', x0: de.x, y0: de.y, x1: e.corps.x, y1: e.corps.y })
         ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })
         if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)

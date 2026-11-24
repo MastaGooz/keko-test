@@ -8789,4 +8789,10 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     chaîne ; chaque bond son critique et les effets de l'arme. Avec Orage, chacun des six éclairs a sa chaîne. Le nom,
     les −20 % et la place d'Incendiaire : Keko (la bobine n'a plus qu'un élément, le givre de Cryogénique). Un test ; VU
     en capture : les éclairs qui sortent du cercle de la bobine, les deux cartes.
-  - Restent, de l'ancienne liste : Cryogénique, Surtension, Champ tesla, Grande bobine.
+  - ACCUMULATEUR, SA VARIATION SUR COUP CRITIQUE, À LA PLACE DE CRYOGÉNIQUE (« les coups critiques de la bobine augmentent
+    ses dégâts de X % pour toute sa durée restante ») : « Chaque coup critique renforce la boule jusqu'à sa fin. » ;
+    `sphere.accumulateur` 0,2, `Sphere.charge` — chaque critique d'une boule lui ajoute +20 % de dégâts, cumulable, jusqu'à
+    sa fin ; la suivante repart de zéro (« +20 %, cumulable », la place et le nom : Keko). Chargée, la boule grossit
+    (jusqu'à moitié plus) et un cœur blanc s'y allume ; un claquement et des étincelles blanches à chaque charge. La
+    bobine n'a plus d'élément. Un test (58, 69,6, 81,2) ; VU en capture : la carte, la boule qui s'éclaire.
+  - Restent, de l'ancienne liste : Surtension, Champ tesla, Grande bobine.

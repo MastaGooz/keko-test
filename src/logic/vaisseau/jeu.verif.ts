@@ -3745,6 +3745,31 @@ for (const vortex of [true, false]) {
   verifier(`conduction : ${perdus.join(', ')} (58, 46.4, 37.12, 0)`, perdus.join() === '58,46.4,37.12,0')
 }
 
+// ACCUMULATEUR (Keko, 24/11 — voir `Arme.sphere.accumulateur`) : critique à chaque coup, une boule qui foudroie un insecte
+// à chaque décharge frappe 58, puis 58 × 1,2, puis 58 × 1,4 (le critique en plus) ; sans la carte, toujours 58
+{
+  const essai = (accu: boolean): number[] => {
+    const tesla = { id: 'tesla', cadence: 2.6, degats: 58, portee: 120, vitesse: 0, vie: 0, dispersion: 0, guide: false, sphere: { vitesse: 0, duree: 3, rayon: 20, periode: 0.6, vitesseTir: 0, foudre: { cibles: 1 }, ...(accu ? { accumulateur: 0.2 } : {}) } }
+    const cfg: ConfigVaisseau = { ...VAISSEAU, coque: 1e9, armes: [tesla], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false }, passifs: { ...VAISSEAU.passifs, critique: 1 } }
+    const w = nouveauMonde(cfg, 5)
+    w.invasion.prochainA = 1e9
+    w.t = 2
+    w.armesA = [1e9]
+    const e: Ennemi = { id: 3200, corps: { ...nouveauVaisseau(), x: 100, y: 10 }, pv: 1e6, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9 }
+    w.ennemis.push(e)
+    w.spheres.push({ id: 3201, arme: 0, x: 100, y: 0, vx: 0, vy: 0, nee: w.t, tirA: w.t })
+    const coups: number[] = []
+    let avant = e.pv
+    for (let i = 0; i < 80; i++) {
+      avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+      if (e.pv < avant) coups.push(Math.round((avant - e.pv) / cfg.passifs.critiqueFacteur * 100) / 100), (avant = e.pv)
+    }
+    return coups
+  }
+  const [oui, non] = [essai(true), essai(false)]
+  verifier(`accumulateur : la boule frappe ${oui.join(', ')} avant critique (58, 69.6, 81.2) ; sans la carte ${non.join(', ')} (58, 58, 58)`, oui.slice(0, 3).join() === '58,69.6,81.2' && non.slice(0, 3).join() === '58,58,58')
+}
+
 // LE RAILGUN ÉLECTRIQUE (Keko, 24/11 : la carte Cryogénique « applique l'état d'électricité » à la place) : la balle
 // électrocute ce qu'elle traverse, et son sillon ce qui y passe
 {
