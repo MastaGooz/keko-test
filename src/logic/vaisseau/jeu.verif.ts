@@ -3243,6 +3243,31 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   verifier(`les grenades givrées : la cible est givrée (${avec.cible}) ; la couronne hors de la zone, ${avec.couronne} givrés par les éclats (plusieurs), ${sans.couronne} sans eux (0)`, avec.cible && sans.cible && avec.couronne >= 3 && sans.couronne === 0)
 }
 
+// SANS CIBLE, DROIT DEVANT (Keko, 24/11 — voir `Arme.sansCible`) : aucun insecte, le vaisseau tourné vers la droite —
+// l'obusier tombe à 105 devant (0,7 × 150), la grenade à 77 (0,7 × 110), la boule tesla part vers la droite ; une arme
+// sans `sansCible` (le laser) ne tire pas
+{
+  const tir = (a: Partial<Arme>): { x: number; y: number } | null => {
+    const arme = { cadence: 99, degats: 10, portee: 150, vitesse: 110, vie: 2, dispersion: 0, guide: false, tousSens: true, ...a } as Arme
+    const cfg = { ...VAISSEAU, coque: 1e9, armes: [arme], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9 }, derive: { ...VAISSEAU.derive, active: false } }
+    const w = nouveauMonde(cfg, 5)
+    w.invasion.prochainA = 1e9
+    w.vaisseau = { ...w.vaisseau, cap: 0 }
+    for (let i = 0; i < 60 * 3; i++) {
+      for (const ev of avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements) if (ev.type === 'explosionDeZone') return { x: ev.x, y: ev.y }
+      if (w.spheres.length > 0 && i > 30) return { x: w.spheres[0].x, y: w.spheres[0].y }
+      if (a.zone === undefined && a.sphere === undefined && w.obus.length > 0) return { x: w.obus[0].x, y: w.obus[0].y }
+    }
+    return null
+  }
+  const obus = tir({ id: 'obusier', zone: { rayon: 40 }, cloche: { vol: 0.8 }, sansCible: { portee: 0.7 } })
+  const grenade = tir({ id: 'grenades', portee: 110, vitesse: 150, vie: 1.2, zone: { rayon: 28 }, minuterie: { duree: 1.2, frein: 3 }, sansCible: { portee: 0.7 } })
+  const boule = tir({ id: 'tesla', portee: 120, sphere: { vitesse: 45, duree: 3, rayon: 42, periode: 0.6, vitesseTir: 0, foudre: { cibles: 3 } }, sansCible: { portee: 0.7 } })
+  const laser = tir({ id: 'laser', portee: 120, vitesse: 420, vie: 0.7 })
+  const devant = (p: { x: number; y: number } | null, x: number): boolean => p !== null && Math.abs(p.x - x) < 8 && Math.abs(p.y) < 3
+  verifier(`sans cible, droit devant : l'obus tombe à ${obus?.x.toFixed(0)}, ${obus?.y.toFixed(0)} (105, 0), la grenade à ${grenade?.x.toFixed(0)}, ${grenade?.y.toFixed(0)} (77, 0), la boule file vers ${boule?.x.toFixed(0)}, ${boule?.y.toFixed(0)} (devant) ; le laser ${laser === null ? 'ne tire pas' : 'tire'}`, devant(obus, 105) && devant(grenade, 77) && boule !== null && boule.x > 20 && Math.abs(boule.y) < 3 && laser === null)
+}
+
 // L'ÉTOURDISSEMENT (Keko, 24/11 — voir `Arme.etourdissement`) : tout critique, la cible et le voisin dans l'explosion sont
 // étourdis 1 s ; la couronne hors de la zone, que seuls les éclats atteignent, ne l'est pas (« l'explosion initiale, pas
 // les fragments ») ; sans critique, personne

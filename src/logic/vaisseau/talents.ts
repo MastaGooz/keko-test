@@ -375,6 +375,12 @@ const changerA = (arme: string, f: (a: Arme) => Arme) => (c: ConfigVaisseau): Co
 const ajouterA = (arme: string, f: (a: Arme) => Arme[]) => (c: ConfigVaisseau): ConfigVaisseau => ajouter(c, arme, f)
 
 /** LES NOUVELLES ARMES D'UNE FACTION (aux chiffres du vortex, ses dégâts fois dix) : la (ou les) arme(s) qu'elle ajoute. */
+/**
+ * LA BOBINE, L'OBUSIER ET LE LANCE-GRENADES TIRENT MÊME SANS CIBLE, DROIT DEVANT (Keko, 24/11 : « ceux qui peuvent avoir
+ * un intérêt même en dehors d'ennemis à portée ; pas les lasers, pas le railgun » — voir `Arme.sansCible`) : un obus ou
+ * une grenade tombe aux sept dixièmes de sa portée.
+ */
+const SANS_CIBLE = { portee: 0.7 }
 export type ArmeDeFaction = { id: string; nom: string; dit: string; race: Race; icone: string; armes: () => Arme[] }
 const nouvelle = (a: Omit<Arme, 'dispersion' | 'guide' | 'vitesse' | 'vie'> & Partial<Arme>): Arme => ({ dispersion: 0, guide: false, vitesse: 0, vie: 0, ...a, ajoutee: true, tousSens: true, place: 20 })
 export const ARMES_DE_FACTION: ArmeDeFaction[] = [
@@ -389,17 +395,17 @@ export const ARMES_DE_FACTION: ArmeDeFaction[] = [
   { id: 'railgun', nom: 'Railgun', dit: 'Une balle très rapide qui transperce les ennemis, un peu moins forte à chacun.', race: 'humains', icone: 'imp-railgun', armes: () => [nouvelle({ id: 'railgun', cadence: 3, degats: 160, portee: 190, vitesse: 900, vie: 190 / 900, perforant: true, balle: { part: 0.75, calibre: 2 } })] },
   // (TIRÉ EN CLOCHE — Keko, 23/11 : « pour le distinguer un peu des missiles » : il passe au-dessus des insectes et
   // explose en retombant, là où sera sa cible — voir `Arme.cloche`)
-  { id: 'obusier', nom: 'Obusier', dit: 'De lourds obus tirés en cloche, qui explosent en retombant sur une large zone.', race: 'humains', icone: 'imp-obusier', armes: () => [nouvelle({ id: 'obusier', cadence: 2.4, degats: 86, portee: 150, vitesse: 110, vie: 2.2, dispersion: 0.05, zone: { rayon: 40 }, cloche: { vol: 0.8 } })] },
+  { id: 'obusier', nom: 'Obusier', dit: 'De lourds obus tirés en cloche, qui explosent en retombant sur une large zone.', race: 'humains', icone: 'imp-obusier', armes: () => [nouvelle({ id: 'obusier', cadence: 2.4, degats: 86, portee: 150, vitesse: 110, vie: 2.2, dispersion: 0.05, zone: { rayon: 40 }, cloche: { vol: 0.8 }, sansCible: SANS_CIBLE })] },
   // (LA BOBINE TESLA — Keko, 22/11 : « l'arc tesla, c'est une chaîne d'éclair bis » : une boule de foudre lente qui
   // traverse la mêlée en foudroyant les trois insectes les plus proches toutes les 0,6 s ; l'identifiant reste `tesla`)
-  { id: 'tesla', nom: 'Bobine tesla', dit: 'Une boule de foudre lente qui foudroie les ennemis autour d’elle.', race: 'humains', icone: 'imp-tesla', armes: () => [nouvelle({ id: 'tesla', cadence: 2.6, degats: 58, portee: 120, sphere: { vitesse: 45, duree: 3, rayon: 42, periode: 0.6, vitesseTir: 0, foudre: { cibles: 3 } }, electrocution: { ...ELECTROCUTION_DU_VORTEX } })] },
+  { id: 'tesla', nom: 'Bobine tesla', dit: 'Une boule de foudre lente qui foudroie les ennemis autour d’elle.', race: 'humains', icone: 'imp-tesla', armes: () => [nouvelle({ id: 'tesla', cadence: 2.6, degats: 58, portee: 120, sphere: { vitesse: 45, duree: 3, rayon: 42, periode: 0.6, vitesseTir: 0, foudre: { cibles: 3 } }, electrocution: { ...ELECTROCUTION_DU_VORTEX }, sansCible: SANS_CIBLE })] },
   // (… ET ELLE ÉLECTROCUTE, comme les armes de la Sentinelle — Keko, 24/11 : « je voudrais que la bobine inflige l'état
   // électrique » : chaque éclair, rebonds compris, est un coup électrique — voir `Arme.electrocution`)
   // (À RETARDEMENT — Keko, 23/11 : « très proche des missiles : on envoie deux projectiles tout droit qui explosent » ;
   // « trois petites grenades qui clignotent en rouge pour indiquer le timer, et leur clignotement s'intensifie jusqu'à
   // exploser ; la taille de l'explosion entre le missile et l'obus » : trois en éventail, elles s'arrêtent là où sera
   // la cible et explosent au bout de 1,2 s, sur 28 — le missile 18, l'obus 40 ; voir `Arme.minuterie`)
-  { id: 'grenades', nom: 'Lance-grenades', dit: 'Trois grenades à retardement, qui explosent au bout d’un instant.', race: 'humains', icone: 'imp-grenades', armes: () => [nouvelle({ id: 'grenades', cadence: 1.5, degats: 34, portee: 110, vitesse: 150, vie: 1.2, dispersion: 0.08, zone: { rayon: 28 }, gerbe: { nombre: 3, ecart: 0.3 }, minuterie: { duree: 1.2, frein: 3 } })] },
+  { id: 'grenades', nom: 'Lance-grenades', dit: 'Trois grenades à retardement, qui explosent au bout d’un instant.', race: 'humains', icone: 'imp-grenades', armes: () => [nouvelle({ id: 'grenades', cadence: 1.5, degats: 34, portee: 110, vitesse: 150, vie: 1.2, dispersion: 0.08, zone: { rayon: 28 }, gerbe: { nombre: 3, ecart: 0.3 }, minuterie: { duree: 1.2, frein: 3 }, sansCible: SANS_CIBLE })] },
   // (DES MINI-AVIONS, PAS DES DRONES — Keko, 22/11 : « on a déjà les drones de la Sentinelle » : l'orbite des drones, plus
   // large et plus vive ; la page les dessine en petits chasseurs)
   { id: 'escorte', nom: 'Escorte', dit: 'Deux mini-avions en formation, qui mitraillent les ennemis de loin.', race: 'humains', icone: 'imp-escorte', armes: () => [0, 1].map((k) => ({ ...nouvelle({ id: 'escorte', cadence: 0.45, degats: 24, portee: 110, vitesse: 320, vie: 0.5, dispersion: 0.05 }), place: 20 + k, orbite: { ...ORBITE_DES_DRONES, rayon: 30, vitesse: 2.6, vol: 230, braquage: 9, autour: 34, phase: k * Math.PI, formation: { x: -5, y: k === 0 ? -16 : 16 }, ailier: true } })) },

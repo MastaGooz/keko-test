@@ -714,6 +714,14 @@ export type Arme = {
    */
   etourdissement?: { duree: number }
   /**
+   * ELLE TIRE MÊME SANS CIBLE (Keko, 24/11 : « lancer en tir automatique, même en l'absence d'ennemis, ceux qui ne
+   * nécessitent pas une cible particulière ou qui peuvent avoir un intérêt même sans ennemi à portée — la bobine Tesla,
+   * les obus, les grenades ; pas les lasers, pas le railgun ; en l'absence d'ennemis, on le tire tout simplement droit
+   * devant ») : personne à portée, elle tire à sa cadence, droit devant le nez — un obus ou une grenade tombe aux
+   * `portee` de sa portée (0,7, de moi), une boule tesla part tout droit.
+   */
+  sansCible?: { portee: number }
+  /**
    * UN HARPON (la sixième arme de l'Empire, Keko, 23/11 : « on fait un test avec le harpon » — proposé : « il harponne
    * l'insecte le plus résistant à portée, le relie au vaisseau par un câble, et le câble lui inflige des dégâts qui
    * augmentent tant qu'il tient ; il casse si l'insecte meurt ou s'éloigne trop » ; l'arme anti-boss de l'Empire) : le
@@ -3847,10 +3855,11 @@ function menerLesSpheres(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[
         if (aPortee(e) && d < dc) (dc = d), (cible = e)
       }
     }
-    if (cible === undefined) return
+    // (SANS CIBLE, DROIT DEVANT — voir `Arme.sansCible`)
+    if (cible === undefined && a.sansCible === undefined) return
     m.armesA[i] = m.t + a.cadence
     const b = boucheDansLeMonde(v, a)
-    const cap = Math.atan2(cible.corps.y - b.y, cible.corps.x - b.x)
+    const cap = cible === undefined ? v.cap : Math.atan2(cible.corps.y - b.y, cible.corps.x - b.x)
     m.spheres.push({ id: m.prochainId++, arme: i, x: b.x, y: b.y, vx: Math.cos(cap) * sp.vitesse, vy: Math.sin(cap) * sp.vitesse, nee: m.t, tirA: m.t + sp.periode * 0.5 })
     ev.push({ type: 'sphere', x: b.x, y: b.y, arme: a.id })
   })
@@ -6705,6 +6714,11 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
         const an = tire(m.graine, m.prochainId, 13) * Math.PI * 2
         const loin = arme.portee * (0.45 + 0.5 * tire(m.graine, m.prochainId, 14))
         cible = { id: -1, corps: { ...v, x: bx + Math.cos(an) * loin, y: by + Math.sin(an) * loin, vx: 0, vy: 0 } } as Ennemi
+      }
+      // (SANS CIBLE, DROIT DEVANT — voir `Arme.sansCible`)
+      if (cible === null && arme.sansCible !== undefined) {
+        const loin = arme.portee * arme.sansCible.portee
+        cible = { id: -1, corps: { ...v, x: bx + Math.cos(v.cap) * loin, y: by + Math.sin(v.cap) * loin, vx: 0, vy: 0 } } as Ennemi
       }
       if (cible === null) return
       if (cible.id >= 0) cibleDuTir = cible

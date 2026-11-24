@@ -8990,3 +8990,12 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   étoiles jaunes tournent au-dessus de lui, un coup sourd. Le contrôle reste au givre : c'est l'arme du givre. Un test
   (tout critique : les deux de l'explosion étourdis, la couronne touchée par six éclats, aucun ; sans critique, aucun) ;
   la carte VUE en capture (cinq lignes) ; les étoiles, pas encore vues nettement — les étourdis mouraient trop vite.
+- LA BOBINE, L'OBUSIER ET LE LANCE-GRENADES TIRENT MÊME SANS CIBLE (Keko, 24/11 : « lancer en tir automatique, même en
+  l'absence d'ennemis, ceux qui ne nécessitent pas une cible particulière ou qui peuvent avoir un intérêt même sans
+  ennemi à portée, comme la bobine Tesla ; pas les lasers, pas le railgun, mais les obus et les grenades ; en l'absence
+  d'ennemis, on le tire tout simplement droit devant ») : `Arme.sansCible` = { portee 0,7 } (`SANS_CIBLE` dans
+  `talents.ts`) — personne à portée (ni insecte ni roche), elles tirent à leur cadence DROIT DEVANT LE NEZ : un obus ou
+  une grenade tombe aux sept dixièmes de sa portée (de moi), une boule tesla part tout droit. Leurs variations suivent :
+  Triangulation sans groupe tire droit devant, Téléguidage sans proie attend sa minuterie ; la boule et son Magnétisme
+  ramassent les cristaux en route. VÉRIFIÉ ARME PAR ARME : le laser et le railgun ne tirent toujours pas sans cible.
+  Un test (l'obus à 106, la grenade à 75, la boule devant ; le laser, rien).
