@@ -9005,3 +9005,9 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   centrées sur la visée ; chacune tombe à la distance de la cible. Le nom « Rafale » gardé. Un test (six explosions de
   -90° à +90°, toutes à 88 du vaisseau) ; VU en capture. LE LANCE-GRENADES : Grenades givrées, Fragmentation,
   Téléguidage, Étourdissement, Rafale, Gros calibre — reste Gros calibre à trancher.
+- LE SON DE L'ÉTOURDISSEMENT (Keko, 24/11 : « un son qui fait grésiller un peu le haut-parleur de mon téléphone, peut-être
+  un peu trop d'écho ; c'est un petit peu trop ») : c'était la « frappe » du titre — trois secondes de grande salle, un
+  grave saturé, crête 0,40 —, et elle partait POUR CHAQUE étourdi d'une même explosion. Un son à lui, `etourdi`
+  (`synthe.ts`) : un « tonk » sourd et rond qui tombe de 240 à 180 Hz, sans saturation, deux petits tintements (les
+  étoiles), une petite pièce ; mesuré, crête 0,10, éteint en 0,17 s (la frappe : 3 s), à peu près le poids du
+  craquement du givre ; et UNE FOIS AU PLUS PAR DIXIÈME DE SECONDE (`etourdiSonneA`), comme le givre.

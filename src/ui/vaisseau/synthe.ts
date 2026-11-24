@@ -674,6 +674,21 @@ const RECETTES = {
     },
   },
   /**
+   * UN INSECTE EST ÉTOURDI (« Étourdissement » des grenades, Keko, 24/11 : la « frappe » du titre — trois secondes de
+   * grande salle, un grave saturé — « fait grésiller un peu le haut-parleur de mon téléphone, peut-être un peu trop
+   * d'écho ») : COURT ET SEC — un « tonk » sourd et rond qui tombe d'une quarte, sans saturation, puis deux petits
+   * tintements clairs qui tournent d'une oreille à l'autre (les étoiles) ; une petite pièce, un niveau bas.
+   */
+  etourdi: {
+    duree: 0.4, niveau: 0.1, salle: [0.2, 0.08], variantes: 3,
+    faire: (m, h) => {
+      const pan = (h.next() - 0.5) * 0.5
+      note(m, 0, 0.8, pan, { f: 240 + 30 * h.next(), glisse: { vers: 180, en: 0.06 }, a: 0.002, d: 0.09, partiels: [[1, 1, 1], [2, 0.3, 0.6]] })
+      souffle(m, h, 0, 0.2, pan, { f: 900, q: 1.2, bande: true, a: 0.001, d: 0.03 })
+      for (let k = 0; k < 2; k++) note(m, 0.05 + k * 0.07, 0.22, (k ? 0.5 : -0.5), { f: 1760 + 220 * k + 80 * h.next(), a: 0.002, d: 0.12, partiels: [[1, 1, 1], [2.76, 0.3, 0.5]] })
+    },
+  },
+  /**
    * UNE SALVE D'ÉCLATS DE GLACE PART : la glace qui éclate en couronne — un claquement sec et clair, une gerbe de
    * tintements aigus jetés d'une oreille à l'autre, un sifflement froid qui s'éloigne
    */

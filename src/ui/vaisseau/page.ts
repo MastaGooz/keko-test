@@ -14274,6 +14274,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   let fouetSonneA = -10
   /** L'instant du dernier craquement de givre (voir l'événement `gele`). */
   let geleSonneA = -10
+  let etourdiSonneA = -10
   /** Les lignes de balises qui viennent de s'éclairer (voir `dessinerLesBalises`). */
   const lignesEclairees: { x0: number; y0: number; x1: number; y1: number; t0: number; bleu?: boolean }[] = []
   /** (SOUS LES VAISSEAUX ET LES INSECTES : dessinées avec les tirs, elles cachaient le vaisseau posé dessus.) */
@@ -18172,9 +18173,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           }
           break
         case 'fige':
-          // (ÉTOURDI : un coup sourd et des étincelles jaunes — voir `Arme.etourdissement`)
+          // (ÉTOURDI : un « tonk » sec et deux tintements, une fois au plus par dixième de seconde — plusieurs étourdis d'une
+          // même explosion s'empilaient et faisaient grésiller le haut-parleur (Keko, 24/11) —, et des étincelles jaunes ;
+          // voir `Arme.etourdissement`)
           if (ev.sorte === 'etourdi') {
-            jouer('frappe', { dx: ev.x - v.x, dy: ev.y - v.y })
+            if (t - etourdiSonneA > 0.1) {
+              etourdiSonneA = t
+              jouer('etourdi', { dx: ev.x - v.x, dy: ev.y - v.y })
+            }
             for (let i = 0; i < 5; i++) {
               const a = R.range(0, Math.PI * 2)
               etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(20, 45), Math.sin(a) * R.range(20, 45), R.range(0.15, 0.3), R.next() < 0.5 ? N.WHITE : N.hex('#ffe46a'), 1, 1.5)
