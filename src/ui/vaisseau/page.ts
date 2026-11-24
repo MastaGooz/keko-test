@@ -92,6 +92,7 @@ type Noyau = {
   sparkle(p: Peintre, x: number, y: number, bras: number, c: number, pointe?: number, k?: number): void
   Rng: new (graine: number) => { next(): number; range(a: number, b: number): number }
   P: Record<string, number>
+  PF: Record<string, number>
   PAL: Record<string, string[]>
   WHITE: number
 }
@@ -10450,6 +10451,26 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const ROUSSI = N.hex('#3a2216')
   const CHARBON = N.hex('#2a1a16')
   const FUMEE_DU_FEU = N.hex('#6a5a60')
+  /** LA POUSSIÈRE D'UNE ONDE DE CHOC (voir `Arme.onde`), du sombre au clair : un gris de roche, à peine violet. */
+  const POUSSIERE_DE_L_ONDE = ['#3a3442', '#5a5262', '#857c8a', '#b4abb4'].map((c) => N.hex(c))
+  /** … et son ton avec Incendiaires : de la braise à la flamme claire. */
+  const ONDE_EN_FEU = ['#5e2c1c', '#a4502a', '#e8893a', '#ffc764'].map((c) => N.hex(c))
+  /** Les bouffées de poussière au front des ondes de choc (voir `semerLaPoussiereDesOndes`). */
+  function semerLaPoussiereDesOndes(): void {
+    for (const o of m.ondes) {
+      const r = rayonDeLOnde(o, m.t)
+      const u = r / Math.max(1, o.portee)
+      const T = o.brule !== undefined ? ONDE_EN_FEU : POUSSIERE_DE_L_ONDE
+      // (une bouffée tous les 26 pixels de front par image : le nuage reste dense sans écraser le téléphone)
+      const nb = Math.min(14, Math.ceil((Math.PI * 2 * r) / 26))
+      for (let i = 0; i < nb; i++) {
+        const a = R.range(0, Math.PI * 2)
+        const rr = r - R.range(0, 4)
+        const vit = R.range(6, 22) * (1 - 0.6 * u)
+        feuDesConsumes.spawn(N.P.SMOKE, o.x + Math.cos(a) * rr, o.y + Math.sin(a) * rr, Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.45, 0.9), R.next() < 0.35 ? T[3] : T[2], R.range(2.5, 5.5) * (1 - 0.4 * u), 0, N.PF.BIG)
+      }
+    }
+  }
   const DUREE_DE_LA_CONSUMATION = 0.6
   type Consume = { x: number; y: number; vx: number; vy: number; t0: number; S: number; color: Uint32Array; champ: Float32Array; kMin: number; kMax: number; passe: Uint8Array; fini: boolean }
   let consumes: Consume[] = []
@@ -10594,16 +10615,36 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     return { h: Math.sin(Math.PI * u) * haut, dh: (Math.cos(Math.PI * u) * Math.PI * haut) / vie0 }
   }
   function dessinerLesConsumes(p: Peintre): void {
-    // (LES ONDES DE CHOC DE L'OBUSIER — voir `Arme.onde` : un anneau clair qui s'étend jusqu'à sa portée, doublé d'un second
-    // plus pâle juste derrière, et une lueur chaude au front ; il s'efface en arrivant)
+    // (LES ONDES DE CHOC DE L'OBUSIER — voir `Arme.onde` — UN NUAGE DE POUSSIÈRE QUI SE RÉPAND (Keko, 24/11 : « pas rouge
+    // orangé tant qu'on n'a pas l'effet incendiaire ; je la voyais plus comme un nuage de poussière qui se répand ; un peu
+    // plus épaisse et un peu plus texturée » — la poussière qui roule du « Ground slam » de pixelfx, vue de dessus) : une
+    // BANDE épaisse au bord irrégulier (un bruit le long du cercle, propre à chaque onde), claire au front, sombre derrière,
+    // qui s'amincit et pâlit en arrivant ; ses bouffées de poussière sont semées au front, image par image (voir
+    // `semerLaPoussiereDesOndes`). Grise sans élément ; aux tons du feu avec Incendiaires.)
     for (const o of m.ondes) {
       const r = rayonDeLOnde(o, m.t)
       const u = r / Math.max(1, o.portee)
       const ox = o.x - camera.x + W / 2
       const oy = o.y - camera.y + centreY()
+      const T = o.brule !== undefined ? ONDE_EN_FEU : POUSSIERE_DE_L_ONDE
       const k = 1 - u * u
-      p.ring(ox, oy, r, 1, u < 0.2 ? N.hex('#fff2a8') : FEU[4], 0.85 * k)
-      if (r > 4) p.ring(ox, oy, r - 3, 1, FEU[3], 0.35 * k)
+      const g = o.nee * 97 + o.x * 0.37
+      const epais = 3 + 5 * (1 - u)
+      const n = Math.max(24, Math.ceil(Math.PI * 2 * r))
+      for (let i = 0; i < n; i++) {
+        const a = (i / n) * Math.PI * 2
+        // (le bord irrégulier : deux ondulations lentes et un grain, qui tournent un peu avec le temps)
+        const bruit = 0.55 + 0.25 * Math.sin(a * 5 + g) + 0.15 * Math.sin(a * 13 - g * 1.7 + u * 3) + 0.05 * Math.sin(a * 41 + g * 3)
+        const e = Math.max(1, epais * bruit)
+        const ca = Math.cos(a)
+        const sa = Math.sin(a)
+        for (let d = 0; d < e; d++) {
+          const q = d / e
+          // (au front le ton clair, puis de plus en plus sombre et transparent vers l'intérieur)
+          const c = q < 0.2 ? T[3] : q < 0.5 ? T[2] : q < 0.8 ? T[1] : T[0]
+          p.dot(ox + ca * (r - d), oy + sa * (r - d), c, k * (1 - q * 0.7) * (0.55 + 0.45 * bruit))
+        }
+      }
     }
     ondesDeZone = ondesDeZone.filter((o) => t - o.t0 < 0.25)
     for (const o of ondesDeZone) {
@@ -18560,6 +18601,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
             }
           }
         }
+        semerLaPoussiereDesOndes()
         // les mini-missiles laissent une traînée de fumée
         // (et l'obus en cloche une fumée plus grosse, là où il est à l'écran — en l'air)
         for (const o of m.obus) if (o.arme === 'obusier' && R.next() < 0.7) feuDesConsumes.spawn(N.P.SMOKE, o.x - o.vx * 0.04, o.y - hauteurEnCloche(o).h - o.vy * 0.04, R.range(-3, 3), R.range(-3, 3), R.range(0.4, 0.6), FUMEE_DU_FEU, R.range(1.3, 1.9) * (o.taille ?? 1))

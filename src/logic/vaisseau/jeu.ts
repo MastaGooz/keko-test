@@ -688,7 +688,7 @@ export type Arme = {
    * explosion, un anneau part de son centre et s'étend jusqu'à `portee` fois le rayon de la zone en `duree` secondes ;
    * chaque insecte qu'il traverse prend `part` des dégâts de la zone, une fois, avec l'élément du tir — ses critiques ne
    * déclenchent pas la Réplique ; les mini-obus de la grappe n'en lâchent pas (« jusqu'à 120 — trois fois 40 —, 30 %,
-   * en 0,5 s, son élément seulement » : Keko). L'état est `Monde.ondes`.
+   * en 0,5 s, son élément seulement » : Keko ; puis en 1 s : « il va trop vite »). L'état est `Monde.ondes`.
    */
   onde?: { portee: number; part: number; duree: number }
   /**

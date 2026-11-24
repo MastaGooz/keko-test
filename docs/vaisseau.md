@@ -8945,3 +8945,13 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   un anneau clair doublé d'un plus pâle, qui s'efface en arrivant. Un test (la cible 78, un insecte à 80 : 18 au bout de
   0,33 s, et il brûle ; à 140, rien) ; VU en capture. L'OBUSIER A SES SIX : Incendiaires, Fragmentation, Réplique,
   Triangulation, Épicentre, Onde de choc.
+- L'ONDE DE CHOC EST UN NUAGE DE POUSSIÈRE, DEUX FOIS MOINS VITE (Keko, 24/11 : « pas de couleur rouge orangé tant qu'on
+  n'a pas l'effet incendiaire ; je voyais plus une onde de choc comme un nuage de poussière qui se répand ; il va trop
+  vite : deux fois moins vite, un peu plus épais et un peu plus texturé ; vois dans la bibliothèque de pixelfx ») : en
+  1 s au lieu de 0,5 (`onde.duree`). Dans pixelfx, le « Ground slam » (impacts) a ce qu'il faut — de la poussière qui roule
+  derrière un front de choc —, mais vu de côté : j'en ai repris les ingrédients, vus de dessus. UNE BANDE de 8 pixels au
+  départ, 3 à l'arrivée, au bord irrégulier (trois ondulations le long du cercle, propres à chaque onde), claire au front
+  et sombre derrière ; DES BOUFFÉES de fumée de pixelfx (`P.SMOKE`, `PF.BIG`) semées au front à chaque image, qui
+  roulent vers l'extérieur et restent un instant derrière (`semerLaPoussiereDesOndes`, quatorze au plus par image).
+  GRISE (`POUSSIERE_DE_L_ONDE`, un gris de roche à peine violet) ; AUX TONS DU FEU avec Incendiaires (`ONDE_EN_FEU`). Le
+  test refait (l'insecte à 80 touché au bout de 0,65 s) ; VU en capture, les deux.
