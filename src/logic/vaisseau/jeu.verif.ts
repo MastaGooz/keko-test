@@ -3244,9 +3244,9 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
 }
 
 // LA DOUBLE EXPLOSION (Keko, 24/11 — voir `Arme.double`) : la grenade explose sur l'insecte à 90, puis une seconde fois
-// 0,5 s plus tard au même endroit, à 50 % — il perd 34 puis 17 ; pas de troisième
+// 0,8 s plus tard au même endroit, à 50 % — il perd 34 puis 17 ; pas de troisième
 {
-  const grenades = { id: 'grenades', cadence: 99, degats: 34, portee: 110, vitesse: 150, vie: 1.2, dispersion: 0, guide: false, tousSens: true, zone: { rayon: 28 }, minuterie: { duree: 1.2, frein: 3 }, double: { delai: 0.5, part: 0.5 } }
+  const grenades = { id: 'grenades', cadence: 99, degats: 34, portee: 110, vitesse: 150, vie: 1.2, dispersion: 0, guide: false, tousSens: true, zone: { rayon: 28 }, minuterie: { duree: 1.2, frein: 3 }, double: { delai: 0.8, part: 0.5 } }
   const cfg = { ...VAISSEAU, coque: 1e9, armes: [grenades], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false }, passifs: { ...VAISSEAU.passifs, critique: 0 } }
   const w = nouveauMonde(cfg, 5)
   w.invasion.prochainA = 1e9
@@ -3255,7 +3255,7 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   w.verrou = e.id
   const zones: { x: number; y: number; t: number; pv: number }[] = []
   for (let i = 0; i < 60 * 3; i++) for (const ev of avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements) if (ev.type === 'explosionDeZone') zones.push({ x: ev.x, y: ev.y, t: w.t, pv: 1e6 - e.pv })
-  verifier(`la double explosion : ${zones.length} explosions (2), à ${zones.length === 2 ? (zones[1].t - zones[0].t).toFixed(2) : '?'} s d'écart (0,5), au même endroit ; l'insecte perd ${zones.map((z) => z.pv).join(' puis ')} (34 puis 51)`, zones.length === 2 && Math.abs(zones[1].t - zones[0].t - 0.5) < 0.04 && Math.hypot(zones[1].x - zones[0].x, zones[1].y - zones[0].y) < 1e-6 && zones[0].pv === 34 && zones[1].pv === 51)
+  verifier(`la double explosion : ${zones.length} explosions (2), à ${zones.length === 2 ? (zones[1].t - zones[0].t).toFixed(2) : '?'} s d'écart (0,8), au même endroit ; l'insecte perd ${zones.map((z) => z.pv).join(' puis ')} (34 puis 51)`, zones.length === 2 && Math.abs(zones[1].t - zones[0].t - 0.8) < 0.04 && Math.hypot(zones[1].x - zones[0].x, zones[1].y - zones[0].y) < 1e-6 && zones[0].pv === 34 && zones[1].pv === 51)
 }
 
 // LA RAFALE EN DEMI-CERCLE (Keko, 24/11) : six grenades à 36° l'une de l'autre, lancées vers un insecte à 90 : six

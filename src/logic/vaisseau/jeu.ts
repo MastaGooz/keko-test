@@ -724,7 +724,8 @@ export type Arme = {
   /**
    * LA DOUBLE EXPLOSION (le Lance-grenades, Keko, 24/11 : « la double explosion, ça apporte vraiment quelque chose ») :
    * chaque grenade explose une seconde fois, `delai` secondes plus tard au même endroit, à `part` de ses dégâts — avec
-   * son élément, ses éclats et ses critiques ; la seconde n'en appelle pas d'autre (0,5 s, 50 % : proposés, retenus).
+   * son élément, ses éclats et ses critiques ; la seconde n'en appelle pas d'autre (0,5 s, 50 % : proposés, retenus ; puis
+   * 0,8 s — Keko : la glace de la première, 0,7 s, n'était pas finie que la seconde partait).
    */
   double?: { delai: number; part: number }
   /**

@@ -9023,3 +9023,6 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   critiques (donc l'Étourdissement) ; elle ne chasse pas et n'en appelle pas d'autre. Un test (34 puis 17, à 0,5 s, au
   même endroit) ; VU en capture (givrées : deux explosions de glace). LE LANCE-GRENADES A SES SIX : Grenades givrées,
   Fragmentation, Téléguidage, Étourdissement, Barrage, Double explosion.
+- LA SECONDE EXPLOSION À 0,8 S (Keko, 24/11 : « l'animation de la première explosion givrée n'est pas finie que la
+  deuxième se déclenche » — la glace dure 0,7 s ; retarder la seconde plutôt que raccourcir la glace : Keko) :
+  `double.delai` 0,5 → 0,8. Le test refait.
