@@ -8633,3 +8633,6 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   ennemi sous corrosion, ça ne relance pas la durée ») : VÉRIFIÉ, c'était déjà la règle — seul `ronger` repousse la fin, et
   seules les attaques corrosives l'appellent (le tir, le rebond, l'explosion, la zone d'une arme corrosive). Un test la
   garde : frappé par un canon sans corrosion, la fin ne bouge pas ; par un tir corrosif, elle repart à 6 s.
+- LA CORROSION DU VORTEX MAJORE DE 20 % (Keko, 24/11 : « passe l'augmentation des dégâts subis par corrosion à 20 % au
+  lieu de 25 % ») : `CORROSION_DU_VORTEX` = 0,2, toutes ses sources comme ci-dessus ; la carte « Corrosion » légendaire
+  la porte à 25 %. Le Nova Drifter garde ses 35 %.

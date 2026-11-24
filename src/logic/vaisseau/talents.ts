@@ -188,11 +188,11 @@ const poseesDe = (a: Arme): { cle: (typeof POSEES)[number]; duree: number }[] =>
 })
 /** L'arme corrode-t-elle (son acide, ses mines, sa traînée) — et de combien rend-elle vulnérable. */
 /**
- * LA CORROSION DU VORTEX MAJORE DE 25 % (Keko, 23/11 : « on va passer le bonus de dégâts de corrosion à 25 % au lieu de
- * 35 % ») : toutes ses sources — la carte Corrosion du laser, l'acide, les mines, les traînées des vaisseaux — à 25 % ; la
- * carte « Corrosion » grandit ce bonus ; le Nova Drifter garde les 35 % de ses fiches.
+ * LA CORROSION DU VORTEX MAJORE DE 20 % (Keko, 23/11 : 25 % au lieu de 35 % ; 24/11 : « passe l'augmentation des dégâts
+ * subis par corrosion à 20 % au lieu de 25 % ») : toutes ses sources — la carte Corrosion du laser, l'acide, les mines, les
+ * traînées des vaisseaux — à 20 % ; la carte « Corrosion » grandit ce bonus ; le Nova Drifter garde les 35 % de ses fiches.
  */
-export const CORROSION_DU_VORTEX = 0.25
+export const CORROSION_DU_VORTEX = 0.2
 /** L'arme dont chaque corrosion vaut `bonus` (voir `CORROSION_DU_VORTEX`). */
 export function corrosionPosee(a: Arme, bonus: number): Arme {
   return {
