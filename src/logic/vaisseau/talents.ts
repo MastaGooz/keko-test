@@ -505,7 +505,10 @@ export const MUTATIONS: Mutation[] = [
   // (« MAGNÉTISME », À LA PLACE DE « CHAMP TESLA » — Keko, 24/11 : « attire les ennemis ET les pépites » ; « douce, sur 60 »,
   // choisi par Keko ; la place, de moi — le champ faisait doublon avec la Tempête de la Sentinelle ; voir `Arme.sphere.magnetisme`)
   variation('tesla-magnetisme', 'tesla', 'Magnétisme', 'La boule attire les ennemis et les cristaux autour d’elle.', changerA('tesla', (a) => ({ ...a, sphere: a.sphere === undefined ? undefined : { ...a.sphere, magnetisme: { rayon: 60, periode: 0.9, impulsion: 10 } } }))),
-  variation('tesla-jumeau', 'tesla', 'Grande bobine', 'Une boule plus grande, qui dure plus longtemps.', changerA('tesla', (a) => ({ ...a, sphere: a.sphere === undefined ? undefined : { ...a.sphere, rayon: a.sphere.rayon * 1.5, duree: a.sphere.duree * 1.4 } }))),
+  // (« COURT-CIRCUIT », À LA PLACE DE « GRANDE BOBINE » — Keko, 24/11 : « la bobine explose à la fin dans une décharge d'énergie » ;
+  // « 150, 1,5 fois sa zone », la place et le nom : Keko — 150 étant 2,6 fois son éclair de 58, la décharge suit les cartes
+  // « Dégâts » ; voir `Arme.sphere.court`)
+  variation('tesla-court-circuit', 'tesla', 'Court-circuit', 'À sa fin, la boule explose en une décharge d’énergie.', changerA('tesla', (a) => ({ ...a, sphere: a.sphere === undefined ? undefined : { ...a.sphere, court: { part: 150 / 58, taille: 1.5 } } }))),
   // LE LANCE-GRENADES
   variation('grenades-fragmentation', 'grenades', 'Fragmentation', 'Chaque explosion projette six éclats brûlants tout autour.', changerA('grenades', V.fragments)),
   variation('grenades-incendiaires', 'grenades', 'Incendiaires', 'Les grenades enflamment ce qu’elles touchent.', changerA('grenades', V.incendiaire)),

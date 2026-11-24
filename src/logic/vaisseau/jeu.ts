@@ -923,9 +923,11 @@ export type Arme = {
   // (`trainee` : HAUTE TENSION — Keko, 24/11 : « la bobine laisse dans son sillage une traînée électrique » : un sillon (voir
   // `Arme.sillon`) dont chaque bout dure `duree` ; ce qui y passe perd `dps` par seconde et est électrocuté si la bobine
   // l'est — sans faire sauter d'arc : c'est continu)
+  // (`court` : COURT-CIRCUIT — Keko, 24/11 : « la bobine explose à la fin dans une décharge d'énergie » : à sa fin, tout ce qui est
+  // à `taille` fois son rayon prend `part` fois ses dégâts — un coup électrique, avec son critique et sa charge)
   // (`accumulateur` : ACCUMULATEUR — Keko, 24/11 : « les coups critiques de la bobine augmentent ses dégâts de X % pour toute
   // sa durée restante » : chaque critique d'une boule lui ajoute cette part de dégâts, jusqu'à sa fin — +20 %, cumulable)
-  sphere?: { vitesse: number; duree: number; rayon: number; periode: number; vitesseTir: number; foudre?: { cibles: number; rebonds?: { n: number; saut: number; attenuation: number } }; accumulateur?: number; magnetisme?: { rayon: number; periode: number; impulsion: number }; trainee?: { duree: number; dps: number; largeur: number } }
+  sphere?: { vitesse: number; duree: number; rayon: number; periode: number; vitesseTir: number; foudre?: { cibles: number; rebonds?: { n: number; saut: number; attenuation: number } }; accumulateur?: number; magnetisme?: { rayon: number; periode: number; impulsion: number }; trainee?: { duree: number; dps: number; largeur: number }; court?: { part: number; taille: number } }
   /**
    * UN PUITS DE PLASMA (la troisième arme du Pulsar, Keko, 16/11 : « on va tenter le puits » — une petite singularité lancée
    * au milieu de la nuée, qui aspire les insectes vers son centre puis éclate) : à la cadence, un insecte à portée, il part
@@ -1737,6 +1739,8 @@ export type Evenement =
   /** Un insecte mort rongé laisse une flaque d'acide (« Dissolution » — voir `ELEMENTAIRES`). */
   | { type: 'flaqueDAcide'; x: number; y: number; rayon: number }
   | { type: 'feuPropage'; de: number; vers: number; x0: number; y0: number; x1: number; y1: number }
+  /** Une boule tesla finit en décharge (« Court-circuit » — voir `Arme.sphere.court`). */
+  | { type: 'courtCircuit'; x: number; y: number; rayon: number }
   /** Une boule tesla se charge d'un coup critique (« Accumulateur » — voir `Arme.sphere.accumulateur`). */
   | { type: 'sphereChargee'; x: number; y: number; charge: number }
   /** Un coup électrique sur un insecte déjà électrocuté : il tire sa chance de faire sauter un arc (voir `propagerLElectrocution`). */
@@ -3799,6 +3803,20 @@ function menerLesSpheres(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[
     if (a === undefined || sp === undefined || m.t - s.nee >= sp.duree) {
       m.spheres.splice(k, 1)
       ev.push({ type: 'sphereFinie', x: s.x, y: s.y })
+      // (COURT-CIRCUIT : elle finit en décharge — voir `Arme.sphere.court`)
+      const cc = sp?.court
+      if (a !== undefined && cc !== undefined && m.phase === 'vol') {
+        const r = sp!.rayon * cc.taille
+        ev.push({ type: 'courtCircuit', x: s.x, y: s.y, rayon: r })
+        for (const e of [...m.ennemis]) {
+          if (e.asteroide !== undefined || Math.hypot(e.corps.x - s.x, e.corps.y - s.y) > r + rayonDe(c, e)) continue
+          const critique = critiqueTire(c, m, a, e)
+          effetsDuCoup(c, m, a, e, ev)
+          e.pv -= a.degats * cc.part * (1 + (s.charge ?? 0)) * (critique ? facteurSur(c, m, a, e) : 1)
+          ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })
+          if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
+        }
+      }
       continue
     }
     const x0 = s.x

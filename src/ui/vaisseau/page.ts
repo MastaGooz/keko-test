@@ -18034,6 +18034,24 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
             etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(15, 35), Math.sin(a) * R.range(15, 35), R.range(0.15, 0.3), R.next() < 0.5 ? MIASME[7] : MIASME[5], 1, 1.5)
           }
           break
+        case 'courtCircuit': {
+          // (« COURT-CIRCUIT » : la boule finit en décharge — un éclair blanc, un anneau bleu qui s'ouvre jusqu'au bord de sa
+          // zone, des foudres qui en jaillissent, son claquement, une secousse — voir `Arme.sphere.court`)
+          flashs.push({ x: ev.x, y: ev.y, t0: t, r: 10, c: TESLA })
+          ondesDeZone.push({ x: ev.x, y: ev.y, t0: t, r: ev.rayon, s: Math.max(0.6, ev.rayon / RAYON_DU_MISSILE) })
+          for (let i = 0; i < 7; i++) {
+            const a = R.range(0, Math.PI * 2)
+            const d = ev.rayon * R.range(0.6, 1)
+            foudresTesla.push({ x0: ev.x, y0: ev.y, x1: ev.x + Math.cos(a) * d, y1: ev.y + Math.sin(a) * d, t0: t, g: Math.round(ev.x * 13 + i * 7) })
+          }
+          for (let i = 0; i < 14; i++) {
+            const a = R.range(0, Math.PI * 2)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(40, 110), Math.sin(a) * R.range(40, 110), R.range(0.15, 0.35), R.next() < 0.5 ? N.WHITE : TESLA[3], 1, 2)
+          }
+          jouer('foudre', { dx: ev.x - v.x, dy: ev.y - v.y })
+          secousse = Math.max(secousse, 0.4)
+          break
+        }
         case 'sphereChargee':
           // (« ACCUMULATEUR » : la boule se charge d'un critique — un claquement, des étincelles blanches)
           if (t - zapA > 0.06) {

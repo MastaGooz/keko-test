@@ -3843,6 +3843,23 @@ for (const vortex of [true, false]) {
   verifier(`affaiblissement : une morsure de ${sain} ; rongé, ${r0.toFixed(2)} (0,70) ; +50 % de corrosion, ${r5.toFixed(2)} (0,55) ; plafonné, ${r9.toFixed(2)} (0,40)`, sain > 0 && Math.abs(r0 - 0.7) < 1e-6 && Math.abs(r5 - 0.55) < 1e-6 && Math.abs(r9 - 0.4) < 1e-6)
 }
 
+// COURT-CIRCUIT (Keko, 24/11 — voir `Arme.sphere.court`) : à sa fin, la boule de rayon 20 décharge 2,5 fois ses dégâts de
+// 60 sur 30 (1,5 fois sa zone) : l'insecte à 25 perd 150, celui à 50 rien
+{
+  const tesla = { id: 'tesla', cadence: 2.6, degats: 60, portee: 120, vitesse: 0, vie: 0, dispersion: 0, guide: false, sphere: { vitesse: 0, duree: 0.5, rayon: 20, periode: 99, vitesseTir: 0, foudre: { cibles: 0 }, court: { part: 2.5, taille: 1.5 } } }
+  const cfg: ConfigVaisseau = { ...VAISSEAU, coque: 1e9, armes: [tesla], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false }, passifs: { ...VAISSEAU.passifs, critique: 0 } }
+  const w = nouveauMonde(cfg, 5)
+  w.invasion.prochainA = 1e9
+  w.t = 2
+  w.armesA = [1e9]
+  const pres: Ennemi = { id: 3600, corps: { ...nouveauVaisseau(), x: 125, y: 0 }, pv: 1e6, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9 }
+  const loin: Ennemi = { ...pres, id: 3601, corps: { ...nouveauVaisseau(), x: 150, y: 0 }, pv: 1e6 }
+  w.ennemis.push(pres, loin)
+  w.spheres.push({ id: 3602, arme: 0, x: 100, y: 0, vx: 0, vy: 0, nee: w.t, tirA: 1e9 })
+  for (let i = 0; i < 40; i++) avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+  verifier(`court-circuit : l'insecte à 25 perd ${1e6 - pres.pv} (150), celui à 50 ${1e6 - loin.pv} (0) ; la boule est finie (${w.spheres.length === 0})`, 1e6 - pres.pv === 150 && loin.pv === 1e6 && w.spheres.length === 0)
+}
+
 // LE RAILGUN ÉLECTRIQUE (Keko, 24/11 : la carte Cryogénique « applique l'état d'électricité » à la place) : la balle
 // électrocute ce qu'elle traverse, et son sillon ce qui y passe
 {

@@ -8851,6 +8851,13 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   réduction (`renforts`), plafonnée à 60 % (« −30 % » et le nom : Keko ; le plafond, de moi). La règle de Point faible
   reste écrite (`vulnerable`, `critiqueSur` : les critiques connaissent toujours leur cible), aucune carte ne l'allume
   plus. Un test (0,70 ; 0,55 sous +50 % ; 0,40 au plafond) ; VU en capture : la carte tient.
+- COURT-CIRCUIT, À LA PLACE DE GRANDE BOBINE (Keko, 24/11 : « la bobine explose à la fin dans une décharge d'énergie ») :
+  « À sa fin, la boule explose en une décharge d'énergie. » ; `sphere.court` — à sa fin, tout ce qui est à 1,5 fois son
+  rayon (63, cartes « Portée » comprises) prend 150, 2,6 fois son éclair de 58 : la décharge suit les cartes « Dégâts »,
+  et la charge de l'Accumulateur ; c'est un coup électrique, avec son critique (« 150, 1,5 fois sa zone », la place et le
+  nom : Keko). Un éclair blanc, l'onde des explosions jusqu'au bord, sept foudres qui jaillissent, des étincelles, le
+  claquement de la bobine, une secousse. LA BOBINE A SES SIX : Orage, Conduction, Accumulateur, Magnétisme, Haute
+  tension, Court-circuit. Un test ; VU en capture (petit à l'échelle du vol, à juger chez Keko).
   - Restent, de l'ancienne liste : Surtension, Grande bobine.
 - « CRISTAUX » À LA PLACE DE « PÉPITES » (Keko, 24/11 : « remplace partout dans le jeu le mot pépite par cristaux ») :
   dans le vortex, un seul texte le disait, la carte Expérience — « d'expérience par cristal ». Le code, les commentaires
