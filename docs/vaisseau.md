@@ -8795,4 +8795,7 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     sa fin ; la suivante repart de zéro (« +20 %, cumulable », la place et le nom : Keko). Chargée, la boule grossit
     (jusqu'à moitié plus) et un cœur blanc s'y allume ; un claquement et des étincelles blanches à chaque charge. La
     bobine n'a plus d'élément. Un test (58, 69,6, 81,2) ; VU en capture : la carte, la boule qui s'éclaire.
+    SON TEXTE (Keko, 24/11 : « pas clair ; il faudrait dire chaque coup critique augmente les dégâts pour la durée de la
+    bobine ») : « Chaque critique augmente les dégâts pour la durée de la bobine. » — avec « coup », six lignes, la
+    dernière coupée (VU en capture) ; sans, cinq.
   - Restent, de l'ancienne liste : Surtension, Champ tesla, Grande bobine.
