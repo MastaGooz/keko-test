@@ -46,7 +46,7 @@ import { RASSEMBLE as TELEPORTE_A } from '../pixelfx/fx/keko/teleportation.js'
 import * as MATERIALISATION from '../pixelfx/fx/keko/materialisation.js'
 import * as QUETE_TERMINEE from '../pixelfx/fx/keko/quete-terminee.js'
 import * as VORTEX_FX from '../pixelfx/fx/keko/vortex.js'
-import { aUneZone, corrosionPosee, CORROSION_DU_VORTEX, ETATS, type StatDArme, carteSpeciale, armeDeFaction, NIVEAU_SPECIAL, MUTATIONS, mutationsPrises, ajouterLeBonus, apresUnChoix, avecLesBonus, carte, DUREE_DU_CHOIX, type Bonus, ouvrirLeChoix, proposer, RARETES, reserveApresLeDelai, type Choix, type Rarete, type Talent } from '../../logic/vaisseau/talents.ts'
+import { aUneZone, corrosionPosee, CORROSION_DU_VORTEX, electrocutionPosee, ETATS, type StatDArme, carteSpeciale, armeDeFaction, NIVEAU_SPECIAL, MUTATIONS, mutationsPrises, ajouterLeBonus, apresUnChoix, avecLesBonus, carte, DUREE_DU_CHOIX, type Bonus, ouvrirLeChoix, proposer, RARETES, reserveApresLeDelai, type Choix, type Rarete, type Talent } from '../../logic/vaisseau/talents.ts'
 import { depuisTexte, ordreVuDu, retirerLesPilotes, retirerUnPilote, versTexte, vuDu } from '../../logic/vaisseau/reseau.ts'
 import { compresser, decompresser, ouvrirLeSalon, rejoindreLeSalon, type EtatDeLaLiaison, type Liaison } from './reseau.ts'
 import { APPARAIT as ARRIVE_A, REFROIDI as REFROIDI_A } from '../pixelfx/fx/keko/materialisation.js'
@@ -1056,6 +1056,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       if (VORTEX) conf = { ...conf, dureeDesEtats: 6 }
       // (SA CORROSION MAJORE DE 20 % — Keko, 24/11 — voir `CORROSION_DU_VORTEX`)
       if (VORTEX) conf = { ...conf, armes: conf.armes.map((a) => corrosionPosee(a, CORROSION_DU_VORTEX)) }
+      // (SES ARMES ÉLECTRIQUES ÉLECTROCUTENT — Keko, 24/11 — voir `ELECTROCUTION_DU_VORTEX` ; après l'échelle : ses dégâts y sont)
+      if (VORTEX) conf = { ...conf, armes: conf.armes.map(electrocutionPosee) }
       if (VORTEX) conf = { ...conf, champ: { ...conf.champ, densite: 0 }, station: { ...conf.station, portee: -1 }, invasion: { ...conf.invasion, active: true, sansPortail: true /* (PLUS DE PORTAIL — Keko, 20/11 : voir `sansPortail`) */, continu: { ...conf.invasion.continu, actif: true, ...(FLOT > 0 ? { debut: FLOT, max: FLOT } : {}) }, ...(parametres.has('cornus') ? { cornu: { ...conf.invasion.cornu, debut: 0, montee: 1e-6, part: Number(parametres.get('cornus')) || 0.5 } } : {}), ...(parametres.has('cuirassiers') ? { cuirassier: { ...conf.invasion.cuirassier, debut: 0, montee: 1e-6, part: Number(parametres.get('cuirassiers')) || 0.3 } } : {}), ...(parametres.has('moucherons') ? { moucheron: { ...conf.invasion.moucheron, part: Number(parametres.get('moucherons')) || 0 } } : {}) /* (`&cornus=P`, `&cuirassiers=P`, `&moucherons=P` : cette part de cornus, de cuirassiers, de moucherons, dès le départ) */, ...(parametres.has('aimant') ? { aimant: Number(parametres.get('aimant')) || 0.2 } : {}) /* (`&aimant=P` : la chance qu'un insecte lâche l'aimant — 0,2 sans nombre) */ /* (ET PLUS DE VAGUES : voir `continu`) */, viePortail: Math.max(1, Number(parametres.get('portail')) || conf.invasion.viePortail) /* (`&portail=N` : la vie du portail au départ, pour voir la fin d'un lien) */ }, ennemi: { ...conf.ennemi, ...INSECTE }, bouclier: { ...conf.bouclier, points: Math.max(conf.bouclier.points, BOUCLIER_DU_VORTEX), delai: 5, plein: 10 } /* (LE BOUCLIER SE RECHARGE EN PART DE LUI-MÊME — Keko, 21/11 : « après 5 secondes sans subir de dégâts, en 10 secondes totalement » ; voir `bouclier.plein`) */, passifs: { ...conf.passifs, critique: conf.passifs.critique + CRITIQUE_DU_VORTEX, critiqueFacteur: FACTEUR_CRITIQUE_DU_VORTEX } }
       // LE RIVAL EST UN CUIRASSÉ LOURDEMENT ARMÉ (Keko, 14/11, à l'essai : « pour voir si je peux arriver à le tuer avec mon
       // chasseur ») : gros, lent, qui vire mal, très solide, et qui tire trois fois plus souvent, de plus loin ; il ne
@@ -2036,6 +2038,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     feu: { nom: 'Brûlure', effet: 'de dégâts de l’effet de brûlure' },
     corrosion: { nom: 'Corrosion', effet: 'de dégâts aux ennemis sous corrosion' },
     givre: { nom: 'Givre', effet: 'de ralentissement aux ennemis sous givre' },
+    // (Keko, 24/11 : « une carte électrocution avec +X % de chance de déclencher l'effet d'électrocution »)
+    electrocution: { nom: 'Électrocution', effet: 'de chance de déclencher l’effet d’électrocution' },
     blindage: { nom: 'Blindage', effet: 'de blindage' },
     moteur: { nom: 'Vitesse', effet: 'de vitesse' },
     maniabilite: { nom: 'Maniabilité', effet: 'de maniabilité' },
@@ -14533,6 +14537,21 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
             p.rect(Math.round(sx + Math.sin(e.id * 2.7 + k * 2.1) * 3 * ech), Math.round(sy - 2 - ph * 8 * ech), 1, 1, ph < 0.4 ? N.WHITE : lumiereDuPrisme()[4], 1 - ph)
           }
         }
+        // IL EST ÉLECTROCUTÉ (Keko, 24/11 — voir `Arme.electrocution`) : une lueur violette qui grésille, et de petits arcs
+        // qui claquent sur lui, d'un bord à l'autre, à l'encre des éclairs de la Sentinelle — ils sautent toutes les deux images
+        if (e.electrocute !== undefined && e.electrocute.jusque > m.t) {
+          const C = COULEURS_VOLT
+          const image = Math.floor(t * 15)
+          p.glow(sx, sy, 7 * ech, C[4], 0.22 + 0.18 * ((image + e.id) % 3 === 0 ? 1 : 0))
+          const Rn = new N.Rng((e.id * 7919 + image * 31) | 0)
+          for (let k = 0; k < plus(2); k++) {
+            if (Rn.next() < 0.35) continue
+            const a0 = Rn.range(0, Math.PI * 2)
+            const a1 = a0 + Rn.range(1.2, 2.6)
+            const rr = rayonDe(CONF, e) * Rn.range(0.7, 1.3)
+            crackle(p, zigzag(Rn, sx + Math.cos(a0) * rr, sy + Math.sin(a0) * rr, sx + Math.cos(a1) * rr, sy + Math.sin(a1) * rr, 0.35, 0.12), 0.8, C, 0.4)
+          }
+        }
         // IL BRÛLE (le lance-flammes) : il rougeoie, et des braises s'en échappent
         if ((e.bruleA ?? -1) > m.t) {
           const reste = Math.min(1, ((e.bruleA ?? 0) - m.t) / Math.max(0.1, e.dureeBrulure ?? 2))
@@ -17880,6 +17899,26 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           if (t - geleSonneA > 0.1) {
             geleSonneA = t
             jouer('gel', { dx: ev.x - v.x, dy: ev.y - v.y })
+          }
+          break
+        case 'electrocute':
+          // (un insecte se met à être électrocuté : un petit claquement — un seul tous les dixièmes)
+          if (t - zapA > 0.1) {
+            zapA = t
+            jouer('zap', { dx: ev.x - v.x, dy: ev.y - v.y })
+          }
+          break
+        case 'arcDElectrocution':
+          // (L'ÉLECTROCUTION SAUTE — Keko, 24/11 : « un petit arc électrique sur un ennemi proche » : un éclair bref, accroché
+          // aux deux insectes, et un éclat sur celui qu'il frappe)
+          arcsElectriques.push({ x0: ev.x0, y0: ev.y0, x1: ev.x1, y1: ev.y1, de: { sorte: 'ennemi', id: ev.de }, vers: { sorte: 'ennemi', id: ev.vers }, t0: t, vie: 0.22, g: R.range(0, 1e4), fort: false })
+          for (let i = 0; i < 4; i++) {
+            const a = R.range(0, Math.PI * 2)
+            etincelles.ajouter('etincelle', ev.x1, ev.y1, Math.cos(a) * R.range(20, 45), Math.sin(a) * R.range(20, 45), R.range(0.1, 0.2), R.next() < 0.5 ? N.WHITE : COULEURS_VOLT[5], 1, 1.5)
+          }
+          if (t - zapA > 0.06) {
+            zapA = t
+            jouer('zap', { dx: ev.x1 - v.x, dy: ev.y1 - v.y })
           }
           break
         case 'ennemiDetruit': {

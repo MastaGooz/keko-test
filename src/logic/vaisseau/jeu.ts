@@ -1193,6 +1193,16 @@ export type Arme = {
    */
   corrosif?: { duree: number; bonus: number }
   /**
+   * L'ÉLECTROCUTION (Keko, 24/11 : « quand une attaque électrique — du Sentinelle principalement — touche un ennemi, on lui
+   * met un état d'électrocution ; à chaque fois qu'il subit des dégâts directs — pas ceux d'un effet sur la durée —, il a un
+   * pourcentage de chance de créer un petit arc électrique sur un ennemi proche, de lui infliger des dégâts et de lui
+   * appliquer électrocution également ») : ce que l'arme touche est électrocuté `duree` secondes (voir `dureeDEtat`) ; à
+   * chaque coup direct qu'il prend, une chance `chance` qu'un arc saute, à `saut` au plus, sur l'ennemi le plus proche :
+   * `degats`, et électrocuté à son tour (voir `Ennemi.electrocute`, `propagerLElectrocution`). Les cartes « Électrocution »
+   * grandissent `chance`.
+   */
+  electrocution?: { duree: number; chance: number; degats: number; saut: number }
+  /**
    * UNE DÉTONATION SUR COUP CRITIQUE (la carte « Détonation » du canon laser — Keko, 23/11 : « dans chaque variation
    * d'armes, on va en mettre une qui se déclenche en cas de coup critique ; quand un laser fait un coup critique — ses
    * dégâts directs ou ceux d'un de ses ricochets, pas la zone de l'impulsion —, on déclenche une explosion dans la zone qui
@@ -1300,6 +1310,8 @@ export type Ennemi = {
   ralenti?: number
   /** IL EST RONGÉ PAR L'ACIDE (voir `Arme.crachat`) jusqu'à cet instant : il perd tant par seconde, et tout ce qu'il perd d'autre est majoré de cette part. */
   acide?: { jusque: number; dps: number; bonus: number }
+  /** IL EST ÉLECTROCUTÉ (voir `Arme.electrocution`) jusqu'à cet instant : chaque coup direct a cette chance de faire sauter un arc. */
+  electrocute?: { jusque: number; chance: number; degats: number; saut: number }
   /** IL EST IRRADIÉ (voir `Arme.balise.irradie`) : il est sur un faisceau de cristaux, jusqu'à cet instant (à peine au-delà : pour le dessin). */
   irradie?: { jusque: number }
   /** IL EST EMPOISONNÉ (la traînée de poison du Ver) jusqu'à cet instant (pour le dessin). */
@@ -1666,6 +1678,9 @@ export type Evenement =
   | { type: 'parasiteMort'; x: number; y: number }
   /** Un insecte entre dans le givre (il n'y était pas). */
   | { type: 'gele'; id: number; x: number; y: number }
+  /** Un insecte se met à être électrocuté (il ne l'était pas) ; un arc d'électrocution saute de l'un à l'autre. */
+  | { type: 'electrocute'; id: number; x: number; y: number }
+  | { type: 'arcDElectrocution'; de: number; vers: number; x0: number; y0: number; x1: number; y1: number }
   /** Une nova de givre part du vaisseau (voir `Arme.nova`). */
   | { type: 'nova'; x: number; y: number; rayon: number }
   /** Une bombe part ; une bombe éclate. */
@@ -3192,6 +3207,8 @@ function mener_L_Electricite(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenem
     if (au !== undefined)
       for (const e of [...m.ennemis]) {
         if (Math.hypot(e.corps.x - v.x, e.corps.y - v.y) > au.rayon + rayonDe(c, e)) continue
+        // (elle électrocute ce qui est dedans ; ses dégâts, sans cesse, ne sont pas des coups directs : ils ne font pas sauter d'arc)
+        if (a.electrocution !== undefined) electrocuter(c, m, e, a.electrocution, ev)
         e.pv -= au.dps * dt
         if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
       }
@@ -3975,6 +3992,55 @@ function empoisonner(m: Monde, e: Ennemi, po: { duree: number; dps: number }): v
 function ronger(c: ConfigVaisseau, m: Monde, e: Ennemi, ac: { duree: number; dps: number; bonus: number }, ev: Evenement[]): void {
   if (e.acide === undefined || e.acide.jusque <= m.t) ev.push({ type: 'ronge', id: e.id, x: e.corps.x, y: e.corps.y })
   e.acide = { jusque: Math.max(e.acide?.jusque ?? 0, m.t + dureeDEtat(c, ac.duree)), dps: Math.max(e.acide?.jusque !== undefined && e.acide.jusque > m.t ? e.acide.dps : 0, ac.dps), bonus: Math.max(e.acide?.jusque !== undefined && e.acide.jusque > m.t ? e.acide.bonus : 0, ac.bonus) }
+}
+
+/** Un insecte ÉLECTROCUTÉ (voir `Arme.electrocution`) : jusqu'à `duree` d'ici (voir `dureeDEtat`) — le plus fort l'emporte. */
+function electrocuter(c: ConfigVaisseau, m: Monde, e: Ennemi, el: { duree: number; chance: number; degats: number; saut: number }, ev: Evenement[]): void {
+  if (e.asteroide !== undefined) return
+  const encore = e.electrocute !== undefined && e.electrocute.jusque > m.t
+  if (!encore) ev.push({ type: 'electrocute', id: e.id, x: e.corps.x, y: e.corps.y })
+  e.electrocute = {
+    jusque: Math.max(encore ? e.electrocute!.jusque : 0, m.t + dureeDEtat(c, el.duree)),
+    chance: Math.max(encore ? e.electrocute!.chance : 0, el.chance),
+    degats: Math.max(encore ? e.electrocute!.degats : 0, el.degats),
+    saut: Math.max(encore ? e.electrocute!.saut : 0, el.saut),
+  }
+}
+/** (au plus tant d'arcs d'électrocution par pas : chacun en appelle d'autres) */
+const ARCS_PAR_PAS = 24
+/**
+ * L'ÉLECTROCUTION SE PROPAGE (voir `Arme.electrocution`) : chaque coup direct de ce pas — chaque `ennemiTouche`, pas les
+ * dégâts sur la durée (brûlure, acide, zones qui rongent sans cesse), pas le choc d'une roche — sur un insecte électrocuté
+ * tire sa chance ; si elle sort, un arc saute sur l'insecte le plus proche à `saut` au plus (lui-même exclu) : `degats`,
+ * et il est électrocuté à son tour. L'ARC N'EN APPELLE PAS UN AUTRE : ce sont les coups des armes qui le font sauter (en
+ * chaîne, deux insectes électrocutés se renvoyaient l'arc sans fin — le test, à chance 1, en comptait vingt-quatre) ;
+ * l'insecte qu'il électrocute fera sauter le sien au prochain coup qu'il prendra.
+ */
+function propagerLElectrocution(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
+  let arcs = 0
+  const coups = ev.length
+  for (let i = 0; i < coups && arcs < ARCS_PAR_PAS; i++) {
+    const x = ev[i]
+    if (x.type !== 'ennemiTouche') continue
+    const e = m.ennemis.find((y) => y.id === x.id)
+    const el = e?.electrocute
+    if (e === undefined || el === undefined || el.jusque <= m.t || e.horsArmeA === m.t) continue
+    if (tire(m.graine, m.prochainId++, 97) >= el.chance) continue
+    let proche: Ennemi | undefined
+    let dc = Infinity
+    for (const o of m.ennemis) {
+      if (o === e || o.asteroide !== undefined) continue
+      const d = Math.hypot(o.corps.x - e.corps.x, o.corps.y - e.corps.y)
+      if (d <= el.saut + rayonDe(c, o) && d < dc) (dc = d), (proche = o)
+    }
+    if (proche === undefined) continue
+    arcs++
+    ev.push({ type: 'arcDElectrocution', de: e.id, vers: proche.id, x0: e.corps.x, y0: e.corps.y, x1: proche.corps.x, y1: proche.corps.y })
+    electrocuter(c, m, proche, { duree: Math.max(0, el.jusque - m.t), chance: el.chance, degats: el.degats, saut: el.saut }, ev)
+    proche.pv -= el.degats
+    ev.push({ type: 'ennemiTouche', id: proche.id, x: proche.corps.x, y: proche.corps.y, critique: false })
+    if (proche.pv <= 0) abattreLEnnemi(c, m, proche, ev)
+  }
 }
 
 /** Un point dans un cône (sa pointe, son cap, son demi-angle, sa longueur), un insecte compté avec son rayon. */
@@ -5505,6 +5571,7 @@ function effetsDuTir(a: Arme): Partial<Obus> {
 function effetsDuCoup(c: ConfigVaisseau, m: Monde, a: Arme, e: Ennemi, ev: Evenement[]): void {
   if (a.incendiaire !== undefined) enflammer(c, m, e, a.incendiaire)
   if (a.gel !== undefined) geler(c, m, e, a.gel.duree, a.gel.ralenti, ev)
+  if (a.electrocution !== undefined) electrocuter(c, m, e, a.electrocution, ev)
   if (a.fragments !== undefined) fragmenter(m, e.corps.x, e.corps.y, a.fragments, e)
 }
 /** Un ennemi touché par un tir qui enflamme (voir `Arme.incendiaire`) : il brûle, le plus fort l'emporte. */
@@ -5718,6 +5785,7 @@ function menerLesDrones(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]
     // (UN DRONE ÉLECTRIQUE frappe d'un arc, à l'instant)
     if (a.eclair === true) {
       const critique = critiqueTire(c, m, a)
+      if (a.electrocution !== undefined) electrocuter(c, m, cible, a.electrocution, ev)
       cible.pv -= a.degats * (critique ? facteurDeCritique(c, a) : 1)
       ev.push({ type: 'arc', x0: d.x, y0: d.y, x1: cible.corps.x, y1: cible.corps.y, drone: k, id: cible.id })
       ev.push({ type: 'ennemiTouche', id: cible.id, x: cible.corps.x, y: cible.corps.y, critique })
@@ -6451,6 +6519,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
       if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
     }
   }
+  propagerLElectrocution(c, m, ev)
   majorerParLAcide(c, m, avantLAcide, ev)
   if (masquees.length > 0) m.ennemis = [...m.ennemis, ...masquees]
 

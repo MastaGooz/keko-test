@@ -1,7 +1,7 @@
 /**
  * Vérifications des talents du jeu du vortex, sans navigateur.
  */
-import { aUneZone, corrosionPosee, CORROSION_DU_VORTEX, armeDeFaction, ARMES_DE_FACTION, type Mutation, NIVEAU_SPECIAL, carteSpeciale, MUTATIONS, mutationsPrises, ajouterLeBonus, apresUnChoix, armeAmelioree, avecLesBonus, carte, factionAmelioree, type Bonus, ouvrirLeChoix, proposer, RARETES, rareteTiree, reserveApresLeDelai, STATS_DE_FACTION, statsDeLArme } from './talents.ts'
+import { aUneZone, corrosionPosee, CORROSION_DU_VORTEX, electrocutionPosee, ETATS, armeDeFaction, ARMES_DE_FACTION, type Mutation, NIVEAU_SPECIAL, carteSpeciale, MUTATIONS, mutationsPrises, ajouterLeBonus, apresUnChoix, armeAmelioree, avecLesBonus, carte, factionAmelioree, type Bonus, ouvrirLeChoix, proposer, RARETES, rareteTiree, reserveApresLeDelai, STATS_DE_FACTION, statsDeLArme } from './talents.ts'
 import { VAISSEAU as C, type Arme, type ConfigVaisseau } from './jeu.ts'
 
 let echecs = 0
@@ -163,6 +163,15 @@ verifier('le délai passé, ce qui restait à choisir part en réserve', reserve
   const vouivre = { ...laser, crachat: { cone: 1, duree: 3, acide: { duree: 3, dps: 0, bonus: 0.35 } }, mine: { corrosion: { duree: 4, bonus: 0.35 } } } as unknown as Arme
   const posee = corrosionPosee(vouivre, CORROSION_DU_VORTEX)
   verifier(`la corrosion du vortex : la carte du laser ${corrode} (0,2) ; posée, l'acide ${posee.crachat?.acide.bonus}, les mines ${posee.mine?.corrosion?.bonus} (0,2)`, corrode === 0.2 && posee.crachat?.acide.bonus === 0.2 && posee.mine?.corrosion?.bonus === 0.2)
+}
+{
+  // L'ÉLECTROCUTION (Keko, 24/11) : posée sur les drones à arcs, la chaîne et la tempête, pas sur le canon ; sa carte n'est
+  // qu'à toutes les armes, au bonus entier ; légendaire, sa chance passe de 20 % à 25 %
+  const chaine = { id: 'chaine', cadence: 1.5, degats: 80, portee: 90, vitesse: 0, vie: 0, dispersion: 0, guide: false, chaine: { rebonds: 4, saut: 45, attenuation: 0.8 } } as Arme
+  const posee = electrocutionPosee(chaine)
+  const nue = electrocutionPosee({ id: 'canon', cadence: 1, degats: 10, portee: 100, vitesse: 300, vie: 1, dispersion: 0, guide: false } as Arme)
+  const plus = armeAmelioree(posee, 'electrocution', 0.25)
+  verifier(`l'électrocution : la chaîne électrocute (${posee.electrocution?.chance}), le canon non (${nue.electrocution === undefined}) ; une carte de +25 % : ${plus.electrocution?.chance} (0,25) ; à toutes les armes seulement (${ETATS.has('electrocution') && statsDeLArme(posee).includes('electrocution')})`, posee.electrocution?.chance === 0.2 && nue.electrocution === undefined && Math.abs((plus.electrocution?.chance ?? 0) - 0.25) < 1e-9 && ETATS.has('electrocution'))
 }
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)
 console.log('Tout passe.')

@@ -55,7 +55,7 @@ export function rareteTiree(u: number): Rarete {
 // (LA PORTÉE FAIT AUSSI LA ZONE — Keko, 22/11 : « on peut pas fusionner la portée et la zone, en considérant que la portée
 // d'une zone est son rayon ? » puis « va pour Portée qui fait les deux » : une seule carte, qui allonge le tir ET agrandit
 // tout ce qui est une zone — voir rmeAmelioree ; plus de carte « Zone »)
-export type StatDArme = 'degats' | 'critique' | 'critiques' | 'cadence' | 'portee' | 'pose' | 'feu' | 'corrosion' | 'givre'
+export type StatDArme = 'degats' | 'critique' | 'critiques' | 'cadence' | 'portee' | 'pose' | 'feu' | 'corrosion' | 'givre' | 'electrocution'
 /**
  * LES CARTES DE FACTION (Keko, 21/11) : pour toutes, le blindage (les points de vie des Xénoïdes), la vitesse, la
  * maniabilité, l'aimant (la distance) et l'expérience (+X % par pépite) ; l'Empire, la RÉCUPÉRATION (22/11 : la chance
@@ -90,7 +90,7 @@ export const POINTS_DE_CHANCE: Record<Rarete, number> = { commune: 0.02, peuComm
  * globale deux fois moins forte qui concerne toutes les armes, comme pour le reste ») ; une
  * carte n'est proposée que si une arme portée au moins a cette stat, et son bonus est LA MOITIÉ de celui de la rareté.
  */
-export const STATS_GLOBALES: StatDArme[] = ['degats', 'critique', 'critiques', 'cadence', 'portee', 'pose', 'feu', 'corrosion', 'givre']
+export const STATS_GLOBALES: StatDArme[] = ['degats', 'critique', 'critiques', 'cadence', 'portee', 'pose', 'feu', 'corrosion', 'givre', 'electrocution']
 export const PART_GLOBALE = 0.5
 /**
  * LES ÉTATS — LE FEU, LA CORROSION, LE GIVRE — NE SE PRENNENT QUE POUR TOUTES LES ARMES (Keko, 23/11 : « supprimer les
@@ -99,7 +99,8 @@ export const PART_GLOBALE = 0.5
  * toujours toutes les armes ») : plus de carte d'état à une arme ; la carte « toutes les armes » paraît dès qu'une arme
  * portée applique l'état, et, seule à le faire, ELLE VAUT LE BONUS ENTIER de sa rareté (pas la moitié des autres).
  */
-export const ETATS: ReadonlySet<StatDArme> = new Set<StatDArme>(['feu', 'corrosion', 'givre'])
+// (… ET L'ÉLECTROCUTION, la quatrième — Keko, 24/11 — voir `Arme.electrocution`)
+export const ETATS: ReadonlySet<StatDArme> = new Set<StatDArme>(['feu', 'corrosion', 'givre', 'electrocution'])
 const EN_POINTS: ReadonlySet<string> = new Set(['critique', 'dephasage'])
 
 /**
@@ -204,6 +205,14 @@ export function corrosionPosee(a: Arme, bonus: number): Arme {
     ...(a.corrosif !== undefined ? { corrosif: { ...a.corrosif, bonus } } : {}),
   }
 }
+/**
+ * L'ÉLECTROCUTION DU VORTEX (Keko, 24/11 — voir `Arme.electrocution`) : posée sur les armes électriques de la Sentinelle —
+ * les drones à arcs, la chaîne d'éclairs, la tempête. *Chiffres de moi, à rejuger* : 20 % de chance par coup direct, un
+ * arc de 20 (les dégâts d'un arc de drone) à 45 au plus (le saut de la chaîne) ; la durée, celle des états (6 s).
+ */
+export const ELECTROCUTION_DU_VORTEX = { duree: 6, chance: 0.2, degats: 20, saut: 45 }
+/** L'arme électrique de la Sentinelle électrocute (voir `ELECTROCUTION_DU_VORTEX`) ; les autres, telles quelles. */
+export const electrocutionPosee = (a: Arme): Arme => (a.eclair === true || a.chaine !== undefined || a.aura !== undefined ? { ...a, electrocution: { ...ELECTROCUTION_DU_VORTEX } } : a)
 export const corrodeDe = (a: Arme): number[] => [a.crachat?.acide.bonus, a.mine?.corrosion?.bonus, a.givre?.corrosion?.bonus, a.parasite?.acide?.bonus, a.corrosif?.bonus].filter((b): b is number => b !== undefined && b > 0)
 
 /** LE POOL D'UNE ARME : le commun (dégâts, critique), puis ce qu'elle porte. */
@@ -216,6 +225,7 @@ export function statsDeLArme(a: Arme): StatDArme[] {
   if (valeurs(a, CLES_DU_FEU).some((v) => v > 0)) s.push('feu')
   if (corrodeDe(a).length > 0) s.push('corrosion')
   if (valeurs(a, CLES_DU_GIVRE).some((v) => v > 0 && v < 1)) s.push('givre')
+  if (a.electrocution !== undefined) s.push('electrocution')
   return s
 }
 /**
@@ -253,6 +263,9 @@ export function armeAmelioree(a: Arme, stat: StatDArme, k: number): Arme {
       }
     case 'givre':
       return changer(a, CLES_DU_GIVRE, (v) => (v < 1 ? Math.max(0.1, 1 - (1 - v) * (1 + k)) : v))
+    // (la chance qu'un coup fasse sauter un arc, en relatif : 20 % +25 % → 25 % ; jamais plus que toujours)
+    case 'electrocution':
+      return a.electrocution === undefined ? a : { ...a, electrocution: { ...a.electrocution, chance: Math.min(1, a.electrocution.chance * (1 + k)) } }
     // (LE CRITIQUE EST À L'ARME — Keko, 22/11 : en points, ajoutés à ceux du vaisseau — voir `Arme.critique`)
     case 'critique':
       return { ...a, critique: (a.critique ?? 0) + k }

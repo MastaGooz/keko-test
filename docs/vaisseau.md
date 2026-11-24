@@ -8645,3 +8645,23 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
 - LA CARTE « PORTÉE » D'UNE ARME À ZONE S'APPELLE « ZONE ET PORTÉE » (Keko, 24/11 : « ça loge ? » — oui, VU en capture,
   au pixel près dans le cadre) : là où elle dit « de portée et de zone ». Une arme sans zone garde « Portée » ; une arme
   qui n'a qu'une zone (les traînées) garde le titre « Portée » et dit « de zone ».
+- L'ÉLECTROCUTION, UN QUATRIÈME ÉTAT (Keko, 24/11 : « quand une attaque électrique du Sentinelle touche un ennemi, on lui
+  met un état d'électrocution ; à chaque fois qu'il subit des dégâts directs, il a une chance de créer un petit arc
+  électrique sur un ennemi proche, de lui infliger des dégâts et de lui appliquer électrocution également ; une carte
+  électrocution avec +X % de chance de déclencher l'effet ») — `Arme.electrocution`, `Ennemi.electrocute`,
+  `electrocuter`, `propagerLElectrocution` :
+  - LES SOURCES : au vortex, les trois armes électriques de la Sentinelle (`electrocutionPosee` : les drones à arcs, la
+    chaîne d'éclairs — chaque insecte de la chaîne —, la tempête — ce qui est dedans). 6 s, comme les autres états.
+  - LE COUP DIRECT, c'est un `ennemiTouche` du pas : un tir, un éclair, une explosion, une morsure… PAS la brûlure, l'acide,
+    les zones qui blessent sans cesse (la tempête électrocute mais ne fait pas sauter d'arc), ni le choc d'une roche.
+  - L'ARC : vers l'insecte le plus proche (pas une roche), à 45 au plus ; 20 points (les
+    dégâts d'un arc de drone, grandis par les cartes « Dégâts » de l'arme), électrocuté à son tour. Chance 20 %. *Chiffres
+    de moi, à rejuger* (`ELECTROCUTION_DU_VORTEX`).
+  - L'ARC N'EN APPELLE PAS UN AUTRE dans le même pas : à chance 1, deux insectes se renvoyaient l'arc vingt-quatre fois
+    (le test) ; l'insecte électrocuté par l'arc fera sauter le sien au prochain coup qu'il prendra.
+  - LA CARTE « Électrocution » : « +X % de chance de déclencher l'effet d'électrocution », à toutes les armes seulement,
+    au bonus entier, comme les autres états ; EN RELATIF (légendaire : 20 % → 25 %), jamais plus que 100 %.
+  - À L'ÉCRAN : une lueur violette qui grésille et de petits arcs qui claquent sur l'insecte, à l'encre des éclairs de la
+    Sentinelle (`COULEURS_VOLT`) ; l'arc qui saute, un éclair bref accroché aux deux insectes, des étincelles, le « zap »
+    des drones. VU en capture : la carte tient en quatre lignes ; les arcs blancs se lisent sur les insectes violets, la
+    lueur peu.

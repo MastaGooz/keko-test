@@ -3542,6 +3542,28 @@ for (const vortex of [true, false]) {
   verifier(`la corrosion gagne toutes les variations du laser (R rongé) : ${vu.map(([k, v]) => `${k} ${v} (${attendu[k]})`).join(', ')}`, vu.every(([k, v]) => v === attendu[k]))
 }
 
+// L'ÉLECTROCUTION SAUTE SUR UN COUP DIRECT (Keko, 24/11) : un insecte électrocuté (chance 1) frappé par un canon — un arc
+// saute sur son voisin à 30 : 20 points, électrocuté à son tour ; chance 0, rien ; brûlé sans être frappé, rien (la
+// brûlure n'est pas un coup direct) ; le voisin trop loin (60 > 45), rien
+{
+  const essai = (chance: number, tir: boolean, voisin = 30): { arcs: number; perdu: number; electrocute: boolean } => {
+    const arme = { id: 'canon', cadence: 99, degats: 10, portee: 120, vitesse: 420, vie: 0.7, dispersion: 0, guide: false, tousSens: true, infaillible: true }
+    const cfg = { ...VAISSEAU, coque: 1e9, dureeDesEtats: 6, armes: tir ? [arme] : [], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false } }
+    const w = nouveauMonde(cfg, 5)
+    w.invasion.prochainA = 1e9
+    w.t = 2
+    w.armesA = [0]
+    const e: Ennemi = { id: 2300, corps: { ...nouveauVaisseau(), x: 40, y: 0 }, pv: 1e6, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9, electrocute: { jusque: 8, chance, degats: 20, saut: 45 }, ...(tir ? {} : { bruleA: 8, dpsBrulure: 100, dureeBrulure: 6 }) }
+    const o: Ennemi = { id: 2301, corps: { ...nouveauVaisseau(), x: 40, y: voisin }, pv: 1000, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9 }
+    w.ennemis.push(e, o)
+    let arcs = 0
+    for (let i = 0; i < 40; i++) arcs += avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements.filter((x) => x.type === 'arcDElectrocution').length
+    return { arcs, perdu: 1000 - o.pv, electrocute: (o.electrocute?.jusque ?? 0) > w.t }
+  }
+  const [oui, non, brule, loin] = [essai(1, true), essai(0, true), essai(1, false), essai(1, true, 60)]
+  verifier(`l'électrocution saute sur un coup direct : chance 1, ${oui.arcs} arc (1), le voisin perd ${oui.perdu} (20), électrocuté ${oui.electrocute} ; chance 0, ${non.arcs} arc ; brûlé sans coup, ${brule.arcs} ; voisin à 60, ${loin.arcs}`, oui.arcs === 1 && oui.perdu === 20 && oui.electrocute && non.arcs === 0 && brule.arcs === 0 && loin.arcs === 0)
+}
+
 // SEULE UNE ATTAQUE QUI RONGE RELANCE LA CORROSION (Keko, 23/11 : « si une attaque qui n'applique pas corrosion touche un
 // ennemi sous corrosion, ça ne relance pas la durée de corrosion ») : un insecte rongé jusqu'à 6 s ; un canon sans
 // corrosion le frappe à 2 s — la fin ne bouge pas ; un laser corrosif le frappe — elle repart à 6 s de ce coup
