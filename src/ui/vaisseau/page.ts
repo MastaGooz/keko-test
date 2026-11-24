@@ -2228,7 +2228,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // (une arme qui n'a qu'une zone — les traînées — : « de zone » seulement)
     const visee = ta.cible.sorte === 'arme' ? CONF.armes.find((x) => x.id === (ta.cible as { arme: string }).arme) : undefined
     const effetDeLaPortee = ta.cible.sorte === 'armes' ? (CONF.armes.some(aUneZone) ? 'de portée et de zone' : null) : visee !== undefined && aUneZone(visee) ? (visee.portee > 0 ? 'de portée et de zone' : 'de zone') : null
-    const st = ta.stat === 'blindage' && ta.cible.sorte === 'faction' && ta.cible.race === 'essaim' ? { nom: 'Points de vie', effet: 'de points de vie' } : ta.stat === 'portee' && effetDeLaPortee !== null ? { nom: 'Portée', effet: effetDeLaPortee } : st0
+    const st = ta.stat === 'blindage' && ta.cible.sorte === 'faction' && ta.cible.race === 'essaim' ? { nom: 'Points de vie', effet: 'de points de vie' } : ta.stat === 'portee' && effetDeLaPortee !== null ? { nom: effetDeLaPortee === 'de portée et de zone' ? 'Zone et portée' : 'Portée', effet: effetDeLaPortee } : st0
     let ly = y + 44
     titreEnRelief(st.nom, ly)
     // un filet orné : deux traits, un losange au milieu

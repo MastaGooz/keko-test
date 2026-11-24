@@ -8642,3 +8642,6 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   LES NOMS DES ÉTATS : la carte du feu s'appelle « Brûlure » (les fiches disaient déjà « Brûlure ») ; le gel s'appelle
   « Givre » partout — Cryogénique dit « Les tirs appliquent givre. », les fiches des armes « Givre » au lieu de « Gel ».
   Les verbes restent (« gèlent », « enflamment ») ; les variations « Incendiaire(s) » gardent leur nom.
+- LA CARTE « PORTÉE » D'UNE ARME À ZONE S'APPELLE « ZONE ET PORTÉE » (Keko, 24/11 : « ça loge ? » — oui, VU en capture,
+  au pixel près dans le cadre) : là où elle dit « de portée et de zone ». Une arme sans zone garde « Portée » ; une arme
+  qui n'a qu'une zone (les traînées) garde le titre « Portée » et dit « de zone ».
