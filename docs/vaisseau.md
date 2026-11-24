@@ -8837,6 +8837,20 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   électrique de cette largeur sous l'éclair, qui garde son serpentin à la taille d'un sillon ; le halo s'efface vers son
   bord, il est tracé à 1,6 fois la largeur — à la largeur seule, il se lisait deux fois plus étroit (VU en capture). Le
   test : un insecte à 30 de côté de sa course y perd 10 en une seconde.
+- LE RAILGUN EST BLANC TANT QU'IL N'EST PAS ÉLECTRIQUE (Keko, 24/11 : « change la couleur des effets du railgun quand il
+  n'y a pas la carte spéciale Électrique, afin qu'on ne pense pas que l'arme est électrique de base ; pas de lueur
+  bleutée, une attaque un peu blanche, neutre ; pour le railgun et toutes ses cartes spéciales ») : `BLANC_DU_RAILGUN`, un
+  acier pâle, et `couleursDuRailgun()` — le cyan si une arme « railgun » porte l'électrocution, sinon le blanc. Ils
+  passent : la traînée de la balle (sa brume, son fil, ses anneaux de bobine), l'éclair du départ et ses étincelles, la
+  balle qui traverse un insecte, la croix de l'Exécution, le sillon d'énergie (toujours blanc : électrique, il prend
+  l'éclair bleu). VU en capture, côte à côte : blanc sans la carte, bleu avec.
+- AFFAIBLISSEMENT À LA PLACE DE POINT FAIBLE (Keko, 24/11 : « changer la carte spéciale corrosion qui influence les
+  chances et les dégâts des critiques pour autre chose ; réduire les dégâts infligés par les ennemis atteints de
+  corrosion ») : « Les ennemis sous corrosion infligent moins de dégâts. » ; `element-affaiblissement`,
+  `ELEMENTAIRES.affaiblissement` — un insecte rongé mord 30 % moins fort ; les cartes « Corrosion » grandissent la
+  réduction (`renforts`), plafonnée à 60 % (« −30 % » et le nom : Keko ; le plafond, de moi). La règle de Point faible
+  reste écrite (`vulnerable`, `critiqueSur` : les critiques connaissent toujours leur cible), aucune carte ne l'allume
+  plus. Un test (0,70 ; 0,55 sous +50 % ; 0,40 au plafond) ; VU en capture : la carte tient.
   - Restent, de l'ancienne liste : Surtension, Grande bobine.
 - « CRISTAUX » À LA PLACE DE « PÉPITES » (Keko, 24/11 : « remplace partout dans le jeu le mot pépite par cristaux ») :
   dans le vortex, un seul texte le disait, la carte Expérience — « d'expérience par cristal ». Le code, les commentaires

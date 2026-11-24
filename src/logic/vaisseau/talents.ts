@@ -540,7 +540,9 @@ export const MUTATIONS: Mutation[] = [
   // (« DISSOLUTION », la seconde de la corrosion — Keko, 24/11 : « une carte de plus spéciale pour chaque état, à commencer par
   // la corrosion : un ennemi qui meurt sous l'effet de la corrosion laisse une flaque d'acide »)
   element('element-dissolution', 'corrosion', 'Dissolution', 'Les ennemis qui meurent sous corrosion laissent une flaque d’acide.', 'dissolution'),
-  element('element-corrosion', 'corrosion', 'Point faible', 'Les coups critiques sont plus fréquents et plus forts sous corrosion.', 'vulnerabilite'),
+  // (« AFFAIBLISSEMENT », À LA PLACE DE « POINT FAIBLE » — Keko, 24/11 : « réduire les dégâts infligés par les ennemis atteints
+  // de corrosion » — voir `ELEMENTAIRES`)
+  element('element-affaiblissement', 'corrosion', 'Affaiblissement', 'Les ennemis sous corrosion infligent moins de dégâts.', 'affaiblissement'),
   // (« FOUDRE », à la place de « Paralysie » — Keko, 24/11 : « ça fait doublon avec le gel »)
   element('element-electrocution', 'electrocution', 'Foudre', 'L’électrocution peut faire tomber la foudre sur l’ennemi.', 'foudre'),
 ]

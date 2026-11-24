@@ -3826,6 +3826,23 @@ for (const vortex of [true, false]) {
   verifier(`haute tension : une seconde sur la traînée, ${perdu.toFixed(1)} perdus (environ 30), électrocuté ${electrocute} ; éteinte, ${(avant - e.pv).toFixed(1)} (0) ; large comme sa zone, à 30 de côté : ${(1e6 - cote.pv).toFixed(1)} (environ 10)`, perdu > 20 && perdu <= 31 && electrocute && avant - e.pv < 1e-6 && 1e6 - cote.pv > 6 && 1e6 - cote.pv <= 10.5)
 }
 
+// AFFAIBLISSEMENT (Keko, 24/11 — voir `ELEMENTAIRES.affaiblissement`) : un insecte rongé mord 30 % moins fort ; avec
+// +50 % de cartes « Corrosion », 45 % ; plafonné à 60 % ; sain, toute sa morsure
+{
+  const essai = (ronge: boolean, renfort: number): number => {
+    const cfg: ConfigVaisseau = { ...VAISSEAU, coque: 1000, armes: [], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9 }, derive: { ...VAISSEAU.derive, active: false }, elementaires: { ...VAISSEAU.elementaires, affaiblissement: true }, renforts: { ...VAISSEAU.renforts, corrosion: renfort } }
+    const w = nouveauMonde(cfg, 5)
+    w.invasion.prochainA = 1e9
+    w.t = 2
+    w.ennemis.push({ id: 3500, corps: { ...nouveauVaisseau(), x: cfg.rayon + 3, y: 0 }, pv: 1e6, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 0, ...(ronge ? { acide: { jusque: 10, dps: 0, bonus: 0 } } : {}) })
+    avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+    return 1000 - w.coque
+  }
+  const sain = essai(false, 0)
+  const [r0, r5, r9] = [essai(true, 0) / sain, essai(true, 0.5) / sain, essai(true, 9) / sain]
+  verifier(`affaiblissement : une morsure de ${sain} ; rongé, ${r0.toFixed(2)} (0,70) ; +50 % de corrosion, ${r5.toFixed(2)} (0,55) ; plafonné, ${r9.toFixed(2)} (0,40)`, sain > 0 && Math.abs(r0 - 0.7) < 1e-6 && Math.abs(r5 - 0.55) < 1e-6 && Math.abs(r9 - 0.4) < 1e-6)
+}
+
 // LE RAILGUN ÉLECTRIQUE (Keko, 24/11 : la carte Cryogénique « applique l'état d'électricité » à la place) : la balle
 // électrocute ce qu'elle traverse, et son sillon ce qui y passe
 {

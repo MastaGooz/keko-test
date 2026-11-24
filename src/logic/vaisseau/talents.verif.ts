@@ -186,10 +186,10 @@ verifier('le délai passé, ce qui restait à choisir part en réserve', reserve
   const corrosif = { id: 'laser', cadence: 2.2, degats: 90, portee: 120, vitesse: 420, vie: 0.7, dispersion: 0, guide: false, corrosif: { duree: 3, bonus: 0.2 } } as Arme
   const vues = new Set<string>()
   for (let g = 1; g <= 20; g++) for (const t of proposer(g, 40, 0, corrosif, 'humains', ['arme-railgun', 'arme-obusier', 'arme-tesla'], [corrosif])) if (t.mutation !== undefined) vues.add(t.mutation)
-  const mu = MUTATIONS.find((x) => x.id === 'element-corrosion')!
+  const mu = MUTATIONS.find((x) => x.id === 'element-affaiblissement')!
   // (PRISE COMME EN JEU, par les bonus du vol — `avecLesBonus` : elle ne s'appliquait pas, sa cible « toutes les armes » la sautait)
   const prise = avecLesBonus({ ...C, armes: [corrosif] }, ajouterLeBonus([], carteSpeciale(mu)))
-  verifier(`les cartes d'élément : un laser corrosif voit ${[...vues].filter((x) => x.startsWith('element')).join(', ') || 'aucune'} (element-corrosion) ; prise, la règle ${prise.elementaires.vulnerabilite}`, vues.has('element-corrosion') && !vues.has('element-givre') && !vues.has('element-feu') && !vues.has('element-electrocution') && prise.elementaires.vulnerabilite)
+  verifier(`les cartes d'élément : un laser corrosif voit ${[...vues].filter((x) => x.startsWith('element')).join(', ') || 'aucune'} (element-affaiblissement) ; prise, la règle ${prise.elementaires.affaiblissement}`, vues.has('element-affaiblissement') && !vues.has('element-givre') && !vues.has('element-feu') && !vues.has('element-electrocution') && prise.elementaires.affaiblissement)
 }
 {
   // UNE CARTE D'ÉTAT GRANDIT TOUS LES EFFETS DE SON ÉLÉMENT (Keko, 24/11 — voir `ConfigVaisseau.renforts`) : une carte

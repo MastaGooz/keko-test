@@ -182,7 +182,7 @@ export const VAISSEAU = {
    */
   renforts: { feu: 0, corrosion: 0, givre: 0, electrocution: 0 } as { feu: number; corrosion: number; givre: number; electrocution: number },
   /** LES CARTES SPÉCIALES D'ÉLÉMENT PRISES (Keko, 24/11 — voir `ELEMENTAIRES`). */
-  elementaires: { gelure: false, incendie: false, vulnerabilite: false, foudre: false, dissolution: false, combustion: false, surtension: false, auraGlaciale: false } as { gelure: boolean; incendie: boolean; vulnerabilite: boolean; foudre: boolean; dissolution: boolean; combustion: boolean; surtension: boolean; auraGlaciale: boolean },
+  elementaires: { gelure: false, incendie: false, vulnerabilite: false, foudre: false, dissolution: false, combustion: false, surtension: false, auraGlaciale: false, affaiblissement: false } as { gelure: boolean; incendie: boolean; vulnerabilite: boolean; foudre: boolean; dissolution: boolean; combustion: boolean; surtension: boolean; auraGlaciale: boolean; affaiblissement: boolean },
   /**
    * L'ARC DE TIR (le jeu du vortex — Keko, 15/11 : « limiter les tirs du canon à un angle qui va devant le vaisseau ;
    * pas forcément tout droit, mais les empêcher de tirer en angle droit sur les côtés et en arrière, pour forcer le
@@ -2647,7 +2647,9 @@ const facteurDeCritique = (c: ConfigVaisseau, a: Arme | undefined): number => c.
  *   glace, immobile, il ne mord pas) — « 15 %, 1,5 s », choisi par Keko ;
  * - PROPAGATION : chaque seconde, un insecte en feu allume ses voisins presque collés, à 6 de bord à bord — choisi par Keko ;
  * - POINT FAIBLE : un insecte rongé prend +25 points de chance critique et +50 points de dégâts critiques (150 % → 200 %) —
- *   « +25 points », choisi par Keko ;
+ *   « +25 points », choisi par Keko ; RETIRÉE le même jour (sa règle reste écrite — `vulnerable`, `critiqueSur`), pour :
+ * - AFFAIBLISSEMENT (Keko : « réduire les dégâts infligés par les ennemis atteints de corrosion ») : un insecte rongé mord
+ *   30 % moins fort ; les cartes « Corrosion » grandissent la réduction, jusqu'à 60 % (« −30 % » et le nom : Keko) ;
  * - FOUDRE (à la place de la Paralysie, le même jour — Keko : « ça fait doublon avec le gel ; je préfère garder le givre pour
  *   le contrôle ; quand l'effet d'électrocution est appliqué, une chance pour qu'un éclair tombe du ciel sur la cible ») :
  *   chaque fois qu'un coup électrique ou un arc électrocute un insecte, 10 % de chance que la foudre tombe sur lui : 150,
@@ -2668,7 +2670,7 @@ const facteurDeCritique = (c: ConfigVaisseau, a: Arme | undefined): number => c.
  *   du vaisseau est sous givre, au ralenti le plus fort des armes portées (leurs cartes « Givre » comprises) ; ce n'est
  *   pas un coup : Gel profond ne s'y déclenche pas (« 50 », le nom : Keko).
  */
-export const ELEMENTAIRES = { gelure: { chance: 0.15, duree: 1.5 }, incendie: { ecart: 6, periode: 1 }, vulnerabilite: { chance: 0.25, facteur: 0.5 }, foudre: { chance: 0.1, degats: 150, rayon: 20, part: 0.5 }, dissolution: { taille: 1.5, duree: 3, dps: 30 }, combustion: { degats: 60, taille: 3 }, auraGlaciale: { rayon: 50, ralenti: 0.5 } }
+export const ELEMENTAIRES = { gelure: { chance: 0.15, duree: 1.5 }, incendie: { ecart: 6, periode: 1 }, vulnerabilite: { chance: 0.25, facteur: 0.5 }, foudre: { chance: 0.1, degats: 150, rayon: 20, part: 0.5 }, dissolution: { taille: 1.5, duree: 3, dps: 30 }, combustion: { degats: 60, taille: 3 }, auraGlaciale: { rayon: 50, ralenti: 0.5 }, affaiblissement: { reduction: 0.3, max: 0.6 } }
 /** UN INSECTE VULNÉRABLE (« Point faible ») : rongé, il prend plus de critiques, et plus forts. */
 const vulnerable = (c: ConfigVaisseau, m: Monde, e: Ennemi | undefined): boolean => e !== undefined && c.elementaires.vulnerabilite && e.acide !== undefined && e.acide.jusque > m.t
 /** UN COUP CRITIQUE SUR `e` ? Sa chance, celle de l'arme et du vaisseau, et de `e` s'il est vulnérable ; `u` n'est tiré que si elle n'est pas nulle. */
@@ -2923,7 +2925,10 @@ function conduireLInsecte(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number, ev
     if (enVol && !fige && dj <= c.rayon + rayonDe(c, e) + 2 && m.t >= (e.mordA ?? 0)) {
       e.mordA = m.t + I.cadenceMorsure
       // (un autre pilote que celui dont c'est le tour : sa morsure l'attend, il l'encaissera à son tour)
-      const degats = I.morsure * gabaritDInsecte(c, e).morsure
+      // (« AFFAIBLISSEMENT » : rongé, il mord moins fort — voir `ELEMENTAIRES.affaiblissement`)
+      const A = ELEMENTAIRES.affaiblissement
+      const affaibli = c.elementaires.affaiblissement && e.acide !== undefined && e.acide.jusque > m.t ? Math.min(A.max, A.reduction * (1 + c.renforts.corrosion)) : 0
+      const degats = I.morsure * gabaritDInsecte(c, e).morsure * (1 - affaibli)
       if (m.equipage === undefined || cible!.k === m.equipage.actif) encaisser(c, m, v.x, v.y, degats, ev)
       else m.equipage.pilotes[cible!.k].morsures.push({ x: v.x, y: v.y, degats })
     }
