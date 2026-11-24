@@ -8964,3 +8964,12 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   les éclats d'un missile incendiaire brûlent, ceux du harpon aussi) ; son texte perd « brûlants » pour le lance-grenades.
   Un test (une couronne hors de la zone : 6 givrés par les éclats, 0 sans eux) ; les cartes VUES en capture. Restent à
   trancher : Rafale, Drones (une attaque à côté), Gros calibre, et la variation critique.
+- LES GRENADES GIVRÉES EXPLOSENT EN GLACE (Keko, 24/11 : « changer le visuel de l'explosion et des éclats pour quelque
+  chose qui évoque le givre quand les grenades sont givrées : plus une explosion de feu, une explosion de glace, avec des
+  échardes de glace à la place des éclats ») : les effets de glace de pixelfx (Frost nova, Ice shatter, Snowflake burst,
+  Freeze) sont vus de côté, sur un sol — leurs ingrédients, vus de dessus (`dessinerLesExplosionsDeGlace`,
+  `explosionsDeGlace`) : un éclair froid, un anneau de givre jusqu'au bord de la zone, DIX-HUIT CRISTAUX qui jaillissent
+  du centre en étoile en un dixième de seconde (neuf grands, neuf petits ; une face claire du côté de la lampe, une
+  sombre, l'arête et la pointe blanches), se figent et pâlissent en 0,7 s ; des éclats bleu-blanc, des flocons
+  (`P.FLAKE`) ; le « boum » et le craquement du givre. Les éclats de Fragmentation qui portent le gel sont des ÉCHARDES :
+  un losange effilé le long de leur course, deux faces, la pointe blanche, une lueur froide. VU en capture.

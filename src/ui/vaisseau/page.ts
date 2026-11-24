@@ -10598,6 +10598,50 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   }
   /** L'ONDE D'UNE EXPLOSION DE MINI-MISSILE : un anneau orange qui s'ouvre jusqu'à son rayon, en 0,25 s. */
   let ondesDeZone: { x: number; y: number; t0: number; r: number; s: number }[] = []
+  /** LES EXPLOSIONS DE GLACE (les grenades givrées — voir `dessinerLesExplosionsDeGlace`). */
+  let explosionsDeGlace: { x: number; y: number; t0: number; r: number; g: number }[] = []
+  /**
+   * UNE EXPLOSION DE GLACE (Keko, 24/11 : « quand les grenades sont givrées, on ne veut plus une explosion de feu, on veut
+   * une explosion de glace, avec des échardes de glace à la place des éclats ») — les effets de glace de pixelfx (Frost
+   * nova, Ice shatter, Snowflake burst) sont vus de côté, sur un sol : leurs ingrédients, vus de dessus. Un anneau de givre
+   * qui s'ouvre jusqu'au bord de la zone ; DES CRISTAUX qui jaillissent du centre en étoile en un dixième de seconde —
+   * une face claire, une face sombre, l'arête et la pointe blanches —, se figent, puis pâlissent ; un voile froid au
+   * centre ; de la buée de givre sur toute la zone.
+   */
+  function dessinerLesExplosionsDeGlace(p: Peintre): void {
+    explosionsDeGlace = explosionsDeGlace.filter((x) => t - x.t0 < 0.7)
+    for (const x of explosionsDeGlace) {
+      const age = t - x.t0
+      const ox = x.x - camera.x + W / 2
+      const oy = x.y - camera.y + centreY()
+      const fond = age < 0.45 ? 1 : 1 - (age - 0.45) / 0.25
+      // (le voile froid, puis l'anneau de givre)
+      p.glow(ox, oy, x.r * 0.9, GLACE[4], 0.35 * fond)
+      const ua = Math.min(1, age / 0.22)
+      p.ring(ox, oy, 3 + (x.r - 3) * Math.sqrt(ua), 2, ua < 0.3 ? N.WHITE : GLACE[5], 0.9 * (1 - ua))
+      p.ring(ox, oy, 2 + (x.r - 5) * Math.sqrt(ua), 1, GLACE[3], 0.5 * (1 - ua))
+      // (les cristaux en étoile : neuf grands, neuf petits entre eux)
+      const pousse = 1 - Math.pow(1 - Math.min(1, age / 0.1), 3)
+      for (let i = 0; i < 18; i++) {
+        const grand = i % 2 === 0
+        const a = (i / 18) * Math.PI * 2 + x.g + (grand ? 0 : 0.05)
+        const L = x.r * (grand ? 0.72 + 0.18 * Math.sin(x.g * 7 + i) : 0.4 + 0.1 * Math.sin(x.g * 5 + i)) * pousse
+        const w = grand ? 2.6 : 1.6
+        const ux = Math.cos(a)
+        const uy = Math.sin(a)
+        const nx = -uy
+        const ny = ux
+        const bx = ox + ux * 2
+        const by = oy + uy * 2
+        // (deux faces : la claire du côté de la lampe — en haut à gauche —, la sombre en face)
+        const clair = nx * -0.7 + ny * -0.7 > 0 ? 1 : -1
+        p.poly([[bx, by], [bx + nx * w * clair + ux * L * 0.55, by + ny * w * clair + uy * L * 0.55], [bx + ux * L, by + uy * L]], GLACE[6], 0.9 * fond)
+        p.poly([[bx, by], [bx - nx * w * clair + ux * L * 0.55, by - ny * w * clair + uy * L * 0.55], [bx + ux * L, by + uy * L]], GLACE[4], 0.9 * fond)
+        p.line(bx, by, bx + ux * L, by + uy * L, age < 0.08 ? N.WHITE : GLACE[7], 0.8 * fond)
+        p.dot(bx + ux * L, by + uy * L, N.WHITE, fond)
+      }
+    }
+  }
   /** Le rayon de l'explosion des missiles du Chasseur : l'étalon de la boule de feu (voir l'événement `explosionDeZone`). */
   const RAYON_DU_MISSILE = pieceDe('arme-minimissiles')?.arme?.zone?.rayon ?? 18
   /**
@@ -10646,6 +10690,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         }
       }
     }
+    dessinerLesExplosionsDeGlace(p)
     ondesDeZone = ondesDeZone.filter((o) => t - o.t0 < 0.25)
     for (const o of ondesDeZone) {
       const u = (t - o.t0) / 0.25
@@ -14993,6 +15038,17 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         p.line(o.x - ux * 3, o.y - uy * 3, o.x, o.y, VERRIERE[1])
         p.px(o.x, o.y, N.WHITE)
         p.glow(o.x, o.y, 3, VERRIERE[2], 0.45)
+      } else if (o.arme === 'mitraille' && o.gel !== undefined) {
+        // (UNE ÉCHARDE DE GLACE — l'éclat d'une explosion givrée, voir `fragmenter` ; Keko, 24/11 : « des échardes de glace
+        // à la place des éclats » : un losange effilé le long de sa course, une face claire, une face sombre, la pointe
+        // blanche, une lueur froide)
+        const nx = -uy
+        const ny = ux
+        p.glow(o.x - ux * 2, o.y - uy * 2, 4, GLACE[5], 0.45)
+        p.poly([[o.x - ux * 6, o.y - uy * 6], [o.x - ux * 2 + nx * 1.4, o.y - uy * 2 + ny * 1.4], [o.x + ux, o.y + uy]], GLACE[6])
+        p.poly([[o.x - ux * 6, o.y - uy * 6], [o.x - ux * 2 - nx * 1.4, o.y - uy * 2 - ny * 1.4], [o.x + ux, o.y + uy]], GLACE[4])
+        p.line(o.x - ux * 5, o.y - uy * 5, o.x, o.y, GLACE[7])
+        p.px(o.x + ux, o.y + uy, N.WHITE)
       } else if (o.arme === 'mitraille') {
         // (UNE BALLE JAUNE, BIEN DROITE — Keko, 18/11 : « des projectiles jaunes, un tout petit peu plus gros, bien droits,
         // pas tout tordus » : un trait de cinq pixels sur deux le long de sa course, le bout blanc, une lueur jaune)
@@ -17186,6 +17242,26 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
               etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.2, 0.45), [N.WHITE, PLASMA[5], PLASMA[4], PLASMA_V[3]][Math.floor(R.next() * 4)], 1, 2)
             }
             secousse = Math.max(secousse, 0.22)
+            break
+          }
+          // (UNE GRENADE GIVRÉE EXPLOSE EN GLACE — Keko, 24/11 — voir `dessinerLesExplosionsDeGlace` : son « boum » et le
+          // craquement du givre, un éclair froid, l'étoile de cristaux, des éclats et des flocons qui s'envolent, une secousse)
+          if (ev.arme === 'grenades' && CONF.armes.some((a) => a.id === 'grenades' && a.gel !== undefined)) {
+            jouer('explosionMini', { dx: ev.x - v.x, dy: ev.y - v.y })
+            jouer('gel', { dx: ev.x - v.x, dy: ev.y - v.y })
+            flashs.push({ x: ev.x, y: ev.y, t0: t, r: ev.rayon * 0.35, c: [GLACE[1], GLACE[2], GLACE[4], GLACE[5], GLACE[6]] })
+            explosionsDeGlace.push({ x: ev.x, y: ev.y, t0: t, r: ev.rayon, g: R.range(0, Math.PI * 2) })
+            for (let i = 0; i < 16; i++) {
+              const a = R.range(0, Math.PI * 2)
+              const vit = R.range(40, 110)
+              etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.15, 0.4), [N.WHITE, GLACE[6], GLACE[5], GLACE[4]][Math.floor(R.next() * 4)], 1, 2)
+            }
+            for (let i = 0; i < 10; i++) {
+              const a = R.range(0, Math.PI * 2)
+              const d = R.range(0, ev.rayon * 0.6)
+              feuDesConsumes.spawn(N.P.FLAKE, ev.x + Math.cos(a) * d, ev.y + Math.sin(a) * d, Math.cos(a) * R.range(8, 25), Math.sin(a) * R.range(8, 25), R.range(0.5, 0.9), R.next() < 0.5 ? GLACE[6] : GLACE[7], R.range(0.6, 1.2))
+            }
+            secousse = Math.max(secousse, 0.2)
             break
           }
           // UN MINI-MISSILE EXPLOSE (Keko, 15/11) : un éclair, un anneau qui s'ouvre jusqu'à son rayon, une boule de
