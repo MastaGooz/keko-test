@@ -8772,3 +8772,11 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     augmente ») : « La balle gagne en force à chaque ennemi traversé. » ; `balle.part` 1,25 au lieu de 0,75 — 160, 200,
     250… (« +25 % » et le nom : Keko).
   - Deux tests ; VU en capture : les deux cartes tiennent.
+- LE DÉPHASAGE PERD SON INVINCIBILITÉ (Keko, 24/11 : « on lui enlève son effet d'invincibilité ; juste une chance d'annuler
+  complètement les dégâts subis ; si on monte trop haut le pourcentage, il se déclenche régulièrement — sans
+  l'invincibilité, on évite un coup, et instantanément après on peut s'en prendre un deuxième au contact de plusieurs
+  ennemis ; avec, on enchaîne l'invincibilité pratiquement à l'infini ») : le coup esquivé est annulé (`encaisser`), et
+  c'est tout — plus d'`intouchableJusque`, plus de traversée des roches, des insectes ni des rivaux. `dephasage.duree`
+  passe de 1,5 à 0,3 s : ce n'est plus que la durée de son dessin (le vaisseau qui sort du plan, la barre violette). Le
+  texte de la défense des Yhg'tharr : « Une chance d'annuler complètement les dégâts subis. » (c'était « Annule parfois
+  les dégâts et devient invincible. »). Le test le garde : le coup qui suit, à l'instant, porte ; déphasé, la roche l'arrête.

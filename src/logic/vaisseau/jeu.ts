@@ -129,8 +129,12 @@ export const VAISSEAU = {
    * les obstacles, pendant un court instant ») : un coup qui atteint le blindage (le bouclier, s'il y en a un, le prend
    * d'abord) est esquivé avec la chance `chance` — un tirage seedé —, et pendant `duree` secondes le vaisseau ne prend
    * plus aucun coup et ne heurte plus rien, ni roche ni insecte. `chance` à zéro : jamais. (La durée est de moi.)
+   * PLUS D'INVINCIBILITÉ (Keko, 24/11 : « on lui enlève son effet d'invincibilité ; juste une chance d'annuler complètement
+   * les dégâts subis ; si on monte trop haut la chance, il se déclenche régulièrement — sans l'invincibilité, on évite un
+   * coup, et l'instant d'après on peut en prendre un deuxième ; avec, on enchaîne l'invincibilité presque à l'infini ») :
+   * le coup esquivé est annulé, c'est tout — ni intouchable, ni traversée ; `duree` n'est plus que celle de son dessin.
    */
-  dephasage: { chance: 0, duree: 1.5 },
+  dephasage: { chance: 0, duree: 0.3 },
   /**
    * L'INVULNÉRABILITÉ APRÈS UN COUP (Keko, 17/11 : « quand le vaisseau touche un ennemi, il devrait subir des dégâts,
    * clignoter une petite seconde, et pendant cet intervalle ne pas pouvoir prendre d'autres dégâts ; sinon on peut se
@@ -2286,7 +2290,7 @@ function subirLArene(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[], a
   m.vaisseau = retenue(retenir(v))
   for (const e of m.ennemis) if (e.asteroide === undefined) e.corps = retenir(e.corps)
   const w = m.vaisseau
-  if (Math.hypot(w.x, w.y) <= A.rayon || m.t < m.dephaseJusque || m.t < m.renaitJusque) return chocs
+  if (Math.hypot(w.x, w.y) <= A.rayon || m.t < m.renaitJusque) return chocs
   // (L'ÉNERGIE RONGE LE BLINDAGE, DIRECTEMENT — Keko, 21/11 : « on attaque directement le blindage ; on ignore les
   // boucliers bleus, les plaques de blindage ; et on ne peut pas déclencher de déphasage aux dégâts de la tempête » :
   // voir `blesserParLaTempete`)
@@ -3153,8 +3157,8 @@ const sousBouclier = (c: ConfigVaisseau, m: Monde): boolean => c.bouclier.points
  * PREND PAS si le bouclier du joueur est levé (Keko : pas de bélier). Rend faux si la partie est perdue.
  */
 function heurterLesVaisseaux(c: ConfigVaisseau, m: Monde, ev: Evenement[]): boolean {
-  // (déphasé, il passe au travers — voir `dephasage` ; revenu, aussi — voir `invasion.retour`)
-  if (m.t < m.dephaseJusque || m.t < m.renaitJusque) return true
+  // (revenu, il passe au travers — voir `invasion.retour` ; déphasé, plus — voir `dephasage`)
+  if (m.t < m.renaitJusque) return true
   const v = m.vaisseau
   // (TOUCHÉ, IL TRAVERSE LES INSECTES le temps qu'il clignote — Keko, 22/11 : « quand on est touché on est invincible un
   // court instant ; je voudrais qu'on traverse aussi les ennemis » — voir `invulnerabilite` ; les roches l'arrêtent encore)
@@ -3237,10 +3241,10 @@ export function encaisser(c: ConfigVaisseau, m: Monde, x: number, y: number, deg
     // ne concerne que le blindage » : tout bu par lui, le coup n'ouvre aucune invincibilité)
     if (reste <= 1e-9) return
   }
-  // LE DÉPHASAGE (voir la configuration) : le coup qui atteindrait le blindage est esquivé, et le vaisseau est déphasé
+  // LE DÉPHASAGE (voir la configuration) : le coup qui atteindrait le blindage est annulé — sans invincibilité ni traversée
+  // (`dephaseJusque` ne sert plus qu'au dessin)
   if (c.dephasage.chance > 0 && tire(m.graine, m.prochainId++, 31) < c.dephasage.chance) {
     m.dephaseJusque = m.t + c.dephasage.duree
-    m.intouchableJusque = Math.max(m.intouchableJusque, m.dephaseJusque)
     ev.push({ type: 'dephase', x, y })
     return
   }
@@ -6244,8 +6248,8 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   const moteur = boost > 0 ? { poussee: c.poussee * (pousse ? c.postcombustion.poussee : 1), vitesseMax: c.vitesseMax * (1 + (c.postcombustion.vitesse - 1) * boost), rotation: c.rotation, rayon: c.rayon, masse: c.masse, virage: c.virage } : c
   const dir = pousse && Math.hypot(direction.x, direction.y) < 0.2 ? { x: Math.cos(m.vaisseau.cap), y: Math.sin(m.vaisseau.cap) } : direction
   // (un vaisseau à tourelles ne tourne pas vers son regard : il ne sert plus bas qu'à viser)
-  // (DÉPHASÉ, il traverse les roches — voir `dephasage`)
-  const r = voler(c, m.t < m.dephaseJusque || m.t < m.renaitJusque ? { ...moteur, fantome: true } : moteur, m.vaisseau, dt, dir, m.detruits, c.tourelles ? undefined : regard)
+  // (REVENU, il traverse les roches — voir `invasion.retour` ; déphasé, plus — voir `dephasage`)
+  const r = voler(c, m.t < m.renaitJusque ? { ...moteur, fantome: true } : moteur, m.vaisseau, dt, dir, m.detruits, c.tourelles ? undefined : regard)
   const avantLeVol = m.vaisseau
   m.vaisseau = r.vaisseau
   // (L'ARÈNE : la tempête, ses roches, son bord — voir `arene`)

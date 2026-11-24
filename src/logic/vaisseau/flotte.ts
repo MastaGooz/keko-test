@@ -48,7 +48,7 @@ export const RACES: { id: Race; nom: string; defense: { nom: string; dit: string
   // vraiment un nom de race, un peu comme les Xénoïdes » — choisis par Keko parmi mes propositions)
   { id: 'etheres', nom: 'Les Vectrans', defense: { nom: 'Bouclier', dit: 'Un bouclier protecteur qui se recharge.' } },
   // (… PUIS LES YHG'THARR — Keko, 19/11 : « Xl'qoth commence par un X, comme les Xénoïdes, c'est dommage »)
-  { id: 'innommes', nom: 'Les Yhg’tharr', defense: { nom: 'Déphasage', dit: 'Annule parfois les dégâts et devient invincible.' } },
+  { id: 'innommes', nom: 'Les Yhg’tharr', defense: { nom: 'Déphasage', dit: 'Une chance d’annuler complètement les dégâts subis.' } },
 ]
 
 /**

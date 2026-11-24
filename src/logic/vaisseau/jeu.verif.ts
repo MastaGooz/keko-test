@@ -2657,21 +2657,18 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   verifier(`un insecte à 110 : les cinq partent l'une après l'autre en 0,3 s (${parties}), le touchent (${touches}) et le gèlent`, parties === 5 && touches === 5 && (w.ennemis[0].geleA ?? 0) > w.t && w.ennemis[0].pv === 1000 - 5 * eclats.degats)
 }
 
-// LE DÉPHASAGE (les Yhg'tharr, Keko, 20/11) : le coup esquivé, invincible et traversant un court instant ; sans chance, rien
+// LE DÉPHASAGE (les Yhg'tharr, Keko, 20/11) : le coup est annulé ; sans chance, rien. PLUS D'INVINCIBILITÉ (Keko, 24/11) :
+// le coup qui suit, à l'instant, porte ; et il ne traverse plus les roches
 {
-  const c: ConfigVaisseau = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, coque: 5, dephasage: { chance: 1, duree: 1.5 } }
+  const c: ConfigVaisseau = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, coque: 5, dephasage: { chance: 1, duree: 0.3 } }
   const md = nouveauMonde(c)
   const ev: Evenement[] = []
   encaisser(c, md, 0, 0, 2, ev)
-  verifier('un coup esquivé : la coque ne baisse pas, le vaisseau est déphasé', md.coque === 5 && md.dephaseJusque === md.t + 1.5 && ev.some((e) => e.type === 'dephase') && !ev.some((e) => e.type === 'touche'))
-  md.t += 1
-  const ev2: Evenement[] = []
-  encaisser({ ...c, dephasage: { chance: 0, duree: 1.5 } }, md, 0, 0, 2, ev2)
-  verifier('déphasé, il ne prend aucun coup', md.coque === 5 && ev2.length === 0)
-  md.t += 1
-  encaisser({ ...c, dephasage: { chance: 0, duree: 1.5 } }, md, 0, 0, 2, [])
-  verifier('le déphasage fini, le coup suivant porte', md.coque === 3)
-  // (il traverse une roche : sans déphasage, elle l'arrête)
+  verifier('un coup esquivé : la coque ne baisse pas, le déphasage se montre', md.coque === 5 && ev.some((e) => e.type === 'dephase') && !ev.some((e) => e.type === 'touche'))
+  md.t += 0.05
+  encaisser({ ...c, dephasage: { chance: 0, duree: 0.3 } }, md, 0, 0, 2, [])
+  verifier('le coup suivant, à l\'instant, porte : plus d\'invincibilité', md.coque === 3)
+  // (déphasé, il ne traverse plus une roche : elle l'arrête comme sans déphasage)
   const champ = { ...VAISSEAU.champ, densite: 1 }
   const roche = asteroidesAutour({ ...c, champ }, 200, 0, 400).find((a) => a.rayon >= 6 && Math.hypot(a.x, a.y) > 60)
   if (roche !== undefined) {
@@ -2690,7 +2687,7 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
     }
     const sans = traverse(false)
     const avec = traverse(true)
-    verifier(`déphasé, il traverse la roche (au plus près : ${avec.toFixed(1)} du centre, ${sans.toFixed(1)} sans déphasage, la roche fait ${roche.rayon.toFixed(1)})`, avec < roche.rayon * 0.5 && sans >= roche.rayon)
+    verifier(`déphasé, il ne traverse plus la roche (au plus près : ${avec.toFixed(1)} du centre, ${sans.toFixed(1)} sans déphasage, la roche fait ${roche.rayon.toFixed(1)})`, avec >= roche.rayon && sans >= roche.rayon)
   } else verifier('une roche pour le test du déphasage', false)
   // (sans chance, jamais)
   const c0: ConfigVaisseau = { ...c, dephasage: { chance: 0, duree: 1.5 } }
