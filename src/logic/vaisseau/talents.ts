@@ -489,8 +489,10 @@ export const MUTATIONS: Mutation[] = [
   variation('obusier-drones', 'obusier', 'Drones', 'Deux drones en orbite tirent des obus sur les ennemis proches.', ajouterA('obusier', (a) => drones(a, { cadence: 2.2, degats: fois(a, 0.5), portee: 90, vie: 1 }))),
   variation('obusier-lourd', 'obusier', 'Gros calibre', 'Des obus plus lents à venir, plus forts, qui explosent plus large.', changerA('obusier', V.lourd)),
   // L'ARC TESLA
-  variation('tesla-rebonds', 'tesla', 'Orage', 'La bobine foudroie trois ennemis de plus à chaque décharge.', changerA('tesla', (a) => ({ ...a, sphere: a.sphere === undefined ? undefined : { ...a.sphere, foudre: { cibles: (a.sphere.foudre?.cibles ?? 3) + 3 } } }))),
-  variation('tesla-incendiaire', 'tesla', 'Incendiaire', 'Ce que la foudre touche s’enflamme.', changerA('tesla', V.incendiaire)),
+  variation('tesla-rebonds', 'tesla', 'Orage', 'La bobine foudroie trois ennemis de plus à chaque décharge.', changerA('tesla', (a) => ({ ...a, sphere: a.sphere === undefined ? undefined : { ...a.sphere, foudre: { ...a.sphere.foudre, cibles: (a.sphere.foudre?.cibles ?? 3) + 3 } } }))),
+  // (« CONDUCTION », À LA PLACE D'« INCENDIAIRE » — Keko, 24/11 : « l'arc rebondit sur 2 autres cibles, en mode chaîne
+  // d'éclair » ; −20 % par bond, comme la chaîne de la Sentinelle ; la bobine n'a plus qu'un élément — voir `Arme.sphere`)
+  variation('tesla-conduction', 'tesla', 'Conduction', 'Chaque éclair rebondit sur deux autres ennemis.', changerA('tesla', (a) => ({ ...a, sphere: a.sphere === undefined ? undefined : { ...a.sphere, foudre: { cibles: a.sphere.foudre?.cibles ?? 3, ...a.sphere.foudre, rebonds: { n: 2, saut: 45, attenuation: 0.8 } } } }))),
   variation('tesla-cryo', 'tesla', 'Cryogénique', 'Ce que la foudre touche gèle.', changerA('tesla', V.cryo)),
   variation('tesla-surtension', 'tesla', 'Surtension', 'La bobine décharge deux fois plus souvent.', changerA('tesla', (a) => ({ ...a, sphere: a.sphere === undefined ? undefined : { ...a.sphere, periode: a.sphere.periode * 0.5 } }))),
   variation('tesla-champ', 'tesla', 'Champ tesla', 'Un champ électrique blesse les ennemis tout près.', changerA('tesla', (a) => ({ ...a, aura: { rayon: 34, dps: fois(a, 0.4) } }))),

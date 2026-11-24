@@ -910,7 +910,10 @@ export type Arme = {
    */
   // (`foudre` : LA BOBINE TESLA de l'Empire — Keko, 22/11 : « l'arc tesla, c'est une chaîne d'éclair bis » : au lieu de
   // petits traits, elle FOUDROIE à l'instant les `cibles` insectes les plus proches dans son rayon, à chaque période)
-  sphere?: { vitesse: number; duree: number; rayon: number; periode: number; vitesseTir: number; foudre?: { cibles: number } }
+  // (`foudre.rebonds` : CONDUCTION — Keko, 24/11 : « l'arc rebondit sur 2 autres cibles, en mode chaîne d'éclair » : chaque
+  // éclair saute ensuite `n` fois d'ennemi en ennemi, à `saut` au plus, perdant `attenuation` à chaque bond, jamais deux fois
+  // sur le même dans sa chaîne)
+  sphere?: { vitesse: number; duree: number; rayon: number; periode: number; vitesseTir: number; foudre?: { cibles: number; rebonds?: { n: number; saut: number; attenuation: number } } }
   /**
    * UN PUITS DE PLASMA (la troisième arme du Pulsar, Keko, 16/11 : « on va tenter le puits » — une petite singularité lancée
    * au milieu de la nuée, qui aspire les insectes vers son centre puis éclate) : à la cadence, un insecte à portée, il part
@@ -3778,13 +3781,36 @@ function menerLesSpheres(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[
     // (LA FOUDRE : les plus proches dans son rayon, frappés à l'instant — voir `Arme.sphere.foudre`)
     if (sp.foudre !== undefined) {
       const proches = m.ennemis.filter((e) => Math.hypot(e.corps.x - s.x, e.corps.y - s.y) <= sp.rayon + rayonDe(c, e)).sort((e1, e2) => Math.hypot(e1.corps.x - s.x, e1.corps.y - s.y) - Math.hypot(e2.corps.x - s.x, e2.corps.y - s.y)).slice(0, sp.foudre.cibles)
-      for (const e of proches) {
+      // (un éclair : de `de` à `e`, `part` de ses dégâts)
+      const frapper = (e: Ennemi, de: { x: number; y: number }, part: number): void => {
         const critique = critiqueTire(c, m, a, e)
         effetsDuCoup(c, m, a, e, ev)
-        e.pv -= a.degats * (critique ? facteurSur(c, m, a, e) : 1)
-        ev.push({ type: 'foudre', x0: s.x, y0: s.y, x1: e.corps.x, y1: e.corps.y })
+        e.pv -= a.degats * part * (critique ? facteurSur(c, m, a, e) : 1)
+        ev.push({ type: 'foudre', x0: de.x, y0: de.y, x1: e.corps.x, y1: e.corps.y })
         ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })
         if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
+      }
+      const rb = sp.foudre.rebonds
+      for (const e of proches) {
+        frapper(e, s, 1)
+        // (CONDUCTION : puis il saute d'ennemi en ennemi — voir `Arme.sphere.foudre.rebonds`)
+        if (rb === undefined) continue
+        const chaine = new Set<Ennemi>([e])
+        let der = { x: e.corps.x, y: e.corps.y }
+        for (let k = 1; k <= rb.n; k++) {
+          let suiv: Ennemi | undefined
+          let dc = Infinity
+          for (const o of m.ennemis) {
+            if (chaine.has(o) || o.asteroide !== undefined) continue
+            const d = Math.hypot(o.corps.x - der.x, o.corps.y - der.y)
+            if (d <= rb.saut + rayonDe(c, o) && d < dc) (dc = d), (suiv = o)
+          }
+          if (suiv === undefined) break
+          chaine.add(suiv)
+          const ici = { x: suiv.corps.x, y: suiv.corps.y }
+          frapper(suiv, der, Math.pow(rb.attenuation, k))
+          der = ici
+        }
       }
       if (proches.length > 0) ev.push({ type: 'sphereTir', x: s.x, y: s.y, tirs: proches.length })
       continue

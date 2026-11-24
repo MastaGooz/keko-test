@@ -3728,6 +3728,23 @@ for (const vortex of [true, false]) {
   verifier(`amplification : ${plus.join(', ')} (160, 200, 250) ; sans elle ${moins.join(', ')} (160, 120, 90)`, plus.join() === '160,200,250' && moins.join() === '160,120,90')
 }
 
+// CONDUCTION (Keko, 24/11 — voir `Arme.sphere.foudre.rebonds`) : la bobine foudroie l'insecte le plus proche (58), et
+// l'éclair saute sur deux autres, l'un après l'autre, à −20 % (46,4, puis 37,12) ; le quatrième, trop loin, rien
+{
+  const tesla = { id: 'tesla', cadence: 2.6, degats: 58, portee: 120, vitesse: 0, vie: 0, dispersion: 0, guide: false, sphere: { vitesse: 0, duree: 3, rayon: 20, periode: 0.6, vitesseTir: 0, foudre: { cibles: 1, rebonds: { n: 2, saut: 45, attenuation: 0.8 } } } }
+  const cfg: ConfigVaisseau = { ...VAISSEAU, coque: 1e9, armes: [tesla], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false }, passifs: { ...VAISSEAU.passifs, critique: 0 } }
+  const w = nouveauMonde(cfg, 5)
+  w.invasion.prochainA = 1e9
+  w.t = 2
+  w.armesA = [1e9]
+  const es = [[100, 10], [100, 40], [100, 70], [100, 160]].map(([x, y], k): Ennemi => ({ id: 3000 + k, corps: { ...nouveauVaisseau(), x, y }, pv: 1e6, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9 }))
+  w.ennemis.push(...es)
+  w.spheres.push({ id: 3100, arme: 0, x: 100, y: 0, vx: 0, vy: 0, nee: w.t, tirA: w.t })
+  avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+  const perdus = es.map((e) => Math.round((1e6 - e.pv) * 100) / 100)
+  verifier(`conduction : ${perdus.join(', ')} (58, 46.4, 37.12, 0)`, perdus.join() === '58,46.4,37.12,0')
+}
+
 // LE RAILGUN ÉLECTRIQUE (Keko, 24/11 : la carte Cryogénique « applique l'état d'électricité » à la place) : la balle
 // électrocute ce qu'elle traverse, et son sillon ce qui y passe
 {

@@ -8780,3 +8780,13 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   passe de 1,5 à 0,3 s : ce n'est plus que la durée de son dessin (le vaisseau qui sort du plan, la barre violette). Le
   texte de la défense des Yhg'tharr : « Une chance d'annuler complètement les dégâts subis. » (c'était « Annule parfois
   les dégâts et devient invincible. »). Le test le garde : le coup qui suit, à l'instant, porte ; déphasé, la roche l'arrête.
+- LES SIX VARIATIONS DE LA BOBINE TESLA, EN COURS (Keko, 24/11 : « on va partir sur les 6 variations de la bobine tesla »).
+  - ORAGE, GARDÉE (« foudroie 3 cibles supplémentaires » : elle existait — « La bobine foudroie trois ennemis de plus à
+    chaque décharge. »).
+  - CONDUCTION, À LA PLACE D'INCENDIAIRE (« l'arc rebondit sur 2 autres cibles, en mode chaîne d'éclair ») : « Chaque
+    éclair rebondit sur deux autres ennemis. » ; `sphere.foudre.rebonds` — chaque éclair saute deux fois d'ennemi en
+    ennemi, à 45 au plus, −20 % par bond (comme la chaîne de la Sentinelle), jamais deux fois sur le même dans sa
+    chaîne ; chaque bond son critique et les effets de l'arme. Avec Orage, chacun des six éclairs a sa chaîne. Le nom,
+    les −20 % et la place d'Incendiaire : Keko (la bobine n'a plus qu'un élément, le givre de Cryogénique). Un test ; VU
+    en capture : les éclairs qui sortent du cercle de la bobine, les deux cartes.
+  - Restent, de l'ancienne liste : Cryogénique, Surtension, Champ tesla, Grande bobine.
