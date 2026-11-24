@@ -565,7 +565,9 @@ export const MUTATIONS: Mutation[] = [
   variation('lien-cryo', 'lien', 'Cryogénique', 'Le rayon gèle et ralentit ce qu’il traverse.', changerA('lien', V.cryo)),
   variation('lien-incendiaire', 'lien', 'Incendiaire', 'Le rayon enflamme ce qu’il traverse.', changerA('lien', V.incendiaire)),
   // LES DRONES D'ESCORTE
-  variation('escorte-plus', 'escorte', 'Escadrille', 'Deux mini-avions de plus.', ajouterA('escorte', (a) => drones(a, { cadence: a.cadence, degats: a.degats, portee: a.portee }, 2, Math.PI / 2).map((d, k) => ({ ...d, place: 22 + k, orbite: { ...a.orbite!, phase: Math.PI / 2 + k * Math.PI, formation: { x: -16, y: k === 0 ? -30 : 30 } } })))),
+  // (ESCADRILLE, UN AVION DE PLUS — Keko, 24/11 : « une variation qui ajoute un avion de plus » ; elle en ajoutait deux ;
+  // derrière le vaisseau, dans son axe — la formation devient un V : Keko)
+  variation('escorte-plus', 'escorte', 'Escadrille', 'Un mini-avion de plus dans la formation.', ajouterA('escorte', (a) => drones(a, { cadence: a.cadence, degats: a.degats, portee: a.portee }, 1, Math.PI / 2).map((d) => ({ ...d, place: 22, orbite: { ...a.orbite!, phase: Math.PI / 2, formation: { x: -20, y: 0 } } })))),
   variation('escorte-perforantes', 'escorte', 'Perforantes', 'Les balles des mini-avions traversent les ennemis.', changerA('escorte', V.perforant)),
   // (« BALLES ACIDES », SON ÉLÉMENT, À LA PLACE D'INCENDIAIRES ET DE CRYOGÉNIQUES — Keko, 24/11 : la corrosion, proposée — le
   // feu est à l'obusier, le givre aux grenades, l'électricité au railgun et à la bobine ; l'escorte devient un soutien qui

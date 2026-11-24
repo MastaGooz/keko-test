@@ -9061,3 +9061,7 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   critique des avions eux-mêmes, sinon c'est une boucle ») : `designe(m, e, designante)` rend 0 pour une arme qui
   désigne (`critiqueSur` le lit sur l'arme, `coupDObus` sur l'obus). Le test le vérifie (l'escorte à 0 % : 0 % sur un
   désigné ; une autre arme : 24 %).
+- ESCADRILLE, UN AVION DE PLUS (Keko, 24/11 : « une variation qui ajoute un avion de plus » ; Escadrille en ajoutait
+  deux — elle passe à un, « derrière, au centre » : Keko) : « Un mini-avion de plus dans la formation. » ; le troisième
+  vole dans l'axe, 20 derrière — la formation fait un V. Le test des balles acides suit (trois avions rongent). VU en
+  capture (formation et carte).
