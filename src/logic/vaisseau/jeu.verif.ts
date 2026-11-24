@@ -3697,6 +3697,40 @@ for (const vortex of [true, false]) {
     cOui.voisin === 60 && cOui.loin === 0 && cNon.voisin === 0 && cRenfort === 90 && sOui === 2 && sNon === 1 && glace)
 }
 
+// TRIPLE RAIL (Keko, 24/11 — voir `Arme.cotes`) : un tir du railgun part en trois balles — la principale, et deux à ± 15°,
+// moitié moins fortes, moitié moins larges
+{
+  const railgun = { id: 'railgun', cadence: 99, degats: 160, portee: 190, vitesse: 900, vie: 190 / 900, dispersion: 0, guide: false, tousSens: true, perforant: true, balle: { part: 0.75, calibre: 2 }, cotes: { angle: (15 * Math.PI) / 180, part: 0.5, calibre: 0.5 } }
+  const cfg: ConfigVaisseau = { ...VAISSEAU, coque: 1e9, armes: [railgun], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false }, passifs: { ...VAISSEAU.passifs, critique: 0 } }
+  const w = nouveauMonde(cfg, 5)
+  w.invasion.prochainA = 1e9
+  w.t = 2
+  w.armesA = [0]
+  w.ennemis.push({ id: 2800, corps: { ...nouveauVaisseau(), x: 150, y: 0 }, pv: 1e6, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9 })
+  avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+  const balles = w.obus.filter((o) => o.arme === 'railgun').map((o) => ({ deg: Math.round((Math.atan2(o.vy, o.vx) * 180) / Math.PI), degats: o.degats, calibre: o.balle?.calibre })).sort((p, q) => p.deg - q.deg)
+  verifier(`triple rail : ${balles.map((b) => `${b.deg}° ${b.degats} calibre ${b.calibre}`).join(' ; ')} (−15° 80 calibre 1 ; 0° 160 calibre 2 ; 15° 80 calibre 1)`, balles.length === 3 && balles[0].deg === -15 && balles[2].deg === 15 && balles[1].degats === 160 && balles[0].degats === 80 && balles[2].calibre === 1 && balles[1].calibre === 2)
+}
+
+// AMPLIFICATION (Keko, 24/11 — voir `Arme.balle`) : la balle gagne 25 % à chaque insecte traversé — trois en ligne
+// perdent 160, 200, 250 ; sans la carte, 160, 120, 90
+{
+  const essai = (part: number): number[] => {
+    const railgun = { id: 'railgun', cadence: 99, degats: 160, portee: 190, vitesse: 900, vie: 190 / 900, dispersion: 0, guide: false, tousSens: true, perforant: true, balle: { part, calibre: 2 } }
+    const cfg: ConfigVaisseau = { ...VAISSEAU, coque: 1e9, armes: [railgun], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false }, passifs: { ...VAISSEAU.passifs, critique: 0 } }
+    const w = nouveauMonde(cfg, 5)
+    w.invasion.prochainA = 1e9
+    w.t = 2
+    w.armesA = [0]
+    const es = [60, 90, 120].map((x, k): Ennemi => ({ id: 2900 + k, corps: { ...nouveauVaisseau(), x, y: 0 }, pv: 1e6, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9 }))
+    w.ennemis.push(...es)
+    for (let i = 0; i < 20; i++) avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+    return es.map((e) => Math.round(1e6 - e.pv))
+  }
+  const [plus, moins] = [essai(1.25), essai(0.75)]
+  verifier(`amplification : ${plus.join(', ')} (160, 200, 250) ; sans elle ${moins.join(', ')} (160, 120, 90)`, plus.join() === '160,200,250' && moins.join() === '160,120,90')
+}
+
 // LE RAILGUN ÉLECTRIQUE (Keko, 24/11 : la carte Cryogénique « applique l'état d'électricité » à la place) : la balle
 // électrocute ce qu'elle traverse, et son sillon ce qui y passe
 {

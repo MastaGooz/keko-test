@@ -8761,3 +8761,14 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   `sillonEnergie` — un bourdon pur et doux à 220 Hz qui monte d'un ton, son octave et sa quinte qui chatoient, un souffle
   qui glisse vers l'aigu. MESURÉ : centre spectral 909 Hz (le grésillement : 471), efficace 0,084 sur 30-100 ms (0,079),
   éteint vers 600 ms comme lui.
+- LES DEUX DERNIÈRES VARIATIONS DU RAILGUN (Keko, 24/11) — le railgun est complet : Exécution, Électrique, Gros calibre,
+  Sillon, Triple rail, Amplification.
+  - TRIPLE RAIL, À LA PLACE DE SURCHARGE (« on supprime Surcharge ; deux autres traits plus petits sont tirés en plus du
+    principal, ils partent du même endroit mais avec un angle différent ») : « Deux balles plus petites partent en
+    éventail de chaque côté. » ; `Arme.cotes` — à ± 15°, la moitié des dégâts, une balle moitié moins large, chacune son
+    critique, sans verrou (« ± 15°, 50 % » et le nom : Keko). Ses balles portent tout ce que porte le tir (sillon,
+    électrocution, exécution…). VU en capture : trois traînées en éventail.
+  - AMPLIFICATION, À LA PLACE DE BALLE À ÉCLATS (« au lieu de diminuer les dégâts à chaque ennemi traversé, on les
+    augmente ») : « La balle gagne en force à chaque ennemi traversé. » ; `balle.part` 1,25 au lieu de 0,75 — 160, 200,
+    250… (« +25 % » et le nom : Keko).
+  - Deux tests ; VU en capture : les deux cartes tiennent.

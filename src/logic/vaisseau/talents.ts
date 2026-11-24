@@ -474,8 +474,13 @@ export const MUTATIONS: Mutation[] = [
   // (UN SILLON D'ÉNERGIE — Keko, 24/11 : « il devient électrique uniquement avec la carte Électrique du railgun ; sinon,
   // c'est juste un sillon d'énergie »)
   variation('railgun-sillon', 'railgun', 'Sillon', 'La balle laisse un sillon d’énergie qui blesse les ennemis.', changerA('railgun', (a) => ({ ...a, sillon: { duree: 2, part: 0.3, largeur: 4 } }))),
-  variation('railgun-eclats', 'railgun', 'Balle à éclats', 'Chaque ennemi traversé projette des éclats autour de lui.', changerA('railgun', (a) => ({ ...V.fragments(a), fragments: { nombre: 4, degats: fois(a, 0.2), vitesse: 160, vie: 0.2 } }))),
-  variation('railgun-surcharge', 'railgun', 'Surcharge', 'Deux fois plus de tirs, un peu moins forts.', changerA('railgun', (a) => ({ ...a, cadence: a.cadence * 0.5, degats: fois(a, 0.6) }))),
+  // (« AMPLIFICATION », À LA PLACE DE « BALLE À ÉCLATS » — Keko, 24/11 : « au lieu de diminuer les dégâts à chaque ennemi
+  // traversé, on les augmente » : +25 % à chacun, le miroir des −25 % — choisi par Keko ; voir `Arme.balle`)
+  variation('railgun-amplification', 'railgun', 'Amplification', 'La balle gagne en force à chaque ennemi traversé.', changerA('railgun', (a) => ({ ...a, balle: a.balle === undefined ? undefined : { ...a.balle, part: 1.25 } }))),
+  // (« TRIPLE RAIL », À LA PLACE DE « SURCHARGE » — Keko, 24/11 : « on supprime Surcharge ; deux autres traits plus petits sont
+  // tirés en plus du principal, ils partent du même endroit avec un angle différent » ; ± 15°, la moitié des dégâts, une
+  // balle moitié moins large — choisis par Keko ; voir `Arme.cotes`)
+  variation('railgun-triple', 'railgun', 'Triple rail', 'Deux balles plus petites partent en éventail de chaque côté.', changerA('railgun', (a) => ({ ...a, cotes: { angle: (15 * Math.PI) / 180, part: 0.5, calibre: 0.5 } }))),
   // L'OBUSIER
   variation('obusier-fragmentation', 'obusier', 'Fragmentation', 'Chaque explosion projette six éclats brûlants tout autour.', changerA('obusier', V.fragments)),
   variation('obusier-incendiaire', 'obusier', 'Incendiaires', 'Les obus enflamment ce qu’ils touchent.', changerA('obusier', V.incendiaire)),

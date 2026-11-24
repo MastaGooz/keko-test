@@ -1160,6 +1160,12 @@ export type Arme = {
   tousSens?: boolean
   gerbe?: { nombre: number; ecart: number }
   /**
+   * DEUX TIRS DE CÔTÉ (la carte « Triple rail » du railgun — Keko, 24/11 : « deux autres traits plus petits sont tirés en
+   * plus du principal, ils partent du même endroit mais avec un angle différent ») : à ± `angle` (en radians) du tir,
+   * `part` de ses dégâts, une balle `calibre` fois la sienne.
+   */
+  cotes?: { angle: number; part: number; calibre: number }
+  /**
    * EN RAFALE (la carte « Rafale » du canon laser, Keko, 23/11 : « à la place de tirer un seul gros laser, l'avion va tirer
    * des rafales de trois lasers ; il faut que le total des trois fasse plus de dégâts que le laser seul ») : `nombre` tirs
    * à la suite, à `intervalle` secondes l'un de l'autre, chacun visant sa cible à nouveau ; puis la cadence de l'arme. Les
@@ -6482,6 +6488,21 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
       const critique = chanceDeCritique(c, arme) > 0 && tire(m.graine, m.prochainId, 12) < chanceDeCritique(c, arme)
       m.obus.push({ id: m.prochainId++, x: x0, y: y0, vx: Math.cos(angle) * vitesseDuTir, vy: Math.sin(angle) * vitesseDuTir, vie: vieDuTir, degats: arme.degats * (critique ? facteurDeCritique(c, arme) : 1), guide: arme.guide, arme: arme.id, critique, ...(arme.infaillible === true && cibleDuTir !== null ? { verrou: cibleDuTir.id } : {}), ...effetsDuTir(arme), ...(arme.napalm === undefined ? {} : { napalm: arme.napalm, vie0: vieDuTir }), ...(arme.plasma === undefined ? {} : { zone: arme.plasma, perce: [], vie0: vieDuTir }), ...(arme.cloche !== undefined ? { cloche: true, vie0: vieDuTir } : {}), ...(arme.minuterie !== undefined ? { minuterie: arme.minuterie.frein, vie0: vieDuTir } : {}), brut: arme.degats })
       if (g === 0) ev.push({ type: 'obus', x: x0, y: y0, arme: arme.id })
+    }
+    // (DEUX TIRS DE CÔTÉ, PLUS PETITS — voir `Arme.cotes` : de la même bouche, à ± `angle` du tir, `part` de ses dégâts, une
+    // balle `calibre` fois plus fine ; chacun son critique, sans verrou)
+    const co = arme.cotes
+    if (co !== undefined) {
+      const bo = arme.bouche
+      for (const s of [-1, 1]) {
+        const angle = vise + s * co.angle
+        const x0 = bo === undefined ? v.x + Math.cos(angle) * (c.rayon + 3) : v.x + Math.cos(v.cap) * bo.x - Math.sin(v.cap) * bo.y
+        const y0 = bo === undefined ? v.y + Math.sin(angle) * (c.rayon + 3) : v.y + Math.sin(v.cap) * bo.x + Math.cos(v.cap) * bo.y
+        const petite = { ...arme, degats: arme.degats * co.part }
+        const critique = critiqueTire(c, m, arme)
+        const effets = effetsDuTir(petite)
+        m.obus.push({ id: m.prochainId++, x: x0, y: y0, vx: Math.cos(angle) * vitesseDuTir, vy: Math.sin(angle) * vitesseDuTir, vie: vieDuTir, degats: petite.degats * (critique ? facteurDeCritique(c, arme) : 1), guide: false, arme: arme.id, critique, ...effets, ...(effets.balle === undefined ? {} : { balle: { ...effets.balle, calibre: effets.balle.calibre * co.calibre } }), brut: petite.degats })
+      }
     }
   })
   // les obus volent (les guidés tournent vers le rival le plus proche, à 3,5 rad/s), touchent le rival, s'écrasent sur une roche
