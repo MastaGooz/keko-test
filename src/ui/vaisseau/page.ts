@@ -14733,7 +14733,17 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         }
         // IL EST PRIS DANS LA GLACE (« Gel profond », Keko, 24/11 — voir `ELEMENTAIRES`) : un bloc de glace bleue translucide
         // autour de lui, cerné de clair, des éclats qui scintillent
-        if ((e.figeA ?? -1) > m.t) {
+        // (IL EST ÉTOURDI — « Étourdissement », Keko, 24/11, voir `Arme.etourdissement` : trois étoiles jaunes qui tournent
+        // au-dessus de lui)
+        if ((e.figeA ?? -1) > m.t && e.fige === 'etourdi') {
+          const r = rayonDe(CONF, e) + 2
+          for (let k = 0; k < 3; k++) {
+            const a = t * 7 + e.id + (k * Math.PI * 2) / 3
+            const ex = sx + Math.cos(a) * r
+            const ey = sy - r * 0.9 + Math.sin(a) * r * 0.35
+            N.sparkle(p, ex, ey, 1.6, N.hex('#ffe46a'), N.hex('#ffb02a'), 0.95)
+          }
+        } else if ((e.figeA ?? -1) > m.t) {
           const r = rayonDe(CONF, e) * 1.5 + 1
           p.disc(sx, sy, r, BLEU_DU_GIVRE, () => 0.32)
           p.ring(sx, sy, r, 1, N.hex('#dff4ff'), 0.75)
@@ -18162,6 +18172,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           }
           break
         case 'fige':
+          // (ÉTOURDI : un coup sourd et des étincelles jaunes — voir `Arme.etourdissement`)
+          if (ev.sorte === 'etourdi') {
+            jouer('frappe', { dx: ev.x - v.x, dy: ev.y - v.y })
+            for (let i = 0; i < 5; i++) {
+              const a = R.range(0, Math.PI * 2)
+              etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(20, 45), Math.sin(a) * R.range(20, 45), R.range(0.15, 0.3), R.next() < 0.5 ? N.WHITE : N.hex('#ffe46a'), 1, 1.5)
+            }
+            break
+          }
           // (PRIS DANS LA GLACE : le craquement du givre et des éclats — voir `ELEMENTAIRES`)
           jouer('gel', { dx: ev.x - v.x, dy: ev.y - v.y })
           for (let i = 0; i < 6; i++) {

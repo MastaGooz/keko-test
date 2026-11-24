@@ -3243,6 +3243,31 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   verifier(`les grenades givrées : la cible est givrée (${avec.cible}) ; la couronne hors de la zone, ${avec.couronne} givrés par les éclats (plusieurs), ${sans.couronne} sans eux (0)`, avec.cible && sans.cible && avec.couronne >= 3 && sans.couronne === 0)
 }
 
+// L'ÉTOURDISSEMENT (Keko, 24/11 — voir `Arme.etourdissement`) : tout critique, la cible et le voisin dans l'explosion sont
+// étourdis 1 s ; la couronne hors de la zone, que seuls les éclats atteignent, ne l'est pas (« l'explosion initiale, pas
+// les fragments ») ; sans critique, personne
+{
+  const etourdis = (critique: number): { zone: number; couronne: number; touchesParEclats: number } => {
+    const grenades = { id: 'grenades', cadence: 99, degats: 34, portee: 110, vitesse: 150, vie: 1.2, dispersion: 0, guide: false, tousSens: true, zone: { rayon: 28 }, minuterie: { duree: 1.2, frein: 3 }, etourdissement: { duree: 1 }, fragments: { nombre: 6, degats: 8, vitesse: 160, vie: 0.25 } }
+    const cfg = { ...VAISSEAU, coque: 1e9, armes: [grenades], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false }, passifs: { ...VAISSEAU.passifs, critique } }
+    const w = nouveauMonde(cfg, 5)
+    w.invasion.prochainA = 1e9
+    const places: [number, number][] = [[90, 0], [90, 15], ...Array.from({ length: 12 }, (_, k): [number, number] => [90 + Math.cos((k / 12) * Math.PI * 2) * 36, Math.sin((k / 12) * Math.PI * 2) * 36])]
+    const es = places.map(([x, y], k): Ennemi => ({ id: 790 + k, corps: { ...nouveauVaisseau(), x, y }, pv: 1e6, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9 }))
+    w.ennemis.push(...es)
+    w.verrou = es[0].id
+    let explose = -1
+    for (let i = 0; i < 400; i++) {
+      for (const ev of avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements) if (ev.type === 'explosionDeZone' && explose < 0) explose = w.t
+      if (explose > 0 && w.t > explose + 0.3) break
+    }
+    const etourdi = (e: Ennemi): boolean => (e.figeA ?? -1) > w.t && e.fige === 'etourdi'
+    return { zone: es.slice(0, 2).filter(etourdi).length, couronne: es.slice(2).filter(etourdi).length, touchesParEclats: es.slice(2).filter((e) => e.pv < 1e6).length }
+  }
+  const [tout, rien] = [etourdis(1), etourdis(0)]
+  verifier(`l'étourdissement : tout critique, ${tout.zone} étourdis dans l'explosion (2) ; la couronne touchée par ${tout.touchesParEclats} éclats, ${tout.couronne} étourdi (0) ; sans critique, ${rien.zone} (0)`, tout.zone === 2 && tout.touchesParEclats >= 3 && tout.couronne === 0 && rien.zone === 0)
+}
+
 // LE TÉLÉGUIDAGE (Keko, 24/11 — voir `Arme.teleguidage`) : une grenade lancée vers un insecte à 90 ; il se déplace à
 // (90, 45) pendant le vol — sans la carte, elle explose à son point d'arrivée, 1,2 s après ; avec, elle fond sur lui et
 // explose à son contact

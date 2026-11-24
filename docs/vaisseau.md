@@ -8982,3 +8982,11 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   1,2 s ; avec, sur lui, à 0,92 s) ; la carte VUE en capture, cinq lignes. LE LANCE-GRENADES : Grenades givrées,
   Fragmentation, Téléguidage, Rafale, Drones, Gros calibre — restent à trancher les trois dernières et sa variation
   critique.
+- ÉTOURDISSEMENT, LA VARIATION CRITIQUE DU LANCE-GRENADES, À LA PLACE DE DRONES (Keko, 24/11 : « les ennemis qui
+  subissent des dégâts critiques des grenades sont étourdis pendant X secondes » ; « l'étourdissement ne peut venir que de
+  l'explosion initiale, pas des fragments de Fragmentation » ; 1 s, la place : Keko) : « Les coups critiques des
+  explosions étourdissent les ennemis. » ; `Arme.etourdissement` — tout insecte que l'explosion frappe d'un critique est
+  figé 1 s (`figer`, sorte « etourdi » : ni pas ni morsure, comme le Gel profond) ; ses éclats n'étourdissent pas. Trois
+  étoiles jaunes tournent au-dessus de lui, un coup sourd. Le contrôle reste au givre : c'est l'arme du givre. Un test
+  (tout critique : les deux de l'explosion étourdis, la couronne touchée par six éclats, aucun ; sans critique, aucun) ;
+  la carte VUE en capture (cinq lignes) ; les étoiles, pas encore vues nettement — les étourdis mouraient trop vite.

@@ -538,7 +538,10 @@ export const MUTATIONS: Mutation[] = [
   // place : Keko — voir `Arme.teleguidage`)
   variation('grenades-teleguidage', 'grenades', 'Téléguidage', 'Les grenades fondent sur les ennemis et explosent au contact.', changerA('grenades', (a) => ({ ...a, teleguidage: { vitesse: 60 } }))),
   variation('grenades-rafale', 'grenades', 'Rafale', 'Cinq grenades à chaque tir.', changerA('grenades', (a) => ({ ...a, gerbe: { nombre: 5, ecart: 0.22 }, degats: fois(a, 0.7) }))),
-  variation('grenades-drones', 'grenades', 'Drones', 'Deux drones en orbite lancent des grenades sur les ennemis proches.', ajouterA('grenades', (a) => drones(a, { cadence: 1.8, degats: fois(a, 0.6), portee: 80, gerbe: undefined }))),
+  // (« ÉTOURDISSEMENT », SA VARIATION SUR COUP CRITIQUE, À LA PLACE DE « DRONES » — Keko, 24/11 : « les ennemis qui subissent
+  // des dégâts critiques des grenades sont étourdis » ; 1 s, la place : Keko ; l'explosion seule, pas les éclats — voir
+  // `Arme.etourdissement`)
+  variation('grenades-etourdissement', 'grenades', 'Étourdissement', 'Les coups critiques des explosions étourdissent les ennemis.', changerA('grenades', (a) => ({ ...a, etourdissement: { duree: 1 } }))),
   variation('grenades-lourdes', 'grenades', 'Gros calibre', 'Des grenades plus lentes, plus fortes, qui explosent plus large.', changerA('grenades', V.lourd)),
   // LA BALISE LASER
   variation('lien-double', 'lien', 'Deux balises', 'Une seconde balise, son propre rayon.', ajouterA('lien', (a) => [ajoutee(a, (a.place ?? 20) + 1, { degats: fois(a, 0.7) })])),
