@@ -9011,3 +9011,6 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   (`synthe.ts`) : un « tonk » sourd et rond qui tombe de 240 à 180 Hz, sans saturation, deux petits tintements (les
   étoiles), une petite pièce ; mesuré, crête 0,10, éteint en 0,17 s (la frappe : 3 s), à peu près le poids du
   craquement du givre ; et UNE FOIS AU PLUS PAR DIXIÈME DE SECONDE (`etourdiSonneA`), comme le givre.
+- « BARRAGE » (Keko, 24/11 : « change le nom Rafale par autre chose, parce que ce n'est pas vraiment une rafale » ; parmi
+  Éventail, Tir de barrage, Arrosage, Demi-lune, il a choisi « Barrage ») : la carte des six grenades en demi-cercle.
+  L'identifiant reste `grenades-rafale`.

@@ -545,8 +545,9 @@ export const MUTATIONS: Mutation[] = [
   variation('grenades-teleguidage', 'grenades', 'Téléguidage', 'Les grenades fondent sur les ennemis et explosent au contact.', changerA('grenades', (a) => ({ ...a, teleguidage: { vitesse: 60 } }))),
   // (RAFALE EN DEMI-CERCLE — Keko, 24/11 : « une variation qui lancerait 6 grenades à la place de 3, dans un éventail
   // beaucoup plus large » ; à la place de l'ancienne Rafale — cinq grenades serrées — ; 70 % chacune, un demi-cercle :
-  // Keko — six grenades à 36° l'une de l'autre, 180° en tout, centrées sur la visée)
-  variation('grenades-rafale', 'grenades', 'Rafale', 'Six grenades à chaque tir, en demi-cercle.', changerA('grenades', (a) => ({ ...a, gerbe: { nombre: 6, ecart: Math.PI / 5 }, degats: fois(a, 0.7) }))),
+  // Keko — six grenades à 36° l'une de l'autre, 180° en tout, centrées sur la visée) (« BARRAGE » — Keko, 24/11 : « change
+  // le nom Rafale, ce n'est pas vraiment une rafale »)
+  variation('grenades-rafale', 'grenades', 'Barrage', 'Six grenades à chaque tir, en demi-cercle.', changerA('grenades', (a) => ({ ...a, gerbe: { nombre: 6, ecart: Math.PI / 5 }, degats: fois(a, 0.7) }))),
   // (« ÉTOURDISSEMENT », SA VARIATION SUR COUP CRITIQUE, À LA PLACE DE « DRONES » — Keko, 24/11 : « les ennemis qui subissent
   // des dégâts critiques des grenades sont étourdis » ; 1 s, la place : Keko ; l'explosion seule, pas les éclats — voir
   // `Arme.etourdissement`)
