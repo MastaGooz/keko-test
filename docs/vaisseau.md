@@ -8934,3 +8934,14 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   groupe, où il n'y a pas forcément d'insecte : les deux tirent en sens contraire, c'est un choix de build. Un test (la
   cible 180, le voisin à 30, 60 ; sans la carte, 60 et 60) ; la carte VUE en capture. L'OBUSIER : Incendiaires,
   Fragmentation, Réplique, Triangulation, Épicentre, Gros calibre.
+- ONDE DE CHOC, À LA PLACE DE GROS CALIBRE (Keko, 24/11 : Gros calibre « n'apporte pas vraiment une richesse au
+  gameplay : l'augmentation de zone peut déjà avoir un effet là-dessus » ; « l'explosion de l'obus libère une onde de
+  choc qui se déplace sur une distance beaucoup plus grande, en faisant un petit peu moins mal ») : « Chaque explosion
+  libère une large onde de choc. » ; `Arme.onde` = { portee 3, part 0,3, duree 0,5 }, `Monde.ondes`, `menerLesOndes` —
+  un anneau part du centre de chaque explosion d'obus et s'étend jusqu'à trois fois sa zone (120, et plus avec les
+  cartes « Portée ») en 0,5 s ; chaque insecte qu'il atteint prend 30 % des dégâts de la zone, une fois — ceux de
+  l'explosion aussi —, avec l'élément du tir (Incendiaires : il enflamme) et son propre critique, qui ne déclenche pas
+  la Réplique ; les mini-obus de la grappe n'en lâchent pas (120, 30 %, 0,5 s, « son élément seulement » : Keko). Dessin :
+  un anneau clair doublé d'un plus pâle, qui s'efface en arrivant. Un test (la cible 78, un insecte à 80 : 18 au bout de
+  0,33 s, et il brûle ; à 140, rien) ; VU en capture. L'OBUSIER A SES SIX : Incendiaires, Fragmentation, Réplique,
+  Triangulation, Épicentre, Onde de choc.

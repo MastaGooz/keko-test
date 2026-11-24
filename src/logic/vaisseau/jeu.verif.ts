@@ -3219,6 +3219,30 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   verifier(`l'épicentre : la cible prend ${avec[0]} (180), le voisin à 30 ${avec[1]} (60) ; sans la carte, ${sans.join(' et ')} (60 et 60)`, avec[0] === 180 && avec[1] === 60 && sans[0] === 60 && sans[1] === 60)
 }
 
+// L'ONDE DE CHOC (Keko, 24/11 — voir `Arme.onde`) : l'explosion de 60 sur 40 libère une onde jusqu'à 120 (3 × 40) en
+// 0,5 s, à 30 % : la cible prend 60 + 18 ; un insecte à 80, hors de l'explosion, 18, un peu après, et il brûle
+// (Incendiaires) ; un à 140, rien ; l'onde s'éteint
+{
+  const obusier = { id: 'obusier', cadence: 99, degats: 60, portee: 150, vitesse: 110, vie: 2.2, dispersion: 0, guide: false, tousSens: true, zone: { rayon: 40 }, cloche: { vol: 0.8 }, incendiaire: { duree: 3, dps: 0 }, onde: { portee: 3, part: 0.3, duree: 0.5 } }
+  const cfg = { ...VAISSEAU, coque: 1e9, armes: [obusier], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false }, passifs: { ...VAISSEAU.passifs, critique: 0 } }
+  const w = nouveauMonde(cfg, 5)
+  w.invasion.prochainA = 1e9
+  const es = [[120, 0], [120, 80], [120, 140]].map(([x, y], k): Ennemi => ({ id: 697 + k, corps: { ...nouveauVaisseau(), x, y }, pv: 1e6, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9 }))
+  w.ennemis.push(...es)
+  w.verrou = es[0].id
+  let explosionA = -1
+  let mediane = -1
+  for (let i = 0; i < 60 * 3; i++) {
+    const avant = es[1].pv
+    for (const ev of avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements) if (ev.type === 'explosionDeZone' && explosionA < 0) explosionA = w.t
+    if (avant === 1e6 && es[1].pv < 1e6) mediane = w.t
+    if (explosionA > 0 && w.t > explosionA + 0.6) break
+  }
+  const pris = es.map((e) => 1e6 - e.pv)
+  const brule = (es[1].bruleA ?? -1) > w.t
+  verifier(`l'onde de choc : la cible prend ${pris[0]} (78), celui à 80 ${pris[1]} (18) ${(mediane - explosionA).toFixed(2)} s après l'explosion (vers 0,3) et brûle (${brule}), celui à 140 ${pris[2]} (0) ; ${w.ondes.length} onde reste (0)`, pris[0] === 78 && pris[1] === 18 && mediane - explosionA > 0.2 && mediane - explosionA < 0.4 && brule && pris[2] === 0 && w.ondes.length === 0)
+}
+
 // L'OBUS INCENDIAIRE (Keko, 24/11 : « on garde les dégâts et on inflige enflammé en plus ») : l'explosion blesse comme
 // avant ET enflamme tout ce qui est dans sa zone — la cible et son voisin à 30 ; celui à 70, hors de la zone de 40, rien
 {

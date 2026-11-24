@@ -12,7 +12,7 @@
  */
 import './vaisseau.css'
 import * as noyau from 'pixelfx'
-import { ELEMENTAIRES, anneauMagnetique, ennemisDuLien, ajouterUnPilote, avancerLEquipage, prendreLaMain, type SorteDInsecte, SORTES_D_INSECTES, gabaritDInsecte, gemmesDuButin, butinDeLaRoche, pointDeRetour, rayonDe, rocheDeLaTempete, vieMultipliee, degatsMultiplies, placeDeLEcharde, frontDeLaNova, ancreDansLeMonde, zoneDuDe, coupeDUnCube, formeDeLaCoupe, liesAuDrain, encaisser, type Ennemi, type Evenement, type Monde, impactDuRayon, asteroidesVisibles, avancerLeMonde, finDuTrio, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur, xpDuNiveau, ennemiLePlusProche, ennemiVerrouille, verrouiller, angleDuBalayage, aPlusieurs, alliesAuRetour, recompenseDeFin, type LigneDeRecompense } from '../../logic/vaisseau/jeu.ts'
+import { ELEMENTAIRES, anneauMagnetique, rayonDeLOnde, ennemisDuLien, ajouterUnPilote, avancerLEquipage, prendreLaMain, type SorteDInsecte, SORTES_D_INSECTES, gabaritDInsecte, gemmesDuButin, butinDeLaRoche, pointDeRetour, rayonDe, rocheDeLaTempete, vieMultipliee, degatsMultiplies, placeDeLEcharde, frontDeLaNova, ancreDansLeMonde, zoneDuDe, coupeDUnCube, formeDeLaCoupe, liesAuDrain, encaisser, type Ennemi, type Evenement, type Monde, impactDuRayon, asteroidesVisibles, avancerLeMonde, finDuTrio, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur, xpDuNiveau, ennemiLePlusProche, ennemiVerrouille, verrouiller, angleDuBalayage, aPlusieurs, alliesAuRetour, recompenseDeFin, type LigneDeRecompense } from '../../logic/vaisseau/jeu.ts'
 import { PIECES, ETALONS as ETALONS_DU_BANC, acheter, ajouterLesPiecesDEssai, capacite, poidsTotal, POIDS_SERIE, configDuHangar, demonter, demonterA, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, montantCourt, monteeA, monter, monterA, peutAcheter, peutMonter, perdreLesMontees, estDeBase, exemplaires, libres, pieceDe, piecesDe, placeLourde, possede, aimantMonte, radarMonte, type Jauge, type Piece, type Sorte } from '../../logic/vaisseau/hangar.ts'
 import { drawWord, spell } from 'pixelfx/fx/ui/_lib'
 import { firePuff, hotFirst, smokePuff } from 'pixelfx/fx/fire/_lib'
@@ -10594,6 +10594,17 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     return { h: Math.sin(Math.PI * u) * haut, dh: (Math.cos(Math.PI * u) * Math.PI * haut) / vie0 }
   }
   function dessinerLesConsumes(p: Peintre): void {
+    // (LES ONDES DE CHOC DE L'OBUSIER — voir `Arme.onde` : un anneau clair qui s'étend jusqu'à sa portée, doublé d'un second
+    // plus pâle juste derrière, et une lueur chaude au front ; il s'efface en arrivant)
+    for (const o of m.ondes) {
+      const r = rayonDeLOnde(o, m.t)
+      const u = r / Math.max(1, o.portee)
+      const ox = o.x - camera.x + W / 2
+      const oy = o.y - camera.y + centreY()
+      const k = 1 - u * u
+      p.ring(ox, oy, r, 1, u < 0.2 ? N.hex('#fff2a8') : FEU[4], 0.85 * k)
+      if (r > 4) p.ring(ox, oy, r - 3, 1, FEU[3], 0.35 * k)
+    }
     ondesDeZone = ondesDeZone.filter((o) => t - o.t0 < 0.25)
     for (const o of ondesDeZone) {
       const u = (t - o.t0) / 0.25

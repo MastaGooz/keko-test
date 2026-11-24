@@ -504,7 +504,10 @@ export const MUTATIONS: Mutation[] = [
   // grand nombre d'ennemis » ; Drones ajoutait une attaque à côté au lieu de changer le tir ; le nom : Keko — voir
   // `Arme.triangulation`)
   variation('obusier-triangulation', 'obusier', 'Triangulation', 'Les obus visent toujours le plus gros groupe d’ennemis.', changerA('obusier', (a) => ({ ...a, triangulation: true }))),
-  variation('obusier-lourd', 'obusier', 'Gros calibre', 'Des obus plus lents à venir, plus forts, qui explosent plus large.', changerA('obusier', V.lourd)),
+  // (« ONDE DE CHOC », À LA PLACE DE « GROS CALIBRE » — Keko, 24/11 : Gros calibre « n'apporte pas vraiment une richesse au
+  // gameplay : l'augmentation de zone peut déjà avoir un effet là-dessus » ; « l'explosion libère une onde de choc qui se
+  // déplace sur une distance beaucoup plus grande » ; 120, 30 %, 0,5 s : Keko — voir `Arme.onde`)
+  variation('obusier-onde', 'obusier', 'Onde de choc', 'Chaque explosion libère une large onde de choc.', changerA('obusier', (a) => ({ ...a, onde: { portee: 3, part: 0.3, duree: 0.5 } }))),
   // L'ARC TESLA
   variation('tesla-rebonds', 'tesla', 'Orage', 'La bobine foudroie trois ennemis de plus à chaque décharge.', changerA('tesla', (a) => ({ ...a, sphere: a.sphere === undefined ? undefined : { ...a.sphere, foudre: { ...a.sphere.foudre, cibles: (a.sphere.foudre?.cibles ?? 3) + 3 } } }))),
   // (« CONDUCTION », À LA PLACE D'« INCENDIAIRE » — Keko, 24/11 : « l'arc rebondit sur 2 autres cibles, en mode chaîne

@@ -683,6 +683,15 @@ export type Arme = {
    */
   epicentre?: { rayon: number; facteur: number }
   /**
+   * L'ONDE DE CHOC (l'Obusier, Keko, 24/11 : « l'explosion de l'obus libère une onde de choc qui se déplace sur une
+   * distance beaucoup plus grande, en faisant un petit peu moins mal qu'une vraie explosion d'obus ») : à chaque
+   * explosion, un anneau part de son centre et s'étend jusqu'à `portee` fois le rayon de la zone en `duree` secondes ;
+   * chaque insecte qu'il traverse prend `part` des dégâts de la zone, une fois, avec l'élément du tir — ses critiques ne
+   * déclenchent pas la Réplique ; les mini-obus de la grappe n'en lâchent pas (« jusqu'à 120 — trois fois 40 —, 30 %,
+   * en 0,5 s, son élément seulement » : Keko). L'état est `Monde.ondes`.
+   */
+  onde?: { portee: number; part: number; duree: number }
+  /**
    * À RETARDEMENT (le Lance-grenades de l'Empire, Keko, 23/11 : « l'idée du compte à rebours me plaît beaucoup : trois
    * petites grenades, qui clignotent en rouge pour indiquer le timer, et leur clignotement s'intensifie jusqu'à
    * exploser » — sans rebond : « on est dans l'espace ; seul l'hypercube peut rebondir sur l'espace-temps ») : le tir ne
@@ -1357,7 +1366,7 @@ export type Choc = { x: number; y: number; force: number; asteroide: number; /**
 /** (un trait du rival armé porte les dégâts de son arme, son nom, et s'il est guidé — absents : le trait d'avant, un point) */
 export type Tir = { id: number; x: number; y: number; vx: number; vy: number; vie: number; degats?: number; guide?: boolean; arme?: string }
 /** Un obus du joueur : un trait qui porte des dégâts, de l'arme qui l'a tiré ; guidé, il tourne vers le rival. */
-export type Obus = Tir & { degats: number; guide: boolean; arme: string; /** Ses ricochets qui restent (voir `Arme.ricochet`), ceux qu'il a déjà touchés (il ne les retouche pas en repartant). */ rebonds?: { n: number; portee: number; part: number }; deja?: number[]; /** Ses dégâts sans le coup critique : un rebond retire le sien (voir `Arme.ricochet`). */ brut?: number; /** Ce qu'il enflamme (voir `Arme.incendiaire`). */ brule?: { duree: number; dps: number }; /** Les éclats de son explosion (voir `Arme.fragments`). */ fragments?: { nombre: number; degats: number; vitesse: number; vie: number }; /** L'insecte auquel il est accroché (voir `Arme.infaillible`). */ verrou?: number; /** Un coup critique (le passif du labo) : ses dégâts sont déjà multipliés. */ critique?: boolean; /** Il explose (voir `Arme.zone`) ; son cœur frappe plus fort (voir `Arme.epicentre`). */ zone?: { rayon: number; degats: number; coeur?: { rayon: number; facteur: number } }; /** Il gèle ce qu'il touche (voir `Arme.gel`). */ gel?: { duree: number; ralenti: number }; /** Il ronge ce qu'il touche (voir `Arme.corrosif`). */ ronge?: { duree: number; bonus: number }; /** Il électrocute ce qu'il touche (voir `Arme.electrocution`). */ electrocution?: { duree: number; chance: number; degats: number; saut: number }; /** Il détone sur un coup critique (voir `Arme.detonation`). */ detonation?: { rayon: number; part: number }; /** Critique, il exécute (voir `Arme.execute`). */ execute?: boolean; /** Il laisse un sillon (voir `Arme.sillon`) : sa durée, ce qu'il fait par seconde, sa largeur, son gel. */ sillon?: { duree: number; dps: number; largeur: number; gel?: { duree: number; ralenti: number }; electrocution?: { duree: number; chance: number; degats: number; saut: number } }; /** Il traverse (voir `Arme.salve`) : les insectes déjà touchés. */ perce?: number[]; /** Une balle de railgun (voir `Arme.balle`) : la part de ses dégâts qu'elle garde à chaque insecte traversé, son calibre. */ balle?: { part: number; calibre: number }; /** Il se brise au premier insecte touché en petits fragments, en cône derrière lui (voir `Arme.salve`). */ eclatement?: { nombre: number; cone: number; vitesse: number; vie: number; degats: number }; /** Un missile d'essaim (voir `Arme.essaim`) : sa cible, sa naissance, sa vitesse de départ, et comment il fonce. */ traque?: { cible: number; nee: number; v0: number; acces: number; pointe: number; braquage: number; chaos: number; pas: number; calme: number; reprise: number; /** L'instant où il a repris une autre cible (la sienne morte) : son chaos repart de là. */ depuis?: number }; /** Une boule de napalm, lancée en cloche (voir `Arme.napalm`) : sa durée de vol au départ ; elle ne touche rien en vol. */ napalm?: { rayon: number; duree: number; dps: number; brulure: number; dpsBrulure: number }; vie0?: number; /** Un obus tiré en cloche (voir `Arme.cloche`) : il ne touche rien en vol, il explose en retombant. */ cloche?: boolean; /** Une grenade à retardement (voir `Arme.minuterie`) : son frein par seconde ; elle ne touche rien, elle explose au bout de sa vie. */ minuterie?: number; /** Il lâche des mini-obus au sommet de sa cloche (voir `Arme.grappe`). */ grappe?: { nombre: number; part: number; zone: number; ecart: number }; /** Ses critiques d'explosion en déclenchent de petites (voir `Arme.replique`). */ replique?: { rayon: number; part: number }; /** Sa taille à l'écran (un mini-obus de la grappe : 0,6). */ taille?: number; /** Son élément gagne toute sa zone quand il éclate, même au contact (l'obusier et ses drones — voir `elementsDansLaZone`). */ embrase?: boolean }
+export type Obus = Tir & { degats: number; guide: boolean; arme: string; /** Ses ricochets qui restent (voir `Arme.ricochet`), ceux qu'il a déjà touchés (il ne les retouche pas en repartant). */ rebonds?: { n: number; portee: number; part: number }; deja?: number[]; /** Ses dégâts sans le coup critique : un rebond retire le sien (voir `Arme.ricochet`). */ brut?: number; /** Ce qu'il enflamme (voir `Arme.incendiaire`). */ brule?: { duree: number; dps: number }; /** Les éclats de son explosion (voir `Arme.fragments`). */ fragments?: { nombre: number; degats: number; vitesse: number; vie: number }; /** L'insecte auquel il est accroché (voir `Arme.infaillible`). */ verrou?: number; /** Un coup critique (le passif du labo) : ses dégâts sont déjà multipliés. */ critique?: boolean; /** Il explose (voir `Arme.zone`) ; son cœur frappe plus fort (voir `Arme.epicentre`). */ zone?: { rayon: number; degats: number; coeur?: { rayon: number; facteur: number } }; /** Il gèle ce qu'il touche (voir `Arme.gel`). */ gel?: { duree: number; ralenti: number }; /** Il ronge ce qu'il touche (voir `Arme.corrosif`). */ ronge?: { duree: number; bonus: number }; /** Il électrocute ce qu'il touche (voir `Arme.electrocution`). */ electrocution?: { duree: number; chance: number; degats: number; saut: number }; /** Il détone sur un coup critique (voir `Arme.detonation`). */ detonation?: { rayon: number; part: number }; /** Critique, il exécute (voir `Arme.execute`). */ execute?: boolean; /** Il laisse un sillon (voir `Arme.sillon`) : sa durée, ce qu'il fait par seconde, sa largeur, son gel. */ sillon?: { duree: number; dps: number; largeur: number; gel?: { duree: number; ralenti: number }; electrocution?: { duree: number; chance: number; degats: number; saut: number } }; /** Il traverse (voir `Arme.salve`) : les insectes déjà touchés. */ perce?: number[]; /** Une balle de railgun (voir `Arme.balle`) : la part de ses dégâts qu'elle garde à chaque insecte traversé, son calibre. */ balle?: { part: number; calibre: number }; /** Il se brise au premier insecte touché en petits fragments, en cône derrière lui (voir `Arme.salve`). */ eclatement?: { nombre: number; cone: number; vitesse: number; vie: number; degats: number }; /** Un missile d'essaim (voir `Arme.essaim`) : sa cible, sa naissance, sa vitesse de départ, et comment il fonce. */ traque?: { cible: number; nee: number; v0: number; acces: number; pointe: number; braquage: number; chaos: number; pas: number; calme: number; reprise: number; /** L'instant où il a repris une autre cible (la sienne morte) : son chaos repart de là. */ depuis?: number }; /** Une boule de napalm, lancée en cloche (voir `Arme.napalm`) : sa durée de vol au départ ; elle ne touche rien en vol. */ napalm?: { rayon: number; duree: number; dps: number; brulure: number; dpsBrulure: number }; vie0?: number; /** Un obus tiré en cloche (voir `Arme.cloche`) : il ne touche rien en vol, il explose en retombant. */ cloche?: boolean; /** Une grenade à retardement (voir `Arme.minuterie`) : son frein par seconde ; elle ne touche rien, elle explose au bout de sa vie. */ minuterie?: number; /** Il lâche des mini-obus au sommet de sa cloche (voir `Arme.grappe`). */ grappe?: { nombre: number; part: number; zone: number; ecart: number }; /** Ses critiques d'explosion en déclenchent de petites (voir `Arme.replique`). */ replique?: { rayon: number; part: number }; /** Sa taille à l'écran (un mini-obus de la grappe : 0,6). */ taille?: number; /** Son élément gagne toute sa zone quand il éclate, même au contact (l'obusier et ses drones — voir `elementsDansLaZone`). */ embrase?: boolean; /** Son explosion libère une onde de choc (voir `Arme.onde`). */ onde?: { portee: number; part: number; duree: number } }
 /** Une bombe en vol (la capacité active d'essai). */
 export type Bombe = Tir
 /** Le rival : un vaisseau comme l'autre, des points, ce qu'il fait, sa roche, son laser, son prochain tir, son butin. */
@@ -1525,6 +1534,8 @@ export type Monde = {
   faisceaux: { arme: number; cible: number; nee: number; dps: number; /** Ses rebonds de l'image (voir `Arme.concentre`). */ chaine?: number[] }[]
   /** LES SILLONS ÉLECTRIQUES (voir `Arme.sillon`) : un par balle, sa course en segments, sa naissance, ce qu'il fait. */
   sillons: Sillon[]
+  /** LES ONDES DE CHOC (voir `Arme.onde`) : leur centre, leur naissance, jusqu'où et à quelle vitesse, ce qu'elles font, qui elles ont déjà frappé. */
+  ondes: OndeDeChoc[]
   /** LES SCIES EN VOL (voir `Arme.scie`) ; une arme dont la scie n'y est pas l'a à bord. */
   scies: Scie[]
   /** LES BALISES POSÉES (voir `Arme.balise`). */
@@ -1770,6 +1781,8 @@ export type Evenement =
   | { type: 'feuPropage'; de: number; vers: number; x0: number; y0: number; x1: number; y1: number }
   /** Un obus en grappe lâche ses mini-obus au sommet de sa cloche (voir `Arme.grappe`). */
   | { type: 'grappe'; x: number; y: number; vie0: number }
+  /** Une onde de choc part d'une explosion (voir `Arme.onde`). */
+  | { type: 'ondeDeChoc'; x: number; y: number; portee: number; duree: number }
   /** Une boule tesla finit en décharge (« Court-circuit » — voir `Arme.sphere.court`). */
   | { type: 'courtCircuit'; x: number; y: number; rayon: number }
   /** Une boule tesla se charge d'un coup critique (« Accumulateur » — voir `Arme.sphere.accumulateur`). */
@@ -1798,7 +1811,7 @@ export function nouveauVaisseau(): Vaisseau {
 }
 
 export function nouveauMonde(c: ConfigVaisseau = VAISSEAU, graine = 1): Monde {
-  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, coqueMax: c.coque, tableau: tableauVide(), bouclier: c.bouclier.points, plaques: Array.from({ length: c.plaques }, () => true), intouchableJusque: -1, corruption: 0, dephaseJusque: -100, plaqueCasseeA: 0, renaitJusque: -100, rochesPrises: [], toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, prochaineDeriveA: c.derive.premier, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, vies: c.invasion.vies, miniBoss: 0, boss: 0, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, harpons: [], rafales: [], rafaleDesAiles: 0, salveDesAiles: -1e9, faisceaux: [], sillons: [], balisesLaser: [], scies: [], balises: [], givres: [], tornades: [], novas: [], echardes: [], spheres: [], puits: [], meteores: [], tentacules: [], nuees: [], rejetons: [], flaquesAcides: [], mines: [], fleaux: [], parasites: [], vrilles: [], liens: [], oeufs: [], brochettes: [], miniVers: [], hypercubes: [], des: [], coupes: [], rayonVu: null }
+  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, coqueMax: c.coque, tableau: tableauVide(), bouclier: c.bouclier.points, plaques: Array.from({ length: c.plaques }, () => true), intouchableJusque: -1, corruption: 0, dephaseJusque: -100, plaqueCasseeA: 0, renaitJusque: -100, rochesPrises: [], toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, prochaineDeriveA: c.derive.premier, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, vies: c.invasion.vies, miniBoss: 0, boss: 0, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, harpons: [], rafales: [], rafaleDesAiles: 0, salveDesAiles: -1e9, faisceaux: [], sillons: [], ondes: [], balisesLaser: [], scies: [], balises: [], givres: [], tornades: [], novas: [], echardes: [], spheres: [], puits: [], meteores: [], tentacules: [], nuees: [], rejetons: [], flaquesAcides: [], mines: [], fleaux: [], parasites: [], vrilles: [], liens: [], oeufs: [], brochettes: [], miniVers: [], hypercubes: [], des: [], coupes: [], rayonVu: null }
 }
 
 /** Un hachage entier déterministe (celui de pixelfx), et un réel dans [0, 1) qui en sort. */
@@ -5578,6 +5591,31 @@ function concentrerLesFaisceaux(c: ConfigVaisseau, m: Monde, dt: number, ev: Eve
     return e.pv > 0
   })
 }
+/** UNE ONDE DE CHOC (voir `Arme.onde`). */
+export type OndeDeChoc = { x: number; y: number; nee: number; portee: number; duree: number; degats: number; arme: string; deja: number[]; brule?: { duree: number; dps: number }; gel?: { duree: number; ralenti: number }; electrocution?: { duree: number; chance: number; degats: number; saut: number } }
+/** Le rayon d'une onde de choc à l'instant `t` : elle grandit à vitesse constante jusqu'à sa portée. */
+export function rayonDeLOnde(o: OndeDeChoc, t: number): number {
+  return Math.min(o.portee, (o.portee * (t - o.nee)) / Math.max(0.01, o.duree))
+}
+/** LES ONDES DE CHOC (voir `Arme.onde`) : chacune frappe une fois chaque insecte que son anneau atteint, puis s'éteint à sa portée. */
+function menerLesOndes(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
+  m.ondes = m.ondes.filter((o) => {
+    const r = rayonDeLOnde(o, m.t)
+    const a = c.armes.find((x) => x.id === o.arme)
+    for (const e of [...m.ennemis]) {
+      if (e.asteroide !== undefined || o.deja.includes(e.id) || Math.hypot(e.corps.x - o.x, e.corps.y - o.y) - rayonDe(c, e) > r) continue
+      o.deja.push(e.id)
+      if (o.gel !== undefined) geler(c, m, e, o.gel.duree, o.gel.ralenti, ev, true)
+      if (o.brule !== undefined) enflammer(c, m, e, o.brule)
+      if (o.electrocution !== undefined) electrocuter(c, m, e, o.electrocution, ev, true)
+      const critique = critiqueTire(c, m, a, e)
+      e.pv -= o.degats * (critique ? facteurSur(c, m, a, e) : 1)
+      ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })
+      if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
+    }
+    return r < o.portee && m.phase === 'vol'
+  })
+}
 /** UN SILLON ÉLECTRIQUE (voir `Arme.sillon`) : la balle qui le trace, sa course, sa naissance et sa durée, ce qu'il fait, son gel. */
 // (`parSegment` : chaque bout s'éteint `duree` après sa pose, `t` — la traînée d'une boule tesla, voir `Arme.sphere.trainee`)
 export type Sillon = { parSegment?: boolean; balle: number; segments: { x0: number; y0: number; x1: number; y1: number; t?: number }[]; nee: number; duree: number; dps: number; largeur: number; gel?: { duree: number; ralenti: number }; electrocution?: { duree: number; chance: number; degats: number; saut: number } }
@@ -5946,6 +5984,7 @@ function effetsDuTir(a: Arme): Partial<Obus> {
     ...(a.fragments === undefined ? {} : { fragments: { ...a.fragments } }),
     ...(a.grappe === undefined ? {} : { grappe: { ...a.grappe } }),
     ...(a.replique === undefined ? {} : { replique: { ...a.replique } }),
+    ...(a.onde === undefined ? {} : { onde: { ...a.onde } }),
     // (une arme de l'obusier — ses drones compris, qui gardent sa cloche — : son élément gagne toute sa zone)
     ...(a.cloche === undefined ? {} : { embrase: true }),
     ...(a.gel === undefined ? {} : { gel: { ...a.gel } }),
@@ -6571,6 +6610,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   concentrerLesFaisceaux(c, m, dt, ev)
   menerLesBalisesLaser(c, m, dt, ev)
   menerLesSillons(c, m, dt, ev)
+  menerLesOndes(c, m, ev)
   mener_L_Electricite(c, m, dt, ev)
   menerLesScies(c, m, dt, ev)
   menerLesBalises(c, m, dt, ev)
@@ -6797,6 +6837,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
         const ty = cy + Math.sin(an) * o.zone.rayon * gr.ecart
         const mini: Obus = { ...o, id: m.prochainId++, vx: (tx - o.x) / reste, vy: (ty - o.y) / reste, vie: reste, degats: o.degats * gr.part, zone: { rayon: o.zone.rayon * gr.zone, degats: o.zone.degats * gr.part, ...(o.zone.coeur === undefined ? {} : { coeur: { ...o.zone.coeur, rayon: o.zone.coeur.rayon * gr.zone } }) }, taille: 0.6 }
         delete mini.verrou
+        delete mini.onde
         m.obus.push(mini)
       }
       ev.push({ type: 'grappe', x: o.x, y: o.y, vie0: o.vie0 })
@@ -6974,6 +7015,12 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
       const critiques = exploser(c, m, o.x, o.y, o.zone, null, ev, o.arme)
       if (o.fragments !== undefined) fragmenter(m, o.x, o.y, o.fragments, null)
       repliquer(c, m, o, critiques, ev)
+      // (L'ONDE DE CHOC part de l'explosion — voir `Arme.onde`)
+      const od = o.onde
+      if (od !== undefined) {
+        m.ondes.push({ x: o.x, y: o.y, nee: m.t, portee: o.zone.rayon * od.portee, duree: od.duree, degats: o.zone.degats * od.part, arme: o.arme, deja: [], ...(o.brule === undefined ? {} : { brule: o.brule }), ...(o.gel === undefined ? {} : { gel: o.gel }), ...(o.electrocution === undefined ? {} : { electrocution: o.electrocution }) })
+        ev.push({ type: 'ondeDeChoc', x: o.x, y: o.y, portee: o.zone.rayon * od.portee, duree: od.duree })
+      }
     }
     if (fini) m.obus.splice(i, 1)
   }
