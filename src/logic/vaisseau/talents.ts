@@ -429,7 +429,9 @@ export const MUTATIONS: Mutation[] = [
   // (CORROSIF, À LA PLACE DE CRYOGÉNIQUE — Keko, 23/11 : « plutôt que cryogénie, on va donner un effet corrosif au laser » :
   // ce qu'il touche est rongé 3 s, il perd 35 % de plus de toutes les sources — la corrosion des mines de la Vouivre ; voir
   // `Arme.corrosif`)
-  variation('laser-corrosif', 'laser', 'Corrosion', 'Les tirs appliquent corrosion.', changerA('laser', (a) => ({ ...a, corrosif: { duree: 3, bonus: CORROSION_DU_VORTEX } }))),
+  // (« LASER ACIDE » — Keko, 24/11 : elle s'appelait « Corrosion », comme la carte de l'état ; « il faudrait trouver un autre
+  // nom pour la carte de corrosion du laser »)
+  variation('laser-corrosif', 'laser', 'Laser acide', 'Les tirs appliquent corrosion.', changerA('laser', (a) => ({ ...a, corrosif: { duree: 3, bonus: CORROSION_DU_VORTEX } }))),
   // LA MITRAILLEUSE
   variation('mitraille-jumelee', 'mitraille', 'Canons jumelés', 'Chaque tir part en double : deux balles côte à côte.', changerA('mitraille', V.gerbe(2, 0.12, 0.7))),
   variation('mitraille-tourelle', 'mitraille', 'Tourelle', 'Une mitrailleuse arrose tout autour du vaisseau.', ajouterA('mitraille', (a) => [ajoutee(a, 9, { cadence: a.cadence * 0.9, degats: fois(a, 0.6), portee: a.portee * 0.9 })])),
@@ -450,7 +452,9 @@ export const MUTATIONS: Mutation[] = [
   variation('railgun-execution', 'railgun', 'Exécution', 'Les coups critiques tuent instantanément les ennemis faibles.', changerA('railgun', (a) => ({ ...a, execute: true }))),
   // (CRYOGÉNIQUE, SON ÉLÉMENT — Keko, 23/11 : « le même texte que le laser corrosif, en remplaçant corrosion par gel »)
   // (puis « givre » : l'état s'appelle Givre partout — Keko, 24/11)
-  variation('railgun-cryo', 'railgun', 'Cryogénique', 'Les tirs appliquent givre.', changerA('railgun', V.cryo)),
+  // (PUIS ÉLECTRIQUE — Keko, 24/11 : « qu'à la place, elle applique l'état d'électricité » : son élément est l'électrocution,
+  // à ses chiffres du vortex — voir `ELECTROCUTION_DU_VORTEX` ; son sillon électrocute aussi)
+  variation('railgun-electrique', 'railgun', 'Électrique', 'Les tirs appliquent électrocution.', changerA('railgun', (a) => ({ ...a, electrocution: { ...ELECTROCUTION_DU_VORTEX } }))),
   variation('railgun-large', 'railgun', 'Gros calibre', 'Une balle deux fois et demie plus grosse, qui touche plus large.', changerA('railgun', (a) => ({ ...a, balle: a.balle === undefined ? undefined : { ...a.balle, calibre: a.balle.calibre * 2.5 } }))),
   // (LE SILLON, À LA PLACE DU RAIL JUMEAU — Keko, 23/11 : « la traînée du railgun laisse un sillon électrique, et de gel si
   // on a Cryogénie » ; le Rail jumeau ajoutait une arme à côté au lieu de changer le tir : 2 s, 30 % des dégâts par

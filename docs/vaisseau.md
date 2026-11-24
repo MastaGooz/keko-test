@@ -8665,3 +8665,16 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     Sentinelle (`COULEURS_VOLT`) ; l'arc qui saute, un éclair bref accroché aux deux insectes, des étincelles, le « zap »
     des drones. VU en capture : la carte tient en quatre lignes ; les arcs blancs se lisent sur les insectes violets, la
     lueur peu.
+- SEUL UN COUP ÉLECTRIQUE FAIT SAUTER L'ARC (Keko, 24/11 : « il faut que ce soit des dégâts électriques qui soient
+  infligés ; si j'inflige des dégâts corrosifs à une cible sous électrocution, l'effet ne se déclenche pas ») : plus
+  n'importe quel `ennemiTouche` — le coup d'une arme qui électrocute (un arc de drone, un maillon de chaîne, une balle du
+  railgun Électrique), sur un insecte qui l'était déjà (`electrocuter(…, direct)`, l'événement `coupElectrique`). La
+  tempête et le sillon électrocutent sans cesse : ils ne font pas sauter d'arc ; l'arc non plus. Un insecte tué par le
+  coup électrique fait quand même sauter le sien, de là où il était. Un test : un canon qui ronge sur un électrocuté, 0 arc.
+- LA CARTE DE CORROSION DU LASER S'APPELLE « LASER ACIDE » (Keko, 24/11 : « il faudrait trouver un autre nom » — elle
+  s'appelait « Corrosion », comme la carte de l'état ; choisi parmi quatre). L'identifiant reste `laser-corrosif`.
+- CRYOGÉNIQUE (RAILGUN) DEVIENT « ÉLECTRIQUE » (Keko, 24/11 : « qu'à la place, elle applique l'état d'électricité » ; le
+  nom choisi parmi quatre) : « Les tirs appliquent électrocution. », `railgun-electrique`, aux chiffres du vortex
+  (`ELECTROCUTION_DU_VORTEX`). La balle électrocute ce qu'elle traverse (`Obus.electrocution`), son SILLON aussi ce qui y
+  passe (comme il gelait avec Cryogénique) ; le railgun garde UN SEUL ÉLÉMENT. La carte « Électrocution » paraît donc
+  aussi pour l'Empire. VU en capture : les deux cartes tiennent. Un test.

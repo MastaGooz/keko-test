@@ -1282,7 +1282,7 @@ export type Choc = { x: number; y: number; force: number; asteroide: number; /**
 /** (un trait du rival armé porte les dégâts de son arme, son nom, et s'il est guidé — absents : le trait d'avant, un point) */
 export type Tir = { id: number; x: number; y: number; vx: number; vy: number; vie: number; degats?: number; guide?: boolean; arme?: string }
 /** Un obus du joueur : un trait qui porte des dégâts, de l'arme qui l'a tiré ; guidé, il tourne vers le rival. */
-export type Obus = Tir & { degats: number; guide: boolean; arme: string; /** Ses ricochets qui restent (voir `Arme.ricochet`), ceux qu'il a déjà touchés (il ne les retouche pas en repartant). */ rebonds?: { n: number; portee: number; part: number }; deja?: number[]; /** Ses dégâts sans le coup critique : un rebond retire le sien (voir `Arme.ricochet`). */ brut?: number; /** Ce qu'il enflamme (voir `Arme.incendiaire`). */ brule?: { duree: number; dps: number }; /** Les éclats de son explosion (voir `Arme.fragments`). */ fragments?: { nombre: number; degats: number; vitesse: number; vie: number }; /** L'insecte auquel il est accroché (voir `Arme.infaillible`). */ verrou?: number; /** Un coup critique (le passif du labo) : ses dégâts sont déjà multipliés. */ critique?: boolean; /** Il explose (voir `Arme.zone`). */ zone?: { rayon: number; degats: number }; /** Il gèle ce qu'il touche (voir `Arme.gel`). */ gel?: { duree: number; ralenti: number }; /** Il ronge ce qu'il touche (voir `Arme.corrosif`). */ ronge?: { duree: number; bonus: number }; /** Il détone sur un coup critique (voir `Arme.detonation`). */ detonation?: { rayon: number; part: number }; /** Critique, il exécute (voir `Arme.execute`). */ execute?: boolean; /** Il laisse un sillon (voir `Arme.sillon`) : sa durée, ce qu'il fait par seconde, sa largeur, son gel. */ sillon?: { duree: number; dps: number; largeur: number; gel?: { duree: number; ralenti: number } }; /** Il traverse (voir `Arme.salve`) : les insectes déjà touchés. */ perce?: number[]; /** Une balle de railgun (voir `Arme.balle`) : la part de ses dégâts qu'elle garde à chaque insecte traversé, son calibre. */ balle?: { part: number; calibre: number }; /** Il se brise au premier insecte touché en petits fragments, en cône derrière lui (voir `Arme.salve`). */ eclatement?: { nombre: number; cone: number; vitesse: number; vie: number; degats: number }; /** Un missile d'essaim (voir `Arme.essaim`) : sa cible, sa naissance, sa vitesse de départ, et comment il fonce. */ traque?: { cible: number; nee: number; v0: number; acces: number; pointe: number; braquage: number; chaos: number; pas: number; calme: number; reprise: number; /** L'instant où il a repris une autre cible (la sienne morte) : son chaos repart de là. */ depuis?: number }; /** Une boule de napalm, lancée en cloche (voir `Arme.napalm`) : sa durée de vol au départ ; elle ne touche rien en vol. */ napalm?: { rayon: number; duree: number; dps: number; brulure: number; dpsBrulure: number }; vie0?: number; /** Un obus tiré en cloche (voir `Arme.cloche`) : il ne touche rien en vol, il explose en retombant. */ cloche?: boolean; /** Une grenade à retardement (voir `Arme.minuterie`) : son frein par seconde ; elle ne touche rien, elle explose au bout de sa vie. */ minuterie?: number }
+export type Obus = Tir & { degats: number; guide: boolean; arme: string; /** Ses ricochets qui restent (voir `Arme.ricochet`), ceux qu'il a déjà touchés (il ne les retouche pas en repartant). */ rebonds?: { n: number; portee: number; part: number }; deja?: number[]; /** Ses dégâts sans le coup critique : un rebond retire le sien (voir `Arme.ricochet`). */ brut?: number; /** Ce qu'il enflamme (voir `Arme.incendiaire`). */ brule?: { duree: number; dps: number }; /** Les éclats de son explosion (voir `Arme.fragments`). */ fragments?: { nombre: number; degats: number; vitesse: number; vie: number }; /** L'insecte auquel il est accroché (voir `Arme.infaillible`). */ verrou?: number; /** Un coup critique (le passif du labo) : ses dégâts sont déjà multipliés. */ critique?: boolean; /** Il explose (voir `Arme.zone`). */ zone?: { rayon: number; degats: number }; /** Il gèle ce qu'il touche (voir `Arme.gel`). */ gel?: { duree: number; ralenti: number }; /** Il ronge ce qu'il touche (voir `Arme.corrosif`). */ ronge?: { duree: number; bonus: number }; /** Il électrocute ce qu'il touche (voir `Arme.electrocution`). */ electrocution?: { duree: number; chance: number; degats: number; saut: number }; /** Il détone sur un coup critique (voir `Arme.detonation`). */ detonation?: { rayon: number; part: number }; /** Critique, il exécute (voir `Arme.execute`). */ execute?: boolean; /** Il laisse un sillon (voir `Arme.sillon`) : sa durée, ce qu'il fait par seconde, sa largeur, son gel. */ sillon?: { duree: number; dps: number; largeur: number; gel?: { duree: number; ralenti: number }; electrocution?: { duree: number; chance: number; degats: number; saut: number } }; /** Il traverse (voir `Arme.salve`) : les insectes déjà touchés. */ perce?: number[]; /** Une balle de railgun (voir `Arme.balle`) : la part de ses dégâts qu'elle garde à chaque insecte traversé, son calibre. */ balle?: { part: number; calibre: number }; /** Il se brise au premier insecte touché en petits fragments, en cône derrière lui (voir `Arme.salve`). */ eclatement?: { nombre: number; cone: number; vitesse: number; vie: number; degats: number }; /** Un missile d'essaim (voir `Arme.essaim`) : sa cible, sa naissance, sa vitesse de départ, et comment il fonce. */ traque?: { cible: number; nee: number; v0: number; acces: number; pointe: number; braquage: number; chaos: number; pas: number; calme: number; reprise: number; /** L'instant où il a repris une autre cible (la sienne morte) : son chaos repart de là. */ depuis?: number }; /** Une boule de napalm, lancée en cloche (voir `Arme.napalm`) : sa durée de vol au départ ; elle ne touche rien en vol. */ napalm?: { rayon: number; duree: number; dps: number; brulure: number; dpsBrulure: number }; vie0?: number; /** Un obus tiré en cloche (voir `Arme.cloche`) : il ne touche rien en vol, il explose en retombant. */ cloche?: boolean; /** Une grenade à retardement (voir `Arme.minuterie`) : son frein par seconde ; elle ne touche rien, elle explose au bout de sa vie. */ minuterie?: number }
 /** Une bombe en vol (la capacité active d'essai). */
 export type Bombe = Tir
 /** Le rival : un vaisseau comme l'autre, des points, ce qu'il fait, sa roche, son laser, son prochain tir, son butin. */
@@ -1681,6 +1681,8 @@ export type Evenement =
   /** Un insecte se met à être électrocuté (il ne l'était pas) ; un arc d'électrocution saute de l'un à l'autre. */
   | { type: 'electrocute'; id: number; x: number; y: number }
   | { type: 'arcDElectrocution'; de: number; vers: number; x0: number; y0: number; x1: number; y1: number }
+  /** Un coup électrique sur un insecte déjà électrocuté : il tire sa chance de faire sauter un arc (voir `propagerLElectrocution`). */
+  | { type: 'coupElectrique'; id: number; x: number; y: number; jusque: number; chance: number; degats: number; saut: number }
   /** Une nova de givre part du vaisseau (voir `Arme.nova`). */
   | { type: 'nova'; x: number; y: number; rayon: number }
   /** Une bombe part ; une bombe éclate. */
@@ -3994,8 +3996,13 @@ function ronger(c: ConfigVaisseau, m: Monde, e: Ennemi, ac: { duree: number; dps
   e.acide = { jusque: Math.max(e.acide?.jusque ?? 0, m.t + dureeDEtat(c, ac.duree)), dps: Math.max(e.acide?.jusque !== undefined && e.acide.jusque > m.t ? e.acide.dps : 0, ac.dps), bonus: Math.max(e.acide?.jusque !== undefined && e.acide.jusque > m.t ? e.acide.bonus : 0, ac.bonus) }
 }
 
-/** Un insecte ÉLECTROCUTÉ (voir `Arme.electrocution`) : jusqu'à `duree` d'ici (voir `dureeDEtat`) — le plus fort l'emporte. */
-function electrocuter(c: ConfigVaisseau, m: Monde, e: Ennemi, el: { duree: number; chance: number; degats: number; saut: number }, ev: Evenement[]): void {
+/**
+ * Un insecte ÉLECTROCUTÉ (voir `Arme.electrocution`) : jusqu'à `duree` d'ici (voir `dureeDEtat`) — le plus fort l'emporte.
+ * `direct` : c'est un COUP ÉLECTRIQUE (un arc de drone, un éclair, une balle électrique) — s'il l'était déjà, ce coup tire
+ * sa chance de faire sauter un arc (voir `propagerLElectrocution`) ; une zone qui électrocute sans cesse (la tempête, le
+ * sillon) ou l'arc lui-même ne le sont pas.
+ */
+function electrocuter(c: ConfigVaisseau, m: Monde, e: Ennemi, el: { duree: number; chance: number; degats: number; saut: number }, ev: Evenement[], direct = false): void {
   if (e.asteroide !== undefined) return
   const encore = e.electrocute !== undefined && e.electrocute.jusque > m.t
   if (!encore) ev.push({ type: 'electrocute', id: e.id, x: e.corps.x, y: e.corps.y })
@@ -4005,39 +4012,38 @@ function electrocuter(c: ConfigVaisseau, m: Monde, e: Ennemi, el: { duree: numbe
     degats: Math.max(encore ? e.electrocute!.degats : 0, el.degats),
     saut: Math.max(encore ? e.electrocute!.saut : 0, el.saut),
   }
+  if (direct && encore) ev.push({ type: 'coupElectrique', id: e.id, x: e.corps.x, y: e.corps.y, ...e.electrocute })
 }
-/** (au plus tant d'arcs d'électrocution par pas : chacun en appelle d'autres) */
+/** (au plus tant d'arcs d'électrocution par pas) */
 const ARCS_PAR_PAS = 24
 /**
- * L'ÉLECTROCUTION SE PROPAGE (voir `Arme.electrocution`) : chaque coup direct de ce pas — chaque `ennemiTouche`, pas les
- * dégâts sur la durée (brûlure, acide, zones qui rongent sans cesse), pas le choc d'une roche — sur un insecte électrocuté
- * tire sa chance ; si elle sort, un arc saute sur l'insecte le plus proche à `saut` au plus (lui-même exclu) : `degats`,
- * et il est électrocuté à son tour. L'ARC N'EN APPELLE PAS UN AUTRE : ce sont les coups des armes qui le font sauter (en
- * chaîne, deux insectes électrocutés se renvoyaient l'arc sans fin — le test, à chance 1, en comptait vingt-quatre) ;
- * l'insecte qu'il électrocute fera sauter le sien au prochain coup qu'il prendra.
+ * L'ÉLECTROCUTION SE PROPAGE (voir `Arme.electrocution`) : chaque COUP ÉLECTRIQUE de ce pas sur un insecte déjà électrocuté
+ * (Keko, 24/11 : « il faut que ce soit des dégâts électriques qui soient infligés ; si j'inflige des dégâts corrosifs à
+ * une cible sous électrocution, l'effet ne se déclenche pas » — d'abord, tout coup direct le déclenchait) tire sa chance ;
+ * si elle sort, un arc saute de lui — même s'il en est mort — sur l'insecte le plus proche à `saut` au plus : `degats`, et
+ * il est électrocuté à son tour. L'ARC N'EN APPELLE PAS UN AUTRE (en chaîne, deux insectes électrocutés se renvoyaient
+ * l'arc sans fin — le test, à chance 1, en comptait vingt-quatre) ; l'insecte qu'il électrocute fera sauter le sien au
+ * prochain coup électrique qu'il prendra.
  */
 function propagerLElectrocution(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
   let arcs = 0
   const coups = ev.length
   for (let i = 0; i < coups && arcs < ARCS_PAR_PAS; i++) {
     const x = ev[i]
-    if (x.type !== 'ennemiTouche') continue
-    const e = m.ennemis.find((y) => y.id === x.id)
-    const el = e?.electrocute
-    if (e === undefined || el === undefined || el.jusque <= m.t || e.horsArmeA === m.t) continue
-    if (tire(m.graine, m.prochainId++, 97) >= el.chance) continue
+    if (x.type !== 'coupElectrique') continue
+    if (tire(m.graine, m.prochainId++, 97) >= x.chance) continue
     let proche: Ennemi | undefined
     let dc = Infinity
     for (const o of m.ennemis) {
-      if (o === e || o.asteroide !== undefined) continue
-      const d = Math.hypot(o.corps.x - e.corps.x, o.corps.y - e.corps.y)
-      if (d <= el.saut + rayonDe(c, o) && d < dc) (dc = d), (proche = o)
+      if (o.id === x.id || o.asteroide !== undefined) continue
+      const d = Math.hypot(o.corps.x - x.x, o.corps.y - x.y)
+      if (d <= x.saut + rayonDe(c, o) && d < dc) (dc = d), (proche = o)
     }
     if (proche === undefined) continue
     arcs++
-    ev.push({ type: 'arcDElectrocution', de: e.id, vers: proche.id, x0: e.corps.x, y0: e.corps.y, x1: proche.corps.x, y1: proche.corps.y })
-    electrocuter(c, m, proche, { duree: Math.max(0, el.jusque - m.t), chance: el.chance, degats: el.degats, saut: el.saut }, ev)
-    proche.pv -= el.degats
+    ev.push({ type: 'arcDElectrocution', de: x.id, vers: proche.id, x0: x.x, y0: x.y, x1: proche.corps.x, y1: proche.corps.y })
+    electrocuter(c, m, proche, { duree: Math.max(0, x.jusque - m.t), chance: x.chance, degats: x.degats, saut: x.saut }, ev)
+    proche.pv -= x.degats
     ev.push({ type: 'ennemiTouche', id: proche.id, x: proche.corps.x, y: proche.corps.y, critique: false })
     if (proche.pv <= 0) abattreLEnnemi(c, m, proche, ev)
   }
@@ -5204,7 +5210,7 @@ function concentrerLesFaisceaux(c: ConfigVaisseau, m: Monde, dt: number, ev: Eve
   })
 }
 /** UN SILLON ÉLECTRIQUE (voir `Arme.sillon`) : la balle qui le trace, sa course, sa naissance et sa durée, ce qu'il fait, son gel. */
-export type Sillon = { balle: number; segments: { x0: number; y0: number; x1: number; y1: number }[]; nee: number; duree: number; dps: number; largeur: number; gel?: { duree: number; ralenti: number } }
+export type Sillon = { balle: number; segments: { x0: number; y0: number; x1: number; y1: number }[]; nee: number; duree: number; dps: number; largeur: number; gel?: { duree: number; ralenti: number }; electrocution?: { duree: number; chance: number; degats: number; saut: number } }
 /** LES SILLONS (voir `Arme.sillon`) : tout insecte dedans perd leurs dégâts par seconde, une fois par sillon, et gèle s'il gèle ; puis ils s'éteignent. */
 function menerLesSillons(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]): void {
   m.sillons = m.sillons.filter((si) => m.phase === 'vol' && m.t - si.nee < si.duree)
@@ -5217,6 +5223,8 @@ function menerLesSillons(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[
       if (!si.segments.some((g) => distanceAuSegment(e.corps.x, e.corps.y, g.x0, g.y0, g.x1, g.y1) <= r)) continue
       e.pv -= si.dps * dt
       if (si.gel !== undefined) geler(c, m, e, si.gel.duree, si.gel.ralenti, ev)
+      // (un sillon électrique électrocute — la carte « Électrique » du railgun ; ses dégâts, sans cesse, ne font pas sauter d'arc)
+      if (si.electrocution !== undefined) electrocuter(c, m, e, si.electrocution, ev)
       touches.push(e)
     }
   for (const e of touches) if (e.pv <= 0 && m.ennemis.includes(e)) abattreLEnnemi(c, m, e, ev)
@@ -5562,16 +5570,17 @@ function effetsDuTir(a: Arme): Partial<Obus> {
     ...(a.fragments === undefined ? {} : { fragments: { ...a.fragments } }),
     ...(a.gel === undefined ? {} : { gel: { ...a.gel } }),
     ...(a.corrosif === undefined ? {} : { ronge: { ...a.corrosif } }),
+    ...(a.electrocution === undefined ? {} : { electrocution: { ...a.electrocution } }),
     ...(a.detonation === undefined ? {} : { detonation: { ...a.detonation } }),
     ...(a.execute === true ? { execute: true } : {}),
-    ...(a.sillon === undefined ? {} : { sillon: { duree: a.sillon.duree, dps: a.degats * a.sillon.part, largeur: a.sillon.largeur, ...(a.gel === undefined ? {} : { gel: { ...a.gel } }) } }),
+    ...(a.sillon === undefined ? {} : { sillon: { duree: a.sillon.duree, dps: a.degats * a.sillon.part, largeur: a.sillon.largeur, ...(a.gel === undefined ? {} : { gel: { ...a.gel } }), ...(a.electrocution === undefined ? {} : { electrocution: { ...a.electrocution } }) } }),
   }
 }
 /** CE QU'UN COUP SANS OBUS FAIT EN PLUS (le rail, l'arc) : le feu, le gel, les éclats — voir les cartes spéciales. */
 function effetsDuCoup(c: ConfigVaisseau, m: Monde, a: Arme, e: Ennemi, ev: Evenement[]): void {
   if (a.incendiaire !== undefined) enflammer(c, m, e, a.incendiaire)
   if (a.gel !== undefined) geler(c, m, e, a.gel.duree, a.gel.ralenti, ev)
-  if (a.electrocution !== undefined) electrocuter(c, m, e, a.electrocution, ev)
+  if (a.electrocution !== undefined) electrocuter(c, m, e, a.electrocution, ev, true)
   if (a.fragments !== undefined) fragmenter(m, e.corps.x, e.corps.y, a.fragments, e)
 }
 /** Un ennemi touché par un tir qui enflamme (voir `Arme.incendiaire`) : il brûle, le plus fort l'emporte. */
@@ -5785,7 +5794,7 @@ function menerLesDrones(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]
     // (UN DRONE ÉLECTRIQUE frappe d'un arc, à l'instant)
     if (a.eclair === true) {
       const critique = critiqueTire(c, m, a)
-      if (a.electrocution !== undefined) electrocuter(c, m, cible, a.electrocution, ev)
+      if (a.electrocution !== undefined) electrocuter(c, m, cible, a.electrocution, ev, true)
       cible.pv -= a.degats * (critique ? facteurDeCritique(c, a) : 1)
       ev.push({ type: 'arc', x0: d.x, y0: d.y, x1: cible.corps.x, y1: cible.corps.y, drone: k, id: cible.id })
       ev.push({ type: 'ennemiTouche', id: cible.id, x: cible.corps.x, y: cible.corps.y, critique })
@@ -6339,7 +6348,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
     if (o.sillon !== undefined && (o.x !== ox || o.y !== oy)) {
       let si = m.sillons.find((x) => x.balle === o.id)
       if (si === undefined) {
-        si = { balle: o.id, segments: [], nee: m.t, duree: o.sillon.duree, dps: o.sillon.dps, largeur: o.sillon.largeur, ...(o.sillon.gel === undefined ? {} : { gel: o.sillon.gel }) }
+        si = { balle: o.id, segments: [], nee: m.t, duree: o.sillon.duree, dps: o.sillon.dps, largeur: o.sillon.largeur, ...(o.sillon.gel === undefined ? {} : { gel: o.sillon.gel }), ...(o.sillon.electrocution === undefined ? {} : { electrocution: o.sillon.electrocution }) }
         m.sillons.push(si)
         ev.push({ type: 'sillon', x: ox, y: oy, gel: o.sillon.gel !== undefined })
       }
@@ -6378,6 +6387,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
         if (o.verrou === e.id) delete o.verrou
         if (o.gel !== undefined) geler(c, m, e, o.gel.duree, o.gel.ralenti, ev)
         if (o.brule !== undefined) enflammer(c, m, e, o.brule)
+        if (o.electrocution !== undefined) electrocuter(c, m, e, o.electrocution, ev, true)
         e.pv -= o.degats
         // (UN CRITIQUE QUI EXÉCUTE abat net ce qui n'est ni grand ni roche — voir `Arme.execute` ; s'il en réchappait, la page
         // le montre)
@@ -6404,6 +6414,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
         if (o.gel !== undefined) geler(c, m, e, o.gel.duree, o.gel.ralenti, ev)
         if (o.brule !== undefined) enflammer(c, m, e, o.brule)
         if (o.ronge !== undefined) ronger(c, m, e, { ...o.ronge, dps: 0 }, ev)
+        if (o.electrocution !== undefined) electrocuter(c, m, e, o.electrocution, ev, true)
         e.pv -= o.degats
         if (o.critique === true && o.execute === true && e.asteroide === undefined && e.grand !== true && e.pv > 0) {
           e.pv = 0
@@ -6491,6 +6502,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
           if (Math.hypot(e.corps.x - o.x, e.corps.y - o.y) > o.zone.rayon + rayonDe(c, e)) continue
           if (o.gel !== undefined) geler(c, m, e, o.gel.duree, o.gel.ralenti, ev)
           if (o.brule !== undefined) enflammer(c, m, e, o.brule)
+          if (o.electrocution !== undefined) electrocuter(c, m, e, o.electrocution, ev, true)
         }
       }
       exploser(c, m, o.x, o.y, o.zone, null, ev, o.arme)

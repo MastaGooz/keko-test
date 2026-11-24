@@ -3517,6 +3517,28 @@ for (const vortex of [true, false]) {
   verifier(`le sillon : une seconde dedans, ${sec.perdu % 1000} (30) ; après, ${Math.floor(sec.perdu / 1000)} de plus (au plus la fin du sillon) ; sans gel, gelé ${sec.gele} ; avec, gelé ${gele.gele}`, Math.abs((sec.perdu % 1000) - 30) <= 1 && Math.floor(sec.perdu / 1000) <= 30 && !sec.gele && gele.gele)
 }
 
+// LE RAILGUN ÉLECTRIQUE (Keko, 24/11 : la carte Cryogénique « applique l'état d'électricité » à la place) : la balle
+// électrocute ce qu'elle traverse, et son sillon ce qui y passe
+{
+  const railgun = { id: 'railgun', cadence: 99, degats: 100, portee: 190, vitesse: 900, vie: 190 / 900, dispersion: 0, guide: false, tousSens: true, perforant: true, balle: { part: 1, calibre: 2 }, sillon: { duree: 2, part: 0.3, largeur: 4 }, electrocution: { duree: 6, chance: 0, degats: 20, saut: 45 } }
+  const cfg = { ...VAISSEAU, coque: 1e9, armes: [railgun], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false }, passifs: { ...VAISSEAU.passifs, critique: 0 } }
+  const w = nouveauMonde(cfg, 5)
+  w.invasion.prochainA = 1e9
+  const cible: Ennemi = { id: 2010, corps: { ...nouveauVaisseau(), x: 150, y: 0 }, pv: 1e6, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9 }
+  const passant: Ennemi = { id: 2011, corps: { ...nouveauVaisseau(), x: 80, y: 60 }, pv: 1e6, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9 }
+  w.ennemis.push(cible, passant)
+  w.verrou = 2010
+  for (let i = 0; i < 18; i++) avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+  const passantAvant = (passant.electrocute?.jusque ?? 0) > w.t
+  for (let i = 0; i < 10; i++) {
+    passant.corps = { ...passant.corps, x: 80, y: 0, vx: 0, vy: 0 }
+    avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+  }
+  const balle = (cible.electrocute?.jusque ?? 0) > w.t
+  const sillon = (passant.electrocute?.jusque ?? 0) > w.t
+  verifier(`le railgun électrique : la cible traversée est électrocutée (${balle}) ; l'insecte hors de la course ne l'est pas (${passantAvant}), entré dans le sillon il l'est (${sillon})`, balle && !passantAvant && sillon)
+}
+
 // LA CORROSION GAGNE TOUTES LES VARIATIONS DU LASER (Keko, 23/11 : « toutes les variations du laser appliquent corrosion si
 // on a la variation Corrosion — ricochet, explosions… ») : la cible, un voisin dans l'onde de l'Impulsion, un insecte plus
 // loin où le Ricochet rebondit ; le tir, le rayon concentré, la Détonation (tout critique) — chacun ronge tous ceux qu'il
@@ -3542,12 +3564,13 @@ for (const vortex of [true, false]) {
   verifier(`la corrosion gagne toutes les variations du laser (R rongé) : ${vu.map(([k, v]) => `${k} ${v} (${attendu[k]})`).join(', ')}`, vu.every(([k, v]) => v === attendu[k]))
 }
 
-// L'ÉLECTROCUTION SAUTE SUR UN COUP DIRECT (Keko, 24/11) : un insecte électrocuté (chance 1) frappé par un canon — un arc
-// saute sur son voisin à 30 : 20 points, électrocuté à son tour ; chance 0, rien ; brûlé sans être frappé, rien (la
-// brûlure n'est pas un coup direct) ; le voisin trop loin (60 > 45), rien
+// L'ÉLECTROCUTION SAUTE SUR UN COUP ÉLECTRIQUE (Keko, 24/11) : un insecte électrocuté (chance 1) frappé par un canon
+// électrique — un arc saute sur son voisin à 30 : 20 points, électrocuté à son tour ; chance 0, rien ; frappé par un canon
+// qui ronge, pas électrique, rien (« si j'inflige des dégâts corrosifs à une cible sous électrocution, l'effet ne se
+// déclenche pas ») ; brûlé sans être frappé, rien ; le voisin trop loin (60 > 45), rien
 {
-  const essai = (chance: number, tir: boolean, voisin = 30): { arcs: number; perdu: number; electrocute: boolean } => {
-    const arme = { id: 'canon', cadence: 99, degats: 10, portee: 120, vitesse: 420, vie: 0.7, dispersion: 0, guide: false, tousSens: true, infaillible: true }
+  const essai = (chance: number, tir: boolean, voisin = 30, electrique = true): { arcs: number; perdu: number; electrocute: boolean } => {
+    const arme = { id: 'canon', cadence: 99, degats: 10, portee: 120, vitesse: 420, vie: 0.7, dispersion: 0, guide: false, tousSens: true, infaillible: true, ...(electrique ? { electrocution: { duree: 6, chance, degats: 20, saut: 45 } } : { corrosif: { duree: 3, bonus: 0.2 } }) }
     const cfg = { ...VAISSEAU, coque: 1e9, dureeDesEtats: 6, armes: tir ? [arme] : [], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false } }
     const w = nouveauMonde(cfg, 5)
     w.invasion.prochainA = 1e9
@@ -3560,8 +3583,8 @@ for (const vortex of [true, false]) {
     for (let i = 0; i < 40; i++) arcs += avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements.filter((x) => x.type === 'arcDElectrocution').length
     return { arcs, perdu: 1000 - o.pv, electrocute: (o.electrocute?.jusque ?? 0) > w.t }
   }
-  const [oui, non, brule, loin] = [essai(1, true), essai(0, true), essai(1, false), essai(1, true, 60)]
-  verifier(`l'électrocution saute sur un coup direct : chance 1, ${oui.arcs} arc (1), le voisin perd ${oui.perdu} (20), électrocuté ${oui.electrocute} ; chance 0, ${non.arcs} arc ; brûlé sans coup, ${brule.arcs} ; voisin à 60, ${loin.arcs}`, oui.arcs === 1 && oui.perdu === 20 && oui.electrocute && non.arcs === 0 && brule.arcs === 0 && loin.arcs === 0)
+  const [oui, non, ronge, brule, loin] = [essai(1, true), essai(0, true), essai(1, true, 30, false), essai(1, false), essai(1, true, 60)]
+  verifier(`l'électrocution saute sur un coup électrique : chance 1, ${oui.arcs} arc (1), le voisin perd ${oui.perdu} (20), électrocuté ${oui.electrocute} ; chance 0, ${non.arcs} arc ; un coup qui ronge, ${ronge.arcs} ; brûlé sans coup, ${brule.arcs} ; voisin à 60, ${loin.arcs}`, oui.arcs === 1 && oui.perdu === 20 && oui.electrocute && non.arcs === 0 && ronge.arcs === 0 && brule.arcs === 0 && loin.arcs === 0)
 }
 
 // SEULE UNE ATTAQUE QUI RONGE RELANCE LA CORROSION (Keko, 23/11 : « si une attaque qui n'applique pas corrosion touche un
