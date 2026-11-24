@@ -8809,6 +8809,9 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     toutes les 0,9 s, un anneau part du bord et se referme sur la boule en s'allumant ; les cristaux à 60 d'elle volent
     VERS ELLE à 90 par seconde et comptent en expérience dès qu'ils l'atteignent (`gagnerLaPepite`), sans passer par le
     vaisseau ; ceux que le vaisseau aimante déjà restent à lui ; hors du vortex, rien (ce sont du minerai). VU en capture.
+    PLUS DE CERCLE FIXE AU BORD (Keko, 24/11 : « que le cercle extérieur ne reste pas en place ; il se contracte, puis
+    réapparaît, se contracte… ») : le cercle de 60 ne reste plus ; c'est lui qui se contracte, et il renaît au bord en
+    s'allumant. Reste, à peine marqué, le cercle de la portée de la boule (son rayon de foudre, 42), qui était là avant.
   - Restent, de l'ancienne liste : Surtension, Grande bobine.
 - « CRISTAUX » À LA PLACE DE « PÉPITES » (Keko, 24/11 : « remplace partout dans le jeu le mot pépite par cristaux ») :
   dans le vortex, un seul texte le disait, la carte Expérience — « d'expérience par cristal ». Le code, les commentaires

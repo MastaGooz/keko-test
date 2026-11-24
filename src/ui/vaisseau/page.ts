@@ -11195,12 +11195,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         // qui convergent vers elle — voir `Arme.sphere.magnetisme`)
         const mg = sp.magnetisme
         if (mg !== undefined) {
-          p.ring(s.x, s.y, mg.rayon, 1, TESLA[3], 0.1 * k)
           // (… QUI SE CONTRACTE — Keko, 24/11 : « que le cercle se contracte vers le centre à intervalles réguliers pour
-          // montrer que ça attire » : toutes les 0,9 s, un anneau part du bord et se referme sur la boule en s'allumant)
+          // montrer que ça attire » : toutes les 0,9 s, un anneau part du bord et se referme sur la boule en s'allumant ;
+          // PLUS DE CERCLE FIXE AU BORD — Keko : « que le cercle extérieur ne reste pas en place ; il se contracte, puis
+          // réapparaît, se contracte… » : c'est lui qui se contracte, et il renaît au bord)
           const u = ((t + s.id * 0.31) % 0.9) / 0.9
           const rc = mg.rayon * (1 - u * u)
-          if (rc > 2) p.ring(s.x, s.y, rc, u > 0.6 ? 2 : 1, u > 0.6 ? TESLA[4] : TESLA[3], (0.15 + 0.45 * u) * k)
+          if (rc > 2) p.ring(s.x, s.y, rc, u > 0.6 ? 2 : 1, u > 0.6 ? TESLA[4] : TESLA[3], (0.25 + 0.35 * u) * Math.min(1, u / 0.08) * k)
           for (let g = 0; g < 10; g++) {
             const u = (t * 0.9 + g * 0.37 + s.id * 0.13) % 1
             const an = g * 2.4 + s.id
