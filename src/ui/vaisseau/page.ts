@@ -14744,10 +14744,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           const reste = (e.designeA ?? 0) - m.t
           const k = Math.min(1, reste / 0.5)
           const r = 3 + Math.max(0, reste - 2.85) * 30 + (Math.sin(t * 7 + e.id) > 0.5 ? 1 : 0)
-          const c = N.hex('#ff9a2a')
-          p.ring(sx, sy, r + 1, 1, N.hex('#3a1606'), 0.6 * k)
+          // (ROUGE — Keko, 24/11 : « on peut mettre la cible rouge ? » ; d'abord orange)
+          const c = N.hex('#ff3a3a')
+          p.ring(sx, sy, r + 1, 1, N.hex('#3a0608'), 0.6 * k)
           p.ring(sx, sy, r, 1, c, k)
-          p.dot(sx, sy, N.hex('#ffe0a0'), k)
+          p.dot(sx, sy, N.hex('#ffb0a8'), k)
           p.glow(sx, sy, r + 3, c, 0.25 * k)
         }
         // (IL EST ÉTOURDI — « Étourdissement », Keko, 24/11, voir `Arme.etourdissement` : trois étoiles jaunes qui tournent

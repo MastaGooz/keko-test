@@ -9055,3 +9055,5 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   cible circulaire au centre de l'ennemi plutôt ») : un anneau orange de 3 cerné de sombre et un point clair au milieu,
   posés sur l'insecte, qui se resserrent en apparaissant, battent doucement et pâlissent à la fin. Le verrou reste en
   coins rouges autour. VU en capture.
+- LA CIBLE DE LA DÉSIGNATION EN ROUGE (Keko, 24/11 : « on peut mettre la cible rouge ? ») : l'anneau `#ff3a3a`, cerné de
+  sombre, le point rose clair.
