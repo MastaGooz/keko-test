@@ -9051,3 +9051,7 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   plus 9 : plus bas, il se cachait sous la tête du cuirassier et sous les chiffres des dégâts) et pâlit à la fin ; rien
   autour de l'insecte. Son son, `designe` (`synthe.ts`) : un « bip-bip » de deux notes rondes qui montent d'une quarte,
   mesuré crête 0,05 à 0,07, 0,11 s (le verrouillage : 0,15, 0,22 s). VU en capture.
+- LA DÉSIGNATION, UNE PETITE CIBLE RONDE AU CENTRE (Keko, 24/11 : le losange au-dessus, « c'est pas dingue ; une petite
+  cible circulaire au centre de l'ennemi plutôt ») : un anneau orange de 3 cerné de sombre et un point clair au milieu,
+  posés sur l'insecte, qui se resserrent en apparaissant, battent doucement et pâlissent à la fin. Le verrou reste en
+  coins rouges autour. VU en capture.
