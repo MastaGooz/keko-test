@@ -11381,9 +11381,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    */
   function dessinerLesSillons(p: Peintre): void {
     for (const si of m.sillons) {
-      const u = (m.t - si.nee) / si.duree
+      // (une traînée de boule tesla : chaque bout s'allume à sa pose et pâlit sur son dernier tiers — voir `Sillon.parSegment`)
+      const fondu = (u: number): number => (u >= 1 ? 0 : Math.min(1, u / 0.05) * Math.min(1, (1 - u) / 0.35))
+      const u = si.parSegment === true ? 0.5 : (m.t - si.nee) / si.duree
       if (u >= 1) continue
-      const k = Math.min(1, u / 0.05) * Math.min(1, (1 - u) / 0.35)
+      const kSillon = si.parSegment === true ? 1 : fondu(u)
+      const k = kSillon
       const glace = si.gel !== undefined
       const halo = glace ? BLEU_DU_GIVRE : CYAN_DU_RAILGUN[2]
       const coeur = glace ? N.hex('#e8f8ff') : CYAN_DU_RAILGUN[4]
@@ -11411,6 +11414,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         if (L < 0.5) continue
         const ux = (g.x1 - g.x0) / L
         const uy = (g.y1 - g.y0) / L
+        const k = si.parSegment === true ? fondu((m.t - (g.t ?? si.nee)) / si.duree) : kSillon
+        if (k <= 0) continue
         // (l'éclair : des points tous les 3, écartés de part et d'autre du trait d'un hasard refrappé)
         let px = g.x0
         let py = g.y0

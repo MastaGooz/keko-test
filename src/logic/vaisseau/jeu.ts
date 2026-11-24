@@ -920,9 +920,12 @@ export type Arme = {
   // pépites, et qu'il donne aux ennemis une petite impulsion vers l'intérieur » : toutes les `periode` secondes, un anneau
   // part de `rayon` et se referme sur la boule (`anneauMagnetique`) ; un cristal qu'il touche est emporté avec lui et compte
   // au centre ; un insecte qu'il touche fait un bond de `impulsion` vers elle)
+  // (`trainee` : HAUTE TENSION — Keko, 24/11 : « la bobine laisse dans son sillage une traînée électrique » : un sillon (voir
+  // `Arme.sillon`) dont chaque bout dure `duree` ; ce qui y passe perd `dps` par seconde et est électrocuté si la bobine
+  // l'est — sans faire sauter d'arc : c'est continu)
   // (`accumulateur` : ACCUMULATEUR — Keko, 24/11 : « les coups critiques de la bobine augmentent ses dégâts de X % pour toute
   // sa durée restante » : chaque critique d'une boule lui ajoute cette part de dégâts, jusqu'à sa fin — +20 %, cumulable)
-  sphere?: { vitesse: number; duree: number; rayon: number; periode: number; vitesseTir: number; foudre?: { cibles: number; rebonds?: { n: number; saut: number; attenuation: number } }; accumulateur?: number; magnetisme?: { rayon: number; periode: number; impulsion: number } }
+  sphere?: { vitesse: number; duree: number; rayon: number; periode: number; vitesseTir: number; foudre?: { cibles: number; rebonds?: { n: number; saut: number; attenuation: number } }; accumulateur?: number; magnetisme?: { rayon: number; periode: number; impulsion: number }; trainee?: { duree: number; dps: number; largeur: number } }
   /**
    * UN PUITS DE PLASMA (la troisième arme du Pulsar, Keko, 16/11 : « on va tenter le puits » — une petite singularité lancée
    * au milieu de la nuée, qui aspire les insectes vers son centre puis éclate) : à la cadence, un insecte à portée, il part
@@ -3793,8 +3796,23 @@ function menerLesSpheres(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[
       ev.push({ type: 'sphereFinie', x: s.x, y: s.y })
       continue
     }
+    const x0 = s.x
+    const y0 = s.y
     s.x += s.vx * dt
     s.y += s.vy * dt
+    // (HAUTE TENSION : sa course laisse une traînée électrique — voir `Arme.sphere.trainee` ; un bout tous les 4 au moins,
+    // pour que l'éclair ait de quoi serpenter)
+    const tr = sp.trainee
+    if (tr !== undefined && m.phase === 'vol') {
+      let si = m.sillons.find((x) => x.balle === s.id)
+      if (si === undefined) {
+        si = { parSegment: true, balle: s.id, segments: [], nee: m.t, duree: tr.duree, dps: tr.dps, largeur: tr.largeur, ...(a.electrocution === undefined ? {} : { electrocution: a.electrocution }) }
+        m.sillons.push(si)
+      }
+      const der = si.segments[si.segments.length - 1]
+      if (der !== undefined && Math.hypot(der.x1 - der.x0, der.y1 - der.y0) < 4 && m.t - (der.t ?? m.t) < 0.2) (der.x1 = s.x), (der.y1 = s.y)
+      else si.segments.push({ x0: der?.x1 ?? x0, y0: der?.y1 ?? y0, x1: s.x, y1: s.y, t: m.t })
+    }
     // (MAGNÉTISME : son anneau se referme, emporte les cristaux et pousse les insectes vers elle — voir `Arme.sphere.magnetisme`)
     const mg = sp.magnetisme
     if (mg !== undefined && m.phase === 'vol') {
@@ -5505,10 +5523,17 @@ function concentrerLesFaisceaux(c: ConfigVaisseau, m: Monde, dt: number, ev: Eve
   })
 }
 /** UN SILLON ÉLECTRIQUE (voir `Arme.sillon`) : la balle qui le trace, sa course, sa naissance et sa durée, ce qu'il fait, son gel. */
-export type Sillon = { balle: number; segments: { x0: number; y0: number; x1: number; y1: number }[]; nee: number; duree: number; dps: number; largeur: number; gel?: { duree: number; ralenti: number }; electrocution?: { duree: number; chance: number; degats: number; saut: number } }
+// (`parSegment` : chaque bout s'éteint `duree` après sa pose, `t` — la traînée d'une boule tesla, voir `Arme.sphere.trainee`)
+export type Sillon = { parSegment?: boolean; balle: number; segments: { x0: number; y0: number; x1: number; y1: number; t?: number }[]; nee: number; duree: number; dps: number; largeur: number; gel?: { duree: number; ralenti: number }; electrocution?: { duree: number; chance: number; degats: number; saut: number } }
 /** LES SILLONS (voir `Arme.sillon`) : tout insecte dedans perd leurs dégâts par seconde, une fois par sillon, et gèle s'il gèle ; puis ils s'éteignent. */
 function menerLesSillons(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]): void {
-  m.sillons = m.sillons.filter((si) => m.phase === 'vol' && m.t - si.nee < si.duree)
+  // (une traînée de boule : ses bouts s'éteignent un à un ; elle reste tant qu'il en reste, ou que sa boule vit)
+  m.sillons = m.sillons.filter((si) => {
+    if (m.phase !== 'vol') return false
+    if (si.parSegment !== true) return m.t - si.nee < si.duree
+    si.segments = si.segments.filter((g) => m.t - (g.t ?? si.nee) < si.duree)
+    return si.segments.length > 0 || m.spheres.some((s) => s.id === si.balle)
+  })
   if (m.sillons.length === 0) return
   const touches: Ennemi[] = []
   for (const si of m.sillons)

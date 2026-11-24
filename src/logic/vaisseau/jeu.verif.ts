@@ -3791,6 +3791,29 @@ for (const vortex of [true, false]) {
   verifier(`magnétisme : l'insecte proche, touché par l'anneau, s'est rapproché de ${(250 - pres.corps.x).toFixed(1)} (10, ou 20 s'il a pris deux tours), le lointain de ${(320 - loin.corps.x).toFixed(1)} (0) ; le cristal proche compte (${w.invasion.xp - xp0} d'expérience), restent ${restants.join(', ')} (−120)`, 250 - pres.corps.x >= 9 && 250 - pres.corps.x <= 21 && Math.abs(320 - loin.corps.x) < 1e-6 && w.invasion.xp > xp0 && restants.join() === '-120')
 }
 
+// HAUTE TENSION (Keko, 24/11 — voir `Arme.sphere.trainee`) : la boule file à 45 ; un insecte posé une seconde plus tard
+// sur sa course, derrière elle, y perd environ 30 en une seconde et y est électrocuté ; trois secondes plus tard, sa
+// traînée de là est éteinte
+{
+  const tesla = { id: 'tesla', cadence: 2.6, degats: 0, portee: 120, vitesse: 0, vie: 0, dispersion: 0, guide: false, electrocution: { duree: 6, chance: 0, degats: 20, saut: 45 }, sphere: { vitesse: 45, duree: 6, rayon: 1, periode: 99, vitesseTir: 0, foudre: { cibles: 0 }, trainee: { duree: 2, dps: 30, largeur: 5 } } }
+  const cfg: ConfigVaisseau = { ...VAISSEAU, coque: 1e9, dureeDesEtats: 6, armes: [tesla], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false } }
+  const w = nouveauMonde(cfg, 5)
+  w.invasion.prochainA = 1e9
+  w.t = 2
+  w.armesA = [1e9]
+  w.spheres.push({ id: 3400, arme: 0, x: 100, y: 0, vx: 45, vy: 0, nee: w.t, tirA: 1e9 })
+  for (let i = 0; i < 60; i++) avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+  const e: Ennemi = { id: 3401, corps: { ...nouveauVaisseau(), x: 120, y: 0 }, pv: 1e6, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9 }
+  w.ennemis.push(e)
+  for (let i = 0; i < 60; i++) avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+  const perdu = 1e6 - e.pv
+  const electrocute = (e.electrocute?.jusque ?? 0) > w.t
+  for (let i = 0; i < 120; i++) avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+  const avant = e.pv
+  for (let i = 0; i < 30; i++) avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+  verifier(`haute tension : une seconde sur la traînée, ${perdu.toFixed(1)} perdus (environ 30), électrocuté ${electrocute} ; éteinte, ${(avant - e.pv).toFixed(1)} (0)`, perdu > 20 && perdu <= 31 && electrocute && avant - e.pv < 1e-6)
+}
+
 // LE RAILGUN ÉLECTRIQUE (Keko, 24/11 : la carte Cryogénique « applique l'état d'électricité » à la place) : la balle
 // électrocute ce qu'elle traverse, et son sillon ce qui y passe
 {

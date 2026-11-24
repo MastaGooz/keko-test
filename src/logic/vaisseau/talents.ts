@@ -498,7 +498,9 @@ export const MUTATIONS: Mutation[] = [
   // (« ACCUMULATEUR », SA VARIATION SUR COUP CRITIQUE, À LA PLACE DE « CRYOGÉNIQUE » — Keko, 24/11 : « les coups critiques de la
   // bobine augmentent ses dégâts de X % pour toute sa durée restante » ; +20 %, cumulable — voir `Arme.sphere.accumulateur`)
   variation('tesla-accumulateur', 'tesla', 'Accumulateur', 'Chaque critique augmente les dégâts pour la durée de la bobine.', changerA('tesla', (a) => ({ ...a, sphere: a.sphere === undefined ? undefined : { ...a.sphere, accumulateur: 0.2 } }))),
-  variation('tesla-surtension', 'tesla', 'Surtension', 'La bobine décharge deux fois plus souvent.', changerA('tesla', (a) => ({ ...a, sphere: a.sphere === undefined ? undefined : { ...a.sphere, periode: a.sphere.periode * 0.5 } }))),
+  // (« HAUTE TENSION », À LA PLACE DE « SURTENSION » — Keko, 24/11 : « la bobine laisse dans son sillage une traînée électrique » ;
+  // « 30/s, 2 s, large de 5 », la place et le nom : Keko — voir `Arme.sphere.trainee`)
+  variation('tesla-haute-tension', 'tesla', 'Haute tension', 'La boule laisse une traînée électrique derrière elle.', changerA('tesla', (a) => ({ ...a, sphere: a.sphere === undefined ? undefined : { ...a.sphere, trainee: { duree: 2, dps: 30, largeur: 5 } } }))),
   // (« MAGNÉTISME », À LA PLACE DE « CHAMP TESLA » — Keko, 24/11 : « attire les ennemis ET les pépites » ; « douce, sur 60 »,
   // choisi par Keko ; la place, de moi — le champ faisait doublon avec la Tempête de la Sentinelle ; voir `Arme.sphere.magnetisme`)
   variation('tesla-magnetisme', 'tesla', 'Magnétisme', 'La boule attire les ennemis et les cristaux autour d’elle.', changerA('tesla', (a) => ({ ...a, sphere: a.sphere === undefined ? undefined : { ...a.sphere, magnetisme: { rayon: 60, periode: 0.9, impulsion: 10 } } }))),

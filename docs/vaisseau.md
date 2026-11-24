@@ -8825,6 +8825,12 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   « je voudrais que la bobine inflige l'état électrique, tout comme les attaques de la Sentinelle ») : son arme de faction
   porte `ELECTROCUTION_DU_VORTEX` ; chaque éclair, les rebonds de Conduction compris, est un coup électrique
   (`effetsDuCoup`). Les cartes Électrocution, Foudre et Surtension s'ouvrent à qui la porte. Un test.
+- HAUTE TENSION, À LA PLACE DE SURTENSION (Keko, 24/11 : « une autre carte variation qui fait que la bobine laisse dans
+  son sillage une traînée électrique ») : « La boule laisse une traînée électrique derrière elle. » ; `sphere.trainee` —
+  un sillon (celui du Sillon du railgun, son éclair qui serpente) dont CHAQUE BOUT dure 2 s (`Sillon.parSegment`, `t` par
+  bout ; un bout tous les 4 au moins, pour que l'éclair ait de quoi serpenter) ; ce qui y passe perd 30 par seconde et est
+  électrocuté, sans faire sauter d'arc (c'est continu). « 30/s, 2 s, large de 5 », la place et le nom : Keko. La bobine :
+  Orage, Conduction, Accumulateur, Magnétisme, Haute tension, et Grande bobine encore d'origine. Un test ; VU en capture.
   - Restent, de l'ancienne liste : Surtension, Grande bobine.
 - « CRISTAUX » À LA PLACE DE « PÉPITES » (Keko, 24/11 : « remplace partout dans le jeu le mot pépite par cristaux ») :
   dans le vortex, un seul texte le disait, la carte Expérience — « d'expérience par cristal ». Le code, les commentaires
