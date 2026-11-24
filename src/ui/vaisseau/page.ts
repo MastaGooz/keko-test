@@ -11999,7 +11999,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   function dessinerLePlasma(p: Peintre): void {
     for (let i = eclatsDePlasma.length - 1; i >= 0; i--) if (t - eclatsDePlasma[i].t0 > DUREE_DE_L_ECLAT) eclatsDePlasma.splice(i, 1)
     const orbes = m.obus.filter((o) => o.arme === 'plasma')
-    if (orbes.length === 0 && m.faisceaux.length === 0 && executions.length === 0 && impulsionsVertes.length === 0 && m.balisesLaser.length === 0 && m.harpons.length === 0 && cassuresDuHarpon.length === 0 && eclatsDePlasma.length === 0 && rubans.size === 0 && popsDEssaim.length === 0 && m.spheres.length === 0 && m.puits.length === 0 && effondrements.length === 0 && traitsDuRail.length === 0 && trainesDuRailgun.size === 0 && m.sillons.length === 0 && !m.obus.some((o) => o.arme === 'essaim' || o.arme === 'arcane' || o.arme === 'railgun')) return
+    if (orbes.length === 0 && foudresTesla.length === 0 && m.faisceaux.length === 0 && executions.length === 0 && impulsionsVertes.length === 0 && m.balisesLaser.length === 0 && m.harpons.length === 0 && cassuresDuHarpon.length === 0 && eclatsDePlasma.length === 0 && rubans.size === 0 && popsDEssaim.length === 0 && m.spheres.length === 0 && m.puits.length === 0 && effondrements.length === 0 && traitsDuRail.length === 0 && trainesDuRailgun.size === 0 && m.sillons.length === 0 && !m.obus.some((o) => o.arme === 'essaim' || o.arme === 'arcane' || o.arme === 'railgun')) return
     p.place(W / 2 - camera.x, centreY() - camera.y)
     dessinerLesSpheres(p)
     dessinerLesPuits(p)
@@ -14559,27 +14559,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
             crackle(p, zigzag(Rn, sx + Math.cos(a0) * rr, sy + Math.sin(a0) * rr, sx + Math.cos(a1) * rr, sy + Math.sin(a1) * rr, 0.35, 0.12), 0.8, C, 0.4)
           }
         }
-        // IL EST FIGÉ (Keko, 24/11 — voir `ELEMENTAIRES`) : PRIS DANS LA GLACE (« Gel profond »), un bloc de glace bleue
-        // translucide autour de lui, cerné de clair, des éclats qui scintillent ; PARALYSÉ (« Paralysie »), une lueur blanche
-        // qui bat vite et des arcs qui claquent sans cesse sur lui
+        // IL EST PRIS DANS LA GLACE (« Gel profond », Keko, 24/11 — voir `ELEMENTAIRES`) : un bloc de glace bleue translucide
+        // autour de lui, cerné de clair, des éclats qui scintillent
         if ((e.figeA ?? -1) > m.t) {
           const r = rayonDe(CONF, e) * 1.5 + 1
-          if (e.fige === 'glace') {
-            p.disc(sx, sy, r, BLEU_DU_GIVRE, () => 0.32)
-            p.ring(sx, sy, r, 1, N.hex('#dff4ff'), 0.75)
-            for (let k = 0; k < plus(3); k++) {
-              const a = e.id * 1.3 + k * 2.1
-              if ((Math.floor(t * 6) + k + e.id) % 3 === 0) p.dot(sx + Math.cos(a) * r * 0.6, sy + Math.sin(a) * r * 0.6, N.WHITE, 0.9)
-            }
-          } else {
-            const C = COULEURS_VOLT
-            const image = Math.floor(t * 30)
-            p.glow(sx, sy, r * 1.6, C[6], 0.3 + 0.25 * (image % 2))
-            const Rn = new N.Rng((e.id * 104729 + image * 17) | 0)
-            for (let k = 0; k < plus(3); k++) {
-              const a0 = Rn.range(0, Math.PI * 2)
-              crackle(p, zigzag(Rn, sx + Math.cos(a0) * r, sy + Math.sin(a0) * r, sx + Math.cos(a0 + Rn.range(1.5, 3)) * r, sy + Math.sin(a0 + Rn.range(1.5, 3)) * r, 0.35, 0.12), 0.95, C, 0.45)
-            }
+          p.disc(sx, sy, r, BLEU_DU_GIVRE, () => 0.32)
+          p.ring(sx, sy, r, 1, N.hex('#dff4ff'), 0.75)
+          for (let k = 0; k < plus(3); k++) {
+            const a = e.id * 1.3 + k * 2.1
+            if ((Math.floor(t * 6) + k + e.id) % 3 === 0) p.dot(sx + Math.cos(a) * r * 0.6, sy + Math.sin(a) * r * 0.6, N.WHITE, 0.9)
           }
         }
         // IL BRÛLE (le lance-flammes) : il rougeoie, et des braises s'en échappent
@@ -17952,17 +17940,23 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           }
           break
         case 'fige':
-          // (PRIS DANS LA GLACE : le craquement du givre et des éclats ; PARALYSÉ : le claquement des arcs — voir `ELEMENTAIRES`)
-          if (ev.sorte === 'glace') {
-            jouer('gel', { dx: ev.x - v.x, dy: ev.y - v.y })
-            for (let i = 0; i < 6; i++) {
-              const a = R.range(0, Math.PI * 2)
-              etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(20, 45), Math.sin(a) * R.range(20, 45), R.range(0.15, 0.3), R.next() < 0.5 ? N.WHITE : BLEU_DU_GIVRE, 1, 1.5)
-            }
-          } else if (t - zapA > 0.06) {
-            zapA = t
-            jouer('zap', { dx: ev.x - v.x, dy: ev.y - v.y })
+          // (PRIS DANS LA GLACE : le craquement du givre et des éclats — voir `ELEMENTAIRES`)
+          jouer('gel', { dx: ev.x - v.x, dy: ev.y - v.y })
+          for (let i = 0; i < 6; i++) {
+            const a = R.range(0, Math.PI * 2)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(20, 45), Math.sin(a) * R.range(20, 45), R.range(0.15, 0.3), R.next() < 0.5 ? N.WHITE : BLEU_DU_GIVRE, 1, 1.5)
           }
+          break
+        case 'foudreDuCiel':
+          // (LA FOUDRE TOMBE DU CIEL — « Foudre », Keko, 24/11 : la foudre de la bobine tesla, du haut de l'écran jusqu'à lui,
+          // son claquement, une gerbe d'étincelles sur sa zone et une secousse)
+          foudresTesla.push({ x0: ev.x + R.range(-12, 12), y0: ev.y - 170, x1: ev.x, y1: ev.y, t0: t, g: Math.round(ev.x * 13 + ev.y * 7) })
+          jouer('foudre', { dx: ev.x - v.x, dy: ev.y - v.y })
+          for (let i = 0; i < 12; i++) {
+            const a = R.range(0, Math.PI * 2)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(30, 80), Math.sin(a) * R.range(30, 80), R.range(0.12, 0.3), R.next() < 0.5 ? N.WHITE : COULEURS_VOLT[5], 1, 1.5)
+          }
+          secousse = Math.max(secousse, 0.35)
           break
         case 'feuPropage':
           // (LE FEU SAUTE d'un insecte à son voisin : une traînée de braises de l'un à l'autre — voir `propagerLeFeu`)

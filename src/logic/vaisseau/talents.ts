@@ -510,7 +510,8 @@ export const MUTATIONS: Mutation[] = [
   element('element-givre', 'givre', 'Gel profond', 'Le givre peut geler net les ennemis déjà sous givre.', 'gelure'),
   element('element-feu', 'feu', 'Propagation', 'La brûlure se propage aux ennemis tout proches.', 'incendie'),
   element('element-corrosion', 'corrosion', 'Point faible', 'Les coups critiques sont plus fréquents et plus forts sous corrosion.', 'vulnerabilite'),
-  element('element-electrocution', 'electrocution', 'Paralysie', 'L’ennemi qui déclenche l’électrocution est paralysé.', 'paralysie'),
+  // (« FOUDRE », à la place de « Paralysie » — Keko, 24/11 : « ça fait doublon avec le gel »)
+  element('element-electrocution', 'electrocution', 'Foudre', 'L’électrocution peut faire tomber la foudre sur l’ennemi.', 'foudre'),
 ]
 /**
  * LES ARMES MISES DE CÔTÉ — LES ROQUETTES (Keko, 23/11 : « on va enlever les mini-roquettes, car ça, on va plutôt le mettre comme

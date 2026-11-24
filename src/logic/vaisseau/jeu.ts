@@ -169,7 +169,7 @@ export const VAISSEAU = {
   brulureDesEtats: 0 as number,
   arcDElectrocution: 0 as number,
   /** LES CARTES SPÉCIALES D'ÉLÉMENT PRISES (Keko, 24/11 — voir `ELEMENTAIRES`). */
-  elementaires: { gelure: false, incendie: false, vulnerabilite: false, paralysie: false } as { gelure: boolean; incendie: boolean; vulnerabilite: boolean; paralysie: boolean },
+  elementaires: { gelure: false, incendie: false, vulnerabilite: false, foudre: false } as { gelure: boolean; incendie: boolean; vulnerabilite: boolean; foudre: boolean },
   /**
    * L'ARC DE TIR (le jeu du vortex — Keko, 15/11 : « limiter les tirs du canon à un angle qui va devant le vaisseau ;
    * pas forcément tout droit, mais les empêcher de tirer en angle droit sur les côtés et en arrière, pour forcer le
@@ -1320,9 +1320,9 @@ export type Ennemi = {
   ralenti?: number
   /** IL EST RONGÉ PAR L'ACIDE (voir `Arme.crachat`) jusqu'à cet instant : il perd tant par seconde, et tout ce qu'il perd d'autre est majoré de cette part. */
   acide?: { jusque: number; dps: number; bonus: number }
-  /** IL EST FIGÉ jusqu'à cet instant — pris dans la glace (« Gel profond ») ou paralysé (« Paralysie ») : immobile, il ne mord pas (voir `ELEMENTAIRES`). */
+  /** IL EST FIGÉ jusqu'à cet instant — pris dans la glace (« Gel profond ») : immobile, il ne mord pas (voir `ELEMENTAIRES`). */
   figeA?: number
-  fige?: 'glace' | 'paralysie'
+  fige?: 'glace'
   /** IL EST ÉLECTROCUTÉ (voir `Arme.electrocution`) jusqu'à cet instant : chaque coup direct a cette chance de faire sauter un arc. */
   electrocute?: { jusque: number; chance: number; degats: number; saut: number }
   /** IL EST IRRADIÉ (voir `Arme.balise.irradie`) : il est sur un faisceau de cristaux, jusqu'à cet instant (à peine au-delà : pour le dessin). */
@@ -1695,7 +1695,9 @@ export type Evenement =
   | { type: 'electrocute'; id: number; x: number; y: number }
   | { type: 'arcDElectrocution'; de: number; vers: number; x0: number; y0: number; x1: number; y1: number }
   /** Un insecte est figé (voir `Ennemi.figeA`) ; le feu se propage de l'un à l'autre (voir `propagerLeFeu`). */
-  | { type: 'fige'; id: number; x: number; y: number; sorte: 'glace' | 'paralysie' }
+  | { type: 'fige'; id: number; x: number; y: number; sorte: 'glace' }
+  /** La foudre tombe du ciel sur un insecte électrocuté (« Foudre » — voir `foudroyer`). */
+  | { type: 'foudreDuCiel'; id: number; x: number; y: number; rayon: number }
   | { type: 'feuPropage'; de: number; vers: number; x0: number; y0: number; x1: number; y1: number }
   /** Un coup électrique sur un insecte déjà électrocuté : il tire sa chance de faire sauter un arc (voir `propagerLElectrocution`). */
   | { type: 'coupElectrique'; id: number; x: number; y: number; jusque: number; chance: number; degats: number; saut: number }
@@ -2588,9 +2590,12 @@ const facteurDeCritique = (c: ConfigVaisseau, a: Arme | undefined): number => c.
  * - PROPAGATION : chaque seconde, un insecte en feu allume ses voisins presque collés, à 6 de bord à bord — choisi par Keko ;
  * - POINT FAIBLE : un insecte rongé prend +25 points de chance critique et +50 points de dégâts critiques (150 % → 200 %) —
  *   « +25 points », choisi par Keko ;
- * - PARALYSIE : l'insecte dont le coup fait sauter l'arc d'électrocution est paralysé 1 s.
+ * - FOUDRE (à la place de la Paralysie, le même jour — Keko : « ça fait doublon avec le gel ; je préfère garder le givre pour
+ *   le contrôle ; quand l'effet d'électrocution est appliqué, une chance pour qu'un éclair tombe du ciel sur la cible ») :
+ *   chaque fois qu'un coup électrique ou un arc électrocute un insecte, 10 % de chance que la foudre tombe sur lui : 150,
+ *   et la moitié à ce qui est à 20 autour — « 10 %, 150, petite zone », choisi par Keko. Les mêmes partout, comme l'arc.
  */
-export const ELEMENTAIRES = { gelure: { chance: 0.15, duree: 1.5 }, incendie: { ecart: 6, periode: 1 }, vulnerabilite: { chance: 0.25, facteur: 0.5 }, paralysie: { duree: 1 } }
+export const ELEMENTAIRES = { gelure: { chance: 0.15, duree: 1.5 }, incendie: { ecart: 6, periode: 1 }, vulnerabilite: { chance: 0.25, facteur: 0.5 }, foudre: { chance: 0.1, degats: 150, rayon: 20, part: 0.5 } }
 /** UN INSECTE VULNÉRABLE (« Point faible ») : rongé, il prend plus de critiques, et plus forts. */
 const vulnerable = (c: ConfigVaisseau, m: Monde, e: Ennemi | undefined): boolean => e !== undefined && c.elementaires.vulnerabilite && e.acide !== undefined && e.acide.jusque > m.t
 /** UN COUP CRITIQUE SUR `e` ? Sa chance, celle de l'arme et du vaisseau, et de `e` s'il est vulnérable ; `u` n'est tiré que si elle n'est pas nulle. */
@@ -4056,8 +4061,8 @@ function coupDObus(c: ConfigVaisseau, m: Monde, o: Obus, e: Ennemi): { degats: n
   return { degats: o.degats, critique: false }
 }
 
-/** Un insecte FIGÉ (voir `Ennemi.figeA`) : pris dans la glace, ou paralysé, `duree` secondes. */
-function figer(m: Monde, e: Ennemi, duree: number, sorte: 'glace' | 'paralysie', ev: Evenement[]): void {
+/** Un insecte FIGÉ (voir `Ennemi.figeA`) : pris dans la glace, `duree` secondes. */
+function figer(m: Monde, e: Ennemi, duree: number, sorte: 'glace', ev: Evenement[]): void {
   if (e.asteroide !== undefined) return
   e.figeA = Math.max(e.figeA ?? -1, m.t + duree)
   e.fige = sorte
@@ -4088,7 +4093,8 @@ function propagerLeFeu(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[])
  * sa chance de faire sauter un arc (voir `propagerLElectrocution`) ; une zone qui électrocute sans cesse (la tempête, le
  * sillon) ou l'arc lui-même ne le sont pas.
  */
-function electrocuter(c: ConfigVaisseau, m: Monde, e: Ennemi, el: { duree: number; chance: number; degats: number; saut: number }, ev: Evenement[], direct = false): void {
+// (`arc` : c'est un arc d'électrocution qui le pose — avec un coup électrique, il peut faire tomber la foudre, voir `foudroyer`)
+function electrocuter(c: ConfigVaisseau, m: Monde, e: Ennemi, el: { duree: number; chance: number; degats: number; saut: number }, ev: Evenement[], direct = false, arc = false): void {
   if (e.asteroide !== undefined) return
   const encore = e.electrocute !== undefined && e.electrocute.jusque > m.t
   if (!encore) ev.push({ type: 'electrocute', id: e.id, x: e.corps.x, y: e.corps.y })
@@ -4099,6 +4105,25 @@ function electrocuter(c: ConfigVaisseau, m: Monde, e: Ennemi, el: { duree: numbe
     saut: Math.max(encore ? e.electrocute!.saut : 0, el.saut),
   }
   if (direct && encore) ev.push({ type: 'coupElectrique', id: e.id, x: e.corps.x, y: e.corps.y, ...e.electrocute })
+  // (« FOUDRE » : un coup électrique ou un arc qui électrocute — pas la tempête, pas le sillon, qui l'appliquent sans cesse)
+  if ((direct || arc) && c.elementaires.foudre && tire(m.graine, m.prochainId++, 96) < ELEMENTAIRES.foudre.chance) foudroyer(c, m, e, ev)
+}
+/**
+ * LA FOUDRE TOMBE DU CIEL (« Foudre » — voir `ELEMENTAIRES`) sur `e` : ses dégâts, et leur part à ce qui est autour, dans
+ * son rayon. Ce ne sont pas des coups électriques : elle ne fait pas sauter d'arc, et n'en appelle pas une autre.
+ */
+function foudroyer(c: ConfigVaisseau, m: Monde, e: Ennemi, ev: Evenement[]): void {
+  const F = ELEMENTAIRES.foudre
+  const x = e.corps.x
+  const y = e.corps.y
+  ev.push({ type: 'foudreDuCiel', id: e.id, x, y, rayon: F.rayon })
+  for (const o of [...m.ennemis]) {
+    if (o.asteroide !== undefined) continue
+    if (o !== e && Math.hypot(o.corps.x - x, o.corps.y - y) > F.rayon + rayonDe(c, o)) continue
+    o.pv -= o === e ? F.degats : F.degats * F.part
+    ev.push({ type: 'ennemiTouche', id: o.id, x: o.corps.x, y: o.corps.y, critique: false })
+    if (o.pv <= 0) abattreLEnnemi(c, m, o, ev)
+  }
 }
 /** (au plus tant d'arcs d'électrocution par pas) */
 const ARCS_PAR_PAS = 24
@@ -4128,12 +4153,7 @@ function propagerLElectrocution(c: ConfigVaisseau, m: Monde, ev: Evenement[]): v
     if (proche === undefined) continue
     arcs++
     ev.push({ type: 'arcDElectrocution', de: x.id, vers: proche.id, x0: x.x, y0: x.y, x1: proche.corps.x, y1: proche.corps.y })
-    // (« PARALYSIE » : celui qui l'a déclenché est paralysé — voir `ELEMENTAIRES`)
-    if (c.elementaires.paralysie) {
-      const source = m.ennemis.find((y) => y.id === x.id)
-      if (source !== undefined) figer(m, source, ELEMENTAIRES.paralysie.duree, 'paralysie', ev)
-    }
-    electrocuter(c, m, proche, { duree: Math.max(0, x.jusque - m.t), chance: x.chance, degats: x.degats, saut: x.saut }, ev)
+    electrocuter(c, m, proche, { duree: Math.max(0, x.jusque - m.t), chance: x.chance, degats: x.degats, saut: x.saut }, ev, false, true)
     // (au vortex, l'arc fait partout la même chose — voir `ConfigVaisseau.arcDElectrocution`)
     proche.pv -= c.arcDElectrocution > 0 ? c.arcDElectrocution : x.degats
     ev.push({ type: 'ennemiTouche', id: proche.id, x: proche.corps.x, y: proche.corps.y, critique: false })

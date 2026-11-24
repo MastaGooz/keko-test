@@ -8709,3 +8709,12 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   - PARALYSIE (« L'ennemi qui déclenche l'électrocution est paralysé. ») : l'insecte dont le coup électrique fait sauter
     l'arc est figé 1 s (`fige: 'paralysie'`) ; une lueur blanche qui bat vite et des arcs qui claquent sans cesse.
   - Deux tests (à chance 1 pour le gel et le point faible) ; VU en capture : les quatre cartes tiennent en cinq lignes.
+- LA FOUDRE À LA PLACE DE LA PARALYSIE (Keko, 24/11 : « ça fait doublon avec le gel, le fait que l'électrocution
+  paralyse ; je préfère garder le givre pour le contrôle ; quand l'effet d'électrocution est appliqué, une chance pour
+  qu'un éclair tombe du ciel sur la cible ») : « Foudre », « L'électrocution peut faire tomber la foudre sur l'ennemi. »
+  (le premier texte, « Appliquer l'électrocution… », prenait six lignes — VU en capture). Chaque fois qu'un COUP
+  ÉLECTRIQUE ou un ARC pose l'électrocution — pas la tempête ni le sillon, qui la posent sans cesse —, 10 % de chance
+  (`foudroyer`) : 150 sur lui, 75 à ce qui est à 20 autour ; ce ne sont pas des coups électriques (ni arc ni autre
+  foudre). « 10 %, 150, petite zone » et le nom choisis par Keko. À l'écran, la foudre de la bobine tesla tombe du haut
+  de l'écran, son claquement, une gerbe d'étincelles, une secousse. Le gel garde seul le figé (`fige: 'glace'`). Un test,
+  à chance 1 : la cible perd 10 + 150, le voisin 75, le lointain rien.

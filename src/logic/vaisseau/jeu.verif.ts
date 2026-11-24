@@ -3542,7 +3542,7 @@ for (const vortex of [true, false]) {
 // fige (à chance 1 pour le test), et figé il ne bouge plus ; sans la carte, non. PROPAGATION, un insecte en feu allume son
 // voisin collé à la seconde, pas celui qui est loin ; sans la carte, non. POINT FAIBLE, un insecte rongé (à chance 1) prend
 // des critiques de 50 points plus forts : un canon de 10 lui en ôte 10 × (facteur + 0,5) ; un insecte sain, 10. PARALYSIE, l'insecte dont le coup fait sauter
-// l'arc est figé 1 s.
+// l'arc est figé 1 s — puis FOUDRE, à sa place : la foudre tombe sur l'insecte électrocuté, et autour.
 {
   const base: ConfigVaisseau = { ...VAISSEAU, coque: 1e9, dureeDesEtats: 6, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9 }, derive: { ...VAISSEAU.derive, active: false }, passifs: { ...VAISSEAU.passifs, critique: 0 } }
   const insecte = (id: number, x: number, y: number, plus: Partial<Ennemi> = {}): Ennemi => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv: 1e6, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9, ...plus })
@@ -3596,20 +3596,25 @@ for (const vortex of [true, false]) {
   }
   const [faibleOui, faibleNon] = [faible(true), faible(false)]
   Object.assign(ELEMENTAIRES.vulnerabilite, sauveV)
-  // PARALYSIE
-  const para = (): boolean => {
-    const arme = { ...canon, cadence: 99, electrocution: { duree: 6, chance: 1, degats: 20, saut: 45 } }
-    const cfg = { ...base, armes: [arme], elementaires: regles({ paralysie: true }), ennemi: { ...base.ennemi, poussee: 0, vitesseMax: 0 } }
-    const e = insecte(2530, 40, 0, { electrocute: { jusque: 8, chance: 1, degats: 20, saut: 45 } })
-    const o = insecte(2531, 40, 30)
-    const w = monde(cfg, e, o)
+  // FOUDRE (à chance 1 pour le test) : un canon électrique (son arc à chance 0) électrocute l'insecte — la foudre tombe : il
+  // perd 10 + 150, son voisin à 15 en perd 75, le lointain rien ; sans la carte, il ne perd que 10
+  const sauveF = { ...ELEMENTAIRES.foudre }
+  ELEMENTAIRES.foudre.chance = 1
+  const foudre = (carte: boolean): { cible: number; voisin: number; loin: number } => {
+    const arme = { ...canon, cadence: 99, electrocution: { duree: 6, chance: 0, degats: 20, saut: 45 } }
+    const cfg = { ...base, armes: [arme], elementaires: regles({ foudre: carte }), ennemi: { ...base.ennemi, poussee: 0, vitesseMax: 0 } }
+    const e = insecte(2530, 40, 0)
+    const o = insecte(2531, 40, 15)
+    const l = insecte(2532, 40, 70)
+    const w = monde(cfg, e, o, l)
     w.armesA = [0]
     for (let i = 0; i < 40; i++) avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
-    return (e.figeA ?? -1) > w.t && e.fige === 'paralysie' && (o.figeA ?? -1) <= w.t
+    return { cible: 1e6 - e.pv, voisin: 1e6 - o.pv, loin: 1e6 - l.pv }
   }
-  const paralyse = para()
-  verifier(`les cartes d'élément : gel profond, figé ${gelOui.fige} et immobile (${gelOui.bouge.toFixed(2)}), sans la carte ${gelNon.fige} ; propagation, le voisin collé brûle (${feuOui.voisin}), le lointain non (${feuOui.loin}), sans la carte ${feuNon.voisin} ; point faible, un coup de 10 ôte ${faibleOui} au rongé (${10 * (base.passifs.critiqueFacteur + 0.5)}), ${faibleNon} au sain (10) ; paralysie, ${paralyse}`,
-    gelOui.fige && gelOui.bouge === 0 && !gelNon.fige && feuOui.voisin && !feuOui.loin && !feuNon.voisin && Math.abs(faibleOui - 10 * (base.passifs.critiqueFacteur + 0.5)) < 1e-9 && faibleNon === 10 && paralyse)
+  const [fOui, fNon] = [foudre(true), foudre(false)]
+  Object.assign(ELEMENTAIRES.foudre, sauveF)
+  verifier(`les cartes d'élément : gel profond, figé ${gelOui.fige} et immobile (${gelOui.bouge.toFixed(2)}), sans la carte ${gelNon.fige} ; propagation, le voisin collé brûle (${feuOui.voisin}), le lointain non (${feuOui.loin}), sans la carte ${feuNon.voisin} ; point faible, un coup de 10 ôte ${faibleOui} au rongé (${10 * (base.passifs.critiqueFacteur + 0.5)}), ${faibleNon} au sain (10) ; foudre, la cible perd ${fOui.cible} (160), le voisin ${fOui.voisin} (75), le lointain ${fOui.loin} (0) ; sans la carte, ${fNon.cible} (10)`,
+    gelOui.fige && gelOui.bouge === 0 && !gelNon.fige && feuOui.voisin && !feuOui.loin && !feuNon.voisin && Math.abs(faibleOui - 10 * (base.passifs.critiqueFacteur + 0.5)) < 1e-9 && faibleNon === 10 && fOui.cible === 160 && fOui.voisin === 75 && fOui.loin === 0 && fNon.cible === 10)
 }
 
 // LE RAILGUN ÉLECTRIQUE (Keko, 24/11 : la carte Cryogénique « applique l'état d'électricité » à la place) : la balle
