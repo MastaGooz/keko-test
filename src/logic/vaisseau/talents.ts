@@ -147,7 +147,10 @@ export function avecLesBonus(base: ConfigVaisseau, b: Bonus): ConfigVaisseau {
     if (stat === 'critique') c = { ...c, passifs: { ...c.passifs, critique: c.passifs.critique + x.somme } }
     else if (stat === 'critiques') c = { ...c, passifs: { ...c.passifs, critiqueFacteur: c.passifs.critiqueFacteur + x.somme } }
     // (la brûlure unique du vortex grandit avec la carte « Brûlure » — voir `ConfigVaisseau.brulureDesEtats`)
-    else if (stat === 'feu' && c.brulureDesEtats > 0) c = { ...c, brulureDesEtats: c.brulureDesEtats * (1 + x.somme), armes: c.armes.map((a) => (statsDeLArme(a).includes(stat) ? armeAmelioree(a, stat, x.somme) : a)) }
+    else if (stat === 'feu' && c.brulureDesEtats > 0) c = { ...c, brulureDesEtats: c.brulureDesEtats * (1 + x.somme), renforts: { ...c.renforts, feu: c.renforts.feu + x.somme }, armes: c.armes.map((a) => (statsDeLArme(a).includes(stat) ? armeAmelioree(a, stat, x.somme) : a)) }
+    // (UNE CARTE D'ÉTAT GRANDIT TOUS LES EFFETS DE SON ÉLÉMENT — Keko, 24/11 — ceux de ses armes, et ceux de ses cartes
+    // spéciales : voir `ConfigVaisseau.renforts`)
+    else if (ETATS.has(stat)) c = { ...c, renforts: { ...c.renforts, [stat]: c.renforts[stat as keyof ConfigVaisseau['renforts']] + x.somme }, armes: c.armes.map((a) => (statsDeLArme(a).includes(stat) ? armeAmelioree(a, stat, x.somme) : a)) }
     else c = { ...c, armes: c.armes.map((a) => (statsDeLArme(a).includes(stat) ? armeAmelioree(a, stat, x.somme) : a)) }
   }
   return c

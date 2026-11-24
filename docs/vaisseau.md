@@ -8740,3 +8740,13 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     n'est pas un coup : Gel profond ne s'y déclenche pas (Keko : « pour congeler il faut infliger des dégâts de givre à
     une cible déjà affectée »). Un anneau de givre pâle qui respire autour du vaisseau, des flocons qui y tournent.
   - Un test pour les trois ; VU en capture : les trois cartes tiennent.
+- LES DÉGÂTS FIXES DES CARTES SPÉCIALES (Keko, 24/11 : « l'arc, la foudre, la combustion, la flaque infligent des dégâts
+  fixes, on n'a aucun moyen de les augmenter ; ces cartes vont se retrouver obsolètes en late game ») — l'indexation au
+  niveau proposée, puis écartée par Keko (« on n'indexe aucun autre dégât sur le niveau ; juste la solution des cartes
+  suffit ») : UNE CARTE D'ÉTAT GRANDIT TOUS LES EFFETS DE SON ÉLÉMENT, « +X % à tous les effets liés à la brûlure / à la
+  corrosion / au givre / à l'électrocution » (« on reste vague et on peut inclure la totalité des effets »).
+  `ConfigVaisseau.renforts` garde la somme de leurs bonus, par élément (`avecLesBonus`) ; ils grandissent : BRÛLURE, la
+  combustion ; CORROSION, la flaque de la dissolution, la chance et le facteur du point faible ; ÉLECTROCUTION, l'arc (sa
+  surtension comprise) et la foudre ; GIVRE, la chance du gel profond. Ce que ces cartes grandissaient déjà reste aux
+  armes : la brûlure, la vulnérabilité, la chance d'arc, le ralenti (et l'aura glaciale par lui). Deux tests ; VU en
+  capture : les quatre textes tiennent en trois lignes.

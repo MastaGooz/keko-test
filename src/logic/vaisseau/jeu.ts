@@ -168,6 +168,15 @@ export const VAISSEAU = {
    */
   brulureDesEtats: 0 as number,
   arcDElectrocution: 0 as number,
+  /**
+   * CE QUE LES CARTES D'ÉTAT AJOUTENT À TOUS LES EFFETS DE LEUR ÉLÉMENT (Keko, 24/11 : « je valide le fait que les cartes
+   * augmentent tous les effets d'un élément » — contre les dégâts fixes des cartes spéciales, qui seraient devenus obsolètes
+   * en fin de partie ; « juste la solution des cartes suffit », pas d'indexation au niveau) : la somme de leurs bonus, en part
+   * (0,25 = +25 %). Brûlure : la combustion ; corrosion : la flaque, le point faible ; électrocution : l'arc, la foudre ;
+   * givre : le gel profond. Ce que ces cartes grandissaient déjà — la brûlure (`brulureDesEtats`), la vulnérabilité, la
+   * chance d'arc, le ralenti — reste aux armes (voir `avecLesBonus`).
+   */
+  renforts: { feu: 0, corrosion: 0, givre: 0, electrocution: 0 } as { feu: number; corrosion: number; givre: number; electrocution: number },
   /** LES CARTES SPÉCIALES D'ÉLÉMENT PRISES (Keko, 24/11 — voir `ELEMENTAIRES`). */
   elementaires: { gelure: false, incendie: false, vulnerabilite: false, foudre: false, dissolution: false, combustion: false, surtension: false, auraGlaciale: false } as { gelure: boolean; incendie: boolean; vulnerabilite: boolean; foudre: boolean; dissolution: boolean; combustion: boolean; surtension: boolean; auraGlaciale: boolean },
   /**
@@ -2013,7 +2022,7 @@ function abattreLEnnemi(c: ConfigVaisseau, m: Monde, e: Ennemi, ev: Evenement[],
   // (« DISSOLUTION » : mort rongé, il laisse une flaque d'acide à sa taille — voir `ELEMENTAIRES` ; elle n'est à aucune arme)
   if (ro === undefined && !sansButin && c.elementaires.dissolution && e.acide !== undefined && e.acide.jusque > m.t) {
     const D = ELEMENTAIRES.dissolution
-    m.givres.push({ id: m.prochainId++, arme: -1, x: e.corps.x, y: e.corps.y, nee: m.t, rayon: rayonDe(c, e) * D.taille, duree: D.duree, dps: D.dps, ralenti: 1, poison: true, corrosion: { duree: D.duree, bonus: e.acide.bonus } })
+    m.givres.push({ id: m.prochainId++, arme: -1, x: e.corps.x, y: e.corps.y, nee: m.t, rayon: rayonDe(c, e) * D.taille, duree: D.duree, dps: D.dps * (1 + c.renforts.corrosion), ralenti: 1, poison: true, corrosion: { duree: D.duree, bonus: e.acide.bonus } })
     ev.push({ type: 'flaqueDAcide', x: e.corps.x, y: e.corps.y, rayon: rayonDe(c, e) * D.taille })
   }
   // (« COMBUSTION » : mort en feu, il explose — voir `ELEMENTAIRES` ; ce qu'elle tue en feu explose à son tour)
@@ -2023,7 +2032,7 @@ function abattreLEnnemi(c: ConfigVaisseau, m: Monde, e: Ennemi, ev: Evenement[],
     ev.push({ type: 'explosionDeZone', x: e.corps.x, y: e.corps.y, rayon: r })
     for (const o of [...m.ennemis]) {
       if (o.asteroide !== undefined || Math.hypot(o.corps.x - e.corps.x, o.corps.y - e.corps.y) > r + rayonDe(c, o)) continue
-      o.pv -= B.degats
+      o.pv -= B.degats * (1 + c.renforts.feu)
       ev.push({ type: 'ennemiTouche', id: o.id, x: o.corps.x, y: o.corps.y, critique: false })
       if (o.pv <= 0) abattreLEnnemi(c, m, o, ev)
     }
@@ -2635,11 +2644,11 @@ export const ELEMENTAIRES = { gelure: { chance: 0.15, duree: 1.5 }, incendie: { 
 const vulnerable = (c: ConfigVaisseau, m: Monde, e: Ennemi | undefined): boolean => e !== undefined && c.elementaires.vulnerabilite && e.acide !== undefined && e.acide.jusque > m.t
 /** UN COUP CRITIQUE SUR `e` ? Sa chance, celle de l'arme et du vaisseau, et de `e` s'il est vulnérable ; `u` n'est tiré que si elle n'est pas nulle. */
 const critiqueSur = (c: ConfigVaisseau, m: Monde, a: Arme | undefined, e: Ennemi | undefined, u: () => number): boolean => {
-  const ch = chanceDeCritique(c, a) + (vulnerable(c, m, e) ? ELEMENTAIRES.vulnerabilite.chance : 0)
+  const ch = chanceDeCritique(c, a) + (vulnerable(c, m, e) ? ELEMENTAIRES.vulnerabilite.chance * (1 + c.renforts.corrosion) : 0)
   return ch > 0 && u() < ch
 }
 /** Le facteur d'un coup critique sur `e` (voir `critiqueSur`). */
-const facteurSur = (c: ConfigVaisseau, m: Monde, a: Arme | undefined, e: Ennemi | undefined): number => facteurDeCritique(c, a) + (vulnerable(c, m, e) ? ELEMENTAIRES.vulnerabilite.facteur : 0)
+const facteurSur = (c: ConfigVaisseau, m: Monde, a: Arme | undefined, e: Ennemi | undefined): number => facteurDeCritique(c, a) + (vulnerable(c, m, e) ? ELEMENTAIRES.vulnerabilite.facteur * (1 + c.renforts.corrosion) : 0)
 const critiqueTire = (c: ConfigVaisseau, m: Monde, a: Arme | undefined, e?: Ennemi): boolean => critiqueSur(c, m, a, e, () => tire(m.graine, m.prochainId++, 12))
 
 /**
@@ -3503,7 +3512,7 @@ const dureeDEtat = (c: ConfigVaisseau, duree: number): number => (c.dureeDesEtat
 function geler(c: ConfigVaisseau, m: Monde, e: Ennemi, duree: number, ralenti: number, ev: Evenement[], coup = false): void {
   const deja = (e.geleA ?? -1) > m.t
   // (« GEL PROFOND » : un COUP de givre — pas une zone qui gèle sans cesse — sur un insecte qui l'était déjà ; voir `ELEMENTAIRES`)
-  if (coup && deja && c.elementaires.gelure && e.asteroide === undefined && tire(m.graine, m.prochainId++, 99) < ELEMENTAIRES.gelure.chance) figer(m, e, ELEMENTAIRES.gelure.duree, 'glace', ev)
+  if (coup && deja && c.elementaires.gelure && e.asteroide === undefined && tire(m.graine, m.prochainId++, 99) < ELEMENTAIRES.gelure.chance * (1 + c.renforts.givre)) figer(m, e, ELEMENTAIRES.gelure.duree, 'glace', ev)
   if (!deja) ev.push({ type: 'gele', id: e.id, x: e.corps.x, y: e.corps.y })
   e.ralenti = deja ? Math.min(e.ralenti ?? 1, ralenti) : ralenti
   e.geleA = Math.max(e.geleA ?? -1, m.t + dureeDEtat(c, duree))
@@ -4091,8 +4100,9 @@ function coupDObus(c: ConfigVaisseau, m: Monde, o: Obus, e: Ennemi): { degats: n
   if (!vulnerable(c, m, e)) return { degats: o.degats, critique: o.critique === true }
   const a = c.armes.find((x) => x.id === o.arme)
   const f = facteurDeCritique(c, a)
-  if (o.critique === true) return { degats: (o.degats * (f + ELEMENTAIRES.vulnerabilite.facteur)) / f, critique: true }
-  if (tire(m.graine, m.prochainId++, 98) < ELEMENTAIRES.vulnerabilite.chance) return { degats: o.degats * (f + ELEMENTAIRES.vulnerabilite.facteur), critique: true }
+  const plus = 1 + c.renforts.corrosion
+  if (o.critique === true) return { degats: (o.degats * (f + ELEMENTAIRES.vulnerabilite.facteur * plus)) / f, critique: true }
+  if (tire(m.graine, m.prochainId++, 98) < ELEMENTAIRES.vulnerabilite.chance * plus) return { degats: o.degats * (f + ELEMENTAIRES.vulnerabilite.facteur * plus), critique: true }
   return { degats: o.degats, critique: false }
 }
 
@@ -4184,7 +4194,7 @@ function foudroyer(c: ConfigVaisseau, m: Monde, e: Ennemi, ev: Evenement[]): voi
   for (const o of [...m.ennemis]) {
     if (o.asteroide !== undefined) continue
     if (o !== e && Math.hypot(o.corps.x - x, o.corps.y - y) > F.rayon + rayonDe(c, o)) continue
-    o.pv -= o === e ? F.degats : F.degats * F.part
+    o.pv -= (o === e ? F.degats : F.degats * F.part) * (1 + c.renforts.electrocution)
     ev.push({ type: 'ennemiTouche', id: o.id, x: o.corps.x, y: o.corps.y, critique: false })
     if (o.pv <= 0) abattreLEnnemi(c, m, o, ev)
   }
@@ -4216,7 +4226,7 @@ function propagerLElectrocution(c: ConfigVaisseau, m: Monde, ev: Evenement[]): v
       ev.push({ type: 'arcDElectrocution', de: x.id, vers: proche.id, x0: x.x, y0: x.y, x1: proche.corps.x, y1: proche.corps.y })
       electrocuter(c, m, proche, { duree: Math.max(0, x.jusque - m.t), chance: x.chance, degats: x.degats, saut: x.saut }, ev, false, true)
       // (au vortex, l'arc fait partout la même chose — voir `ConfigVaisseau.arcDElectrocution`)
-      proche.pv -= c.arcDElectrocution > 0 ? c.arcDElectrocution : x.degats
+      proche.pv -= (c.arcDElectrocution > 0 ? c.arcDElectrocution : x.degats) * (1 + c.renforts.electrocution)
       ev.push({ type: 'ennemiTouche', id: proche.id, x: proche.corps.x, y: proche.corps.y, critique: false })
       if (proche.pv <= 0) abattreLEnnemi(c, m, proche, ev)
     }

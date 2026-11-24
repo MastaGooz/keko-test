@@ -3667,6 +3667,13 @@ for (const vortex of [true, false]) {
     return { voisin: 1e6 - v.pv, loin: 1e6 - l.pv }
   }
   const [cOui, cNon] = [combustion(true), combustion(false)]
+  // (… et grandie de moitié par les cartes « Brûlure » — voir `ConfigVaisseau.renforts` : 90)
+  const cRenfort = (() => {
+    const cfg = { ...base, armes: [canon], elementaires: { ...base.elementaires, combustion: true }, renforts: { ...base.renforts, feu: 0.5 } }
+    const v = insecte(2703, 60, 8)
+    jouer(cfg, 30, insecte(2704, 60, 0, { pv: 5, bruleA: 10, dpsBrulure: 0, dureeBrulure: 6 }), v)
+    return 1e6 - v.pv
+  })()
   // SURTENSION
   const surtension = (carte: boolean): number => {
     const arme = { ...canon, electrocution: { duree: 6, chance: 1, degats: 20, saut: 45 } }
@@ -3686,8 +3693,8 @@ for (const vortex of [true, false]) {
   const wA = jouer(cfgA, 60, pres, loin)
   Object.assign(ELEMENTAIRES.gelure, sauve)
   const glace = (pres.geleA ?? -1) > wA.t && (loin.geleA ?? -1) <= wA.t && pres.pv === 1e6 && (pres.figeA ?? -1) <= wA.t
-  verifier(`combustion : le voisin perd ${cOui.voisin} (60), le lointain ${cOui.loin} (0), sans la carte ${cNon.voisin} (0) ; surtension : l'arc frappe ${sOui} voisins (2), sans elle ${sNon} (1) ; aura glaciale : l'insecte proche sous givre, le lointain non, sans dégâts ni gel net (${glace})`,
-    cOui.voisin === 60 && cOui.loin === 0 && cNon.voisin === 0 && sOui === 2 && sNon === 1 && glace)
+  verifier(`combustion : le voisin perd ${cOui.voisin} (60), ${cRenfort} sous +50 % de renfort (90), le lointain ${cOui.loin} (0), sans la carte ${cNon.voisin} (0) ; surtension : l'arc frappe ${sOui} voisins (2), sans elle ${sNon} (1) ; aura glaciale : l'insecte proche sous givre, le lointain non, sans dégâts ni gel net (${glace})`,
+    cOui.voisin === 60 && cOui.loin === 0 && cNon.voisin === 0 && cRenfort === 90 && sOui === 2 && sNon === 1 && glace)
 }
 
 // LE RAILGUN ÉLECTRIQUE (Keko, 24/11 : la carte Cryogénique « applique l'état d'électricité » à la place) : la balle

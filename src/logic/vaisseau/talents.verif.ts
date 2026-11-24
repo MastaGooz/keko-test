@@ -191,5 +191,12 @@ verifier('le délai passé, ce qui restait à choisir part en réserve', reserve
   const prise = avecLesBonus({ ...C, armes: [corrosif] }, ajouterLeBonus([], carteSpeciale(mu)))
   verifier(`les cartes d'élément : un laser corrosif voit ${[...vues].filter((x) => x.startsWith('element')).join(', ') || 'aucune'} (element-corrosion) ; prise, la règle ${prise.elementaires.vulnerabilite}`, vues.has('element-corrosion') && !vues.has('element-givre') && !vues.has('element-feu') && !vues.has('element-electrocution') && prise.elementaires.vulnerabilite)
 }
+{
+  // UNE CARTE D'ÉTAT GRANDIT TOUS LES EFFETS DE SON ÉLÉMENT (Keko, 24/11 — voir `ConfigVaisseau.renforts`) : une carte
+  // « Corrosion » de +25 % et une « Électrocution » de +10 % font leurs renforts ; le givre et le feu restent à zéro
+  const corrosif = { id: 'laser', cadence: 2.2, degats: 90, portee: 120, vitesse: 420, vie: 0.7, dispersion: 0, guide: false, corrosif: { duree: 3, bonus: 0.2 } } as Arme
+  const cr = avecLesBonus({ ...C, armes: [corrosif] }, [{ id: 'armes:corrosion', cible: { sorte: 'armes' }, stat: 'corrosion', somme: 0.25 }, { id: 'armes:electrocution', cible: { sorte: 'armes' }, stat: 'electrocution', somme: 0.1 }])
+  verifier(`les renforts des cartes d'état : corrosion ${cr.renforts.corrosion} (0,25), électrocution ${cr.renforts.electrocution} (0,1), givre ${cr.renforts.givre}, feu ${cr.renforts.feu} (0)`, cr.renforts.corrosion === 0.25 && cr.renforts.electrocution === 0.1 && cr.renforts.givre === 0 && cr.renforts.feu === 0)
+}
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)
 console.log('Tout passe.')
