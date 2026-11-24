@@ -8973,3 +8973,12 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   sombre, l'arête et la pointe blanches), se figent et pâlissent en 0,7 s ; des éclats bleu-blanc, des flocons
   (`P.FLAKE`) ; le « boum » et le craquement du givre. Les éclats de Fragmentation qui portent le gel sont des ÉCHARDES :
   un losange effilé le long de leur course, deux faces, la pointe blanche, une lueur froide. VU en capture.
+- TÉLÉGUIDAGE, LA SIXIÈME DU LANCE-GRENADES (Keko, 24/11 : « les grenades se déplacent et fondent sur les ennemis » ;
+  au contact, à 60, la sixième place : Keko) : « Les grenades fondent sur les ennemis et explosent au contact. » ;
+  `Arme.teleguidage` = { vitesse 60 } — dès son lancer, la grenade file vers l'insecte le plus proche d'elle, à sa
+  vitesse qui freine, jamais sous 60 ; elle explose à son contact, ou au bout de sa minuterie si elle n'en a rattrapé
+  aucun (d'abord la chasse ne commençait qu'une fois freinée à 60 : mesuré, elle ne rattrapait pas un insecte parti à
+  45 de son point de chute). Un test (l'insecte déplacé pendant le vol : sans la carte, elle explose à 90, 0 au bout de
+  1,2 s ; avec, sur lui, à 0,92 s) ; la carte VUE en capture, cinq lignes. LE LANCE-GRENADES : Grenades givrées,
+  Fragmentation, Téléguidage, Rafale, Drones, Gros calibre — restent à trancher les trois dernières et sa variation
+  critique.

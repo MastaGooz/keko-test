@@ -534,6 +534,9 @@ export const MUTATIONS: Mutation[] = [
   // en vol, elle givre toute sa zone en explosant, et ses éclats aussi ; Incendiaires RETIRÉE — un seul élément par arme ;
   // le lance-grenades n'a que cinq variations en attendant)
   variation('grenades-givrees', 'grenades', 'Grenades givrées', 'L’explosion applique givre à tous les ennemis touchés.', changerA('grenades', V.cryo)),
+  // (« TÉLÉGUIDAGE » — Keko, 24/11 : « les grenades se déplacent et fondent sur les ennemis » ; au contact, à 60, la sixième
+  // place : Keko — voir `Arme.teleguidage`)
+  variation('grenades-teleguidage', 'grenades', 'Téléguidage', 'Les grenades fondent sur les ennemis et explosent au contact.', changerA('grenades', (a) => ({ ...a, teleguidage: { vitesse: 60 } }))),
   variation('grenades-rafale', 'grenades', 'Rafale', 'Cinq grenades à chaque tir.', changerA('grenades', (a) => ({ ...a, gerbe: { nombre: 5, ecart: 0.22 }, degats: fois(a, 0.7) }))),
   variation('grenades-drones', 'grenades', 'Drones', 'Deux drones en orbite lancent des grenades sur les ennemis proches.', ajouterA('grenades', (a) => drones(a, { cadence: 1.8, degats: fois(a, 0.6), portee: 80, gerbe: undefined }))),
   variation('grenades-lourdes', 'grenades', 'Gros calibre', 'Des grenades plus lentes, plus fortes, qui explosent plus large.', changerA('grenades', V.lourd)),

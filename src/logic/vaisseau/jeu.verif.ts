@@ -3243,6 +3243,31 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   verifier(`les grenades givrées : la cible est givrée (${avec.cible}) ; la couronne hors de la zone, ${avec.couronne} givrés par les éclats (plusieurs), ${sans.couronne} sans eux (0)`, avec.cible && sans.cible && avec.couronne >= 3 && sans.couronne === 0)
 }
 
+// LE TÉLÉGUIDAGE (Keko, 24/11 — voir `Arme.teleguidage`) : une grenade lancée vers un insecte à 90 ; il se déplace à
+// (90, 45) pendant le vol — sans la carte, elle explose à son point d'arrivée, 1,2 s après ; avec, elle fond sur lui et
+// explose à son contact
+{
+  const ou = (teleguidage: boolean): { x: number; y: number; t: number } | null => {
+    const grenades = { id: 'grenades', cadence: 99, degats: 34, portee: 110, vitesse: 150, vie: 1.2, dispersion: 0, guide: false, tousSens: true, zone: { rayon: 28 }, minuterie: { duree: 1.2, frein: 3 }, ...(teleguidage ? { teleguidage: { vitesse: 60 } } : {}) }
+    const cfg = { ...VAISSEAU, coque: 1e9, armes: [grenades], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false }, passifs: { ...VAISSEAU.passifs, critique: 0 } }
+    const w = nouveauMonde(cfg, 5)
+    w.invasion.prochainA = 1e9
+    const e: Ennemi = { id: 780, corps: { ...nouveauVaisseau(), x: 90, y: 0 }, pv: 1e6, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9 }
+    w.ennemis.push(e)
+    w.verrou = e.id
+    let lance = -1
+    for (let i = 0; i < 400; i++) {
+      for (const ev of avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements) {
+        if (ev.type === 'obus' && lance < 0) (lance = w.t), (e.corps = { ...e.corps, x: 90, y: 45 })
+        if (ev.type === 'explosionDeZone') return { x: ev.x, y: ev.y, t: w.t - lance }
+      }
+    }
+    return null
+  }
+  const [sans, avec] = [ou(false), ou(true)]
+  verifier(`le téléguidage : sans la carte, la grenade explose à ${sans?.x.toFixed(0)}, ${sans?.y.toFixed(0)} au bout de ${sans?.t.toFixed(2)} s (90, 0, 1,2) ; avec, à ${avec?.x.toFixed(0)}, ${avec?.y.toFixed(0)} au bout de ${avec?.t.toFixed(2)} s (près de 90, 45, avant 1,2)`, sans !== null && Math.hypot(sans.x - 90, sans.y) < 6 && Math.abs(sans.t - 1.2) < 0.05 && avec !== null && Math.hypot(avec.x - 90, avec.y - 45) < 10 && avec.t < 1)
+}
+
 // L'ONDE DE CHOC (Keko, 24/11 — voir `Arme.onde`) : l'explosion de 60 sur 40 libère une onde jusqu'à 120 (3 × 40) en
 // 1 s, à 30 % : la cible prend 60 + 18 ; un insecte à 80, hors de l'explosion, 18, un peu après, et il brûle
 // (Incendiaires) ; un à 140, rien ; l'onde s'éteint
