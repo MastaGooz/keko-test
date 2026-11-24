@@ -1610,6 +1610,19 @@ const RECETTES = {
       }
     },
   },
+  /**
+   * LE SILLON D'ÉNERGIE (Keko, 24/11 : « mets quand même un petit son au sillon, même quand ce n'est pas électrique » — voir
+   * `Arme.sillon`) : un bourdon pur et doux qui monte d'un ton en s'ouvrant, son octave et sa quinte qui chatoient lentement,
+   * et un souffle d'air qui glisse vers l'aigu — de la lumière qui chante, pas de grésillement
+   */
+  sillonEnergie: {
+    duree: 0.9, niveau: 0.2, salle: [0.35, 0.18], variantes: 3,
+    faire: (m, h) => {
+      const f = 220 * (0.95 + 0.1 * h.next())
+      note(m, 0, 0.7, 0, { f, glisse: { vers: f * 1.12, en: 0.4 }, a: 0.03, d: 0.6, battement: 5, partiels: [[1, 1, 1], [2, 0.35, 0.7], [3, 0.12, 0.5]] })
+      souffle(m, h, 0.02, 0.35, (h.next() - 0.5) * 0.6, { f: 1200, glisse: { vers: 2600, en: 0.5 }, q: 2, bande: true, a: 0.05, d: 0.35 })
+    },
+  },
 } satisfies Record<string, Recette>
 
 export type Son = keyof typeof RECETTES

@@ -8757,3 +8757,7 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   lumière cyan qui respire, un fil clair, des grains de lumière qui s'en élèvent — pas d'éclair, pas d'étincelles — et il
   est muet (le grésillement était électrique) ; avec Électrique, l'éclair qui serpente et son son reviennent, et il
   électrocute (c'était déjà la règle). L'événement `sillon` dit `electrique`. VU en capture, les deux côte à côte.
+  PUIS SON SON À LUI (Keko, 24/11 : « mets quand même un petit son au sillon même quand ce n'est pas électrique ») :
+  `sillonEnergie` — un bourdon pur et doux à 220 Hz qui monte d'un ton, son octave et sa quinte qui chatoient, un souffle
+  qui glisse vers l'aigu. MESURÉ : centre spectral 909 Hz (le grésillement : 471), efficace 0,084 sur 30-100 ms (0,079),
+  éteint vers 600 ms comme lui.

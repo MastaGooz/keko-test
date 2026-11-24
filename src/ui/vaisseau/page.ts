@@ -17784,8 +17784,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           }
           break
         case 'sillon':
-          // (UNE BALLE LAISSE UN SILLON — voir `Arme.sillon` : son grésillement, s'il est électrique ; d'énergie, il est muet)
-          if (ev.electrique || ev.gel) jouer('sillon', { dx: ev.x - v.x, dy: ev.y - v.y })
+          // (UNE BALLE LAISSE UN SILLON — voir `Arme.sillon` : son grésillement, s'il est électrique ; d'énergie, un bourdon
+          // doux qui monte — Keko, 24/11 : « mets quand même un petit son au sillon même quand ce n'est pas électrique »)
+          jouer(ev.electrique || ev.gel ? 'sillon' : 'sillonEnergie', { dx: ev.x - v.x, dy: ev.y - v.y })
           break
         case 'execution':
           // (UN COUP CRITIQUE DU RAILGUN EXÉCUTE — voir `Arme.execute` et `dessinerLesExecutions` : la croix, son « shing »,
