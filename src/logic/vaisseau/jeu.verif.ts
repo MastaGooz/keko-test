@@ -3617,6 +3617,30 @@ for (const vortex of [true, false]) {
     gelOui.fige && gelOui.bouge === 0 && !gelNon.fige && feuOui.voisin && !feuOui.loin && !feuNon.voisin && Math.abs(faibleOui - 10 * (base.passifs.critiqueFacteur + 0.5)) < 1e-9 && faibleNon === 10 && fOui.cible === 160 && fOui.voisin === 75 && fOui.loin === 0 && fNon.cible === 10)
 }
 
+// DISSOLUTION (Keko, 24/11 — voir `ELEMENTAIRES`) : un insecte rongé tué par un canon laisse une flaque d'acide (1,5 fois
+// son rayon, 3 s) ; un second, posé dedans, y est rongé et perd 30 par seconde ; sans la carte, ou mort sain, pas de flaque
+{
+  const essai = (carte: boolean, ronge: boolean): { flaque: number; perdu: number; rongeDedans: boolean } => {
+    const canon = { id: 'canon', cadence: 99, degats: 10, portee: 120, vitesse: 420, vie: 0.7, dispersion: 0, guide: false, tousSens: true, infaillible: true }
+    const cfg: ConfigVaisseau = { ...VAISSEAU, coque: 1e9, dureeDesEtats: 6, armes: [canon], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false }, passifs: { ...VAISSEAU.passifs, critique: 0 }, elementaires: { ...VAISSEAU.elementaires, dissolution: carte } }
+    const w = nouveauMonde(cfg, 5)
+    w.invasion.prochainA = 1e9
+    w.t = 2
+    w.armesA = [0]
+    const e: Ennemi = { id: 2600, corps: { ...nouveauVaisseau(), x: 60, y: 0 }, pv: 5, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9, ...(ronge ? { acide: { jusque: 10, dps: 0, bonus: 0.2 } } : {}) }
+    w.ennemis.push(e)
+    for (let i = 0; i < 30; i++) avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+    const fl = w.givres.find((g) => g.arme === -1)
+    const o: Ennemi = { id: 2601, corps: { ...nouveauVaisseau(), x: 60, y: 0 }, pv: 1e6, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9 }
+    w.armesA = [1e9]
+    w.ennemis.push(o)
+    for (let i = 0; i < 60; i++) avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+    return { flaque: fl?.rayon ?? 0, perdu: Math.round(1e6 - o.pv), rongeDedans: (o.acide?.jusque ?? 0) > w.t }
+  }
+  const [oui, sans, sain] = [essai(true, true), essai(false, true), essai(true, false)]
+  verifier(`dissolution : mort rongé, une flaque de ${oui.flaque} de rayon (1,5 fois le sien) ; un insecte dedans une seconde perd ${oui.perdu} (environ 30, majoré par l'acide), rongé ${oui.rongeDedans} ; sans la carte, ${sans.flaque} ; mort sain, ${sain.flaque}`, oui.flaque > 0 && oui.perdu >= 30 && oui.perdu <= 40 && oui.rongeDedans && sans.flaque === 0 && sain.flaque === 0)
+}
+
 // LE RAILGUN ÉLECTRIQUE (Keko, 24/11 : la carte Cryogénique « applique l'état d'électricité » à la place) : la balle
 // électrocute ce qu'elle traverse, et son sillon ce qui y passe
 {

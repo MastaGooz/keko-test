@@ -17947,6 +17947,17 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
             etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(20, 45), Math.sin(a) * R.range(20, 45), R.range(0.15, 0.3), R.next() < 0.5 ? N.WHITE : BLEU_DU_GIVRE, 1, 1.5)
           }
           break
+        case 'flaqueDAcide':
+          // (« DISSOLUTION » : il fond en flaque — un grésillement, des gouttes d'acide qui giclent)
+          if (t - rongeSonneA > 0.15) {
+            rongeSonneA = t
+            jouer('ronge', { dx: ev.x - v.x, dy: ev.y - v.y })
+          }
+          for (let i = 0; i < 6; i++) {
+            const a = R.range(0, Math.PI * 2)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(15, 35), Math.sin(a) * R.range(15, 35), R.range(0.15, 0.3), R.next() < 0.5 ? MIASME[7] : MIASME[5], 1, 1.5)
+          }
+          break
         case 'foudreDuCiel':
           // (LA FOUDRE TOMBE DU CIEL — « Foudre », Keko, 24/11 : la foudre de la bobine tesla, du haut de l'écran jusqu'à lui,
           // son claquement, une gerbe d'étincelles sur sa zone et une secousse)

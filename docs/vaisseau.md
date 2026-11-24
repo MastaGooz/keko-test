@@ -8718,3 +8718,14 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   foudre). « 10 %, 150, petite zone » et le nom choisis par Keko. À l'écran, la foudre de la bobine tesla tombe du haut
   de l'écran, son claquement, une gerbe d'étincelles, une secousse. Le gel garde seul le figé (`fige: 'glace'`). Un test,
   à chance 1 : la cible perd 10 + 150, le voisin 75, le lointain rien.
+- UNE SECONDE CARTE SPÉCIALE PAR ÉTAT (Keko, 24/11 : « une carte de plus spéciale pour chaque état, à commencer par la
+  corrosion »). DISSOLUTION (« Les ennemis qui meurent sous corrosion laissent une flaque d'acide. ») : un insecte qui
+  meurt rongé laisse, là où il est mort, une flaque d'acide d'un rayon de 1,5 fois le sien, 3 s, qui ronge ce qui y passe
+  et le blesse de 30 par seconde (« ronge et blesse, mais pour 30/s », « 1,5 fois la taille, 3 s », le nom : Keko). C'EST
+  UNE PLAQUE DE LA TRAÎNÉE CORROSIVE DE LA VOUIVRE (Keko : « utiliser en graphique la traînée d'acide de la Vouivre ») :
+  un `Givre` `poison` à aucune arme (`arme: -1`), posé dans `abattreLEnnemi`. Un insecte qui y meurt rongé laisse la
+  sienne. Un test ; VU en capture : les flaques, des taches de goudron olive qui rétrécissent.
+- BUG : LES CARTES D'ÉLÉMENT NE S'APPLIQUAIENT PAS EN JEU (24/11, trouvé en capture : pas de flaque à l'écran, quand une
+  sonde hors navigateur en comptait). `avecLesBonus` sautait toute carte à « toutes les armes » dans sa première boucle —
+  leur cible —, et la seconde ne sait que les stats. Le test appelait `appliquer` directement ; il passe maintenant par
+  `avecLesBonus`, comme le jeu. Gel profond, Propagation, Point faible et Foudre, publiées avant, n'avaient donc aucun effet.

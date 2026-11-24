@@ -131,7 +131,9 @@ export function avecLesBonus(base: ConfigVaisseau, b: Bonus): ConfigVaisseau {
   let c = base
   for (const x of b) {
     // (« toutes les armes » vient à la fin, ci-dessous : il vaut aussi pour une arme prise après lui)
-    if (x.cible.sorte === 'armes') continue
+    // (… SAUF UNE CARTE D'ÉLÉMENT : spéciale, elle change la configuration ici — sa cible « toutes les armes » la faisait
+    // passer, et elle ne s'appliquait jamais — 24/11)
+    if (x.cible.sorte === 'armes' && x.stat !== 'mutation') continue
     // (le critique d'une arme est à elle : la chance en points, les dégâts critiques en points du facteur — 150 % +12 % : 162 %)
     // (une carte spéciale change la configuration elle-même — voir `MUTATIONS`)
     if (x.stat === 'mutation') c = MUTATIONS.find((mu) => `mutation:${mu.id}` === x.id)?.appliquer(c) ?? c
@@ -139,7 +141,7 @@ export function avecLesBonus(base: ConfigVaisseau, b: Bonus): ConfigVaisseau {
   }
   // TOUTES LES ARMES : chaque arme portée qui a cette stat — même prise après la carte
   for (const x of b) {
-    if (x.cible.sorte !== 'armes') continue
+    if (x.cible.sorte !== 'armes' || x.stat === 'mutation') continue
     const stat = x.stat as StatDArme
     // (le critique de toutes les armes est celui du vaisseau, que chaque arme ajoute au sien)
     if (stat === 'critique') c = { ...c, passifs: { ...c.passifs, critique: c.passifs.critique + x.somme } }
@@ -509,6 +511,9 @@ export const MUTATIONS: Mutation[] = [
   // `ELEMENTAIRES` pour leurs chiffres ; leurs noms et leurs textes sont de moi)
   element('element-givre', 'givre', 'Gel profond', 'Le givre peut geler net les ennemis déjà sous givre.', 'gelure'),
   element('element-feu', 'feu', 'Propagation', 'La brûlure se propage aux ennemis tout proches.', 'incendie'),
+  // (« DISSOLUTION », la seconde de la corrosion — Keko, 24/11 : « une carte de plus spéciale pour chaque état, à commencer par
+  // la corrosion : un ennemi qui meurt sous l'effet de la corrosion laisse une flaque d'acide »)
+  element('element-dissolution', 'corrosion', 'Dissolution', 'Les ennemis qui meurent sous corrosion laissent une flaque d’acide.', 'dissolution'),
   element('element-corrosion', 'corrosion', 'Point faible', 'Les coups critiques sont plus fréquents et plus forts sous corrosion.', 'vulnerabilite'),
   // (« FOUDRE », à la place de « Paralysie » — Keko, 24/11 : « ça fait doublon avec le gel »)
   element('element-electrocution', 'electrocution', 'Foudre', 'L’électrocution peut faire tomber la foudre sur l’ennemi.', 'foudre'),

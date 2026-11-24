@@ -169,7 +169,7 @@ export const VAISSEAU = {
   brulureDesEtats: 0 as number,
   arcDElectrocution: 0 as number,
   /** LES CARTES SPÉCIALES D'ÉLÉMENT PRISES (Keko, 24/11 — voir `ELEMENTAIRES`). */
-  elementaires: { gelure: false, incendie: false, vulnerabilite: false, foudre: false } as { gelure: boolean; incendie: boolean; vulnerabilite: boolean; foudre: boolean },
+  elementaires: { gelure: false, incendie: false, vulnerabilite: false, foudre: false, dissolution: false } as { gelure: boolean; incendie: boolean; vulnerabilite: boolean; foudre: boolean; dissolution: boolean },
   /**
    * L'ARC DE TIR (le jeu du vortex — Keko, 15/11 : « limiter les tirs du canon à un angle qui va devant le vaisseau ;
    * pas forcément tout droit, mais les empêcher de tirer en angle droit sur les côtés et en arrière, pour forcer le
@@ -1698,6 +1698,8 @@ export type Evenement =
   | { type: 'fige'; id: number; x: number; y: number; sorte: 'glace' }
   /** La foudre tombe du ciel sur un insecte électrocuté (« Foudre » — voir `foudroyer`). */
   | { type: 'foudreDuCiel'; id: number; x: number; y: number; rayon: number }
+  /** Un insecte mort rongé laisse une flaque d'acide (« Dissolution » — voir `ELEMENTAIRES`). */
+  | { type: 'flaqueDAcide'; x: number; y: number; rayon: number }
   | { type: 'feuPropage'; de: number; vers: number; x0: number; y0: number; x1: number; y1: number }
   /** Un coup électrique sur un insecte déjà électrocuté : il tire sa chance de faire sauter un arc (voir `propagerLElectrocution`). */
   | { type: 'coupElectrique'; id: number; x: number; y: number; jusque: number; chance: number; degats: number; saut: number }
@@ -2008,6 +2010,12 @@ function abattreLEnnemi(c: ConfigVaisseau, m: Monde, e: Ennemi, ev: Evenement[],
   m.prochainEnnemiA = m.t + c.ennemi.revient
   const ro = e.asteroide
   if (c.invasion.active && ro === undefined && !sansButin) m.invasion.abattus += 1
+  // (« DISSOLUTION » : mort rongé, il laisse une flaque d'acide à sa taille — voir `ELEMENTAIRES` ; elle n'est à aucune arme)
+  if (ro === undefined && !sansButin && c.elementaires.dissolution && e.acide !== undefined && e.acide.jusque > m.t) {
+    const D = ELEMENTAIRES.dissolution
+    m.givres.push({ id: m.prochainId++, arme: -1, x: e.corps.x, y: e.corps.y, nee: m.t, rayon: rayonDe(c, e) * D.taille, duree: D.duree, dps: D.dps, ralenti: 1, poison: true, corrosion: { duree: D.duree, bonus: e.acide.bonus } })
+    ev.push({ type: 'flaqueDAcide', x: e.corps.x, y: e.corps.y, rayon: rayonDe(c, e) * D.taille })
+  }
   // (LE TABLEAU : au pilote dont c'est le tour — celui qui porte le coup fatal ; les grands, à l'équipe — voir `invasion.points`)
   if (c.invasion.active && !sansButin) {
     if (ro !== undefined) m.tableau = { ...m.tableau, roches: m.tableau.roches + 1, pointsDeRoches: m.tableau.pointsDeRoches + pointsDeLaRoche(c, ro.rayon) }
@@ -2594,8 +2602,13 @@ const facteurDeCritique = (c: ConfigVaisseau, a: Arme | undefined): number => c.
  *   le contrôle ; quand l'effet d'électrocution est appliqué, une chance pour qu'un éclair tombe du ciel sur la cible ») :
  *   chaque fois qu'un coup électrique ou un arc électrocute un insecte, 10 % de chance que la foudre tombe sur lui : 150,
  *   et la moitié à ce qui est à 20 autour — « 10 %, 150, petite zone », choisi par Keko. Les mêmes partout, comme l'arc.
+ * LA SECONDE CARTE DE CHAQUE ÉTAT (Keko, 24/11 : « une carte de plus spéciale pour chaque état, à commencer par la
+ * corrosion ») :
+ * - DISSOLUTION : un insecte qui meurt rongé laisse une flaque d'acide là où il est mort, d'un rayon de 1,5 fois le sien,
+ *   3 s — elle ronge ce qui y passe, et le blesse de 30 par seconde (« ronge et blesse, mais pour 30/s », « 1,5 fois la
+ *   taille, 3 s », le nom : Keko). La flaque est une plaque de la traînée corrosive de la Vouivre (`Givre`, `poison`).
  */
-export const ELEMENTAIRES = { gelure: { chance: 0.15, duree: 1.5 }, incendie: { ecart: 6, periode: 1 }, vulnerabilite: { chance: 0.25, facteur: 0.5 }, foudre: { chance: 0.1, degats: 150, rayon: 20, part: 0.5 } }
+export const ELEMENTAIRES = { gelure: { chance: 0.15, duree: 1.5 }, incendie: { ecart: 6, periode: 1 }, vulnerabilite: { chance: 0.25, facteur: 0.5 }, foudre: { chance: 0.1, degats: 150, rayon: 20, part: 0.5 }, dissolution: { taille: 1.5, duree: 3, dps: 30 } }
 /** UN INSECTE VULNÉRABLE (« Point faible ») : rongé, il prend plus de critiques, et plus forts. */
 const vulnerable = (c: ConfigVaisseau, m: Monde, e: Ennemi | undefined): boolean => e !== undefined && c.elementaires.vulnerabilite && e.acide !== undefined && e.acide.jusque > m.t
 /** UN COUP CRITIQUE SUR `e` ? Sa chance, celle de l'arme et du vaisseau, et de `e` s'il est vulnérable ; `u` n'est tiré que si elle n'est pas nulle. */
