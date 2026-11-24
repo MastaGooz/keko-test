@@ -8925,3 +8925,12 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   Salve, les trois obus partent en éventail autour de ce point. Un test (un seul à 50, un groupe de quatre à 130 et
   verrouillé le seul : sans la carte, 50 ; avec, 130) ; la carte VUE en capture, quatre lignes. Restent à juger : Salve
   et Gros calibre.
+- ÉPICENTRE, À LA PLACE DE SALVE (Keko, 24/11 : « une variation orientée un peu pour les cibles uniques : pile poil au
+  milieu de l'explosion, les dégâts sont beaucoup plus importants » ; cœur de 10, ×3, la place — Salve recoupait
+  Fragmentation — et le nom : Keko) : « Au cœur de l'explosion, les dégâts sont triplés. » ; `Arme.epicentre`, porté par
+  la zone du tir (`zone.coeur`) jusqu'à `exploser` — tout insecte à 10 du centre, bord à bord, prend ×3 (critique
+  compris), le reste de la zone ×1 ; les mini-obus de la grappe ont un cœur à leur échelle (5). Un second éclair blanc
+  à la taille du cœur. Le cœur ne grandit pas avec les cartes « Portée ». Avec Triangulation, l'obus tombe au centre du
+  groupe, où il n'y a pas forcément d'insecte : les deux tirent en sens contraire, c'est un choix de build. Un test (la
+  cible 180, le voisin à 30, 60 ; sans la carte, 60 et 60) ; la carte VUE en capture. L'OBUSIER : Incendiaires,
+  Fragmentation, Réplique, Triangulation, Épicentre, Gros calibre.

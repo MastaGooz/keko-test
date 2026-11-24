@@ -496,7 +496,10 @@ export const MUTATIONS: Mutation[] = [
   // répétée 0,4 s plus tard ; puis « les ennemis touchés par un critique de l'obus déclenchent une petite explosion autour
   // d'eux » : rayon 15, 30 % — voir `Arme.replique`)
   variation('obusier-replique', 'obusier', 'Réplique', 'Les ennemis touchés par un coup critique explosent.', changerA('obusier', (a) => ({ ...a, replique: { rayon: 15, part: 0.3 } }))),
-  variation('obusier-salve', 'obusier', 'Salve', 'Chaque tir lâche trois obus en éventail.', changerA('obusier', V.gerbe(3, 0.3, 0.55))),
+  // (« ÉPICENTRE », À LA PLACE DE « SALVE » — Keko, 24/11 : « une variation orientée pour les cibles uniques : pile poil au
+  // milieu de l'explosion, les dégâts sont beaucoup plus importants » ; cœur de 10, ×3, la place et le nom : Keko ; Salve
+  // recoupait Fragmentation — voir `Arme.epicentre`)
+  variation('obusier-epicentre', 'obusier', 'Épicentre', 'Au cœur de l’explosion, les dégâts sont triplés.', changerA('obusier', (a) => ({ ...a, epicentre: { rayon: 10, facteur: 3 } }))),
   // (« TRIANGULATION », À LA PLACE DE « DRONES » — Keko, 24/11 : « l'obus frappe toujours dans la zone qui comporte le plus
   // grand nombre d'ennemis » ; Drones ajoutait une attaque à côté au lieu de changer le tir ; le nom : Keko — voir
   // `Arme.triangulation`)

@@ -17155,6 +17155,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           if (ev.arme === 'obusier') {
             effets.push({ fx: N.createFx(EXPLOSION_OBUS as Module, { x: ev.x - camera.x + W / 2, y: ev.y - camera.y + centreY(), size: ev.rayon / 54, seed: Math.round(ev.x * 7 + ev.y) }), x: ev.x, y: ev.y })
             flashs.push({ x: ev.x, y: ev.y, t0: t, r: ev.rayon * 0.35 })
+            // (L'ÉPICENTRE : son cœur éclate d'un second éclair, blanc, à sa taille — voir `Arme.epicentre`)
+            if (ev.coeur !== undefined) flashs.push({ x: ev.x, y: ev.y, t0: t, r: ev.coeur, c: [N.WHITE, N.WHITE, N.hex('#fff2a8'), N.WHITE, N.WHITE] })
             secousse = Math.max(secousse, 0.7)
             if (typeof navigator.vibrate === 'function') vibrer(40)
             break

@@ -3200,6 +3200,25 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   verifier(`la triangulation : sans elle, l'obus tombe à ${sans?.x.toFixed(0)} (le seul, à 50) ; avec, à ${avec?.x.toFixed(0)}, ${avec?.y.toFixed(0)} (le centre du groupe, 130, 0)`, sans !== null && Math.abs(sans.x - 50) < 4 && avec !== null && Math.hypot(avec.x - 130, avec.y) < 4)
 }
 
+// L'ÉPICENTRE (Keko, 24/11 — voir `Arme.epicentre`) : l'obus tombe sur sa cible ; elle, au cœur, prend 3 × 60 ; un voisin à
+// 30, dans la zone mais hors du cœur (10 + 5), 60 ; sans la carte, 60 chacun
+{
+  const pris = (epicentre: boolean): number[] => {
+    const obusier = { id: 'obusier', cadence: 99, degats: 60, portee: 150, vitesse: 110, vie: 2.2, dispersion: 0, guide: false, tousSens: true, zone: { rayon: 40 }, cloche: { vol: 0.8 }, ...(epicentre ? { epicentre: { rayon: 10, facteur: 3 } } : {}) }
+    const cfg = { ...VAISSEAU, coque: 1e9, armes: [obusier], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false }, passifs: { ...VAISSEAU.passifs, critique: 0 } }
+    const w = nouveauMonde(cfg, 5)
+    w.invasion.prochainA = 1e9
+    const es = [[120, 0], [120, 30]].map(([x, y], k): Ennemi => ({ id: 695 + k, corps: { ...nouveauVaisseau(), x, y }, pv: 1e6, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9 }))
+    w.ennemis.push(...es)
+    w.verrou = es[0].id
+    let fini = false
+    for (let i = 0; i < 400 && !fini; i++) for (const ev of avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements) if (ev.type === 'explosionDeZone') fini = true
+    return es.map((e) => 1e6 - e.pv)
+  }
+  const [avec, sans] = [pris(true), pris(false)]
+  verifier(`l'épicentre : la cible prend ${avec[0]} (180), le voisin à 30 ${avec[1]} (60) ; sans la carte, ${sans.join(' et ')} (60 et 60)`, avec[0] === 180 && avec[1] === 60 && sans[0] === 60 && sans[1] === 60)
+}
+
 // L'OBUS INCENDIAIRE (Keko, 24/11 : « on garde les dégâts et on inflige enflammé en plus ») : l'explosion blesse comme
 // avant ET enflamme tout ce qui est dans sa zone — la cible et son voisin à 30 ; celui à 70, hors de la zone de 40, rien
 {
