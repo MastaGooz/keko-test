@@ -11416,11 +11416,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         const uy = (g.y1 - g.y0) / L
         const k = si.parSegment === true ? fondu((m.t - (g.t ?? si.nee)) / si.duree) : kSillon
         if (k <= 0) continue
+        // (UNE TRAÎNÉE LARGE — celle de la bobine, toute sa zone : un voile électrique de sa largeur, sous l'éclair, qui garde
+        // son serpentin à la taille d'un sillon)
+        // (le halo s'efface vers son bord : à `largeur` seul, il se lisait deux fois plus étroit que la zone — VU en capture)
+        if (si.largeur > 10) p.glowLine(g.x0, g.y0, g.x1, g.y1, si.largeur * 1.6, halo, 0.12 * k)
         // (l'éclair : des points tous les 3, écartés de part et d'autre du trait d'un hasard refrappé)
         let px = g.x0
         let py = g.y0
         for (let d = 3; d <= L + 0.01; d += 3) {
-          const ec = (alea(si.balle * 31 + n, frappe * 97 + Math.round(d), 5) - 0.5) * 4 * si.largeur * 0.6
+          const ec = (alea(si.balle * 31 + n, frappe * 97 + Math.round(d), 5) - 0.5) * 4 * Math.min(si.largeur, 6) * 0.6
           const qx = g.x0 + ux * Math.min(d, L) - uy * ec
           const qy = g.y0 + uy * Math.min(d, L) + ux * ec
           p.glowLine(px, py, qx, qy, 3, halo, 0.3 * k)

@@ -8831,6 +8831,12 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   bout ; un bout tous les 4 au moins, pour que l'éclair ait de quoi serpenter) ; ce qui y passe perd 30 par seconde et est
   électrocuté, sans faire sauter d'arc (c'est continu). « 30/s, 2 s, large de 5 », la place et le nom : Keko. La bobine :
   Orage, Conduction, Accumulateur, Magnétisme, Haute tension, et Grande bobine encore d'origine. Un test ; VU en capture.
+  PUIS LARGE COMME TOUTE SA ZONE (Keko, 24/11 : « une traînée dont la largeur est égale à la largeur de la zone totale de
+  la bobine ; elle inflige beaucoup moins de dégâts, mais est beaucoup plus large ») : `trainee.largeur` 0 = le rayon de
+  la boule (42 ; Grande bobine et cartes « Portée » comprises), 10 par seconde (de moi : un tiers). À l'écran, un voile
+  électrique de cette largeur sous l'éclair, qui garde son serpentin à la taille d'un sillon ; le halo s'efface vers son
+  bord, il est tracé à 1,6 fois la largeur — à la largeur seule, il se lisait deux fois plus étroit (VU en capture). Le
+  test : un insecte à 30 de côté de sa course y perd 10 en une seconde.
   - Restent, de l'ancienne liste : Surtension, Grande bobine.
 - « CRISTAUX » À LA PLACE DE « PÉPITES » (Keko, 24/11 : « remplace partout dans le jeu le mot pépite par cristaux ») :
   dans le vortex, un seul texte le disait, la carte Expérience — « d'expérience par cristal ». Le code, les commentaires

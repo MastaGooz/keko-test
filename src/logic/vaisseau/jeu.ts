@@ -3806,7 +3806,9 @@ function menerLesSpheres(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[
     if (tr !== undefined && m.phase === 'vol') {
       let si = m.sillons.find((x) => x.balle === s.id)
       if (si === undefined) {
-        si = { parSegment: true, balle: s.id, segments: [], nee: m.t, duree: tr.duree, dps: tr.dps, largeur: tr.largeur, ...(a.electrocution === undefined ? {} : { electrocution: a.electrocution }) }
+        // (`largeur` 0 : TOUTE LA ZONE DE LA BOULE — Keko, 24/11 : « une traînée dont la largeur est égale à la zone totale de la
+        // bobine ; beaucoup moins de dégâts, mais beaucoup plus large » : son rayon, Grande bobine et cartes « Portée » comprises)
+        si = { parSegment: true, balle: s.id, segments: [], nee: m.t, duree: tr.duree, dps: tr.dps, largeur: tr.largeur > 0 ? tr.largeur : sp.rayon, ...(a.electrocution === undefined ? {} : { electrocution: a.electrocution }) }
         m.sillons.push(si)
       }
       const der = si.segments[si.segments.length - 1]

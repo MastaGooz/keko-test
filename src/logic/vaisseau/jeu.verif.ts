@@ -3811,7 +3811,19 @@ for (const vortex of [true, false]) {
   for (let i = 0; i < 120; i++) avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
   const avant = e.pv
   for (let i = 0; i < 30; i++) avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
-  verifier(`haute tension : une seconde sur la traînée, ${perdu.toFixed(1)} perdus (environ 30), électrocuté ${electrocute} ; éteinte, ${(avant - e.pv).toFixed(1)} (0)`, perdu > 20 && perdu <= 31 && electrocute && avant - e.pv < 1e-6)
+  // (… LARGE COMME TOUTE SA ZONE, `largeur` 0 : un insecte à 30 de côté de sa course, dans les 42 de la boule, y est pris)
+  const large = { ...tesla, sphere: { ...tesla.sphere, rayon: 42, trainee: { duree: 2, dps: 10, largeur: 0 } } }
+  const cl: ConfigVaisseau = { ...cfg, armes: [large] }
+  const w2 = nouveauMonde(cl, 5)
+  w2.invasion.prochainA = 1e9
+  w2.t = 2
+  w2.armesA = [1e9]
+  w2.spheres.push({ id: 3410, arme: 0, x: 100, y: 0, vx: 45, vy: 0, nee: w2.t, tirA: 1e9 })
+  for (let i = 0; i < 60; i++) avancerLeMonde(cl, w2, 1 / 60, { x: 0, y: 0 })
+  const cote: Ennemi = { ...e, id: 3411, corps: { ...nouveauVaisseau(), x: 120, y: 30 }, pv: 1e6, electrocute: undefined }
+  w2.ennemis.push(cote)
+  for (let i = 0; i < 60; i++) avancerLeMonde(cl, w2, 1 / 60, { x: 0, y: 0 })
+  verifier(`haute tension : une seconde sur la traînée, ${perdu.toFixed(1)} perdus (environ 30), électrocuté ${electrocute} ; éteinte, ${(avant - e.pv).toFixed(1)} (0) ; large comme sa zone, à 30 de côté : ${(1e6 - cote.pv).toFixed(1)} (environ 10)`, perdu > 20 && perdu <= 31 && electrocute && avant - e.pv < 1e-6 && 1e6 - cote.pv > 6 && 1e6 - cote.pv <= 10.5)
 }
 
 // LE RAILGUN ÉLECTRIQUE (Keko, 24/11 : la carte Cryogénique « applique l'état d'électricité » à la place) : la balle
