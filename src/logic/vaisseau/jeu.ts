@@ -169,7 +169,7 @@ export const VAISSEAU = {
   brulureDesEtats: 0 as number,
   arcDElectrocution: 0 as number,
   /** LES CARTES SPÉCIALES D'ÉLÉMENT PRISES (Keko, 24/11 — voir `ELEMENTAIRES`). */
-  elementaires: { gelure: false, incendie: false, vulnerabilite: false, foudre: false, dissolution: false } as { gelure: boolean; incendie: boolean; vulnerabilite: boolean; foudre: boolean; dissolution: boolean },
+  elementaires: { gelure: false, incendie: false, vulnerabilite: false, foudre: false, dissolution: false, combustion: false, surtension: false, auraGlaciale: false } as { gelure: boolean; incendie: boolean; vulnerabilite: boolean; foudre: boolean; dissolution: boolean; combustion: boolean; surtension: boolean; auraGlaciale: boolean },
   /**
    * L'ARC DE TIR (le jeu du vortex — Keko, 15/11 : « limiter les tirs du canon à un angle qui va devant le vaisseau ;
    * pas forcément tout droit, mais les empêcher de tirer en angle droit sur les côtés et en arrière, pour forcer le
@@ -2016,6 +2016,18 @@ function abattreLEnnemi(c: ConfigVaisseau, m: Monde, e: Ennemi, ev: Evenement[],
     m.givres.push({ id: m.prochainId++, arme: -1, x: e.corps.x, y: e.corps.y, nee: m.t, rayon: rayonDe(c, e) * D.taille, duree: D.duree, dps: D.dps, ralenti: 1, poison: true, corrosion: { duree: D.duree, bonus: e.acide.bonus } })
     ev.push({ type: 'flaqueDAcide', x: e.corps.x, y: e.corps.y, rayon: rayonDe(c, e) * D.taille })
   }
+  // (« COMBUSTION » : mort en feu, il explose — voir `ELEMENTAIRES` ; ce qu'elle tue en feu explose à son tour)
+  if (ro === undefined && !sansButin && c.elementaires.combustion && (e.bruleA ?? -1) > m.t) {
+    const B = ELEMENTAIRES.combustion
+    const r = rayonDe(c, e) * B.taille
+    ev.push({ type: 'explosionDeZone', x: e.corps.x, y: e.corps.y, rayon: r })
+    for (const o of [...m.ennemis]) {
+      if (o.asteroide !== undefined || Math.hypot(o.corps.x - e.corps.x, o.corps.y - e.corps.y) > r + rayonDe(c, o)) continue
+      o.pv -= B.degats
+      ev.push({ type: 'ennemiTouche', id: o.id, x: o.corps.x, y: o.corps.y, critique: false })
+      if (o.pv <= 0) abattreLEnnemi(c, m, o, ev)
+    }
+  }
   // (LE TABLEAU : au pilote dont c'est le tour — celui qui porte le coup fatal ; les grands, à l'équipe — voir `invasion.points`)
   if (c.invasion.active && !sansButin) {
     if (ro !== undefined) m.tableau = { ...m.tableau, roches: m.tableau.roches + 1, pointsDeRoches: m.tableau.pointsDeRoches + pointsDeLaRoche(c, ro.rayon) }
@@ -2607,8 +2619,18 @@ const facteurDeCritique = (c: ConfigVaisseau, a: Arme | undefined): number => c.
  * - DISSOLUTION : un insecte qui meurt rongé laisse une flaque d'acide là où il est mort, d'un rayon de 1,5 fois le sien,
  *   3 s — elle ronge ce qui y passe, et le blesse de 30 par seconde (« ronge et blesse, mais pour 30/s », « 1,5 fois la
  *   taille, 3 s », le nom : Keko). La flaque est une plaque de la traînée corrosive de la Vouivre (`Givre`, `poison`).
+ * - COMBUSTION (Keko : « les ennemis qui meurent alors qu'ils sont affectés par brûlure déclenchent une explosion ») : 60
+ *   à tout ce qui est à trois fois son rayon ; elle n'allume rien — un insecte en feu qu'elle tue explose à son tour, pas
+ *   plus (« 60, à sa taille ×3 », le nom : Keko).
+ * - SURTENSION (Keko : « lorsque l'effet d'électrocution se déclenche, à la place de toucher un autre ennemi proche, la
+ *   cible déclenche son effet sur tous les ennemis à portée ») : l'arc frappe tous les insectes à son saut, pas le plus
+ *   proche seul — chacun ses dégâts, électrocuté (le nom : Keko).
+ * - AURA GLACIALE (Keko : « tous les ennemis dans une zone autour du vaisseau ont automatiquement l'effet givre ; ça
+ *   n'inflige pas de dégâts, et ça ne peut pas déclencher la congélation de l'autre carte de givre ») : tout insecte à 50
+ *   du vaisseau est sous givre, au ralenti le plus fort des armes portées (leurs cartes « Givre » comprises) ; ce n'est
+ *   pas un coup : Gel profond ne s'y déclenche pas (« 50 », le nom : Keko).
  */
-export const ELEMENTAIRES = { gelure: { chance: 0.15, duree: 1.5 }, incendie: { ecart: 6, periode: 1 }, vulnerabilite: { chance: 0.25, facteur: 0.5 }, foudre: { chance: 0.1, degats: 150, rayon: 20, part: 0.5 }, dissolution: { taille: 1.5, duree: 3, dps: 30 } }
+export const ELEMENTAIRES = { gelure: { chance: 0.15, duree: 1.5 }, incendie: { ecart: 6, periode: 1 }, vulnerabilite: { chance: 0.25, facteur: 0.5 }, foudre: { chance: 0.1, degats: 150, rayon: 20, part: 0.5 }, dissolution: { taille: 1.5, duree: 3, dps: 30 }, combustion: { degats: 60, taille: 3 }, auraGlaciale: { rayon: 50, ralenti: 0.5 } }
 /** UN INSECTE VULNÉRABLE (« Point faible ») : rongé, il prend plus de critiques, et plus forts. */
 const vulnerable = (c: ConfigVaisseau, m: Monde, e: Ennemi | undefined): boolean => e !== undefined && c.elementaires.vulnerabilite && e.acide !== undefined && e.acide.jusque > m.t
 /** UN COUP CRITIQUE SUR `e` ? Sa chance, celle de l'arme et du vaisseau, et de `e` s'il est vulnérable ; `u` n'est tiré que si elle n'est pas nulle. */
@@ -4082,6 +4104,35 @@ function figer(m: Monde, e: Ennemi, duree: number, sorte: 'glace', ev: Evenement
   ev.push({ type: 'fige', id: e.id, x: e.corps.x, y: e.corps.y, sorte })
 }
 
+/** Le ralenti le plus fort que portent les armes (leur givre, leur gel, leur nova…) ; sans givre, `defaut`. */
+function ralentiDesArmes(c: ConfigVaisseau, defaut: number): number {
+  let r = defaut
+  let vu = false
+  const fouiller = (o: unknown): void => {
+    if (o === null || typeof o !== 'object') return
+    for (const [cle, v] of Object.entries(o)) {
+      if (cle === 'ralenti' && typeof v === 'number' && v > 0 && v < 1) r = vu ? Math.min(r, v) : v, (vu = true)
+      else fouiller(v)
+    }
+  }
+  for (const a of c.armes) fouiller(a)
+  return r
+}
+/**
+ * L'AURA GLACIALE (voir `ELEMENTAIRES.auraGlaciale`) : tout insecte à son rayon du vaisseau est sous givre — sans dégâts,
+ * et sans être un coup de givre (`geler` sans `coup` : pas de Gel profond).
+ */
+function menerLAuraGlaciale(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
+  if (!c.elementaires.auraGlaciale || m.phase !== 'vol') return
+  const A = ELEMENTAIRES.auraGlaciale
+  const v = m.vaisseau
+  const ralenti = ralentiDesArmes(c, A.ralenti)
+  for (const e of m.ennemis) {
+    if (e.asteroide !== undefined || Math.hypot(e.corps.x - v.x, e.corps.y - v.y) > A.rayon + rayonDe(c, e)) continue
+    geler(c, m, e, 0.25, ralenti, ev)
+  }
+}
+
 /**
  * LA BRÛLURE SE PROPAGE (« Propagation » — voir `ELEMENTAIRES.incendie` ; Keko, 24/11 : « si deux ennemis sont très
  * proches, le feu se répand ») : chaque seconde de la partie, tout insecte en feu allume ceux qui ne brûlent pas, presque
@@ -4156,21 +4207,19 @@ function propagerLElectrocution(c: ConfigVaisseau, m: Monde, ev: Evenement[]): v
     const x = ev[i]
     if (x.type !== 'coupElectrique') continue
     if (tire(m.graine, m.prochainId++, 97) >= x.chance) continue
-    let proche: Ennemi | undefined
-    let dc = Infinity
-    for (const o of m.ennemis) {
-      if (o.id === x.id || o.asteroide !== undefined) continue
-      const d = Math.hypot(o.corps.x - x.x, o.corps.y - x.y)
-      if (d <= x.saut + rayonDe(c, o) && d < dc) (dc = d), (proche = o)
-    }
-    if (proche === undefined) continue
+    // (le plus proche à son saut ; avec « SURTENSION », tous ceux qui y sont — voir `ELEMENTAIRES`)
+    const aPortee = m.ennemis.filter((o) => o.id !== x.id && o.asteroide === undefined && Math.hypot(o.corps.x - x.x, o.corps.y - x.y) <= x.saut + rayonDe(c, o))
+    if (aPortee.length === 0) continue
+    const vises = c.elementaires.surtension ? aPortee : [aPortee.reduce((p, o) => (Math.hypot(o.corps.x - x.x, o.corps.y - x.y) < Math.hypot(p.corps.x - x.x, p.corps.y - x.y) ? o : p))]
     arcs++
-    ev.push({ type: 'arcDElectrocution', de: x.id, vers: proche.id, x0: x.x, y0: x.y, x1: proche.corps.x, y1: proche.corps.y })
-    electrocuter(c, m, proche, { duree: Math.max(0, x.jusque - m.t), chance: x.chance, degats: x.degats, saut: x.saut }, ev, false, true)
-    // (au vortex, l'arc fait partout la même chose — voir `ConfigVaisseau.arcDElectrocution`)
-    proche.pv -= c.arcDElectrocution > 0 ? c.arcDElectrocution : x.degats
-    ev.push({ type: 'ennemiTouche', id: proche.id, x: proche.corps.x, y: proche.corps.y, critique: false })
-    if (proche.pv <= 0) abattreLEnnemi(c, m, proche, ev)
+    for (const proche of vises) {
+      ev.push({ type: 'arcDElectrocution', de: x.id, vers: proche.id, x0: x.x, y0: x.y, x1: proche.corps.x, y1: proche.corps.y })
+      electrocuter(c, m, proche, { duree: Math.max(0, x.jusque - m.t), chance: x.chance, degats: x.degats, saut: x.saut }, ev, false, true)
+      // (au vortex, l'arc fait partout la même chose — voir `ConfigVaisseau.arcDElectrocution`)
+      proche.pv -= c.arcDElectrocution > 0 ? c.arcDElectrocution : x.degats
+      ev.push({ type: 'ennemiTouche', id: proche.id, x: proche.corps.x, y: proche.corps.y, critique: false })
+      if (proche.pv <= 0) abattreLEnnemi(c, m, proche, ev)
+    }
   }
 }
 
@@ -6660,6 +6709,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   }
   propagerLElectrocution(c, m, ev)
   propagerLeFeu(c, m, dt, ev)
+  menerLAuraGlaciale(c, m, ev)
   majorerParLAcide(c, m, avantLAcide, ev)
   if (masquees.length > 0) m.ennemis = [...m.ennemis, ...masquees]
 

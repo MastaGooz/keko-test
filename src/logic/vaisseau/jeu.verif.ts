@@ -3641,6 +3641,55 @@ for (const vortex of [true, false]) {
   verifier(`dissolution : mort rongé, une flaque de ${oui.flaque} de rayon (1,5 fois le sien) ; un insecte dedans une seconde perd ${oui.perdu} (environ 30, majoré par l'acide), rongé ${oui.rongeDedans} ; sans la carte, ${sans.flaque} ; mort sain, ${sain.flaque}`, oui.flaque > 0 && oui.perdu >= 30 && oui.perdu <= 40 && oui.rongeDedans && sans.flaque === 0 && sain.flaque === 0)
 }
 
+// COMBUSTION, SURTENSION, AURA GLACIALE (Keko, 24/11 — voir `ELEMENTAIRES`) : un insecte en feu tué par un canon explose —
+// son voisin à 8 perd 60, le lointain rien ; sans la carte, rien. Un arc (à chance 1) frappe le plus proche seul, ou avec
+// la Surtension les deux voisins à portée. L'aure glace l'insecte à 30 du vaisseau, pas celui à 90, sans dégâts, et sans
+// le geler net même avec Gel profond (à chance 1)
+{
+  const base: ConfigVaisseau = { ...VAISSEAU, coque: 1e9, dureeDesEtats: 6, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false }, passifs: { ...VAISSEAU.passifs, critique: 0 } }
+  const insecte = (id: number, x: number, y: number, plus: Partial<Ennemi> = {}): Ennemi => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv: 1e6, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9, ...plus })
+  const canon = { id: 'canon', cadence: 99, degats: 10, portee: 120, vitesse: 420, vie: 0.7, dispersion: 0, guide: false, tousSens: true, infaillible: true }
+  const jouer = (cfg: ConfigVaisseau, n: number, ...es: Ennemi[]) => {
+    const w = nouveauMonde(cfg, 5)
+    w.invasion.prochainA = 1e9
+    w.t = 2
+    w.armesA = cfg.armes.map(() => 0)
+    w.ennemis.push(...es)
+    for (let i = 0; i < n; i++) avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+    return w
+  }
+  // COMBUSTION
+  const combustion = (carte: boolean): { voisin: number; loin: number } => {
+    const cfg = { ...base, armes: [canon], elementaires: { ...base.elementaires, combustion: carte } }
+    const v = insecte(2701, 60, 8)
+    const l = insecte(2702, 60, 60)
+    jouer(cfg, 30, insecte(2700, 60, 0, { pv: 5, bruleA: 10, dpsBrulure: 0, dureeBrulure: 6 }), v, l)
+    return { voisin: 1e6 - v.pv, loin: 1e6 - l.pv }
+  }
+  const [cOui, cNon] = [combustion(true), combustion(false)]
+  // SURTENSION
+  const surtension = (carte: boolean): number => {
+    const arme = { ...canon, electrocution: { duree: 6, chance: 1, degats: 20, saut: 45 } }
+    const cfg = { ...base, armes: [arme], elementaires: { ...base.elementaires, surtension: carte } }
+    const a = insecte(2711, 40, 25)
+    const b = insecte(2712, 40, -30)
+    jouer(cfg, 30, insecte(2710, 40, 0, { electrocute: { jusque: 8, chance: 1, degats: 20, saut: 45 } }), a, b)
+    return [a, b].filter((x) => x.pv < 1e6).length
+  }
+  const [sOui, sNon] = [surtension(true), surtension(false)]
+  // AURA GLACIALE
+  const sauve = { ...ELEMENTAIRES.gelure }
+  ELEMENTAIRES.gelure.chance = 1
+  const cfgA = { ...base, armes: [], elementaires: { ...base.elementaires, auraGlaciale: true, gelure: true } }
+  const pres = insecte(2720, 30, 0)
+  const loin = insecte(2721, 90, 0)
+  const wA = jouer(cfgA, 60, pres, loin)
+  Object.assign(ELEMENTAIRES.gelure, sauve)
+  const glace = (pres.geleA ?? -1) > wA.t && (loin.geleA ?? -1) <= wA.t && pres.pv === 1e6 && (pres.figeA ?? -1) <= wA.t
+  verifier(`combustion : le voisin perd ${cOui.voisin} (60), le lointain ${cOui.loin} (0), sans la carte ${cNon.voisin} (0) ; surtension : l'arc frappe ${sOui} voisins (2), sans elle ${sNon} (1) ; aura glaciale : l'insecte proche sous givre, le lointain non, sans dégâts ni gel net (${glace})`,
+    cOui.voisin === 60 && cOui.loin === 0 && cNon.voisin === 0 && sOui === 2 && sNon === 1 && glace)
+}
+
 // LE RAILGUN ÉLECTRIQUE (Keko, 24/11 : la carte Cryogénique « applique l'état d'électricité » à la place) : la balle
 // électrocute ce qu'elle traverse, et son sillon ce qui y passe
 {

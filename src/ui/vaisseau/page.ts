@@ -12,7 +12,7 @@
  */
 import './vaisseau.css'
 import * as noyau from 'pixelfx'
-import { ennemisDuLien, ajouterUnPilote, avancerLEquipage, prendreLaMain, type SorteDInsecte, SORTES_D_INSECTES, gabaritDInsecte, gemmesDuButin, butinDeLaRoche, pointDeRetour, rayonDe, rocheDeLaTempete, vieMultipliee, degatsMultiplies, placeDeLEcharde, frontDeLaNova, ancreDansLeMonde, zoneDuDe, coupeDUnCube, formeDeLaCoupe, liesAuDrain, encaisser, type Ennemi, type Evenement, type Monde, impactDuRayon, asteroidesVisibles, avancerLeMonde, finDuTrio, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur, xpDuNiveau, ennemiLePlusProche, ennemiVerrouille, verrouiller, angleDuBalayage, aPlusieurs, alliesAuRetour, recompenseDeFin, type LigneDeRecompense } from '../../logic/vaisseau/jeu.ts'
+import { ELEMENTAIRES, ennemisDuLien, ajouterUnPilote, avancerLEquipage, prendreLaMain, type SorteDInsecte, SORTES_D_INSECTES, gabaritDInsecte, gemmesDuButin, butinDeLaRoche, pointDeRetour, rayonDe, rocheDeLaTempete, vieMultipliee, degatsMultiplies, placeDeLEcharde, frontDeLaNova, ancreDansLeMonde, zoneDuDe, coupeDUnCube, formeDeLaCoupe, liesAuDrain, encaisser, type Ennemi, type Evenement, type Monde, impactDuRayon, asteroidesVisibles, avancerLeMonde, finDuTrio, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur, xpDuNiveau, ennemiLePlusProche, ennemiVerrouille, verrouiller, angleDuBalayage, aPlusieurs, alliesAuRetour, recompenseDeFin, type LigneDeRecompense } from '../../logic/vaisseau/jeu.ts'
 import { PIECES, ETALONS as ETALONS_DU_BANC, acheter, ajouterLesPiecesDEssai, capacite, poidsTotal, POIDS_SERIE, configDuHangar, demonter, demonterA, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, montantCourt, monteeA, monter, monterA, peutAcheter, peutMonter, perdreLesMontees, estDeBase, exemplaires, libres, pieceDe, piecesDe, placeLourde, possede, aimantMonte, radarMonte, type Jauge, type Piece, type Sorte } from '../../logic/vaisseau/hangar.ts'
 import { drawWord, spell } from 'pixelfx/fx/ui/_lib'
 import { firePuff, hotFirst, smokePuff } from 'pixelfx/fx/fire/_lib'
@@ -10525,6 +10525,19 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       if (a.fort) stroke(p, bowed(R, x0, y0, x1, y1, -L * R.range(0.05, 0.15), 0.2, 0.1), k, C, 0.75, { light: 0.45 })
       else crackle(p, zigzag(R, x0, y0, x1, y1, 0.3, 0.12), k, C, 0.5)
       p.glow(x1, y1, a.fort ? 9 : 5, C[5], 0.6 * k)
+    }
+    // L'AURA GLACIALE (« Aura glaciale », Keko, 24/11 — voir `ELEMENTAIRES`) : un anneau de givre pâle autour du vaisseau,
+    // qui respire, et des flocons qui y tournent lentement
+    if (CONF.elementaires.auraGlaciale && m.phase === 'vol' && t - arriveA >= ARRIVE_A) {
+      const [gx, gy] = ecran(v.x, v.y)
+      const rg = ELEMENTAIRES.auraGlaciale.rayon
+      p.ring(gx, gy, rg, 1, BLEU_DU_GIVRE, 0.22 + 0.08 * Math.sin(t * 2))
+      p.glow(gx, gy, rg, BLEU_DU_GIVRE, 0.06)
+      for (let k = 0; k < 10; k++) {
+        const a = t * 0.35 + (k * Math.PI * 2) / 10
+        const rr = rg * (0.55 + 0.4 * ((k * 0.37) % 1))
+        p.dot(gx + Math.cos(a) * rr, gy + Math.sin(a) * rr, k % 3 === 0 ? N.WHITE : BLEU_DU_GIVRE, 0.6)
+      }
     }
     // L'AURA
     const au = CONF.armes.find((a) => a.aura !== undefined)?.aura

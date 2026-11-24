@@ -509,7 +509,12 @@ export const MUTATIONS: Mutation[] = [
   // LES CARTES D'ÉLÉMENT (Keko, 24/11 : « des cartes spéciales de chaque élément » ; « des cartes multicolores spéciales qu'on
   // proposera dans le pool des cartes spéciales, si le joueur a au moins une attaque avec l'élément en question » — voir
   // `ELEMENTAIRES` pour leurs chiffres ; leurs noms et leurs textes sont de moi)
+  // (« AURA GLACIALE », la seconde du givre — Keko, 24/11)
+  element('element-aura', 'givre', 'Aura glaciale', 'Les ennemis proches sont sous givre.', 'auraGlaciale'),
   element('element-givre', 'givre', 'Gel profond', 'Le givre peut geler net les ennemis déjà sous givre.', 'gelure'),
+  // (« COMBUSTION » et « SURTENSION », les secondes de la brûlure et de l'électrocution — Keko, 24/11)
+  element('element-combustion', 'feu', 'Combustion', 'Les ennemis qui meurent en brûlant explosent.', 'combustion'),
+  element('element-surtension', 'electrocution', 'Surtension', 'L’électrocution frappe tous les ennemis à portée.', 'surtension'),
   element('element-feu', 'feu', 'Propagation', 'La brûlure se propage aux ennemis tout proches.', 'incendie'),
   // (« DISSOLUTION », la seconde de la corrosion — Keko, 24/11 : « une carte de plus spéciale pour chaque état, à commencer par
   // la corrosion : un ennemi qui meurt sous l'effet de la corrosion laisse une flaque d'acide »)

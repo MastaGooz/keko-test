@@ -8729,3 +8729,14 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   sonde hors navigateur en comptait). `avecLesBonus` sautait toute carte à « toutes les armes » dans sa première boucle —
   leur cible —, et la seconde ne sait que les stats. Le test appelait `appliquer` directement ; il passe maintenant par
   `avecLesBonus`, comme le jeu. Gel profond, Propagation, Point faible et Foudre, publiées avant, n'avaient donc aucun effet.
+- LES TROIS AUTRES SECONDES CARTES (Keko, 24/11, une à une ; chiffres et noms choisis par lui) :
+  - COMBUSTION (brûlure, « Les ennemis qui meurent en brûlant explosent. ») : un insecte qui meurt en feu explose, 60 à
+    tout ce qui est à trois fois son rayon (l'explosion du missile, `explosionDeZone` sans arme) ; elle n'allume rien,
+    mais un insecte en feu qu'elle tue explose à son tour.
+  - SURTENSION (électrocution, « L'électrocution frappe tous les ennemis à portée. ») : l'arc qui saute frappe TOUS les
+    insectes à son saut (45), chacun ses dégâts et électrocuté, au lieu du plus proche seul.
+  - AURA GLACIALE (givre, « Les ennemis proches sont sous givre. ») : tout insecte à 50 du vaisseau est sous givre, au
+    ralenti le plus fort des armes portées (`ralentiDesArmes` : leurs cartes « Givre » comprises), SANS DÉGÂTS — et ce
+    n'est pas un coup : Gel profond ne s'y déclenche pas (Keko : « pour congeler il faut infliger des dégâts de givre à
+    une cible déjà affectée »). Un anneau de givre pâle qui respire autour du vaisseau, des flocons qui y tournent.
+  - Un test pour les trois ; VU en capture : les trois cartes tiennent.
