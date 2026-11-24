@@ -205,13 +205,13 @@ verifier('le délai passé, ce qui restait à choisir part en réserve', reserve
   verifier(`la bobine électrocute : chance ${bobine.electrocution?.chance} (0,2), sa carte d'état ${statsDeLArme(bobine).includes('electrocution')}`, bobine.electrocution?.chance === 0.2 && statsDeLArme(bobine).includes('electrocution'))
 }
 // LES BALLES ACIDES DE L'ESCORTE (Keko, 24/11) : prise, la carte pose la corrosion du vortex sur tous les mini-avions,
-// celui de l'Escadrille compris, dans les deux ordres
+// ceux de l'Escadrille compris, dans les deux ordres
 {
   const mu = (id: string): Mutation => MUTATIONS.find((x) => x.id === id)!
   const prendre = (ids: string[]): ConfigVaisseau => avecLesBonus(base, ids.reduce((b, id) => ajouterLeBonus(b, carteSpeciale(mu(id))), [] as ReturnType<typeof ajouterLeBonus>))
   const ronge = (c: ConfigVaisseau): string => c.armes.filter((a) => a.id === 'escorte').map((a) => (a.corrosif?.bonus === CORROSION_DU_VORTEX ? 'R' : '-')).join('')
   const [avant, apres] = [prendre(['arme-escorte', 'escorte-acide', 'escorte-plus']), prendre(['arme-escorte', 'escorte-plus', 'escorte-acide'])]
-  verifier(`les balles acides : les mini-avions rongent (${ronge(avant)} et ${ronge(apres)}, RRR) ; plus de feu ni de gel (${MUTATIONS.some((x) => x.id === 'escorte-incendiaires' || x.id === 'escorte-cryo')})`, ronge(avant) === 'RRR' && ronge(apres) === 'RRR' && !MUTATIONS.some((x) => x.id === 'escorte-incendiaires' || x.id === 'escorte-cryo'))
+  verifier(`les balles acides : les mini-avions rongent (${ronge(avant)} et ${ronge(apres)}, RRRR) ; plus de feu ni de gel (${MUTATIONS.some((x) => x.id === 'escorte-incendiaires' || x.id === 'escorte-cryo')})`, ronge(avant) === 'RRRR' && ronge(apres) === 'RRRR' && !MUTATIONS.some((x) => x.id === 'escorte-incendiaires' || x.id === 'escorte-cryo'))
 }
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)
 console.log('Tout passe.')

@@ -9065,3 +9065,7 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   deux — elle passe à un, « derrière, au centre » : Keko) : « Un mini-avion de plus dans la formation. » ; le troisième
   vole dans l'axe, 20 derrière — la formation fait un V. Le test des balles acides suit (trois avions rongent). VU en
   capture (formation et carte).
+- ESCADRILLE, DEUX AVIONS EN V D'OISEAUX (Keko, 24/11 : « plutôt +2 avions et formation en mode oiseau » ; « en V
+  d'oiseaux », parmi trois formations dessinées) : « Deux mini-avions de plus, en V. » ; les deux de base en tête (5
+  derrière le nez, 16 sur les flancs), les deux nouveaux à 17 derrière et 32 sur les flancs — un V d'oies. Le test des
+  balles acides : quatre avions.
