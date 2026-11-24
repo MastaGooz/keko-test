@@ -8893,3 +8893,11 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   petite boule de feu (le boum du missile, une secousse légère), pas l'énergie verte du laser. Plus de réplique
   différée (`echo` retiré). Le test refait (deux insectes collés, tout critique : deux petites, chacun 60 + 18
   critiques ; sans critique, aucune) ; la carte VUE en capture, quatre lignes.
+- LES OBJETS PLUS GRANDS, ET PRIS EN LES FRÔLANT (Keko, 24/11 : « augmenter la taille des pick-up de soins, de
+  boucliers et d'aimants » ; « augmenter la zone dans laquelle on les ramasse aussi : un problème de visibilité, ils sont
+  un peu petits, et surtout de ramassage, parfois je les frôle et ça ne les ramasse pas ») : REDESSINÉS à ~17 pixels au
+  lieu de 11 à 13 (`asteroide.ts` : l'aimant 15 × 13, la croix du soin 15 × 15, l'écu 17 × 16 ; leurs halos, le reflet
+  de l'écu et son étoile suivent ; « redessinés », pas les pixels doublés : Keko). `forage.margeDesObjets` passe de 9 à
+  16 : la moitié d'un objet, plus 8 de tolérance (de moi, à rejuger). Le test du ramassage refait (pris à la coque + 15,
+  pas à + 18) ; VU en capture (`&vitrine`). Rappel : une plaque ne se prend que si une plaque manque, un soin que si le
+  blindage n'est pas plein — sinon on passe dessus sans la prendre, c'est voulu.

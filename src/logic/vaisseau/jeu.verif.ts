@@ -4753,6 +4753,7 @@ for (const vortex of [true, false]) {
   verifier(`à 25 (portée d'aimant ${cfg.forage.aimant}), le soin, la plaque et l'aimant ne viennent pas : ${immobiles} / 3 immobiles, blindage ${Math.round((a.coque / cfg.coque) * 100)} %`, immobiles === 3 && a.coque === cfg.coque * 0.5 && a.plaques[0] === false)
   // (… MAIS ILS SE PRENNENT SANS ÊTRE PILE DESSUS — Keko, 23/11 : « parfois je le touche, mais si je suis pas exactement
   // dessus, je le ramasse pas » : à la coque plus 8, il le prend ; à la coque plus 10, non)
+  // (… ET FRÔLÉS — Keko, 24/11 : « parfois je les frôle et ça ne les ramasse pas » : à la coque plus 15, pris ; plus 18, non)
   const prisA = (ecart: number): boolean => {
     const b = nouveauMonde(cfg, 8)
     b.coque = cfg.coque * 0.5
@@ -4760,7 +4761,7 @@ for (const vortex of [true, false]) {
     avancerLeMonde(cfg, b, 1 / 60, { x: 0, y: 0 })
     return !b.pepites.some((p) => p.soin === true)
   }
-  verifier(`un soin à la coque + 8 est pris (${prisA(8)}), à la coque + 10 non (${!prisA(10)})`, prisA(8) && !prisA(10))
+  verifier(`un soin à la coque + 15 est pris (${prisA(15)}), à la coque + 18 non (${!prisA(18)})`, prisA(15) && !prisA(18))
   // (à deux : le second blessé, le premier plein et posé dessus — il le laisse ; le second passe dessus, il le prend)
   const q = nouveauMonde(cfg, 6)
   ajouterUnPilote(cfg, q, 40, 0)

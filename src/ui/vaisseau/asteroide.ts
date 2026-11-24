@@ -354,18 +354,22 @@ export function dessinerPepiteDuVortex(p: PeintreRoche, pe: Pepite, t: number, T
     p.glow(gx, gy, 3 + R, 0xffffffff, 0.4 * k)
   }
 }
+// (PLUS GRANDS, REDESSINÉS — Keko, 24/11 : « augmenter la taille des pick-up de soins, de boucliers et d'aimants » ; à ~17
+// pixels au lieu de 11 à 13, à la même finesse — « redessinés », pas les pixels doublés : Keko)
 const AIMANT = [
-  'oooo...oooo',
-  'o44o...o44o',
-  'o44o...o44o',
-  'oooo...oooo',
-  'o33o...o32o',
-  'o32o...o22o',
-  'o32o...o21o',
-  'o322ooo221o',
-  '.o3222221o.',
-  '..o22211o..',
-  '...ooooo...',
+  'ooooo.....ooooo',
+  'o444o.....o444o',
+  'o444o.....o444o',
+  'ooooo.....ooooo',
+  'o333o.....o322o',
+  'o332o.....o322o',
+  'o332o.....o221o',
+  'o332o.....o221o',
+  'o3322o...o2221o',
+  '.o33222222221o.',
+  '..o322222211o..',
+  '...oo22221oo...',
+  '.....ooooo.....',
 ]
 /** Pose un dessin en chiffres, son centre en (x, y), aux tons de `T` (« o » le plus sombre, « 4 » le blanc). */
 function poserLeDessin(p: PeintreRoche, d: string[], x: number, y: number, T: number[]): void {
@@ -386,31 +390,34 @@ function poserLeDessin(p: PeintreRoche, d: string[], x: number, y: number, T: nu
  * partage le champ en une moitié claire et une moitié dans l'ombre, et deux RIVETS en haut.)
  */
 const PLAQUE_TOMBEE = [
-  '.ooooooooooo.',
-  'o43333333332o',
-  'o34222311142o',
-  'o32222311112o',
-  'o32222311112o',
-  'o32222311112o',
-  '.o322231112o.',
-  '.o322231112o.',
-  '..o3223112o..',
-  '...o32312o...',
-  '....o332o....',
-  '.....o3o.....',
-  '......o......',
+  '.ooooooooooooooo.',
+  'o433333333333332o',
+  'o342222231111142o',
+  'o322222231111112o',
+  'o322222231111112o',
+  'o322222231111112o',
+  'o322222231111112o',
+  '.o3222223111112o.',
+  '.o3222223111112o.',
+  '..o32222311112o..',
+  '...o322231112o...',
+  '....o3223112o....',
+  '.....o32312o.....',
+  '......o332o......',
+  '.......o3o.......',
+  '........o........',
 ]
 export function dessinerPlaqueTombee(p: PeintreRoche, x0: number, y0: number, t: number, T: number[], graine = 0): void {
   const x = Math.round(x0)
   const y = Math.round(y0) + Math.round(Math.sin(t * 2.2 + tire(graine, 71) * 6.28))
-  p.glow(x, y, 11, T[3], 0.14 + 0.08 * Math.sin(t * 4))
+  p.glow(x, y, 15, T[3], 0.14 + 0.08 * Math.sin(t * 4))
   poserLeDessin(p, PLAQUE_TOMBEE, x, y, T)
   // (le reflet : une diagonale blanche qui traverse l'écu, dedans seulement)
   const u = ((t + tire(graine, 72) * 2) % 2) / 0.45
   if (u < 1) {
     const x1 = x - Math.floor(PLAQUE_TOMBEE[0].length / 2)
     const y1 = y - Math.floor(PLAQUE_TOMBEE.length / 2)
-    const d = Math.round(-4 + u * 22)
+    const d = Math.round(-4 + u * 36)
     for (let j = 0; j < PLAQUE_TOMBEE.length; j++)
       for (let i = 0; i < PLAQUE_TOMBEE[j].length; i++) {
         const ch = PLAQUE_TOMBEE[j][i]
@@ -421,11 +428,11 @@ export function dessinerPlaqueTombee(p: PeintreRoche, x0: number, y0: number, t:
   // (une étoile au coin, qui bat)
   const b = (Math.sin(t * 3 + tire(graine, 73) * 6.28) + 1) / 2
   if (b > 0.75) {
-    p.dot(x + 6, y - 7, 0xffffffff)
-    p.dot(x + 5, y - 7, T[3])
-    p.dot(x + 7, y - 7, T[3])
-    p.dot(x + 6, y - 8, T[3])
-    p.dot(x + 6, y - 6, T[3])
+    p.dot(x + 8, y - 9, 0xffffffff)
+    p.dot(x + 7, y - 9, T[3])
+    p.dot(x + 9, y - 9, T[3])
+    p.dot(x + 8, y - 10, T[3])
+    p.dot(x + 8, y - 8, T[3])
   }
 }
 /**
@@ -434,23 +441,27 @@ export function dessinerPlaqueTombee(p: PeintreRoche, x0: number, y0: number, t:
  * voit (`T`), claire en haut à gauche ; elle flotte et bat doucement, sous son halo.
  */
 const SOIN = [
-  '...ooooo...',
-  '...o433o...',
-  '...o332o...',
-  'oooo332oooo',
-  'o443333332o',
-  'o333333322o',
-  'o322222211o',
-  'oooo321oooo',
-  '...o321o...',
-  '...o211o...',
-  '...ooooo...',
+  '....ooooooo....',
+  '....o44333o....',
+  '....o43332o....',
+  '....o33332o....',
+  'ooooo33332ooooo',
+  'o4433333333332o',
+  'o4333333333322o',
+  'o3333333333222o',
+  'o3322222222211o',
+  'o2222222222111o',
+  'ooooo32221ooooo',
+  '....o32211o....',
+  '....o32211o....',
+  '....o22111o....',
+  '....ooooooo....',
 ]
 export function dessinerSoin(p: PeintreRoche, x0: number, y0: number, t: number, T: number[], graine = 0): void {
   const x = Math.round(x0)
   const y = Math.round(y0) + Math.round(Math.sin(t * 2.4 + tire(graine, 74) * 6.28))
   const bat = 0.5 + 0.5 * Math.sin(t * 4.5 + tire(graine, 75) * 6.28)
-  p.glow(x, y, 12, T[2], 0.22 + 0.22 * bat)
+  p.glow(x, y, 16, T[2], 0.22 + 0.22 * bat)
   poserLeDessin(p, SOIN, x, y, T)
 }
 /**
@@ -462,7 +473,7 @@ export function dessinerAimant(p: PeintreRoche, x0: number, y0: number, t: numbe
   const x = Math.round(x0)
   const y = Math.round(y0) + Math.round(Math.sin(t * 2.6 + tire(graine, 70) * 6.28))
   const bat = 0.5 + 0.5 * Math.sin(t * 5)
-  p.glow(x, y, 13, T[2], 0.3 + 0.3 * bat)
+  p.glow(x, y, 17, T[2], 0.3 + 0.3 * bat)
   poserLeDessin(p, AIMANT, x, y, T)
 }
 

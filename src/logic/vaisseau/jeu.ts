@@ -470,7 +470,7 @@ export const VAISSEAU = {
    * une roche a `durete × rayon²` points ; éclatée, elle laisse des pépites (tant par unité de rayon) qui viennent
    * au vaisseau le plus proche à portée d'aimant, et comptent une fois à bord.
    */
-  forage: { portee: 64, debit: 28, durete: 0.6, pepitesParRayon: 0.45, aimant: 44, vitessePepite: 160, ramassage: 5, /** UN SOIN, UNE PLAQUE, UN AIMANT — qui ne s'aimantent pas — se prennent à tant AU-DELÀ DE LA COQUE (Keko, 23/11 : « parfois je le touche, mais si je suis pas exactement dessus, je le ramasse pas » : 9, au lieu de 3). */ margeDesObjets: 9, /** Une pépite aimantée par le joueur : de combien sa vitesse monte chaque seconde (voir « une pépite aimantée »). */ accelerationAimantee: 400 },
+  forage: { portee: 64, debit: 28, durete: 0.6, pepitesParRayon: 0.45, aimant: 44, vitessePepite: 160, ramassage: 5, /** UN SOIN, UNE PLAQUE, UN AIMANT — qui ne s'aimantent pas — se prennent à tant AU-DELÀ DE LA COQUE (Keko, 23/11 : « parfois je le touche, mais si je suis pas exactement dessus, je le ramasse pas » : 9, au lieu de 3) (16 — Keko, 24/11 : « parfois je les frôle et ça ne les ramasse pas » ; dessinés plus grands, ~17 pixels, ils touchaient la coque à 9 : la moitié d'un objet, plus 8 de tolérance). */ margeDesObjets: 16, /** Une pépite aimantée par le joueur : de combien sa vitesse monte chaque seconde (voir « une pépite aimantée »). */ accelerationAimantee: 400 },
   /**
    * LA BOMBE, la première CAPACITÉ ACTIVE (Keko, 12/11 : « une action un peu puissante, soumise à un nombre de charges
    * par vol ») — une capacité d'ESSAI, pour juger le geste : tant de charges par vol ; lancée, elle file à tant d'unités
