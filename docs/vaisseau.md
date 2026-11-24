@@ -8820,6 +8820,11 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     `pousses` : poussé, il était rattrapé à l'image suivante et emporté jusqu'à la boule — mesuré, 44 en une seconde) ; un
     élan ne servait à rien, sa pointe le buvait aussitôt (mesuré : le test ne le voyait pas bouger). Plus de glissement
     continu ni d'aimantation. Un test (le bond de 10, le cristal compté).
+- LA BOBINE TESLA ÉLECTROCUTE (Keko, 24/11 : « on ne met pas d'éléments supplémentaires à la bobine ; elle inflige déjà
+  des dégâts électriques » — elle ne le faisait pas : seules les armes de la Sentinelle électrocutaient d'office ; puis
+  « je voudrais que la bobine inflige l'état électrique, tout comme les attaques de la Sentinelle ») : son arme de faction
+  porte `ELECTROCUTION_DU_VORTEX` ; chaque éclair, les rebonds de Conduction compris, est un coup électrique
+  (`effetsDuCoup`). Les cartes Électrocution, Foudre et Surtension s'ouvrent à qui la porte. Un test.
   - Restent, de l'ancienne liste : Surtension, Grande bobine.
 - « CRISTAUX » À LA PLACE DE « PÉPITES » (Keko, 24/11 : « remplace partout dans le jeu le mot pépite par cristaux ») :
   dans le vortex, un seul texte le disait, la carte Expérience — « d'expérience par cristal ». Le code, les commentaires

@@ -198,5 +198,11 @@ verifier('le délai passé, ce qui restait à choisir part en réserve', reserve
   const cr = avecLesBonus({ ...C, armes: [corrosif] }, [{ id: 'armes:corrosion', cible: { sorte: 'armes' }, stat: 'corrosion', somme: 0.25 }, { id: 'armes:electrocution', cible: { sorte: 'armes' }, stat: 'electrocution', somme: 0.1 }])
   verifier(`les renforts des cartes d'état : corrosion ${cr.renforts.corrosion} (0,25), électrocution ${cr.renforts.electrocution} (0,1), givre ${cr.renforts.givre}, feu ${cr.renforts.feu} (0)`, cr.renforts.corrosion === 0.25 && cr.renforts.electrocution === 0.1 && cr.renforts.givre === 0 && cr.renforts.feu === 0)
 }
+{
+  // LA BOBINE TESLA ÉLECTROCUTE (Keko, 24/11) : son arme porte l'électrocution du vortex, et la carte « Électrocution » est
+  // à son pool
+  const bobine = armeDeFaction('tesla')!.armes()[0]
+  verifier(`la bobine électrocute : chance ${bobine.electrocution?.chance} (0,2), sa carte d'état ${statsDeLArme(bobine).includes('electrocution')}`, bobine.electrocution?.chance === 0.2 && statsDeLArme(bobine).includes('electrocution'))
+}
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)
 console.log('Tout passe.')

@@ -392,7 +392,9 @@ export const ARMES_DE_FACTION: ArmeDeFaction[] = [
   { id: 'obusier', nom: 'Obusier', dit: 'De lourds obus tirés en cloche, qui explosent en retombant sur une large zone.', race: 'humains', icone: 'imp-obusier', armes: () => [nouvelle({ id: 'obusier', cadence: 2.4, degats: 86, portee: 150, vitesse: 110, vie: 2.2, dispersion: 0.05, zone: { rayon: 40 }, cloche: { vol: 0.8 } })] },
   // (LA BOBINE TESLA — Keko, 22/11 : « l'arc tesla, c'est une chaîne d'éclair bis » : une boule de foudre lente qui
   // traverse la mêlée en foudroyant les trois insectes les plus proches toutes les 0,6 s ; l'identifiant reste `tesla`)
-  { id: 'tesla', nom: 'Bobine tesla', dit: 'Une boule de foudre lente qui foudroie les ennemis autour d’elle.', race: 'humains', icone: 'imp-tesla', armes: () => [nouvelle({ id: 'tesla', cadence: 2.6, degats: 58, portee: 120, sphere: { vitesse: 45, duree: 3, rayon: 42, periode: 0.6, vitesseTir: 0, foudre: { cibles: 3 } } })] },
+  { id: 'tesla', nom: 'Bobine tesla', dit: 'Une boule de foudre lente qui foudroie les ennemis autour d’elle.', race: 'humains', icone: 'imp-tesla', armes: () => [nouvelle({ id: 'tesla', cadence: 2.6, degats: 58, portee: 120, sphere: { vitesse: 45, duree: 3, rayon: 42, periode: 0.6, vitesseTir: 0, foudre: { cibles: 3 } }, electrocution: { ...ELECTROCUTION_DU_VORTEX } })] },
+  // (… ET ELLE ÉLECTROCUTE, comme les armes de la Sentinelle — Keko, 24/11 : « je voudrais que la bobine inflige l'état
+  // électrique » : chaque éclair, rebonds compris, est un coup électrique — voir `Arme.electrocution`)
   // (À RETARDEMENT — Keko, 23/11 : « très proche des missiles : on envoie deux projectiles tout droit qui explosent » ;
   // « trois petites grenades qui clignotent en rouge pour indiquer le timer, et leur clignotement s'intensifie jusqu'à
   // exploser ; la taille de l'explosion entre le missile et l'obus » : trois en éventail, elles s'arrêtent là où sera
