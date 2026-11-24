@@ -572,6 +572,9 @@ export const MUTATIONS: Mutation[] = [
   // ronge de loin, et tout ce qu'elle touche prend 20 % de plus des autres armes ; la corrosion du laser acide, aux
   // chiffres du vortex ; un seul élément par arme : cinq variations en attendant)
   variation('escorte-acide', 'escorte', 'Balles acides', 'Les tirs des mini-avions appliquent corrosion.', changerA('escorte', (a) => ({ ...a, corrosif: { duree: 3, bonus: CORROSION_DU_VORTEX } }))),
+  // (« DÉSIGNATION », SA VARIATION SUR COUP CRITIQUE — Keko, 24/11, proposée : un critique des mini-avions marque l'ennemi
+  // 3 s, toutes les armes y ont +25 points de chance critique — voir `Arme.designation`)
+  variation('escorte-designation', 'escorte', 'Désignation', 'Les ennemis touchés par un critique subissent plus de critiques.', changerA('escorte', (a) => ({ ...a, designation: { duree: 3, bonus: 0.25 } }))),
   variation('escorte-ricochet', 'escorte', 'Ricochet', 'Chaque balle des mini-avions rebondit sur deux autres ennemis.', changerA('escorte', V.ricochet)),
   variation('escorte-roquettes', 'escorte', 'Roquettes', 'Les mini-avions tirent des roquettes qui explosent.', changerA('escorte', (a) => ({ ...V.explosif(a), cadence: a.cadence * 2.5, degats: fois(a, 2) }))),
   // LES CARTES D'ÉLÉMENT (Keko, 24/11 : « des cartes spéciales de chaque élément » ; « des cartes multicolores spéciales qu'on

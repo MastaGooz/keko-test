@@ -9035,3 +9035,13 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   mini-avions de plus portent l'acide, dans les deux ordres), Ricochet (chaque rebond ronge), Roquettes (l'explosion
   ronge, par l'arme) ; UN TROU CORRIGÉ — une balle PERFORANTE gelait, brûlait, électrocutait ce qu'elle traversait, mais
   ne rongeait pas. Deux tests ; la carte VUE en capture.
+- DÉSIGNATION, LA VARIATION CRITIQUE DE L'ESCORTE (Keko, 24/11 : « ok pour Désignation », parmi Désignation, Frénésie,
+  Tir groupé, Balle chercheuse — proposée : l'escorte repère les cibles, le reste les abat) : « Les ennemis touchés par un
+  critique subissent plus de critiques. » ; `Arme.designation` = { duree 3, bonus 0,25 } — un critique des mini-avions
+  (balle, rebond, traversée, explosion des Roquettes) marque l'insecte 3 s (`Ennemi.designeA`, `designeBonus`,
+  `designer`) ; TOUTES LES ARMES y ont +25 points de chance critique (`designe`, lu par `critiqueSur` et par
+  `coupDObus`, qui tire à l'impact la chance que la cible ajoute) ; un nouveau critique relance la marque. Une MIRE
+  orange en quatre coins qui se resserre en apparaissant, bat doucement et pâlit dans sa dernière demi-seconde ; le
+  son du verrouillage, une fois au plus par cinquième de seconde. Un test (marqué 3 s ; une autre arme à 0 % y fait
+  24 % de critiques, 0 % sur un sain) ; la carte VUE en capture (le premier texte débordait), la mire aussi.
+  L'ESCORTE : Balles acides, Désignation, Escadrille, Perforantes, Ricochet, Roquettes.

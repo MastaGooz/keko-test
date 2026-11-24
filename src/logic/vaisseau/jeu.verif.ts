@@ -3243,6 +3243,38 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   verifier(`les grenades givrées : la cible est givrée (${avec.cible}) ; la couronne hors de la zone, ${avec.couronne} givrés par les éclats (plusieurs), ${sans.couronne} sans eux (0)`, avec.cible && sans.cible && avec.couronne >= 3 && sans.couronne === 0)
 }
 
+// LA DÉSIGNATION (Keko, 24/11 — voir `Arme.designation`) : un critique de l'arme qui désigne marque l'insecte 3 s ; une
+// autre arme, à 0 % de critique, en fait alors environ 25 % sur lui — et 0 sur un insecte non désigné
+{
+  const cfgDe = (arme: Partial<Arme>, critique: number): ConfigVaisseau => ({ ...VAISSEAU, coque: 1e9, armes: [{ id: 'escorte', cadence: 0.05, degats: 1, portee: 150, vitesse: 600, vie: 1, dispersion: 0, guide: false, tousSens: true, infaillible: true, ...arme } as Arme], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false }, passifs: { ...VAISSEAU.passifs, critique } })
+  const insecte = (): Ennemi => ({ id: 830, corps: { ...nouveauVaisseau(), x: 60, y: 0 }, pv: 1e9, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9 })
+  // (le marquage)
+  const cm = cfgDe({ designation: { duree: 3, bonus: 0.25 } }, 1)
+  const wm = nouveauMonde(cm, 5)
+  wm.invasion.prochainA = 1e9
+  const em = insecte()
+  wm.ennemis.push(em)
+  for (let i = 0; i < 20; i++) avancerLeMonde(cm, wm, 1 / 60, { x: 0, y: 0 })
+  const marque = (em.designeA ?? -1) - wm.t
+  // (le taux de critiques d'une autre arme sur un désigné, et sur un insecte sain)
+  const taux = (designe: boolean): number => {
+    const ca = cfgDe({ id: 'canon' }, 0)
+    const w = nouveauMonde(ca, 7)
+    w.invasion.prochainA = 1e9
+    const e = insecte()
+    w.ennemis.push(e)
+    let coups = 0
+    let crits = 0
+    for (let i = 0; i < 60 * 30; i++) {
+      if (designe) (e.designeA = w.t + 3), (e.designeBonus = 0.25)
+      for (const ev of avancerLeMonde(ca, w, 1 / 60, { x: 0, y: 0 }).evenements) if (ev.type === 'ennemiTouche') (coups += 1), (crits += ev.critique ? 1 : 0)
+    }
+    return crits / Math.max(1, coups)
+  }
+  const [avec, sans] = [taux(true), taux(false)]
+  verifier(`la désignation : un critique marque l'insecte (${marque.toFixed(2)} s qui restent, vers 3) ; une autre arme à 0 % y fait ${(avec * 100).toFixed(0)} % de critiques (vers 25), ${(sans * 100).toFixed(0)} % sur un insecte sain (0)`, marque > 2.5 && marque <= 3 && Math.abs(avec - 0.25) < 0.06 && sans === 0)
+}
+
 // LA BALLE PERFORANTE RONGE (Keko, 24/11 : « l'élément s'applique à toutes les variations ») : une balle acide qui
 // traverse deux insectes en ligne les ronge tous les deux
 {

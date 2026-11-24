@@ -14275,6 +14275,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** L'instant du dernier craquement de givre (voir l'événement `gele`). */
   let geleSonneA = -10
   let etourdiSonneA = -10
+  let designeSonneA = -10
   /** Les lignes de balises qui viennent de s'éclairer (voir `dessinerLesBalises`). */
   const lignesEclairees: { x0: number; y0: number; x1: number; y1: number; t0: number; bleu?: boolean }[] = []
   /** (SOUS LES VAISSEAUX ET LES INSECTES : dessinées avec les tirs, elles cachaient le vaisseau posé dessus.) */
@@ -14734,6 +14735,22 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         }
         // IL EST PRIS DANS LA GLACE (« Gel profond », Keko, 24/11 — voir `ELEMENTAIRES`) : un bloc de glace bleue translucide
         // autour de lui, cerné de clair, des éclats qui scintillent
+        // (IL EST DÉSIGNÉ — « Désignation », Keko, 24/11, voir `Arme.designation` : une mire orange en quatre coins autour de
+        // lui, qui se resserre en apparaissant et bat doucement ; elle pâlit dans sa dernière demi-seconde)
+        if ((e.designeA ?? -1) > m.t) {
+          const reste = (e.designeA ?? 0) - m.t
+          const r = rayonDe(CONF, e) + 3 + Math.max(0, reste - 2.8) * 25 + (Math.sin(t * 8 + e.id) > 0 ? 1 : 0)
+          const k = Math.min(1, reste / 0.5)
+          const c = N.hex('#ff9a2a')
+          const L = 3
+          for (const [ax, ay] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
+            const cx = sx + ax * r
+            const cy = sy + ay * r
+            p.line(cx, cy, cx - ax * L, cy, c, 0.9 * k)
+            p.line(cx, cy, cx, cy - ay * L, c, 0.9 * k)
+          }
+          p.dot(sx, sy - r - 2, N.hex('#ffd27a'), 0.8 * k)
+        }
         // (IL EST ÉTOURDI — « Étourdissement », Keko, 24/11, voir `Arme.etourdissement` : trois étoiles jaunes qui tournent
         // au-dessus de lui)
         if ((e.figeA ?? -1) > m.t && e.fige === 'etourdi') {
@@ -18225,6 +18242,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           secousse = Math.max(secousse, 0.4)
           break
         }
+        case 'designe':
+          // (DÉSIGNÉ : le petit son du verrouillage, une fois au plus par cinquième de seconde — voir `Arme.designation`)
+          if (t - designeSonneA > 0.2) {
+            designeSonneA = t
+            jouer('verrou', { dx: ev.x - v.x, dy: ev.y - v.y })
+          }
+          break
         case 'grappe': {
           // (LA GRAPPE S'OUVRE au sommet de la cloche — voir `Arme.grappe` : un petit éclair là-haut, des étincelles, un
           // claquement sec)
