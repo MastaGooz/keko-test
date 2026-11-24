@@ -497,7 +497,9 @@ export const MUTATIONS: Mutation[] = [
   // bobine augmentent ses dégâts de X % pour toute sa durée restante » ; +20 %, cumulable — voir `Arme.sphere.accumulateur`)
   variation('tesla-accumulateur', 'tesla', 'Accumulateur', 'Chaque critique augmente les dégâts pour la durée de la bobine.', changerA('tesla', (a) => ({ ...a, sphere: a.sphere === undefined ? undefined : { ...a.sphere, accumulateur: 0.2 } }))),
   variation('tesla-surtension', 'tesla', 'Surtension', 'La bobine décharge deux fois plus souvent.', changerA('tesla', (a) => ({ ...a, sphere: a.sphere === undefined ? undefined : { ...a.sphere, periode: a.sphere.periode * 0.5 } }))),
-  variation('tesla-champ', 'tesla', 'Champ tesla', 'Un champ électrique blesse les ennemis tout près.', changerA('tesla', (a) => ({ ...a, aura: { rayon: 34, dps: fois(a, 0.4) } }))),
+  // (« MAGNÉTISME », À LA PLACE DE « CHAMP TESLA » — Keko, 24/11 : « attire les ennemis ET les pépites » ; « douce, sur 60 »,
+  // choisi par Keko ; la place, de moi — le champ faisait doublon avec la Tempête de la Sentinelle ; voir `Arme.sphere.magnetisme`)
+  variation('tesla-magnetisme', 'tesla', 'Magnétisme', 'La boule attire les ennemis et les cristaux autour d’elle.', changerA('tesla', (a) => ({ ...a, sphere: a.sphere === undefined ? undefined : { ...a.sphere, magnetisme: { rayon: 60, vitesse: 30 } } }))),
   variation('tesla-jumeau', 'tesla', 'Grande bobine', 'Une boule plus grande, qui dure plus longtemps.', changerA('tesla', (a) => ({ ...a, sphere: a.sphere === undefined ? undefined : { ...a.sphere, rayon: a.sphere.rayon * 1.5, duree: a.sphere.duree * 1.4 } }))),
   // LE LANCE-GRENADES
   variation('grenades-fragmentation', 'grenades', 'Fragmentation', 'Chaque explosion projette six éclats brûlants tout autour.', changerA('grenades', V.fragments)),

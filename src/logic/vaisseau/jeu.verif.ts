@@ -3770,6 +3770,26 @@ for (const vortex of [true, false]) {
   verifier(`accumulateur : la boule frappe ${oui.join(', ')} avant critique (58, 69.6, 81.2) ; sans la carte ${non.join(', ')} (58, 58, 58)`, oui.slice(0, 3).join() === '58,69.6,81.2' && non.slice(0, 3).join() === '58,58,58')
 }
 
+// MAGNÉTISME (Keko, 24/11 — voir `Arme.sphere.magnetisme`) : un insecte à 50 de la boule glisse vers elle (environ 30 en
+// une seconde), un autre à 120 ne bouge pas ; un cristal à 40 d'elle est aimanté vers le vaisseau, un à 120 non
+{
+  const tesla = { id: 'tesla', cadence: 2.6, degats: 0, portee: 120, vitesse: 0, vie: 0, dispersion: 0, guide: false, sphere: { vitesse: 0, duree: 5, rayon: 1, periode: 99, vitesseTir: 0, foudre: { cibles: 0 }, magnetisme: { rayon: 60, vitesse: 30 } } }
+  const cfg: ConfigVaisseau = { ...VAISSEAU, coque: 1e9, armes: [tesla], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false } }
+  const w = nouveauMonde(cfg, 5)
+  w.invasion.prochainA = 1e9
+  w.t = 2
+  w.armesA = [1e9]
+  const pres: Ennemi = { id: 3300, corps: { ...nouveauVaisseau(), x: 250, y: 0 }, pv: 1e6, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9 }
+  const loin: Ennemi = { ...pres, id: 3301, corps: { ...nouveauVaisseau(), x: 320, y: 0 } }
+  w.ennemis.push(pres, loin)
+  w.spheres.push({ id: 3302, arme: 0, x: 200, y: 0, vx: 0, vy: 0, nee: w.t, tirA: 1e9 })
+  w.pepites.push({ x: 200, y: 40, vx: 0, vy: 0, minerai: 'fer', valeur: 1 } as (typeof w.pepites)[number], { x: 200, y: -120, vx: 0, vy: 0, minerai: 'fer', valeur: 1 } as (typeof w.pepites)[number])
+  avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+  const aimantes = w.pepites.map((p) => p.aimanteeA !== undefined)
+  for (let i = 0; i < 59; i++) avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+  verifier(`magnétisme : l'insecte proche glisse de ${(250 - pres.corps.x).toFixed(1)} (environ 30), le lointain de ${(320 - loin.corps.x).toFixed(1)} (0) ; cristaux aimantés : ${aimantes.join(', ')} (true, false)`, Math.abs(250 - pres.corps.x - 30) < 2 && Math.abs(320 - loin.corps.x) < 1e-6 && aimantes[0] === true && aimantes[1] === false)
+}
+
 // LE RAILGUN ÉLECTRIQUE (Keko, 24/11 : la carte Cryogénique « applique l'état d'électricité » à la place) : la balle
 // électrocute ce qu'elle traverse, et son sillon ce qui y passe
 {

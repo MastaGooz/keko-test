@@ -2049,7 +2049,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     moteur: { nom: 'Vitesse', effet: 'de vitesse' },
     maniabilite: { nom: 'Maniabilité', effet: 'de maniabilité' },
     aimant: { nom: 'Aimant', effet: 'de portée de l’aimant' },
-    experience: { nom: 'Expérience', effet: 'd’expérience par pépite' },
+    // (« cristal », plus « pépite » — Keko, 24/11 : « remplace partout dans le jeu le mot pépite par cristaux »)
+    experience: { nom: 'Expérience', effet: 'd’expérience par cristal' },
     recuperation: { nom: 'Récupération', effet: 'de chance de trouver une plaque' },
     regeneration: { nom: 'Régénération', effet: 'de régénération' },
     bouclier: { nom: 'Bouclier', effet: 'de capacité du bouclier' },
@@ -11190,6 +11191,18 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         const Rb = (4 + bat) * k * zoneDuVol() * (1 + 0.25 * pouls) * (1 + 0.25 * charge)
         p.ring(s.x, s.y, sp.rayon, 1, TESLA[2], 0.12 * k)
         if (charge > 0) p.glow(s.x, s.y, Rb * 2.2, TESLA[4], Math.min(0.55, 0.2 + 0.15 * charge) * k)
+        // (MAGNÉTIQUE — « Magnétisme », Keko, 24/11 : le cercle de son attraction, à peine marqué, et des grains de lumière
+        // qui convergent vers elle — voir `Arme.sphere.magnetisme`)
+        const mg = sp.magnetisme
+        if (mg !== undefined) {
+          p.ring(s.x, s.y, mg.rayon, 1, TESLA[3], 0.1 * k)
+          for (let g = 0; g < 10; g++) {
+            const u = (t * 0.9 + g * 0.37 + s.id * 0.13) % 1
+            const an = g * 2.4 + s.id
+            const r = mg.rayon * (1 - u)
+            p.dot(s.x + Math.cos(an) * r, s.y + Math.sin(an) * r, u > 0.7 ? N.WHITE : TESLA[3], 0.7 * k * Math.min(1, u * 3))
+          }
+        }
         // (LA PÉRIPHÉRIE PULSE EN BLEU : le cercle de la portée s'allume et s'ouvre d'un cran, puis se rendort)
         if (pouls > 0) {
           const ro = sp.rayon * (1 + 0.08 * (1 - pouls))

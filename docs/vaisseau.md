@@ -8798,4 +8798,13 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     SON TEXTE (Keko, 24/11 : « pas clair ; il faudrait dire chaque coup critique augmente les dégâts pour la durée de la
     bobine ») : « Chaque critique augmente les dégâts pour la durée de la bobine. » — avec « coup », six lignes, la
     dernière coupée (VU en capture) ; sans, cinq.
-  - Restent, de l'ancienne liste : Surtension, Champ tesla, Grande bobine.
+  - MAGNÉTISME, À LA PLACE DE CHAMP TESLA (Keko : « attire les ennemis ET les pépites ») : « La boule attire les ennemis
+    et les cristaux autour d'elle. » ; `sphere.magnetisme` — les insectes à 60 de la boule glissent vers elle à 30 par
+    seconde, sans s'y coller ; les cristaux à 60 d'elle sont aimantés VERS LE VAISSEAU, comme par son aimant (la boule
+    ramasse pour lui ; ni plaques, ni soins, ni l'aimant). « Douce, sur 60 » : Keko ; la place : de moi (sa réponse à
+    « à la place de quelle variation » était « Magnétisme » ; le champ faisait doublon avec la Tempête). Un cercle pâle et
+    des grains de lumière qui convergent vers la boule. Un test ; VU en capture.
+  - Restent, de l'ancienne liste : Surtension, Grande bobine.
+- « CRISTAUX » À LA PLACE DE « PÉPITES » (Keko, 24/11 : « remplace partout dans le jeu le mot pépite par cristaux ») :
+  dans le vortex, un seul texte le disait, la carte Expérience — « d'expérience par cristal ». Le code, les commentaires
+  et le Nova Drifter (où les pépites sont de fer, d'or et de cristal) gardent leur mot.

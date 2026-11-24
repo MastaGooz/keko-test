@@ -913,9 +913,12 @@ export type Arme = {
   // (`foudre.rebonds` : CONDUCTION — Keko, 24/11 : « l'arc rebondit sur 2 autres cibles, en mode chaîne d'éclair » : chaque
   // éclair saute ensuite `n` fois d'ennemi en ennemi, à `saut` au plus, perdant `attenuation` à chaque bond, jamais deux fois
   // sur le même dans sa chaîne)
+  // (`magnetisme` : MAGNÉTISME — Keko, 24/11 : « attire les ennemis ET les pépites » — les cristaux : les insectes à `rayon` de
+  // la boule glissent vers elle à `vitesse`, sans s'y coller ; les cristaux à `rayon` d'elle sont aimantés vers le vaisseau,
+  // comme par son aimant — la boule ramasse pour lui ; ni les plaques, ni les soins, ni l'aimant)
   // (`accumulateur` : ACCUMULATEUR — Keko, 24/11 : « les coups critiques de la bobine augmentent ses dégâts de X % pour toute
   // sa durée restante » : chaque critique d'une boule lui ajoute cette part de dégâts, jusqu'à sa fin — +20 %, cumulable)
-  sphere?: { vitesse: number; duree: number; rayon: number; periode: number; vitesseTir: number; foudre?: { cibles: number; rebonds?: { n: number; saut: number; attenuation: number } }; accumulateur?: number }
+  sphere?: { vitesse: number; duree: number; rayon: number; periode: number; vitesseTir: number; foudre?: { cibles: number; rebonds?: { n: number; saut: number; attenuation: number } }; accumulateur?: number; magnetisme?: { rayon: number; vitesse: number } }
   /**
    * UN PUITS DE PLASMA (la troisième arme du Pulsar, Keko, 16/11 : « on va tenter le puits » — une petite singularité lancée
    * au milieu de la nuée, qui aspire les insectes vers son centre puis éclate) : à la cadence, un insecte à portée, il part
@@ -3781,6 +3784,25 @@ function menerLesSpheres(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[
     }
     s.x += s.vx * dt
     s.y += s.vy * dt
+    // (MAGNÉTISME : elle attire les insectes et aimante les cristaux — voir `Arme.sphere.magnetisme`)
+    const mg = sp.magnetisme
+    if (mg !== undefined && m.phase === 'vol') {
+      for (const e of m.ennemis) {
+        if (e.asteroide !== undefined) continue
+        const dx = s.x - e.corps.x
+        const dy = s.y - e.corps.y
+        const d = Math.hypot(dx, dy)
+        if (d > mg.rayon + rayonDe(c, e) || d <= rayonDe(c, e)) continue
+        const pas = Math.min(mg.vitesse * dt, d - rayonDe(c, e))
+        e.corps = { ...e.corps, x: e.corps.x + (dx / d) * pas, y: e.corps.y + (dy / d) * pas }
+      }
+      for (const q of m.pepites) {
+        if (q.aimanteeA !== undefined || q.aimant === true || q.plaque === true || q.soin === true) continue
+        if (Math.hypot(q.x - s.x, q.y - s.y) > mg.rayon) continue
+        q.aimanteeA = m.t
+        if (m.equipage !== undefined) q.par = m.equipage.actif
+      }
+    }
     if (m.t < s.tirA) continue
     s.tirA = m.t + sp.periode
     // (LA FOUDRE : les plus proches dans son rayon, frappés à l'instant — voir `Arme.sphere.foudre`)
