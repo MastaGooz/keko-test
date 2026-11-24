@@ -8916,3 +8916,12 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     changent pas (ils enflamment ce qu'ils touchent). Un test (la grappe enflamme 6 insectes d'une couronne hors de la
     grande zone, 0 sans elle ; la réplique enflamme un insecte à 17 d'un voisin critiqué) ; les drones, sans test — la
     carte est à remplacer.
+- TRIANGULATION, À LA PLACE DE DRONES (Keko, 24/11 : « une carte spéciale qui fait que l'obus frappe toujours dans la
+  zone qui comporte le plus grand nombre d'ennemis » ; parmi mes idées, « Repérage », dont le nom n'allait pas ;
+  « Triangulation » et la place de Drones — qui ajoutait une attaque à côté — : Keko) : « Les obus visent toujours le
+  plus gros groupe d'ennemis. » ; `Arme.triangulation`, `lePlusGrosGroupe` — parmi les insectes à portée, celui qui en a
+  le plus à un rayon de zone autour de lui (le plus proche, à égalité) ; l'obus tombe au CENTRE de ce groupe, à sa
+  vitesse moyenne ; les roches n'y comptent pas ; LE VERROU N'Y CHANGE RIEN (« toujours » — à rejuger s'il gêne). Avec
+  Salve, les trois obus partent en éventail autour de ce point. Un test (un seul à 50, un groupe de quatre à 130 et
+  verrouillé le seul : sans la carte, 50 ; avec, 130) ; la carte VUE en capture, quatre lignes. Restent à juger : Salve
+  et Gros calibre.

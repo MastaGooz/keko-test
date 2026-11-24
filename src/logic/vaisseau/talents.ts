@@ -497,7 +497,10 @@ export const MUTATIONS: Mutation[] = [
   // d'eux » : rayon 15, 30 % — voir `Arme.replique`)
   variation('obusier-replique', 'obusier', 'Réplique', 'Les ennemis touchés par un coup critique explosent.', changerA('obusier', (a) => ({ ...a, replique: { rayon: 15, part: 0.3 } }))),
   variation('obusier-salve', 'obusier', 'Salve', 'Chaque tir lâche trois obus en éventail.', changerA('obusier', V.gerbe(3, 0.3, 0.55))),
-  variation('obusier-drones', 'obusier', 'Drones', 'Deux drones en orbite tirent des obus sur les ennemis proches.', ajouterA('obusier', (a) => drones(a, { cadence: 2.2, degats: fois(a, 0.5), portee: 90, vie: 1 }))),
+  // (« TRIANGULATION », À LA PLACE DE « DRONES » — Keko, 24/11 : « l'obus frappe toujours dans la zone qui comporte le plus
+  // grand nombre d'ennemis » ; Drones ajoutait une attaque à côté au lieu de changer le tir ; le nom : Keko — voir
+  // `Arme.triangulation`)
+  variation('obusier-triangulation', 'obusier', 'Triangulation', 'Les obus visent toujours le plus gros groupe d’ennemis.', changerA('obusier', (a) => ({ ...a, triangulation: true }))),
   variation('obusier-lourd', 'obusier', 'Gros calibre', 'Des obus plus lents à venir, plus forts, qui explosent plus large.', changerA('obusier', V.lourd)),
   // L'ARC TESLA
   variation('tesla-rebonds', 'tesla', 'Orage', 'La bobine foudroie trois ennemis de plus à chaque décharge.', changerA('tesla', (a) => ({ ...a, sphere: a.sphere === undefined ? undefined : { ...a.sphere, foudre: { ...a.sphere.foudre, cibles: (a.sphere.foudre?.cibles ?? 3) + 3 } } }))),

@@ -671,6 +671,12 @@ export type Arme = {
    */
   replique?: { rayon: number; part: number }
   /**
+   * LA TRIANGULATION (l'Obusier, Keko, 24/11 : « l'obus frappe toujours dans la zone qui comporte le plus grand nombre
+   * d'ennemis ») : au lieu du plus proche, il vise l'insecte à portée qui a le plus d'insectes dans un rayon de sa zone
+   * autour de lui — le plus proche, à égalité —, et tombe au CENTRE de ce groupe ; le verrou n'y change rien (« toujours »).
+   */
+  triangulation?: boolean
+  /**
    * À RETARDEMENT (le Lance-grenades de l'Empire, Keko, 23/11 : « l'idée du compte à rebours me plaît beaucoup : trois
    * petites grenades, qui clignotent en rouge pour indiquer le timer, et leur clignotement s'intensifie jusqu'à
    * exploser » — sans rebond : « on est dans l'espace ; seul l'hypercube peut rebondir sur l'espace-temps ») : le tir ne
@@ -5993,6 +5999,24 @@ function repliquer(c: ConfigVaisseau, m: Monde, o: Obus, critiques: Ennemi[], ev
     exploser(c, m, e.corps.x, e.corps.y, { rayon: rp.rayon, degats: o.zone.degats * rp.part }, e, ev, o.arme, true)
   }
 }
+/**
+ * LE PLUS GROS GROUPE (voir `Arme.triangulation`) : parmi `candidats`, celui qui a le plus d'insectes à `rayon` autour de
+ * lui (le plus proche de (x, y), à égalité) ; rend le centre de son groupe, à sa vitesse moyenne, comme une cible sans id.
+ */
+function lePlusGrosGroupe(c: ConfigVaisseau, m: Monde, candidats: Ennemi[], rayon: number, x: number, y: number): Ennemi | null {
+  const insectes = m.ennemis.filter((e) => e.asteroide === undefined)
+  let meilleur: Ennemi[] = []
+  let dm = Infinity
+  for (const e of candidats) {
+    const groupe = insectes.filter((g) => Math.hypot(g.corps.x - e.corps.x, g.corps.y - e.corps.y) <= rayon + rayonDe(c, g))
+    const d = Math.hypot(e.corps.x - x, e.corps.y - y)
+    if (groupe.length > meilleur.length || (groupe.length === meilleur.length && d < dm)) (meilleur = groupe), (dm = d)
+  }
+  if (meilleur.length === 0) return null
+  const n = meilleur.length
+  const moy = (f: (e: Ennemi) => number): number => meilleur.reduce((s, e) => s + f(e), 0) / n
+  return { id: -1, corps: { ...meilleur[0].corps, x: moy((e) => e.corps.x), y: moy((e) => e.corps.y), vx: moy((e) => e.corps.vx), vy: moy((e) => e.corps.vy) } } as Ennemi
+}
 /** Une explosion de zone ; elle rend les insectes qu'elle a frappés d'un coup critique (voir `Arme.replique`). */
 function exploser(c: ConfigVaisseau, m: Monde, x: number, y: number, zone: { rayon: number; degats: number }, touche: Ennemi | null, ev: Evenement[], arme?: string, detonation = false): Ennemi[] {
   // (une détonation sur coup critique a son événement à elle — voir `Arme.detonation`)
@@ -6598,6 +6622,11 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
       else for (const e of m.ennemis) {
         const d = Math.hypot(e.corps.x - v.x, e.corps.y - v.y)
         if (enVue(e) && d < dc) (dc = d), (cible = e)
+      }
+      // (TRIANGULATION : le plus gros groupe à portée — voir `Arme.triangulation`)
+      if (arme.triangulation === true && arme.zone !== undefined) {
+        const groupe = lePlusGrosGroupe(c, m, m.ennemis.filter((e) => e.asteroide === undefined && enVue(e)), arme.zone.rayon, bx, by)
+        if (groupe !== null) cible = groupe
       }
       // (LE NAPALM TIRE MÊME SANS CIBLE — Keko, 18/11 : « le napalm devrait tirer même en l'absence d'ennemis, un peu au
       // hasard autour de lui : il laisse une flaque, ça peut avoir un intérêt de tirer sans cible ; pas le lance-flammes ni
