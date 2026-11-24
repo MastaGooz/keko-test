@@ -1,7 +1,7 @@
 /**
  * Vérifications du vaisseau, sans navigateur : le temps est injecté.
  */
-import { type Arme, placeDuDrone, recompenseDeFin, tableauVide, chanceDePlaque, ajouterUnPilote, avancerLEquipage, etatDuPilote, partDe, gabaritDInsecte, rayonDe, rocheDeLaTempete, vieMultipliee, cadenceDeLaVague, asteroideDeLaCase, coupeDUnCube, asteroidesAutour, avancer, avancerLeMonde, encaisser, purger, impactDuRayon, lancerLaBombe, larguer, porteeDeLaBombe, MINERAIS, nouveauMonde, nouveauVaisseau, solidite, voler, totalDe, stationDeLaCase, stationLaPlusProche, VAISSEAU, verrouiller, ennemiLePlusProche, type ConfigVaisseau, type Ennemi, type Evenement, type Vaisseau, xpDuNiveau, gemmesDuButin, tire, type Pepite } from './jeu.ts'
+import { ELEMENTAIRES, type Arme, placeDuDrone, recompenseDeFin, tableauVide, chanceDePlaque, ajouterUnPilote, avancerLEquipage, etatDuPilote, partDe, gabaritDInsecte, rayonDe, rocheDeLaTempete, vieMultipliee, cadenceDeLaVague, asteroideDeLaCase, coupeDUnCube, asteroidesAutour, avancer, avancerLeMonde, encaisser, purger, impactDuRayon, lancerLaBombe, larguer, porteeDeLaBombe, MINERAIS, nouveauMonde, nouveauVaisseau, solidite, voler, totalDe, stationDeLaCase, stationLaPlusProche, VAISSEAU, verrouiller, ennemiLePlusProche, type ConfigVaisseau, type Ennemi, type Evenement, type Vaisseau, xpDuNiveau, gemmesDuButin, tire, type Pepite } from './jeu.ts'
 import { acheter, configDuHangar, hangarNeuf, monter, pieceDe } from './hangar.ts'
 import { depuisTexte, retirerLesPilotes, retirerUnPilote, versTexte, vuDu, vuDuSecond } from './reseau.ts'
 
@@ -3536,6 +3536,80 @@ for (const vortex of [true, false]) {
   }
   const [v, n] = [essai(true), essai(false)]
   verifier(`la brûlure et l'arc, les mêmes partout au vortex : une source à 300 brûle à ${v.brule} (20), ailleurs à ${n.brule} (300) ; l'arc fait ${v.arc} (60), ailleurs ${n.arc} (20)`, v.brule === 20 && n.brule === 300 && v.arc === 60 && n.arc === 20)
+}
+
+// LES CARTES D'ÉLÉMENT (Keko, 24/11 — voir `ELEMENTAIRES`) : GEL PROFOND, un canon de givre sur un insecte déjà gelé le
+// fige (à chance 1 pour le test), et figé il ne bouge plus ; sans la carte, non. PROPAGATION, un insecte en feu allume son
+// voisin collé à la seconde, pas celui qui est loin ; sans la carte, non. POINT FAIBLE, un insecte rongé (à chance 1) prend
+// des critiques de 50 points plus forts : un canon de 10 lui en ôte 10 × (facteur + 0,5) ; un insecte sain, 10. PARALYSIE, l'insecte dont le coup fait sauter
+// l'arc est figé 1 s.
+{
+  const base: ConfigVaisseau = { ...VAISSEAU, coque: 1e9, dureeDesEtats: 6, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9 }, derive: { ...VAISSEAU.derive, active: false }, passifs: { ...VAISSEAU.passifs, critique: 0 } }
+  const insecte = (id: number, x: number, y: number, plus: Partial<Ennemi> = {}): Ennemi => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv: 1e6, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9, ...plus })
+  const canon = { id: 'canon', cadence: 0.2, degats: 10, portee: 120, vitesse: 420, vie: 0.7, dispersion: 0, guide: false, tousSens: true, infaillible: true }
+  const monde = (cfg: ConfigVaisseau, ...es: Ennemi[]) => {
+    const w = nouveauMonde(cfg, 5)
+    w.invasion.prochainA = 1e9
+    w.t = 2
+    w.ennemis.push(...es)
+    return w
+  }
+  const regles = (r: Partial<ConfigVaisseau['elementaires']>) => ({ ...base.elementaires, ...r })
+  // GEL PROFOND
+  const sauve = { ...ELEMENTAIRES.gelure }
+  ELEMENTAIRES.gelure.chance = 1
+  const gel = (carte: boolean): { fige: boolean; bouge: number } => {
+    const cfg = { ...base, armes: [{ ...canon, gel: { duree: 1.5, ralenti: 0.5 } }], elementaires: regles({ gelure: carte }) }
+    const e = insecte(2500, 60, 0, { geleA: 10, ralenti: 0.5 })
+    const w = monde(cfg, e)
+    let fige = false
+    let x0 = 0
+    for (let i = 0; i < 30; i++) {
+      avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+      if (!fige && (e.figeA ?? -1) > w.t) (fige = true), (x0 = e.corps.x)
+    }
+    return { fige, bouge: fige ? Math.abs(e.corps.x - x0) : -1 }
+  }
+  const [gelOui, gelNon] = [gel(true), gel(false)]
+  Object.assign(ELEMENTAIRES.gelure, sauve)
+  // PROPAGATION
+  const feu = (carte: boolean): { voisin: boolean; loin: boolean } => {
+    const cfg = { ...base, brulureDesEtats: 20, armes: [], elementaires: regles({ incendie: carte }) }
+    const a = insecte(2510, 100, 0, { bruleA: 8, dpsBrulure: 20, dureeBrulure: 6 })
+    const v = insecte(2511, 100, 12)
+    const l = insecte(2512, 100, 60)
+    const w = monde({ ...cfg, ennemi: { ...cfg.ennemi, poussee: 0, vitesseMax: 0 } }, a, v, l)
+    for (let i = 0; i < 70; i++) avancerLeMonde({ ...cfg, ennemi: { ...cfg.ennemi, poussee: 0, vitesseMax: 0 } }, w, 1 / 60, { x: 0, y: 0 })
+    return { voisin: (v.bruleA ?? -1) > w.t, loin: (l.bruleA ?? -1) > w.t }
+  }
+  const [feuOui, feuNon] = [feu(true), feu(false)]
+  // POINT FAIBLE
+  const sauveV = { ...ELEMENTAIRES.vulnerabilite }
+  ELEMENTAIRES.vulnerabilite.chance = 1
+  const faible = (ronge: boolean): number => {
+    const cfg = { ...base, armes: [{ ...canon, cadence: 99 }], elementaires: regles({ vulnerabilite: true }), ennemi: { ...base.ennemi, poussee: 0, vitesseMax: 0 } }
+    const e = insecte(2520, 60, 0, ronge ? { acide: { jusque: 10, dps: 0, bonus: 0 } } : {})
+    const w = monde(cfg, e)
+    w.armesA = [0]
+    for (let i = 0; i < 40; i++) avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+    return 1e6 - e.pv
+  }
+  const [faibleOui, faibleNon] = [faible(true), faible(false)]
+  Object.assign(ELEMENTAIRES.vulnerabilite, sauveV)
+  // PARALYSIE
+  const para = (): boolean => {
+    const arme = { ...canon, cadence: 99, electrocution: { duree: 6, chance: 1, degats: 20, saut: 45 } }
+    const cfg = { ...base, armes: [arme], elementaires: regles({ paralysie: true }), ennemi: { ...base.ennemi, poussee: 0, vitesseMax: 0 } }
+    const e = insecte(2530, 40, 0, { electrocute: { jusque: 8, chance: 1, degats: 20, saut: 45 } })
+    const o = insecte(2531, 40, 30)
+    const w = monde(cfg, e, o)
+    w.armesA = [0]
+    for (let i = 0; i < 40; i++) avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+    return (e.figeA ?? -1) > w.t && e.fige === 'paralysie' && (o.figeA ?? -1) <= w.t
+  }
+  const paralyse = para()
+  verifier(`les cartes d'élément : gel profond, figé ${gelOui.fige} et immobile (${gelOui.bouge.toFixed(2)}), sans la carte ${gelNon.fige} ; propagation, le voisin collé brûle (${feuOui.voisin}), le lointain non (${feuOui.loin}), sans la carte ${feuNon.voisin} ; point faible, un coup de 10 ôte ${faibleOui} au rongé (${10 * (base.passifs.critiqueFacteur + 0.5)}), ${faibleNon} au sain (10) ; paralysie, ${paralyse}`,
+    gelOui.fige && gelOui.bouge === 0 && !gelNon.fige && feuOui.voisin && !feuOui.loin && !feuNon.voisin && Math.abs(faibleOui - 10 * (base.passifs.critiqueFacteur + 0.5)) < 1e-9 && faibleNon === 10 && paralyse)
 }
 
 // LE RAILGUN ÉLECTRIQUE (Keko, 24/11 : la carte Cryogénique « applique l'état d'électricité » à la place) : la balle

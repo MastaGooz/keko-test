@@ -331,7 +331,8 @@ export function carte(cible: Cible, stat: StatDArme | StatDeFaction, rarete: Rar
 export const NIVEAU_SPECIAL = 10
 export const NIVEAUX_MIXTES = 3
 export const ARMES_MAX = 4
-export type Mutation = { id: string; arme: string; sorte: 'arme' | 'variation'; nom: string; dit: string; race?: Race; appliquer: (c: ConfigVaisseau) => ConfigVaisseau }
+// (`element` : une carte d'élément — Keko, 24/11 — voir `ELEMENTAIRES` ; `etat`, l'état qu'une arme portée doit appliquer pour qu'elle paraisse)
+export type Mutation = { id: string; arme: string; sorte: 'arme' | 'variation' | 'element'; nom: string; dit: string; race?: Race; etat?: StatDArme; appliquer: (c: ConfigVaisseau) => ConfigVaisseau }
 /** L'arme de départ de ce nom (pas une ajoutée par une variation). */
 const principale = (c: ConfigVaisseau, id: string): Arme | undefined => c.armes.find((a) => a.id === id && a.ajoutee !== true) ?? c.armes.find((a) => a.id === id)
 /** Toutes les armes de ce nom, changées. */
@@ -363,6 +364,8 @@ const V = {
   lourd: (a: Arme): Arme => ({ ...a, zone: a.zone === undefined ? undefined : { rayon: a.zone.rayon * 1.6 }, degats: fois(a, 1.3), cadence: a.cadence * 1.4 }),
 }
 const variation = (id: string, arme: string, nom: string, dit: string, appliquer: (c: ConfigVaisseau) => ConfigVaisseau): Mutation => ({ id, arme, sorte: 'variation', nom, dit, appliquer })
+/** Une carte d'élément : elle paraît si une arme portée applique `etat`, et allume sa règle (voir `ConfigVaisseau.elementaires`). */
+const element = (id: string, etat: StatDArme, nom: string, dit: string, regle: keyof ConfigVaisseau['elementaires']): Mutation => ({ id, arme: '', sorte: 'element', etat, nom, dit, appliquer: (c) => ({ ...c, elementaires: { ...c.elementaires, [regle]: true } }) })
 const changerA = (arme: string, f: (a: Arme) => Arme) => (c: ConfigVaisseau): ConfigVaisseau => changerLes(c, arme, f)
 const ajouterA = (arme: string, f: (a: Arme) => Arme[]) => (c: ConfigVaisseau): ConfigVaisseau => ajouter(c, arme, f)
 
@@ -501,6 +504,13 @@ export const MUTATIONS: Mutation[] = [
   variation('escorte-cryo', 'escorte', 'Cryogéniques', 'Les balles des mini-avions gèlent les ennemis.', changerA('escorte', V.cryo)),
   variation('escorte-ricochet', 'escorte', 'Ricochet', 'Chaque balle des mini-avions rebondit sur deux autres ennemis.', changerA('escorte', V.ricochet)),
   variation('escorte-roquettes', 'escorte', 'Roquettes', 'Les mini-avions tirent des roquettes qui explosent.', changerA('escorte', (a) => ({ ...V.explosif(a), cadence: a.cadence * 2.5, degats: fois(a, 2) }))),
+  // LES CARTES D'ÉLÉMENT (Keko, 24/11 : « des cartes spéciales de chaque élément » ; « des cartes multicolores spéciales qu'on
+  // proposera dans le pool des cartes spéciales, si le joueur a au moins une attaque avec l'élément en question » — voir
+  // `ELEMENTAIRES` pour leurs chiffres ; leurs noms et leurs textes sont de moi)
+  element('element-givre', 'givre', 'Gel profond', 'Le givre peut geler net les ennemis déjà sous givre.', 'gelure'),
+  element('element-feu', 'feu', 'Propagation', 'La brûlure se propage aux ennemis tout proches.', 'incendie'),
+  element('element-corrosion', 'corrosion', 'Point faible', 'Les coups critiques sont plus fréquents et plus forts sous corrosion.', 'vulnerabilite'),
+  element('element-electrocution', 'electrocution', 'Paralysie', 'L’ennemi qui déclenche l’électrocution est paralysé.', 'paralysie'),
 ]
 /**
  * LES ARMES MISES DE CÔTÉ — LES ROQUETTES (Keko, 23/11 : « on va enlever les mini-roquettes, car ça, on va plutôt le mettre comme
@@ -542,15 +552,19 @@ export const VARIATIONS_EN_RESERVE: Mutation[] = [
   variation('roquettes-ricochet', 'roquettes', 'Ricochet', 'Chaque roquette rebondit sur deux autres ennemis.', changerA('roquettes', V.ricochet)),
 ]
 /** La carte d'une spéciale. */
-export const carteSpeciale = (mu: Mutation): Talent => ({ id: `mutation:${mu.id}`, cible: { sorte: 'arme', arme: mu.arme }, stat: 'mutation', rarete: 'speciale', bonus: 0, mutation: mu.id })
+// (une carte d'élément vaut pour toutes les armes)
+export const carteSpeciale = (mu: Mutation): Talent => ({ id: `mutation:${mu.id}`, cible: mu.sorte === 'element' ? { sorte: 'armes' } : { sorte: 'arme', arme: mu.arme }, stat: 'mutation', rarete: 'speciale', bonus: 0, mutation: mu.id })
 /** Les spéciales déjà prises, d'après les bonus du vol. */
 export const mutationsPrises = (b: Bonus): string[] => b.filter((x) => x.stat === 'mutation').map((x) => x.id.slice('mutation:'.length))
 /** Les noms des armes portées, une fois chacun, l'arme principale d'abord. */
 export const armesPortees = (armes: Arme[]): Arme[] => armes.filter((a, i) => armes.findIndex((b) => b.id === a.id) === i)
 
 /** LES TROIS SPÉCIALES d'un choix (voir `MUTATIONS`), ou rien : `k`, la combientième spéciale (1 au niveau 10). */
-function proposerLesSpeciales(graine: number, niveau: number, k: number, principaleId: string, portees: string[], race: Race, prises: string[]): Talent[] {
-  const variationsDe = (ids: string[]): Mutation[] => MUTATIONS.filter((mu) => mu.sorte === 'variation' && ids.includes(mu.arme) && !prises.includes(mu.id))
+function proposerLesSpeciales(graine: number, niveau: number, k: number, principaleId: string, armes: Arme[], race: Race, prises: string[]): Talent[] {
+  const portees = armes.map((a) => a.id)
+  // (LES CARTES D'ÉLÉMENT vont avec les variations : chacune si une arme portée applique son état — voir `ELEMENTAIRES`)
+  const elements = MUTATIONS.filter((mu) => mu.sorte === 'element' && !prises.includes(mu.id) && armes.some((a) => statsDeLArme(a).includes(mu.etat!)))
+  const variationsDe = (ids: string[]): Mutation[] => [...MUTATIONS.filter((mu) => mu.sorte === 'variation' && ids.includes(mu.arme) && !prises.includes(mu.id)), ...elements]
   const nouvelles = portees.length < ARMES_MAX ? MUTATIONS.filter((mu) => mu.sorte === 'arme' && mu.race === race && !portees.includes(mu.arme) && !prises.includes(mu.id)) : []
   let cle = 0
   const tirer = (liste: Mutation[]): Mutation | undefined => (liste.length === 0 ? undefined : liste.splice(hache(hache(graine, niveau, 41), cle++) % liste.length, 1)[0])
@@ -590,7 +604,7 @@ export function proposer(graine: number, niveau: number, rang: number, arme: Arm
   // prise, la suivante n'est plus due et le choix d'après est ordinaire)
   let speciales: Talent[] = []
   if (arme !== undefined && Math.floor(niveau / NIVEAU_SPECIAL) > prises.length) {
-    speciales = proposerLesSpeciales(graine, niveau, prises.length + 1, arme.id, portees.map((a) => a.id), race, prises)
+    speciales = proposerLesSpeciales(graine, niveau, prises.length + 1, arme.id, portees, race, prises)
     if (speciales.length >= 3) return speciales
   }
   // (MOINS DE TROIS SPÉCIALES QUI RESTENT — toutes les variations d'une arme seule prises — : des cartes ordinaires complètent)

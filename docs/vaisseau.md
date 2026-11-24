@@ -8689,3 +8689,23 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     arc à 20 % de chance n'ajoutait que 4 en moyenne par coup électrique ; à 60, 12) : la moitié d'un insecte de base ;
     `ELECTROCUTION_DU_VORTEX.degats` suit. Les cartes « Dégâts » d'une arme ne le grandissent plus.
   - Deux tests : une source à 300 brûle à 20 au vortex, à 300 ailleurs ; l'arc fait 60 ; la carte « Brûlure » mène à 25.
+- LES CARTES SPÉCIALES D'ÉLÉMENT (Keko, 24/11 : « des cartes spéciales de chaque élément » ; « des cartes multicolores
+  spéciales qu'on proposera dans le pool des cartes spéciales, si le joueur a au moins une attaque avec l'élément ») —
+  `MUTATIONS` (`sorte: 'element'`, `etat`), `ELEMENTAIRES`, `ConfigVaisseau.elementaires`. Elles vont avec les variations
+  (aux niveaux 10 à 30, dans la place de la variation de l'arme principale ; ensuite, avec celles des armes portées), une
+  fois chacune ; leur médaillon est celui de « toutes les armes », leur sous-titre l'état. NOMS ET TEXTES DE MOI ; leurs
+  chiffres choisis par Keko parmi trois :
+  - GEL PROFOND (« Le givre peut geler net les ennemis déjà sous givre. ») : un COUP de givre (la nova, un tir, un éclat,
+    une grenade — pas une zone qui gèle sans cesse) sur un insecte déjà sous givre, 15 % de chance de le GELER NET 1,5 s :
+    pris dans la glace, immobile, il ne mord pas (`Ennemi.figeA`, `fige: 'glace'`). Un bloc de glace bleue translucide
+    autour de lui, cerné de clair ; le craquement du givre.
+  - PROPAGATION (« La brûlure se propage aux ennemis tout proches. ») : à chaque seconde de la partie, tout insecte en feu
+    allume ceux qui ne brûlent pas à 6 au plus de bord à bord (`propagerLeFeu`) ; une traînée de braises de l'un à l'autre.
+  - POINT FAIBLE (« Les coups critiques sont plus fréquents et plus forts sous corrosion. ») : un insecte rongé prend +25
+    POINTS de chance critique (1 % → 26 %) et +50 points de dégâts critiques. LES CRITIQUES CONNAISSENT LEUR CIBLE : les
+    vingt-six coups qui la connaissent passent par `critiqueSur` / `facteurSur` ; un obus, dont le critique est tiré au
+    départ, se reprend au contact (`coupDObus`) ; le rayon concentré, à son départ sur sa cible. Le texte d'abord écrit
+    (« … subissent plus de coups critiques, plus forts ») prenait six lignes (VU en capture).
+  - PARALYSIE (« L'ennemi qui déclenche l'électrocution est paralysé. ») : l'insecte dont le coup électrique fait sauter
+    l'arc est figé 1 s (`fige: 'paralysie'`) ; une lueur blanche qui bat vite et des arcs qui claquent sans cesse.
+  - Deux tests (à chance 1 pour le gel et le point faible) ; VU en capture : les quatre cartes tiennent en cinq lignes.

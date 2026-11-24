@@ -2214,7 +2214,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         // (en gras s'il tient, en lettre fine sinon — « Nouvelle arme » touchait le bord de la carte)
         // (« NOUVELLE ARME », et pour une variation LE NOM DE L'ARME QU'ELLE CHANGE — Keko, 22/11 : « on a du mal à comprendre à
         // quelle arme s'applique la variation » ; « Armement » et « Variation » avant)
-        const sorte = mu.sorte === 'arme' ? 'Nouvelle arme' : armeDeLaCarte(mu.arme).nom
+        // (… et pour une carte d'élément, son ÉTAT — Keko, 24/11 — voir `ELEMENTAIRES`)
+        const sorte = mu.sorte === 'arme' ? 'Nouvelle arme' : mu.sorte === 'element' ? STATS_DES_CARTES[mu.etat!].nom : armeDeLaCarte(mu.arme).nom
         // (TOUJOURS EN LETTRE FINE, sous le nom en gras : « Lance-grenades » et « Nouvelle arme » ne tiennent pas en gras, et
         // deux cartes côte à côte ne doivent pas changer de lettre)
         // (… À PLAT, SOUS LE TITRE EN RELIEF — Keko, 23/11 : le titre d'abord ; d'un ton de la rareté éteint vers l'acier)
@@ -14558,6 +14559,29 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
             crackle(p, zigzag(Rn, sx + Math.cos(a0) * rr, sy + Math.sin(a0) * rr, sx + Math.cos(a1) * rr, sy + Math.sin(a1) * rr, 0.35, 0.12), 0.8, C, 0.4)
           }
         }
+        // IL EST FIGÉ (Keko, 24/11 — voir `ELEMENTAIRES`) : PRIS DANS LA GLACE (« Gel profond »), un bloc de glace bleue
+        // translucide autour de lui, cerné de clair, des éclats qui scintillent ; PARALYSÉ (« Paralysie »), une lueur blanche
+        // qui bat vite et des arcs qui claquent sans cesse sur lui
+        if ((e.figeA ?? -1) > m.t) {
+          const r = rayonDe(CONF, e) * 1.5 + 1
+          if (e.fige === 'glace') {
+            p.disc(sx, sy, r, BLEU_DU_GIVRE, () => 0.32)
+            p.ring(sx, sy, r, 1, N.hex('#dff4ff'), 0.75)
+            for (let k = 0; k < plus(3); k++) {
+              const a = e.id * 1.3 + k * 2.1
+              if ((Math.floor(t * 6) + k + e.id) % 3 === 0) p.dot(sx + Math.cos(a) * r * 0.6, sy + Math.sin(a) * r * 0.6, N.WHITE, 0.9)
+            }
+          } else {
+            const C = COULEURS_VOLT
+            const image = Math.floor(t * 30)
+            p.glow(sx, sy, r * 1.6, C[6], 0.3 + 0.25 * (image % 2))
+            const Rn = new N.Rng((e.id * 104729 + image * 17) | 0)
+            for (let k = 0; k < plus(3); k++) {
+              const a0 = Rn.range(0, Math.PI * 2)
+              crackle(p, zigzag(Rn, sx + Math.cos(a0) * r, sy + Math.sin(a0) * r, sx + Math.cos(a0 + Rn.range(1.5, 3)) * r, sy + Math.sin(a0 + Rn.range(1.5, 3)) * r, 0.35, 0.12), 0.95, C, 0.45)
+            }
+          }
+        }
         // IL BRÛLE (le lance-flammes) : il rougeoie, et des braises s'en échappent
         if ((e.bruleA ?? -1) > m.t) {
           const reste = Math.min(1, ((e.bruleA ?? 0) - m.t) / Math.max(0.1, e.dureeBrulure ?? 2))
@@ -17925,6 +17949,26 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           if (t - zapA > 0.06) {
             zapA = t
             jouer('zap', { dx: ev.x1 - v.x, dy: ev.y1 - v.y })
+          }
+          break
+        case 'fige':
+          // (PRIS DANS LA GLACE : le craquement du givre et des éclats ; PARALYSÉ : le claquement des arcs — voir `ELEMENTAIRES`)
+          if (ev.sorte === 'glace') {
+            jouer('gel', { dx: ev.x - v.x, dy: ev.y - v.y })
+            for (let i = 0; i < 6; i++) {
+              const a = R.range(0, Math.PI * 2)
+              etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(20, 45), Math.sin(a) * R.range(20, 45), R.range(0.15, 0.3), R.next() < 0.5 ? N.WHITE : BLEU_DU_GIVRE, 1, 1.5)
+            }
+          } else if (t - zapA > 0.06) {
+            zapA = t
+            jouer('zap', { dx: ev.x - v.x, dy: ev.y - v.y })
+          }
+          break
+        case 'feuPropage':
+          // (LE FEU SAUTE d'un insecte à son voisin : une traînée de braises de l'un à l'autre — voir `propagerLeFeu`)
+          for (let i = 0; i < 5; i++) {
+            const u = i / 4
+            etincelles.ajouter('braise', ev.x0 + (ev.x1 - ev.x0) * u, ev.y0 + (ev.y1 - ev.y0) * u, R.range(-8, 8), R.range(-14, -4), R.range(0.3, 0.6), 0, 1, 1.5)
           }
           break
         case 'ennemiDetruit': {

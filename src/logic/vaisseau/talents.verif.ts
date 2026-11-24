@@ -179,5 +179,16 @@ verifier('le délai passé, ce qui restait à choisir part en réserve', reserve
   const cv = avecLesBonus({ ...C, brulureDesEtats: 20, armes: [flammes] }, [{ id: 'armes:feu', cible: { sorte: 'armes' }, stat: 'feu', somme: 0.25 }])
   verifier(`la brûlure du vortex : 20, une carte de +25 %, ${cv.brulureDesEtats} (25)`, cv.brulureDesEtats === 25)
 }
+{
+  // LES CARTES D'ÉLÉMENT AU POOL DES SPÉCIALES (Keko, 24/11) : seulement si une arme portée applique l'élément — un laser
+  // corrosif, au niveau 40, sur vingt tirages : la carte de la corrosion paraît, jamais celle du givre ni du feu ; prise,
+  // elle allume sa règle
+  const corrosif = { id: 'laser', cadence: 2.2, degats: 90, portee: 120, vitesse: 420, vie: 0.7, dispersion: 0, guide: false, corrosif: { duree: 3, bonus: 0.2 } } as Arme
+  const vues = new Set<string>()
+  for (let g = 1; g <= 20; g++) for (const t of proposer(g, 40, 0, corrosif, 'humains', ['arme-railgun', 'arme-obusier', 'arme-tesla'], [corrosif])) if (t.mutation !== undefined) vues.add(t.mutation)
+  const mu = MUTATIONS.find((x) => x.id === 'element-corrosion')!
+  const prise = mu.appliquer({ ...C, armes: [corrosif] })
+  verifier(`les cartes d'élément : un laser corrosif voit ${[...vues].filter((x) => x.startsWith('element')).join(', ') || 'aucune'} (element-corrosion) ; prise, la règle ${prise.elementaires.vulnerabilite}`, vues.has('element-corrosion') && !vues.has('element-givre') && !vues.has('element-feu') && !vues.has('element-electrocution') && prise.elementaires.vulnerabilite)
+}
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)
 console.log('Tout passe.')
