@@ -492,9 +492,10 @@ export const MUTATIONS: Mutation[] = [
   // touche rien en vol, il enflamme toute sa zone en explosant ; Cryogéniques RETIRÉE — « un seul élément par attaque » ;
   // Réplique prend sa place)
   variation('obusier-incendiaire', 'obusier', 'Incendiaires', 'Les obus enflamment tous les ennemis pris dans l’explosion.', changerA('obusier', V.incendiaire)),
-  // (« RÉPLIQUE », SA VARIATION SUR COUP CRITIQUE, À LA PLACE DE CRYOGÉNIQUES — Keko, 24/11 : 0,4 s, la même force ; voir
-  // `Arme.replique`)
-  variation('obusier-replique', 'obusier', 'Réplique', 'Une explosion critique se répète peu après.', changerA('obusier', (a) => ({ ...a, replique: { delai: 0.4 } }))),
+  // (« RÉPLIQUE », SA VARIATION SUR COUP CRITIQUE, À LA PLACE DE CRYOGÉNIQUES — Keko, 24/11 : d'abord toute l'explosion
+  // répétée 0,4 s plus tard ; puis « les ennemis touchés par un critique de l'obus déclenchent une petite explosion autour
+  // d'eux » : rayon 15, 30 % — voir `Arme.replique`)
+  variation('obusier-replique', 'obusier', 'Réplique', 'Les ennemis touchés par un coup critique explosent.', changerA('obusier', (a) => ({ ...a, replique: { rayon: 15, part: 0.3 } }))),
   variation('obusier-salve', 'obusier', 'Salve', 'Chaque tir lâche trois obus en éventail.', changerA('obusier', V.gerbe(3, 0.3, 0.55))),
   variation('obusier-drones', 'obusier', 'Drones', 'Deux drones en orbite tirent des obus sur les ennemis proches.', ajouterA('obusier', (a) => drones(a, { cadence: 2.2, degats: fois(a, 0.5), portee: 90, vie: 1 }))),
   variation('obusier-lourd', 'obusier', 'Gros calibre', 'Des obus plus lents à venir, plus forts, qui explosent plus large.', changerA('obusier', V.lourd)),

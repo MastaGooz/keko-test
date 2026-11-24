@@ -8882,3 +8882,14 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   maintenant) se répète 0,4 s plus tard, au même endroit, avec la même force ; la réplique n'en appelle pas d'autre (une
   `echo`, invisible, qui attend au sol). Un test (deux explosions à 0,4 s ; sans critique, une). L'OBUSIER A SES SIX :
   Fragmentation, Incendiaires, Réplique, Salve, Drones (à remplacer), Gros calibre. Textes VUS en capture, raccourcis.
+- LA RÉPLIQUE CHANGE (Keko, 24/11 : « vu que c'est une attaque de zone, il y a de grandes chances que si beaucoup
+  d'ennemis sont touchés, au moins un provoque un critique ; on va se retrouver avec des répliques quasiment
+  permanentes » — mesuré : à 20 % de critique, huit insectes dans la zone la répétaient 83 fois sur 100 ; puis « que les
+  ennemis touchés par un critique de l'obus déclenchent une petite explosion autour d'eux ») : « Les ennemis touchés
+  par un coup critique explosent. » ; `Arme.replique` = { rayon 15, part 0,3 } — chaque insecte qu'une explosion de
+  l'obus (mini-obus compris) frappe d'un critique explose autour de lui, sans se retoucher, pour 30 % des dégâts de la
+  zone ; ces petites explosions tirent leurs critiques mais n'en relancent pas (rayon, part, la chaîne et le nom gardé :
+  Keko). `exploser` rend les insectes critiqués ; l'événement `detonation` porte son arme, et celle de l'obusier est une
+  petite boule de feu (le boum du missile, une secousse légère), pas l'énergie verte du laser. Plus de réplique
+  différée (`echo` retiré). Le test refait (deux insectes collés, tout critique : deux petites, chacun 60 + 18
+  critiques ; sans critique, aucune) ; la carte VUE en capture, quatre lignes.

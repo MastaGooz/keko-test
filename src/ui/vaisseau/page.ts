@@ -14774,8 +14774,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
     // les obus du joueur : canon, un fuseau cyan ; mitrailleuse, un tiret court ; missile, un corps clair à pointe rouge et sa flamme
     for (const o of m.obus) {
-      // (une réplique attend au sol, invisible : on ne voit que sa seconde explosion — voir `Arme.replique`)
-      if (o.echo === true) continue
       const l = Math.hypot(o.vx, o.vy) || 1
       const ux = o.vx / l
       const uy = o.vy / l
@@ -17847,6 +17845,21 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           if (typeof navigator.vibrate === 'function') vibrer(25)
           break
         case 'detonation':
+          // (LA RÉPLIQUE DE L'OBUSIER — voir `Arme.replique` : un insecte frappé d'un critique explose — une petite boule de
+          // feu, un éclair, son « boum » de missile, une secousse légère ; plusieurs ensemble ne doivent pas tout couvrir)
+          if (ev.arme === 'obusier') {
+            jouer('explosionMini', { dx: ev.x - v.x, dy: ev.y - v.y })
+            flashs.push({ x: ev.x, y: ev.y, t0: t, r: ev.rayon * 0.4 })
+            ondesDeZone.push({ x: ev.x, y: ev.y, t0: t, r: ev.rayon, s: Math.max(0.6, ev.rayon / RAYON_DU_MISSILE) })
+            for (let i = 0; i < 10; i++) {
+              const a = R.range(0, Math.PI * 2)
+              const d = R.range(0, ev.rayon * 0.35)
+              const vit = R.range(8, 30)
+              feuDesConsumes.spawn(N.P.FIRE, ev.x + Math.cos(a) * d, ev.y + Math.sin(a) * d, Math.cos(a) * vit, Math.sin(a) * vit - 8, R.range(0.2, 0.4), 0, R.range(1.4, 2.4), R.range(0, 0.06), R.next() < 0.5 ? 1 : 0)
+            }
+            secousse = Math.max(secousse, 0.2)
+            break
+          }
           // (UN COUP CRITIQUE DU LASER DÉTONE — Keko, 23/11, voir `Arme.detonation` : l'explosion d'énergie verte —
           // `explosion-laser.js`, la « Plasma explosion » du dépôt à la taille du jeu —, sa détonation, un éclair vert, une
           // secousse et une vibration)
@@ -18536,7 +18549,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         }
         // les mini-missiles laissent une traînée de fumée
         // (et l'obus en cloche une fumée plus grosse, là où il est à l'écran — en l'air)
-        for (const o of m.obus) if (o.arme === 'obusier' && o.echo !== true && R.next() < 0.7) feuDesConsumes.spawn(N.P.SMOKE, o.x - o.vx * 0.04, o.y - hauteurEnCloche(o).h - o.vy * 0.04, R.range(-3, 3), R.range(-3, 3), R.range(0.4, 0.6), FUMEE_DU_FEU, R.range(1.3, 1.9) * (o.taille ?? 1))
+        for (const o of m.obus) if (o.arme === 'obusier' && R.next() < 0.7) feuDesConsumes.spawn(N.P.SMOKE, o.x - o.vx * 0.04, o.y - hauteurEnCloche(o).h - o.vy * 0.04, R.range(-3, 3), R.range(-3, 3), R.range(0.4, 0.6), FUMEE_DU_FEU, R.range(1.3, 1.9) * (o.taille ?? 1))
         for (const o of m.obus) if ((o.arme === 'minimissile' || o.arme === 'roquettes') && R.next() < 0.6) feuDesConsumes.spawn(N.P.SMOKE, o.x - o.vx * 0.03, o.y - o.vy * 0.03, R.range(-3, 3), R.range(-3, 3), R.range(0.3, 0.5), FUMEE_DU_FEU, R.range(0.9, 1.4))
         // les insectes rongés : des gouttes d'acide naissent sur eux et s'évaporent (plus sur un gros — voir `gouttesDAcide`)
         for (const e of m.ennemis) {

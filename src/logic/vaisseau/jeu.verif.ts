@@ -3200,28 +3200,37 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
 }
 
 // LA GRAPPE ET LA RÉPLIQUE DE L'OBUSIER (Keko, 24/11 — voir `Arme.grappe`, `Arme.replique`) : en grappe, l'obus lâche au
-// sommet trois mini-obus qui explosent avec lui, à 40 de son point de chute, sur 20, pour 40 % ; en réplique, une explosion
-// critique se répète 0,4 s plus tard, une seule fois ; sans critique, rien ne se répète
+// sommet trois mini-obus qui explosent avec lui, à 40 de son point de chute, sur 20, pour 40 % ; en réplique, chaque
+// insecte frappé d'un critique explose autour de lui (15, 30 %) — deux insectes collés, tous deux critiques : deux petites
+// explosions, chacune touche l'autre, aucune n'en relance ; sans critique, aucune
 {
-  const essai = (a: Partial<Arme>, critique: number): { zones: { x: number; y: number; rayon: number; t: number }[]; pris: number } => {
+  const essai = (a: Partial<Arme>, critique: number): { zones: { x: number; y: number; rayon: number; t: number }[]; petites: number; pris: number; voisin: number } => {
     const obusier = { id: 'obusier', cadence: 99, degats: 60, portee: 150, vitesse: 110, vie: 2.2, dispersion: 0, guide: false, tousSens: true, zone: { rayon: 40 }, cloche: { vol: 0.8 }, ...a }
     const cfg = { ...VAISSEAU, coque: 1e9, armes: [obusier], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false }, passifs: { ...VAISSEAU.passifs, critique } }
     const w = nouveauMonde(cfg, 5)
     w.invasion.prochainA = 1e9
     const cible: Ennemi = { id: 660, corps: { ...nouveauVaisseau(), x: 120, y: 0 }, pv: 1e6, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9 }
-    w.ennemis.push(cible)
+    const voisin: Ennemi = { ...cible, id: 661, corps: { ...nouveauVaisseau(), x: 120, y: 12 }, pv: 1e6 }
+    w.ennemis.push(cible, voisin)
+    w.verrou = cible.id
     const zones: { x: number; y: number; rayon: number; t: number }[] = []
-    for (let i = 0; i < 60 * 3.5; i++) for (const ev of avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements) if (ev.type === 'explosionDeZone') zones.push({ x: ev.x, y: ev.y, rayon: ev.rayon, t: w.t })
-    return { zones, pris: 1e6 - cible.pv }
+    let petites = 0
+    for (let i = 0; i < 60 * 3.5; i++)
+      for (const ev of avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements) {
+        if (ev.type === 'explosionDeZone') zones.push({ x: ev.x, y: ev.y, rayon: ev.rayon, t: w.t })
+        if (ev.type === 'detonation') petites++
+      }
+    return { zones, petites, pris: 1e6 - cible.pv, voisin: 1e6 - voisin.pv }
   }
   const g = essai({ grappe: { nombre: 3, part: 0.4, zone: 0.5, ecart: 1 } }, 0)
   const grande = g.zones.find((z) => z.rayon === 40)
   const minis = g.zones.filter((z) => z.rayon === 20)
   const ecarts = grande === undefined ? [] : minis.map((z) => Math.hypot(z.x - grande.x, z.y - grande.y))
   verifier(`la grappe : ${g.zones.length} explosions (4), trois de 20 à ${ecarts.map((d) => d.toFixed(0)).join(', ')} de la grande (40), en même temps (${minis.every((z) => Math.abs(z.t - (grande?.t ?? -9)) < 0.05)}) ; la cible prend ${g.pris} (60, et 24 par mini-obus qui l'atteint)`, g.zones.length === 4 && grande !== undefined && minis.length === 3 && ecarts.every((d) => Math.abs(d - 40) < 3) && minis.every((z) => Math.abs(z.t - grande.t) < 0.05) && g.pris >= 60)
-  const r = essai({ replique: { delai: 0.4 } }, 1)
-  const sans = essai({ replique: { delai: 0.4 } }, 0)
-  verifier(`la réplique : critique, ${r.zones.length} explosions (2), à ${r.zones.length === 2 ? (r.zones[1].t - r.zones[0].t).toFixed(2) : '?'} s d'écart (0,4), au même endroit ; sans critique, ${sans.zones.length} (1)`, r.zones.length === 2 && Math.abs(r.zones[1].t - r.zones[0].t - 0.4) < 0.03 && Math.hypot(r.zones[1].x - r.zones[0].x, r.zones[1].y - r.zones[0].y) < 1e-6 && sans.zones.length === 1)
+  const r = essai({ replique: { rayon: 15, part: 0.3 } }, 1)
+  const sans = essai({ replique: { rayon: 15, part: 0.3 } }, 0)
+  const f = VAISSEAU.passifs.critiqueFacteur
+  verifier(`la réplique : tout critique, une explosion de zone (${r.zones.length}) et ${r.petites} petites (2) ; chacun prend ${r.pris} et ${r.voisin} (${60 * f + 18 * f} : 60 et 18, critiques) ; sans critique, ${sans.petites} petite (0)`, r.zones.length === 1 && r.petites === 2 && r.pris === 60 * f + 18 * f && r.voisin === r.pris && sans.petites === 0 && sans.pris === 60)
 }
 
 // LA GRENADE À RETARDEMENT (Keko, 23/11 : « trois petites grenades qui clignotent en rouge pour indiquer le timer, et leur
