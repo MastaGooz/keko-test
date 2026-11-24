@@ -11196,6 +11196,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         const mg = sp.magnetisme
         if (mg !== undefined) {
           p.ring(s.x, s.y, mg.rayon, 1, TESLA[3], 0.1 * k)
+          // (… QUI SE CONTRACTE — Keko, 24/11 : « que le cercle se contracte vers le centre à intervalles réguliers pour
+          // montrer que ça attire » : toutes les 0,9 s, un anneau part du bord et se referme sur la boule en s'allumant)
+          const u = ((t + s.id * 0.31) % 0.9) / 0.9
+          const rc = mg.rayon * (1 - u * u)
+          if (rc > 2) p.ring(s.x, s.y, rc, u > 0.6 ? 2 : 1, u > 0.6 ? TESLA[4] : TESLA[3], (0.15 + 0.45 * u) * k)
           for (let g = 0; g < 10; g++) {
             const u = (t * 0.9 + g * 0.37 + s.id * 0.13) % 1
             const an = g * 2.4 + s.id

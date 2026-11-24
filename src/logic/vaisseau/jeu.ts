@@ -914,11 +914,11 @@ export type Arme = {
   // éclair saute ensuite `n` fois d'ennemi en ennemi, à `saut` au plus, perdant `attenuation` à chaque bond, jamais deux fois
   // sur le même dans sa chaîne)
   // (`magnetisme` : MAGNÉTISME — Keko, 24/11 : « attire les ennemis ET les pépites » — les cristaux : les insectes à `rayon` de
-  // la boule glissent vers elle à `vitesse`, sans s'y coller ; les cristaux à `rayon` d'elle sont aimantés vers le vaisseau,
-  // comme par son aimant — la boule ramasse pour lui ; ni les plaques, ni les soins, ni l'aimant)
+  // la boule glissent vers elle à `vitesse`, sans s'y coller ; les cristaux à `rayon` d'elle volent vers elle à `cristaux`
+  // et comptent dès qu'ils l'atteignent ; ni les plaques, ni les soins, ni l'aimant)
   // (`accumulateur` : ACCUMULATEUR — Keko, 24/11 : « les coups critiques de la bobine augmentent ses dégâts de X % pour toute
   // sa durée restante » : chaque critique d'une boule lui ajoute cette part de dégâts, jusqu'à sa fin — +20 %, cumulable)
-  sphere?: { vitesse: number; duree: number; rayon: number; periode: number; vitesseTir: number; foudre?: { cibles: number; rebonds?: { n: number; saut: number; attenuation: number } }; accumulateur?: number; magnetisme?: { rayon: number; vitesse: number } }
+  sphere?: { vitesse: number; duree: number; rayon: number; periode: number; vitesseTir: number; foudre?: { cibles: number; rebonds?: { n: number; saut: number; attenuation: number } }; accumulateur?: number; magnetisme?: { rayon: number; vitesse: number; cristaux: number } }
   /**
    * UN PUITS DE PLASMA (la troisième arme du Pulsar, Keko, 16/11 : « on va tenter le puits » — une petite singularité lancée
    * au milieu de la nuée, qui aspire les insectes vers son centre puis éclate) : à la cadence, un insecte à portée, il part
@@ -3796,11 +3796,28 @@ function menerLesSpheres(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[
         const pas = Math.min(mg.vitesse * dt, d - rayonDe(c, e))
         e.corps = { ...e.corps, x: e.corps.x + (dx / d) * pas, y: e.corps.y + (dy / d) * pas }
       }
-      for (const q of m.pepites) {
+      // (LES CRISTAUX VONT À LA BOULE, ET COMPTENT DÈS QU'ILS L'ATTEIGNENT — Keko, 24/11 : « attirés vers la bobine et
+      // automatiquement ajoutés à l'XP, pas envoyés sur le vaisseau » : d'abord aimantés vers le vaisseau ; ni les plaques,
+      // ni les soins, ni l'aimant ; ceux que le vaisseau aimante déjà restent à lui)
+      // (l'expérience n'est qu'au vortex : ailleurs, les cristaux sont du minerai, ils restent au vaisseau)
+      for (let n = c.invasion.active ? m.pepites.length - 1 : -1; n >= 0; n--) {
+        const q = m.pepites[n]
         if (q.aimanteeA !== undefined || q.aimant === true || q.plaque === true || q.soin === true) continue
-        if (Math.hypot(q.x - s.x, q.y - s.y) > mg.rayon) continue
-        q.aimanteeA = m.t
-        if (m.equipage !== undefined) q.par = m.equipage.actif
+        const dx = s.x - q.x
+        const dy = s.y - q.y
+        const d = Math.hypot(dx, dy)
+        if (d > mg.rayon) continue
+        if (d <= 3) {
+          m.pepites.splice(n, 1)
+          gagnerLaPepite(c, m, q, ev)
+          ev.push({ type: 'ramasse', x: s.x, y: s.y, par: 'joueur', minerai: q.minerai })
+          continue
+        }
+        const pas = Math.min(mg.cristaux * dt, d)
+        q.x += (dx / d) * pas
+        q.y += (dy / d) * pas
+        q.vx = 0
+        q.vy = 0
       }
     }
     if (m.t < s.tirA) continue

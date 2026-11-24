@@ -8804,6 +8804,11 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     ramasse pour lui ; ni plaques, ni soins, ni l'aimant). « Douce, sur 60 » : Keko ; la place : de moi (sa réponse à
     « à la place de quelle variation » était « Magnétisme » ; le champ faisait doublon avec la Tempête). Un cercle pâle et
     des grains de lumière qui convergent vers la boule. Un test ; VU en capture.
+    PUIS (Keko, 24/11 : « que le cercle se contracte vers le centre à intervalles réguliers pour montrer que ça attire ; et
+    que les pépites soient attirées vers la bobine et automatiquement ajoutées à l'XP, pas envoyées sur le vaisseau ») :
+    toutes les 0,9 s, un anneau part du bord et se referme sur la boule en s'allumant ; les cristaux à 60 d'elle volent
+    VERS ELLE à 90 par seconde et comptent en expérience dès qu'ils l'atteignent (`gagnerLaPepite`), sans passer par le
+    vaisseau ; ceux que le vaisseau aimante déjà restent à lui ; hors du vortex, rien (ce sont du minerai). VU en capture.
   - Restent, de l'ancienne liste : Surtension, Grande bobine.
 - « CRISTAUX » À LA PLACE DE « PÉPITES » (Keko, 24/11 : « remplace partout dans le jeu le mot pépite par cristaux ») :
   dans le vortex, un seul texte le disait, la carte Expérience — « d'expérience par cristal ». Le code, les commentaires
