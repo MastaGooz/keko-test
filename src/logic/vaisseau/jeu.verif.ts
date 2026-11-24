@@ -3243,6 +3243,24 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   verifier(`les grenades givrées : la cible est givrée (${avec.cible}) ; la couronne hors de la zone, ${avec.couronne} givrés par les éclats (plusieurs), ${sans.couronne} sans eux (0)`, avec.cible && sans.cible && avec.couronne >= 3 && sans.couronne === 0)
 }
 
+// LA RAFALE EN DEMI-CERCLE (Keko, 24/11) : six grenades à 36° l'une de l'autre, lancées vers un insecte à 90 : six
+// explosions, toutes à 90 du vaisseau, de -90° à +90° autour de la visée
+{
+  const grenades = { id: 'grenades', cadence: 99, degats: 34, portee: 110, vitesse: 150, vie: 1.2, dispersion: 0, guide: false, tousSens: true, zone: { rayon: 28 }, minuterie: { duree: 1.2, frein: 3 }, gerbe: { nombre: 6, ecart: Math.PI / 5 } }
+  const cfg = { ...VAISSEAU, coque: 1e9, armes: [grenades], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false } }
+  const w = nouveauMonde(cfg, 5)
+  w.invasion.prochainA = 1e9
+  w.ennemis.push({ id: 800, corps: { ...nouveauVaisseau(), x: 90, y: 0 }, pv: 1e9, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9 })
+  w.verrou = 800
+  const angles: number[] = []
+  const distances: number[] = []
+  for (let i = 0; i < 60 * 2 && angles.length < 6; i++)
+    for (const ev of avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements)
+      if (ev.type === 'explosionDeZone') angles.push((Math.atan2(ev.y, ev.x) * 180) / Math.PI), distances.push(Math.hypot(ev.x, ev.y))
+  angles.sort((p, q) => p - q)
+  verifier(`la rafale en demi-cercle : ${angles.length} explosions (6), de ${angles[0]?.toFixed(0)}° à ${angles[angles.length - 1]?.toFixed(0)}° (-90 à 90), à ${Math.min(...distances).toFixed(0)}–${Math.max(...distances).toFixed(0)} du vaisseau (vers 90)`, angles.length === 6 && Math.abs(angles[0] + 90) < 4 && Math.abs(angles[5] - 90) < 4 && distances.every((d) => Math.abs(d - 90) < 12))
+}
+
 // SANS CIBLE, DROIT DEVANT (Keko, 24/11 — voir `Arme.sansCible`) : aucun insecte, le vaisseau tourné vers la droite —
 // l'obusier tombe à 105 devant (0,7 × 150), la grenade à 77 (0,7 × 110), la boule tesla part vers la droite ; une arme
 // sans `sansCible` (le laser) ne tire pas

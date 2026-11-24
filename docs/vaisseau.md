@@ -8999,3 +8999,9 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   Triangulation sans groupe tire droit devant, Téléguidage sans proie attend sa minuterie ; la boule et son Magnétisme
   ramassent les cristaux en route. VÉRIFIÉ ARME PAR ARME : le laser et le railgun ne tirent toujours pas sans cible.
   Un test (l'obus à 106, la grenade à 75, la boule devant ; le laser, rien).
+- RAFALE EN DEMI-CERCLE (Keko, 24/11 : « une variation qui lancerait 6 grenades à la place de 3, dans un éventail
+  beaucoup plus large » ; à la place de l'ancienne Rafale — cinq grenades serrées —, 70 % chacune, un demi-cercle :
+  Keko) : « Six grenades à chaque tir, en demi-cercle. » ; `gerbe` { 6, π/5 } — 36° l'une de l'autre, 180° en tout,
+  centrées sur la visée ; chacune tombe à la distance de la cible. Le nom « Rafale » gardé. Un test (six explosions de
+  -90° à +90°, toutes à 88 du vaisseau) ; VU en capture. LE LANCE-GRENADES : Grenades givrées, Fragmentation,
+  Téléguidage, Étourdissement, Rafale, Gros calibre — reste Gros calibre à trancher.
