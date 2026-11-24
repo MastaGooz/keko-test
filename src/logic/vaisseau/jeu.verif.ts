@@ -3182,6 +3182,23 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   verifier(`l'obus en cloche passe au-dessus de l'insecte de devant (${pv0 - devant.pv} de dégâts) et explose en retombant à ${ou?.toFixed(0)}, sur sa cible (${pv0 - cible.pv}), au bout de ${quand.toFixed(2)} s (1,9)`, devant.pv === pv0 && cible.pv === pv0 - 62 && ou !== null && Math.abs(ou - 120) < 4 && Math.abs(quand - (0.8 + 120 / 110)) < 0.1)
 }
 
+// L'OBUS INCENDIAIRE (Keko, 24/11 : « on garde les dégâts et on inflige enflammé en plus ») : l'explosion blesse comme
+// avant ET enflamme tout ce qui est dans sa zone — la cible et son voisin à 30 ; celui à 70, hors de la zone de 40, rien
+{
+  const obusier = { id: 'obusier', cadence: 2.4, degats: 62, portee: 150, vitesse: 110, vie: 2.2, dispersion: 0, guide: false, tousSens: true, zone: { rayon: 40 }, cloche: { vol: 0.8 }, incendiaire: { duree: 3, dps: 10 } }
+  const cfg = { ...VAISSEAU, coque: 1e9, armes: [obusier], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false }, passifs: { ...VAISSEAU.passifs, critique: 0 } }
+  const w = nouveauMonde(cfg, 5)
+  w.invasion.prochainA = 1e9
+  const pv0 = 1e6
+  const [cible, voisin, loin] = [0, 30, 70].map((y, k): Ennemi => ({ id: 650 + k, corps: { ...nouveauVaisseau(), x: 120, y }, pv: pv0, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9 }))
+  w.ennemis.push(cible, voisin, loin)
+  w.verrou = cible.id
+  let explose = false
+  for (let i = 0; i < 400 && !explose; i++) for (const ev of avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements) if (ev.type === 'explosionDeZone') explose = true
+  const brule = (e: Ennemi): boolean => (e.bruleA ?? -1) > w.t
+  verifier(`l'obus incendiaire : la cible perd ${pv0 - cible.pv} (62 au moins) et brûle (${brule(cible)}), le voisin à 30 perd ${pv0 - voisin.pv} et brûle (${brule(voisin)}) ; celui à 70, ${pv0 - loin.pv} et ${brule(loin)}`, explose && pv0 - cible.pv >= 62 && brule(cible) && voisin.pv < pv0 && brule(voisin) && loin.pv === pv0 && !brule(loin))
+}
+
 // LA GRENADE À RETARDEMENT (Keko, 23/11 : « trois petites grenades qui clignotent en rouge pour indiquer le timer, et leur
 // clignotement s'intensifie jusqu'à exploser ») : lancée vers un insecte à 90, elle passe celui de 40 sans le toucher,
 // s'arrête sur sa cible et n'explose qu'au bout de sa minuterie, 1,2 s

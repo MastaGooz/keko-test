@@ -8862,3 +8862,10 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
 - « CRISTAUX » À LA PLACE DE « PÉPITES » (Keko, 24/11 : « remplace partout dans le jeu le mot pépite par cristaux ») :
   dans le vortex, un seul texte le disait, la carte Expérience — « d'expérience par cristal ». Le code, les commentaires
   et le Nova Drifter (où les pépites sont de fer, d'or et de cristal) gardent leur mot.
+- L'OBUSIER, SON ÉLÉMENT EST LE FEU (Keko, 24/11 : « on garde les dégâts et on inflige enflammé en plus ; et on supprime la
+  cryogénie, un seul élément par attaque ») : Incendiaires existait déjà et faisait ce qu'il demande — l'obus en cloche
+  ne touche rien en vol, il enflamme TOUTE SA ZONE en explosant, et l'explosion garde ses dégâts ; son texte le dit
+  maintenant : « Les obus enflamment tous les ennemis pris dans l'explosion. » (VU en capture : quatre lignes). Un
+  test (la cible et le voisin à 30 perdent 62 et brûlent, celui à 70 rien). CRYOGÉNIQUES RETIRÉE : l'obusier n'a que
+  CINQ variations tant qu'elle n'est pas remplacée (le test du compte le sait). Restent pour lui : une variation sur
+  coup critique, et Drones à remplacer (elle ajoute une attaque à côté au lieu de changer le tir).

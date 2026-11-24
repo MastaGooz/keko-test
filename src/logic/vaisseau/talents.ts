@@ -485,8 +485,10 @@ export const MUTATIONS: Mutation[] = [
   variation('railgun-triple', 'railgun', 'Triple rail', 'Deux balles plus petites partent en éventail de chaque côté.', changerA('railgun', (a) => ({ ...a, cotes: { angle: (15 * Math.PI) / 180, part: 0.5, calibre: 0.5 } }))),
   // L'OBUSIER
   variation('obusier-fragmentation', 'obusier', 'Fragmentation', 'Chaque explosion projette six éclats brûlants tout autour.', changerA('obusier', V.fragments)),
-  variation('obusier-incendiaire', 'obusier', 'Incendiaires', 'Les obus enflamment ce qu’ils touchent.', changerA('obusier', V.incendiaire)),
-  variation('obusier-cryo', 'obusier', 'Cryogéniques', 'Les obus gèlent ce qu’ils touchent.', changerA('obusier', V.cryo)),
+  // (INCENDIAIRES, SON ÉLÉMENT — Keko, 24/11 : « on garde les dégâts et on inflige enflammé en plus » : l'obus en cloche ne
+  // touche rien en vol, il enflamme toute sa zone en explosant ; Cryogéniques RETIRÉE — « un seul élément par attaque » ;
+  // l'obusier n'a que cinq variations tant qu'elle n'est pas remplacée)
+  variation('obusier-incendiaire', 'obusier', 'Incendiaires', 'Les obus enflamment tous les ennemis pris dans l’explosion.', changerA('obusier', V.incendiaire)),
   variation('obusier-salve', 'obusier', 'Salve', 'Chaque tir lâche trois obus en éventail.', changerA('obusier', V.gerbe(3, 0.3, 0.55))),
   variation('obusier-drones', 'obusier', 'Drones', 'Deux drones en orbite tirent des obus sur les ennemis proches.', ajouterA('obusier', (a) => drones(a, { cadence: 2.2, degats: fois(a, 0.5), portee: 90, vie: 1 }))),
   variation('obusier-lourd', 'obusier', 'Gros calibre', 'Des obus plus lents à venir, plus forts, qui explosent plus large.', changerA('obusier', V.lourd)),
