@@ -14735,21 +14735,23 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         }
         // IL EST PRIS DANS LA GLACE (« Gel profond », Keko, 24/11 — voir `ELEMENTAIRES`) : un bloc de glace bleue translucide
         // autour de lui, cerné de clair, des éclats qui scintillent
-        // (IL EST DÉSIGNÉ — « Désignation », Keko, 24/11, voir `Arme.designation` : une mire orange en quatre coins autour de
-        // lui, qui se resserre en apparaissant et bat doucement ; elle pâlit dans sa dernière demi-seconde)
+        // (IL EST DÉSIGNÉ — « Désignation », Keko, 24/11, voir `Arme.designation` : UN LOSANGE ORANGE QUI FLOTTE AU-DESSUS DE
+        // LUI, comme le marqueur d'un jeu de stratégie — rien autour : la mire en quatre coins était « trop proche du
+        // verrouillage » (Keko) ; il tombe en place en apparaissant, monte et descend doucement, un reflet clair, cerné de
+        // sombre, et pâlit dans sa dernière demi-seconde)
         if ((e.designeA ?? -1) > m.t) {
           const reste = (e.designeA ?? 0) - m.t
-          const r = rayonDe(CONF, e) + 3 + Math.max(0, reste - 2.8) * 25 + (Math.sin(t * 8 + e.id) > 0 ? 1 : 0)
           const k = Math.min(1, reste / 0.5)
-          const c = N.hex('#ff9a2a')
-          const L = 3
-          for (const [ax, ay] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) {
-            const cx = sx + ax * r
-            const cy = sy + ay * r
-            p.line(cx, cy, cx - ax * L, cy, c, 0.9 * k)
-            p.line(cx, cy, cx, cy - ay * L, c, 0.9 * k)
-          }
-          p.dot(sx, sy - r - 2, N.hex('#ffd27a'), 0.8 * k)
+          const tombe = Math.max(0, reste - 2.85) * 40
+          const lx = sx
+          // (au-dessus de sa silhouette dessinée, plus haute que son rayon de choc, et un peu au-dessus des chiffres qui naissent sur lui)
+          const ly = sy - rayonDe(CONF, e) * 1.5 - 9 - tombe + Math.round(Math.sin(t * 5 + e.id))
+          const h = 4
+          p.poly([[lx, ly - h - 1], [lx + h, ly], [lx, ly + h + 1], [lx - h, ly]], N.hex('#3a1606'), 0.85 * k)
+          p.poly([[lx, ly - h], [lx + h - 1, ly], [lx, ly + h], [lx - h + 1, ly]], N.hex('#ff8a1a'), k)
+          p.poly([[lx, ly - h], [lx - h + 1, ly], [lx, ly]], N.hex('#ffc46a'), k)
+          p.dot(lx - 1, ly - 1, N.WHITE, 0.9 * k)
+          p.glow(lx, ly, 5, N.hex('#ff8a1a'), 0.3 * k)
         }
         // (IL EST ÉTOURDI — « Étourdissement », Keko, 24/11, voir `Arme.etourdissement` : trois étoiles jaunes qui tournent
         // au-dessus de lui)
@@ -18243,10 +18245,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           break
         }
         case 'designe':
-          // (DÉSIGNÉ : le petit son du verrouillage, une fois au plus par cinquième de seconde — voir `Arme.designation`)
+          // (DÉSIGNÉ : son petit « bip » à lui — le verrouillage était trop proche (Keko) —, une fois au plus par cinquième de
+          // seconde — voir `Arme.designation`)
           if (t - designeSonneA > 0.2) {
             designeSonneA = t
-            jouer('verrou', { dx: ev.x - v.x, dy: ev.y - v.y })
+            jouer('designe', { dx: ev.x - v.x, dy: ev.y - v.y })
           }
           break
         case 'grappe': {

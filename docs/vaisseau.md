@@ -9045,3 +9045,9 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   son du verrouillage, une fois au plus par cinquième de seconde. Un test (marqué 3 s ; une autre arme à 0 % y fait
   24 % de critiques, 0 % sur un sain) ; la carte VUE en capture (le premier texte débordait), la mire aussi.
   L'ESCORTE : Balles acides, Désignation, Escadrille, Perforantes, Ricochet, Roquettes.
+- LA DÉSIGNATION, UN LOSANGE AU-DESSUS (Keko, 24/11 : la mire en quatre coins, « le visuel va pas, trop proche du
+  verrouillage » ; « losange au-dessus » et « un son à lui » : Keko) : un petit losange orange cerné de sombre, un reflet
+  clair, qui tombe en place en apparaissant, flotte au-dessus de la silhouette (une fois et demie son rayon de choc,
+  plus 9 : plus bas, il se cachait sous la tête du cuirassier et sous les chiffres des dégâts) et pâlit à la fin ; rien
+  autour de l'insecte. Son son, `designe` (`synthe.ts`) : un « bip-bip » de deux notes rondes qui montent d'une quarte,
+  mesuré crête 0,05 à 0,07, 0,11 s (le verrouillage : 0,15, 0,22 s). VU en capture.

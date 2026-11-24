@@ -674,6 +674,19 @@ const RECETTES = {
     },
   },
   /**
+   * UN INSECTE EST DÉSIGNÉ (« Désignation » de l'escorte, Keko, 24/11 : un son à lui, pas celui du verrouillage) : un
+   * « bip-bip » de marquage, deux notes rondes et brèves qui montent d'une quarte, sans souffle ; une petite pièce, bas.
+   */
+  designe: {
+    duree: 0.3, niveau: 0.07, salle: [0.15, 0.06], variantes: 2,
+    faire: (m, h, v) => {
+      const pan = (h.next() - 0.5) * 0.4
+      const f0 = v ? 1175 : 1047
+      note(m, 0, 0.7, pan, { f: f0, a: 0.003, d: 0.05, partiels: [[1, 1, 1], [2, 0.2, 0.5]] })
+      note(m, 0.07, 0.8, pan, { f: f0 * 4 / 3, a: 0.003, d: 0.08, partiels: [[1, 1, 1], [2, 0.2, 0.5]] })
+    },
+  },
+  /**
    * UN INSECTE EST ÉTOURDI (« Étourdissement » des grenades, Keko, 24/11 : la « frappe » du titre — trois secondes de
    * grande salle, un grave saturé — « fait grésiller un peu le haut-parleur de mon téléphone, peut-être un peu trop
    * d'écho ») : COURT ET SEC — un « tonk » sourd et rond qui tombe d'une quarte, sans saturation, puis deux petits
