@@ -9026,3 +9026,12 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
 - LA SECONDE EXPLOSION À 0,8 S (Keko, 24/11 : « l'animation de la première explosion givrée n'est pas finie que la
   deuxième se déclenche » — la glace dure 0,7 s ; retarder la seconde plutôt que raccourcir la glace : Keko) :
   `double.delai` 0,5 → 0,8. Le test refait.
+- L'ESCORTE, SON ÉLÉMENT EST LA CORROSION (Keko, 24/11 : « tu proposes quoi comme variation d'effet ? » — la corrosion,
+  proposée : le feu est à l'obusier, le givre aux grenades, l'électricité au railgun et à la bobine ; les mini-avions
+  tirent beaucoup de petites balles de loin : un soutien qui ronge tout ce qu'il touche, et tout rongé prend 20 % de plus
+  des autres armes — « ok on fait ça ») : « Balles acides — Les tirs des mini-avions appliquent corrosion. »
+  (`escorte-acide`, la corrosion du laser acide aux chiffres du vortex) ; INCENDIAIRES ET CRYOGÉNIQUES RETIRÉES : cinq
+  variations en attendant, le test du compte le sait. Vérifié variation par variation : Escadrille (ses deux
+  mini-avions de plus portent l'acide, dans les deux ordres), Ricochet (chaque rebond ronge), Roquettes (l'explosion
+  ronge, par l'arme) ; UN TROU CORRIGÉ — une balle PERFORANTE gelait, brûlait, électrocutait ce qu'elle traversait, mais
+  ne rongeait pas. Deux tests ; la carte VUE en capture.

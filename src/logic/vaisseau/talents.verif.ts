@@ -137,7 +137,9 @@ verifier('le délai passé, ce qui restait à choisir part en réserve', reserve
       const depart = id === 'laser' ? base : id === 'mitraille' || id === 'minimissile' ? { ...C, armes: [{ ...laser, id, place: 0 }] } : avecLesBonus(base, ajouterLeBonus([], carteSpeciale(mu(`arme-${id}`))))
       if (JSON.stringify(v.appliquer(depart)) === JSON.stringify(depart)) sansEffet += ` ${v.id}`
     }
-  verifier(`l'Empire a ${ARMES_DE_FACTION.filter((x) => x.race === 'humains').length} nouvelles armes ; six variations par arme (${ids.map((id) => `${id} ${MUTATIONS.filter((x) => x.sorte === 'variation' && x.arme === id).length}`).join(', ')}) ; aucune sans effet (${sansEffet || 'aucune'})`, ARMES_DE_FACTION.filter((x) => x.race === 'humains').length === 6 && ids.every((id) => MUTATIONS.filter((x) => x.sorte === 'variation' && x.arme === id).length === 6) && sansEffet === '')
+  // (l'escorte en a cinq tant qu'Incendiaires et Cryogéniques, retirées — Keko, 24/11 —, n'ont qu'une remplaçante)
+  const attendues: Record<string, number> = { escorte: 5 }
+  verifier(`l'Empire a ${ARMES_DE_FACTION.filter((x) => x.race === 'humains').length} nouvelles armes ; six variations par arme, cinq pour l'escorte (${ids.map((id) => `${id} ${MUTATIONS.filter((x) => x.sorte === 'variation' && x.arme === id).length}`).join(', ')}) ; aucune sans effet (${sansEffet || 'aucune'})`, ARMES_DE_FACTION.filter((x) => x.race === 'humains').length === 6 && ids.every((id) => MUTATIONS.filter((x) => x.sorte === 'variation' && x.arme === id).length === (attendues[id] ?? 6)) && sansEffet === '')
 }
 {
   // LES ÉTATS NE SE PRENNENT QUE POUR TOUTES LES ARMES (Keko, 23/11 : « une augmentation d'un état concerne toujours toutes
@@ -203,6 +205,15 @@ verifier('le délai passé, ce qui restait à choisir part en réserve', reserve
   // à son pool
   const bobine = armeDeFaction('tesla')!.armes()[0]
   verifier(`la bobine électrocute : chance ${bobine.electrocution?.chance} (0,2), sa carte d'état ${statsDeLArme(bobine).includes('electrocution')}`, bobine.electrocution?.chance === 0.2 && statsDeLArme(bobine).includes('electrocution'))
+}
+// LES BALLES ACIDES DE L'ESCORTE (Keko, 24/11) : prise, la carte pose la corrosion du vortex sur tous les mini-avions,
+// ceux de l'Escadrille compris, dans les deux ordres
+{
+  const mu = (id: string): Mutation => MUTATIONS.find((x) => x.id === id)!
+  const prendre = (ids: string[]): ConfigVaisseau => avecLesBonus(base, ids.reduce((b, id) => ajouterLeBonus(b, carteSpeciale(mu(id))), [] as ReturnType<typeof ajouterLeBonus>))
+  const ronge = (c: ConfigVaisseau): string => c.armes.filter((a) => a.id === 'escorte').map((a) => (a.corrosif?.bonus === CORROSION_DU_VORTEX ? 'R' : '-')).join('')
+  const [avant, apres] = [prendre(['arme-escorte', 'escorte-acide', 'escorte-plus']), prendre(['arme-escorte', 'escorte-plus', 'escorte-acide'])]
+  verifier(`les balles acides : les mini-avions rongent (${ronge(avant)} et ${ronge(apres)}, RRRR) ; plus de feu ni de gel (${MUTATIONS.some((x) => x.id === 'escorte-incendiaires' || x.id === 'escorte-cryo')})`, ronge(avant) === 'RRRR' && ronge(apres) === 'RRRR' && !MUTATIONS.some((x) => x.id === 'escorte-incendiaires' || x.id === 'escorte-cryo'))
 }
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)
 console.log('Tout passe.')

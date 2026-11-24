@@ -3243,6 +3243,21 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   verifier(`les grenades givrées : la cible est givrée (${avec.cible}) ; la couronne hors de la zone, ${avec.couronne} givrés par les éclats (plusieurs), ${sans.couronne} sans eux (0)`, avec.cible && sans.cible && avec.couronne >= 3 && sans.couronne === 0)
 }
 
+// LA BALLE PERFORANTE RONGE (Keko, 24/11 : « l'élément s'applique à toutes les variations ») : une balle acide qui
+// traverse deux insectes en ligne les ronge tous les deux
+{
+  const arme = { id: 'escorte', cadence: 99, degats: 10, portee: 150, vitesse: 300, vie: 1, dispersion: 0, guide: false, tousSens: true, infaillible: true, perforant: true, corrosif: { duree: 3, bonus: 0.2 } }
+  const cfg = { ...VAISSEAU, coque: 1e9, armes: [arme], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false } }
+  const w = nouveauMonde(cfg, 5)
+  w.invasion.prochainA = 1e9
+  w.vaisseau = { ...w.vaisseau, cap: 0 }
+  const es = [60, 110].map((x, k): Ennemi => ({ id: 820 + k, corps: { ...nouveauVaisseau(), x, y: 0 }, pv: 1e6, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9 }))
+  w.ennemis.push(...es)
+  for (let i = 0; i < 40; i++) avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+  const ronges = es.map((e) => (e.acide !== undefined && e.acide.jusque > w.t ? 'R' : '-')).join('')
+  verifier(`la balle perforante acide ronge les deux insectes traversés (${ronges}, RR)`, ronges === 'RR')
+}
+
 // LA DOUBLE EXPLOSION (Keko, 24/11 — voir `Arme.double`) : la grenade explose sur l'insecte à 90, puis une seconde fois
 // 0,8 s plus tard au même endroit, à 50 % — il perd 34 puis 17 ; pas de troisième
 {

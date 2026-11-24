@@ -567,8 +567,11 @@ export const MUTATIONS: Mutation[] = [
   // LES DRONES D'ESCORTE
   variation('escorte-plus', 'escorte', 'Escadrille', 'Deux mini-avions de plus.', ajouterA('escorte', (a) => drones(a, { cadence: a.cadence, degats: a.degats, portee: a.portee }, 2, Math.PI / 2).map((d, k) => ({ ...d, place: 22 + k, orbite: { ...a.orbite!, phase: Math.PI / 2 + k * Math.PI, formation: { x: -16, y: k === 0 ? -30 : 30 } } })))),
   variation('escorte-perforantes', 'escorte', 'Perforantes', 'Les balles des mini-avions traversent les ennemis.', changerA('escorte', V.perforant)),
-  variation('escorte-incendiaires', 'escorte', 'Incendiaires', 'Les balles des mini-avions enflamment les ennemis.', changerA('escorte', V.incendiaire)),
-  variation('escorte-cryo', 'escorte', 'Cryogéniques', 'Les balles des mini-avions gèlent les ennemis.', changerA('escorte', V.cryo)),
+  // (« BALLES ACIDES », SON ÉLÉMENT, À LA PLACE D'INCENDIAIRES ET DE CRYOGÉNIQUES — Keko, 24/11 : la corrosion, proposée — le
+  // feu est à l'obusier, le givre aux grenades, l'électricité au railgun et à la bobine ; l'escorte devient un soutien qui
+  // ronge de loin, et tout ce qu'elle touche prend 20 % de plus des autres armes ; la corrosion du laser acide, aux
+  // chiffres du vortex ; un seul élément par arme : cinq variations en attendant)
+  variation('escorte-acide', 'escorte', 'Balles acides', 'Les tirs des mini-avions appliquent corrosion.', changerA('escorte', (a) => ({ ...a, corrosif: { duree: 3, bonus: CORROSION_DU_VORTEX } }))),
   variation('escorte-ricochet', 'escorte', 'Ricochet', 'Chaque balle des mini-avions rebondit sur deux autres ennemis.', changerA('escorte', V.ricochet)),
   variation('escorte-roquettes', 'escorte', 'Roquettes', 'Les mini-avions tirent des roquettes qui explosent.', changerA('escorte', (a) => ({ ...V.explosif(a), cadence: a.cadence * 2.5, degats: fois(a, 2) }))),
   // LES CARTES D'ÉLÉMENT (Keko, 24/11 : « des cartes spéciales de chaque élément » ; « des cartes multicolores spéciales qu'on

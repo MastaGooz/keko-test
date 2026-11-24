@@ -6961,6 +6961,9 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
         if (o.verrou === e.id) delete o.verrou
         if (o.gel !== undefined) geler(c, m, e, o.gel.duree, o.gel.ralenti, ev, true)
         if (o.brule !== undefined) enflammer(c, m, e, o.brule)
+        // (… ET IL RONGE — Keko, 24/11 : « l'élément s'applique à toutes les variations » : les balles perforantes de
+        // l'escorte acide ne rongeaient rien)
+        if (o.ronge !== undefined) ronger(c, m, e, { ...o.ronge, dps: 0 }, ev)
         if (o.electrocution !== undefined) electrocuter(c, m, e, o.electrocution, ev, true)
         const coup = coupDObus(c, m, o, e)
         e.pv -= coup.degats
