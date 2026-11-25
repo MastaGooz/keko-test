@@ -10642,6 +10642,57 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       }
     }
   }
+  /** LES EXPLOSIONS D'ACIDE (les missiles de l'escorte aux balles acides — voir `dessinerLesExplosionsDAcide`). */
+  let explosionsDAcide: { x: number; y: number; t0: number; r: number; g: number }[] = []
+  const DUREE_DE_L_ACIDE = 0.55
+  /**
+   * UNE EXPLOSION D'ACIDE (Keko, 25/11 : « transformer l'explosion des missiles en explosion d'acide quand on a la
+   * variation corrosion pour l'escorte ») — l'« Acid splash » de pixelfx, vu de dessus, aux teintes de l'éclaboussure : un
+   * éclair blanc-vert, une poche d'acide qui crève au centre, des gouttes à tête vive qui giclent en étoile jusqu'au bord
+   * de la zone, ralentissent et grésillent où elles retombent (une petite étoile blanche), puis une vapeur pâle qui monte.
+   */
+  function dessinerLesExplosionsDAcide(p: Peintre): void {
+    explosionsDAcide = explosionsDAcide.filter((x) => t - x.t0 < DUREE_DE_L_ACIDE)
+    const E = ECLABOUSSURE
+    for (const x of explosionsDAcide) {
+      const u = (t - x.t0) / DUREE_DE_L_ACIDE
+      const ox = x.x - camera.x + W / 2
+      const oy = x.y - camera.y + centreY()
+      const id = Math.round(x.g * 1000)
+      // (l'éclair, puis la poche qui crève : un disque d'acide qui s'étale et pâlit)
+      if (u < 0.15) p.circle(ox, oy, 2 + x.r * 0.5 * (u / 0.15), u < 0.07 ? N.WHITE : E[7], 1 - u / 0.15)
+      p.glow(ox, oy, x.r * 0.9, E[5], 0.45 * (1 - u))
+      const ru = x.r * 0.45 * Math.sqrt(Math.min(1, u * 3))
+      p.disc(ox, oy, ru, (dd) => (dd < 0.4 ? E[6] : dd < 0.75 ? E[5] : E[3]), (dd) => (1 - dd * dd) * 0.75 * (1 - u))
+      // (les gouttes en étoile : elles filent, ralentissent, retombent et grésillent)
+      for (let j = 0; j < 16; j++) {
+        const an = x.g + (j / 16) * Math.PI * 2 + (alea(id, j, 1) - 0.5) * 0.35
+        const loin = x.r * (0.55 + 0.45 * alea(id, j, 2))
+        const q = Math.min(1, u / 0.6)
+        const d = loin * (1 - (1 - q) * (1 - q))
+        const gx = ox + Math.cos(an) * d
+        const gy = oy + Math.sin(an) * d
+        if (u < 0.6) {
+          const r = (1.8 - 1.2 * q) * (0.7 + 0.5 * alea(id, j, 3))
+          p.line(gx, gy, gx - Math.cos(an) * (2 + 3 * (1 - q)), gy - Math.sin(an) * (2 + 3 * (1 - q)), E[4], 0.7)
+          p.circle(gx, gy, Math.max(0.5, r), j % 3 === 0 ? E[6] : E[5])
+          p.px(Math.round(gx), Math.round(gy), E[7])
+        } else {
+          // (où elle retombe : une tache qui pâlit, et un grésillement — une étoile blanche qui s'ouvre)
+          const s = (u - 0.6) / 0.4
+          p.dot(gx, gy, E[4], 1 - s)
+          if (j % 2 === 0) for (const [dx, dy] of [[1, 0], [-1, 0], [0, -1], [0, 1]]) p.dot(gx + dx * (1 + s * 2), gy + dy * (1 + s * 2), s < 0.4 ? N.WHITE : E[7], 1 - s)
+        }
+      }
+      // (la vapeur pâle qui monte du centre)
+      if (u > 0.3) for (let j = 0; j < 5; j++) {
+        const s = (u - 0.3) / 0.7
+        const vx = ox + (alea(id, j, 7) - 0.5) * x.r * 0.8 + Math.sin(s * 4 + j) * 1.5
+        const vy = oy + (alea(id, j, 8) - 0.5) * x.r * 0.5 - s * 10
+        p.circle(vx, vy, 1.5 + s * 2, VAPEUR, 0.35 * (1 - s))
+      }
+    }
+  }
   /** Le rayon de l'explosion des missiles du Chasseur : l'étalon de la boule de feu (voir l'événement `explosionDeZone`). */
   const RAYON_DU_MISSILE = pieceDe('arme-minimissiles')?.arme?.zone?.rayon ?? 18
   /**
@@ -10691,6 +10742,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       }
     }
     dessinerLesExplosionsDeGlace(p)
+    dessinerLesExplosionsDAcide(p)
     ondesDeZone = ondesDeZone.filter((o) => t - o.t0 < 0.25)
     for (const o of ondesDeZone) {
       const u = (t - o.t0) / 0.25
@@ -15001,8 +15053,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         // ombré de l'autre, l'ogive rouge, deux ailerons à la queue, une flamme longue et sa lueur
         // (LA ROQUETTE, PLUS PETITE — Keko, 23/11 : « les multi-roquettes doivent être plus petites que les missiles, et
         // l'obus plus gros » : le même dessin, aux deux tiers)
-        // (le petit missile de l'escorte aussi, `Arme.missiles`)
-        const k = o.arme === 'roquettes' || o.missile === true ? 0.65 : 1
+        // (le missile de l'escorte, `Arme.missiles`, garde la taille du missile : qu'on le voie partir des ailes)
+        const k = o.arme === 'roquettes' ? 0.65 : 1
         const nx = -uy
         const ny = ux
         const qx = o.x - ux * 6 * k
@@ -17293,6 +17345,20 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
               feuDesConsumes.spawn(N.P.FLAKE, ev.x + Math.cos(a) * d, ev.y + Math.sin(a) * d, Math.cos(a) * R.range(8, 25), Math.sin(a) * R.range(8, 25), R.range(0.5, 0.9), R.next() < 0.5 ? GLACE[6] : GLACE[7], R.range(0.6, 1.2))
             }
             secousse = Math.max(secousse, 0.2)
+            break
+          }
+          // (UN MISSILE DE L'ESCORTE AUX BALLES ACIDES EXPLOSE EN ACIDE — Keko, 25/11 — voir `dessinerLesExplosionsDAcide` :
+          // un « boum » et le « pchouf » mouillé de la mine d'acide, des gouttes qui giclent, une petite secousse)
+          if (ev.arme === 'escorte' && CONF.armes.some((a) => a.id === 'escorte' && a.corrosif !== undefined)) {
+            jouer('explosionMini', { dx: ev.x - v.x, dy: ev.y - v.y })
+            jouer('gaz', { dx: ev.x - v.x, dy: ev.y - v.y })
+            explosionsDAcide.push({ x: ev.x, y: ev.y, t0: t, r: ev.rayon, g: R.range(0, Math.PI * 2) })
+            for (let i = 0; i < 8; i++) {
+              const a = R.range(0, Math.PI * 2)
+              const vit = R.range(30, 80)
+              etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.15, 0.35), [ECLABOUSSURE[7], ECLABOUSSURE[6], ECLABOUSSURE[5]][Math.floor(R.next() * 3)], 1, 1.5)
+            }
+            secousse = Math.max(secousse, 0.12)
             break
           }
           // UN MINI-MISSILE EXPLOSE (Keko, 15/11) : un éclair, un anneau qui s'ouvre jusqu'à son rayon, une boule de

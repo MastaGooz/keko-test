@@ -579,9 +579,11 @@ export const MUTATIONS: Mutation[] = [
   // — voir `Arme.designation`)
   variation('escorte-designation', 'escorte', 'Désignation', 'Les ennemis touchés par un critique subissent plus de critiques.', changerA('escorte', (a) => ({ ...a, designation: { duree: 3, bonus: 0.25 } }))),
   variation('escorte-ricochet', 'escorte', 'Ricochet', 'Chaque balle des mini-avions rebondit sur deux autres ennemis.', changerA('escorte', V.ricochet)),
-  // (LES MISSILES, à la place des Roquettes — Keko, 25/11 : « les avions tirent périodiquement des petits missiles, en
-  // plus des tirs normaux » : un toutes les 2 s par avion, ×2, sur 11 ; voir `Arme.missiles`)
-  variation('escorte-missiles', 'escorte', 'Missiles', 'Les mini-avions lâchent aussi un petit missile guidé toutes les 2 s.', changerA('escorte', (a) => ({ ...a, missiles: { cadence: 2, part: 2, rayon: 11, vitesse: 140, vie: 1.6 } }))),
+  // (LES MISSILES, à la place des Roquettes — Keko, 25/11 : d'abord un missile toutes les 2 s en plus des balles, « ça se
+  // voit pas trop » ; puis « remplacer les tirs normaux carrément par des missiles » : chaque tir est un petit missile
+  // guidé qui explose sur 11, cadence ×2,5 et dégâts ×2,5 — les dégâts par seconde des balles sur une cible, la zone en
+  // plus ; voir `Arme.missiles`)
+  variation('escorte-missiles', 'escorte', 'Missiles', 'Les mini-avions tirent des missiles guidés qui explosent.', changerA('escorte', (a) => ({ ...a, cadence: a.cadence * 2.5, degats: fois(a, 2.5), missiles: { rayon: 11, vitesse: 140, vie: 1.6 } }))),
   // LES CARTES D'ÉLÉMENT (Keko, 24/11 : « des cartes spéciales de chaque élément » ; « des cartes multicolores spéciales qu'on
   // proposera dans le pool des cartes spéciales, si le joueur a au moins une attaque avec l'élément en question » — voir
   // `ELEMENTAIRES` pour leurs chiffres ; leurs noms et leurs textes sont de moi)

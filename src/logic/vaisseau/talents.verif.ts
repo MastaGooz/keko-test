@@ -212,8 +212,9 @@ verifier('le délai passé, ce qui restait à choisir part en réserve', reserve
   const ronge = (c: ConfigVaisseau): string => c.armes.filter((a) => a.id === 'escorte').map((a) => (a.corrosif?.bonus === CORROSION_DU_VORTEX ? 'R' : '-')).join('')
   const [avant, apres] = [prendre(['arme-escorte', 'escorte-acide', 'escorte-plus']), prendre(['arme-escorte', 'escorte-plus', 'escorte-acide'])]
   verifier(`les balles acides : les mini-avions rongent (${ronge(avant)} et ${ronge(apres)}, RRRR) ; plus de feu ni de gel (${MUTATIONS.some((x) => x.id === 'escorte-incendiaires' || x.id === 'escorte-cryo')})`, ronge(avant) === 'RRRR' && ronge(apres) === 'RRRR' && !MUTATIONS.some((x) => x.id === 'escorte-incendiaires' || x.id === 'escorte-cryo'))
-  // (LES MISSILES, à la place des Roquettes — Keko, 25/11 : les quatre avions de l'Escadrille en lâchent, dans les deux ordres)
-  const lance = (c: ConfigVaisseau): string => c.armes.filter((a) => a.id === 'escorte').map((a) => (a.missiles?.cadence === 2 ? 'M' : '-')).join('')
+  // (LES MISSILES, à la place des Roquettes — Keko, 25/11 : les quatre avions de l'Escadrille en tirent, à la même cadence
+  // et aux mêmes dégâts, dans les deux ordres)
+  const lance = (c: ConfigVaisseau): string => c.armes.filter((a) => a.id === 'escorte').map((a) => (a.missiles?.rayon === 11 && Math.abs(a.cadence - 0.45 * 2.5) < 1e-9 && a.degats === 60 ? 'M' : '-')).join('')
   const [m1, m2] = [prendre(['arme-escorte', 'escorte-missiles', 'escorte-plus']), prendre(['arme-escorte', 'escorte-plus', 'escorte-missiles'])]
   verifier(`les missiles de l'escorte : ${lance(m1)} et ${lance(m2)} (MMMM) ; plus de Roquettes (${MUTATIONS.some((x) => x.id === 'escorte-roquettes')})`, lance(m1) === 'MMMM' && lance(m2) === 'MMMM' && !MUTATIONS.some((x) => x.id === 'escorte-roquettes'))
 }

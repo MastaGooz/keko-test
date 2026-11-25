@@ -736,12 +736,12 @@ export type Arme = {
    */
   designation?: { duree: number; bonus: number }
   /**
-   * LES MISSILES DE L'ESCORTE (Keko, 25/11 : « les avions tirent périodiquement des petits missiles, en plus des tirs
-   * normaux » ; à la place des Roquettes) : chaque drone, sa cible à portée, lâche aussi un petit missile guidé toutes
-   * les `cadence` secondes, `part` des dégâts d'une balle, qui explose sur `rayon` — avec l'élément de l'arme et sa
-   * Désignation, pas ses traversées ni ses rebonds (2 s, ×2, 11 : proposés, retenus).
+   * LES MISSILES DE L'ESCORTE (Keko, 25/11, à la place des Roquettes) : les drones TIRENT des petits missiles guidés au
+   * lieu de leurs balles, qui explosent sur `rayon` — avec l'élément de l'arme et sa Désignation, pas ses traversées ni
+   * ses rebonds (la carte espace les tirs et grandit les dégâts). D'abord un missile toutes les 2 s EN PLUS des balles :
+   * « ça se voit pas trop ; ça ne donne pas une vraie sensation de changement dans le gameplay » (Keko).
    */
-  missiles?: { cadence: number; part: number; rayon: number; vitesse: number; vie: number }
+  missiles?: { rayon: number; vitesse: number; vie: number }
   /**
    * UN HARPON (la sixième arme de l'Empire, Keko, 23/11 : « on fait un test avec le harpon » — proposé : « il harponne
    * l'insecte le plus résistant à portée, le relie au vaisseau par un câble, et le câble lui inflige des dégâts qui
@@ -1673,7 +1673,7 @@ export type Tourelle = { id: number; x: number; y: number; nee: number; cap: num
 
 /** Un drone en vol (voir `Arme.orbite`). */
 /** (`cap` : où son nez regarde — vers sa cible quand il en a une, voir `menerLesDrones`.) */
-export type Drone = { x: number; y: number; vx: number; vy: number; cible: number | null; cap?: number; /** L'heure de son prochain missile (voir `Arme.missiles`). */ missileA?: number }
+export type Drone = { x: number; y: number; vx: number; vy: number; cible: number | null; cap?: number }
 
 /** Ce qui s'est passé pendant un pas, pour le dessin et le son. */
 export type Evenement =
@@ -6331,20 +6331,6 @@ function menerLesDrones(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]
       const ec = ecartDAngle(cap, voulu)
       d.cap = cap + Math.sign(ec) * Math.min(Math.abs(ec), 12 * dt)
     }
-    // (SES PETITS MISSILES, en plus des balles — voir `Arme.missiles` ; les drones décalés d'une demi-période, un sur deux)
-    const mi = a.missiles
-    if (mi !== undefined && d.missileA === undefined) d.missileA = m.t + (k % 2) * 0.5 * mi.cadence
-    if (mi !== undefined && cible !== undefined && m.t >= (d.missileA ?? 0) && Math.hypot(cible.corps.x - d.x, cible.corps.y - d.y) <= a.portee) {
-      d.missileA = m.t + mi.cadence
-      const angle = Math.atan2(cible.corps.y - d.y, cible.corps.x - d.x)
-      const critique = chanceDeCritique(c, a) > 0 && tire(m.graine, m.prochainId, 13) < chanceDeCritique(c, a)
-      const degats = a.degats * mi.part
-      const ef = effetsDuTir(a)
-      delete ef.perce
-      delete ef.rebonds
-      m.obus.push({ id: m.prochainId++, x: d.x, y: d.y, vx: Math.cos(angle) * mi.vitesse, vy: Math.sin(angle) * mi.vitesse, vie: mi.vie, degats: degats * (critique ? facteurDeCritique(c, a) : 1), guide: true, arme: a.id, critique, ...ef, zone: { rayon: mi.rayon, degats }, missile: true })
-      ev.push({ type: 'obus', x: d.x, y: d.y, arme: 'minimissile' })
-    }
     // il tire, sa cible à portée
     if (cible === undefined || m.t < (m.armesA[i] ?? 0)) return
     const dist = Math.hypot(cible.corps.x - d.x, cible.corps.y - d.y)
@@ -6364,6 +6350,16 @@ function menerLesDrones(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]
     const vise = Math.atan2(cible.corps.y + cible.corps.vy * temps - d.y, cible.corps.x + cible.corps.vx * temps - d.x)
     const angle = vise + (tire(m.graine, m.prochainId, 11) - 0.5) * 2 * a.dispersion
     const critique = chanceDeCritique(c, a) > 0 && tire(m.graine, m.prochainId, 12) < chanceDeCritique(c, a)
+    // (UN PETIT MISSILE au lieu de la balle — voir `Arme.missiles` : guidé, il explose, sans traverser ni rebondir)
+    const mi = a.missiles
+    if (mi !== undefined) {
+      const ef = effetsDuTir(a)
+      delete ef.perce
+      delete ef.rebonds
+      m.obus.push({ id: m.prochainId++, x: d.x, y: d.y, vx: Math.cos(vise) * mi.vitesse, vy: Math.sin(vise) * mi.vitesse, vie: mi.vie, degats: a.degats * (critique ? facteurDeCritique(c, a) : 1), guide: true, arme: a.id, critique, ...ef, zone: { rayon: mi.rayon, degats: a.degats }, missile: true })
+      ev.push({ type: 'obus', x: d.x, y: d.y, arme: 'minimissile' })
+      return
+    }
     m.obus.push({ id: m.prochainId++, x: d.x, y: d.y, vx: Math.cos(angle) * a.vitesse, vy: Math.sin(angle) * a.vitesse, vie: a.vie, degats: a.degats * (critique ? facteurDeCritique(c, a) : 1), guide: a.guide, arme: a.id, critique, ...effetsDuTir(a) })
     ev.push({ type: 'obus', x: d.x, y: d.y, arme: a.id })
   })

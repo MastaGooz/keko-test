@@ -9080,3 +9080,16 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   l'Empire (une variation change le tir) plie ici à la demande de Keko. Deux tests : trois missiles en 5 s, rongeants,
   sans traversée, qui explosent ; les quatre avions de l'Escadrille en lâchent, dans les deux ordres.
   L'ESCORTE : Balles acides, Désignation, Escadrille, Missiles, Perforantes, Ricochet.
+- LES MISSILES REMPLACENT LES BALLES (Keko, 25/11 : « on peut remplacer les tirs normaux carrément par des missiles ? ça
+  se voit pas trop visuellement ; vu qu'ils sont périodiques, ça ne donne pas une vraie sensation de changement dans le
+  gameplay » ; proposé, retenu) : « Les mini-avions tirent des missiles guidés qui explosent. » (quatre lignes, VU en
+  capture). Chaque tir est un missile : `Arme.missiles` = { rayon 11, vitesse 140, vie 1,6 }, la carte passe la cadence
+  ×2,5 (1,1 s) et les dégâts ×2,5 (60) — les dégâts par seconde des balles sur une cible, l'explosion en plus (les
+  anciennes Roquettes faisaient ×2 et se dessinaient en balles). Le missile garde la taille du missile du Chasseur.
+  *La variation change de nouveau le tir* : la règle de l'Empire est rendue. LES MISSILES AUX BALLES ACIDES EXPLOSENT EN
+  ACIDE (Keko : « n'oublie pas de transformer l'explosion des missiles en explosion d'acide quand on a la variation
+  corrosion ») : `dessinerLesExplosionsDAcide`, l'« Acid splash » de pixelfx vu de dessus, aux teintes `ECLABOUSSURE` —
+  un éclair blanc-vert, une poche qui crève au centre, seize gouttes qui giclent en étoile jusqu'au bord de la zone et
+  grésillent où elles retombent, une vapeur pâle ; le « boum » du mini-missile et le « pchouf » de la mine d'acide. VU en
+  capture. Les tests : trois missiles en 5 s à cadence 2, aucune balle ; les quatre avions de l'Escadrille à 1,125 s et
+  60, dans les deux ordres.
