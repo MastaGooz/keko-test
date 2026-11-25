@@ -617,7 +617,12 @@ export type Arme = {
   // (… ET DES AILIERS QUI NE LE QUITTENT PAS — Keko, 23/11, pour la distinguer des drones de la Sentinelle : « on essaie »
   // l'escorte qui reste toujours en formation, pivote vers sa cible et tire de plus loin, sans partir chasser : `ailier`
   // — il tient sa place même en combat ; sa cible est un insecte à SA portée de tir, mesurée de lui)
-  orbite?: { rayon: number; vitesse: number; phase: number; laisse?: number; vol?: number; braquage?: number; autour?: number; tour?: number; formation?: Vecteur; ailier?: boolean }
+  // (… SAUF EN CHASSE — la variation « Chasse » de l'Escorte, Keko, 25/11 : « au lieu de rester proche du vaisseau, ils
+  // partent en chasse ; la cible verrouillée s'il en existe une ; sinon, ils tirent en tournant autour de la cible la plus
+  // prioritaire, un mini-boss, un boss ou un gros ennemi » : `chasse` — plus d'ailier, tous les drones vont au même
+  // insecte à `laisse` du vaisseau (160) : le verrouillé, sinon le plus fort — boss, mini-boss, cuirassier, cornu,
+  // moucheron, roche ; à rang égal, ils gardent le leur, sinon le plus proche du vaisseau —, et lui tournent autour)
+  orbite?: { rayon: number; vitesse: number; phase: number; laisse?: number; vol?: number; braquage?: number; autour?: number; tour?: number; formation?: Vecteur; ailier?: boolean; chasse?: boolean }
   /**
    * DES TOURELLES POSÉES (l'Ingénieur, Keko, 15/11 : « quelque chose de mécanique, carré, qui pose des petites tours sur
    * son passage ») : l'arme n'est pas sur le vaisseau, il la POSE dans le monde (`Monde.tourelles`, `menerLesTourelles`)
@@ -6262,6 +6267,14 @@ function menerLesTourelles(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenemen
   }
 }
 
+/** LE RANG D'UNE PROIE pour les chasseurs (voir `orbite.chasse`) : boss, mini-boss, cuirassier, cornu, moucheron, roche. */
+export function rangDeChasse(e: Ennemi): number {
+  if (e.asteroide !== undefined) return 0
+  if (e.boss === true) return 5
+  if (e.grand === true) return 4
+  return e.sorte === 'cuirassier' ? 3 : e.sorte === 'cornu' ? 2 : 1
+}
+
 function menerLesDrones(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]): void {
   const armes = c.armes.map((a, i) => ({ a, i })).filter((x) => x.a.orbite !== undefined)
   if (armes.length === 0) {
@@ -6274,6 +6287,22 @@ function menerLesDrones(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]
       return { x: h.x, y: h.y, vx: m.vaisseau.vx, vy: m.vaisseau.vy, cible: null }
     })
   const v = m.vaisseau
+  // LA PROIE DES CHASSEURS (voir `orbite.chasse`), choisie une fois pour tous : le plus fort à la laisse ; à rang égal, celle
+  // qu'ils chassaient déjà, sinon la plus proche du vaisseau (le verrouillé passe avant, drone par drone)
+  let proie: Ennemi | undefined
+  const chasseur = armes.findIndex((x) => x.a.orbite!.chasse === true)
+  if (chasseur >= 0) {
+    const laisse = armes[chasseur].a.orbite!.laisse ?? 120
+    const avant = m.drones[chasseur].cible
+    let rp = -1
+    let dp = Infinity
+    for (const e of m.ennemis) {
+      const dist = Math.hypot(e.corps.x - v.x, e.corps.y - v.y)
+      if (dist > laisse) continue
+      const r = rangDeChasse(e)
+      if (r > rp || (r === rp && proie?.id !== avant && (e.id === avant || dist < dp))) (proie = e), (rp = r), (dp = dist)
+    }
+  }
   armes.forEach(({ a, i }, k) => {
     const d = m.drones[k]
     const o = a.orbite!
@@ -6283,6 +6312,8 @@ function menerLesDrones(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]
     let cible: Ennemi | undefined = d.cible === null ? undefined : m.ennemis.find((e) => e.id === d.cible && aLaLaisse(e))
     const ve = ennemiVerrouille(m)
     if (ve !== null && aLaLaisse(ve)) cible = ve
+    // (EN CHASSE — voir `orbite.chasse` : la proie de l'escadrille, la même pour tous)
+    else if (o.chasse === true) cible = proie
     if (cible === undefined) {
       const prises = new Set(m.drones.filter((x, j) => j !== k && x.cible !== null).map((x) => x.cible))
       let libre: Ennemi | undefined

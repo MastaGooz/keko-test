@@ -217,6 +217,10 @@ verifier('le délai passé, ce qui restait à choisir part en réserve', reserve
   const lance = (c: ConfigVaisseau): string => c.armes.filter((a) => a.id === 'escorte').map((a) => (a.missiles?.rayon === 11 && Math.abs(a.cadence - 0.45 * 2.5) < 1e-9 && a.degats === 60 ? 'M' : '-')).join('')
   const [m1, m2] = [prendre(['arme-escorte', 'escorte-missiles', 'escorte-plus']), prendre(['arme-escorte', 'escorte-plus', 'escorte-missiles'])]
   verifier(`les missiles de l'escorte : ${lance(m1)} et ${lance(m2)} (MMMM) ; plus de Roquettes (${MUTATIONS.some((x) => x.id === 'escorte-roquettes')})`, lance(m1) === 'MMMM' && lance(m2) === 'MMMM' && !MUTATIONS.some((x) => x.id === 'escorte-roquettes'))
+  // (LA CHASSE, à la place du Ricochet — Keko, 25/11 : les quatre avions de l'Escadrille chassent, dans les deux ordres)
+  const chassent = (c: ConfigVaisseau): string => c.armes.filter((a) => a.id === 'escorte').map((a) => (a.orbite?.chasse === true && a.orbite.ailier === false && a.orbite.laisse === 160 ? 'C' : '-')).join('')
+  const [c1, c2] = [prendre(['arme-escorte', 'escorte-chasse', 'escorte-plus']), prendre(['arme-escorte', 'escorte-plus', 'escorte-chasse'])]
+  verifier(`la chasse de l'escorte : ${chassent(c1)} et ${chassent(c2)} (CCCC) ; plus de Ricochet (${MUTATIONS.some((x) => x.id === 'escorte-ricochet')})`, chassent(c1) === 'CCCC' && chassent(c2) === 'CCCC' && !MUTATIONS.some((x) => x.id === 'escorte-ricochet'))
 }
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)
 console.log('Tout passe.')

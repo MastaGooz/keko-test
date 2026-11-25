@@ -578,7 +578,10 @@ export const MUTATIONS: Mutation[] = [
   // 3 s, toutes les armes y ont +25 points de chance critique — sauf l'escorte elle-même, « sinon c'est une boucle » (Keko)
   // — voir `Arme.designation`)
   variation('escorte-designation', 'escorte', 'Désignation', 'Les ennemis touchés par un critique subissent plus de critiques.', changerA('escorte', (a) => ({ ...a, designation: { duree: 3, bonus: 0.25 } }))),
-  variation('escorte-ricochet', 'escorte', 'Ricochet', 'Chaque balle des mini-avions rebondit sur deux autres ennemis.', changerA('escorte', V.ricochet)),
+  // (LA CHASSE, à la place du Ricochet — Keko, 25/11 : « au lieu de rester proche du vaisseau, ils partent en chasse » ;
+  // « le ricochet et le tir qui traverse, je suis pas fan » : plus d'ailiers, ils vont tous tourner autour du verrouillé,
+  // sinon du plus fort à 160 du vaisseau — voir `orbite.chasse`)
+  variation('escorte-chasse', 'escorte', 'Chasse', 'Les mini-avions partent chasser la cible la plus forte.', changerA('escorte', (a) => ({ ...a, orbite: { ...a.orbite!, ailier: false, chasse: true, laisse: 160 } }))),
   // (LES MISSILES, à la place des Roquettes — Keko, 25/11 : d'abord un missile toutes les 2 s en plus des balles, « ça se
   // voit pas trop » ; puis « remplacer les tirs normaux carrément par des missiles » : chaque tir est un petit missile
   // guidé qui explose sur 11, cadence ×2,5 et dégâts ×2,5 — les dégâts par seconde des balles sur une cible, la zone en

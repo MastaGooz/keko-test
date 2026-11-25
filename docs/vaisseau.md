@@ -9097,3 +9097,16 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   Mini-missiles ») : ACIDIFICATION (`escorte-acide`) et MINI-MISSILES (`escorte-missiles`) ; les identifiants ne
   changent pas. Les deux titres tiennent sur la carte, VU en capture.
   L'ESCORTE : Acidification, Désignation, Escadrille, Mini-missiles, Perforantes, Ricochet.
+- CHASSE, À LA PLACE DU RICOCHET (Keko, 25/11 : « le ricochet et le tir qui traverse, je suis pas fan » ; parmi quatre
+  idées proposées — Piqué, Feu croisé, Cadence montante, Garde rapprochée —, la sienne : « une variation qui change le
+  comportement des chasseurs : au lieu de rester proche du vaisseau, ils partent en chasse ; la cible verrouillée s'il
+  en existe une ; sinon, ils tirent en tournant autour de la cible la plus prioritaire, un mini-boss, un boss ou un gros
+  ennemi » ; Ricochet, le nom et 160 de rayon, proposés, retenus) : « Les mini-avions partent chasser la cible la plus
+  forte. » (la première phrase débordait, VU en capture). `orbite.chasse`, `ailier` à faux, `laisse` 160 : UNE PROIE
+  POUR TOUTE L'ESCADRILLE, choisie une fois par pas dans `menerLesDrones` — le verrouillé à 160 du vaisseau, sinon le
+  plus fort à 160 (`rangDeChasse` : boss 5, mini-boss 4, cuirassier 3, cornu 2, moucheron 1, roche 0) ; à rang égal,
+  celle qu'ils chassaient, sinon la plus proche du vaisseau — ; ils lui tournent autour à 34 (leur `autour`), décalés
+  sur le cercle, et tirent de là ; rien à 160, ils rentrent en formation. Un test (deux avions autour du cuirassier à
+  140, celui à 200 intact ; le moucheron verrouillé, ils y vont ; sans la carte, ils restent en formation) et celui des
+  quatre avions de l'Escadrille, dans les deux ordres. VU en capture : les quatre autour d'un cuirassier.
+  L'ESCORTE : Acidification, Chasse, Désignation, Escadrille, Mini-missiles, Perforantes.
