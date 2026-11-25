@@ -785,8 +785,14 @@ export type Arme = {
    * le facteur de critique, moins un.) `refraction` (sa variation sur coup critique, « Réfraction ») : un critique du rayon
    * le RÉFRACTE — un second rayon part de l'insecte touché vers l'insecte le plus proche de lui à `portee`, `duree`
    * secondes, à `part` des dégâts, avec l'élément de l'arme ; il brûle tout ce qu'il traverse et ne tire aucun critique.
+   * `onde` (« Résonance », Keko, 25/11 : « une onde d'énergie se déplace depuis la balise vers le vaisseau et retourne
+   * du vaisseau vers la balise, et fait des allers-retours comme ça le long du rayon en infligeant des dégâts aux ennemis
+   * qu'elle traverse ; la forme, je te laisse décider ») : UNE ONDE court le long du rayon, de la balise au vaisseau en
+   * `trajet` secondes, et revient, tant que la balise vit (voir `ondeDuLien`) ; à chaque passage, elle frappe une fois
+   * tout insecte à `rayon` d'elle — plus large que le rayon — de `part` fois les dégâts de l'arme, un coup qui tire son
+   * critique, avec l'élément de l'arme.
    */
-  lien?: { duree: number; vol: number; epaisseur: number; explosion?: { rayon: number; part: number }; refraction?: { portee: number; duree: number; part: number } }
+  lien?: { duree: number; vol: number; epaisseur: number; explosion?: { rayon: number; part: number }; refraction?: { portee: number; duree: number; part: number }; onde?: { trajet: number; rayon: number; part: number } }
   /**
    * UN RAYON QUI BALAIE (la Salamandre, Keko, 15/11 : « un rayon à haute énergie qui part au-dessus du vaisseau et
    * descend en décrivant un cercle autour de lui : il enflamme et fait de gros dégâts ») : toutes les `tous` secondes, si
@@ -5744,6 +5750,25 @@ export type BaliseLaser = {
   tics?: Record<number, number>
   /** SES RÉFRACTIONS (voir `lien.refraction`) : de l'insecte `de` — ou de là où il est mort — à l'insecte `vers`. */
   branches?: BrancheDuLien[]
+  /** LE DERNIER PASSAGE DE SON ONDE qui a frappé chaque insecte (voir `lien.onde`). */
+  ondes?: Record<number, number>
+}
+/**
+ * OÙ EST L'ONDE D'UNE BALISE LASER à l'instant `t` (voir `lien.onde`) : partie de la balise à sa pose, elle court jusqu'au
+ * bord du vaisseau en `trajet` secondes, revient, repart — `s` de 0 (la balise) à 1 (le vaisseau), `passe` le numéro de
+ * l'aller ou du retour en cours ; null sans onde ou balise en vol.
+ */
+export function ondeDuLien(c: ConfigVaisseau, m: Monde, b: BaliseLaser, t = m.t): { x: number; y: number; s: number; passe: number; vers: 1 | -1 } | null {
+  const on = c.armes[b.arme]?.lien?.onde
+  if (on === undefined || b.posee === null) return null
+  const age = Math.max(0, t - b.posee)
+  const passe = Math.floor(age / on.trajet)
+  const f = age / on.trajet - passe
+  const s = passe % 2 === 0 ? f : 1 - f
+  const v = m.vaisseau
+  const L = Math.hypot(v.x - b.x, v.y - b.y) || 1
+  const bord = Math.max(0, L - c.rayon - 1)
+  return { x: b.x + ((v.x - b.x) / L) * bord * s, y: b.y + ((v.y - b.y) / L) * bord * s, s, passe, vers: passe % 2 === 0 ? 1 : -1 }
 }
 /** Un rayon réfracté : d'où il part (l'insecte `de`, à sa dernière place connue), vers quel insecte, né quand, jusqu'à quand. */
 export type BrancheDuLien = { de: number; x: number; y: number; vers: number; nee: number; jusque: number }
@@ -5851,6 +5876,21 @@ function menerLesBalisesLaser(c: ConfigVaisseau, m: Monde, dt: number, ev: Evene
         }
       }
       if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
+    }
+    // (LA RÉSONANCE : l'onde frappe une fois par passage tout insecte à son rayon — voir `lien.onde`)
+    const on = li.onde
+    const po = ondeDuLien(c, m, b)
+    if (on !== undefined && po !== null) {
+      const vus = (b.ondes ??= {})
+      for (const e of [...m.ennemis]) {
+        if (vus[e.id] === po.passe || Math.hypot(e.corps.x - po.x, e.corps.y - po.y) > on.rayon + rayonDe(c, e)) continue
+        vus[e.id] = po.passe
+        if (a.gel !== undefined) geler(c, m, e, a.gel.duree, a.gel.ralenti, ev, true)
+        const critique = critiqueTire(c, m, a, e)
+        e.pv -= a.degats * on.part * (critique ? facteurSur(c, m, a, e) : 1)
+        ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })
+        if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
+      }
     }
     // (LES RÉFRACTIONS : elles partent de l'insecte, de là où il est mort s'il l'est ; elles s'éteignent à leur heure, ou
     // quand leur cible n'est plus là ; elles brûlent ce qu'elles traversent, sans critique)

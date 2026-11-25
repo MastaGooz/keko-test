@@ -560,7 +560,10 @@ export const MUTATIONS: Mutation[] = [
   // LA BALISE LASER
   variation('lien-double', 'lien', 'Deux balises', 'Une seconde balise, son propre rayon.', ajouterA('lien', (a) => [ajoutee(a, (a.place ?? 20) + 1, { degats: fois(a, 0.7) })])),
   variation('lien-longue', 'lien', 'Longue vie', 'Les balises restent actives bien plus longtemps.', changerA('lien', (a) => ({ ...a, lien: a.lien === undefined ? undefined : { ...a.lien, duree: a.lien.duree * 1.6 } }))),
-  variation('lien-large', 'lien', 'Faisceau large', 'Un rayon bien plus épais.', changerA('lien', (a) => ({ ...a, lien: a.lien === undefined ? undefined : { ...a.lien, epaisseur: a.lien.epaisseur * 2.5 } }))),
+  // (RÉSONANCE, à la place de Faisceau large — Keko, 25/11 : « une onde d'énergie qui fait des allers-retours le long du
+  // rayon et fait des dégâts aux ennemis qu'elle traverse » : de la balise au vaisseau en 0,5 s, et retour ; une frappe
+  // par passage à 8 d'elle, la moitié des dégâts — voir `lien.onde` ; chiffres de moi)
+  variation('lien-onde', 'lien', 'Résonance', 'Une onde d’énergie fait des allers-retours le long du rayon.', changerA('lien', (a) => ({ ...a, lien: a.lien === undefined ? undefined : { ...a.lien, onde: { trajet: 0.5, rayon: 8, part: 0.5 } } }))),
   variation('lien-surcharge', 'lien', 'Surcharge', 'À la fin de sa vie, la balise explose.', changerA('lien', (a) => ({ ...a, lien: a.lien === undefined ? undefined : { ...a.lien, explosion: { rayon: 30, part: 3 } } }))),
   // (RÉFRACTION, SA VARIATION SUR COUP CRITIQUE — Keko, 25/11, parmi quatre — Réfraction, Pulsation, Rechargement,
   // Éclatement : un critique du rayon fait partir un second rayon de l'insecte touché vers le plus proche de lui à 60,

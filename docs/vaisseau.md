@@ -9171,3 +9171,17 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
     le rayon et ses critiques, si. Test (tout critique : 7 critiques en 4 s, la cible 960 = 512 + 7 × 64 ; 7
     réfractions, le voisin à 40 hors du rayon 410 ; sans la carte, rien).
   LA BALISE LASER : Cryogénique, Deux balises, Faisceau large, Longue vie, Réfraction, Surcharge.
+- RÉSONANCE, À LA PLACE DE FAISCEAU LARGE (Keko, 25/11, après cinq idées de moi — Traqueuse, Phare, Prisme, Toile,
+  Rayon tracteur — : « je propose autre chose. Une onde d'énergie se déplace depuis la balise vers le vaisseau et
+  retourne du vaisseau vers la balise, et fait des allers-retours comme ça le long du rayon en infligeant des dégâts aux
+  ennemis qu'elle traverse ; la forme, je te laisse décider » ; la carte remplacée, c'est moi qui l'ai choisie : Faisceau
+  large ne faisait que grossir un chiffre) : « Une onde d'énergie fait des allers-retours le long du rayon. » (cinq
+  lignes, VU en capture). `lien.onde` = { trajet 0,5, rayon 8, part 0,5 }, chiffres de moi : l'onde part de la balise à
+  sa pose, court jusqu'au bord du vaisseau en 0,5 s, revient, repart, tant que la balise vit — sa place est une fonction
+  du temps (`ondeDuLien`), le dessin lit la même ; à chaque passage, elle frappe UNE fois tout insecte à 8 d'elle — plus
+  large que le rayon, qui n'a que 2 — de la moitié des dégâts de l'arme (64), un coup qui tire son critique (il ne
+  réfracte pas : la Réfraction est aux critiques du rayon), avec le givre (`BaliseLaser.ondes`, le dernier passage qui a
+  frappé chaque insecte). LA FORME : une LENTILLE D'ÉNERGIE en travers du rayon — un trait blanc bordé de rose, plus
+  large au milieu, dans une lueur rouge — et trois échos qui pâlissent derrière elle (VU en capture). Test : un insecte à
+  11 du rayon, que le rayon ne touche pas, frappé 8 fois en 4 s, 512 ; sans la carte, rien.
+  LA BALISE LASER : Cryogénique, Deux balises, Longue vie, Réfraction, Résonance, Surcharge.

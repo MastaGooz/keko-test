@@ -3713,6 +3713,26 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   // (le critique vaut ×2 ici : chacun ajoute 128 × 0,5 = 64 ; une réfraction par tic, chacune 1 s — elles se chevauchent,
   // deux à la fois : 7 × 64 au plus, moins la dernière que la fin de la balise coupe)
   verifier(`les critiques du rayon : ${rf.critiques} en 4 s (7), la cible prend ${rf.cible} (512 + 7 × 64 = 960) ; la Réfraction : ${rf.branches} réfractions (7), le voisin hors du rayon prend ${rf.voisin} (près de 7 × 64 = 448) ; sans la carte, ${sansRf.branches} réfraction, le voisin ${sansRf.voisin} (0)`, rf.critiques === 7 && Math.abs(rf.cible - 960) < 20 && rf.branches === 7 && rf.voisin > 380 && rf.voisin <= 450 && sansRf.branches === 0 && sansRf.voisin === 0 && sansRf.critiques === 7)
+  // (LA RÉSONANCE — Keko, 25/11 : une onde fait des allers-retours le long du rayon, de la balise au vaisseau en 0,5 s ;
+  // un insecte à 11 du rayon, que le rayon ne touche pas, est frappé une fois par passage — huit en 4 s, 64 chacun)
+  const resonne = (avec: boolean): { pris: number; coups: number } => {
+    const cfg5 = { ...cfg, passifs: { ...cfg.passifs, critique: 0 }, armes: [{ ...lien, lien: { ...lien.lien, ...(avec ? { onde: { trajet: 0.5, rayon: 8, part: 0.5 } } : {}) } }] }
+    const w5 = nouveauMonde(cfg5, 9)
+    w5.invasion.prochainA = 1e9
+    const [ci, cote] = [[60, 0], [40, 11]].map(([x, y], k): Ennemi => ({ id: 990 + k, corps: { ...nouveauVaisseau(), x, y }, pv: 1e9, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9 }))
+    w5.ennemis.push(ci, cote)
+    w5.verrou = ci.id
+    let coups = 0
+    let fini = false
+    for (let i = 0; i < 60 * 6 && !fini; i++)
+      for (const ev of avancerLeMonde(cfg5, w5, 1 / 60, { x: 0, y: 0 }).evenements) {
+        if (ev.type === 'ennemiTouche' && ev.id === cote.id) coups++
+        if (ev.type === 'baliseFinie') fini = true
+      }
+    return { pris: Math.round(1e9 - cote.pv), coups }
+  }
+  const [rs, sansRs] = [resonne(true), resonne(false)]
+  verifier(`la Résonance : l'insecte à 11 du rayon frappé ${rs.coups} fois en 4 s (8), ${rs.pris} (8 × 64 = 512) ; sans la carte, ${sansRs.pris} (0)`, rs.coups === 8 && rs.pris === 512 && sansRs.pris === 0)
   verifier(`la Surcharge givrée : la cible sur le rayon givrée (${(vise.geleA ?? -1) > w3.t}), le voisin à 25 de la balise pas avant l'explosion (${avantLaFin}), givré par elle (${(voisin.geleA ?? -1) > w3.t}), touché (${1e9 - voisin.pv})`, fin3 && (vise.geleA ?? -1) > w3.t && avantLaFin && (voisin.geleA ?? -1) > w3.t && voisin.pv < 1e9)
 }
 

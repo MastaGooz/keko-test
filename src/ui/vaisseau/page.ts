@@ -12,7 +12,7 @@
  */
 import './vaisseau.css'
 import * as noyau from 'pixelfx'
-import { ELEMENTAIRES, anneauMagnetique, rayonDeLOnde, ennemisDuLien, ajouterUnPilote, avancerLEquipage, prendreLaMain, type SorteDInsecte, SORTES_D_INSECTES, gabaritDInsecte, gemmesDuButin, butinDeLaRoche, pointDeRetour, rayonDe, rocheDeLaTempete, vieMultipliee, degatsMultiplies, placeDeLEcharde, frontDeLaNova, ancreDansLeMonde, zoneDuDe, coupeDUnCube, formeDeLaCoupe, liesAuDrain, encaisser, type Ennemi, type Evenement, type Monde, impactDuRayon, asteroidesVisibles, avancerLeMonde, finDuTrio, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur, xpDuNiveau, ennemiLePlusProche, ennemiVerrouille, chauffeDuDrone, ennemisDeLaBranche,verrouiller, angleDuBalayage, aPlusieurs, alliesAuRetour, recompenseDeFin, type LigneDeRecompense } from '../../logic/vaisseau/jeu.ts'
+import { ELEMENTAIRES, anneauMagnetique, rayonDeLOnde, ennemisDuLien, ajouterUnPilote, avancerLEquipage, prendreLaMain, type SorteDInsecte, SORTES_D_INSECTES, gabaritDInsecte, gemmesDuButin, butinDeLaRoche, pointDeRetour, rayonDe, rocheDeLaTempete, vieMultipliee, degatsMultiplies, placeDeLEcharde, frontDeLaNova, ancreDansLeMonde, zoneDuDe, coupeDUnCube, formeDeLaCoupe, liesAuDrain, encaisser, type Ennemi, type Evenement, type Monde, impactDuRayon, asteroidesVisibles, avancerLeMonde, finDuTrio, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur, xpDuNiveau, ennemiLePlusProche, ennemiVerrouille, chauffeDuDrone, ennemisDeLaBranche, ondeDuLien,verrouiller, angleDuBalayage, aPlusieurs, alliesAuRetour, recompenseDeFin, type LigneDeRecompense } from '../../logic/vaisseau/jeu.ts'
 import { PIECES, ETALONS as ETALONS_DU_BANC, acheter, ajouterLesPiecesDEssai, capacite, poidsTotal, POIDS_SERIE, configDuHangar, demonter, demonterA, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, montantCourt, monteeA, monter, monterA, peutAcheter, peutMonter, perdreLesMontees, estDeBase, exemplaires, libres, pieceDe, piecesDe, placeLourde, possede, aimantMonte, radarMonte, type Jauge, type Piece, type Sorte } from '../../logic/vaisseau/hangar.ts'
 import { drawWord, spell } from 'pixelfx/fx/ui/_lib'
 import { firePuff, hotFirst, smokePuff } from 'pixelfx/fx/fire/_lib'
@@ -12063,6 +12063,26 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       for (let d = 4; d < L; d += 9) p.glow(x0 + ux * d, y0 + uy * d, 4, ROUGE_LASER[2], 0.22 * k * fremit)
       for (const o of [-1, 1]) p.line(x0 + nx * o, y0 + ny * o, b.x + nx * o, b.y + ny * o, ROUGE_LASER[2], 0.65 * k * fremit)
       p.line(x0, y0, b.x, b.y, ROUGE_LASER[4], k)
+      // (SON ONDE, LA RÉSONANCE — Keko, 25/11, « la forme, je te laisse décider », voir `lien.onde` : une LENTILLE
+      // D'ÉNERGIE en travers du rayon — un trait blanc bordé de rose, plus large au milieu qu'aux pointes, dans une lueur
+      // rouge — et sa traînée, trois échos qui pâlissent derrière elle ; aux deux bouts du rayon, elle rebondit)
+      if (li.onde !== undefined && jaillit >= 1) {
+        const rw = li.onde.rayon
+        for (let q = 3; q >= 0; q--) {
+          const po = ondeDuLien(CONF, m, b, m.t - q * 0.025)
+          if (po === null) continue
+          const al = k * (q === 0 ? 1 : 0.4 - q * 0.1)
+          if (q > 0) {
+            p.line(po.x - nx * rw * 0.6, po.y - ny * rw * 0.6, po.x + nx * rw * 0.6, po.y + ny * rw * 0.6, ROUGE_LASER[3], al)
+            continue
+          }
+          p.glow(po.x, po.y, rw + 3, ROUGE_LASER[2], 0.55 * k)
+          for (const sg of [-1, 1]) p.line(po.x - ux * sg - nx * rw * 0.75, po.y - uy * sg - ny * rw * 0.75, po.x - ux * sg + nx * rw * 0.75, po.y - uy * sg + ny * rw * 0.75, ROUGE_LASER[3], al)
+          p.line(po.x - nx * rw, po.y - ny * rw, po.x + nx * rw, po.y + ny * rw, ROUGE_LASER[4], al)
+          p.line(po.x - nx * rw * 0.5, po.y - ny * rw * 0.5, po.x + nx * rw * 0.5, po.y + ny * rw * 0.5, N.WHITE, al)
+          p.glow(po.x, po.y, 4, N.WHITE, 0.6 * k)
+        }
+      }
       // (SES RÉFRACTIONS — Keko, 25/11, voir `lien.refraction` : un rayon plus fin, de l'insecte frappé d'un critique à son
       // voisin, qui jaillit en 0,08 s, frémit plus vite et s'éteint dans son dernier quart ; un point de lumière là où il
       // se brise)
