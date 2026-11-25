@@ -378,7 +378,7 @@ const ajouterA = (arme: string, f: (a: Arme) => Arme[]) => (c: ConfigVaisseau): 
 /**
  * LA BOBINE, L'OBUSIER ET LE LANCE-GRENADES TIRENT MÊME SANS CIBLE, DROIT DEVANT (Keko, 24/11 : « ceux qui peuvent avoir
  * un intérêt même en dehors d'ennemis à portée ; pas les lasers, pas le railgun » — voir `Arme.sansCible`) : un obus ou
- * une grenade tombe aux sept dixièmes de sa portée.
+ * une grenade tombe aux sept dixièmes de sa portée. (La balise laser aussi, Keko, 25/11 : elle s'y pose.)
  */
 const SANS_CIBLE = { portee: 0.7 }
 export type ArmeDeFaction = { id: string; nom: string; dit: string; race: Race; icone: string; armes: () => Arme[] }
@@ -417,7 +417,7 @@ export const ARMES_DE_FACTION: ArmeDeFaction[] = [
   // (LA BALISE LASER, LA SIXIÈME — Keko, 23/11, après les roquettes et le harpon mis de côté : « le vaisseau lance une
   // balise ; tant qu'elle est active, un rayon laser rouge entre elle et le vaisseau ; tous les ennemis traversés
   // subissent des dégâts » — voir `Arme.lien` ; `degats` est ce qu'il brûle par seconde)
-  { id: 'lien', nom: 'Balise laser', dit: 'Une balise reliée par un rayon laser, qui brûle tout ce qu’il traverse.', race: 'humains', icone: 'imp-lien', armes: () => [nouvelle({ id: 'lien', cadence: 5, degats: 122, portee: 110, lien: { duree: 4, vol: 0.7, epaisseur: 2 } })] },
+  { id: 'lien', nom: 'Balise laser', dit: 'Une balise reliée par un rayon laser, qui brûle tout ce qu’il traverse.', race: 'humains', icone: 'imp-lien', armes: () => [nouvelle({ id: 'lien', cadence: 5, degats: 122, portee: 110, lien: { duree: 4, vol: 0.7, epaisseur: 2 }, sansCible: SANS_CIBLE })] },
 ]
 export const armeDeFaction = (id: string): ArmeDeFaction | undefined => ARMES_DE_FACTION.find((x) => x.id === id)
 

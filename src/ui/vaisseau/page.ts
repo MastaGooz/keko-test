@@ -12075,27 +12075,31 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         const po = ondeDuLien(CONF, m, b)
         if (po !== null) {
           const rw = li.onde.rayon
-          const W = rw * 1.6
-          const A = rw * 0.5
+          // (PLUS GRANDE — Keko, 25/11 : « on la voit pas bien, elle est trop petite » : l'ampleur va presque au bord de sa
+          // frappe, le paquet s'allonge, les brins doublent d'épaisseur, la lueur grandit)
+          const W = rw * 2.4
+          const A = rw * 0.85
           // (le long du rayon, `d` vers la balise ; borné aux deux bouts du rayon)
           const sb = Math.hypot(po.x - b.x, po.y - b.y)
           const dMin = Math.max(-W, sb - L)
           const dMax = Math.min(W, sb)
           const env = (d: number): number => Math.cos((Math.PI * d) / (2 * W)) ** 2
-          const brin = (d: number): number => A * env(d) * Math.sin(d * 0.55 + t * 22 * po.vers)
-          for (let d = dMin; d <= dMax; d += 3) p.glow(po.x + ux * d, po.y + uy * d, 3 + 4 * env(d), ROUGE_LASER[2], 0.4 * k * env(d))
-          // (le brin sombre d'abord, en contrepoint, puis le vif par-dessus : une hélice, pas un fouillis)
-          for (const sg of [-1, 1]) {
-            let [ax, ay] = [po.x + ux * dMin + nx * sg * brin(dMin), po.y + uy * dMin + ny * sg * brin(dMin)]
-            for (let d = dMin + 1; d <= dMax; d += 1) {
-              const o = sg * brin(d)
-              const [bx, by] = [po.x + ux * d + nx * o, po.y + uy * d + ny * o]
-              if (sg < 0) p.line(ax, ay, bx, by, ROUGE_LASER[2], 0.7 * k * env(d))
-              else p.line(ax, ay, bx, by, env(d) > 0.45 ? ROUGE_LASER[4] : ROUGE_LASER[3], k * (0.4 + 0.6 * env(d)))
-              ;[ax, ay] = [bx, by]
+          const brin = (d: number): number => A * env(d) * Math.sin(d * 0.4 + t * 18 * po.vers)
+          for (let d = dMin; d <= dMax; d += 3) p.glow(po.x + ux * d, po.y + uy * d, 4 + 7 * env(d), ROUGE_LASER[2], 0.55 * k * env(d))
+          // (le brin sombre d'abord, en contrepoint, puis le vif par-dessus : une hélice, pas un fouillis ; chacun sur deux
+          // pixels d'épaisseur)
+          for (const sg of [-1, 1])
+            for (const e of [0, 1]) {
+              let [ax, ay] = [po.x + ux * dMin + nx * (sg * brin(dMin) + e), po.y + uy * dMin + ny * (sg * brin(dMin) + e)]
+              for (let d = dMin + 1; d <= dMax; d += 1) {
+                const o = sg * brin(d) + e
+                const [bx, by] = [po.x + ux * d + nx * o, po.y + uy * d + ny * o]
+                if (sg < 0) p.line(ax, ay, bx, by, ROUGE_LASER[2], 0.8 * k * env(d))
+                else p.line(ax, ay, bx, by, env(d) > 0.5 ? (e === 0 ? N.WHITE : ROUGE_LASER[4]) : ROUGE_LASER[3], k * (0.45 + 0.55 * env(d)))
+                ;[ax, ay] = [bx, by]
+              }
             }
-          }
-          p.glow(po.x, po.y, 4, N.WHITE, 0.35 * k)
+          p.glow(po.x, po.y, 7, N.WHITE, 0.45 * k)
         }
       }
       // (la balise posée : trois pieds déployés, et à l'instant où elle s'active, une onde rouge qui s'ouvre)

@@ -3414,6 +3414,19 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   const laser = tir({ id: 'laser', portee: 120, vitesse: 420, vie: 0.7 })
   const devant = (p: { x: number; y: number } | null, x: number): boolean => p !== null && Math.abs(p.x - x) < 8 && Math.abs(p.y) < 3
   verifier(`sans cible, droit devant : l'obus tombe à ${obus?.x.toFixed(0)}, ${obus?.y.toFixed(0)} (105, 0), la grenade à ${grenade?.x.toFixed(0)}, ${grenade?.y.toFixed(0)} (77, 0), la boule file vers ${boule?.x.toFixed(0)}, ${boule?.y.toFixed(0)} (devant) ; le laser ${laser === null ? 'ne tire pas' : 'tire'}`, devant(obus, 105) && devant(grenade, 77) && boule !== null && boule.x > 20 && Math.abs(boule.y) < 3 && laser === null)
+  // (LA BALISE LASER AUSSI — Keko, 25/11 : « que le laser soit lancé même en l'absence d'ennemis » : elle se pose à 77
+  // devant, 0,7 × 110 ; sans `sansCible`, elle ne part pas)
+  const pose = (avec: boolean): { x: number; y: number } | null => {
+    const lien = { id: 'lien', cadence: 5, degats: 128, portee: 110, vitesse: 0, vie: 0, dispersion: 0, guide: false, tousSens: true, lien: { duree: 4, vol: 0.7, epaisseur: 2 }, ...(avec ? { sansCible: { portee: 0.7 } } : {}) } as Arme
+    const cfg = { ...VAISSEAU, coque: 1e9, armes: [lien], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9 }, derive: { ...VAISSEAU.derive, active: false } }
+    const w = nouveauMonde(cfg, 5)
+    w.invasion.prochainA = 1e9
+    w.vaisseau = { ...w.vaisseau, cap: 0 }
+    for (let i = 0; i < 60 * 2; i++) for (const ev of avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements) if (ev.type === 'balisePosee') return { x: ev.x, y: ev.y }
+    return null
+  }
+  const [balise, sansBalise] = [pose(true), pose(false)]
+  verifier(`sans cible, la balise laser se pose à ${balise?.x.toFixed(0)}, ${balise?.y.toFixed(0)} (77, 0) ; sans \`sansCible\`, ${sansBalise === null ? 'elle ne part pas' : 'elle part'}`, devant(balise, 77) && sansBalise === null)
 }
 
 // L'ÉTOURDISSEMENT (Keko, 24/11 — voir `Arme.etourdissement`) : tout critique, la cible et le voisin dans l'explosion sont

@@ -9236,4 +9236,10 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   sombre dessous, le vif (rose, blanc au milieu) dessus, une hélice qui défile dans son sens, une lueur rouge le long et
   un point blanc au centre. Une première version, deux brins vifs plus serrés et le cœur blanc épaissi, faisait un
   fouillis (VU en capture) ; celle-ci se lit comme une hélice qui court sur le laser.
-  LA BALISE LASER : Cryogénique, Deux balises, Éclatement, Longue vie, Résonance, Surcharge.
+  LA BALISE LASER : Cryogénique, Deux balises, Éclatement, Longue vie, Résonance, Surcharge.- LA BALISE LASER SANS CIBLE, ET L'ONDE PLUS GRANDE (Keko, 25/11 : « que le laser soit lancé même en l'absence
+  d'ennemis ; et augmente un peu la visibilité de l'onde, on la voit pas bien, elle est trop petite ») : la balise a
+  `sansCible` (0,7, comme l'obusier, les grenades et la bobine) — personne à portée, elle se pose droit devant le nez,
+  à 77 (0,7 × 110) ; test : posée à 77, 0 ; sans `sansCible`, elle ne part pas. L'ONDE : ampleur 8,5 au lieu de 5 (presque
+  son rayon de frappe, 10), paquet sur 24 de part et d'autre au lieu de 16, longueur d'onde plus longue, brins sur deux
+  pixels (le vif blanc au milieu), lueur rouge plus large et plus forte, point blanc du centre plus grand. VU en
+  capture, sans insecte : la balise part devant, l'hélice se lit de loin sur toute la longueur du rayon.

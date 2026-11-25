@@ -725,7 +725,8 @@ export type Arme = {
    * nécessitent pas une cible particulière ou qui peuvent avoir un intérêt même sans ennemi à portée — la bobine Tesla,
    * les obus, les grenades ; pas les lasers, pas le railgun ; en l'absence d'ennemis, on le tire tout simplement droit
    * devant ») : personne à portée, elle tire à sa cadence, droit devant le nez — un obus ou une grenade tombe aux
-   * `portee` de sa portée (0,7, de moi), une boule tesla part tout droit.
+   * `portee` de sa portée (0,7, de moi), une boule tesla part tout droit. (LA BALISE LASER AUSSI — Keko, 25/11 : « que
+   * le laser soit lancé même en l'absence d'ennemis » : elle se pose droit devant, à la même part de sa portée.)
    */
   sansCible?: { portee: number }
   /**
@@ -5789,12 +5790,14 @@ function menerLesBalisesLaser(c: ConfigVaisseau, m: Monde, dt: number, ev: Evene
     const ve = ennemiVerrouille(m)
     if (ve !== null && aPortee(ve)) cible = ve
     for (const insecte of [true, false]) if (cible === null) for (const e of m.ennemis) if ((e.asteroide === undefined) === insecte && aPortee(e) && (cible === null || dist(e) < dist(cible))) cible = e
-    if (cible === null) return
-    const an = Math.atan2(cible.corps.y - v.y, cible.corps.x - v.x)
+    // (SANS CIBLE, DROIT DEVANT — Keko, 25/11 : « que le laser soit lancé même en l'absence d'ennemis » ; voir
+    // `Arme.sansCible` : elle se pose devant le nez, aux `portee` de sa portée)
+    if (cible === null && a.sansCible === undefined) return
+    const an = cible === null ? v.cap : Math.atan2(cible.corps.y - v.y, cible.corps.x - v.x)
     const x0 = v.x + Math.cos(an) * (c.rayon + 2)
     const y0 = v.y + Math.sin(an) * (c.rayon + 2)
     // (lancée en cloche pour se poser un peu au-delà de lui, à la portée au plus, au bout de son vol)
-    const loin = Math.max(0, Math.min(a.portee, dist(cible) + 20) - c.rayon - 2)
+    const loin = Math.max(0, (cible === null ? a.portee * (a.sansCible?.portee ?? 0) : Math.min(a.portee, dist(cible) + 20)) - c.rayon - 2)
     m.balisesLaser.push({ arme: i, x: x0, y: y0, vx: (Math.cos(an) * loin) / li.vol, vy: (Math.sin(an) * loin) / li.vol, nee: m.t, vol: li.vol, posee: null })
     m.armesA[i] = m.t + a.cadence
     ev.push({ type: 'tourelleLancee', x: x0, y: y0 })
