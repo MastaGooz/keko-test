@@ -1,7 +1,7 @@
 /**
  * Vérifications des talents du jeu du vortex, sans navigateur.
  */
-import { aUneZone, corrosionPosee, CORROSION_DU_VORTEX, electrocutionPosee, ETATS, armeDeFaction, ARMES_DE_FACTION, type Mutation, NIVEAU_SPECIAL, carteSpeciale, MUTATIONS, mutationsPrises, ajouterLeBonus, apresUnChoix, armeAmelioree, avecLesBonus, carte, factionAmelioree, type Bonus, ouvrirLeChoix, proposer, RARETES, rareteTiree, reserveApresLeDelai, STATS_DE_FACTION, statsDeLArme } from './talents.ts'
+import { aUneZone, corrosionPosee, CORROSION_DU_VORTEX, electrocutionPosee, ETATS, armeDeFaction, ARMES_DE_FACTION, type Mutation, NIVEAU_SPECIAL, carteSpeciale, MUTATIONS, mutationsPrises, ajouterLeBonus, apresUnChoix, armeAmelioree, avecLesBonus, carte, factionAmelioree, type Bonus, ouvrirLeChoix, proposer, RARETES, rareteTiree, reserveApresLeDelai, STATS_DE_FACTION, statsDeLArme, ARMES_EN_RESERVE, VARIATIONS_EN_RESERVE } from './talents.ts'
 import { VAISSEAU as C, type Arme, type ConfigVaisseau } from './jeu.ts'
 
 let echecs = 0
@@ -225,6 +225,32 @@ verifier('le délai passé, ce qui restait à choisir part en réserve', reserve
   const montent = (c: ConfigVaisseau): string => c.armes.filter((a) => a.id === 'escorte').map((a) => (a.montee?.max === 3 && a.montee.duree === 3 ? 'C' : '-')).join('')
   const [k1, k2] = [prendre(['arme-escorte', 'escorte-montee', 'escorte-plus']), prendre(['arme-escorte', 'escorte-plus', 'escorte-montee'])]
   verifier(`la cadence montante de l'escorte : ${montent(k1)} et ${montent(k2)} (CCCC) ; plus de Kamikaze ni de Perforantes (${MUTATIONS.some((x) => x.id === 'escorte-kamikaze' || x.id === 'escorte-perforantes')})`, montent(k1) === 'CCCC' && montent(k2) === 'CCCC' && !MUTATIONS.some((x) => x.id === 'escorte-kamikaze' || x.id === 'escorte-perforantes'))
+}
+// DES NOMS DE CARTES SPÉCIALES TOUS DIFFÉRENTS (Keko, 25/11 : « attention avec les titres cryogénie, cryogénique ; on veut
+// vraiment que les noms des cartes spéciales soient différents ; passe tout en vérification ») : les armes, les variations
+// et les cartes d'élément — celles en réserve comprises, pour le jour où elles reviennent. Deux noms se ressemblent trop
+// s'ils sont pareils aux accents, à la casse et au pluriel près, ou s'ils partagent la racine d'un mot (ses six premières
+// lettres, ou toutes s'il en a moins) — sauf les noms des projectiles, « double » et « lance », qui disent seulement sur
+// quoi porte la carte (« Grenades givrées », « Lance-grenades », « Lance-missiles »)
+{
+  const GENERIQUES = ['laser', 'missile', 'balle', 'grenade', 'roquette', 'cable', 'balise', 'harpon', 'double', 'lance']
+  const mots = (nom: string): string[] =>
+    nom
+      .normalize('NFD')
+      .replace(/[̀-ͯ]/g, '')
+      .toLowerCase()
+      .split(/[^a-z]+/)
+      .map((m) => m.replace(/[sx]$/, ''))
+      .filter((m) => m.length > 0)
+  const racines = (nom: string): string[] => mots(nom).filter((m) => m.length >= 5 && !GENERIQUES.includes(m))
+  const proches = (a: string, b: string): boolean => {
+    if (mots(a).join(' ') === mots(b).join(' ')) return true
+    return racines(a).some((x) => racines(b).some((y) => x.slice(0, Math.min(6, x.length, y.length)) === y.slice(0, Math.min(6, x.length, y.length))))
+  }
+  const cartes = [...MUTATIONS, ...VARIATIONS_EN_RESERVE, ...ARMES_EN_RESERVE.map((af) => ({ id: `arme-${af.id}`, nom: af.nom }))]
+  const doublons: string[] = []
+  cartes.forEach((x, i) => cartes.slice(i + 1).forEach((y) => proches(x.nom, y.nom) && doublons.push(`${x.nom} (${x.id}) / ${y.nom} (${y.id})`)))
+  verifier(`${cartes.length} cartes spéciales, aucun nom trop proche d'un autre (${doublons.join(' ; ') || 'aucun'})`, doublons.length === 0)
 }
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)
 console.log('Tout passe.')

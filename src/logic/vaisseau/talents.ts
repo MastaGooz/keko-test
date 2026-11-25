@@ -455,17 +455,21 @@ export const MUTATIONS: Mutation[] = [
   // LA MITRAILLEUSE
   variation('mitraille-jumelee', 'mitraille', 'Canons jumelés', 'Chaque tir part en double : deux balles côte à côte.', changerA('mitraille', V.gerbe(2, 0.12, 0.7))),
   variation('mitraille-tourelle', 'mitraille', 'Tourelle', 'Une mitrailleuse arrose tout autour du vaisseau.', ajouterA('mitraille', (a) => [ajoutee(a, 9, { cadence: a.cadence * 0.9, degats: fois(a, 0.6), portee: a.portee * 0.9 })])),
-  variation('mitraille-incendiaire', 'mitraille', 'Incendiaires', 'Les balles enflamment les ennemis.', changerA('mitraille', V.incendiaire)),
+  // (DES NOMS TOUS DIFFÉRENTS — Keko, 25/11 : « on veut vraiment que les noms des cartes spéciales soient différents » ;
+  // voir talents.verif.ts : Incendiaires → Phosphore, Drones des missiles → Satellites, Explosives → Percussion,
+  // Fragmentation des missiles → Dispersion, de l'obusier → Sous-munitions, Cryogéniques des missiles → Azote liquide,
+  // Incendiaires des missiles → Thermite ; et celles en réserve)
+  variation('mitraille-incendiaire', 'mitraille', 'Phosphore', 'Les balles enflamment les ennemis.', changerA('mitraille', V.incendiaire)),
   variation('mitraille-drones', 'mitraille', 'Drones', 'Deux drones en orbite mitraillent les ennemis proches.', ajouterA('mitraille', (a) => drones(a, { cadence: 0.3, degats: fois(a, 0.6), portee: 70 }))),
   variation('mitraille-perforante', 'mitraille', 'Perforantes', 'Les balles traversent les ennemis.', changerA('mitraille', V.perforant)),
-  variation('mitraille-explosive', 'mitraille', 'Explosives', 'Chaque balle explose à l’impact.', changerA('mitraille', V.explosif)),
+  variation('mitraille-explosive', 'mitraille', 'Percussion', 'Chaque balle explose à l’impact.', changerA('mitraille', V.explosif)),
   // LES MISSILES
   variation('missile-salve', 'minimissile', 'Salve', 'Chaque tir lâche trois missiles en éventail.', changerA('minimissile', V.gerbe(3, 0.35, 0.6))),
-  variation('missile-fragmentation', 'minimissile', 'Fragmentation', 'Chaque explosion projette six éclats brûlants tout autour.', changerA('minimissile', V.fragments)),
+  variation('missile-fragmentation', 'minimissile', 'Dispersion', 'Chaque explosion projette six éclats brûlants tout autour.', changerA('minimissile', V.fragments)),
   variation('missile-lanceur', 'minimissile', 'Lance-missiles', 'Un lanceur tire des missiles tout autour du vaisseau.', ajouterA('minimissile', (a) => [ajoutee(a, 9, { cadence: a.cadence * 0.75, degats: fois(a, 0.7) })])),
-  variation('missile-drones', 'minimissile', 'Drones', 'Deux drones en orbite tirent des missiles sur les ennemis proches.', ajouterA('minimissile', (a) => drones(a, { cadence: 2.5, degats: fois(a, 0.5), portee: 80, vie: 1.2 }))),
-  variation('missile-incendiaire', 'minimissile', 'Incendiaires', 'Les missiles enflamment ce qu’ils touchent.', changerA('minimissile', V.incendiaire)),
-  variation('missile-cryo', 'minimissile', 'Cryogéniques', 'Les missiles gèlent ce qu’ils touchent et le ralentissent.', changerA('minimissile', V.cryo)),
+  variation('missile-drones', 'minimissile', 'Satellites', 'Deux drones en orbite tirent des missiles sur les ennemis proches.', ajouterA('minimissile', (a) => drones(a, { cadence: 2.5, degats: fois(a, 0.5), portee: 80, vie: 1.2 }))),
+  variation('missile-incendiaire', 'minimissile', 'Thermite', 'Les missiles enflamment ce qu’ils touchent.', changerA('minimissile', V.incendiaire)),
+  variation('missile-cryo', 'minimissile', 'Azote liquide', 'Les missiles gèlent ce qu’ils touchent et le ralentissent.', changerA('minimissile', V.cryo)),
   // LE RAILGUN
   // (L'EXÉCUTION, SA CARTE SUR COUP CRITIQUE, À LA PLACE D'INCENDIAIRE — Keko, 23/11 : « on ne fait pas incendiaire : un seul
   // élément par arme » ; « les coups critiques tuent instantanément les ennemis faibles » — voir `Arme.execute`)
@@ -493,7 +497,7 @@ export const MUTATIONS: Mutation[] = [
   // (FRAGMENTATION EN GRAPPE — Keko, 24/11 : « l'obus lâche 3 autres mini-obus quand il est en haut de sa cloche, qui font
   // le même effet mais réduit » ; autour de l'impact, 40 % des dégâts, la moitié de la zone : Keko ; voir `Arme.grappe` —
   // les six éclats restent aux autres armes)
-  variation('obusier-fragmentation', 'obusier', 'Fragmentation', 'En l’air, l’obus lâche trois mini-obus.', changerA('obusier', (a) => ({ ...a, grappe: { nombre: 3, part: 0.4, zone: 0.5, ecart: 1 } }))),
+  variation('obusier-fragmentation', 'obusier', 'Sous-munitions', 'En l’air, l’obus lâche trois mini-obus.', changerA('obusier', (a) => ({ ...a, grappe: { nombre: 3, part: 0.4, zone: 0.5, ecart: 1 } }))),
   // (INCENDIAIRES, SON ÉLÉMENT — Keko, 24/11 : « on garde les dégâts et on inflige enflammé en plus » : l'obus en cloche ne
   // touche rien en vol, il enflamme toute sa zone en explosant ; Cryogéniques RETIRÉE — « un seul élément par attaque » ;
   // Réplique prend sa place)
@@ -643,18 +647,18 @@ export const VARIATIONS_EN_RESERVE: Mutation[] = [
   variation('harpon-barbele', 'harpon', 'Barbelé', 'Les dégâts du câble montent bien plus haut.', changerA('harpon', (a) => ({ ...a, harpon: a.harpon === undefined ? undefined : { ...a.harpon, max: a.harpon.max * 1.5 } }))),
   variation('harpon-treuil', 'harpon', 'Treuil', 'Les dégâts du câble montent deux fois plus vite.', changerA('harpon', (a) => ({ ...a, harpon: a.harpon === undefined ? undefined : { ...a.harpon, montee: a.harpon.montee / 2 } }))),
   variation('harpon-double', 'harpon', 'Double harpon', 'Un second harpon, sur un autre ennemi.', ajouterA('harpon', (a) => [ajoutee(a, (a.place ?? 20) + 1, { degats: fois(a, 0.7) })])),
-  variation('harpon-cryo', 'harpon', 'Cryogénique', 'Le câble gèle et ralentit l’ennemi harponné.', changerA('harpon', V.cryo)),
-  variation('harpon-incendiaire', 'harpon', 'Incendiaire', 'Le câble enflamme l’ennemi harponné.', changerA('harpon', V.incendiaire)),
-  variation('harpon-fragmentation', 'harpon', 'Fragmentation', 'L’ennemi harponné qui meurt projette six éclats.', changerA('harpon', V.fragments)),
+  variation('harpon-cryo', 'harpon', 'Câble glacé', 'Le câble gèle et ralentit l’ennemi harponné.', changerA('harpon', V.cryo)),
+  variation('harpon-incendiaire', 'harpon', 'Câble brûlant', 'Le câble enflamme l’ennemi harponné.', changerA('harpon', V.incendiaire)),
+  variation('harpon-fragmentation', 'harpon', 'Échardes', 'L’ennemi harponné qui meurt projette six éclats.', changerA('harpon', V.fragments)),
   // L'ESSAIM DE ROQUETTES
   variation('roquettes-nuee', 'roquettes', 'Nuée', 'Deux fois plus de roquettes, un peu moins fortes.', changerA('roquettes', (a) => ({ ...a, essaim: a.essaim === undefined ? undefined : { ...a.essaim, nombre: a.essaim.nombre * 2 }, degats: fois(a, 0.6) }))),
   // (elles explosent déjà toutes — Keko, 22/11 : « une version plus lente et plus grosse zone que les missiles » —, la
   // carte « Explosives » est devenue « Gros calibre », et « Perforantes », qui perdait l'explosion, « Fragmentation »)
-  variation('roquettes-lourdes', 'roquettes', 'Gros calibre', 'Des roquettes plus lentes à venir, plus fortes, qui explosent plus large.', changerA('roquettes', V.lourd)),
-  variation('roquettes-incendiaires', 'roquettes', 'Incendiaires', 'Les roquettes enflamment ce qu’elles touchent.', changerA('roquettes', V.incendiaire)),
-  variation('roquettes-cryo', 'roquettes', 'Cryogéniques', 'Les roquettes gèlent ce qu’elles touchent.', changerA('roquettes', V.cryo)),
-  variation('roquettes-fragmentation', 'roquettes', 'Fragmentation', 'Chaque explosion projette six éclats brûlants tout autour.', changerA('roquettes', V.fragments)),
-  variation('roquettes-ricochet', 'roquettes', 'Ricochet', 'Chaque roquette rebondit sur deux autres ennemis.', changerA('roquettes', V.ricochet)),
+  variation('roquettes-lourdes', 'roquettes', 'Ogives lourdes', 'Des roquettes plus lentes à venir, plus fortes, qui explosent plus large.', changerA('roquettes', V.lourd)),
+  variation('roquettes-incendiaires', 'roquettes', 'Roquettes ardentes', 'Les roquettes enflamment ce qu’elles touchent.', changerA('roquettes', V.incendiaire)),
+  variation('roquettes-cryo', 'roquettes', 'Roquettes givrantes', 'Les roquettes gèlent ce qu’elles touchent.', changerA('roquettes', V.cryo)),
+  variation('roquettes-fragmentation', 'roquettes', 'Pluie de débris', 'Chaque explosion projette six éclats brûlants tout autour.', changerA('roquettes', V.fragments)),
+  variation('roquettes-ricochet', 'roquettes', 'Rebonds', 'Chaque roquette rebondit sur deux autres ennemis.', changerA('roquettes', V.ricochet)),
 ]
 /** La carte d'une spéciale. */
 // (une carte d'élément vaut pour toutes les armes)

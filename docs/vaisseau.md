@@ -9195,3 +9195,18 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   réfractions sont parties (`BaliseLaser.branches`, `ennemisDeLaBranche`, l'événement `refraction`). Test (tout
   critique : 7 explosions en 4 s ; le voisin à 12 de la cible, hors du rayon, 1 075 = 7 × 154 ; sans la carte, rien).
   LA BALISE LASER : Cryogénique, Deux balises, Éclatement, Longue vie, Résonance, Surcharge.
+- DES NOMS DE CARTES SPÉCIALES TOUS DIFFÉRENTS (Keko, 25/11 : « attention avec les titres cryogénie, cryogénique, des
+  différents éléments des armes ; on veut vraiment que les noms des cartes spéciales soient différents ; fais
+  attention, passe tout en vérification ») : `talents.verif.ts` compare les 82 cartes spéciales — les armes, les
+  variations, les cartes d'élément, celles en réserve comprises — et refuse deux noms pareils aux accents, à la casse
+  et au pluriel près, ou qui partagent la racine d'un mot (ses six premières lettres), sauf les mots qui disent sur quoi
+  porte la carte (laser, missile, balle, grenade, roquette, câble, balise, harpon, double, lance). Il en trouvait 31
+  paires. RENOMMÉES (les noms sont de moi ; celle qui garde le nom simple est celle qui a été validée, ou qui le porte le
+  mieux) : la Mitrailleuse, Incendiaires → Phosphore, Explosives → Percussion ; les Missiles, Fragmentation →
+  Dispersion, Drones → Satellites, Incendiaires → Thermite, Cryogéniques → Azote liquide ; l'Obusier, Fragmentation →
+  Sous-munitions (il garde Incendiaires, les Grenades gardent Fragmentation, la Balise Cryogénique, la Mitrailleuse
+  Drones, le Canon laser Ricochet, le Railgun Gros calibre) ; EN RÉSERVE, le Harpon : Câble glacé, Câble brûlant,
+  Échardes ; les Roquettes : Ogives lourdes, Roquettes ardentes, Roquettes givrantes, Pluie de débris, Rebonds. VU en
+  capture : Sous-munitions, Azote liquide, Percussion tiennent sur leur ligne. Les cartes ordinaires (Cadence, Givre,
+  Électrocution…) ne sont pas dans la comparaison — leurs noms sont dans la page ; « Cadence montante », « Grenades
+  givrées » et « Électrique » en sont proches.
