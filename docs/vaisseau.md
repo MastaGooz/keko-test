@@ -9262,3 +9262,8 @@ Keko : « Longue vie, ça va pas du tout, car on a déjà des cartes qui pourron
 - **Le dessin** : de un à trois pixels de part et d'autre du rayon, les liserés rouges dehors, le rose dedans, puis un cœur blanc qui s'élargit ; la lueur du rayon et celle de la balise grandissent et s'avivent.
 - **Le nom** : « Concentration » est pris (le canon laser) ; « Focalisation ». La carte : « Plus le rayon dure, plus il est épais et puissant. » (quatre lignes ; la première phrase en faisait six).
 - La balise a maintenant : Cryogénique, Surcharge, Éclatement, Résonance, Décharge, Focalisation.
+### La carte « Zone et portée », toujours (25/11)
+
+Keko : « La carte portée devrait toujours s'appeler zone et portée. Toujours, quelle que soit l'arme, comme ça on ne se prend pas la tête : il n'y a pas de carte portée, de carte zone et de carte zone et portée. Il y a une seule carte. » Elle s'appelait « Portée » sur une arme sans zone, « Zone et portée » sur une arme à zone, et disait « de zone » seulement sur une arme qui n'a qu'une zone (`effetDeLaPortee`, retiré). Désormais `STATS_DES_CARTES.portee` : « Zone et portée », « +X % de portée et de zone de … », partout. La règle ne change pas : la carte allonge la portée et grandit toute zone (`armeAmelioree`).
+
+Mesuré au passage (Keko : « est-ce qu'il y a des cartes dans le canon laser qui ne sont pas utilisées ? ») : son pool est Dégâts, Critique, Impact, Cadence, Zone et portée, avec ou sans variation, et les cinq agissent ; Laser acide ouvre en plus la carte Corrosion de toutes les armes. Deux effets de variation ne grandissent avec aucune carte : la distance des rebonds du Ricochet (80) et la durée du rayon de Concentration (0,5 s).

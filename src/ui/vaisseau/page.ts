@@ -2034,7 +2034,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     critique: { nom: 'Critique', effet: 'de chance de critique' },
     critiques: { nom: 'Impact', effet: 'de dégâts critiques' },
     cadence: { nom: 'Cadence', effet: 'de cadence' },
-    portee: { nom: 'Portée', effet: 'de portée' },
+    portee: { nom: 'Zone et portée', effet: 'de portée et de zone' },
     pose: { nom: 'Durée', effet: 'de durée' },
     // (LES ÉTATS DISENT CE QU'ILS FONT — Keko, 24/11 : « +X % de dégâts infligés aux ennemis affectés par corrosion », « +X %
     // de ralentissement aux ennemis affectés par givre », « +X % de dégâts de l'effet de brûlure » ; le feu s'appelle Brûlure ;
@@ -2235,12 +2235,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // 23/11, « un truc uniforme »)
     const st0 = STATS_DES_CARTES[ta.stat]
     // (le blindage des Xénoïdes, ce sont leurs points de vie — Keko, 21/11)
-    // (la Portée d'une arme qui a une zone la grandit aussi — Keko, 22/11 : la carte le dit ; « toutes les armes », si l'une
-    // des armes portées en a une)
-    // (une arme qui n'a qu'une zone — les traînées — : « de zone » seulement)
-    const visee = ta.cible.sorte === 'arme' ? CONF.armes.find((x) => x.id === (ta.cible as { arme: string }).arme) : undefined
-    const effetDeLaPortee = ta.cible.sorte === 'armes' ? (CONF.armes.some(aUneZone) ? 'de portée et de zone' : null) : visee !== undefined && aUneZone(visee) ? (visee.portee > 0 ? 'de portée et de zone' : 'de zone') : null
-    const st = ta.stat === 'blindage' && ta.cible.sorte === 'faction' && ta.cible.race === 'essaim' ? { nom: 'Points de vie', effet: 'de points de vie' } : ta.stat === 'portee' && effetDeLaPortee !== null ? { nom: effetDeLaPortee === 'de portée et de zone' ? 'Zone et portée' : 'Portée', effet: effetDeLaPortee } : st0
+    // (« ZONE ET PORTÉE », TOUJOURS — Keko, 25/11 : « la carte portée devrait toujours s'appeler zone et portée, quelle que
+    // soit l'arme ; il n'y a qu'une seule carte » : elle s'appelait « Portée », « Zone et portée » ou disait « de zone »
+    // selon l'arme visée — voir `STATS_DES_CARTES`)
+    const st = ta.stat === 'blindage' && ta.cible.sorte === 'faction' && ta.cible.race === 'essaim' ? { nom: 'Points de vie', effet: 'de points de vie' } : st0
     let ly = y + 44
     titreEnRelief(st.nom, ly)
     // un filet orné : deux traits, un losange au milieu
