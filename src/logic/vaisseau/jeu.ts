@@ -792,8 +792,14 @@ export type Arme = {
    * `trajet` secondes, et revient, tant que la balise vit (voir `ondeDuLien`) ; à chaque passage, elle frappe une fois
    * tout insecte à `rayon` d'elle — plus large que le rayon — de `part` fois les dégâts de l'arme, un coup qui tire son
    * critique, avec l'élément de l'arme.
+   * `barre` (« Fauchage », Keko, 25/11 : « une barre perpendiculaire au laser qui fait l'aller-retour entre le joueur et la
+   * balise, une ligne assez large qui balaye sur plus large ; des dégâts inférieurs à la résonance ») : UNE BARRE EN
+   * TRAVERS DU RAYON court comme l'onde, de la balise au vaisseau en `trajet` secondes, et revient (voir `barreDuLien`) ;
+   * à chaque passage, elle frappe une fois tout insecte qu'elle couvre — à `largeur` du rayon de part et d'autre, à
+   * `epaisseur` d'elle le long du rayon — de `part` fois les dégâts de l'arme, un coup qui tire son critique, avec
+   * l'élément de l'arme.
    */
-  lien?: { duree: number; vol: number; epaisseur: number; explosion?: { rayon: number; part: number }; eclat?: { rayon: number; part: number }; onde?: { trajet: number; rayon: number; part: number } }
+  lien?: { duree: number; vol: number; epaisseur: number; explosion?: { rayon: number; part: number }; eclat?: { rayon: number; part: number }; onde?: { trajet: number; rayon: number; part: number }; barre?: { trajet: number; largeur: number; epaisseur: number; part: number } }
   /**
    * UN RAYON QUI BALAIE (la Salamandre, Keko, 15/11 : « un rayon à haute énergie qui part au-dessus du vaisseau et
    * descend en décrivant un cercle autour de lui : il enflamme et fait de gros dégâts ») : toutes les `tous` secondes, si
@@ -5749,23 +5755,38 @@ export type BaliseLaser = {
   tics?: Record<number, number>
   /** LE DERNIER PASSAGE DE SON ONDE qui a frappé chaque insecte (voir `lien.onde`). */
   ondes?: Record<number, number>
+  /** LE DERNIER PASSAGE DE SA BARRE qui a frappé chaque insecte (voir `lien.barre`). */
+  barres?: Record<number, number>
+}
+/** Ce qui court le long du rayon d'une balise : où, `s` de 0 (la balise) à 1 (le vaisseau), le passage, le sens, et l'axe du rayon. */
+export type CourseDuLien = { x: number; y: number; s: number; passe: number; vers: 1 | -1; ux: number; uy: number }
+/** Une course le long du rayon : partie de la balise à sa pose, jusqu'au bord du vaisseau en `trajet` secondes, retour, et ainsi de suite. */
+function courseDuLien(c: ConfigVaisseau, m: Monde, b: BaliseLaser, trajet: number, t: number): CourseDuLien | null {
+  if (b.posee === null) return null
+  const age = Math.max(0, t - b.posee)
+  const passe = Math.floor(age / trajet)
+  const f = age / trajet - passe
+  const s = passe % 2 === 0 ? f : 1 - f
+  const v = m.vaisseau
+  const L = Math.hypot(v.x - b.x, v.y - b.y) || 1
+  const ux = (v.x - b.x) / L
+  const uy = (v.y - b.y) / L
+  const bord = Math.max(0, L - c.rayon - 1)
+  return { x: b.x + ux * bord * s, y: b.y + uy * bord * s, s, passe, vers: passe % 2 === 0 ? 1 : -1, ux, uy }
 }
 /**
  * OÙ EST L'ONDE D'UNE BALISE LASER à l'instant `t` (voir `lien.onde`) : partie de la balise à sa pose, elle court jusqu'au
  * bord du vaisseau en `trajet` secondes, revient, repart — `s` de 0 (la balise) à 1 (le vaisseau), `passe` le numéro de
  * l'aller ou du retour en cours ; null sans onde ou balise en vol.
  */
-export function ondeDuLien(c: ConfigVaisseau, m: Monde, b: BaliseLaser, t = m.t): { x: number; y: number; s: number; passe: number; vers: 1 | -1 } | null {
+export function ondeDuLien(c: ConfigVaisseau, m: Monde, b: BaliseLaser, t = m.t): CourseDuLien | null {
   const on = c.armes[b.arme]?.lien?.onde
-  if (on === undefined || b.posee === null) return null
-  const age = Math.max(0, t - b.posee)
-  const passe = Math.floor(age / on.trajet)
-  const f = age / on.trajet - passe
-  const s = passe % 2 === 0 ? f : 1 - f
-  const v = m.vaisseau
-  const L = Math.hypot(v.x - b.x, v.y - b.y) || 1
-  const bord = Math.max(0, L - c.rayon - 1)
-  return { x: b.x + ((v.x - b.x) / L) * bord * s, y: b.y + ((v.y - b.y) / L) * bord * s, s, passe, vers: passe % 2 === 0 ? 1 : -1 }
+  return on === undefined ? null : courseDuLien(c, m, b, on.trajet, t)
+}
+/** OÙ EST LA BARRE D'UNE BALISE LASER à l'instant `t` (voir `lien.barre`) : la même course que l'onde, à son propre `trajet`. */
+export function barreDuLien(c: ConfigVaisseau, m: Monde, b: BaliseLaser, t = m.t): CourseDuLien | null {
+  const ba = c.armes[b.arme]?.lien?.barre
+  return ba === undefined ? null : courseDuLien(c, m, b, ba.trajet, t)
 }
 /** Toutes les combien de secondes passées dans le rayon d'une balise un insecte tire un critique (voir `Arme.lien`). */
 export const TIC_DU_LIEN = 0.5
@@ -5872,6 +5893,24 @@ function menerLesBalisesLaser(c: ConfigVaisseau, m: Monde, dt: number, ev: Evene
         if (a.gel !== undefined) geler(c, m, e, a.gel.duree, a.gel.ralenti, ev, true)
         const critique = critiqueTire(c, m, a, e)
         e.pv -= a.degats * on.part * (critique ? facteurSur(c, m, a, e) : 1)
+        ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })
+        if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
+      }
+    }
+    // (LE FAUCHAGE : la barre frappe une fois par passage tout insecte qu'elle couvre — voir `lien.barre`)
+    const ba = li.barre
+    const pb = barreDuLien(c, m, b)
+    if (ba !== undefined && pb !== null) {
+      const vus = (b.barres ??= {})
+      for (const e of [...m.ennemis]) {
+        const dx = e.corps.x - pb.x
+        const dy = e.corps.y - pb.y
+        const r = rayonDe(c, e)
+        if (vus[e.id] === pb.passe || Math.abs(dx * pb.ux + dy * pb.uy) > ba.epaisseur + r || Math.abs(dx * pb.uy - dy * pb.ux) > ba.largeur + r) continue
+        vus[e.id] = pb.passe
+        if (a.gel !== undefined) geler(c, m, e, a.gel.duree, a.gel.ralenti, ev, true)
+        const critique = critiqueTire(c, m, a, e)
+        e.pv -= a.degats * ba.part * (critique ? facteurSur(c, m, a, e) : 1)
         ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })
         if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
       }

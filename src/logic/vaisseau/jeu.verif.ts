@@ -3732,6 +3732,27 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   }
   const [rs, sansRs] = [resonne(true), resonne(false)]
   verifier(`la Résonance : l'insecte à 11 du rayon frappé ${rs.coups} fois en 4 s (8), ${rs.pris} (8 × 64 = 512) ; sans la carte, ${sansRs.pris} (0)`, rs.coups === 8 && rs.pris === 512 && sansRs.pris === 0)
+  // (LE FAUCHAGE — Keko, 25/11 : une barre en travers du rayon fait les mêmes allers-retours, plus large ; à 0,7 s par
+  // trajet, 22 de part et d'autre : un insecte à 20 du rayon est frappé une fois par passage, 128 × 0,3 = 38,4 chacun ;
+  // un autre à 40, hors de la barre, jamais)
+  const fauche = (avec: boolean): { pris: number; coups: number; loin: number } => {
+    const cfg6 = { ...cfg, passifs: { ...cfg.passifs, critique: 0 }, armes: [{ ...lien, lien: { ...lien.lien, ...(avec ? { barre: { trajet: 0.7, largeur: 22, epaisseur: 3, part: 0.3 } } : {}) } }] }
+    const w6 = nouveauMonde(cfg6, 9)
+    w6.invasion.prochainA = 1e9
+    const [ci, cote, loin] = [[60, 0], [40, 20], [40, 40]].map(([x, y], k): Ennemi => ({ id: 990 + k, corps: { ...nouveauVaisseau(), x, y }, pv: 1e9, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9 }))
+    w6.ennemis.push(ci, cote, loin)
+    w6.verrou = ci.id
+    let coups = 0
+    let fini = false
+    for (let i = 0; i < 60 * 6 && !fini; i++)
+      for (const ev of avancerLeMonde(cfg6, w6, 1 / 60, { x: 0, y: 0 }).evenements) {
+        if (ev.type === 'ennemiTouche' && ev.id === cote.id) coups++
+        if (ev.type === 'baliseFinie') fini = true
+      }
+    return { pris: Math.round(1e9 - cote.pv), coups, loin: Math.round(1e9 - loin.pv) }
+  }
+  const [fa, sansFa] = [fauche(true), fauche(false)]
+  verifier(`le Fauchage : l'insecte à 20 du rayon frappé ${fa.coups} fois en 4 s (6 passages), ${fa.pris} (${fa.coups} × 38,4) — moins que la Résonance par coup (64) ; celui à 40, ${fa.loin} (0) ; sans la carte, ${sansFa.pris} (0)`, fa.coups >= 5 && fa.coups <= 6 && Math.abs(fa.pris - fa.coups * 38.4) < 1 && fa.loin === 0 && sansFa.pris === 0)
   verifier(`la Surcharge givrée : la cible sur le rayon givrée (${(vise.geleA ?? -1) > w3.t}), le voisin à 25 de la balise pas avant l'explosion (${avantLaFin}), givré par elle (${(voisin.geleA ?? -1) > w3.t}), touché (${1e9 - voisin.pv})`, fin3 && (vise.geleA ?? -1) > w3.t && avantLaFin && (voisin.geleA ?? -1) > w3.t && voisin.pv < 1e9)
 }
 

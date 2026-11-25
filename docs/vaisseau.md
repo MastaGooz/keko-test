@@ -9214,4 +9214,16 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   devient une BOULE D'ÉNERGIE rouge, du rayon de sa frappe (8, dessinée à 6,4 et sa lueur jusqu'à 12), éclairée en haut
   à gauche — bord sombre, corps rouge, reflet rose, point blanc —, un anneau qui frémit autour, et trois boules qui
   pâlissent et rapetissent derrière elle. La règle ne bouge pas. VU en capture : elle se lit comme une sphère qui court
-  le long du rayon.
+  le long du rayon.- LE FAUCHAGE À LA PLACE DE DEUX BALISES (Keko, 25/11 : « une barre perpendiculaire au laser qui fait l'aller-retour
+  entre le joueur et la balise ; un peu comme la résonance, sauf que c'est une ligne perpendiculaire assez large qui
+  balaye sur plus large ; des dégâts inférieurs à la résonance ») : « Une large barre d'énergie balaie le rayon d'un
+  bout à l'autre. » (quatre lignes, VU en capture ; « en travers du rayon » en plus en faisait six). Deux balises est
+  celle qui part : une seconde balise ajoutait une attaque à côté, contre la règle. `lien.barre` = { trajet 0,7, largeur
+  22, epaisseur 3, part 0,3 }, chiffres de moi : la même course que l'onde (`courseDuLien`, partagée par `ondeDuLien`
+  et `barreDuLien`), à son propre rythme ; à chaque passage, elle frappe une fois ce qu'elle couvre — 22 de part et
+  d'autre du rayon, 3 le long —, 30 % des dégâts (37), un coup qui tire son critique, avec le givre (`BaliseLaser.barres`).
+  LE DESSIN : un cœur blanc, un liseré rose de chaque côté, une lueur rouge semée le long, les bouts plus vifs, trois
+  échos derrière (VU en capture, avec la sphère de la Résonance). ET LA RÉSONANCE GRANDIT (« augmente un petit peu le
+  rayon de la résonance et ses dégâts ») : rayon 8 → 10, 50 → 60 % des dégâts (73 par coup). Test : un insecte à 20 du
+  rayon frappé 6 fois en 4 s, 230 (6 × 38,4) ; à 40, rien ; sans la carte, rien.
+  LA BALISE LASER : Cryogénique, Éclatement, Fauchage, Longue vie, Résonance, Surcharge.

@@ -562,12 +562,17 @@ export const MUTATIONS: Mutation[] = [
   // givrée n'est pas finie que la deuxième se déclenche » : la glace dure 0,7 s)
   variation('grenades-double', 'grenades', 'Double explosion', 'Chaque grenade explose deux fois de suite.', changerA('grenades', (a) => ({ ...a, double: { delai: 0.8, part: 0.5 } }))),
   // LA BALISE LASER
-  variation('lien-double', 'lien', 'Deux balises', 'Une seconde balise, son propre rayon.', ajouterA('lien', (a) => [ajoutee(a, (a.place ?? 20) + 1, { degats: fois(a, 0.7) })])),
+  // (FAUCHAGE, à la place de Deux balises — une seconde balise ajoutait une attaque à côté — Keko, 25/11 : « une barre
+  // perpendiculaire au laser qui fait l'aller-retour entre le joueur et la balise ; une ligne assez large qui balaye sur
+  // plus large ; des dégâts inférieurs à la résonance » : 22 de part et d'autre du rayon, 0,7 s par trajet, 30 % des
+  // dégâts — voir `lien.barre` ; chiffres de moi)
+  variation('lien-barre', 'lien', 'Fauchage', 'Une large barre d’énergie balaie le rayon d’un bout à l’autre.', changerA('lien', (a) => ({ ...a, lien: a.lien === undefined ? undefined : { ...a.lien, barre: { trajet: 0.7, largeur: 22, epaisseur: 3, part: 0.3 } } }))),
   variation('lien-longue', 'lien', 'Longue vie', 'Les balises restent actives bien plus longtemps.', changerA('lien', (a) => ({ ...a, lien: a.lien === undefined ? undefined : { ...a.lien, duree: a.lien.duree * 1.6 } }))),
   // (RÉSONANCE, à la place de Faisceau large — Keko, 25/11 : « une onde d'énergie qui fait des allers-retours le long du
   // rayon et fait des dégâts aux ennemis qu'elle traverse » : de la balise au vaisseau en 0,5 s, et retour ; une frappe
-  // par passage à 8 d'elle, la moitié des dégâts — voir `lien.onde` ; chiffres de moi)
-  variation('lien-onde', 'lien', 'Résonance', 'Une onde d’énergie fait des allers-retours le long du rayon.', changerA('lien', (a) => ({ ...a, lien: a.lien === undefined ? undefined : { ...a.lien, onde: { trajet: 0.5, rayon: 8, part: 0.5 } } }))),
+  // par passage à 8 d'elle, la moitié des dégâts — voir `lien.onde` ; chiffres de moi ; puis, avec le Fauchage, « augmente
+  // un petit peu le rayon de la résonance et ses dégâts » : 10, 60 %)
+  variation('lien-onde', 'lien', 'Résonance', 'Une onde d’énergie fait des allers-retours le long du rayon.', changerA('lien', (a) => ({ ...a, lien: a.lien === undefined ? undefined : { ...a.lien, onde: { trajet: 0.5, rayon: 10, part: 0.6 } } }))),
   variation('lien-surcharge', 'lien', 'Surcharge', 'À la fin de sa vie, la balise explose.', changerA('lien', (a) => ({ ...a, lien: a.lien === undefined ? undefined : { ...a.lien, explosion: { rayon: 30, part: 3 } } }))),
   // (ÉCLATEMENT, SA VARIATION SUR COUP CRITIQUE — Keko, 25/11 : d'abord la Réfraction, un second rayon vers le voisin ;
   // puis « à la place de rebondir sur un autre ennemi, une petite explosion de zone autour de l'ennemi qui subit le
