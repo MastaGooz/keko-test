@@ -621,7 +621,9 @@ export type Arme = {
   // partent en chasse ; la cible verrouillée s'il en existe une ; sinon, ils tirent en tournant autour de la cible la plus
   // prioritaire, un mini-boss, un boss ou un gros ennemi » : `chasse` — plus d'ailier, tous les drones vont au même
   // insecte à `laisse` du vaisseau (160) : le verrouillé, sinon le plus fort — boss, mini-boss, cuirassier, cornu,
-  // moucheron, roche ; à rang égal, ils gardent le leur, sinon le plus proche du vaisseau —, et lui tournent autour)
+  // moucheron, roche ; à rang égal, ils gardent le leur, sinon le plus proche du vaisseau —, et lui tournent autour ;
+  // LE VERROUILLÉ, ILS LE SUIVENT À TOUTE DISTANCE, la laisse ne vaut que pour la proie qu'ils choisissent — Keko, 25/11 :
+  // « même si on s'en va très loin, les chasseurs ne la lâchent jamais »)
   orbite?: { rayon: number; vitesse: number; phase: number; laisse?: number; vol?: number; braquage?: number; autour?: number; tour?: number; formation?: Vecteur; ailier?: boolean; chasse?: boolean }
   /**
    * DES TOURELLES POSÉES (l'Ingénieur, Keko, 15/11 : « quelque chose de mécanique, carré, qui pose des petites tours sur
@@ -6324,8 +6326,9 @@ function menerLesDrones(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]
     const aLaLaisse = (e: Ennemi): boolean => (o.ailier === true ? Math.hypot(e.corps.x - d.x, e.corps.y - d.y) <= a.portee : Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= laisse)
     let cible: Ennemi | undefined = d.cible === null ? undefined : m.ennemis.find((e) => e.id === d.cible && aLaLaisse(e))
     const ve = ennemiVerrouille(m)
-    if (ve !== null && aLaLaisse(ve)) cible = ve
-    // (EN CHASSE — voir `orbite.chasse` : la proie de l'escadrille, la même pour tous)
+    // (EN CHASSE, LE VERROUILLÉ À TOUTE DISTANCE — Keko, 25/11 : « même si on s'en va très loin, les chasseurs ne la
+    // lâchent jamais » ; sinon, la proie de l'escadrille, la même pour tous — voir `orbite.chasse`)
+    if (ve !== null && (o.chasse === true || aLaLaisse(ve))) cible = ve
     else if (o.chasse === true) cible = proie
     if (cible === undefined) {
       const prises = new Set(m.drones.filter((x, j) => j !== k && x.cible !== null).map((x) => x.cible))

@@ -3300,24 +3300,25 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
 
 // LA CHASSE DE L'ESCORTE (Keko, 25/11 — voir `orbite.chasse`) : un moucheron à 40 du vaisseau, un cuirassier à 140, un
 // autre à 200 (hors de la laisse, 160) : les deux avions vont tourner autour du cuirassier à 140 et le touchent ; le
-// moucheron verrouillé, ils y vont ; sans la carte, ailiers, ils restent en formation
+// moucheron verrouillé, ils y vont ; LE CUIRASSIER HORS DE LA LAISSE verrouillé, ils y vont aussi (Keko : « ils ne la
+// lâchent jamais ») ; sans la carte, ailiers, ils restent en formation
 {
   const escadrille = (chasse: boolean): Arme[] => [0, 1].map((k) => ({ id: 'escorte', cadence: 0.45, degats: 24, portee: 110, vitesse: 320, vie: 0.5, dispersion: 0, guide: false, tousSens: true, place: 20 + k, orbite: { rayon: 30, vitesse: 2.6, phase: k * Math.PI, vol: 230, braquage: 9, autour: 34, formation: { x: -5, y: k === 0 ? -16 : 16 }, ...(chasse ? { ailier: false, chasse: true, laisse: 160 } : { ailier: true }) } }) as Arme)
-  const essai = (chasse: boolean, verrou: boolean): { pres: number; loin: number; horsLaisse: number; dist: number[] } => {
+  const essai = (chasse: boolean, verrou: number | null): { pres: number; loin: number; horsLaisse: number; dist: number[] } => {
     const cm = { ...VAISSEAU, coque: 1e9, armes: escadrille(chasse), champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false } } as ConfigVaisseau
     const w = nouveauMonde(cm, 11)
     w.invasion.prochainA = 1e9
     const insecte = (id: number, x: number, sorte?: SorteDInsecte): Ennemi => ({ id, corps: { ...nouveauVaisseau(), x, y: 0 }, pv: 1e9, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9, ...(sorte === undefined ? {} : { sorte }) })
     const [moucheron, cuirassier, lointain] = [insecte(850, 40), insecte(851, 140, 'cuirassier'), insecte(852, -200, 'cuirassier')]
     w.ennemis.push(moucheron, cuirassier, lointain)
-    if (verrou) w.verrou = 850
-    for (let i = 0; i < 60 * 3; i++) avancerLeMonde(cm, w, 1 / 60, { x: 0, y: 0 })
-    const cible = verrou ? moucheron : cuirassier
+    w.verrou = verrou
+    for (let i = 0; i < 60 * 4; i++) avancerLeMonde(cm, w, 1 / 60, { x: 0, y: 0 })
+    const cible = verrou === 850 ? moucheron : verrou === 852 ? lointain : cuirassier
     return { pres: 1e9 - moucheron.pv, loin: 1e9 - cuirassier.pv, horsLaisse: 1e9 - lointain.pv, dist: w.drones.map((d) => Math.round(Math.hypot(d.x - cible.corps.x, d.y - cible.corps.y))) }
   }
-  const [libre, verrouille, ailiers] = [essai(true, false), essai(true, true), essai(false, false)]
+  const [libre, verrouille, auLoin, ailiers] = [essai(true, null), essai(true, 850), essai(true, 852), essai(false, null)]
   // (le moucheron est sur leur route : une balle peut le toucher en passant)
-  verifier(`la chasse : les avions tournent autour du cuirassier (à ${libre.dist.join(', ')}, vers 34), il prend ${libre.loin}, le moucheron ${libre.pres} (au plus une balle), celui hors de la laisse ${libre.horsLaisse} (0) ; le moucheron verrouillé, ils y vont (à ${verrouille.dist.join(', ')}) ; sans la carte, ils restent en formation (à ${ailiers.dist.join(', ')} du cuirassier, plus de 100)`, libre.dist.every((x) => Math.abs(x - 34) < 10) && libre.loin > 0 && libre.pres <= 24 && libre.horsLaisse === 0 && verrouille.dist.every((x) => Math.abs(x - 34) < 10) && ailiers.dist.every((x) => x > 100))
+  verifier(`la chasse : les avions tournent autour du cuirassier (à ${libre.dist.join(', ')}, vers 34), il prend ${libre.loin}, le moucheron ${libre.pres} (au plus une balle), celui hors de la laisse ${libre.horsLaisse} (0) ; le moucheron verrouillé, ils y vont (à ${verrouille.dist.join(', ')}) ; celui à 200 verrouillé, hors de la laisse, aussi (à ${auLoin.dist.join(', ')}, il prend ${auLoin.horsLaisse}) ; sans la carte, ils restent en formation (à ${ailiers.dist.join(', ')} du cuirassier, plus de 100)`, libre.dist.every((x) => Math.abs(x - 34) < 10) && libre.loin > 0 && libre.pres <= 24 && libre.horsLaisse === 0 && verrouille.dist.every((x) => Math.abs(x - 34) < 10) && auLoin.dist.every((x) => Math.abs(x - 34) < 10) && auLoin.horsLaisse > 0 && ailiers.dist.every((x) => x > 100))
 }
 
 // LA CADENCE MONTANTE DE L'ESCORTE (Keko, 25/11, à la place du Kamikaze — voir `Arme.montee`) : un avion, un cuirassier

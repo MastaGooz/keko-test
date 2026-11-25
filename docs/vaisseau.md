@@ -9144,3 +9144,9 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   `kamikaze`) ; il reste dans `git log`. Deux tests (3 / 6 / 3 balles par seconde de 0 à 1 s, de 4 à 5 s, puis sur une
   autre cible ; 3 / 2 / 2 sans la carte ; les quatre de l'Escadrille, dans les deux ordres).
   L'ESCORTE : Acidification, Cadence montante, Chasse, Désignation, Escadrille, Mini-missiles.
+- EN CHASSE, LE VERROUILLÉ À TOUTE DISTANCE (Keko, 25/11, l'escorte validée : « quand on verrouille une cible, même si
+  on s'en va très loin, les chasseurs ne la lâchent jamais ») : la laisse de 160 ne vaut plus que pour la proie que
+  l'escadrille choisit seule ; le verrouillé, elle le suit où qu'il soit (sans la carte, les ailiers gardent leur
+  portée de tir). Le test de la Chasse y ajoute un cuirassier verrouillé à 200, hors de la laisse : les deux avions
+  lui tournent autour et le touchent. MESURÉ hors du jeu : le vaisseau qui file à droite 8 s, à 1 041 de sa cible,
+  les avions restent à 35 d'elle et tirent (792 dégâts).
