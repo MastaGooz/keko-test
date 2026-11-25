@@ -793,8 +793,11 @@ export type Arme = {
    * `trajet` secondes, et revient, tant que la balise vit (voir `ondeDuLien`) ; à chaque passage, elle frappe une fois
    * tout insecte à `rayon` d'elle — plus large que le rayon — de `part` fois les dégâts de l'arme, un coup qui tire son
    * critique, avec l'élément de l'arme.
+   * `decharge` (« Décharge », Keko, 25/11 : « une décharge énergétique assez large à l'endroit où la balise est posée
+   * initialement ») : À L'INSTANT OÙ ELLE SE POSE, la balise décharge sur `rayon` autour d'elle, `part` fois les dégâts de
+   * l'arme, un coup qui tire son critique, avec l'élément de l'arme (événement `dechargeDeBalise`).
    */
-  lien?: { duree: number; vol: number; epaisseur: number; explosion?: { rayon: number; part: number }; eclat?: { rayon: number; part: number }; onde?: { trajet: number; rayon: number; part: number } }
+  lien?: { duree: number; vol: number; epaisseur: number; explosion?: { rayon: number; part: number }; eclat?: { rayon: number; part: number }; onde?: { trajet: number; rayon: number; part: number }; decharge?: { rayon: number; part: number } }
   /**
    * UN RAYON QUI BALAIE (la Salamandre, Keko, 15/11 : « un rayon à haute énergie qui part au-dessus du vaisseau et
    * descend en décrivant un cercle autour de lui : il enflamme et fait de gros dégâts ») : toutes les `tous` secondes, si
@@ -1742,6 +1745,8 @@ export type Evenement =
   /** Une balise est posée ; une balise s'éteint ; une ligne entre deux balises, franchie, s'éclaire (voir `Arme.balise`). */
   | { type: 'balisePosee'; x: number; y: number; arme: string }
   | { type: 'baliseFinie'; x: number; y: number; arme: string }
+  /** Une balise laser décharge en se posant (voir `lien.decharge`). */
+  | { type: 'dechargeDeBalise'; x: number; y: number; rayon: number }
   | { type: 'ligne'; x0: number; y0: number; x1: number; y1: number; arme: string }
   /** Une boule de napalm s'écrase en flaque de feu (voir `Arme.napalm`). */
   | { type: 'flaque'; x: number; y: number; rayon: number }
@@ -5821,6 +5826,19 @@ function menerLesBalisesLaser(c: ConfigVaisseau, m: Monde, dt: number, ev: Evene
         b.vx = 0
         b.vy = 0
         ev.push({ type: 'balisePosee', x: b.x, y: b.y, arme: a.id })
+        // (LA DÉCHARGE : en se posant, elle frappe tout ce qui est à son rayon — voir `lien.decharge`)
+        const dc = li.decharge
+        if (dc !== undefined) {
+          ev.push({ type: 'dechargeDeBalise', x: b.x, y: b.y, rayon: dc.rayon })
+          for (const e of [...m.ennemis]) {
+            if (Math.hypot(e.corps.x - b.x, e.corps.y - b.y) > dc.rayon + rayonDe(c, e)) continue
+            if (a.gel !== undefined) geler(c, m, e, a.gel.duree, a.gel.ralenti, ev, true)
+            const critique = critiqueTire(c, m, a, e)
+            e.pv -= a.degats * dc.part * (critique ? facteurSur(c, m, a, e) : 1)
+            ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })
+            if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
+          }
+        }
       }
       continue
     }

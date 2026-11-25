@@ -3745,6 +3745,28 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   }
   const [rs, sansRs] = [resonne(true), resonne(false)]
   verifier(`la Résonance : l'insecte à 11 du rayon frappé ${rs.coups} fois en 4 s (8), ${rs.pris} (8 × 64 = 512) ; sans la carte, ${sansRs.pris} (0)`, rs.coups === 8 && rs.pris === 512 && sansRs.pris === 0)
+  // (LA DÉCHARGE — Keko, 25/11 : en se posant, la balise décharge autour d'elle ; posée à 80, un insecte à 30 d'elle, hors
+  // du rayon, est frappé une fois, 128 × 1,5 = 192 ; un autre à 55, hors de la décharge, jamais)
+  const decharge = (avec: boolean): { pris: number; coups: number; loin: number; evs: number } => {
+    const cfg7 = { ...cfg, passifs: { ...cfg.passifs, critique: 0 }, armes: [{ ...lien, lien: { ...lien.lien, ...(avec ? { decharge: { rayon: 36, part: 1.5 } } : {}) } }] }
+    const w7 = nouveauMonde(cfg7, 9)
+    w7.invasion.prochainA = 1e9
+    const [ci, cote, loin] = [[60, 0], [80, 30], [80, 55]].map(([x, y], k): Ennemi => ({ id: 990 + k, corps: { ...nouveauVaisseau(), x, y }, pv: 1e9, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9 }))
+    w7.ennemis.push(ci, cote, loin)
+    w7.verrou = ci.id
+    let coups = 0
+    let evs = 0
+    let fini = false
+    for (let i = 0; i < 60 * 6 && !fini; i++)
+      for (const ev of avancerLeMonde(cfg7, w7, 1 / 60, { x: 0, y: 0 }).evenements) {
+        if (ev.type === 'ennemiTouche' && ev.id === cote.id) coups++
+        if (ev.type === 'dechargeDeBalise') evs++
+        if (ev.type === 'baliseFinie') fini = true
+      }
+    return { pris: Math.round(1e9 - cote.pv), coups, loin: Math.round(1e9 - loin.pv), evs }
+  }
+  const [dch, sansDch] = [decharge(true), decharge(false)]
+  verifier(`la Décharge : ${dch.evs} décharge à la pose (1) ; l'insecte à 30 de la balise frappé ${dch.coups} fois (1), ${dch.pris} (192) ; celui à 55, ${dch.loin} (0) ; sans la carte, ${sansDch.pris} (0), ${sansDch.evs} décharge`, dch.evs === 1 && dch.coups === 1 && dch.pris === 192 && dch.loin === 0 && sansDch.pris === 0 && sansDch.evs === 0)
   verifier(`la Surcharge givrée : la cible sur le rayon givrée (${(vise.geleA ?? -1) > w3.t}), le voisin à 25 de la balise pas avant l'explosion (${avantLaFin}), givré par elle (${(voisin.geleA ?? -1) > w3.t}), touché (${1e9 - voisin.pv})`, fin3 && (vise.geleA ?? -1) > w3.t && avantLaFin && (voisin.geleA ?? -1) > w3.t && voisin.pv < 1e9)
 }
 

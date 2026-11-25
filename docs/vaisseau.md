@@ -9242,4 +9242,15 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   à 77 (0,7 × 110) ; test : posée à 77, 0 ; sans `sansCible`, elle ne part pas. L'ONDE : ampleur 8,5 au lieu de 5 (presque
   son rayon de frappe, 10), paquet sur 24 de part et d'autre au lieu de 16, longueur d'onde plus longue, brins sur deux
   pixels (le vif blanc au milieu), lueur rouge plus large et plus forte, point blanc du centre plus grand. VU en
-  capture, sans insecte : la balise part devant, l'hélice se lit de loin sur toute la longueur du rayon.
+  capture, sans insecte : la balise part devant, l'hélice se lit de loin sur toute la longueur du rayon.- LA DÉCHARGE À LA PLACE DE DEUX BALISES (Keko, 25/11 : « une autre variation qui crée une décharge énergétique assez
+  large à l'endroit où la balise est posée initialement ») : « En se posant, la balise libère une large décharge
+  d'énergie. » (quatre lignes, VU en capture). Deux balises est celle qui part : une seconde balise ajoutait une attaque
+  à côté, contre la règle. `lien.decharge` = { rayon 36, part 1,5 }, chiffres de moi : à l'instant où elle se pose, tout
+  ce qui est à 36 d'elle prend 150 % des dégâts de l'arme (192), un coup qui tire son critique, avec le givre (événement
+  `dechargeDeBalise`). La Surcharge explose à sa FIN, la Décharge à sa POSE. LE DESSIN (`dechargesDeBalise`, 0,45 s) : un
+  éclair blanc, une lueur rouge sur la zone, un anneau de choc épais qui s'ouvre jusqu'au bord — cerné de blanc au début —
+  et un second qui le suit, six arcs brisés qui crépitent du centre à l'anneau (blancs puis roses), une gerbe
+  d'étincelles rouges, une secousse ; le son : le « zap » de l'impulsion et un petit boum, le givre en plus avec
+  Cryogénique. Une première version, l'anneau sur un pixel, sortait en pointillé, pâle (VU en capture) ; épaissi.
+  Test : posée à 80, l'insecte à 30 d'elle, hors du rayon, frappé une fois, 192 ; celui à 55, rien ; sans la carte, rien.
+  LA BALISE LASER : Cryogénique, Décharge, Éclatement, Longue vie, Résonance, Surcharge.

@@ -12030,7 +12030,47 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * rayon jaillit d'elle jusqu'au vaisseau en 0,15 s)
    */
   const ROUGE_LASER = ['#3a0808', '#8a1414', '#e02828', '#ff6a5a', '#ffd8d0'].map((c) => N.hex(c))
+  /**
+   * LES DÉCHARGES DE BALISE (Keko, 25/11 : « une décharge énergétique assez large à l'endroit où la balise est posée » —
+   * voir `lien.decharge`) : un éclair blanc, une lueur rouge sur toute la zone, un anneau de choc qui s'ouvre jusqu'à son
+   * bord et un second qui le suit, et des arcs brisés qui crépitent du centre vers l'anneau, retirés tous les vingtièmes de
+   * seconde ; le tout en 0,45 s.
+   */
+  const dechargesDeBalise: { x: number; y: number; t0: number; r: number; g: number }[] = []
+  const DUREE_DE_LA_DECHARGE = 0.45
+  function dessinerLesDecharges(p: Peintre): void {
+    for (let i = dechargesDeBalise.length - 1; i >= 0; i--) if (t - dechargesDeBalise[i].t0 > DUREE_DE_LA_DECHARGE) dechargesDeBalise.splice(i, 1)
+    for (const d of dechargesDeBalise) {
+      const age = t - d.t0
+      const u = age / DUREE_DE_LA_DECHARGE
+      const k = 1 - u
+      if (age < 0.08) p.glow(d.x, d.y, d.r * 0.7, N.WHITE, 0.8 * (1 - age / 0.08))
+      p.glow(d.x, d.y, d.r, ROUGE_LASER[2], 0.4 * k)
+      const r1 = d.r * (1 - (1 - Math.min(1, u * 1.4)) ** 3)
+      p.ring(d.x, d.y, r1, u < 0.4 ? 3 : 2, u < 0.25 ? ROUGE_LASER[4] : ROUGE_LASER[3], Math.min(1, 1.3 * k))
+      p.ring(d.x, d.y, r1 - 1, 1, N.WHITE, u < 0.35 ? 0.8 * k : 0)
+      if (u > 0.15) p.ring(d.x, d.y, d.r * (1 - (1 - (u - 0.15) / 0.85) ** 3) * 0.75, 2, ROUGE_LASER[2], 0.85 * k)
+      // (les arcs : six, brisés, du cœur jusqu'à l'anneau, un tirage neuf tous les vingtièmes)
+      const R2 = new N.Rng((d.g * 7919 + Math.floor(age * 20) * 131) | 0)
+      for (let n = 0; n < 6; n++) {
+        const a = R2.range(0, Math.PI * 2)
+        let [ax, ay] = [d.x, d.y]
+        const pas = 5
+        for (let s = 1; s <= pas; s++) {
+          const q = (r1 * s) / pas
+          const j = s === pas ? 0 : R2.range(-3, 3)
+          const [bx, by] = [d.x + Math.cos(a) * q - Math.sin(a) * j, d.y + Math.sin(a) * q + Math.cos(a) * j]
+          p.line(ax + 0.7, ay + 0.7, bx + 0.7, by + 0.7, ROUGE_LASER[2], 0.8 * k)
+          p.line(ax, ay, bx, by, u < 0.3 ? N.WHITE : ROUGE_LASER[4], Math.min(1, 1.2 * k))
+          ;[ax, ay] = [bx, by]
+        }
+        p.glow(ax, ay, 3, ROUGE_LASER[3], 0.6 * k)
+      }
+      p.glow(d.x, d.y, 6, N.WHITE, 0.6 * k)
+    }
+  }
   function dessinerLesBalisesLaser(p: Peintre): void {
+    dessinerLesDecharges(p)
     for (const b of m.balisesLaser) {
       const li = CONF.armes[b.arme]?.lien
       if (li === undefined) continue
@@ -12262,7 +12302,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   function dessinerLePlasma(p: Peintre): void {
     for (let i = eclatsDePlasma.length - 1; i >= 0; i--) if (t - eclatsDePlasma[i].t0 > DUREE_DE_L_ECLAT) eclatsDePlasma.splice(i, 1)
     const orbes = m.obus.filter((o) => o.arme === 'plasma')
-    if (orbes.length === 0 && foudresTesla.length === 0 && m.faisceaux.length === 0 && executions.length === 0 && impulsionsVertes.length === 0 && m.balisesLaser.length === 0 && m.harpons.length === 0 && cassuresDuHarpon.length === 0 && eclatsDePlasma.length === 0 && rubans.size === 0 && popsDEssaim.length === 0 && m.spheres.length === 0 && m.puits.length === 0 && effondrements.length === 0 && traitsDuRail.length === 0 && trainesDuRailgun.size === 0 && m.sillons.length === 0 && !m.obus.some((o) => o.arme === 'essaim' || o.arme === 'arcane' || o.arme === 'railgun')) return
+    if (orbes.length === 0 && foudresTesla.length === 0 && m.faisceaux.length === 0 && executions.length === 0 && impulsionsVertes.length === 0 && m.balisesLaser.length === 0 && dechargesDeBalise.length === 0 && m.harpons.length === 0 && cassuresDuHarpon.length === 0 && eclatsDePlasma.length === 0 && rubans.size === 0 && popsDEssaim.length === 0 && m.spheres.length === 0 && m.puits.length === 0 && effondrements.length === 0 && traitsDuRail.length === 0 && trainesDuRailgun.size === 0 && m.sillons.length === 0 && !m.obus.some((o) => o.arme === 'essaim' || o.arme === 'arcane' || o.arme === 'railgun')) return
     p.place(W / 2 - camera.x, centreY() - camera.y)
     dessinerLesSpheres(p)
     dessinerLesPuits(p)
@@ -17483,6 +17523,21 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
             etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(10, 30), Math.sin(a) * R.range(10, 30), R.range(0.15, 0.3), ev.arme === 'cristal' ? lumiereDuPrisme()[R.next() < 0.5 ? 3 : 4] : N.hex('#8a8a96'), 1, 2)
           }
           break
+        case 'dechargeDeBalise': {
+          // (LA DÉCHARGE DE LA BALISE — Keko, 25/11, voir `dechargesDeBalise` : le « zap » de l'impulsion et un petit boum —
+          // le craquement du givre en plus avec Cryogénique —, une gerbe d'étincelles rouges, une secousse)
+          jouer('impulsion', { dx: ev.x - v.x, dy: ev.y - v.y })
+          jouer('explosionMini', { dx: ev.x - v.x, dy: ev.y - v.y })
+          if (CONF.armes.some((a) => a.id === 'lien' && a.gel !== undefined)) jouer('gel', { dx: ev.x - v.x, dy: ev.y - v.y })
+          dechargesDeBalise.push({ x: ev.x, y: ev.y, t0: t, r: ev.rayon, g: R.range(0, 1000) })
+          for (let i = 0; i < 14; i++) {
+            const a = R.range(0, Math.PI * 2)
+            const vit = R.range(50, 120)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.15, 0.35), [N.WHITE, ROUGE_LASER[3], ROUGE_LASER[4]][Math.floor(R.next() * 3)], 1, 2)
+          }
+          secousse = Math.max(secousse, 0.18)
+          break
+        }
         case 'baliseFinie':
           for (let i = 0; i < 4; i++) {
             const a = R.range(0, Math.PI * 2)

@@ -563,8 +563,11 @@ export const MUTATIONS: Mutation[] = [
   variation('grenades-double', 'grenades', 'Double explosion', 'Chaque grenade explose deux fois de suite.', changerA('grenades', (a) => ({ ...a, double: { delai: 0.8, part: 0.5 } }))),
   // LA BALISE LASER
   // (le Fauchage, une barre en travers du rayon, essayé et retiré — Keko, 25/11 : « les deux variantes servent le même
-  // objectif ; on reste sur la résonance » ; Deux balises revient à sa place, à décider)
-  variation('lien-double', 'lien', 'Deux balises', 'Une seconde balise, son propre rayon.', ajouterA('lien', (a) => [ajoutee(a, (a.place ?? 20) + 1, { degats: fois(a, 0.7) })])),
+  // objectif ; on reste sur la résonance »)
+  // (DÉCHARGE, à la place de Deux balises — une seconde balise ajoutait une attaque à côté — Keko, 25/11 : « une décharge
+  // énergétique assez large à l'endroit où la balise est posée initialement » : sur 36, 150 % des dégâts — voir
+  // `lien.decharge` ; chiffres de moi)
+  variation('lien-decharge', 'lien', 'Décharge', 'En se posant, la balise libère une large décharge d’énergie.', changerA('lien', (a) => ({ ...a, lien: a.lien === undefined ? undefined : { ...a.lien, decharge: { rayon: 36, part: 1.5 } } }))),
   variation('lien-longue', 'lien', 'Longue vie', 'Les balises restent actives bien plus longtemps.', changerA('lien', (a) => ({ ...a, lien: a.lien === undefined ? undefined : { ...a.lien, duree: a.lien.duree * 1.6 } }))),
   // (RÉSONANCE, à la place de Faisceau large — Keko, 25/11 : « une onde d'énergie qui fait des allers-retours le long du
   // rayon et fait des dégâts aux ennemis qu'elle traverse » : de la balise au vaisseau en 0,5 s, et retour ; une frappe
