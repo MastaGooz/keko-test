@@ -12,7 +12,7 @@
  */
 import './vaisseau.css'
 import * as noyau from 'pixelfx'
-import { ELEMENTAIRES, anneauMagnetique, rayonDeLOnde, ennemisDuLien, ajouterUnPilote, avancerLEquipage, prendreLaMain, type SorteDInsecte, SORTES_D_INSECTES, gabaritDInsecte, gemmesDuButin, butinDeLaRoche, pointDeRetour, rayonDe, rocheDeLaTempete, vieMultipliee, degatsMultiplies, placeDeLEcharde, frontDeLaNova, ancreDansLeMonde, zoneDuDe, coupeDUnCube, formeDeLaCoupe, liesAuDrain, encaisser, type Ennemi, type Evenement, type Monde, impactDuRayon, asteroidesVisibles, avancerLeMonde, finDuTrio, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur, xpDuNiveau, ennemiLePlusProche, ennemiVerrouille, chauffeDuDrone, barreDuLien,ondeDuLien,verrouiller, angleDuBalayage, aPlusieurs, alliesAuRetour, recompenseDeFin, type LigneDeRecompense } from '../../logic/vaisseau/jeu.ts'
+import { ELEMENTAIRES, anneauMagnetique, rayonDeLOnde, ennemisDuLien, ajouterUnPilote, avancerLEquipage, prendreLaMain, type SorteDInsecte, SORTES_D_INSECTES, gabaritDInsecte, gemmesDuButin, butinDeLaRoche, pointDeRetour, rayonDe, rocheDeLaTempete, vieMultipliee, degatsMultiplies, placeDeLEcharde, frontDeLaNova, ancreDansLeMonde, zoneDuDe, coupeDUnCube, formeDeLaCoupe, liesAuDrain, encaisser, type Ennemi, type Evenement, type Monde, impactDuRayon, asteroidesVisibles, avancerLeMonde, finDuTrio, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur, xpDuNiveau, ennemiLePlusProche, ennemiVerrouille, chauffeDuDrone,ondeDuLien,verrouiller, angleDuBalayage, aPlusieurs, alliesAuRetour, recompenseDeFin, type LigneDeRecompense } from '../../logic/vaisseau/jeu.ts'
 import { PIECES, ETALONS as ETALONS_DU_BANC, acheter, ajouterLesPiecesDEssai, capacite, poidsTotal, POIDS_SERIE, configDuHangar, demonter, demonterA, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, montantCourt, monteeA, monter, monterA, peutAcheter, peutMonter, perdreLesMontees, estDeBase, exemplaires, libres, pieceDe, piecesDe, placeLourde, possede, aimantMonte, radarMonte, type Jauge, type Piece, type Sorte } from '../../logic/vaisseau/hangar.ts'
 import { drawWord, spell } from 'pixelfx/fx/ui/_lib'
 import { firePuff, hotFirst, smokePuff } from 'pixelfx/fx/fire/_lib'
@@ -12066,47 +12066,36 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // (SON ONDE, LA RÉSONANCE — Keko, 25/11, « la forme, je te laisse décider », voir `lien.onde` : une LENTILLE
       // D'ÉNERGIE en travers du rayon — un trait blanc bordé de rose, plus large au milieu qu'aux pointes, dans une lueur
       // rouge — et sa traînée, trois échos qui pâlissent derrière elle ; aux deux bouts du rayon, elle rebondit)
-      // (SA BARRE, LE FAUCHAGE — Keko, 25/11, voir `lien.barre` : une barre d'énergie en travers du rayon, de toute sa
-      // largeur — un cœur blanc, un liseré rose de chaque côté, une lueur rouge semée le long, les deux bouts plus vifs —, et
-      // trois échos qui pâlissent derrière elle)
-      if (li.barre !== undefined && jaillit >= 1) {
-        const lb = li.barre.largeur
-        for (let q = 3; q >= 0; q--) {
-          const pb = barreDuLien(CONF, m, b, m.t - q * 0.03)
-          if (pb === null) continue
-          if (q > 0) {
-            p.line(pb.x - nx * lb, pb.y - ny * lb, pb.x + nx * lb, pb.y + ny * lb, ROUGE_LASER[2], k * (0.4 - q * 0.1))
-            continue
-          }
-          for (let d = -lb; d <= lb; d += 6) p.glow(pb.x + nx * d, pb.y + ny * d, 4, ROUGE_LASER[2], 0.3 * k * fremit)
-          for (const sg of [-1, 1]) p.line(pb.x + ux * sg - nx * lb, pb.y + uy * sg - ny * lb, pb.x + ux * sg + nx * lb, pb.y + uy * sg + ny * lb, ROUGE_LASER[3], 0.8 * k)
-          p.line(pb.x - nx * lb, pb.y - ny * lb, pb.x + nx * lb, pb.y + ny * lb, N.WHITE, k)
-          for (const sg of [-1, 1]) {
-            p.glow(pb.x + nx * lb * sg, pb.y + ny * lb * sg, 3, ROUGE_LASER[3], 0.6 * k)
-            p.dot(pb.x + nx * lb * sg, pb.y + ny * lb * sg, ROUGE_LASER[4], k)
-          }
-        }
-      }
-      // (… PUIS UNE SPHÈRE — Keko, 25/11 : « Résonance devrait être une sphère plutôt » : une boule d'énergie rouge, du
-      // rayon de sa frappe, éclairée en haut à gauche — bord sombre, corps rouge, reflet rose, point blanc —, un anneau
-      // qui frémit autour, et sa traînée, trois boules qui pâlissent et rapetissent derrière elle)
+      // (… PUIS UNE SPHÈRE — Keko, 25/11 : « Résonance devrait être une sphère plutôt » ; … PUIS UNE ONDE DANS LE RAYON —
+      // « on dirait un ballon qui va le long de la barre, c'est assez moche ; une forme d'onde qui se déplacerait, quelque
+      // chose de plus logique sur un laser » : LE RAYON LUI-MÊME ONDULE là où passe l'onde — un paquet d'ondes, deux brins
+      // roses en sinusoïde opposée qui se croisent autour du rayon, plus amples au milieu (une enveloppe en cloche, sur deux
+      // fois son rayon de frappe), le cœur blanc épaissi et une lueur rouge qui le suit ; les brins défilent dans son sens)
       if (li.onde !== undefined && jaillit >= 1) {
-        const rw = li.onde.rayon
-        for (let q = 3; q >= 0; q--) {
-          const po = ondeDuLien(CONF, m, b, m.t - q * 0.03)
-          if (po === null) continue
-          if (q > 0) {
-            p.circle(po.x, po.y, rw * (0.8 - q * 0.15), ROUGE_LASER[2], k * (0.45 - q * 0.1))
-            continue
+        const po = ondeDuLien(CONF, m, b)
+        if (po !== null) {
+          const rw = li.onde.rayon
+          const W = rw * 1.6
+          const A = rw * 0.5
+          // (le long du rayon, `d` vers la balise ; borné aux deux bouts du rayon)
+          const sb = Math.hypot(po.x - b.x, po.y - b.y)
+          const dMin = Math.max(-W, sb - L)
+          const dMax = Math.min(W, sb)
+          const env = (d: number): number => Math.cos((Math.PI * d) / (2 * W)) ** 2
+          const brin = (d: number): number => A * env(d) * Math.sin(d * 0.55 + t * 22 * po.vers)
+          for (let d = dMin; d <= dMax; d += 3) p.glow(po.x + ux * d, po.y + uy * d, 3 + 4 * env(d), ROUGE_LASER[2], 0.4 * k * env(d))
+          // (le brin sombre d'abord, en contrepoint, puis le vif par-dessus : une hélice, pas un fouillis)
+          for (const sg of [-1, 1]) {
+            let [ax, ay] = [po.x + ux * dMin + nx * sg * brin(dMin), po.y + uy * dMin + ny * sg * brin(dMin)]
+            for (let d = dMin + 1; d <= dMax; d += 1) {
+              const o = sg * brin(d)
+              const [bx, by] = [po.x + ux * d + nx * o, po.y + uy * d + ny * o]
+              if (sg < 0) p.line(ax, ay, bx, by, ROUGE_LASER[2], 0.7 * k * env(d))
+              else p.line(ax, ay, bx, by, env(d) > 0.45 ? ROUGE_LASER[4] : ROUGE_LASER[3], k * (0.4 + 0.6 * env(d)))
+              ;[ax, ay] = [bx, by]
+            }
           }
-          const r = rw * 0.8
-          p.glow(po.x, po.y, rw + 4, ROUGE_LASER[2], 0.55 * k)
-          p.circle(po.x, po.y, r, ROUGE_LASER[1], k)
-          p.circle(po.x, po.y, r - 1, ROUGE_LASER[2], k)
-          p.circle(po.x - r * 0.22, po.y - r * 0.22, r * 0.6, ROUGE_LASER[3], k)
-          p.circle(po.x - r * 0.35, po.y - r * 0.35, r * 0.28, ROUGE_LASER[4], k)
-          p.dot(po.x - r * 0.45, po.y - r * 0.45, N.WHITE, k)
-          p.ring(po.x, po.y, r + 1.5 + Math.sin(t * 40) * 0.5, 1, ROUGE_LASER[3], 0.5 * k * fremit)
+          p.glow(po.x, po.y, 4, N.WHITE, 0.35 * k)
         }
       }
       // (la balise posée : trois pieds déployés, et à l'instant où elle s'active, une onde rouge qui s'ouvre)

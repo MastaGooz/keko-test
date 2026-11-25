@@ -9226,4 +9226,14 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   échos derrière (VU en capture, avec la sphère de la Résonance). ET LA RÉSONANCE GRANDIT (« augmente un petit peu le
   rayon de la résonance et ses dégâts ») : rayon 8 → 10, 50 → 60 % des dégâts (73 par coup). Test : un insecte à 20 du
   rayon frappé 6 fois en 4 s, 230 (6 × 38,4) ; à 40, rien ; sans la carte, rien.
-  LA BALISE LASER : Cryogénique, Éclatement, Fauchage, Longue vie, Résonance, Surcharge.
+  LA BALISE LASER : Cryogénique, Éclatement, Fauchage, Longue vie, Résonance, Surcharge.- LE FAUCHAGE RETIRÉ, LA RÉSONANCE EN ONDE (Keko, 25/11 : « non, ça va pas ; les deux variantes servent le même
+  objectif ; on va rester sur la résonance ; par contre, on dirait un ballon qui va le long de la barre, c'est assez
+  moche ; une forme d'onde qui se déplacerait, quelque chose de plus logique sur un laser ; on laisse tomber la barre
+  horizontale ») : `lien.barre`, `barreDuLien`, `BaliseLaser.barres` et son test sont partis — la règle est revenue mot
+  pour mot à celle d'avant —, Deux balises reprend sa place, toujours à décider avec Longue vie. La Résonance garde
+  ses chiffres grandis (10, 60 %). LE DESSIN : plus de sphère, LE RAYON ONDULE LÀ OÙ PASSE L'ONDE — un paquet d'ondes
+  sur deux fois son rayon de frappe, en cloche, deux brins en sinusoïde opposée qui se croisent autour du rayon, le
+  sombre dessous, le vif (rose, blanc au milieu) dessus, une hélice qui défile dans son sens, une lueur rouge le long et
+  un point blanc au centre. Une première version, deux brins vifs plus serrés et le cœur blanc épaissi, faisait un
+  fouillis (VU en capture) ; celle-ci se lit comme une hélice qui court sur le laser.
+  LA BALISE LASER : Cryogénique, Deux balises, Éclatement, Longue vie, Résonance, Surcharge.
