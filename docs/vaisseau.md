@@ -9129,3 +9129,18 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   pénalisant ») : `retour` 0 — l'aile n'est plus jamais vide, l'avion reparaît à sa place sous ses étincelles bleues
   dès l'explosion (le mécanisme d'absence reste, un `retour` au-dessus de 0 le rendrait). Le test : retour à l'instant
   de l'explosion, aucun avion absent à 9,5 s, tous à moins de 40 du vaisseau.
+- LE KAMIKAZE EST RETIRÉ, LA CADENCE MONTANTE PREND SA PLACE (Keko, 25/11 : « je suis pas fan du kamikaze. Déjà toutes
+  les 8 secondes, ça fait long ; pour le temps qu'on attend, les dégâts et la zone sont pas incroyables » — 360 toutes
+  les 8 s, 45 par seconde à côté des ~107 des balles. J'ai proposé d'en faire le tir de l'escorte, des piqués continus ;
+  Keko : « on a déjà les mini-missiles qui remplacent le tir », les deux ensemble seraient incompatibles — « abandonner
+  l'idée du kamikaze ». Parmi quatre — Cadence montante, Rafales, Tireurs d'élite, Contre-attaque —, il a pris la
+  première). « Sur la même cible, les mini-avions tirent de plus en plus vite. » (quatre lignes, VU en capture).
+  `Arme.montee` = { max 3, duree 3 }, chiffres de moi : chaque drone retient la cible qu'il garde et depuis quand
+  (`Drone.tenue`) ; sa chauffe (`chauffeDuDrone`, de 0 à 1) monte en ligne droite sur `duree`, sa cadence est divisée
+  par 1 + (max − 1) × chauffe ; une autre cible, ou aucune, et tout retombe. Ça vaut pour ce qu'il tire — les balles,
+  ou les missiles avec Mini-missiles —, et la Chasse et le verrou la gardent au maximum sur le gros. LE VISUEL : deux
+  bouches au bord des ailes qui passent du rouge sombre au blanc, une lueur orange qui grandit et bat au plus chaud (VU
+  en capture). Le code du Kamikaze est parti avec lui (`Drone.pique`, `absentJusque`, `Monde.kamikazeA`, l'événement
+  `kamikaze`) ; il reste dans `git log`. Deux tests (3 / 6 / 3 balles par seconde de 0 à 1 s, de 4 à 5 s, puis sur une
+  autre cible ; 3 / 2 / 2 sans la carte ; les quatre de l'Escadrille, dans les deux ordres).
+  L'ESCORTE : Acidification, Cadence montante, Chasse, Désignation, Escadrille, Mini-missiles.
