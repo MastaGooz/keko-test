@@ -3688,31 +3688,30 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
     for (const ev of avancerLeMonde(cfg3, w3, 1 / 60, { x: 0, y: 0 }).evenements) if (ev.type === 'baliseFinie') fin3 = true
     if (!fin3 && (voisin.geleA ?? -1) > w3.t) avantLaFin = false
   }
-  // (SES CRITIQUES ET LA RÉFRACTION — Keko, 25/11 : tout coup critique, la cible sur le rayon en tire un toutes les 0,5 s ;
-  // chacun réfracte le rayon vers le voisin à 40 d'elle, hors du rayon, 1 s à la moitié des dégâts ; sans la carte, le
-  // voisin n'a rien)
-  const refracte = (avec: boolean): { cible: number; voisin: number; branches: number; critiques: number } => {
-    const cfg4 = { ...cfg, passifs: { ...cfg.passifs, critique: 1 }, armes: [{ ...lien, lien: { ...lien.lien, ...(avec ? { refraction: { portee: 60, duree: 1, part: 0.5 } } : {}) } }] }
+  // (SES CRITIQUES ET L'ÉCLATEMENT — Keko, 25/11 : tout coup critique, la cible sur le rayon en tire un toutes les 0,5 s ;
+  // chacun la fait exploser sur 16, 60 % des dégâts, une explosion qui tire aussi son critique ; le voisin à 12 d'elle,
+  // hors du rayon, est pris dans chacune ; sans la carte, il n'a rien)
+  const eclate = (avec: boolean): { cible: number; voisin: number; explosions: number; critiques: number } => {
+    const cfg4 = { ...cfg, passifs: { ...cfg.passifs, critique: 1 }, armes: [{ ...lien, lien: { ...lien.lien, ...(avec ? { eclat: { rayon: 16, part: 0.6 } } : {}) } }] }
     const w4 = nouveauMonde(cfg4, 8)
     w4.invasion.prochainA = 1e9
-    const [ci, vo] = [[60, 0], [60, 40]].map(([x, y], k): Ennemi => ({ id: 980 + k, corps: { ...nouveauVaisseau(), x, y }, pv: 1e9, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9 }))
+    const [ci, vo] = [[60, 0], [60, 12]].map(([x, y], k): Ennemi => ({ id: 980 + k, corps: { ...nouveauVaisseau(), x, y }, pv: 1e9, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9 }))
     w4.ennemis.push(ci, vo)
     w4.verrou = ci.id
-    let branches = 0
+    let explosions = 0
     let critiques = 0
     let fini = false
     for (let i = 0; i < 60 * 6 && !fini; i++)
       for (const ev of avancerLeMonde(cfg4, w4, 1 / 60, { x: 0, y: 0 }).evenements) {
-        if (ev.type === 'refraction') branches++
-        if (ev.type === 'ennemiTouche' && ev.critique === true) critiques++
+        if (ev.type === 'explosionDeZone' && ev.arme === 'lien') explosions++
+        if (ev.type === 'ennemiTouche' && ev.critique === true && ev.id === ci.id) critiques++
         if (ev.type === 'baliseFinie') fini = true
       }
-    return { cible: Math.round(1e9 - ci.pv), voisin: Math.round(1e9 - vo.pv), branches, critiques }
+    return { cible: Math.round(1e9 - ci.pv), voisin: Math.round(1e9 - vo.pv), explosions, critiques }
   }
-  const [rf, sansRf] = [refracte(true), refracte(false)]
-  // (le critique vaut ×2 ici : chacun ajoute 128 × 0,5 = 64 ; une réfraction par tic, chacune 1 s — elles se chevauchent,
-  // deux à la fois : 7 × 64 au plus, moins la dernière que la fin de la balise coupe)
-  verifier(`les critiques du rayon : ${rf.critiques} en 4 s (7), la cible prend ${rf.cible} (512 + 7 × 64 = 960) ; la Réfraction : ${rf.branches} réfractions (7), le voisin hors du rayon prend ${rf.voisin} (près de 7 × 64 = 448) ; sans la carte, ${sansRf.branches} réfraction, le voisin ${sansRf.voisin} (0)`, rf.critiques === 7 && Math.abs(rf.cible - 960) < 20 && rf.branches === 7 && rf.voisin > 380 && rf.voisin <= 450 && sansRf.branches === 0 && sansRf.voisin === 0 && sansRf.critiques === 7)
+  const [ec, sansEc] = [eclate(true), eclate(false)]
+  // (le critique vaut ×2 ici : chaque critique du rayon ajoute 128 × 0,5 = 64 ; chaque explosion, 128 × 0,6 × 2 ≈ 154)
+  verifier(`les critiques du rayon : ${sansEc.critiques} en 4 s (7), la cible prend ${sansEc.cible} (512 + 7 × 64 = 960) ; l'Éclatement : ${ec.explosions} explosions (7), le voisin à 12 hors du rayon prend ${ec.voisin} (7 × 154 = 1 075), la cible ${ec.cible} (960 + 1 075) ; sans la carte, ${sansEc.explosions} explosion, le voisin ${sansEc.voisin} (0)`, sansEc.critiques === 7 && Math.abs(sansEc.cible - 960) < 20 && ec.explosions === 7 && Math.abs(ec.voisin - 1075) < 5 && Math.abs(ec.cible - 2035) < 25 && sansEc.explosions === 0 && sansEc.voisin === 0)
   // (LA RÉSONANCE — Keko, 25/11 : une onde fait des allers-retours le long du rayon, de la balise au vaisseau en 0,5 s ;
   // un insecte à 11 du rayon, que le rayon ne touche pas, est frappé une fois par passage — huit en 4 s, 64 chacun)
   const resonne = (avec: boolean): { pris: number; coups: number } => {

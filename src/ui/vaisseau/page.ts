@@ -12,7 +12,7 @@
  */
 import './vaisseau.css'
 import * as noyau from 'pixelfx'
-import { ELEMENTAIRES, anneauMagnetique, rayonDeLOnde, ennemisDuLien, ajouterUnPilote, avancerLEquipage, prendreLaMain, type SorteDInsecte, SORTES_D_INSECTES, gabaritDInsecte, gemmesDuButin, butinDeLaRoche, pointDeRetour, rayonDe, rocheDeLaTempete, vieMultipliee, degatsMultiplies, placeDeLEcharde, frontDeLaNova, ancreDansLeMonde, zoneDuDe, coupeDUnCube, formeDeLaCoupe, liesAuDrain, encaisser, type Ennemi, type Evenement, type Monde, impactDuRayon, asteroidesVisibles, avancerLeMonde, finDuTrio, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur, xpDuNiveau, ennemiLePlusProche, ennemiVerrouille, chauffeDuDrone, ennemisDeLaBranche, ondeDuLien,verrouiller, angleDuBalayage, aPlusieurs, alliesAuRetour, recompenseDeFin, type LigneDeRecompense } from '../../logic/vaisseau/jeu.ts'
+import { ELEMENTAIRES, anneauMagnetique, rayonDeLOnde, ennemisDuLien, ajouterUnPilote, avancerLEquipage, prendreLaMain, type SorteDInsecte, SORTES_D_INSECTES, gabaritDInsecte, gemmesDuButin, butinDeLaRoche, pointDeRetour, rayonDe, rocheDeLaTempete, vieMultipliee, degatsMultiplies, placeDeLEcharde, frontDeLaNova, ancreDansLeMonde, zoneDuDe, coupeDUnCube, formeDeLaCoupe, liesAuDrain, encaisser, type Ennemi, type Evenement, type Monde, impactDuRayon, asteroidesVisibles, avancerLeMonde, finDuTrio, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur, xpDuNiveau, ennemiLePlusProche, ennemiVerrouille, chauffeDuDrone, ondeDuLien,verrouiller, angleDuBalayage, aPlusieurs, alliesAuRetour, recompenseDeFin, type LigneDeRecompense } from '../../logic/vaisseau/jeu.ts'
 import { PIECES, ETALONS as ETALONS_DU_BANC, acheter, ajouterLesPiecesDEssai, capacite, poidsTotal, POIDS_SERIE, configDuHangar, demonter, demonterA, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, montantCourt, monteeA, monter, monterA, peutAcheter, peutMonter, perdreLesMontees, estDeBase, exemplaires, libres, pieceDe, piecesDe, placeLourde, possede, aimantMonte, radarMonte, type Jauge, type Piece, type Sorte } from '../../logic/vaisseau/hangar.ts'
 import { drawWord, spell } from 'pixelfx/fx/ui/_lib'
 import { firePuff, hotFirst, smokePuff } from 'pixelfx/fx/fire/_lib'
@@ -12083,23 +12083,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           p.glow(po.x, po.y, 4, N.WHITE, 0.6 * k)
         }
       }
-      // (SES RÉFRACTIONS — Keko, 25/11, voir `lien.refraction` : un rayon plus fin, de l'insecte frappé d'un critique à son
-      // voisin, qui jaillit en 0,08 s, frémit plus vite et s'éteint dans son dernier quart ; un point de lumière là où il
-      // se brise)
-      for (const r of b.branches ?? []) {
-        const vers = m.ennemis.find((e) => e.id === r.vers)
-        if (vers === undefined) continue
-        const jr = Math.min(1, (m.t - r.nee) / 0.08)
-        const kr = k * jr * Math.max(0, Math.min(1, (r.jusque - m.t) / (Math.max(0.01, r.jusque - r.nee) * 0.25)))
-        const xe = r.x + (vers.corps.x - r.x) * jr
-        const ye = r.y + (vers.corps.y - r.y) * jr
-        const Lr = Math.hypot(xe - r.x, ye - r.y)
-        const fr = 0.7 + 0.3 * Math.sin(t * 90 + r.nee * 17)
-        for (let d = 3; d < Lr; d += 7) p.glow(r.x + ((xe - r.x) * d) / Lr, r.y + ((ye - r.y) * d) / Lr, 3, ROUGE_LASER[2], 0.2 * kr * fr)
-        p.line(r.x, r.y, xe, ye, ROUGE_LASER[3], 0.85 * kr * fr)
-        p.glow(r.x, r.y, 5, ROUGE_LASER[4], 0.55 * kr)
-        p.dot(r.x, r.y, N.WHITE, kr)
-      }
       // (la balise posée : trois pieds déployés, et à l'instant où elle s'active, une onde rouge qui s'ouvre)
       const pieds = Math.min(1, age / 0.12)
       for (let q = 0; q < 3; q++) {
@@ -17379,7 +17362,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           }
           // (UNE GRENADE GIVRÉE EXPLOSE EN GLACE — Keko, 24/11 — voir `dessinerLesExplosionsDeGlace` : son « boum » et le
           // craquement du givre, un éclair froid, l'étoile de cristaux, des éclats et des flocons qui s'envolent, une secousse)
-          if (ev.arme === 'grenades' && CONF.armes.some((a) => a.id === 'grenades' && a.gel !== undefined)) {
+          // (… ET LA BALISE LASER CRYOGÉNIQUE, son Éclatement et sa Surcharge — Keko, 25/11 : un élément par arme, pour
+          // toutes ses variations ; voir `lien.eclat`)
+          if ((ev.arme === 'grenades' || ev.arme === 'lien') && CONF.armes.some((a) => a.id === ev.arme && a.gel !== undefined)) {
             jouer('explosionMini', { dx: ev.x - v.x, dy: ev.y - v.y })
             jouer('gel', { dx: ev.x - v.x, dy: ev.y - v.y })
             flashs.push({ x: ev.x, y: ev.y, t0: t, r: ev.rayon * 0.35, c: [GLACE[1], GLACE[2], GLACE[4], GLACE[5], GLACE[6]] })
@@ -18359,14 +18344,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           secousse = Math.max(secousse, 0.4)
           break
         }
-        case 'refraction':
-          // (LE RAYON SE BRISE SUR UN CRITIQUE — voir `lien.refraction` : un éclat blanc et rouge, une poignée d'étincelles)
-          flashs.push({ x: ev.x, y: ev.y, t0: t, r: 5, c: [N.WHITE, ROUGE_LASER[4], ROUGE_LASER[3], ROUGE_LASER[2], ROUGE_LASER[1]] })
-          for (let i = 0; i < 8; i++) {
-            const a = R.range(0, Math.PI * 2)
-            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(40, 100), Math.sin(a) * R.range(40, 100), R.range(0.15, 0.3), R.next() < 0.5 ? N.WHITE : ROUGE_LASER[3], 1, 2)
-          }
-          break
         case 'designe':
           // (DÉSIGNÉ : son petit « bip » à lui — le verrouillage était trop proche (Keko) —, une fois au plus par cinquième de
           // seconde — voir `Arme.designation`)
@@ -18853,14 +18830,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
               etincelles.ajouter('etincelle', tx, ty, Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.14, 0.3), [ROUGE_LASER[3], ROUGE_LASER[3], ROUGE_LASER[4], N.hex('#ffeae4')][Math.floor(R.next() * 4)], 1, 2)
             }
           }
-          // (… ET SUR CE QUE BRÛLENT SES RÉFRACTIONS, quelques-unes — voir `lien.refraction`)
-          for (const rb of b.branches ?? [])
-            for (const e of ennemisDeLaBranche(CONF, m, b, rb))
-              if (R.next() < 0.6) {
-                const a = R.range(0, Math.PI * 2)
-                const vit = R.range(35, 90)
-                etincelles.ajouter('etincelle', e.corps.x, e.corps.y, Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.12, 0.25), R.next() < 0.5 ? ROUGE_LASER[3] : ROUGE_LASER[4], 1, 1.5)
-              }
         }
         semerLaPoussiereDesOndes()
         // les mini-missiles laissent une traînée de fumée

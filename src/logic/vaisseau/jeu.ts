@@ -782,9 +782,10 @@ export type Arme = {
    * elle explose. L'état est `Monde.balisesLaser`. *Les chiffres sont de moi.*
    * (SES CRITIQUES — Keko, 25/11, pour sa variation sur coup critique : le rayon brûlait sans jamais en faire ; toutes les
    * `TIC_DU_LIEN` secondes passées dans le rayon, un insecte tire un critique, qui ajoute ce que ce temps-là a brûlé fois
-   * le facteur de critique, moins un.) `refraction` (sa variation sur coup critique, « Réfraction ») : un critique du rayon
-   * le RÉFRACTE — un second rayon part de l'insecte touché vers l'insecte le plus proche de lui à `portee`, `duree`
-   * secondes, à `part` des dégâts, avec l'élément de l'arme ; il brûle tout ce qu'il traverse et ne tire aucun critique.
+   * le facteur de critique, moins un.) `eclat` (sa variation sur coup critique, « Éclatement », Keko, 25/11, à la place
+   * de la Réfraction — un second rayon vers le voisin — : « à la place de rebondir sur un autre ennemi, une petite
+   * explosion de zone autour de l'ennemi qui subit le critique ») : un critique du rayon fait EXPLOSER l'insecte touché,
+   * sur `rayon`, à `part` des dégâts de l'arme, avec son élément ; l'explosion tire ses critiques, sans rien relancer.
    * `onde` (« Résonance », Keko, 25/11 : « une onde d'énergie se déplace depuis la balise vers le vaisseau et retourne
    * du vaisseau vers la balise, et fait des allers-retours comme ça le long du rayon en infligeant des dégâts aux ennemis
    * qu'elle traverse ; la forme, je te laisse décider ») : UNE ONDE court le long du rayon, de la balise au vaisseau en
@@ -792,7 +793,7 @@ export type Arme = {
    * tout insecte à `rayon` d'elle — plus large que le rayon — de `part` fois les dégâts de l'arme, un coup qui tire son
    * critique, avec l'élément de l'arme.
    */
-  lien?: { duree: number; vol: number; epaisseur: number; explosion?: { rayon: number; part: number }; refraction?: { portee: number; duree: number; part: number }; onde?: { trajet: number; rayon: number; part: number } }
+  lien?: { duree: number; vol: number; epaisseur: number; explosion?: { rayon: number; part: number }; eclat?: { rayon: number; part: number }; onde?: { trajet: number; rayon: number; part: number } }
   /**
    * UN RAYON QUI BALAIE (la Salamandre, Keko, 15/11 : « un rayon à haute énergie qui part au-dessus du vaisseau et
    * descend en décrivant un cercle autour de lui : il enflamme et fait de gros dégâts ») : toutes les `tous` secondes, si
@@ -1854,8 +1855,6 @@ export type Evenement =
   | { type: 'grappe'; x: number; y: number; vie0: number }
   /** Un insecte est désigné par un critique de l'escorte (voir `Arme.designation`). */
   | { type: 'designe'; id: number; x: number; y: number }
-  /** Le rayon d'une balise laser se réfracte sur cet insecte (voir `lien.refraction`). */
-  | { type: 'refraction'; x: number; y: number }
   /** Une onde de choc part d'une explosion (voir `Arme.onde`). */
   | { type: 'ondeDeChoc'; x: number; y: number; portee: number; duree: number }
   /** Une boule tesla finit en décharge (« Court-circuit » — voir `Arme.sphere.court`). */
@@ -5748,8 +5747,6 @@ export type BaliseLaser = {
   posee: number | null
   /** Le prochain critique que le rayon tire sur chaque insecte (voir `TIC_DU_LIEN`). */
   tics?: Record<number, number>
-  /** SES RÉFRACTIONS (voir `lien.refraction`) : de l'insecte `de` — ou de là où il est mort — à l'insecte `vers`. */
-  branches?: BrancheDuLien[]
   /** LE DERNIER PASSAGE DE SON ONDE qui a frappé chaque insecte (voir `lien.onde`). */
   ondes?: Record<number, number>
 }
@@ -5770,17 +5767,8 @@ export function ondeDuLien(c: ConfigVaisseau, m: Monde, b: BaliseLaser, t = m.t)
   const bord = Math.max(0, L - c.rayon - 1)
   return { x: b.x + ((v.x - b.x) / L) * bord * s, y: b.y + ((v.y - b.y) / L) * bord * s, s, passe, vers: passe % 2 === 0 ? 1 : -1 }
 }
-/** Un rayon réfracté : d'où il part (l'insecte `de`, à sa dernière place connue), vers quel insecte, né quand, jusqu'à quand. */
-export type BrancheDuLien = { de: number; x: number; y: number; vers: number; nee: number; jusque: number }
 /** Toutes les combien de secondes passées dans le rayon d'une balise un insecte tire un critique (voir `Arme.lien`). */
 export const TIC_DU_LIEN = 0.5
-/** Les insectes que brûle une réfraction : sur son segment, sauf celui d'où elle part. */
-export function ennemisDeLaBranche(c: ConfigVaisseau, m: Monde, b: BaliseLaser, r: BrancheDuLien): Ennemi[] {
-  const li = c.armes[b.arme]?.lien
-  const vers = m.ennemis.find((e) => e.id === r.vers)
-  if (li === undefined || vers === undefined) return []
-  return m.ennemis.filter((e) => e.id !== r.de && distanceAuSegment(e.corps.x, e.corps.y, r.x, r.y, vers.corps.x, vers.corps.y) <= li.epaisseur + rayonDe(c, e))
-}
 /** CE QUE LE RAYON D'UNE BALISE LASER TRAVERSE (voir `Arme.lien`) : du vaisseau à elle, à son épaisseur. */
 export function ennemisDuLien(c: ConfigVaisseau, m: Monde, b: BaliseLaser): Ennemi[] {
   const li = c.armes[b.arme]?.lien
@@ -5845,7 +5833,7 @@ function menerLesBalisesLaser(c: ConfigVaisseau, m: Monde, dt: number, ev: Evene
       continue
     }
     const tics = (b.tics ??= {})
-    const branches = (b.branches ??= [])
+    const eclats: Ennemi[] = []
     for (const e of ennemisDuLien(c, m, b)) {
       e.pv -= a.degats * dt
       if (a.gel !== undefined) geler(c, m, e, 0.3, a.gel.ralenti, ev)
@@ -5858,25 +5846,21 @@ function menerLesBalisesLaser(c: ConfigVaisseau, m: Monde, dt: number, ev: Evene
         if (critiqueTire(c, m, a, e)) {
           e.pv -= a.degats * TIC_DU_LIEN * (facteurSur(c, m, a, e) - 1)
           ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique: true })
-          // (LA RÉFRACTION : un second rayon, de lui vers l'insecte le plus proche de lui)
-          const rf = li.refraction
-          if (rf !== undefined) {
-            let vers: Ennemi | undefined
-            let dv = rf.portee
-            for (const x of m.ennemis) {
-              if (x === e || x.asteroide !== undefined) continue
-              const d = Math.hypot(x.corps.x - e.corps.x, x.corps.y - e.corps.y) - rayonDe(c, x)
-              if (d <= dv) (dv = d), (vers = x)
-            }
-            if (vers !== undefined) {
-              branches.push({ de: e.id, x: e.corps.x, y: e.corps.y, vers: vers.id, nee: m.t, jusque: m.t + rf.duree })
-              ev.push({ type: 'refraction', x: e.corps.x, y: e.corps.y })
-            }
-          }
+          // (L'ÉCLATEMENT : il explose — après le rayon, pour ne pas changer ce qu'il traverse en le parcourant)
+          if (li.eclat !== undefined) eclats.push(e)
         }
       }
       if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
     }
+    // (L'ÉCLATEMENT — voir `lien.eclat` : autour de chaque insecte qu'un critique du rayon a frappé, là où il est — ou
+    // était —, une petite explosion avec le givre de l'arme ; elle tire ses critiques, sans rien relancer)
+    const ec = li.eclat
+    if (ec !== undefined)
+      for (const e of eclats) {
+        if (a.gel !== undefined)
+          for (const x of m.ennemis) if (Math.hypot(x.corps.x - e.corps.x, x.corps.y - e.corps.y) <= ec.rayon + rayonDe(c, x)) geler(c, m, x, a.gel.duree, a.gel.ralenti, ev, true)
+        exploser(c, m, e.corps.x, e.corps.y, { rayon: ec.rayon, degats: a.degats * ec.part }, null, ev, a.id)
+      }
     // (LA RÉSONANCE : l'onde frappe une fois par passage tout insecte à son rayon — voir `lien.onde`)
     const on = li.onde
     const po = ondeDuLien(c, m, b)
@@ -5889,23 +5873,6 @@ function menerLesBalisesLaser(c: ConfigVaisseau, m: Monde, dt: number, ev: Evene
         const critique = critiqueTire(c, m, a, e)
         e.pv -= a.degats * on.part * (critique ? facteurSur(c, m, a, e) : 1)
         ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })
-        if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
-      }
-    }
-    // (LES RÉFRACTIONS : elles partent de l'insecte, de là où il est mort s'il l'est ; elles s'éteignent à leur heure, ou
-    // quand leur cible n'est plus là ; elles brûlent ce qu'elles traversent, sans critique)
-    const rf = li.refraction
-    for (let q = branches.length - 1; q >= 0; q--) {
-      const r = branches[q]
-      const de = m.ennemis.find((e) => e.id === r.de)
-      if (de !== undefined) (r.x = de.corps.x), (r.y = de.corps.y)
-      if (rf === undefined || m.t >= r.jusque || !m.ennemis.some((e) => e.id === r.vers)) {
-        branches.splice(q, 1)
-        continue
-      }
-      for (const e of ennemisDeLaBranche(c, m, b, r)) {
-        e.pv -= a.degats * rf.part * dt
-        if (a.gel !== undefined) geler(c, m, e, 0.3, a.gel.ralenti, ev)
         if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
       }
     }

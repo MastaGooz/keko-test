@@ -9185,3 +9185,13 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   large au milieu, dans une lueur rouge — et trois échos qui pâlissent derrière elle (VU en capture). Test : un insecte à
   11 du rayon, que le rayon ne touche pas, frappé 8 fois en 4 s, 512 ; sans la carte, rien.
   LA BALISE LASER : Cryogénique, Deux balises, Longue vie, Réfraction, Résonance, Surcharge.
+- ÉCLATEMENT À LA PLACE DE LA RÉFRACTION (Keko, 25/11 : « à la place de rebondir sur un autre ennemi, on provoque une
+  petite explosion de zone autour de l'ennemi qui subit le critique ») : « Un coup critique du rayon provoque une petite
+  explosion. » (quatre lignes, VU en capture). `lien.eclat` = { rayon 16, part 0,6 }, chiffres de moi : chaque insecte
+  qu'un critique du rayon frappe explose, là où il est — ou était, s'il en meurt —, sur 16, à 60 % des dégâts de
+  l'arme (77), lui compris ; l'explosion givre avec Cryogénique et tire ses critiques, sans rien relancer ; les coups de
+  la Résonance ne la déclenchent pas. LE VISUEL : avec Cryogénique, l'explosion de glace des Grenades givrées — et la
+  Surcharge aussi, qui explosait en feu ; sans, la boule de feu des explosions. PAS VU EN CAPTURE, trop bref. Les
+  réfractions sont parties (`BaliseLaser.branches`, `ennemisDeLaBranche`, l'événement `refraction`). Test (tout
+  critique : 7 explosions en 4 s ; le voisin à 12 de la cible, hors du rayon, 1 075 = 7 × 154 ; sans la carte, rien).
+  LA BALISE LASER : Cryogénique, Deux balises, Éclatement, Longue vie, Résonance, Surcharge.

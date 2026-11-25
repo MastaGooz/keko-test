@@ -565,10 +565,10 @@ export const MUTATIONS: Mutation[] = [
   // par passage à 8 d'elle, la moitié des dégâts — voir `lien.onde` ; chiffres de moi)
   variation('lien-onde', 'lien', 'Résonance', 'Une onde d’énergie fait des allers-retours le long du rayon.', changerA('lien', (a) => ({ ...a, lien: a.lien === undefined ? undefined : { ...a.lien, onde: { trajet: 0.5, rayon: 8, part: 0.5 } } }))),
   variation('lien-surcharge', 'lien', 'Surcharge', 'À la fin de sa vie, la balise explose.', changerA('lien', (a) => ({ ...a, lien: a.lien === undefined ? undefined : { ...a.lien, explosion: { rayon: 30, part: 3 } } }))),
-  // (RÉFRACTION, SA VARIATION SUR COUP CRITIQUE — Keko, 25/11, parmi quatre — Réfraction, Pulsation, Rechargement,
-  // Éclatement : un critique du rayon fait partir un second rayon de l'insecte touché vers le plus proche de lui à 60,
-  // 1 s, à la moitié des dégâts, avec le givre — voir `lien.refraction` ; le rayon tire maintenant ses critiques)
-  variation('lien-refraction', 'lien', 'Réfraction', 'Un coup critique du rayon le réfracte vers un ennemi proche.', changerA('lien', (a) => ({ ...a, lien: a.lien === undefined ? undefined : { ...a.lien, refraction: { portee: 60, duree: 1, part: 0.5 } } }))),
+  // (ÉCLATEMENT, SA VARIATION SUR COUP CRITIQUE — Keko, 25/11 : d'abord la Réfraction, un second rayon vers le voisin ;
+  // puis « à la place de rebondir sur un autre ennemi, une petite explosion de zone autour de l'ennemi qui subit le
+  // critique » : sur 16, 60 % des dégâts, avec le givre — voir `lien.eclat` ; le rayon tire ses critiques)
+  variation('lien-eclat', 'lien', 'Éclatement', 'Un coup critique du rayon provoque une petite explosion.', changerA('lien', (a) => ({ ...a, lien: a.lien === undefined ? undefined : { ...a.lien, eclat: { rayon: 16, part: 0.6 } } }))),
   // (CRYOGÉNIQUE, SON ÉLÉMENT — Keko, 25/11 : « on va garder le rayon cryogénique, et supprimer enflammé » ; le givre vaut
   // aussi pour l'explosion de la Surcharge)
   variation('lien-cryo', 'lien', 'Cryogénique', 'Le rayon gèle et ralentit ce qu’il traverse.', changerA('lien', V.cryo)),
