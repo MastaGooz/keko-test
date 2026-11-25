@@ -751,8 +751,9 @@ export type Arme = {
    * LE KAMIKAZE (l'Escorte, Keko, 25/11, à la place des Perforantes, parmi trois idées proposées : « va pour kamikaze ») :
    * toutes les `tous` secondes, un mini-avion de l'escadrille PIQUE sur un insecte à `laisse` du vaisseau (le verrouillé,
    * sinon le plus fort — voir `rangDeChasse`), à `vitesse`, et s'y ÉCRASE : une explosion de `part` fois ses dégâts sur
-   * `rayon`, avec l'élément de l'arme et sa Désignation ; il revient à sa place `retour` secondes plus tard. Pas de
-   * cible, il attend. *Chiffres de moi, à rejuger* (8 s, ×15, 28, 3 s, 260).
+   * `rayon`, avec l'élément de l'arme et sa Désignation ; il revient à sa place `retour` secondes plus tard — 0 depuis
+   * le 25/11, il y reparaît aussitôt (Keko : « sinon c'est pénalisant » ; 3 s d'abord). Pas de cible, il attend.
+   * *Chiffres de moi, à rejuger* (8 s, ×15, 28, 260).
    */
   kamikaze?: { tous: number; part: number; rayon: number; retour: number; vitesse: number; laisse: number }
   /**

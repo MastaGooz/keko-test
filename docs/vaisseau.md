@@ -9125,3 +9125,7 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   (départ à 8 s, 360 sur le cuirassier, rongé, un avion absent puis revenu 3 s après ; les quatre de l'Escadrille, dans
   les deux ordres). VU en capture : le départ, le piqué, le nuage, l'aile vide.
   L'ESCORTE : Acidification, Chasse, Désignation, Escadrille, Kamikaze, Mini-missiles.
+- LE KAMIKAZE REPARAÎT AUSSITÔT (Keko, 25/11 : « il faudrait respawn l'avion juste après l'explosion, sinon c'est
+  pénalisant ») : `retour` 0 — l'aile n'est plus jamais vide, l'avion reparaît à sa place sous ses étincelles bleues
+  dès l'explosion (le mécanisme d'absence reste, un `retour` au-dessus de 0 le rendrait). Le test : retour à l'instant
+  de l'explosion, aucun avion absent à 9,5 s, tous à moins de 40 du vaisseau.
