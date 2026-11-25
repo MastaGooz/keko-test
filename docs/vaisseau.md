@@ -9069,3 +9069,14 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   d'oiseaux », parmi trois formations dessinées) : « Deux mini-avions de plus, en V. » ; les deux de base en tête (5
   derrière le nez, 16 sur les flancs), les deux nouveaux à 17 derrière et 32 sur les flancs — un V d'oies. Le test des
   balles acides : quatre avions.
+- MISSILES, À LA PLACE DES ROQUETTES (Keko, 25/11 : « une variation où les avions tirent périodiquement des petits
+  missiles, en plus des tirs normaux » ; à la place des Roquettes, qui la recoupaient, et « 1 toutes les 2 s, ×2 »,
+  proposés, retenus — Keko) : « Les mini-avions lâchent aussi un petit missile guidé toutes les 2 s. » (quatre lignes, VU
+  en capture) ; `Arme.missiles` = { cadence 2, part 2, rayon 11, vitesse 140, vie 1,6 } : chaque mini-avion, sa cible à
+  sa portée, lâche un missile guidé (`Drone.missileA`, son horloge à lui, les avions décalés d'une seconde un sur deux)
+  qui fait deux balles et explose sur 11 (la roquette) ; il porte l'élément et la Désignation de l'arme
+  (`effetsDuTir`), pas ses traversées ni ses rebonds. Il se dessine en missile aux deux tiers, comme la roquette, avec
+  sa fumée (`Obus.missile`), et sonne comme le missile. *Une variation qui AJOUTE un tir à côté du sien* : la règle de
+  l'Empire (une variation change le tir) plie ici à la demande de Keko. Deux tests : trois missiles en 5 s, rongeants,
+  sans traversée, qui explosent ; les quatre avions de l'Escadrille en lâchent, dans les deux ordres.
+  L'ESCORTE : Balles acides, Désignation, Escadrille, Missiles, Perforantes, Ricochet.

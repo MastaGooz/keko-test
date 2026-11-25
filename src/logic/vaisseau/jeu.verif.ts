@@ -3276,6 +3276,26 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   verifier(`la désignation : un critique marque l'insecte (${marque.toFixed(2)} s qui restent, vers 3) ; une autre arme à 0 % y fait ${(avec * 100).toFixed(0)} % de critiques (vers 25), ${(sans * 100).toFixed(0)} % sur un insecte sain (0) ; l'escorte elle-même, ${(boucle * 100).toFixed(0)} % (0)`, marque > 2.5 && marque <= 3 && Math.abs(avec - 0.25) < 0.06 && sans === 0 && boucle === 0)
 }
 
+// LES MISSILES DE L'ESCORTE (Keko, 25/11 — voir `Arme.missiles`) : un mini-avion, sa cible à portée, lâche un missile
+// guidé toutes les 2 s en plus de ses balles ; il porte la corrosion de l'arme, pas ses traversées, et explose
+{
+  const cm = { ...VAISSEAU, coque: 1e9, armes: [{ id: 'escorte', cadence: 99, degats: 24, portee: 110, vitesse: 320, vie: 0.5, dispersion: 0, guide: false, tousSens: true, orbite: { rayon: 30, vitesse: 2.6, phase: 0, formation: { x: -5, y: -16 }, ailier: true }, perforant: true, corrosif: { duree: 3, bonus: 0.2 }, missiles: { cadence: 2, part: 2, rayon: 11, vitesse: 140, vie: 1.6 } } as Arme], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false } } as ConfigVaisseau
+  const w = nouveauMonde(cm, 9)
+  w.invasion.prochainA = 1e9
+  w.ennemis.push({ id: 840, corps: { ...nouveauVaisseau(), x: 70, y: 0 }, pv: 1e9, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9 })
+  let lances = 0
+  let explosions = 0
+  let bon = true
+  for (let i = 0; i < 60 * 5; i++) {
+    for (const ev of avancerLeMonde(cm, w, 1 / 60, { x: 0, y: 0 }).evenements) {
+      if (ev.type === 'obus' && ev.arme === 'minimissile') lances += 1
+      if (ev.type === 'explosionDeZone' && ev.arme === 'escorte') explosions += 1
+    }
+    for (const o of w.obus) if (o.missile === true && (o.ronge === undefined || o.perce !== undefined || o.zone?.rayon !== 11 || !o.guide)) bon = false
+  }
+  verifier(`les missiles de l'escorte : ${lances} lancés en 5 s (3), ${explosions} explosions, rongeants et sans traversée (${bon})`, lances === 3 && explosions >= 2 && bon)
+}
+
 // LA BALLE PERFORANTE RONGE (Keko, 24/11 : « l'élément s'applique à toutes les variations ») : une balle acide qui
 // traverse deux insectes en ligne les ronge tous les deux
 {

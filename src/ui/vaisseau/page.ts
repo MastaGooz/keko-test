@@ -14992,16 +14992,17 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           p.glow(o.x, o.y, 4 + 7 * u, N.hex('#ff3a2a'), 0.35 + 0.5 * u)
           p.px(Math.round(o.x + 1), Math.round(o.y - 1), u > 0.6 ? N.hex('#ffd0c0') : N.hex('#ff4a3a'))
         }
-      } else if (o.arme === 'escorte') {
+      } else if (o.arme === 'escorte' && o.missile !== true) {
         // (une balle des drones d'escorte : un court trait clair)
         p.line(o.x - ux * 3, o.y - uy * 3, o.x, o.y, MITRAILLE[2])
         p.px(o.x, o.y, N.WHITE)
-      } else if (o.arme === 'minimissile' || o.arme === 'roquettes') {
+      } else if (o.arme === 'minimissile' || o.arme === 'roquettes' || o.missile === true) {
         // UN MISSILE (Keko, 15/11 : « il ressemble trop à une balle ») : un corps de six pixels sur deux, clair d'un côté,
         // ombré de l'autre, l'ogive rouge, deux ailerons à la queue, une flamme longue et sa lueur
         // (LA ROQUETTE, PLUS PETITE — Keko, 23/11 : « les multi-roquettes doivent être plus petites que les missiles, et
         // l'obus plus gros » : le même dessin, aux deux tiers)
-        const k = o.arme === 'roquettes' ? 0.65 : 1
+        // (le petit missile de l'escorte aussi, `Arme.missiles`)
+        const k = o.arme === 'roquettes' || o.missile === true ? 0.65 : 1
         const nx = -uy
         const ny = ux
         const qx = o.x - ux * 6 * k
@@ -18733,7 +18734,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         // les mini-missiles laissent une traînée de fumée
         // (et l'obus en cloche une fumée plus grosse, là où il est à l'écran — en l'air)
         for (const o of m.obus) if (o.arme === 'obusier' && R.next() < 0.7) feuDesConsumes.spawn(N.P.SMOKE, o.x - o.vx * 0.04, o.y - hauteurEnCloche(o).h - o.vy * 0.04, R.range(-3, 3), R.range(-3, 3), R.range(0.4, 0.6), FUMEE_DU_FEU, R.range(1.3, 1.9) * (o.taille ?? 1))
-        for (const o of m.obus) if ((o.arme === 'minimissile' || o.arme === 'roquettes') && R.next() < 0.6) feuDesConsumes.spawn(N.P.SMOKE, o.x - o.vx * 0.03, o.y - o.vy * 0.03, R.range(-3, 3), R.range(-3, 3), R.range(0.3, 0.5), FUMEE_DU_FEU, R.range(0.9, 1.4))
+        for (const o of m.obus) if ((o.arme === 'minimissile' || o.arme === 'roquettes' || o.missile === true) && R.next() < 0.6) feuDesConsumes.spawn(N.P.SMOKE, o.x - o.vx * 0.03, o.y - o.vy * 0.03, R.range(-3, 3), R.range(-3, 3), R.range(0.3, 0.5), FUMEE_DU_FEU, R.range(0.9, 1.4))
         // les insectes rongés : des gouttes d'acide naissent sur eux et s'évaporent (plus sur un gros — voir `gouttesDAcide`)
         for (const e of m.ennemis) {
           if (e.acide === undefined || e.acide.jusque <= m.t || e.asteroide !== undefined) continue
