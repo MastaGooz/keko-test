@@ -573,7 +573,7 @@ export const MUTATIONS: Mutation[] = [
   // feu est à l'obusier, le givre aux grenades, l'électricité au railgun et à la bobine ; l'escorte devient un soutien qui
   // ronge de loin, et tout ce qu'elle touche prend 20 % de plus des autres armes ; la corrosion du laser acide, aux
   // chiffres du vortex ; un seul élément par arme : cinq variations en attendant)
-  variation('escorte-acide', 'escorte', 'Balles acides', 'Les tirs des mini-avions appliquent corrosion.', changerA('escorte', (a) => ({ ...a, corrosif: { duree: 3, bonus: CORROSION_DU_VORTEX } }))),
+  variation('escorte-acide', 'escorte', 'Acidification','Les tirs des mini-avions appliquent corrosion.', changerA('escorte', (a) => ({ ...a, corrosif: { duree: 3, bonus: CORROSION_DU_VORTEX } }))),
   // (« DÉSIGNATION », SA VARIATION SUR COUP CRITIQUE — Keko, 24/11, proposée : un critique des mini-avions marque l'ennemi
   // 3 s, toutes les armes y ont +25 points de chance critique — sauf l'escorte elle-même, « sinon c'est une boucle » (Keko)
   // — voir `Arme.designation`)
@@ -583,7 +583,7 @@ export const MUTATIONS: Mutation[] = [
   // voit pas trop » ; puis « remplacer les tirs normaux carrément par des missiles » : chaque tir est un petit missile
   // guidé qui explose sur 11, cadence ×2,5 et dégâts ×2,5 — les dégâts par seconde des balles sur une cible, la zone en
   // plus ; voir `Arme.missiles`)
-  variation('escorte-missiles', 'escorte', 'Missiles', 'Les mini-avions tirent des missiles guidés qui explosent.', changerA('escorte', (a) => ({ ...a, cadence: a.cadence * 2.5, degats: fois(a, 2.5), missiles: { rayon: 11, vitesse: 140, vie: 1.6 } }))),
+  variation('escorte-missiles', 'escorte', 'Mini-missiles','Les mini-avions tirent des missiles guidés qui explosent.', changerA('escorte', (a) => ({ ...a, cadence: a.cadence * 2.5, degats: fois(a, 2.5), missiles: { rayon: 11, vitesse: 140, vie: 1.6 } }))),
   // LES CARTES D'ÉLÉMENT (Keko, 24/11 : « des cartes spéciales de chaque élément » ; « des cartes multicolores spéciales qu'on
   // proposera dans le pool des cartes spéciales, si le joueur a au moins une attaque avec l'élément en question » — voir
   // `ELEMENTAIRES` pour leurs chiffres ; leurs noms et leurs textes sont de moi)

@@ -9093,3 +9093,7 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   grésillent où elles retombent, une vapeur pâle ; le « boum » du mini-missile et le « pchouf » de la mine d'acide. VU en
   capture. Les tests : trois missiles en 5 s à cadence 2, aucune balle ; les quatre avions de l'Escadrille à 1,125 s et
   60, dans les deux ordres.
+- DEUX NOMS CHANGÉS (Keko, 25/11 : « faudrait changer le nom Balles acides, on va dire Acidification ; et Missiles par
+  Mini-missiles ») : ACIDIFICATION (`escorte-acide`) et MINI-MISSILES (`escorte-missiles`) ; les identifiants ne
+  changent pas. Les deux titres tiennent sur la carte, VU en capture.
+  L'ESCORTE : Acidification, Désignation, Escadrille, Mini-missiles, Perforantes, Ricochet.
