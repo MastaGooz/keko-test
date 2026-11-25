@@ -3674,6 +3674,46 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
     }
   }
   verifier(`le vaisseau parti à 400 de sa balise, elle tient ${(finieA - poseeA2).toFixed(2)} s (4)`, poseeA2 > 0 && Math.abs(finieA - poseeA2 - 4) < 0.04)
+  // (CRYOGÉNIQUE ET SURCHARGE — Keko, 25/11 : un élément par arme, pour toutes ses variations : l'explosion de la fin
+  // givre aussi ; un insecte à 25 de la balise, hors du rayon, n'est givré qu'à l'explosion)
+  const cfg3 = { ...cfg, armes: [{ ...lien, gel: { duree: 1.5, ralenti: 0.5 }, lien: { ...lien.lien, explosion: { rayon: 30, part: 3 } } }] }
+  const w3 = nouveauMonde(cfg3, 7)
+  w3.invasion.prochainA = 1e9
+  const [vise, voisin] = [[60, 0], [80, 25]].map(([x, y], k): Ennemi => ({ id: 970 + k, corps: { ...nouveauVaisseau(), x, y }, pv: 1e9, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9 }))
+  w3.ennemis.push(vise, voisin)
+  w3.verrou = vise.id
+  let avantLaFin = true
+  let fin3 = false
+  for (let i = 0; i < 60 * 6 && !fin3; i++) {
+    for (const ev of avancerLeMonde(cfg3, w3, 1 / 60, { x: 0, y: 0 }).evenements) if (ev.type === 'baliseFinie') fin3 = true
+    if (!fin3 && (voisin.geleA ?? -1) > w3.t) avantLaFin = false
+  }
+  // (SES CRITIQUES ET LA RÉFRACTION — Keko, 25/11 : tout coup critique, la cible sur le rayon en tire un toutes les 0,5 s ;
+  // chacun réfracte le rayon vers le voisin à 40 d'elle, hors du rayon, 1 s à la moitié des dégâts ; sans la carte, le
+  // voisin n'a rien)
+  const refracte = (avec: boolean): { cible: number; voisin: number; branches: number; critiques: number } => {
+    const cfg4 = { ...cfg, passifs: { ...cfg.passifs, critique: 1 }, armes: [{ ...lien, lien: { ...lien.lien, ...(avec ? { refraction: { portee: 60, duree: 1, part: 0.5 } } : {}) } }] }
+    const w4 = nouveauMonde(cfg4, 8)
+    w4.invasion.prochainA = 1e9
+    const [ci, vo] = [[60, 0], [60, 40]].map(([x, y], k): Ennemi => ({ id: 980 + k, corps: { ...nouveauVaisseau(), x, y }, pv: 1e9, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9 }))
+    w4.ennemis.push(ci, vo)
+    w4.verrou = ci.id
+    let branches = 0
+    let critiques = 0
+    let fini = false
+    for (let i = 0; i < 60 * 6 && !fini; i++)
+      for (const ev of avancerLeMonde(cfg4, w4, 1 / 60, { x: 0, y: 0 }).evenements) {
+        if (ev.type === 'refraction') branches++
+        if (ev.type === 'ennemiTouche' && ev.critique === true) critiques++
+        if (ev.type === 'baliseFinie') fini = true
+      }
+    return { cible: Math.round(1e9 - ci.pv), voisin: Math.round(1e9 - vo.pv), branches, critiques }
+  }
+  const [rf, sansRf] = [refracte(true), refracte(false)]
+  // (le critique vaut ×2 ici : chacun ajoute 128 × 0,5 = 64 ; une réfraction par tic, chacune 1 s — elles se chevauchent,
+  // deux à la fois : 7 × 64 au plus, moins la dernière que la fin de la balise coupe)
+  verifier(`les critiques du rayon : ${rf.critiques} en 4 s (7), la cible prend ${rf.cible} (512 + 7 × 64 = 960) ; la Réfraction : ${rf.branches} réfractions (7), le voisin hors du rayon prend ${rf.voisin} (près de 7 × 64 = 448) ; sans la carte, ${sansRf.branches} réfraction, le voisin ${sansRf.voisin} (0)`, rf.critiques === 7 && Math.abs(rf.cible - 960) < 20 && rf.branches === 7 && rf.voisin > 380 && rf.voisin <= 450 && sansRf.branches === 0 && sansRf.voisin === 0 && sansRf.critiques === 7)
+  verifier(`la Surcharge givrée : la cible sur le rayon givrée (${(vise.geleA ?? -1) > w3.t}), le voisin à 25 de la balise pas avant l'explosion (${avantLaFin}), givré par elle (${(voisin.geleA ?? -1) > w3.t}), touché (${1e9 - voisin.pv})`, fin3 && (vise.geleA ?? -1) > w3.t && avantLaFin && (voisin.geleA ?? -1) > w3.t && voisin.pv < 1e9)
 }
 
 // LA RAFALE ENTRE LES AILES (Keko, 23/11 : « des rafales de 4 tirs en alternant aile gauche, aile droite, chacune des ailes

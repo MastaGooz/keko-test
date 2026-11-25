@@ -562,8 +562,13 @@ export const MUTATIONS: Mutation[] = [
   variation('lien-longue', 'lien', 'Longue vie', 'Les balises restent actives bien plus longtemps.', changerA('lien', (a) => ({ ...a, lien: a.lien === undefined ? undefined : { ...a.lien, duree: a.lien.duree * 1.6 } }))),
   variation('lien-large', 'lien', 'Faisceau large', 'Un rayon bien plus épais.', changerA('lien', (a) => ({ ...a, lien: a.lien === undefined ? undefined : { ...a.lien, epaisseur: a.lien.epaisseur * 2.5 } }))),
   variation('lien-surcharge', 'lien', 'Surcharge', 'À la fin de sa vie, la balise explose.', changerA('lien', (a) => ({ ...a, lien: a.lien === undefined ? undefined : { ...a.lien, explosion: { rayon: 30, part: 3 } } }))),
+  // (RÉFRACTION, SA VARIATION SUR COUP CRITIQUE — Keko, 25/11, parmi quatre — Réfraction, Pulsation, Rechargement,
+  // Éclatement : un critique du rayon fait partir un second rayon de l'insecte touché vers le plus proche de lui à 60,
+  // 1 s, à la moitié des dégâts, avec le givre — voir `lien.refraction` ; le rayon tire maintenant ses critiques)
+  variation('lien-refraction', 'lien', 'Réfraction', 'Un coup critique du rayon le réfracte vers un ennemi proche.', changerA('lien', (a) => ({ ...a, lien: a.lien === undefined ? undefined : { ...a.lien, refraction: { portee: 60, duree: 1, part: 0.5 } } }))),
+  // (CRYOGÉNIQUE, SON ÉLÉMENT — Keko, 25/11 : « on va garder le rayon cryogénique, et supprimer enflammé » ; le givre vaut
+  // aussi pour l'explosion de la Surcharge)
   variation('lien-cryo', 'lien', 'Cryogénique', 'Le rayon gèle et ralentit ce qu’il traverse.', changerA('lien', V.cryo)),
-  variation('lien-incendiaire', 'lien', 'Incendiaire', 'Le rayon enflamme ce qu’il traverse.', changerA('lien', V.incendiaire)),
   // LES DRONES D'ESCORTE
   // (ESCADRILLE — Keko, 24/11 : un avion de plus, dans l'axe ; puis « plutôt +2 avions, et la formation en mode oiseau » :
   // un V d'oies — les deux de base en tête, à 16 des flancs, les deux nouveaux plus en arrière et plus écartés, à 32)

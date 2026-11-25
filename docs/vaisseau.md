@@ -9150,3 +9150,24 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   portée de tir). Le test de la Chasse y ajoute un cuirassier verrouillé à 200, hors de la laisse : les deux avions
   lui tournent autour et le touchent. MESURÉ hors du jeu : le vaisseau qui file à droite 8 s, à 1 041 de sa cible,
   les avions restent à 35 d'elle et tirent (792 dégâts).
+- LA BALISE LASER, PREMIER PASSAGE (Keko, 25/11 : « on va garder le rayon cryogénique, et supprimer enflammé ; on
+  conserve la règle un élément par attaque, et on va aussi conserver la variation où la balise explose à la fin ; en
+  troisième, celle qui pourrait synergiser avec les critiques ») :
+  - INCENDIAIRE RETIRÉE ; CRYOGÉNIQUE, SON ÉLÉMENT, vaut aussi pour la SURCHARGE : l'explosion de la fin givre tout ce
+    qu'elle prend (elle ne faisait que des dégâts). Test : un insecte à 25 de la balise, hors du rayon, n'est givré
+    qu'à l'explosion.
+  - LE RAYON TIRE SES CRITIQUES (il n'en faisait aucun, ses dégâts étaient continus) : toutes les 0,5 s passées dans le
+    rayon (`TIC_DU_LIEN`, la première au bout d'un tic), un insecte tire un critique, qui ajoute ce que ce demi-seconde
+    a brûlé fois le facteur de critique, moins un — l'éclair, la secousse et le chiffre d'un critique (`ennemiTouche`).
+  - RÉFRACTION, SA VARIATION SUR COUP CRITIQUE (parmi quatre — Réfraction, Pulsation, Rechargement, Éclatement) :
+    « Un coup critique du rayon le réfracte vers un ennemi proche. » (cinq lignes, VU en capture). `lien.refraction` =
+    { portee 60, duree 1, part 0,5 }, chiffres de moi : de l'insecte frappé d'un critique, un second rayon vers
+    l'insecte le plus proche de lui à 60 (bord à bord), 1 s, à la moitié des dégâts, avec le givre ; il brûle tout ce
+    qu'il traverse, sans critique ; il part de l'insecte, ou de là où il est mort ; il s'éteint avec sa cible, ou avec
+    la balise (`BaliseLaser.branches`, `ennemisDeLaBranche`). Deux réfractions vers le même voisin se cumulent (une par
+    tic, chacune 1 s). LE VISUEL : un rayon rouge plus fin qui jaillit en 0,08 s, frémit et s'éteint dans son dernier
+    quart, un point blanc là où il se brise ; à la brisure, un éclat blanc et rouge et des étincelles (événement
+    `refraction`) ; des étincelles rouges sur ce qu'il brûle. PAS ENCORE VU EN CAPTURE : la mêlée cache le rayon court ;
+    le rayon et ses critiques, si. Test (tout critique : 7 critiques en 4 s, la cible 960 = 512 + 7 × 64 ; 7
+    réfractions, le voisin à 40 hors du rayon 410 ; sans la carte, rien).
+  LA BALISE LASER : Cryogénique, Deux balises, Faisceau large, Longue vie, Réfraction, Surcharge.
