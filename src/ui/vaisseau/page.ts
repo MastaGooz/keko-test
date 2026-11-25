@@ -12066,21 +12066,26 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // (SON ONDE, LA RÉSONANCE — Keko, 25/11, « la forme, je te laisse décider », voir `lien.onde` : une LENTILLE
       // D'ÉNERGIE en travers du rayon — un trait blanc bordé de rose, plus large au milieu qu'aux pointes, dans une lueur
       // rouge — et sa traînée, trois échos qui pâlissent derrière elle ; aux deux bouts du rayon, elle rebondit)
+      // (… PUIS UNE SPHÈRE — Keko, 25/11 : « Résonance devrait être une sphère plutôt » : une boule d'énergie rouge, du
+      // rayon de sa frappe, éclairée en haut à gauche — bord sombre, corps rouge, reflet rose, point blanc —, un anneau
+      // qui frémit autour, et sa traînée, trois boules qui pâlissent et rapetissent derrière elle)
       if (li.onde !== undefined && jaillit >= 1) {
         const rw = li.onde.rayon
         for (let q = 3; q >= 0; q--) {
-          const po = ondeDuLien(CONF, m, b, m.t - q * 0.025)
+          const po = ondeDuLien(CONF, m, b, m.t - q * 0.03)
           if (po === null) continue
-          const al = k * (q === 0 ? 1 : 0.4 - q * 0.1)
           if (q > 0) {
-            p.line(po.x - nx * rw * 0.6, po.y - ny * rw * 0.6, po.x + nx * rw * 0.6, po.y + ny * rw * 0.6, ROUGE_LASER[3], al)
+            p.circle(po.x, po.y, rw * (0.8 - q * 0.15), ROUGE_LASER[2], k * (0.45 - q * 0.1))
             continue
           }
-          p.glow(po.x, po.y, rw + 3, ROUGE_LASER[2], 0.55 * k)
-          for (const sg of [-1, 1]) p.line(po.x - ux * sg - nx * rw * 0.75, po.y - uy * sg - ny * rw * 0.75, po.x - ux * sg + nx * rw * 0.75, po.y - uy * sg + ny * rw * 0.75, ROUGE_LASER[3], al)
-          p.line(po.x - nx * rw, po.y - ny * rw, po.x + nx * rw, po.y + ny * rw, ROUGE_LASER[4], al)
-          p.line(po.x - nx * rw * 0.5, po.y - ny * rw * 0.5, po.x + nx * rw * 0.5, po.y + ny * rw * 0.5, N.WHITE, al)
-          p.glow(po.x, po.y, 4, N.WHITE, 0.6 * k)
+          const r = rw * 0.8
+          p.glow(po.x, po.y, rw + 4, ROUGE_LASER[2], 0.55 * k)
+          p.circle(po.x, po.y, r, ROUGE_LASER[1], k)
+          p.circle(po.x, po.y, r - 1, ROUGE_LASER[2], k)
+          p.circle(po.x - r * 0.22, po.y - r * 0.22, r * 0.6, ROUGE_LASER[3], k)
+          p.circle(po.x - r * 0.35, po.y - r * 0.35, r * 0.28, ROUGE_LASER[4], k)
+          p.dot(po.x - r * 0.45, po.y - r * 0.45, N.WHITE, k)
+          p.ring(po.x, po.y, r + 1.5 + Math.sin(t * 40) * 0.5, 1, ROUGE_LASER[3], 0.5 * k * fremit)
         }
       }
       // (la balise posée : trois pieds déployés, et à l'instant où elle s'active, une onde rouge qui s'ouvre)

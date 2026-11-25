@@ -9210,3 +9210,8 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   capture : Sous-munitions, Azote liquide, Percussion tiennent sur leur ligne. Les cartes ordinaires (Cadence, Givre,
   Électrocution…) ne sont pas dans la comparaison — leurs noms sont dans la page ; « Cadence montante », « Grenades
   givrées » et « Électrique » en sont proches.
+- LA RÉSONANCE EN SPHÈRE (Keko, 25/11 : « Résonance devrait être une sphère plutôt ») : la lentille en travers du rayon
+  devient une BOULE D'ÉNERGIE rouge, du rayon de sa frappe (8, dessinée à 6,4 et sa lueur jusqu'à 12), éclairée en haut
+  à gauche — bord sombre, corps rouge, reflet rose, point blanc —, un anneau qui frémit autour, et trois boules qui
+  pâlissent et rapetissent derrière elle. La règle ne bouge pas. VU en capture : elle se lit comme une sphère qui court
+  le long du rayon.
