@@ -9110,3 +9110,18 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   140, celui à 200 intact ; le moucheron verrouillé, ils y vont ; sans la carte, ils restent en formation) et celui des
   quatre avions de l'Escadrille, dans les deux ordres. VU en capture : les quatre autour d'un cuirassier.
   L'ESCORTE : Acidification, Chasse, Désignation, Escadrille, Mini-missiles, Perforantes.
+- KAMIKAZE, À LA PLACE DES PERFORANTES (Keko, 25/11 : « le tir qui traverse, je suis pas fan » ; parmi trois idées —
+  Cadence montante, Kamikaze, Rafales —, « va pour kamikaze, oublie pas le visuel poison si corrosion ») : « Toutes les
+  8 s, un mini-avion pique sur un ennemi et explose. » (cinq lignes, VU en capture). `Arme.kamikaze` = { tous 8, part
+  15, rayon 28, retour 3, vitesse 260, laisse 160 }, chiffres de moi, à rejuger : L'ESCADRILLE a une horloge
+  (`Monde.kamikazeA`) ; l'heure venue, sa cible est le verrouillé à 160 du vaisseau, sinon le plus fort (`rangDeChasse`,
+  le plus proche à rang égal), et l'avion libre le plus proche d'elle PIQUE (`Drone.pique`) — de plus en plus vite,
+  sur l'insecte le plus proche à 80 si elle meurt en route (aucun : il renonce) — et s'écrase au contact ou au bout de
+  2 s : `exploser` à 24 × 15 = 360 sur 28, avec la corrosion de l'arme et sa Désignation sur les critiques ; l'événement
+  porte `kamikaze`. L'avion est ABSENT 3 s (`Drone.absentJusque` : ni dessiné, ni en vol, ni au tir), puis reparaît à sa
+  place. LE VISUEL : au départ un éclair rouge et le souffle du missile ; en piqué une flamme longue, une traînée de feu
+  et une lueur rouge qui bat ; l'explosion de feu à son rayon, une secousse ; AVEC ACIDIFICATION, LE NUAGE DE POISON des
+  mines de la Vouivre (`gaz`) sous l'éclaboussure d'acide, un éclair vert ; au retour, des étincelles bleues. Deux tests
+  (départ à 8 s, 360 sur le cuirassier, rongé, un avion absent puis revenu 3 s après ; les quatre de l'Escadrille, dans
+  les deux ordres). VU en capture : le départ, le piqué, le nuage, l'aile vide.
+  L'ESCORTE : Acidification, Chasse, Désignation, Escadrille, Kamikaze, Mini-missiles.

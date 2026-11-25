@@ -3320,6 +3320,32 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   verifier(`la chasse : les avions tournent autour du cuirassier (à ${libre.dist.join(', ')}, vers 34), il prend ${libre.loin}, le moucheron ${libre.pres} (au plus une balle), celui hors de la laisse ${libre.horsLaisse} (0) ; le moucheron verrouillé, ils y vont (à ${verrouille.dist.join(', ')}) ; sans la carte, ils restent en formation (à ${ailiers.dist.join(', ')} du cuirassier, plus de 100)`, libre.dist.every((x) => Math.abs(x - 34) < 10) && libre.loin > 0 && libre.pres <= 24 && libre.horsLaisse === 0 && verrouille.dist.every((x) => Math.abs(x - 34) < 10) && ailiers.dist.every((x) => x > 100))
 }
 
+// LE KAMIKAZE DE L'ESCORTE (Keko, 25/11 — voir `Arme.kamikaze`) : un cuirassier à 100, un moucheron à 50 ; au bout de
+// 8 s, UN avion pique sur le cuirassier (le plus fort) et s'y écrase — 24 × 15 = 360, rongé avec l'acide ; il revient 3 s
+// plus tard ; les balles n'y sont pour rien (cadence 99)
+{
+  const cm = { ...VAISSEAU, coque: 1e9, armes: [0, 1].map((k) => ({ id: 'escorte', cadence: 99, degats: 24, portee: 110, vitesse: 320, vie: 0.5, dispersion: 0, guide: false, tousSens: true, place: 20 + k, orbite: { rayon: 30, vitesse: 2.6, phase: k * Math.PI, vol: 230, braquage: 9, autour: 34, formation: { x: -5, y: k === 0 ? -16 : 16 }, ailier: true }, corrosif: { duree: 3, bonus: 0.2 }, kamikaze: { tous: 8, part: 15, rayon: 28, retour: 3, vitesse: 260, laisse: 160 } }) as Arme), champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false }, passifs: { ...VAISSEAU.passifs, critique: 0 } } as ConfigVaisseau
+  const w = nouveauMonde(cm, 13)
+  w.invasion.prochainA = 1e9
+  const insecte = (id: number, x: number, sorte?: SorteDInsecte): Ennemi => ({ id, corps: { ...nouveauVaisseau(), x, y: 0 }, pv: 1e9, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9, ...(sorte === undefined ? {} : { sorte }) })
+  const [moucheron, cuirassier] = [insecte(860, 50), insecte(861, 100, 'cuirassier')]
+  w.ennemis.push(moucheron, cuirassier)
+  const departs: number[] = []
+  const retours: number[] = []
+  const explosions: number[] = []
+  let absents = 0
+  for (let i = 0; i < 60 * 12.5; i++) {
+    for (const ev of avancerLeMonde(cm, w, 1 / 60, { x: 0, y: 0 }).evenements) {
+      if (ev.type === 'kamikaze') (ev.retour === true ? retours : departs).push(Math.round(w.t * 10) / 10)
+      if (ev.type === 'explosionDeZone' && ev.kamikaze === true) explosions.push(Math.round(w.t * 10) / 10)
+    }
+    if (Math.abs(w.t - 9.5) < 1 / 120) absents = w.drones.filter((d) => (d.absentJusque ?? -1) > w.t).length
+  }
+  const pris = 1e9 - cuirassier.pv
+  const ronge = (cuirassier.acide?.jusque ?? -1) > 0
+  verifier(`le kamikaze : départs à ${departs.join(', ')} s (8), explosion à ${explosions.join(', ')} s, le cuirassier prend ${pris} (360), rongé (${ronge}) ; ${absents} avion absent à 9,5 s (1) ; retour à ${retours.join(', ')} s (3 s après l'explosion)`, departs.length === 1 && Math.abs(departs[0] - 8) < 0.1 && explosions.length === 1 && pris === 360 && ronge && absents === 1 && retours.length === 1 && Math.abs(retours[0] - explosions[0] - 3) < 0.1)
+}
+
 // LA BALLE PERFORANTE RONGE (Keko, 24/11 : « l'élément s'applique à toutes les variations ») : une balle acide qui
 // traverse deux insectes en ligne les ronge tous les deux
 {

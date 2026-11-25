@@ -748,6 +748,14 @@ export type Arme = {
    */
   missiles?: { rayon: number; vitesse: number; vie: number }
   /**
+   * LE KAMIKAZE (l'Escorte, Keko, 25/11, à la place des Perforantes, parmi trois idées proposées : « va pour kamikaze ») :
+   * toutes les `tous` secondes, un mini-avion de l'escadrille PIQUE sur un insecte à `laisse` du vaisseau (le verrouillé,
+   * sinon le plus fort — voir `rangDeChasse`), à `vitesse`, et s'y ÉCRASE : une explosion de `part` fois ses dégâts sur
+   * `rayon`, avec l'élément de l'arme et sa Désignation ; il revient à sa place `retour` secondes plus tard. Pas de
+   * cible, il attend. *Chiffres de moi, à rejuger* (8 s, ×15, 28, 3 s, 260).
+   */
+  kamikaze?: { tous: number; part: number; rayon: number; retour: number; vitesse: number; laisse: number }
+  /**
    * UN HARPON (la sixième arme de l'Empire, Keko, 23/11 : « on fait un test avec le harpon » — proposé : « il harponne
    * l'insecte le plus résistant à portée, le relie au vaisseau par un câble, et le câble lui inflige des dégâts qui
    * augmentent tant qu'il tient ; il casse si l'insecte meurt ou s'éloigne trop » ; l'arme anti-boss de l'Empire) : le
@@ -1563,6 +1571,8 @@ export type Monde = {
   crache: boolean
   /** LES DRONES, un par arme à orbite (dans leur ordre) : où ils sont, leur vitesse, l'ennemi qu'ils attaquent. */
   drones: Drone[]
+  /** L'heure du prochain KAMIKAZE de l'escadrille (voir `Arme.kamikaze`). */
+  kamikazeA?: number
   /** LES TOURELLES POSÉES (voir `Arme.pose`) : où, depuis quand, leur canon, leur prochain tir, l'arme qui les a posées. */
   tourelles: Tourelle[]
   /** LES FLAQUES DE NAPALM (voir `Arme.napalm`). */
@@ -1678,7 +1688,7 @@ export type Tourelle = { id: number; x: number; y: number; nee: number; cap: num
 
 /** Un drone en vol (voir `Arme.orbite`). */
 /** (`cap` : où son nez regarde — vers sa cible quand il en a une, voir `menerLesDrones`.) */
-export type Drone = { x: number; y: number; vx: number; vy: number; cible: number | null; cap?: number }
+export type Drone = { x: number; y: number; vx: number; vy: number; cible: number | null; cap?: number; /** IL PIQUE en kamikaze sur cet insecte, depuis cet instant (voir `Arme.kamikaze`). */ pique?: { cible: number; depuis: number }; /** Sauté en kamikaze : il revient à sa place à cet instant. */ absentJusque?: number }
 
 /** Ce qui s'est passé pendant un pas, pour le dessin et le son. */
 export type Evenement =
@@ -1724,7 +1734,9 @@ export type Evenement =
   /** Une boule de napalm s'écrase en flaque de feu (voir `Arme.napalm`). */
   | { type: 'flaque'; x: number; y: number; rayon: number }
   /** Un mini-missile explose (voir `Arme.zone`). */
-  | { type: 'explosionDeZone'; x: number; y: number; rayon: number; /** L'arme qui éclate (l'orbe de plasma a sa gerbe à elle). */ arme?: string; /** Le rayon de son cœur (voir `Arme.epicentre`). */ coeur?: number }
+  | { type: 'explosionDeZone'; x: number; y: number; rayon: number; /** L'arme qui éclate (l'orbe de plasma a sa gerbe à elle). */ arme?: string; /** Le rayon de son cœur (voir `Arme.epicentre`). */ coeur?: number; /** Un mini-avion qui s'écrase (voir `Arme.kamikaze`). */ kamikaze?: boolean }
+  /** Un mini-avion part en kamikaze (son drone), ou revient à sa place (voir `Arme.kamikaze`). */
+  | { type: 'kamikaze'; x: number; y: number; drone: number; retour?: boolean }
   | { type: 'tourelleFinie'; x: number; y: number }
   /** Un obus touche le rival. */
   | { type: 'ennemiTouche'; id: number; x: number; y: number; critique: boolean }
@@ -6303,9 +6315,94 @@ function menerLesDrones(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]
       if (r > rp || (r === rp && proie?.id !== avant && (e.id === avant || dist < dp))) (proie = e), (rp = r), (dp = dist)
     }
   }
+  // LE KAMIKAZE (voir `Arme.kamikaze`) : l'heure venue, l'avion libre le plus proche de sa cible pique sur elle — le
+  // verrouillé à la laisse, sinon le plus fort ; sans cible ni avion libre, il attend
+  const kz = armes.find((x) => x.a.kamikaze !== undefined)?.a.kamikaze
+  if (kz !== undefined) {
+    if (m.kamikazeA === undefined) m.kamikazeA = m.t + kz.tous
+    if (m.t >= m.kamikazeA) {
+      const ici = (e: Ennemi): boolean => Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= kz.laisse
+      const ve = ennemiVerrouille(m)
+      let visee: Ennemi | undefined = ve !== null && ici(ve) ? ve : undefined
+      if (visee === undefined) {
+        let rv = -1
+        let dv = Infinity
+        for (const e of m.ennemis) {
+          if (!ici(e)) continue
+          const r = rangDeChasse(e)
+          const dist = Math.hypot(e.corps.x - v.x, e.corps.y - v.y)
+          if (r > rv || (r === rv && dist < dv)) (visee = e), (rv = r), (dv = dist)
+        }
+      }
+      let k = -1
+      if (visee !== undefined)
+        armes.forEach((x, j) => {
+          const dj = m.drones[j]
+          if (x.a.kamikaze === undefined || dj.pique !== undefined || (dj.absentJusque ?? -1) > m.t) return
+          if (k < 0 || Math.hypot(dj.x - visee!.corps.x, dj.y - visee!.corps.y) < Math.hypot(m.drones[k].x - visee!.corps.x, m.drones[k].y - visee!.corps.y)) k = j
+        })
+      if (visee !== undefined && k >= 0) {
+        m.drones[k].pique = { cible: visee.id, depuis: m.t }
+        m.kamikazeA = m.t + kz.tous
+        ev.push({ type: 'kamikaze', x: m.drones[k].x, y: m.drones[k].y, drone: k })
+      }
+    }
+  }
   armes.forEach(({ a, i }, k) => {
     const d = m.drones[k]
     const o = a.orbite!
+    // (SAUTÉ EN KAMIKAZE : il ne vole ni ne tire ; revenu, il reparaît à sa place)
+    if (d.absentJusque !== undefined) {
+      const h = placeDuDrone(m, a)
+      d.x = h.x
+      d.y = h.y
+      d.vx = v.vx
+      d.vy = v.vy
+      d.cible = null
+      d.cap = v.cap
+      if (m.t < d.absentJusque) return
+      d.absentJusque = undefined
+      ev.push({ type: 'kamikaze', x: d.x, y: d.y, drone: k, retour: true })
+    }
+    // (IL PIQUE : droit sur sa cible, de plus en plus vite ; elle morte, sur l'insecte le plus proche de lui à 80 — aucun,
+    // il renonce et rentre ; au contact, ou au bout de 2 s, il s'écrase)
+    if (d.pique !== undefined && a.kamikaze !== undefined) {
+      const kk = a.kamikaze
+      let cible = m.ennemis.find((e) => e.id === d.pique!.cible)
+      if (cible === undefined) {
+        let dc = 80
+        for (const e of m.ennemis) {
+          const dist = Math.hypot(e.corps.x - d.x, e.corps.y - d.y)
+          if (dist < dc) (dc = dist), (cible = e)
+        }
+        if (cible !== undefined) d.pique.cible = cible.id
+      }
+      if (cible === undefined) d.pique = undefined
+      else {
+        const dx = cible.corps.x - d.x
+        const dy = cible.corps.y - d.y
+        const l = Math.hypot(dx, dy) || 1
+        const vit = kk.vitesse * Math.min(1, 0.5 + (m.t - d.pique.depuis) * 2)
+        const kb = Math.min(1, dt * 14)
+        d.vx += ((dx / l) * vit - d.vx) * kb
+        d.vy += ((dy / l) * vit - d.vy) * kb
+        d.x += d.vx * dt
+        d.y += d.vy * dt
+        d.cap = Math.atan2(d.vy, d.vx)
+        d.cible = cible.id
+        if (l <= rayonDe(c, cible) + 3 || m.t - d.pique.depuis > 2) {
+          const n = ev.length
+          const critiques = exploser(c, m, d.x, d.y, { rayon: kk.rayon, degats: a.degats * kk.part }, null, ev, a.id)
+          const ex = ev[n]
+          if (ex !== undefined && ex.type === 'explosionDeZone') ex.kamikaze = true
+          for (const e of critiques) designer(m, e, a.designation, ev)
+          d.pique = undefined
+          d.absentJusque = m.t + kk.retour
+          d.cible = null
+        }
+        return
+      }
+    }
     const laisse = o.laisse ?? 120
     // (un ailier ne choisit qu'à sa portée de tir, mesurée de lui — voir `orbite.ailier`)
     const aLaLaisse = (e: Ennemi): boolean => (o.ailier === true ? Math.hypot(e.corps.x - d.x, e.corps.y - d.y) <= a.portee : Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= laisse)

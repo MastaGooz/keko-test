@@ -221,6 +221,10 @@ verifier('le délai passé, ce qui restait à choisir part en réserve', reserve
   const chassent = (c: ConfigVaisseau): string => c.armes.filter((a) => a.id === 'escorte').map((a) => (a.orbite?.chasse === true && a.orbite.ailier === false && a.orbite.laisse === 160 ? 'C' : '-')).join('')
   const [c1, c2] = [prendre(['arme-escorte', 'escorte-chasse', 'escorte-plus']), prendre(['arme-escorte', 'escorte-plus', 'escorte-chasse'])]
   verifier(`la chasse de l'escorte : ${chassent(c1)} et ${chassent(c2)} (CCCC) ; plus de Ricochet (${MUTATIONS.some((x) => x.id === 'escorte-ricochet')})`, chassent(c1) === 'CCCC' && chassent(c2) === 'CCCC' && !MUTATIONS.some((x) => x.id === 'escorte-ricochet'))
+  // (LE KAMIKAZE, à la place des Perforantes — Keko, 25/11 : les quatre avions de l'Escadrille peuvent piquer, dans les deux ordres)
+  const piquent = (c: ConfigVaisseau): string => c.armes.filter((a) => a.id === 'escorte').map((a) => (a.kamikaze?.tous === 8 ? 'K' : '-')).join('')
+  const [k1, k2] = [prendre(['arme-escorte', 'escorte-kamikaze', 'escorte-plus']), prendre(['arme-escorte', 'escorte-plus', 'escorte-kamikaze'])]
+  verifier(`le kamikaze de l'escorte : ${piquent(k1)} et ${piquent(k2)} (KKKK) ; plus de Perforantes (${MUTATIONS.some((x) => x.id === 'escorte-perforantes')})`, piquent(k1) === 'KKKK' && piquent(k2) === 'KKKK' && !MUTATIONS.some((x) => x.id === 'escorte-perforantes'))
 }
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)
 console.log('Tout passe.')

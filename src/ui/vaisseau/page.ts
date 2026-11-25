@@ -13308,7 +13308,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * dessus, tourné vers où il vole — le nez, deux ailes en flèche, la verrière bleue, deux dérives —, une flamme qui
    * bat derrière lui et sa traînée ; il penche ses ailes en virage.
    */
-  function dessinerUnMiniAvion(p: Peintre, x: number, y: number, vx: number, vy: number, chasse: boolean, capDuDrone?: number): void {
+  // (… EN PIQUÉ KAMIKAZE — Keko, 25/11, voir `Arme.kamikaze` : une longue flamme, une traînée de feu, une lueur rouge
+  // qui bat)
+  function dessinerUnMiniAvion(p: Peintre, x: number, y: number, vx: number, vy: number, chasse: boolean, capDuDrone?: number, pique = false): void {
     const v0 = Math.hypot(vx, vy)
     // (son nez : celui que la règle lui donne — vers sa cible, ou le cap du vaisseau — voir `Drone.cap`)
     const cap = capDuDrone ?? (v0 > 5 ? Math.atan2(vy, vx) : t * 2.6)
@@ -13317,9 +13319,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const nx = -uy
     const ny = ux
     const pt = (a: number, b: number): [number, number] => [x + ux * a + nx * b, y + uy * a + ny * b]
+    if (pique) {
+      for (let i = 1; i <= 6; i++) p.dot(x - vx * i * 0.012, y - vy * i * 0.012, i < 3 ? FEU[4] : FEU[2], 0.8 * (1 - i / 7))
+      p.glow(x, y, 8, N.hex('#ff3a2a'), 0.35 + 0.25 * Math.sin(t * 30))
+    }
     // (la traînée et la flamme)
     for (let i = 1; i <= 3; i++) p.dot(x - vx * i * 0.016, y - vy * i * 0.016, N.hex('#8ac8ff'), 0.4 * (1 - i / 4))
-    const fl = 2 + (Math.sin(t * 50 + x) + 1) * (chasse ? 1.2 : 0.7)
+    const fl = pique ? 5 + (Math.sin(t * 60 + x) + 1) * 1.5 : 2 + (Math.sin(t * 50 + x) + 1) * (chasse ? 1.2 : 0.7)
     p.line(pt(-3, 0)[0], pt(-3, 0)[1], pt(-3 - fl, 0)[0], pt(-3 - fl, 0)[1], FEU[4])
     p.dot(pt(-3.5, 0)[0], pt(-3.5, 0)[1], N.hex('#fff2a8'))
     // (le corps : les ailes, le fuselage, les dérives, cernés)
@@ -15163,7 +15169,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // vert d'eau des pépites)
       // (… SAUF L'ESCORTE DE L'EMPIRE, EN MINI-AVIONS — Keko, 22/11 : « on a déjà les drones de la Sentinelle »)
       const orbitales = CONF.armes.filter((a) => a.orbite !== undefined)
-      m.drones.forEach((d, k) => (orbitales[k]?.id === 'escorte' ? dessinerUnMiniAvion(p, d.x, d.y, d.vx, d.vy, d.cible !== null, d.cap) : dessinerUnDrone(p, d.x, d.y, d.vx, d.vy, 1, d.cible !== null, k)))
+      // (… SAUTÉ EN KAMIKAZE, il n'est plus là jusqu'à son retour ; EN PIQUÉ, il flambe — voir `Arme.kamikaze`)
+      m.drones.forEach((d, k) => ((d.absentJusque ?? -1) > m.t ? undefined : orbitales[k]?.id === 'escorte' ? dessinerUnMiniAvion(p, d.x, d.y, d.vx, d.vy, d.cible !== null, d.cap, d.pique !== undefined) : dessinerUnDrone(p, d.x, d.y, d.vx, d.vy, 1, d.cible !== null, k)))
     }
     // LE RAYON THERMIQUE, À LA MANIÈRE DE « LASER GRID » DU DÉPÔT (Keko, 15/11 : « tu peux utiliser laser grid pour
     // t'inspirer ») : un CŒUR BLANC où des impulsions défilent vers la pointe, un CORPS ROUGE de part et d'autre (clair
@@ -17358,8 +17365,20 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
               const vit = R.range(30, 80)
               etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.15, 0.35), [ECLABOUSSURE[7], ECLABOUSSURE[6], ECLABOUSSURE[5]][Math.floor(R.next() * 3)], 1, 1.5)
             }
-            secousse = Math.max(secousse, 0.12)
+            // (UN KAMIKAZE ACIDE s'écrase dans un NUAGE DE POISON — Keko, 25/11 : « oublie pas le visuel poison si
+            // corrosion » : le miasme des mines de la Vouivre, à son rayon, sous l'éclaboussure ; une plus grosse secousse)
+            if (ev.kamikaze === true) {
+              gaz.push({ x: ev.x, y: ev.y, rayon: ev.rayon, t0: t, id: Math.round(ev.x * 13 + ev.y * 7 + t * 100) })
+              flashs.push({ x: ev.x, y: ev.y, t0: t, r: ev.rayon * 0.35, c: [N.WHITE, ECLABOUSSURE[7], ECLABOUSSURE[6], ECLABOUSSURE[5], ECLABOUSSURE[4]] })
+              secousse = Math.max(secousse, 0.45)
+              if (typeof navigator.vibrate === 'function') vibrer(30)
+            } else secousse = Math.max(secousse, 0.12)
             break
+          }
+          // (UN KAMIKAZE s'écrase sans acide : la boule de feu à son rayon, plus une secousse — voir plus bas)
+          if (ev.kamikaze === true) {
+            secousse = Math.max(secousse, 0.45)
+            if (typeof navigator.vibrate === 'function') vibrer(30)
           }
           // UN MINI-MISSILE EXPLOSE (Keko, 15/11) : un éclair, un anneau qui s'ouvre jusqu'à son rayon, une boule de
           // feu (les flammes, braises et fumées du dépôt), son « boum »
@@ -18309,6 +18328,19 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           secousse = Math.max(secousse, 0.4)
           break
         }
+        case 'kamikaze':
+          // (UN MINI-AVION PART EN KAMIKAZE : un éclair rouge, le souffle du missile qui part ; IL REVIENT : une poignée
+          // d'étincelles bleues à sa place — voir `Arme.kamikaze`)
+          if (ev.retour === true) {
+            for (let i = 0; i < 6; i++) {
+              const a = R.range(0, Math.PI * 2)
+              etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(15, 40), Math.sin(a) * R.range(15, 40), R.range(0.15, 0.3), R.next() < 0.5 ? N.WHITE : N.hex('#8ac8ff'), 1, 1)
+            }
+          } else {
+            flashs.push({ x: ev.x, y: ev.y, t0: t, r: 4, c: [N.WHITE, N.hex('#ffd0c0'), N.hex('#ff8a6a'), N.hex('#ff3a2a'), N.hex('#c02a1a')] })
+            jouer('minimissile', { dx: ev.x - v.x, dy: ev.y - v.y })
+          }
+          break
         case 'designe':
           // (DÉSIGNÉ : son petit « bip » à lui — le verrouillage était trop proche (Keko) —, une fois au plus par cinquième de
           // seconde — voir `Arme.designation`)

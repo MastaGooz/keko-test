@@ -568,7 +568,10 @@ export const MUTATIONS: Mutation[] = [
   // (ESCADRILLE — Keko, 24/11 : un avion de plus, dans l'axe ; puis « plutôt +2 avions, et la formation en mode oiseau » :
   // un V d'oies — les deux de base en tête, à 16 des flancs, les deux nouveaux plus en arrière et plus écartés, à 32)
   variation('escorte-plus', 'escorte', 'Escadrille', 'Deux mini-avions de plus, en V.', ajouterA('escorte', (a) => drones(a, { cadence: a.cadence, degats: a.degats, portee: a.portee }, 2, Math.PI / 2).map((d, k) => ({ ...d, place: 22 + k, orbite: { ...a.orbite!, phase: Math.PI / 2 + k * Math.PI, formation: { x: -17, y: k === 0 ? -32 : 32 } } })))),
-  variation('escorte-perforantes', 'escorte', 'Perforantes', 'Les balles des mini-avions traversent les ennemis.', changerA('escorte', V.perforant)),
+  // (LE KAMIKAZE, à la place des Perforantes — Keko, 25/11 : « le tir qui traverse, je suis pas fan » ; « va pour
+  // kamikaze » : toutes les 8 s, un avion pique sur le verrouillé ou le plus fort à 160 et s'y écrase, ×15 sur 28 ; il
+  // revient 3 s plus tard — voir `Arme.kamikaze` ; chiffres de moi)
+  variation('escorte-kamikaze', 'escorte', 'Kamikaze', 'Toutes les 8 s, un mini-avion pique sur un ennemi et explose.', changerA('escorte', (a) => ({ ...a, kamikaze: { tous: 8, part: 15, rayon: 28, retour: 3, vitesse: 260, laisse: 160 } }))),
   // (« BALLES ACIDES », SON ÉLÉMENT, À LA PLACE D'INCENDIAIRES ET DE CRYOGÉNIQUES — Keko, 24/11 : la corrosion, proposée — le
   // feu est à l'obusier, le givre aux grenades, l'électricité au railgun et à la bobine ; l'escorte devient un soutien qui
   // ronge de loin, et tout ce qu'elle touche prend 20 % de plus des autres armes ; la corrosion du laser acide, aux
