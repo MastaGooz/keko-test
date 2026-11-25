@@ -796,8 +796,12 @@ export type Arme = {
    * `decharge` (« Décharge », Keko, 25/11 : « une décharge énergétique assez large à l'endroit où la balise est posée
    * initialement ») : À L'INSTANT OÙ ELLE SE POSE, la balise décharge sur `rayon` autour d'elle, `part` fois les dégâts de
    * l'arme, un coup qui tire son critique, avec l'élément de l'arme (événement `dechargeDeBalise`).
+   * `focale` (« Focalisation », Keko, 25/11, à la place de Longue vie : « sur toute sa durée, la barrière gagne en
+   * puissance ; le trait s'épaissit au fur et à mesure et devient plus lumineux, comme si le laser se concentrait, et ses
+   * dégâts augmentent jusqu'à la fin ») : de sa pose à sa fin, le rayon passe de son épaisseur et de ses dégâts à
+   * `epaisseur` et `degats` fois ceux-ci, en ligne droite (voir `focaleDuLien`) ; ses critiques suivent.
    */
-  lien?: { duree: number; vol: number; epaisseur: number; explosion?: { rayon: number; part: number }; eclat?: { rayon: number; part: number }; onde?: { trajet: number; rayon: number; part: number }; decharge?: { rayon: number; part: number } }
+  lien?: { duree: number; vol: number; epaisseur: number; explosion?: { rayon: number; part: number }; eclat?: { rayon: number; part: number }; onde?: { trajet: number; rayon: number; part: number }; decharge?: { rayon: number; part: number }; focale?: { degats: number; epaisseur: number } }
   /**
    * UN RAYON QUI BALAIE (la Salamandre, Keko, 15/11 : « un rayon à haute énergie qui part au-dessus du vaisseau et
    * descend en décrivant un cercle autour de lui : il enflamme et fait de gros dégâts ») : toutes les `tous` secondes, si
@@ -5775,12 +5779,25 @@ export function ondeDuLien(c: ConfigVaisseau, m: Monde, b: BaliseLaser, t = m.t)
 }
 /** Toutes les combien de secondes passées dans le rayon d'une balise un insecte tire un critique (voir `Arme.lien`). */
 export const TIC_DU_LIEN = 0.5
-/** CE QUE LE RAYON D'UNE BALISE LASER TRAVERSE (voir `Arme.lien`) : du vaisseau à elle, à son épaisseur. */
+/**
+ * OÙ EN EST LA FOCALISATION D'UNE BALISE LASER à l'instant `t` (voir `lien.focale`) : `u` de 0 (posée) à 1 (sa fin), son
+ * épaisseur et le facteur de ses dégâts ; sans la carte, `u` 0, l'épaisseur de l'arme et ×1.
+ */
+export function focaleDuLien(c: ConfigVaisseau, m: Monde, b: BaliseLaser, t = m.t): { u: number; epaisseur: number; degats: number } {
+  const li = c.armes[b.arme]?.lien
+  if (li === undefined) return { u: 0, epaisseur: 0, degats: 1 }
+  const fo = li.focale
+  if (fo === undefined || b.posee === null) return { u: 0, epaisseur: li.epaisseur, degats: 1 }
+  const u = Math.max(0, Math.min(1, (t - b.posee) / li.duree))
+  return { u, epaisseur: li.epaisseur * (1 + (fo.epaisseur - 1) * u), degats: 1 + (fo.degats - 1) * u }
+}
+/** CE QUE LE RAYON D'UNE BALISE LASER TRAVERSE (voir `Arme.lien`) : du vaisseau à elle, à son épaisseur (focalisée, voir `lien.focale`). */
 export function ennemisDuLien(c: ConfigVaisseau, m: Monde, b: BaliseLaser): Ennemi[] {
   const li = c.armes[b.arme]?.lien
   if (li === undefined || b.posee === null) return []
   const v = m.vaisseau
-  return m.ennemis.filter((e) => distanceAuSegment(e.corps.x, e.corps.y, v.x, v.y, b.x, b.y) <= li.epaisseur + rayonDe(c, e))
+  const ep = focaleDuLien(c, m, b).epaisseur
+  return m.ennemis.filter((e) => distanceAuSegment(e.corps.x, e.corps.y, v.x, v.y, b.x, b.y) <= ep + rayonDe(c, e))
 }
 /** LES BALISES LASER (voir `Arme.lien`) : lancées vers un insecte, elles freinent et tiennent ; le rayon brûle ce qu'il traverse. */
 function menerLesBalisesLaser(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]): void {
@@ -5855,8 +5872,10 @@ function menerLesBalisesLaser(c: ConfigVaisseau, m: Monde, dt: number, ev: Evene
     }
     const tics = (b.tics ??= {})
     const eclats: Ennemi[] = []
+    // (LA FOCALISATION : ses dégâts montent jusqu'à sa fin — voir `lien.focale` ; sans la carte, ×1)
+    const fd = focaleDuLien(c, m, b).degats
     for (const e of ennemisDuLien(c, m, b)) {
-      e.pv -= a.degats * dt
+      e.pv -= a.degats * fd * dt
       if (a.gel !== undefined) geler(c, m, e, 0.3, a.gel.ralenti, ev)
       if (a.incendiaire !== undefined) enflammer(c, m, e, a.incendiaire)
       // (SES CRITIQUES : toutes les `TIC_DU_LIEN` secondes passées dans le rayon — la première au bout d'un tic)
@@ -5865,7 +5884,7 @@ function menerLesBalisesLaser(c: ConfigVaisseau, m: Monde, dt: number, ev: Evene
       else if (m.t >= tic) {
         tics[e.id] = m.t + TIC_DU_LIEN
         if (critiqueTire(c, m, a, e)) {
-          e.pv -= a.degats * TIC_DU_LIEN * (facteurSur(c, m, a, e) - 1)
+          e.pv -= a.degats * fd * TIC_DU_LIEN * (facteurSur(c, m, a, e) - 1)
           ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique: true })
           // (L'ÉCLATEMENT : il explose — après le rayon, pour ne pas changer ce qu'il traverse en le parcourant)
           if (li.eclat !== undefined) eclats.push(e)

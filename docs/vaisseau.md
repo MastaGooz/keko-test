@@ -9254,3 +9254,11 @@ une animation — on voit le vaisseau et un ennemi, avec le projectile en animat
   Cryogénique. Une première version, l'anneau sur un pixel, sortait en pointillé, pâle (VU en capture) ; épaissi.
   Test : posée à 80, l'insecte à 30 d'elle, hors du rayon, frappé une fois, 192 ; celui à 55, rien ; sans la carte, rien.
   LA BALISE LASER : Cryogénique, Décharge, Éclatement, Longue vie, Résonance, Surcharge.
+### La Balise laser : Focalisation à la place de Longue vie (25/11)
+
+Keko : « Longue vie, ça va pas du tout, car on a déjà des cartes qui pourront augmenter la durée des effets. C'est pas très intéressant et original. » Puis, à mes quatre idées (Traque, Barrière, Attraction, Fusion), la sienne : « sur toute sa durée, la barrière gagne en puissance. Le trait s'épaissit au fur et à mesure et devient plus lumineux, comme si le laser se concentrait. Et ses dégâts augmentent jusqu'à la fin. »
+
+- **La règle** (`lien.focale`, `focaleDuLien`) : de la pose à la fin, en ligne droite, l'épaisseur du rayon passe de 2 à 6 (×3) et ses dégâts de ×1 à ×2,5 ; ses critiques suivent. Sur les 4 s, la cible prend 128 × 4 × 1,75 = 896 au lieu de 512 ; un insecte à 4 du rayon, bord à bord, y entre à mi-vie (544). *Chiffres de moi.*
+- **Le dessin** : de un à trois pixels de part et d'autre du rayon, les liserés rouges dehors, le rose dedans, puis un cœur blanc qui s'élargit ; la lueur du rayon et celle de la balise grandissent et s'avivent.
+- **Le nom** : « Concentration » est pris (le canon laser) ; « Focalisation ». La carte : « Plus le rayon dure, plus il est épais et puissant. » (quatre lignes ; la première phrase en faisait six).
+- La balise a maintenant : Cryogénique, Surcharge, Éclatement, Résonance, Décharge, Focalisation.

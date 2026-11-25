@@ -12,7 +12,7 @@
  */
 import './vaisseau.css'
 import * as noyau from 'pixelfx'
-import { ELEMENTAIRES, anneauMagnetique, rayonDeLOnde, ennemisDuLien, ajouterUnPilote, avancerLEquipage, prendreLaMain, type SorteDInsecte, SORTES_D_INSECTES, gabaritDInsecte, gemmesDuButin, butinDeLaRoche, pointDeRetour, rayonDe, rocheDeLaTempete, vieMultipliee, degatsMultiplies, placeDeLEcharde, frontDeLaNova, ancreDansLeMonde, zoneDuDe, coupeDUnCube, formeDeLaCoupe, liesAuDrain, encaisser, type Ennemi, type Evenement, type Monde, impactDuRayon, asteroidesVisibles, avancerLeMonde, finDuTrio, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur, xpDuNiveau, ennemiLePlusProche, ennemiVerrouille, chauffeDuDrone,ondeDuLien,verrouiller, angleDuBalayage, aPlusieurs, alliesAuRetour, recompenseDeFin, type LigneDeRecompense } from '../../logic/vaisseau/jeu.ts'
+import { ELEMENTAIRES, anneauMagnetique, rayonDeLOnde, ennemisDuLien, ajouterUnPilote, avancerLEquipage, prendreLaMain, type SorteDInsecte, SORTES_D_INSECTES, gabaritDInsecte, gemmesDuButin, butinDeLaRoche, pointDeRetour, rayonDe, rocheDeLaTempete, vieMultipliee, degatsMultiplies, placeDeLEcharde, frontDeLaNova, ancreDansLeMonde, zoneDuDe, coupeDUnCube, formeDeLaCoupe, liesAuDrain, encaisser, type Ennemi, type Evenement, type Monde, impactDuRayon, asteroidesVisibles, avancerLeMonde, finDuTrio, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur, xpDuNiveau, ennemiLePlusProche, ennemiVerrouille, chauffeDuDrone,focaleDuLien,ondeDuLien,verrouiller, angleDuBalayage, aPlusieurs, alliesAuRetour, recompenseDeFin, type LigneDeRecompense } from '../../logic/vaisseau/jeu.ts'
 import { PIECES, ETALONS as ETALONS_DU_BANC, acheter, ajouterLesPiecesDEssai, capacite, poidsTotal, POIDS_SERIE, configDuHangar, demonter, demonterA, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, montantCourt, monteeA, monter, monterA, peutAcheter, peutMonter, perdreLesMontees, estDeBase, exemplaires, libres, pieceDe, piecesDe, placeLourde, possede, aimantMonte, radarMonte, type Jauge, type Piece, type Sorte } from '../../logic/vaisseau/hangar.ts'
 import { drawWord, spell } from 'pixelfx/fx/ui/_lib'
 import { firePuff, hotFirst, smokePuff } from 'pixelfx/fx/fire/_lib'
@@ -12100,9 +12100,18 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const y0 = b.y + (yv - b.y) * jaillit
       const L = Math.max(0, L0 - CONF.rayon - 1) * jaillit
       const fremit = 0.8 + 0.2 * Math.sin(t * 70 + b.nee * 13)
-      for (let d = 4; d < L; d += 9) p.glow(x0 + ux * d, y0 + uy * d, 4, ROUGE_LASER[2], 0.22 * k * fremit)
-      for (const o of [-1, 1]) p.line(x0 + nx * o, y0 + ny * o, b.x + nx * o, b.y + ny * o, ROUGE_LASER[2], 0.65 * k * fremit)
-      p.line(x0, y0, b.x, b.y, ROUGE_LASER[4], k)
+      // (LA FOCALISATION — Keko, 25/11, voir `lien.focale` : « le trait s'épaissit au fur et à mesure et devient plus
+      // lumineux, comme si le laser se concentrait » : de un à trois pixels de part et d'autre, ses liserés rouges en
+      // dehors, le rose au milieu, puis un cœur blanc qui s'élargit ; la lueur grandit et s'avive ; sans la carte, fu = 0)
+      const fu = li.focale === undefined ? 0 : focaleDuLien(CONF, m, b).u
+      const demi = Math.round(1 + 2 * fu)
+      for (let d = 4; d < L; d += 9) p.glow(x0 + ux * d, y0 + uy * d, 4 + 6 * fu, fu > 0.5 ? ROUGE_LASER[3] : ROUGE_LASER[2], (0.22 + 0.33 * fu) * k * fremit)
+      for (let o = -demi; o <= demi; o++) {
+        const bord = Math.abs(o) === demi
+        const blanc = fu > 0.35 && Math.abs(o) <= Math.floor((fu - 0.35) * 3.2)
+        const coul = blanc ? N.WHITE : bord ? ROUGE_LASER[2] : Math.abs(o) <= 1 ? ROUGE_LASER[4] : ROUGE_LASER[3]
+        p.line(x0 + nx * o, y0 + ny * o, b.x + nx * o, b.y + ny * o, coul, bord ? 0.65 * k * fremit : k)
+      }
       // (SON ONDE, LA RÉSONANCE — Keko, 25/11, « la forme, je te laisse décider », voir `lien.onde` : une LENTILLE
       // D'ÉNERGIE en travers du rayon — un trait blanc bordé de rose, plus large au milieu qu'aux pointes, dans une lueur
       // rouge — et sa traînée, trois échos qui pâlissent derrière elle ; aux deux bouts du rayon, elle rebondit)
@@ -12161,7 +12170,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       }
       const pouls = (t * 2 + b.nee) % 1
       p.ring(b.x, b.y, 3 + 4 * pouls, 1, ROUGE_LASER[3], 0.55 * (1 - pouls) * k)
-      p.glow(b.x, b.y, 7, ROUGE_LASER[2], 0.5 * k)
+      p.glow(b.x, b.y, 7 + 5 * fu, fu > 0.5 ? ROUGE_LASER[3] : ROUGE_LASER[2], (0.5 + 0.3 * fu) * k)
       p.circle(b.x, b.y, 2.8, N.hex('#2a3044'))
       p.circle(b.x, b.y, 2, COQUE[3])
       p.circle(b.x - 0.5, b.y - 0.5, 1, COQUE[5])

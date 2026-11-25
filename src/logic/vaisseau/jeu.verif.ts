@@ -3767,6 +3767,24 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   }
   const [dch, sansDch] = [decharge(true), decharge(false)]
   verifier(`la Décharge : ${dch.evs} décharge à la pose (1) ; l'insecte à 30 de la balise frappé ${dch.coups} fois (1), ${dch.pris} (192) ; celui à 55, ${dch.loin} (0) ; sans la carte, ${sansDch.pris} (0), ${sansDch.evs} décharge`, dch.evs === 1 && dch.coups === 1 && dch.pris === 192 && dch.loin === 0 && sansDch.pris === 0 && sansDch.evs === 0)
+  // (LA FOCALISATION — Keko, 25/11 : le rayon s'épaissit et ses dégâts montent jusqu'à sa fin, ×2,5 et ×3 ; la cible sur
+  // le rayon prend 128 × 4 × (1 + 1,5 / 2) = 896 ; un insecte à 4 du rayon, bord à bord, n'y entre qu'à mi-vie, quand
+  // l'épaisseur passe 4 : 512 × (0,5 + 1,5 × 3/8) = 544)
+  const focale = (avec: boolean): { cible: number; cote: number } => {
+    const cfg8 = { ...cfg, passifs: { ...cfg.passifs, critique: 0 }, armes: [{ ...lien, lien: { ...lien.lien, ...(avec ? { focale: { degats: 2.5, epaisseur: 3 } } : {}) } }] }
+    const w8 = nouveauMonde(cfg8, 9)
+    w8.invasion.prochainA = 1e9
+    const [ci, cote] = [[60, 0], [40, 0]].map(([x, y], k): Ennemi => ({ id: 990 + k, corps: { ...nouveauVaisseau(), x, y }, pv: 1e9, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9 }))
+    cote.corps = { ...cote.corps, y: rayonDe(cfg8, cote) + 4 }
+    w8.ennemis.push(ci, cote)
+    w8.verrou = ci.id
+    let fini = false
+    for (let i = 0; i < 60 * 6 && !fini; i++)
+      for (const ev of avancerLeMonde(cfg8, w8, 1 / 60, { x: 0, y: 0 }).evenements) if (ev.type === 'baliseFinie') fini = true
+    return { cible: Math.round(1e9 - ci.pv), cote: Math.round(1e9 - cote.pv) }
+  }
+  const [fo, sansFo] = [focale(true), focale(false)]
+  verifier(`la Focalisation : la cible sur le rayon prend ${fo.cible} (896), l'insecte à 4 du rayon ${fo.cote} (544) ; sans la carte, ${sansFo.cible} (512) et ${sansFo.cote} (0)`, Math.abs(fo.cible - 896) < 8 && Math.abs(fo.cote - 544) < 12 && Math.abs(sansFo.cible - 512) < 4 && sansFo.cote === 0)
   verifier(`la Surcharge givrée : la cible sur le rayon givrée (${(vise.geleA ?? -1) > w3.t}), le voisin à 25 de la balise pas avant l'explosion (${avantLaFin}), givré par elle (${(voisin.geleA ?? -1) > w3.t}), touché (${1e9 - voisin.pv})`, fin3 && (vise.geleA ?? -1) > w3.t && avantLaFin && (voisin.geleA ?? -1) > w3.t && voisin.pv < 1e9)
 }
 

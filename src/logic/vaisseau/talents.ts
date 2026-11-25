@@ -568,7 +568,11 @@ export const MUTATIONS: Mutation[] = [
   // énergétique assez large à l'endroit où la balise est posée initialement » : sur 36, 150 % des dégâts — voir
   // `lien.decharge` ; chiffres de moi)
   variation('lien-decharge', 'lien', 'Décharge', 'En se posant, la balise libère une large décharge d’énergie.', changerA('lien', (a) => ({ ...a, lien: a.lien === undefined ? undefined : { ...a.lien, decharge: { rayon: 36, part: 1.5 } } }))),
-  variation('lien-longue', 'lien', 'Longue vie', 'Les balises restent actives bien plus longtemps.', changerA('lien', (a) => ({ ...a, lien: a.lien === undefined ? undefined : { ...a.lien, duree: a.lien.duree * 1.6 } }))),
+  // (FOCALISATION, à la place de Longue vie — « on a déjà des cartes qui pourront augmenter la durée des effets » — Keko,
+  // 25/11 : « sur toute sa durée, la barrière gagne en puissance ; le trait s'épaissit et devient plus lumineux, comme si le
+  // laser se concentrait, et ses dégâts augmentent jusqu'à la fin » : à sa fin, ×2,5 les dégâts, ×3 l'épaisseur — voir
+  // `lien.focale` ; chiffres de moi)
+  variation('lien-focale', 'lien', 'Focalisation', 'Plus le rayon dure, plus il est épais et puissant.', changerA('lien', (a) => ({ ...a, lien: a.lien === undefined ? undefined : { ...a.lien, focale: { degats: 2.5, epaisseur: 3 } } }))),
   // (RÉSONANCE, à la place de Faisceau large — Keko, 25/11 : « une onde d'énergie qui fait des allers-retours le long du
   // rayon et fait des dégâts aux ennemis qu'elle traverse » : de la balise au vaisseau en 0,5 s, et retour ; une frappe
   // par passage à 8 d'elle, la moitié des dégâts — voir `lien.onde` ; chiffres de moi ; puis, avec le Fauchage, « augmente
