@@ -132,6 +132,13 @@ verifier('le délai passé, ce qui restait à choisir part en réserve', reserve
   // (LA DURÉE, CE QUI A UNE VIE À SOI — Keko, 26/11 : la balise laser oui, la flaque de napalm non)
   const li = armeDeFaction('lien')!.armes()[0]
   verifier(`la balise laser a la carte Durée (${statsDeLArme(li).join(', ')}) : +25 %, elle dure ${armeAmelioree(li, 'pose', 0.25).lien?.duree} s (4) ; la flaque de napalm ne l'a plus`, statsDeLArme(li).includes('pose') && armeAmelioree(li, 'pose', 0.25).lien?.duree === 5)
+  // (LE DÉLUGE ET LA BORDÉE DES MISSILES — Keko, 26/11 : une pluie de quatre mini-missiles à intervalles réguliers, qui garde
+  // l'élément du missile ; les deux ailes ensemble)
+  const mm = { id: 'minimissile', cadence: 3.2, degats: 80, portee: 120, vitesse: 110, vie: 1.8, dispersion: 0.25, guide: true, zone: { rayon: 18 } } as Arme
+  const cm: ConfigVaisseau = { ...C, armes: [{ ...mm, place: 0 }, { ...mm, place: 1 }] }
+  const dl = avecLesBonus(cm, ajouterLeBonus(ajouterLeBonus(ajouterLeBonus([], spe('missile-deluge')), spe('missile-incendiaire')), spe('missile-bordee'))).armes
+  const pluie = dl.find((a) => a.essaim !== undefined)
+  verifier(`le Déluge : ${dl.length} armes (3), la pluie de ${pluie?.essaim?.nombre} (4) toutes les ${pluie?.cadence} s (5), ${pluie?.degats} chacun (40), elle brûle avec Thermite (${pluie?.incendiaire !== undefined}) ; la Bordée, les deux ailes jumelées (${dl.filter((a) => a.jumele === true && a.essaim === undefined).length}, 2)`, dl.length === 3 && pluie?.essaim?.nombre === 4 && pluie.cadence === 5 && pluie.degats === 40 && pluie.incendiaire !== undefined && dl.filter((a) => a.jumele === true && a.essaim === undefined).length === 2)
   // (LA CHASSE DE L'ESCORTE CHOISIT SA PROIE PLUS LOIN — 26/11)
   const es = armeDeFaction('escorte')!.armes()[0]
   const ec = avecLesBonus({ ...C, armes: [{ ...es, place: 0 }] }, ajouterLeBonus(ajouterLeBonus([], carte({ sorte: 'arme', arme: 'escorte' }, 'portee', 'legendaire')), spe('escorte-chasse'))).armes[0]
@@ -177,8 +184,9 @@ verifier('le délai passé, ce qui restait à choisir part en réserve', reserve
       const depart = id === 'laser' ? base : id === 'mitraille' || id === 'minimissile' ? { ...C, armes: [{ ...laser, id, place: 0 }] } : avecLesBonus(base, ajouterLeBonus([], carteSpeciale(mu(`arme-${id}`))))
       if (JSON.stringify(v.appliquer(depart)) === JSON.stringify(depart)) sansEffet += ` ${v.id}`
     }
-  // (les armes EN REVUE, leurs variations pas encore toutes trouvées — aucune : la mitrailleuse a ses six, Keko, 26/11)
-  const EN_REVUE: Record<string, number> = {}
+  // (les armes EN REVUE, leurs variations pas encore toutes tranchées — les missiles, Keko, 26/11 : Azote liquide retirée,
+  // Déluge et Bordée ajoutées ; Salve, Dispersion, Lance-missiles et Satellites à revoir)
+  const EN_REVUE: Record<string, number> = { minimissile: 7 }
   verifier(`l'Empire a ${ARMES_DE_FACTION.filter((x) => x.race === 'humains').length} nouvelles armes ; six variations par arme (${ids.map((id) => `${id} ${MUTATIONS.filter((x) => x.sorte === 'variation' && x.arme === id).length}`).join(', ')}) ; aucune sans effet (${sansEffet || 'aucune'})`, ARMES_DE_FACTION.filter((x) => x.race === 'humains').length === 6 && ids.every((id) => MUTATIONS.filter((x) => x.sorte === 'variation' && x.arme === id).length === (EN_REVUE[id] ?? 6)) && sansEffet === '')
 }
 {

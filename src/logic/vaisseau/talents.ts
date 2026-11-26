@@ -501,12 +501,22 @@ export const MUTATIONS: Mutation[] = [
   variation('mitraille-tracante', 'mitraille', 'Traçante', 'Toutes les 8 balles, une grosse balle lumineuse cinq fois plus forte.', changerA('mitraille', (a) => ({ ...a, tracante: { tous: 8, facteur: 5 } }))),
   variation('mitraille-riposte', 'mitraille', 'Riposte', 'Un coup critique lance trois balles très rapides sur l’ennemi touché.', changerA('mitraille', (a) => ({ ...a, riposte: { nombre: 3, part: 0.5, vitesse: 750 } }))),
   // LES MISSILES
-  variation('missile-salve', 'minimissile', 'Salve', 'Chaque tir lâche trois missiles en éventail.', changerA('minimissile', V.gerbe(3, 0.35, 0.6))),
+  // (la pluie du Déluge n'est pas un tir : la Salve ne la touche pas)
+  variation('missile-salve', 'minimissile', 'Salve', 'Chaque tir lâche trois missiles en éventail.', changerA('minimissile', (a) => (a.essaim !== undefined ? a : V.gerbe(3, 0.35, 0.6)(a)))),
   variation('missile-fragmentation', 'minimissile', 'Dispersion', 'Chaque explosion projette six éclats brûlants tout autour.', changerA('minimissile', V.fragments)),
   variation('missile-lanceur', 'minimissile', 'Lance-missiles', 'Un lanceur tire des missiles tout autour du vaisseau.', ajouterA('minimissile', (a) => [ajoutee(a, 9, { cadence: a.cadence * 0.75, degats: fois(a, 0.7) })])),
   variation('missile-drones', 'minimissile', 'Satellites', 'Deux drones en orbite tirent des missiles sur les ennemis proches.', ajouterA('minimissile', (a) => drones(a, { cadence: 2.5, degats: fois(a, 0.5), portee: 80, vie: 1.2 }))),
+  // (THERMITE, SON SEUL ÉLÉMENT — Keko, 26/11 : « on va garder l'élément de feu uniquement » : Azote liquide retirée)
   variation('missile-incendiaire', 'minimissile', 'Thermite', 'Les missiles enflamment ce qu’ils touchent.', changerA('minimissile', V.incendiaire)),
-  variation('missile-cryo', 'minimissile', 'Azote liquide', 'Les missiles gèlent ce qu’ils touchent et le ralentissent.', changerA('minimissile', V.cryo)),
+  // (« DÉLUGE » — Keko, 26/11 : « on va réutiliser la volée de mini-missiles qu'on avait mise de côté : à intervalles réguliers,
+  // une pluie de mini-missiles cible des ennemis au hasard à portée du vaisseau ; 4 mini-missiles au total » : l'essaim des
+  // roquettes (`Arme.essaim`, qui distribue déjà ses missiles au hasard entre les insectes à portée), quatre, toutes les 5 s, la
+  // moitié des dégâts du missile, sur 11 — l'intervalle, les dégâts et le nom : de moi. Il garde l'identité du missile : son
+  // élément, ses cartes le suivent)
+  variation('missile-deluge', 'minimissile', 'Déluge', 'Régulièrement, quatre mini-missiles s’abattent sur des ennemis au hasard.', ajouterA('minimissile', (a) => [ajoutee(a, 9, { cadence: 5, degats: fois(a, 0.5), vitesse: 60, vie: 2, guide: false, dispersion: 0, zone: { rayon: 11 }, essaim: { nombre: 4, eventail: 2.4, acces: 60, pointe: 90, braquage: 5, chaos: 1.6, pas: 0.32, calme: 1.4, reprise: 45 } })])),
+  // (« BORDÉE » — Keko, 26/11 : « comme pour les 2 autres armes du chasseur, les 2 missiles se tirent en même temps » : le
+  // Double laser, `Arme.jumele` ; le nom, de moi — « jumelés » est à la mitrailleuse)
+  variation('missile-bordee', 'minimissile', 'Bordée', 'Les deux lance-missiles tirent en même temps.', changerA('minimissile', (a) => ({ ...a, jumele: true }))),
   // LE RAILGUN
   // (L'EXÉCUTION, SA CARTE SUR COUP CRITIQUE, À LA PLACE D'INCENDIAIRE — Keko, 23/11 : « on ne fait pas incendiaire : un seul
   // élément par arme » ; « les coups critiques tuent instantanément les ennemis faibles » — voir `Arme.execute`)

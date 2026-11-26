@@ -15155,7 +15155,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         // (LA ROQUETTE, PLUS PETITE — Keko, 23/11 : « les multi-roquettes doivent être plus petites que les missiles, et
         // l'obus plus gros » : le même dessin, aux deux tiers)
         // (le missile de l'escorte, `Arme.missiles`, garde la taille du missile : qu'on le voie partir des ailes)
-        const k = o.arme === 'roquettes' ? 0.65 : 1
+        // (… ET LES MINI-MISSILES DU DÉLUGE, à la taille des roquettes — ils traquent, voir `Arme.essaim`)
+        const k = o.arme === 'roquettes' || o.traque !== undefined ? 0.65 : 1
         const nx = -uy
         const ny = ux
         const qx = o.x - ux * 6 * k
@@ -18343,8 +18344,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         }
         case 'essaim':
           // (un essaim part : sa volée de sifflements — sauf s'il a sonné en avance —, des grains de plasma à la bouche)
+          // (le Déluge des missiles siffle comme les roquettes : c'est leur volée — voir `Arme.essaim`)
           if (t - (armeAnnonceeA.get(ev.arme) ?? -10) < 0.4) armeAnnonceeA.delete(ev.arme)
-          else jouer(sonDeLArme(ev.arme) as Son)
+          else jouer((ev.arme === 'minimissile' ? 'roquettes' : sonDeLArme(ev.arme)) as Son)
           for (let i = 0; i < 8; i++) {
             const a = R.range(0, Math.PI * 2)
             etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(30, 80), Math.sin(a) * R.range(30, 80), R.range(0.12, 0.25), R.next() < 0.5 ? N.WHITE : PLASMA_V[3], 1, 1.5)
