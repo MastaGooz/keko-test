@@ -125,6 +125,10 @@ verifier('le délai passé, ce qui restait à choisir part en réserve', reserve
   const bT = ['tesla-conduction', 'tesla-magnetisme', 'tesla-court-circuit'].reduce<Bonus>((b, id) => ajouterLeBonus(b, spe(id)), ajouterLeBonus([], carte({ sorte: 'arme', arme: 'tesla' }, 'portee', 'legendaire')))
   const tz = avecLesBonus(cfgT, bT).armes[0].sphere!
   verifier(`« Zone et portée » légendaire sur la bobine : la boule ${tz.rayon} (42), le saut de la Conduction ${tz.foudre?.rebonds?.saut} (45), l'anneau du Magnétisme ${tz.magnetisme?.rayon} (60), l'explosion du Court-circuit ${tz.rayon * tz.court!.taille} (63)`, tz.rayon === 52.5 && tz.foudre?.rebonds?.saut === 56.25 && tz.magnetisme?.rayon === 75 && tz.rayon * tz.court!.taille === 78.75)
+  // (LES ÉCLATS DE LA FRAGMENTATION VONT PLUS LOIN — Keko, 26/11)
+  const gr = armeDeFaction('grenades')!.armes()[0]
+  const gf = avecLesBonus({ ...C, armes: [{ ...gr, place: 0 }] }, ajouterLeBonus(ajouterLeBonus([], carte({ sorte: 'arme', arme: 'grenades' }, 'portee', 'legendaire')), spe('grenades-fragmentation'))).armes[0]
+  verifier(`« Zone et portée » légendaire sur les grenades : l'explosion ${gf.zone?.rayon} (28), les éclats de la Fragmentation vont à ${gf.fragments!.vitesse * gf.fragments!.vie} (40)`, gf.zone?.rayon === 35 && gf.fragments!.vitesse * gf.fragments!.vie === 50)
   verifier(`« Zone et portée » légendaire (+25 %), prise AVANT les variations : l'onde de l'Impulsion ${av.zone?.rayon} (16), la Détonation ${av.detonation?.rayon} (24), le Ricochet ${av.ricochet?.portee} (80) ; prise après : ${ap.zone?.rayon}, ${ap.detonation?.rayon}, ${ap.ricochet?.portee} ; « toutes les armes » (+12,5 %) : ${gl.zone?.rayon}, ${gl.detonation?.rayon}, ${gl.ricochet?.portee}`, [av, ap].every((a) => a.zone?.rayon === 20 && a.detonation?.rayon === 30 && a.ricochet?.portee === 100 && a.portee === 150) && gl.zone?.rayon === 18 && gl.detonation?.rayon === 27 && gl.ricochet?.portee === 90)
 }
 {

@@ -261,7 +261,10 @@ export function armeAmelioree(a: Arme, stat: StatDArme, k: number): Arme {
       // (… ET L'ÉCLAIR DE LA CONDUCTION SAUTE PLUS LOIN — Keko, 26/11 ; il restait à 45. Le saut de l'arc d'électrocution, lui,
       // est celui du vortex, le même pour toutes les armes)
       const rb = z1.sphere?.foudre?.rebonds
-      const z = rb === undefined ? z1 : { ...z1, sphere: { ...z1.sphere!, foudre: { ...z1.sphere!.foudre!, rebonds: { ...rb, saut: rb.saut * (1 + k) } } } }
+      const z2 = rb === undefined ? z1 : { ...z1, sphere: { ...z1.sphere!, foudre: { ...z1.sphere!.foudre!, rebonds: { ...rb, saut: rb.saut * (1 + k) } } } }
+      // (… ET LES ÉCLATS D'UNE EXPLOSION VONT PLUS LOIN — la Fragmentation des grenades, Keko, 26/11 : l'explosion grandissait,
+      // ses éclats restaient à 40, 160 × 0,25 ; leur vie s'allonge, leur vitesse ne change pas)
+      const z = z2.fragments === undefined ? z2 : { ...z2, fragments: { ...z2.fragments, vie: z2.fragments.vie * (1 + k) } }
       return a.portee > 0 ? { ...z, portee: a.portee * (1 + k), vie: a.vie * (1 + k) } : z
     }
     case 'pose': {
