@@ -517,10 +517,12 @@ export const MUTATIONS: Mutation[] = [
   // missiles en quelque chose de plus petit, avec la même trajectoire accélérante, peut-être même plus rapide que les
   // missiles de base » : la moitié du missile à l'écran, de 80 à 340 en une seconde — le missile, de 110 à 260 —, des
   // écarts plus vifs ; chiffres de moi. Le missile garde son propre zigzag : voir `TRAJECTOIRE_DU_MISSILE`)
-  variation('missile-deluge', 'minimissile', 'Déluge', 'Régulièrement, quatre mini-missiles s’abattent sur des ennemis au hasard.', ajouterA('minimissile', (a) => [ajoutee(a, 9, { cadence: 5, degats: fois(a, 0.5), vitesse: 80, vie: 2, guide: false, dispersion: 0, zone: { rayon: 11 }, essaim: { nombre: 4, eventail: 2.4, acces: 260, pointe: 340, braquage: 7, chaos: 1.2, pas: 0.25, calme: 0.8, reprise: 60, taille: 0.5 } })])),
+  variation('missile-deluge', 'minimissile', 'Déluge', 'Régulièrement, quatre mini-missiles s’abattent au hasard.', ajouterA('minimissile', (a) => [ajoutee(a, 9, { cadence: 5, degats: fois(a, 0.5), vitesse: 80, vie: 2, guide: false, dispersion: 0, zone: { rayon: 11 }, essaim: { nombre: 4, eventail: 2.4, acces: 260, pointe: 340, braquage: 7, chaos: 1.2, pas: 0.25, calme: 0.8, reprise: 60, taille: 0.5 } })])),
   // (« BORDÉE » — Keko, 26/11 : « comme pour les 2 autres armes du chasseur, les 2 missiles se tirent en même temps » : le
   // Double laser, `Arme.jumele` ; le nom, de moi — « jumelés » est à la mitrailleuse)
   variation('missile-bordee', 'minimissile', 'Bordée', 'Les deux lance-missiles tirent en même temps.', changerA('minimissile', (a) => ({ ...a, jumele: true }))),
+  // (SA VARIATION SUR COUP CRITIQUE — Keko, 26/11 : une mine collée sur la cible, qui explose peu après ; voir `Arme.ventouse`)
+  variation('missile-ventouse', 'minimissile', 'Ventouse', 'Un impact critique colle sur l’ennemi une mine qui explose peu après.', changerA('minimissile', (a) => ({ ...a, ventouse: { delai: 1, rayon: 14, part: 0.75 } }))),
   // LE RAILGUN
   // (L'EXÉCUTION, SA CARTE SUR COUP CRITIQUE, À LA PLACE D'INCENDIAIRE — Keko, 23/11 : « on ne fait pas incendiaire : un seul
   // élément par arme » ; « les coups critiques tuent instantanément les ennemis faibles » — voir `Arme.execute`)

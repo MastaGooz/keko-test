@@ -3272,6 +3272,38 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   verifier(`la Riposte : un critique, ${vit.balles - 1} balles de riposte (3), qui touchent aux images ${vit.touches.join(', ')} (quatre coups, à des images différentes) ; ${vit.perdu} perdus (${10 * f} + 3 × ${5 * f}) ; l'insecte tué net, ${mort.balles - 1} (0)`, vit.balles === 4 && vit.touches.length === 4 && new Set(vit.touches).size === 4 && Math.abs(vit.perdu - (10 * f + 15 * f)) < 1e-6 && mort.balles === 1)
 }
 
+// LA VENTOUSE (Keko, 26/11 — voir `Arme.ventouse`) : un impact critique du missile colle une mine sur l'insecte ; elle le
+// suit, et explose une seconde plus tard ; tué par l'explosion du missile, la mine reste là où il était, et explose aussi
+{
+  const essai = (pv: number): { mines: number; suit: boolean; immobile: boolean; explosions: number[] } => {
+    const cfg: ConfigVaisseau = { ...VAISSEAU, coque: 1e9, armes: [{ id: 'minimissile', cadence: 1e9, degats: 10, portee: 150, vitesse: 300, vie: 1, dispersion: 0, guide: false, tousSens: true, infaillible: true, zone: { rayon: 18 }, ventouse: { delai: 1, rayon: 14, part: 0.75 } } as Arme], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false }, passifs: { ...VAISSEAU.passifs, critique: TOUT_CRITIQUE } }
+    const w = nouveauMonde(cfg, 5)
+    w.invasion.prochainA = 1e9
+    const e: Ennemi = { id: 841, corps: { ...nouveauVaisseau(), x: 60, y: 0 }, pv, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9 }
+    w.ennemis.push(e)
+    const mines = new Set<number>()
+    const places: { x: number; y: number }[] = []
+    let suit = true
+    const explosions: number[] = []
+    for (let i = 0; i < 120; i++) {
+      for (const ev of avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements) if (ev.type === 'explosionDeZone') explosions.push(Math.round(w.t * 60))
+      for (const o of w.obus)
+        if (o.collee !== undefined) {
+          mines.add(o.id)
+          places.push({ x: o.x, y: o.y })
+          if (w.ennemis.includes(e) && Math.hypot(o.x - e.corps.x - o.collee.dx, o.y - e.corps.y - o.collee.dy) > 1e-6) suit = false
+        }
+      // (l'insecte, vivant, file vers le haut : la mine doit le suivre)
+      e.corps.y += 0.5
+    }
+    const immobile = places.every((q) => q.x === places[0].x && q.y === places[0].y)
+    return { mines: mines.size, suit, immobile, explosions }
+  }
+  const vit = essai(1e9)
+  const mort = essai(5)
+  verifier(`la Ventouse : un critique, ${vit.mines} mine (1), qui suit l'insecte (${vit.suit}) et explose ${vit.explosions.length >= 2 ? vit.explosions[1] - vit.explosions[0] : '—'} images après l'impact (60) ; tué par l'explosion, ${mort.mines} mine (1), restée en place (${mort.immobile}), ${mort.explosions.length} explosions (2)`, vit.mines === 1 && vit.suit && vit.explosions.length === 2 && Math.abs(vit.explosions[1] - vit.explosions[0] - 60) <= 1 && mort.mines === 1 && mort.immobile && mort.explosions.length === 2)
+}
+
 // LES ROCHES NE SONT IMMUNISÉES À AUCUNE ARME, SEULEMENT AUX ÉTATS (Keko, 26/11 : « je ne veux pas d'astéroïdes immunisés à
 // une arme ou à une variation ; la seule chose à laquelle ils sont immunisés, ce sont les effets de corrosion, feu, glace
 // et foudre ») : une roche collée à l'insecte visé — masquée au choix des cibles — prend l'explosion, sans brûler, geler,

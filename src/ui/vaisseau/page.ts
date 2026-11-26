@@ -15058,6 +15058,23 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     for (const o of m.obus) {
       // (la seconde explosion d'une grenade attend au sol, invisible — voir `Arme.double`)
       if (o.echo === true) continue
+      // (UNE MINE COLLÉE — la Ventouse des missiles, voir `Arme.ventouse` : un petit disque d'acier sombre sur l'insecte,
+      // son voyant rouge qui clignote de plus en plus vite, sa lueur qui grandit jusqu'à l'explosion — le clignotement de la
+      // grenade à retardement)
+      if (o.collee !== undefined) {
+        const vie0 = o.vie0 ?? 1
+        const age = vie0 - o.vie
+        const u = Math.max(0, Math.min(1, age / vie0))
+        const phase = 4 * age + (6 * age * age * age) / (vie0 * vie0)
+        // (… lisible sur un insecte sombre : cernée d'acier clair, son voyant de deux pixels)
+        p.circle(o.x, o.y, 2.6, N.hex('#1a1422'))
+        p.ring(o.x, o.y, 2.6, 1, COQUE[4])
+        if (phase - Math.floor(phase) < 0.5) {
+          p.glow(o.x, o.y, 5 + 8 * u, N.hex('#ff3a2a'), 0.5 + 0.4 * u)
+          p.circle(o.x, o.y, 1.2, u > 0.6 ? N.hex('#ffd0c0') : N.hex('#ff4a3a'))
+        }
+        continue
+      }
       const l = Math.hypot(o.vx, o.vy) || 1
       const ux = o.vx / l
       const uy = o.vy / l
@@ -18950,7 +18967,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         // les mini-missiles laissent une traînée de fumée
         // (et l'obus en cloche une fumée plus grosse, là où il est à l'écran — en l'air)
         for (const o of m.obus) if (o.arme === 'obusier' && R.next() < 0.7) feuDesConsumes.spawn(N.P.SMOKE, o.x - o.vx * 0.04, o.y - hauteurEnCloche(o).h - o.vy * 0.04, R.range(-3, 3), R.range(-3, 3), R.range(0.4, 0.6), FUMEE_DU_FEU, R.range(1.3, 1.9) * (o.taille ?? 1))
-        for (const o of m.obus) if ((o.arme === 'minimissile' || o.arme === 'roquettes' || o.missile === true) && R.next() < 0.6) feuDesConsumes.spawn(N.P.SMOKE, o.x - o.vx * 0.03, o.y - o.vy * 0.03, R.range(-3, 3), R.range(-3, 3), R.range(0.3, 0.5), FUMEE_DU_FEU, R.range(0.9, 1.4))
+        for (const o of m.obus) if ((o.arme === 'minimissile' || o.arme === 'roquettes' || o.missile === true) && o.collee === undefined && R.next() < 0.6) feuDesConsumes.spawn(N.P.SMOKE, o.x - o.vx * 0.03, o.y - o.vy * 0.03, R.range(-3, 3), R.range(-3, 3), R.range(0.3, 0.5), FUMEE_DU_FEU, R.range(0.9, 1.4))
         // les insectes rongés : des gouttes d'acide naissent sur eux et s'évaporent (plus sur un gros — voir `gouttesDAcide`)
         for (const e of m.ennemis) {
           if (e.acide === undefined || e.acide.jusque <= m.t || e.asteroide !== undefined) continue

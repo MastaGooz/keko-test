@@ -9403,3 +9403,16 @@ Keko : « peut-être donne-leur une couleur un petit peu plus différente des mi
 ### La Désignation ne marque pas les roches — vérifié (26/11)
 
 Keko : « pour l'escorte, la carte spéciale marquage ne doit pas affecter les astéroïdes. Vérifie que ce soit bien le cas. » C'était le cas : `designer`, le seul endroit qui pose la marque (`Ennemi.designeA`), sort sur une roche, et la cible rouge de la page ne se dessine que d'elle. Test dans `jeu.verif.ts` : une roche seule, tout critique, 18 critiques en 2 s, jamais marquée.
+### Les missiles : la Ventouse, leur variation sur coup critique (26/11)
+
+Keko : « les missiles qui font des explosions critiques laissent une petite mine collée sur la cible, clignotante, qui explose après un court délai ; si jamais l'ennemi est tué par l'explosion, la mine reste à son emplacement ».
+
+- **Un impact critique du missile** (le coup sur sa cible, pas les insectes pris dans l'explosion) colle une mine sur l'insecte touché (`Arme.ventouse`, `coller`, `Obus.collee`). Elle est posée à mi-rayon du centre, du côté d'où venait le missile, et le suit.
+- **Au bout d'une seconde**, elle explose sur 14, aux trois quarts des dégâts de zone du tir (60 pour le missile, 30 pour un mini-missile du Déluge), avec l'élément du missile (Thermite). L'insecte mort avant, elle reste là où il était et explose quand même.
+- **Ses critiques n'en collent pas d'autre** : elle passe par `exploser`, qui ne colle rien. Elle ne touche rien en route, ni insecte ni roche. Une roche peut la porter : toutes les armes blessent les roches.
+- **Le Déluge colle aussi** : ses mini-missiles portent les cartes du missile.
+- **À l'écran** : un petit disque d'acier sombre cerclé de clair, sur l'insecte, avec un voyant rouge qui clignote de plus en plus vite et une lueur qui grandit jusqu'à l'explosion (le clignotement de la grenade à retardement). Sans fumée de missile.
+- Délai, rayon et part sont de moi, à rejuger.
+- **Test** (`jeu.verif.ts`) : un critique, une mine, qui suit l'insecte et explose 60 images après l'impact. Tué par l'explosion, la mine reste en place et explose.
+- **Le texte du Déluge débordait** (six lignes, « hasard » coupé, vu en capture) : « Régulièrement, quatre mini-missiles s'abattent au hasard. » Il tient en cinq.
+- Les missiles ont huit variations (`EN_REVUE` 8). Salve, Dispersion, Lance-missiles et Satellites restent à revoir.
