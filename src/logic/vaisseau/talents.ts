@@ -186,10 +186,13 @@ const CLES_DE_ZONE: ReadonlySet<string> = new Set(['rayon', 'largeur', 'eclat'])
 const CLES_DE_CADENCE: ReadonlySet<string> = new Set(['cadence', 'tous'])
 /** L'arme a-t-elle une zone (un rayon, une largeur, un éclat) — ce que la carte « Portée » agrandit aussi. */
 export const aUneZone = (a: Arme): boolean => valeurs(a, CLES_DE_ZONE).some((v) => v > 0)
-/** (les branches de ce qu'une arme POSE — tourelles, balises, mines, flaques de napalm, œufs — et leur durée) */
+/** (les branches de ce qu'une arme POSE — tourelles, balises, mines, œufs — et leur durée) */
 // (… ET LA BOULE QUI DURE — la bobine tesla, l'orbe de plasma —, Keko, 26/11 : « pourquoi la carte de durée n'est pas
 // associée à la bobine ? ça pourrait la faire durer plus longtemps » ; elle n'était qu'un tir qui avance)
-const POSEES = ['pose', 'balise', 'mine', 'napalm', 'ponte', 'sphere'] as const
+// (LA DURÉE EST CELLE DE CE QUI A UNE VIE À SOI — Keko, 26/11 : « faire durer plus longtemps une invocation, comme une
+// créature, une tourelle, ou la bobine tesla, qui est une forme de tourelle […] ça ne concerne pas les traînées, les zones
+// enflammées, les zones gelées » : la flaque de napalm en sort, la balise laser y entre)
+const POSEES = ['pose', 'balise', 'mine', 'ponte', 'sphere', 'lien'] as const
 const CLES_DU_FEU: ReadonlySet<string> = new Set(['dpsBrulure'])
 const CLES_DU_GIVRE: ReadonlySet<string> = new Set(['ralenti'])
 /** Ce que l'arme pose, et sa durée. */

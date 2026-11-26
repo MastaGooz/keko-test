@@ -9318,3 +9318,11 @@ Keko : « Ok, et maintenant voyons l'escorte. » Mesuré à +25 % sur la base et
 - **Zone et portée** : la portée 110 → 137,5 (la vie des balles suit) ; l'explosion des Mini-missiles 11 → 13,75 ; ces missiles volent 224 (140 × 1,6), au-delà de la portée.
 - **CE QUI MANQUAIT : LA CHASSE.** Sa proie se choisit à `orbite.laisse` du vaisseau (160), qui ne grandissait pas ; en chasse, les avions tournent à 34 de leur cible, la portée de leurs balles ne leur servait donc à rien. `armeAmelioree('portee')` grandit désormais `orbite.laisse` (160 → 200 en légendaire). Test dans `talents.verif.ts`.
 - **Durée** : pas au pool (rien n'est posé). La Désignation (3 s) et la montée de la Cadence montante (3 s) ne la suivent pas ; même question que le Sillon du railgun, posée à Keko.
+### La carte Durée : ce qui a une vie à soi (26/11)
+
+Keko : « La durée a vraiment pour objectif de faire durer plus longtemps une invocation, comme une créature par exemple, une tourelle, ou par exemple la durée de la bobine Tesla, qui est une forme de tourelle. C'est vraiment assez spécifique aux éléments qui ont une vie à eux. Donc ça ne concerne pas les traînées, les zones enflammées, les zones gelées ou ce genre de choses. »
+
+- Le Sillon du railgun, la traînée de Haute tension, la Désignation et la Cadence montante de l'escorte restent sans elle.
+- **La flaque de napalm en sort** (une zone enflammée) : `POSEES` n'a plus `napalm`.
+- **La balise laser y entre** (`lien`) : posée, elle vit sa vie comme une tourelle ; +25 %, 4 → 5 s. Plusieurs balises à la fois, elles se chevauchent davantage.
+- Restent : tourelles (`pose`), cristaux du Prisme (`balise`), mines, œufs et mini-vers (`ponte`), la boule de la bobine et l'orbe de plasma (`sphere`).
