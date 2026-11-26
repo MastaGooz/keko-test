@@ -18426,6 +18426,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
             }
             // (… ET SES PETITES PARTICULES, à la « Barrel explosion » : étincelles, braises et morceaux en feu, dans le cône)
             gerbeDeBaril(ev.x, ev.y, ev.longueur / 2.8, sz, { cap: ev.cap, ouverture: ev.ouverture, longueur: ev.longueur })
+            // (… ET DES ÉTINCELLES QUI FILENT LE LONG DU CÔNE — Keko, 26/11 : « en rajouter pour le cône, afin que les
+            // étincelles décrivent aussi la trajectoire du cône » : peu freinées, lancées pour courir jusqu'à sa pointe ;
+            // les unes partent de l'impact, les autres naissent dans le cône avec le front de la déflagration)
+            for (let i = 0; i < Math.round(36 * sz); i++) {
+              const a = ev.cap + R.range(-0.9, 0.9) * ev.ouverture
+              const depuis = i % 3 === 0 ? R.range(0.15, 0.6) : 0
+              const vit = ev.longueur * (1 - depuis) * R.range(2.6, 4.4)
+              const d = ev.longueur * depuis
+              etincelles.ajouter('etincelle', ev.x + Math.cos(a) * d, ev.y + Math.sin(a) * d, Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.22, 0.38), [N.WHITE, N.WHITE, FEU[7], FEU[6], FEU[5]][Math.floor(R.next() * 5)], 1, 1.2, 0.1 * depuis)
+            }
             secousse = Math.max(secousse, 0.15)
           }
           break

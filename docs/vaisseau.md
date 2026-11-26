@@ -9488,3 +9488,10 @@ trajectoires plus amples ».
   `etincelles`, sans pesanteur : l'espace n'a pas de sol), 10 braises qui flottent, et 4 morceaux en feu — une braise
   lancée et, derrière elle, une file de flammes qui s'allument sur son passage. Tout à l'échelle du rayon (le Déluge, en
   petit ; la mine de la Ventouse aussi). Le cône du Souffle reçoit la même gerbe, dirigée dans le cône, sans second cœur.
+### Des étincelles qui filent le long du cône (26/11)
+
+Keko : « les petites étincelles de l'explosion, il faudrait en rajouter pour le cône, afin que les étincelles décrivent
+aussi la trajectoire du cône ». L'événement du Souffle lance en plus 36 étincelles (à la taille du missile) dans le cône,
+peu freinées (1,2) et assez rapides pour courir jusqu'à sa pointe ; un tiers naissent dans le cône, entre 15 et 60 % de
+sa longueur, au passage du front de la déflagration. Vu en capture : des traits blancs et jaunes qui filent dans le sens
+du cône, à travers ses flammes.
