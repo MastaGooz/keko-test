@@ -9400,3 +9400,6 @@ Keko : « Je trouve qu'il n'y a pas assez de différence entre les missiles du d
 Keko : « peut-être donne-leur une couleur un petit peu plus différente des missiles de base, pour les missiles de la volée de missiles, histoire de les différencier encore un petit peu. »
 
 - Un corps doré (le jaune de la mitrailleuse), la pointe blanche, une flamme et sa lueur bleues (`FLAMME_DU_DELUGE`), le cœur de la flamme blanc-bleu ; le missile garde sa coque grise, sa pointe rouge, sa flamme orange. Le dessin reconnaît un mini-missile à sa `taille` (`Obus.taille`) sur un obus du missile. Couleurs de moi.
+### La Désignation ne marque pas les roches — vérifié (26/11)
+
+Keko : « pour l'escorte, la carte spéciale marquage ne doit pas affecter les astéroïdes. Vérifie que ce soit bien le cas. » C'était le cas : `designer`, le seul endroit qui pose la marque (`Ennemi.designeA`), sort sur une roche, et la cible rouge de la page ne se dessine que d'elle. Test dans `jeu.verif.ts` : une roche seule, tout critique, 18 critiques en 2 s, jamais marquée.

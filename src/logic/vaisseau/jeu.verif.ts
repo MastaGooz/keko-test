@@ -3379,6 +3379,22 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   verifier(`l'Emballement : ${debut} tirs la première seconde (5), ${lance} la cinquième (10), ${repris} après un arrêt d'une seconde (5)`, debut >= 5 && debut <= 6 && lance >= 9 && lance <= 11 && repris >= 5 && repris <= 6)
 }
 
+// LA DÉSIGNATION NE MARQUE PAS LES ROCHES (Keko, 26/11 : « la carte spéciale marquage ne doit pas affecter les astéroïdes ») :
+// une roche seule, visée et blessée à chaque coup, tout critique — jamais marquée
+{
+  const cfg: ConfigVaisseau = { ...VAISSEAU, coque: 1e9, armes: [{ id: 'escorte', cadence: 0.1, degats: 10, portee: 150, vitesse: 600, vie: 1, dispersion: 0, guide: false, tousSens: true, infaillible: true, designation: { duree: 3, bonus: 0.25 } } as Arme], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false }, passifs: { ...VAISSEAU.passifs, critique: TOUT_CRITIQUE } }
+  const w = nouveauMonde(cfg, 5)
+  w.invasion.prochainA = 1e9
+  const roche: Ennemi = { id: 897, corps: { ...nouveauVaisseau(), x: 50, y: 0 }, pv: 1e9, fait: 'marche', roche: null, forage: null, tirA: 0, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, grand: true, asteroide: { rayon: 10, graine: 5, angle0: 0, vitesseAngulaire: 0, pvMax: 1e9 } }
+  w.ennemis.push(roche)
+  let crits = 0
+  for (let i = 0; i < 120; i++) {
+    roche.corps = { ...roche.corps, x: 50, y: 0, vx: 0, vy: 0 }
+    for (const ev of avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements) if (ev.type === 'ennemiTouche' && ev.critique) crits++
+  }
+  verifier(`la Désignation sur une roche : ${crits} critiques (plusieurs), marquée ${roche.designeA !== undefined} (false)`, crits > 3 && roche.designeA === undefined)
+}
+
 // LA DÉSIGNATION (Keko, 24/11 — voir `Arme.designation`) : un critique de l'arme qui désigne marque l'insecte 3 s ; une
 // autre arme, à 0 % de critique, en fait alors environ 25 % sur lui — et 0 sur un insecte non désigné
 {
