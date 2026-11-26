@@ -9388,3 +9388,10 @@ Keko : « On va garder l'élément de feu uniquement. Et on va créer une nouvel
 - **Bordée** (`missile-bordee`) : les deux ailes tirent ensemble, le mécanisme du Double laser (`Arme.jumele`) ; le nom, de moi (« jumelés » est à la mitrailleuse).
 - Restent à revoir : Salve, Dispersion (le doublon de la Fragmentation des grenades, et son texte dit « brûlants » à tort), Lance-missiles et Satellites (une attaque à côté du tir) ; pas encore de variation sur coup critique. Sept variations en attendant (`EN_REVUE`).
 - Test dans `talents.verif.ts` : la pluie de quatre toutes les 5 s, à 40, brûle avec Thermite ; les deux ailes jumelées.
+### Le missile zigzague et accélère ; le Déluge, plus petit et plus rapide (26/11)
+
+Keko : « Je trouve qu'il n'y a pas assez de différence entre les missiles du déluge et les missiles de base. Et je trouve que les trajectoires des missiles du déluge font beaucoup plus missiles que les missiles de base. Donc déjà, on va passer la trajectoire des missiles de base d'une manière similaire aux missiles du déluge, avec les espèces de zigzags un petit peu. Et je propose de les faire zigzaguer lentement au début, comme leur vitesse actuelle, et de les accélérer au fur et à mesure, comme un vrai missile. Et pour le déluge, on va transformer les missiles en quelque chose de plus petit, avec la même trajectoire accélérante, peut-être même plus rapide que les missiles de base. »
+
+- **Le missile** (au vortex seulement : la page lui donne `zigzag: TRAJECTOIRE_DU_MISSILE` ; le Nova Drifter garde son missile guidé) vole comme un missile d'essaim (`traquer`), accroché à la cible du tir : il part à 110, sa vitesse d'avant, monte à 260 en une seconde (`acces` 150 × âge²), zigzague de 0,7 rad au plus, ses écarts s'éteignant en 0,9 s (`Arme.zigzag`). Sa cible morte, il en reprend une à moins de 60.
+- **Le Déluge** : ses mini-missiles à la moitié de la taille du missile à l'écran (`essaim.taille`, `Obus.taille`), de 80 à 340 en une seconde, des écarts plus vifs (1,2 rad, s'éteignant en 0,8 s).
+- Chiffres de moi. Test dans `jeu.verif.ts` : parti à 108, à 204 au contact d'une cible à 140, écarté de sa ligne de 0,26 rad, il touche.

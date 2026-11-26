@@ -1434,7 +1434,17 @@ export type Arme = {
    */
   coupe?: { duree: number; rayon: number; periode: number; tour: number; /** Le coup du point final, à ce qui est dessous. */ fin: number }
   // (SA CIBLE MORTE, il ne reprend qu'un insecte à moins de `reprise` de lui, et repart en zigzag — voir `traquer`)
-  essaim?: { nombre: number; eventail: number; acces: number; pointe: number; braquage: number; chaos: number; pas: number; calme: number; reprise: number }
+  // (`taille` : leur taille à l'écran — les mini-missiles du Déluge, plus petits que le missile, voir `Obus.taille`)
+  essaim?: { nombre: number; eventail: number; acces: number; pointe: number; braquage: number; chaos: number; pas: number; calme: number; reprise: number; taille?: number }
+  /**
+   * UN TIR QUI ZIGZAGUE ET ACCÉLÈRE (le missile du chasseur au vortex — Keko, 26/11 : « les trajectoires des missiles du
+   * déluge font beaucoup plus missiles que les missiles de base ; on va passer la trajectoire des missiles de base d'une
+   * manière similaire, avec les espèces de zigzags un petit peu ; les faire zigzaguer lentement au début, comme leur vitesse
+   * actuelle, et les accélérer au fur et à mesure, comme un vrai missile ») : le vol de l'essaim (voir `traquer`), d'un seul
+   * missile, accroché à la cible du tir — il part à sa vitesse, monte à `pointe` (`acces` × âge²), ses écarts s'éteignent
+   * en `calme`. Voir `TRAJECTOIRE_DU_MISSILE`.
+   */
+  zigzag?: { acces: number; pointe: number; braquage: number; chaos: number; pas: number; calme: number; reprise: number }
 }
 
 export type Vaisseau = {
@@ -2800,6 +2810,11 @@ function faireNaitreUnInsecte(c: ConfigVaisseau, m: Monde, ev: Evenement[]): voi
  * poison, un rayon qui chauffe) n'ont pas de coup à tirer.
  */
 /** LE CRITIQUE D'UNE ARME : celui du vaisseau (le même pour toutes) plus le sien (voir `Arme.critique`). */
+/**
+ * LA TRAJECTOIRE DU MISSILE AU VORTEX (voir `Arme.zigzag` ; Keko, 26/11) : il part à sa vitesse (110), monte à 260 en une
+ * seconde, zigzague un peu (0,7 rad au plus) en s'apaisant en 0,9 s — de moi, à rejuger.
+ */
+export const TRAJECTOIRE_DU_MISSILE = { acces: 150, pointe: 260, braquage: 6, chaos: 0.7, pas: 0.3, calme: 0.9, reprise: 60 }
 const chanceDeCritique = (c: ConfigVaisseau, a: Arme | undefined): number => c.passifs.critique + (a?.critique ?? 0)
 /**
  * LA CHANCE RÉELLE D'UN COUP CRITIQUE pour une chance affichée `ch` (1 = 100 %) — CHAQUE POINT EST UN TIRAGE À 1 % (Keko,
@@ -3940,7 +3955,7 @@ function tirerLesEssaims(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
       // (il part dans une direction tirée au hasard, à ±`eventail` de sa cible)
       const an = Math.atan2(cible.corps.y - y0, cible.corps.x - x0) + (tire(m.graine, id, 23) - 0.5) * 2 * es.eventail
       const critique = chanceDeCritique(c, a) > 0 && tire(m.graine, id, 12) < probaDeCritique(chanceDeCritique(c, a))
-      m.obus.push({ id, x: x0, y: y0, vx: Math.cos(an) * a.vitesse, vy: Math.sin(an) * a.vitesse, vie: a.vie, degats: a.degats * (critique ? facteurDeCritique(c, a) : 1), guide: false, arme: a.id, critique, ...effetsDuTir(a), traque: { cible: cible.id, nee: m.t, v0: a.vitesse, acces: es.acces, pointe: es.pointe, braquage: es.braquage, chaos: es.chaos, pas: es.pas * (0.7 + 0.6 * tire(m.graine, id, 24)), calme: es.calme, reprise: es.reprise } })
+      m.obus.push({ id, x: x0, y: y0, vx: Math.cos(an) * a.vitesse, vy: Math.sin(an) * a.vitesse, vie: a.vie, degats: a.degats * (critique ? facteurDeCritique(c, a) : 1), guide: false, arme: a.id, critique, ...effetsDuTir(a), ...(es.taille === undefined ? {} : { taille: es.taille }), traque: { cible: cible.id, nee: m.t, v0: a.vitesse, acces: es.acces, pointe: es.pointe, braquage: es.braquage, chaos: es.chaos, pas: es.pas * (0.7 + 0.6 * tire(m.graine, id, 24)), calme: es.calme, reprise: es.reprise } })
     }
     ev.push({ type: 'essaim', x: x0, y: y0, arme: a.id })
   })
@@ -7153,7 +7168,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
       const y0 = bo === undefined ? v.y + Math.sin(angle) * (c.rayon + 3) : v.y + Math.sin(v.cap) * bo.x + Math.cos(v.cap) * bo.y
       // (le coup critique du labo : tiré du même hachage que la dispersion, sur une autre clé)
       const critique = chanceDeCritique(c, arme) > 0 && tire(m.graine, m.prochainId, 12) < probaDeCritique(chanceDeCritique(c, arme))
-      m.obus.push({ id: m.prochainId++, x: x0, y: y0, vx: Math.cos(angle) * vitesseDuTir, vy: Math.sin(angle) * vitesseDuTir, vie: vieDuTir, degats: degatsDuTir * (critique ? facteurDeCritique(c, arme) : 1), guide: arme.guide, arme: arme.id, critique, ...(arme.infaillible === true && cibleDuTir !== null ? { verrou: cibleDuTir.id } : {}), ...effetsDuTir(arme), ...(trace ? { tracante: true } : {}), ...(arme.napalm === undefined ? {} : { napalm: arme.napalm, vie0: vieDuTir }), ...(arme.plasma === undefined ? {} : { zone: arme.plasma, perce: [], vie0: vieDuTir }), ...(arme.cloche !== undefined ? { cloche: true, vie0: vieDuTir } : {}), ...(arme.minuterie !== undefined ? { minuterie: arme.minuterie.frein, vie0: vieDuTir } : {}), brut: degatsDuTir })
+      m.obus.push({ id: m.prochainId++, x: x0, y: y0, vx: Math.cos(angle) * vitesseDuTir, vy: Math.sin(angle) * vitesseDuTir, vie: vieDuTir, degats: degatsDuTir * (critique ? facteurDeCritique(c, arme) : 1), guide: arme.guide, arme: arme.id, critique, ...(arme.infaillible === true && cibleDuTir !== null ? { verrou: cibleDuTir.id } : {}), ...effetsDuTir(arme), ...(trace ? { tracante: true } : {}), ...(arme.zigzag !== undefined && cibleDuTir !== null ? { guide: false, traque: { cible: cibleDuTir.id, nee: m.t, v0: vitesseDuTir, ...arme.zigzag, pas: arme.zigzag.pas * (0.7 + 0.6 * tire(m.graine, m.prochainId, 24)) } } : {}), ...(arme.napalm === undefined ? {} : { napalm: arme.napalm, vie0: vieDuTir }), ...(arme.plasma === undefined ? {} : { zone: arme.plasma, perce: [], vie0: vieDuTir }), ...(arme.cloche !== undefined ? { cloche: true, vie0: vieDuTir } : {}), ...(arme.minuterie !== undefined ? { minuterie: arme.minuterie.frein, vie0: vieDuTir } : {}), brut: degatsDuTir })
       if (g === 0) ev.push({ type: 'obus', x: x0, y: y0, arme: arme.id, ...(trace ? { tracante: true } : {}) })
     }
     // (DEUX TIRS DE CÔTÉ, PLUS PETITS — voir `Arme.cotes` : de la même bouche, à ± `angle` du tir, `part` de ses dégâts, une

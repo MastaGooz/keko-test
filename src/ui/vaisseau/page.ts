@@ -12,7 +12,7 @@
  */
 import './vaisseau.css'
 import * as noyau from 'pixelfx'
-import { ELEMENTAIRES, anneauMagnetique, rayonDeLOnde, ennemisDuLien, ajouterUnPilote, avancerLEquipage, prendreLaMain, type SorteDInsecte, SORTES_D_INSECTES, gabaritDInsecte, gemmesDuButin, butinDeLaRoche, pointDeRetour, rayonDe, rocheDeLaTempete, vieMultipliee, degatsMultiplies, placeDeLEcharde, frontDeLaNova, ancreDansLeMonde, zoneDuDe, coupeDUnCube, formeDeLaCoupe, liesAuDrain, encaisser, type Ennemi, type Evenement, type Monde, impactDuRayon, asteroidesVisibles, avancerLeMonde, finDuTrio, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur, xpDuNiveau, ennemiLePlusProche, ennemiVerrouille, chauffeDuDrone,focaleDuLien,ondeDuLien,verrouiller, angleDuBalayage, aPlusieurs, alliesAuRetour, recompenseDeFin, type LigneDeRecompense } from '../../logic/vaisseau/jeu.ts'
+import { ELEMENTAIRES, TRAJECTOIRE_DU_MISSILE, anneauMagnetique, rayonDeLOnde, ennemisDuLien, ajouterUnPilote, avancerLEquipage, prendreLaMain, type SorteDInsecte, SORTES_D_INSECTES, gabaritDInsecte, gemmesDuButin, butinDeLaRoche, pointDeRetour, rayonDe, rocheDeLaTempete, vieMultipliee, degatsMultiplies, placeDeLEcharde, frontDeLaNova, ancreDansLeMonde, zoneDuDe, coupeDUnCube, formeDeLaCoupe, liesAuDrain, encaisser, type Ennemi, type Evenement, type Monde, impactDuRayon, asteroidesVisibles, avancerLeMonde, finDuTrio, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur, xpDuNiveau, ennemiLePlusProche, ennemiVerrouille, chauffeDuDrone,focaleDuLien,ondeDuLien,verrouiller, angleDuBalayage, aPlusieurs, alliesAuRetour, recompenseDeFin, type LigneDeRecompense } from '../../logic/vaisseau/jeu.ts'
 import { PIECES, ETALONS as ETALONS_DU_BANC, acheter, ajouterLesPiecesDEssai, capacite, poidsTotal, POIDS_SERIE, configDuHangar, demonter, demonterA, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, montantCourt, monteeA, monter, monterA, peutAcheter, peutMonter, perdreLesMontees, estDeBase, exemplaires, libres, pieceDe, piecesDe, placeLourde, possede, aimantMonte, radarMonte, type Jauge, type Piece, type Sorte } from '../../logic/vaisseau/hangar.ts'
 import { drawWord, spell } from 'pixelfx/fx/ui/_lib'
 import { firePuff, hotFirst, smokePuff } from 'pixelfx/fx/fire/_lib'
@@ -1052,6 +1052,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       }
       // (L'ÉCHELLE DES DÉGÂTS DU VORTEX : les armes et la collision contre les insectes, fois `ECHELLE_DU_VORTEX` — voir
       // `INSECTE`)
+      // (… ET LE MISSILE ZIGZAGUE ET ACCÉLÈRE — Keko, 26/11 : voir `Arme.zigzag`, `TRAJECTOIRE_DU_MISSILE`)
+      if (VORTEX) conf = { ...conf, armes: conf.armes.map((a) => (a.id === 'minimissile' ? { ...a, zigzag: TRAJECTOIRE_DU_MISSILE } : a)) }
       if (VORTEX) conf = { ...conf, armes: conf.armes.map((a) => degatsMultiplies(a, ECHELLE_DU_VORTEX)), collision: { ...conf.collision, degatsEnnemi: conf.collision.degatsEnnemi * ECHELLE_DU_VORTEX } }
       // (LES ÉTATS DU VORTEX DURENT 6 S, QUELLE QUE SOIT LEUR SOURCE — Keko, 23/11 — voir `ConfigVaisseau.dureeDesEtats`)
       if (VORTEX) conf = { ...conf, dureeDesEtats: 6 }
@@ -15155,8 +15157,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         // (LA ROQUETTE, PLUS PETITE — Keko, 23/11 : « les multi-roquettes doivent être plus petites que les missiles, et
         // l'obus plus gros » : le même dessin, aux deux tiers)
         // (le missile de l'escorte, `Arme.missiles`, garde la taille du missile : qu'on le voie partir des ailes)
-        // (… ET LES MINI-MISSILES DU DÉLUGE, à la taille des roquettes — ils traquent, voir `Arme.essaim`)
-        const k = o.arme === 'roquettes' || o.traque !== undefined ? 0.65 : 1
+        // (… ET LES MINI-MISSILES DU DÉLUGE, PLUS PETITS — Keko, 26/11 : « transformer les missiles en quelque chose de plus
+        // petit » : leur `taille`, voir `Arme.essaim`)
+        const k = o.taille ?? (o.arme === 'roquettes' ? 0.65 : 1)
         const nx = -uy
         const ny = ux
         const qx = o.x - ux * 6 * k

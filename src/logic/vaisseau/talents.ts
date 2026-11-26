@@ -513,7 +513,11 @@ export const MUTATIONS: Mutation[] = [
   // roquettes (`Arme.essaim`, qui distribue déjà ses missiles au hasard entre les insectes à portée), quatre, toutes les 5 s, la
   // moitié des dégâts du missile, sur 11 — l'intervalle, les dégâts et le nom : de moi. Il garde l'identité du missile : son
   // élément, ses cartes le suivent)
-  variation('missile-deluge', 'minimissile', 'Déluge', 'Régulièrement, quatre mini-missiles s’abattent sur des ennemis au hasard.', ajouterA('minimissile', (a) => [ajoutee(a, 9, { cadence: 5, degats: fois(a, 0.5), vitesse: 60, vie: 2, guide: false, dispersion: 0, zone: { rayon: 11 }, essaim: { nombre: 4, eventail: 2.4, acces: 60, pointe: 90, braquage: 5, chaos: 1.6, pas: 0.32, calme: 1.4, reprise: 45 } })])),
+  // (… PLUS PETITS ET PLUS RAPIDES — Keko, 26/11 : « pas assez de différence avec les missiles de base ; transformer les
+  // missiles en quelque chose de plus petit, avec la même trajectoire accélérante, peut-être même plus rapide que les
+  // missiles de base » : la moitié du missile à l'écran, de 80 à 340 en une seconde — le missile, de 110 à 260 —, des
+  // écarts plus vifs ; chiffres de moi. Le missile garde son propre zigzag : voir `TRAJECTOIRE_DU_MISSILE`)
+  variation('missile-deluge', 'minimissile', 'Déluge', 'Régulièrement, quatre mini-missiles s’abattent sur des ennemis au hasard.', ajouterA('minimissile', (a) => [ajoutee(a, 9, { cadence: 5, degats: fois(a, 0.5), vitesse: 80, vie: 2, guide: false, dispersion: 0, zone: { rayon: 11 }, essaim: { nombre: 4, eventail: 2.4, acces: 260, pointe: 340, braquage: 7, chaos: 1.2, pas: 0.25, calme: 0.8, reprise: 60, taille: 0.5 } })])),
   // (« BORDÉE » — Keko, 26/11 : « comme pour les 2 autres armes du chasseur, les 2 missiles se tirent en même temps » : le
   // Double laser, `Arme.jumele` ; le nom, de moi — « jumelés » est à la mitrailleuse)
   variation('missile-bordee', 'minimissile', 'Bordée', 'Les deux lance-missiles tirent en même temps.', changerA('minimissile', (a) => ({ ...a, jumele: true }))),

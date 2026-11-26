@@ -1,7 +1,7 @@
 /**
  * Vérifications du vaisseau, sans navigateur : le temps est injecté.
  */
-import { ELEMENTAIRES, probaDeCritique, type Arme, placeDuDrone, recompenseDeFin, tableauVide, chanceDePlaque, ajouterUnPilote, avancerLEquipage, etatDuPilote, partDe, gabaritDInsecte, rayonDe, rocheDeLaTempete, vieMultipliee, cadenceDeLaVague, asteroideDeLaCase, coupeDUnCube, asteroidesAutour, avancer, avancerLeMonde, encaisser, purger, impactDuRayon, lancerLaBombe, larguer, porteeDeLaBombe, MINERAIS, nouveauMonde, nouveauVaisseau, solidite, voler, totalDe, stationDeLaCase, stationLaPlusProche, VAISSEAU, verrouiller, ennemiLePlusProche, type ConfigVaisseau, type Ennemi, type Evenement, type Vaisseau, xpDuNiveau, gemmesDuButin, tire, type Pepite, type SorteDInsecte } from './jeu.ts'
+import { ELEMENTAIRES, probaDeCritique, TRAJECTOIRE_DU_MISSILE, type Arme, placeDuDrone, recompenseDeFin, tableauVide, chanceDePlaque, ajouterUnPilote, avancerLEquipage, etatDuPilote, partDe, gabaritDInsecte, rayonDe, rocheDeLaTempete, vieMultipliee, cadenceDeLaVague, asteroideDeLaCase, coupeDUnCube, asteroidesAutour, avancer, avancerLeMonde, encaisser, purger, impactDuRayon, lancerLaBombe, larguer, porteeDeLaBombe, MINERAIS, nouveauMonde, nouveauVaisseau, solidite, voler, totalDe, stationDeLaCase, stationLaPlusProche, VAISSEAU, verrouiller, ennemiLePlusProche, type ConfigVaisseau, type Ennemi, type Evenement, type Vaisseau, xpDuNiveau, gemmesDuButin, tire, type Pepite, type SorteDInsecte } from './jeu.ts'
 import { acheter, configDuHangar, hangarNeuf, monter, pieceDe } from './hangar.ts'
 import { depuisTexte, retirerLesPilotes, retirerUnPilote, versTexte, vuDu, vuDuSecond } from './reseau.ts'
 
@@ -3294,6 +3294,26 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   const etats = (e: Ennemi): string => [(e.bruleA ?? -1) > 0 ? 'feu' : '', (e.geleA ?? -1) > 0 ? 'givre' : '', e.acide !== undefined ? 'corrosion' : '', e.electrocute !== undefined ? 'électrocution' : ''].filter((x) => x !== '').join(', ')
   const r = essai({ ricochet: { rebonds: 1, portee: 80, part: 0.7 } })
   verifier(`une roche à côté de l'insecte visé : l'explosion lui prend ${1e9 - z.roche.pv} (plus de 0), sans état (« ${etats(z.roche)} ») ; l'insecte en a (« ${etats(z.insecte)} ») ; le ricochet, sans autre insecte, lui prend ${Math.round(1e9 - r.roche.pv)}`, z.roche.pv < 1e9 && etats(z.roche) === '' && etats(z.insecte) === 'feu, givre, corrosion, électrocution' && r.roche.pv < 1e9)
+}
+
+// LE MISSILE ZIGZAGUE ET ACCÉLÈRE (Keko, 26/11 — voir `Arme.zigzag`) : il part à sa vitesse, accélère, s'écarte de sa ligne,
+// et touche sa cible
+{
+  const cfg: ConfigVaisseau = { ...VAISSEAU, coque: 1e9, armes: [{ id: 'minimissile', cadence: 1e9, degats: 80, portee: 150, vitesse: 110, vie: 1.8, dispersion: 0, guide: true, tousSens: true, zone: { rayon: 18 }, zigzag: TRAJECTOIRE_DU_MISSILE } as Arme], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false }, passifs: { ...VAISSEAU.passifs, critique: 0 } }
+  const w = nouveauMonde(cfg, 5)
+  w.invasion.prochainA = 1e9
+  const e: Ennemi = { id: 895, corps: { ...nouveauVaisseau(), x: 140, y: 0 }, pv: 1e9, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9 }
+  w.ennemis.push(e)
+  const vitesses: number[] = []
+  let ecartMax = 0
+  for (let i = 0; i < 90 && e.pv === 1e9; i++) {
+    avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+    const o = w.obus.find((x) => x.arme === 'minimissile')
+    if (o === undefined) continue
+    vitesses.push(Math.hypot(o.vx, o.vy))
+    ecartMax = Math.max(ecartMax, Math.abs(Math.atan2(o.y, o.x)))
+  }
+  verifier(`le missile zigzague et accélère : de ${Math.round(vitesses[0])} à ${Math.round(Math.max(...vitesses))} (110 → plus de 200), écarté de sa ligne de ${ecartMax.toFixed(2)} rad au plus (plus de 0,05), et il touche (${e.pv < 1e9})`, vitesses[0] < 140 && Math.max(...vitesses) > 200 && ecartMax > 0.05 && e.pv < 1e9)
 }
 
 // LA CHANCE DE CRITIQUE, UN TIRAGE À 1 % PAR POINT (Keko, 26/11 — voir `probaDeCritique`) : jamais certaine ; et mesurée
