@@ -3304,6 +3304,27 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   verifier(`la Ventouse : un critique, ${vit.mines} mine (1), qui suit l'insecte (${vit.suit}) et explose ${vit.explosions.length >= 2 ? vit.explosions[1] - vit.explosions[0] : '—'} images après l'impact (60) ; tué par l'explosion, ${mort.mines} mine (1), restée en place (${mort.immobile}), ${mort.explosions.length} explosions (2)`, vit.mines === 1 && vit.suit && vit.explosions.length === 2 && Math.abs(vit.explosions[1] - vit.explosions[0] - 60) <= 1 && mort.mines === 1 && mort.immobile && mort.explosions.length === 2)
 }
 
+// LE SOUFFLE (Keko, 26/11 — voir `Arme.souffle`) : le missile explose sur sa cible et souffle un cône derrière elle — un
+// insecte dans l'axe, hors de l'explosion ronde, est touché ; un insecte sur le côté, à la même distance, ne l'est pas
+{
+  const essai = (souffle: boolean): { cible: number; derriere: number; cote: number; souffles: number } => {
+    const cfg: ConfigVaisseau = { ...VAISSEAU, coque: 1e9, armes: [{ id: 'minimissile', cadence: 1e9, degats: 10, portee: 150, vitesse: 300, vie: 1, dispersion: 0, guide: false, tousSens: true, infaillible: true, zone: { rayon: 18 }, ...(souffle ? { souffle: { allonge: 2.8, ouverture: 0.45, part: 0.6 } } : {}) } as Arme], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false }, passifs: { ...VAISSEAU.passifs, critique: 0 } }
+    const w = nouveauMonde(cfg, 5)
+    w.invasion.prochainA = 1e9
+    const insecte = (id: number, x: number, y: number): Ennemi => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv: 1e9, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9 })
+    const cible = insecte(850, 60, 0)
+    const derriere = insecte(851, 95, 0)
+    const cote = insecte(852, 60, 35)
+    w.ennemis.push(cible, derriere, cote)
+    let souffles = 0
+    for (let i = 0; i < 40; i++) for (const ev of avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements) if (ev.type === 'souffle') souffles++
+    return { cible: 1e9 - cible.pv, derriere: 1e9 - derriere.pv, cote: 1e9 - cote.pv, souffles }
+  }
+  const avec = essai(true)
+  const sans = essai(false)
+  verifier(`le Souffle : ${avec.souffles} souffle (1) ; derrière la cible, ${avec.derriere} perdus (6 — sans la carte ${sans.derriere}) ; sur le côté, ${avec.cote} (0) ; la cible, ${avec.cible} (10, le coup seul)`, avec.souffles === 1 && Math.abs(avec.derriere - 6) < 1e-6 && sans.derriere === 0 && avec.cote === 0 && Math.abs(avec.cible - 10) < 1e-6)
+}
+
 // LES ROCHES NE SONT IMMUNISÉES À AUCUNE ARME, SEULEMENT AUX ÉTATS (Keko, 26/11 : « je ne veux pas d'astéroïdes immunisés à
 // une arme ou à une variation ; la seule chose à laquelle ils sont immunisés, ce sont les effets de corrosion, feu, glace
 // et foudre ») : une roche collée à l'insecte visé — masquée au choix des cibles — prend l'explosion, sans brûler, geler,

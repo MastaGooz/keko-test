@@ -63,7 +63,7 @@ type Peintre = {
   text(texte: string, x: number, y: number, c: number, o?: { font?: string; scale?: number; align?: string; outline?: number; shadow?: number; a?: number }): void
   glowLine(x0: number, y0: number, x1: number, y1: number, r: number, c: number, k?: number): void
   arc(x: number, y: number, r: number, w: number, a0: number, a1: number, c: number | ((u: number, v: number) => number), a?: number): void
-  poly(pts: number[][], c: number | ((x: number, y: number) => number), a?: number): void
+  poly(pts: number[][], c: number | ((x: number, y: number) => number), a?: number | ((x: number, y: number) => number)): void
   rect(x: number, y: number, w: number, h: number, c: number, a?: number): void
   measure(texte: string, o?: { font?: string; scale?: number }): [number, number]
   line(x0: number, y0: number, x1: number, y1: number, c: number, a?: number): void
@@ -790,6 +790,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const etincelles = new Grains(R)
   const morceaux = new N.Bits({ ground: () => Infinity })
   const flashs: { x: number; y: number; t0: number; r: number; c?: number[] }[] = []
+  /** LES SOUFFLES DES MISSILES (voir `Arme.souffle`) : un cône de feu qui s'ouvre de l'impact et s'éteint. */
+  let souffles: { x: number; y: number; cap: number; longueur: number; ouverture: number; t0: number }[] = []
+  const DUREE_DU_SOUFFLE = 0.35
   const pops: { x: number; y: number; t0: number; c: number[] }[] = []
   /** LE SCORE EN PIXELS (Keko : « dessiner le score en haut en pixel ») : une pépite ramassée VOLE du vaisseau au compteur, qui ne compte qu'à son arrivée, et s'allume. */
   const envols: { x: number; y: number; t0: number; minerai: Minerai; trace: [number, number][] }[] = []
@@ -17392,6 +17395,36 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         if (long && u < 0.5) N.sparkle(p, sx + Math.cos(a) * l, sy + Math.sin(a) * l, 2, N.WHITE, PEPITE[3], 0.9 * fond)
       }
     }
+    // (LE SOUFFLE — Keko, 26/11, voir `Arme.souffle` : un cône de feu en pixels, tramé par l'alpha, qui jaillit de l'impact
+    // en une fraction de seconde puis s'éteint — trois couches, le rouge sombre au bord, l'orange, le cœur jaune au départ)
+    souffles = souffles.filter((so) => t - so.t0 < DUREE_DU_SOUFFLE)
+    for (const so of souffles) {
+      const u = (t - so.t0) / DUREE_DU_SOUFFLE
+      const portee = so.longueur * sortie(Math.min(1, u / 0.35))
+      const coin = (l: number, ouv: number): number[][] => {
+        const pts = [[so.x, so.y]]
+        for (let k = 0; k <= 6; k++) {
+          const a = so.cap - ouv + (2 * ouv * k) / 6
+          pts.push([so.x + Math.cos(a) * l, so.y + Math.sin(a) * l])
+        }
+        return pts
+      }
+      // (… UN JET DE FEU, PAS UN GRILLAGE — vu en capture : en trois aplats tramés, il se lisait en filet rouge sombre ; un
+      // seul cône dont la couleur suit la distance à l'impact — blanc-jaune au départ, orange, rouge à la pointe — et qui
+      // refroidit en vieillissant ; la trame l'effrite vers la pointe et sur les bords)
+      const L = Math.max(1, portee)
+      const RAMPE = [N.hex('#fff2a8'), FEU[7], FEU[6], FEU[5], FEU[4], FEU[3], FEU[2]]
+      const ecartDe = (x: number, y: number): number => {
+        let e = Math.abs(Math.atan2(y - so.y, x - so.x) - so.cap) % (Math.PI * 2)
+        if (e > Math.PI) e = Math.PI * 2 - e
+        return Math.min(1, e / Math.max(0.01, so.ouverture))
+      }
+      p.poly(
+        coin(portee, so.ouverture),
+        (x, y) => RAMPE[Math.min(RAMPE.length - 1, Math.floor((Math.hypot(x - so.x, y - so.y) / L) * 4 + u * 4 + ecartDe(x, y) * 1.5))],
+        (x, y) => (1 - u) * (1 - 0.55 * (Math.hypot(x - so.x, y - so.y) / L)) * (1 - 0.45 * ecartDe(x, y) ** 2),
+      )
+    }
     for (const f of flashs) {
       const u = (t - f.t0) / 0.4
       if (f.r === 0) {
@@ -18313,6 +18346,18 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           }
           secousse = Math.max(secousse, 0.4)
           if (typeof navigator.vibrate === 'function') vibrer(25)
+          break
+        case 'souffle':
+          // (LE SOUFFLE DU MISSILE — voir `Arme.souffle` et `souffles` : le cône de feu, des flammes projetées dedans, un
+          // second « boum », une petite secousse)
+          souffles.push({ x: ev.x, y: ev.y, cap: ev.cap, longueur: ev.longueur, ouverture: ev.ouverture, t0: t })
+          jouer('explosionMini', { dx: ev.x - v.x, dy: ev.y - v.y })
+          for (let i = 0; i < 22; i++) {
+            const a = ev.cap + R.range(-1, 1) * ev.ouverture
+            const vit = (ev.longueur / 0.3) * R.range(0.5, 1.1)
+            feuDesConsumes.spawn(N.P.FIRE, ev.x, ev.y, Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.2, 0.35), 0, R.range(1.2, 2.2), R.range(0, 0.05), R.next() < 0.5 ? 1 : 0)
+          }
+          secousse = Math.max(secousse, 0.15)
           break
         case 'detonation':
           // (LA RÉPLIQUE DE L'OBUSIER — voir `Arme.replique` : un insecte frappé d'un critique explose — une petite boule de

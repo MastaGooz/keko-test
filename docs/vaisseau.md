@@ -9439,3 +9439,17 @@ Keko : « la traînée du gros missile n'est pas pixelisée, on dirait qu'elle e
 - **Plus de lueur floue** (`glowLine`) derrière le missile. Chaque point de sa course est maintenant un disque de pixels opaques, tramé par l'alpha du peintre (la trame ordonnée de pixelfx). Les disques se dessinent du plus vieux au plus neuf : blancs et pleins derrière la queue, puis gris clair, plus larges et plus clairsemés en vieillissant (rayon 1,2 à 3,6).
 - Les mini-missiles du Déluge gardent leur filet.
 - Vu en capture : un damier blanc qui s'éclaircit le long de la course.
+### Les missiles : le Souffle, un cône derrière la cible (26/11)
+
+Keko : « une variation qui déclenche une explosion en cône derrière la cible touchée par le missile ; comme si le missile explosait et lançait un cône d'explosion derrière lui ».
+
+- **Quand le missile explose**, à l'impact ou au bout de sa course, une déflagration part du point d'explosion dans le sens de sa course (`Arme.souffle`, `souffler`, l'événement `souffle`).
+  - Sa longueur est de 2,8 fois le rayon de l'explosion : 50 pour le missile, 31 pour un mini-missile du Déluge. Elle grandit avec la carte Zone et portée.
+  - Elle s'ouvre de 0,45 rad de chaque côté, environ 52° en tout. Le bord des insectes compte : un gros dépasse dans le cône.
+  - Elle inflige 60 % des dégâts de zone (48 pour le missile) à tout ce qu'elle couvre, sauf la cible, qui a déjà pris le coup. Chacun tire son critique, avec l'élément du missile (Thermite).
+- **La mine de la Ventouse ne souffle pas.**
+- **À l'écran** : un seul cône en pixels, tramé par l'alpha, dont la couleur suit la distance à l'impact (blanc-jaune, orange, rouge à la pointe). Il jaillit en un tiers de seconde, refroidit et s'effrite en 0,35 s. S'y ajoutent des flammes projetées dedans, un second « boum » et une petite secousse. En trois aplats, il se lisait comme un filet rouge sombre (vu en capture) ; la rampe de couleur en fait un jet de feu.
+- Le type `Peintre` de la page déclare maintenant l'alpha de `poly` en fonction, que pixelfx acceptait déjà.
+- **Le texte tient en quatre lignes** : « L'explosion projette un cône derrière la cible. » La première version débordait en capture.
+- **Test** : un insecte dans l'axe, hors de l'explosion ronde, prend 6 (0 sans la carte). Un insecte sur le côté, à la même distance, n'est pas touché. La cible ne prend que le coup.
+- Allonge, ouverture et part sont de moi, à rejuger. Les missiles ont neuf variations (`EN_REVUE` 9).

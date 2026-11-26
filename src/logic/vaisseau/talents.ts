@@ -522,6 +522,8 @@ export const MUTATIONS: Mutation[] = [
   // Double laser, `Arme.jumele` ; le nom, de moi — « jumelés » est à la mitrailleuse)
   variation('missile-bordee', 'minimissile', 'Bordée', 'Les deux lance-missiles tirent en même temps.', changerA('minimissile', (a) => ({ ...a, jumele: true }))),
   // (SA VARIATION SUR COUP CRITIQUE — Keko, 26/11 : une mine collée sur la cible, qui explose peu après ; voir `Arme.ventouse`)
+  // (Keko, 26/11 : une explosion en cône derrière la cible — voir `Arme.souffle`)
+  variation('missile-souffle', 'minimissile', 'Souffle', 'L’explosion projette un cône derrière la cible.', changerA('minimissile', (a) => ({ ...a, souffle: { allonge: 2.8, ouverture: 0.45, part: 0.6 } }))),
   variation('missile-ventouse', 'minimissile', 'Ventouse', 'Un impact critique colle sur l’ennemi une mine qui explose peu après.', changerA('minimissile', (a) => ({ ...a, ventouse: { delai: 1, rayon: 14, part: 0.75 } }))),
   // LE RAILGUN
   // (L'EXÉCUTION, SA CARTE SUR COUP CRITIQUE, À LA PLACE D'INCENDIAIRE — Keko, 23/11 : « on ne fait pas incendiaire : un seul
