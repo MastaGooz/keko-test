@@ -3358,19 +3358,23 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   verifier(`la balle perforante acide ronge les deux insectes traversés (${ronges}, RR)`, ronges === 'RR')
 }
 
-// LA DOUBLE EXPLOSION (Keko, 24/11 — voir `Arme.double`) : la grenade explose sur l'insecte à 90, puis une seconde fois
-// 0,8 s plus tard au même endroit, à 50 % — il perd 34 puis 17 ; pas de troisième
+// LE CHAPELET (Keko, 26/11 — voir `Arme.chapelet`) : la grenade explose sur l'insecte à 90, puis deux fois de plus, 0,15 s
+// l'une après l'autre, en ligne dans son sens, à un rayon de la précédente (28, puis 22,4), ×0,8 la taille (22,4 puis
+// 17,92), à 60 % ; l'insecte, au centre de la première, est dans la deuxième (28 ≤ 22,4 + son rayon), pas dans la
+// troisième (50,4) : il perd 34 puis 20 ; pas de quatrième
 {
-  const grenades = { id: 'grenades', cadence: 99, degats: 34, portee: 110, vitesse: 150, vie: 1.2, dispersion: 0, guide: false, tousSens: true, zone: { rayon: 28 }, minuterie: { duree: 1.2, frein: 3 }, double: { delai: 0.8, part: 0.5 } }
+  const grenades = { id: 'grenades', cadence: 99, degats: 34, portee: 110, vitesse: 150, vie: 1.2, dispersion: 0, guide: false, tousSens: true, zone: { rayon: 28 }, minuterie: { duree: 1.2, frein: 3 }, chapelet: { nombre: 2, delai: 0.15, ecart: 1, taille: 0.8, part: 0.6 } }
   const cfg = { ...VAISSEAU, coque: 1e9, armes: [grenades], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false }, passifs: { ...VAISSEAU.passifs, critique: 0 } }
   const w = nouveauMonde(cfg, 5)
   w.invasion.prochainA = 1e9
   const e: Ennemi = { id: 810, corps: { ...nouveauVaisseau(), x: 90, y: 0 }, pv: 1e6, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9 }
   w.ennemis.push(e)
   w.verrou = e.id
-  const zones: { x: number; y: number; t: number; pv: number }[] = []
-  for (let i = 0; i < 60 * 3; i++) for (const ev of avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements) if (ev.type === 'explosionDeZone') zones.push({ x: ev.x, y: ev.y, t: w.t, pv: 1e6 - e.pv })
-  verifier(`la double explosion : ${zones.length} explosions (2), à ${zones.length === 2 ? (zones[1].t - zones[0].t).toFixed(2) : '?'} s d'écart (0,8), au même endroit ; l'insecte perd ${zones.map((z) => z.pv).join(' puis ')} (34 puis 51)`, zones.length === 2 && Math.abs(zones[1].t - zones[0].t - 0.8) < 0.04 && Math.hypot(zones[1].x - zones[0].x, zones[1].y - zones[0].y) < 1e-6 && zones[0].pv === 34 && zones[1].pv === 51)
+  const zones:{ x: number; y: number; t: number; pv: number; rayon: number }[] = []
+  for (let i = 0; i < 60 * 3; i++) for (const ev of avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements) if (ev.type === 'explosionDeZone') zones.push({ x: ev.x, y: ev.y, t: w.t, pv: 1e6 - e.pv, rayon: ev.rayon })
+  const pas = zones.slice(1).map((z, k) => Math.hypot(z.x - zones[k].x, z.y - zones[k].y))
+  const enLigne = zones.length === 3 && Math.abs(Math.atan2(zones[1].y - zones[0].y, zones[1].x - zones[0].x) - Math.atan2(zones[2].y - zones[1].y, zones[2].x - zones[1].x)) < 1e-6 && zones[1].x > zones[0].x
+  verifier(`le chapelet : ${zones.length} explosions (3), à ${zones.slice(1).map((z, k) => (z.t - zones[k].t).toFixed(2)).join(' et ')} s d'écart (0,15), en ligne, devant (${enLigne}), à ${pas.map((p) => p.toFixed(1)).join(' puis ')} (28 puis 22,4), de rayon ${zones.map((z) => z.rayon.toFixed(1)).join(', ')} (28, 22,4, 17,9) ; l'insecte perd ${zones.map((z) => z.pv).join(' puis ')} (34, 54, 54)`, zones.length === 3 && zones.slice(1).every((z, k) => Math.abs(z.t - zones[k].t - 0.15) < 0.04) && enLigne && Math.abs(pas[0] - 28) < 1e-6 && Math.abs(pas[1] - 22.4) < 1e-6 && Math.abs(zones[2].rayon - 17.92) < 1e-6 && zones[0].pv === 34 && zones[1].pv === 54 && zones[2].pv === 54)
 }
 
 // LA RAFALE EN DEMI-CERCLE (Keko, 24/11) : six grenades à 36° l'une de l'autre, lancées vers un insecte à 90 : six

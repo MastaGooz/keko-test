@@ -573,7 +573,10 @@ export const MUTATIONS: Mutation[] = [
   // « Dégâts » et « Zone et portée » ; « la double explosion, ça apporte vraiment quelque chose » — Leurre et Pièges
   // recoupaient Téléguidage ; 0,5 s, 50 % — voir `Arme.double`) (0,8 s — Keko : « l'animation de la première explosion
   // givrée n'est pas finie que la deuxième se déclenche » : la glace dure 0,7 s)
-  variation('grenades-double', 'grenades', 'Double explosion', 'Chaque grenade explose deux fois de suite.', changerA('grenades', (a) => ({ ...a, double: { delai: 0.8, part: 0.5 } }))),
+  // (« CHAPELET », À LA PLACE DE LA DOUBLE EXPLOSION — Keko, 26/11 : « un peu simple et pas terrible » ; « la grenade explose
+  // 3 fois, mais en ligne droite », de plus en plus petite — deux de plus, 0,15 s l'une après l'autre, à un rayon devant
+  // la précédente, ×0,8 la taille, 60 % des dégâts : de moi — voir `Arme.chapelet`)
+  variation('grenades-chapelet', 'grenades', 'Chapelet', 'Chaque grenade explose trois fois, en ligne droite.', changerA('grenades', (a) => ({ ...a, chapelet: { nombre: 2, delai: 0.15, ecart: 1, taille: 0.8, part: 0.6 } }))),
   // LA BALISE LASER
   // (le Fauchage, une barre en travers du rayon, essayé et retiré — Keko, 25/11 : « les deux variantes servent le même
   // objectif ; on reste sur la résonance »)
