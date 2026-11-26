@@ -11563,6 +11563,18 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         fumeesDesMissiles.delete(id)
         continue
       }
+      // (… EN PIXELS DERRIÈRE LE MISSILE — Keko, 26/11 : « la traînée du gros missile n'est pas pixelisée, on dirait qu'elle est
+      // lisse, ça casse avec la DA » : plus de lueur floue ; des disques de pixels opaques, tramés par l'alpha du peintre (la
+      // trame ordonnée de pixelfx), du plus vieux au plus neuf — blancs et pleins derrière la queue, puis gris clair, plus
+      // larges et plus clairsemés en vieillissant)
+      if (f.k >= 2) {
+        for (const q of f.pts) {
+          const u = Math.min(1, (t - q.t) / DUREE_DE_LA_FUMEE)
+          const c = u < 0.2 ? N.WHITE : u < 0.55 ? N.hex('#dcd8e4') : N.hex('#aaa6b8')
+          p.circle(q.x, q.y, 1.2 + 2.4 * u, c, 0.95 * (1 - u) ** 1.3)
+        }
+        continue
+      }
       for (let i = 1; i < f.pts.length; i++) {
         const a = f.pts[i - 1]
         const b = f.pts[i]
@@ -11571,8 +11583,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         // (la brume s'élargit en vieillissant ; le fil, blanc, ne reste que neuf)
         p.glowLine(a.x, a.y, b.x, b.y, (1.5 + 4 * u) * f.k, N.hex('#e8e4ec'), 0.32 * r)
         if (u < 0.45) p.line(a.x, a.y, b.x, b.y, N.WHITE, 0.6 * (1 - u / 0.45))
-        // (le missile : un cœur de fumée épais, qui tient un peu plus)
-        if (f.k >= 2 && u < 0.7) p.glowLine(a.x, a.y, b.x, b.y, 2.5, N.WHITE, 0.35 * (1 - u / 0.7))
       }
     }
   }
