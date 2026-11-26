@@ -3371,6 +3371,32 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   verifier(`le missile zigzague et accélère : de ${Math.round(vitesses[0])} à ${Math.round(Math.max(...vitesses))} (110 → plus de 200), écarté de sa ligne de ${ecartMax.toFixed(2)} rad au plus (plus de 0,05), et il touche (${e.pv < 1e9})`, vitesses[0] < 140 && Math.max(...vitesses) > 200 && ecartMax > 0.05 && e.pv < 1e9)
 }
 
+// LE SILO (Keko, 26/11 — voir `Arme.silo`) : un moucheron tout près, un cuirassier plus loin ; le missile sort pour le
+// cuirassier, ne touche rien en montant, le suit quand il bouge, et explose sur lui à l'heure — le moucheron intact
+{
+  const cfg: ConfigVaisseau = { ...VAISSEAU, coque: 1e9, armes: [{ id: 'minimissile', cadence: 6, degats: 240, portee: 200, vitesse: 110, vie: 1.8, dispersion: 0, guide: false, tousSens: true, zone: { rayon: 16 }, silo: { montee: 0.45, chute: 0.75 } } as Arme], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false }, passifs: { ...VAISSEAU.passifs, critique: 0 } }
+  const w = nouveauMonde(cfg, 5)
+  w.invasion.prochainA = 1e9
+  const insecte = (id: number, x: number, y: number, sorte?: SorteDInsecte): Ennemi => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv: 1e9, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9, ...(sorte === undefined ? {} : { sorte }) })
+  const petit = insecte(860, 12, 0)
+  const gros = insecte(861, 150, 0, 'cuirassier')
+  w.ennemis.push(petit, gros)
+  let silos = 0
+  let pourLeGros = false
+  let touchesAvant = 0
+  let explose = -1
+  for (let i = 0; i < 90 && explose < 0; i++) {
+    // (il bouge pendant la chute : le missile le suit)
+    if (i === 40) gros.corps.y = 30
+    for (const ev of avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements) {
+      if (ev.type === 'silo') (silos += 1), (pourLeGros = ev.cible === gros.id)
+      if (ev.type === 'ennemiTouche' && i < 70) touchesAvant += 1
+      if (ev.type === 'explosionDeZone') explose = i
+    }
+  }
+  verifier(`le Silo : ${silos} missile (1), pour le cuirassier plutôt que le moucheron tout près (${pourLeGros}) ; rien de touché en vol (${touchesAvant}) ; il explose à l'image ${explose} (vers 72, 1,2 s) sur le cuirassier, qui a bougé : il perd ${1e9 - gros.pv} (240), le moucheron ${1e9 - petit.pv} (0)`, silos === 1 && pourLeGros && touchesAvant === 0 && explose >= 70 && explose <= 74 && 1e9 - gros.pv === 240 && petit.pv === 1e9)
+}
+
 // LE MISSILE TOURNE EN GRAND (Keko, 26/11 — voir `TRAJECTOIRE_DU_MISSILE.virage`) : sa cible passe derrière lui en vol ;
 // sans rayon de virage, il freinait presque à l'arrêt et repartait à l'envers ; avec, il garde sa vitesse et décrit un arc
 {

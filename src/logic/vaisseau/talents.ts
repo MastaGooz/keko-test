@@ -500,12 +500,7 @@ export const MUTATIONS: Mutation[] = [
   // fois les dégâts — chiffres et nom de moi ; voir `Arme.tracante`)
   variation('mitraille-tracante', 'mitraille', 'Traçante', 'Toutes les 8 balles, une grosse balle lumineuse cinq fois plus forte.', changerA('mitraille', (a) => ({ ...a, tracante: { tous: 8, facteur: 5 } }))),
   variation('mitraille-riposte', 'mitraille', 'Riposte', 'Un coup critique lance trois balles très rapides sur l’ennemi touché.', changerA('mitraille', (a) => ({ ...a, riposte: { nombre: 3, part: 0.5, vitesse: 750 } }))),
-  // LES MISSILES
-  // (la pluie du Déluge n'est pas un tir : la Salve ne la touche pas)
-  variation('missile-salve', 'minimissile', 'Salve', 'Chaque tir lâche trois missiles en éventail.', changerA('minimissile', (a) => (a.essaim !== undefined ? a : V.gerbe(3, 0.35, 0.6)(a)))),
-  variation('missile-fragmentation', 'minimissile', 'Dispersion', 'Chaque explosion projette six éclats brûlants tout autour.', changerA('minimissile', V.fragments)),
-  variation('missile-lanceur', 'minimissile', 'Lance-missiles', 'Un lanceur tire des missiles tout autour du vaisseau.', ajouterA('minimissile', (a) => [ajoutee(a, 9, { cadence: a.cadence * 0.75, degats: fois(a, 0.7) })])),
-  variation('missile-drones', 'minimissile', 'Satellites', 'Deux drones en orbite tirent des missiles sur les ennemis proches.', ajouterA('minimissile', (a) => drones(a, { cadence: 2.5, degats: fois(a, 0.5), portee: 80, vie: 1.2 }))),
+  // LES MISSILES (revus le 26/11 : Salve, Dispersion, Lance-missiles et Satellites retirées — Keko : « pas fan »)
   // (THERMITE, SON SEUL ÉLÉMENT — Keko, 26/11 : « on va garder l'élément de feu uniquement » : Azote liquide retirée)
   variation('missile-incendiaire', 'minimissile', 'Thermite', 'Les missiles enflamment ce qu’ils touchent.', changerA('minimissile', V.incendiaire)),
   // (« DÉLUGE » — Keko, 26/11 : « on va réutiliser la volée de mini-missiles qu'on avait mise de côté : à intervalles réguliers,
@@ -524,7 +519,11 @@ export const MUTATIONS: Mutation[] = [
   // (SA VARIATION SUR COUP CRITIQUE — Keko, 26/11 : une mine collée sur la cible, qui explose peu après ; voir `Arme.ventouse`)
   // (Keko, 26/11 : une explosion en cône derrière la cible — voir `Arme.souffle`)
   variation('missile-souffle', 'minimissile', 'Souffle', 'L’explosion projette un cône derrière la cible.', changerA('minimissile', (a) => ({ ...a, souffle: { allonge: 2.8, ouverture: 0.45, part: 0.6 } }))),
-  variation('missile-ventouse', 'minimissile', 'Ventouse', 'Un impact critique colle sur l’ennemi une mine qui explose peu après.', changerA('minimissile', (a) => ({ ...a, ventouse: { delai: 1, rayon: 14, part: 0.75 } }))),
+  variation('missile-ventouse', 'minimissile', 'Ventouse', 'Un impact critique colle sur l’ennemi une mine qui explose peu après.', changerA('minimissile', (a) => ({ ...a, ventouse: { delai: 1, rayon: 14, part: 0.75 } }))),  // (« SILO » — Keko, 26/11 : « un missile tiré depuis un silo, qui ciblerait l'ennemi le plus fort ; un peu plus fréquent
+  // qu'une fois toutes les 10 secondes ; un genre de ciblage vers le plus gros ennemi, chose que n'ont pas les cartes de
+  // l'obusier » : toutes les 6 s, trois fois les dégâts du missile, sur 16, à 200 du vaisseau — chiffres et nom de moi ;
+  // voir `Arme.silo`. La cadence des missiles le presse, comme le Déluge)
+  variation('missile-silo', 'minimissile', 'Silo', 'Régulièrement, un missile s’abat à la verticale sur l’ennemi le plus fort.', ajouterA('minimissile', (a) => [ajoutee(a, 9, { cadence: 6, degats: fois(a, 3), portee: 200, guide: false, dispersion: 0, zone: { rayon: 16 }, silo: { montee: 0.45, chute: 0.75 } })])),
   // LE RAILGUN
   // (L'EXÉCUTION, SA CARTE SUR COUP CRITIQUE, À LA PLACE D'INCENDIAIRE — Keko, 23/11 : « on ne fait pas incendiaire : un seul
   // élément par arme » ; « les coups critiques tuent instantanément les ennemis faibles » — voir `Arme.execute`)

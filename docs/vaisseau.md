@@ -9501,3 +9501,25 @@ Keko : « si je tire sur un énorme boss ou un ennemi important avec le Souffle,
 l'explosion et par le souffle ». La cible du missile était exceptée du cône (elle avait pris le coup) ; un GRAND
 (`Ennemi.grand` : mini-boss, boss) ne l'est plus — il déborde dans le cône, il prend les deux. Les autres insectes
 gardent la règle. Test : la cible prend 10 ; grande, 16 (10 du coup, 6 du souffle).
+### Le Silo, la sixième variation des missiles ; les quatre anciennes retirées (26/11)
+
+Keko : « un missile tiré depuis un silo, qui ciblerait l'ennemi le plus fort ; un peu plus fréquent qu'une fois toutes
+les 10 secondes ; un genre de ciblage vers le plus gros ennemi, chose que n'ont pas les cartes de l'obusier. Un missile
+bien ciblé qui tombe sur un boss. » La frappe nucléaire proposée d'abord, « un peu trop puissante », écartée.
+
+- **La règle** (`Arme.silo`, `tirerLesSilos`, `Obus.silo`) : une arme ajoutée (comme le Déluge, elle garde l'identité du
+  missile : son élément, sa cadence). Toutes les 6 s, l'insecte le plus fort à 200 du vaisseau — le verrouillé d'abord ;
+  sinon boss, mini-boss, cuirassier, cornu, moucheron (`rangDeChasse`), et à rang égal le plus de points de vie ; jamais
+  une roche — reçoit un missile : 0,45 s de montée, 0,75 s de chute, trois fois les dégâts du missile sur 16, avec la
+  Thermite. Il ne touche rien en vol ; il suit sa cible ; morte, il tombe là où elle était. Test : un moucheron tout
+  près, un cuirassier plus loin qui bouge pendant la chute — le missile va au cuirassier, le suit, explose sur lui à
+  1,2 s (240), le moucheron intact.
+- **Le dessin** (`positionDuSilo`, `dessinerLeSilo`) : la règle tient le missile au sol ; la page lui donne une hauteur
+  (`HAUTEUR_DU_SILO`, 260) et le dessine d'autant plus haut — il sort du toit dans une bouffée de fumée blanche, file
+  droit vers le haut hors de vue, puis retombe nez en bas à la verticale de sa cible, sous une colonne de fumée en
+  bouffées. Dès le départ, une CIBLE ROUGE (anneau et croix) sur l'insecte visé se resserre et clignote de plus en plus
+  vite ; dans la chute, l'ombre du missile grandit dessous. L'explosion est celle du missile (« Barrel explosion »).
+  Le gros missile a maintenant sa fonction de dessin (`dessinerLeGrosMissile`), partagée.
+- **Les quatre anciennes cartes retirées** : Salve, Dispersion, Lance-missiles, Satellites. Les missiles ont leurs six :
+  Thermite, Déluge, Bordée, Ventouse, Souffle, Silo ; `talents.verif.ts` n'a plus d'arme en revue.
+- Chiffres et nom de moi : 6 s, 200, ×3, 16 de rayon, les durées de montée et de chute.

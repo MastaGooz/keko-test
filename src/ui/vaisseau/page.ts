@@ -4050,6 +4050,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       if (arme.balise !== undefined) return
       // (les échardes : leur heure est celle de la condensation, pas d'un tir — elles sonnent à leur départ)
       if (arme.condense !== undefined) return
+      // (le silo sonne à son départ : sa cible est choisie à l'heure, sur tout ce qui est à 200)
+      if (arme.silo !== undefined) return
       if (reste <= 0 || reste > avance || t - (armeAnnonceeA.get(arme.id) ?? -10) < 0.4) return
       // (la nova et le blizzard du Frimas partent même sans personne — Keko, 19/11 : leur coup s'annonce toujours)
       if (arme.nova === undefined && arme.tornade === undefined && !m.ennemis.some((e) => Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= arme.portee)) return
@@ -11546,6 +11548,68 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const DUREE_DE_LA_FUMEE = 0.7
   /** LA TAILLE DU MISSILE (voir `dessinerLesTirs`) : son dessin, une fois et demie celui des autres missiles. */
   const GROS_MISSILE = 1.5
+  /** LE GROS MISSILE (voir `GROS_MISSILE`) : en (x, y), le nez vers (ux, uy). */
+  function dessinerLeGrosMissile(p: Peintre, x: number, y: number, ux: number, uy: number, id: number): void {
+    const g = GROS_MISSILE
+    const nx = -uy
+    const ny = ux
+    const pt = (a: number, b: number): number[] => [x + ux * a * g + nx * b * g, y + uy * a * g + ny * b * g]
+    const fl = 5 + Math.sin(t * 60 + id) * 1.4
+    p.glow(pt(-6 - fl * 0.5, 0)[0], pt(-6 - fl * 0.5, 0)[1], 7 * g, FEU[4], 0.6)
+    p.line(pt(-6.5, 0)[0], pt(-6.5, 0)[1], pt(-6.5 - fl, 0)[0], pt(-6.5 - fl, 0)[1], FEU[4])
+    for (const b of [-0.6, 0.6]) p.line(pt(-6.5, b)[0], pt(-6.5, b)[1], pt(-6.5 - fl * 0.6, b)[0], pt(-6.5 - fl * 0.6, b)[1], FEU[3])
+    p.line(pt(-6.5, 0)[0], pt(-6.5, 0)[1], pt(-8.5, 0)[0], pt(-8.5, 0)[1], N.hex('#fff2a8'))
+    // (les ailerons, en croix à la queue)
+    for (const b of [-1, 1]) p.poly([pt(-3.5, b * 1.1), pt(-6.5, b * 2.6), pt(-6.5, b * 1.1)], COQUE[2])
+    p.poly([pt(1, 0), pt(-2, -1.6), pt(-6.6, -1.6), pt(-6.6, 1.6), pt(-2, 1.6)], N.hex('#1a1422'))
+    p.poly([pt(-2, -1.1), pt(-6.2, -1.1), pt(-6.2, 1.1), pt(-2, 1.1)], COQUE[3])
+    p.poly([pt(-2, -1.1), pt(-6.2, -1.1), pt(-6.2, 0), pt(-2, 0)], COQUE[5])
+    p.poly([pt(0.4, 0), pt(-2, -1.1), pt(-2, 1.1)], N.hex('#ff5a5a'))
+    p.px(Math.round(pt(-0.6, -0.4)[0]), Math.round(pt(-0.6, -0.4)[1]), N.hex('#ffd0c0'))
+  }
+  /**
+   * LE MISSILE DU SILO EN PSEUDO-RELIEF (voir `Arme.silo`) : la règle le tient au sol — au vaisseau pendant sa montée,
+   * sur sa cible pendant sa chute ; la page lui donne une HAUTEUR, `HAUTEUR_DU_SILO` au sommet, et le dessine d'autant plus
+   * haut à l'écran — il file droit vers le haut, hors de vue, puis retombe à la verticale sur sa cible.
+   */
+  const HAUTEUR_DU_SILO = 260
+  function positionDuSilo(o: Monde['obus'][number]): { x: number; y: number; ux: number; uy: number; s: number; chute: boolean } {
+    const si = o.silo!
+    const vie0 = o.vie0 ?? 1
+    const age = vie0 - o.vie
+    if (age < si.montee) {
+      const s = age / si.montee
+      return { x: o.x, y: o.y - HAUTEUR_DU_SILO * s * s, ux: 0, uy: -1, s, chute: false }
+    }
+    const s = Math.min(1, (age - si.montee) / Math.max(0.01, vie0 - si.montee))
+    return { x: si.tx, y: si.ty - HAUTEUR_DU_SILO * (1 - s * s), ux: 0, uy: 1, s, chute: true }
+  }
+  /**
+   * … ET CE QU'ON VOIT VENIR : dès le départ, LA CIBLE ROUGE sur l'insecte visé — un anneau et sa croix, qui se resserrent
+   * et clignotent de plus en plus vite jusqu'à l'impact — et, dans la chute, l'ombre du missile qui grandit sous lui.
+   */
+  function dessinerLeSilo(p: Peintre, o: Monde['obus'][number]): void {
+    const si = o.silo!
+    const ps = positionDuSilo(o)
+    const vie0 = o.vie0 ?? 1
+    const u = Math.min(1, (vie0 - o.vie) / vie0)
+    const R0 = o.zone?.rayon ?? 16
+    const rr = R0 * (1.5 - 0.7 * u)
+    const phase = 3 * u + 9 * u * u * u
+    const allume = phase - Math.floor(phase) < 0.6
+    const rouge = ROUGE_LASER[3]
+    p.glow(si.tx, si.ty, rr + 4, ROUGE_LASER[2], 0.12 + 0.25 * u)
+    if (ps.chute) p.circle(si.tx, si.ty, 1 + 3.5 * ps.s, N.hex('#0a0610'), 0.3 + 0.45 * ps.s)
+    if (allume) {
+      p.ring(si.tx, si.ty, rr, 1, rouge, 0.5 + 0.5 * u)
+      for (let k = 0; k < 4; k++) {
+        const a = (k * Math.PI) / 2 + Math.PI / 4
+        p.line(si.tx + Math.cos(a) * (rr - 2), si.ty + Math.sin(a) * (rr - 2), si.tx + Math.cos(a) * (rr + 3), si.ty + Math.sin(a) * (rr + 3), rouge, 0.5 + 0.5 * u)
+      }
+      p.circle(si.tx, si.ty, 1, u > 0.7 ? N.WHITE : rouge)
+    }
+    dessinerLeGrosMissile(p, ps.x, ps.y, ps.ux, ps.uy, o.id)
+  }
   /**
    * CE QUE LA « BARREL EXPLOSION » DE PIXELFX AJOUTE À L'EXPLOSION D'UN MISSILE (Keko, 26/11 : « là tu as des petits ronds
    * de fumée et de feu ; dans Barrel Explosion, pas mal de petites particules complètent l'effet et le rendent plus
@@ -11599,10 +11663,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // mini-missiles du Déluge, à qui reste un filet)
       if (f === undefined) fumeesDesMissiles.set(o.id, (f = { pts: [], k: o.taille ?? (o.arme === 'roquettes' ? 0.65 : o.arme === 'minimissile' ? 2 : 1) }))
       // (la fumée sort de la queue, pas de l'ogive)
+      // (le missile du silo fume là où on le voit, à sa hauteur — voir `positionDuSilo`)
+      const ps = o.silo === undefined ? null : positionDuSilo(o)
       const l = Math.hypot(o.vx, o.vy) || 1
       const queue = o.arme === 'minimissile' && o.taille === undefined ? 7 * GROS_MISSILE : 6 * f.k
-      const x = o.x - (o.vx / l) * queue
-      const y = o.y - (o.vy / l) * queue
+      const x = ps !== null ? ps.x - ps.ux * queue : o.x - (o.vx / l) * queue
+      const y = ps !== null ? ps.y - ps.uy * queue : o.y - (o.vy / l) * queue
       const der = f.pts[f.pts.length - 1]
       if (der === undefined || Math.hypot(x - der.x, y - der.y) >= (f.k >= 2 ? 3 : 1.5)) f.pts.push({ x, y, t, g: R.next() })
     }
@@ -15179,6 +15245,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // (UNE MINE COLLÉE — la Ventouse des missiles, voir `Arme.ventouse` : un petit disque d'acier sombre sur l'insecte,
       // son voyant rouge qui clignote de plus en plus vite, sa lueur qui grandit jusqu'à l'explosion — le clignotement de la
       // grenade à retardement)
+      if (o.silo !== undefined) {
+        dessinerLeSilo(p, o)
+        continue
+      }
       if (o.collee !== undefined) {
         const vie0 = o.vie0 ?? 1
         const age = vie0 - o.vie
@@ -15308,20 +15378,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         // sombre, éclairé d'un côté, l'ogive rouge, quatre ailerons, une flamme double — les mini-missiles, dorés, restent
         // des traits fins)
         if (o.arme === 'minimissile' && !deluge) {
-          const g = GROS_MISSILE
-          const pt = (a: number, b: number): number[] => [o.x + ux * a * g + nx * b * g, o.y + uy * a * g + ny * b * g]
-          const fl = 5 + Math.sin(t * 60 + o.id) * 1.4
-          p.glow(pt(-6 - fl * 0.5, 0)[0], pt(-6 - fl * 0.5, 0)[1], 7 * g, FEU[4], 0.6)
-          p.line(pt(-6.5, 0)[0], pt(-6.5, 0)[1], pt(-6.5 - fl, 0)[0], pt(-6.5 - fl, 0)[1], FEU[4])
-          for (const b of [-0.6, 0.6]) p.line(pt(-6.5, b)[0], pt(-6.5, b)[1], pt(-6.5 - fl * 0.6, b)[0], pt(-6.5 - fl * 0.6, b)[1], FEU[3])
-          p.line(pt(-6.5, 0)[0], pt(-6.5, 0)[1], pt(-8.5, 0)[0], pt(-8.5, 0)[1], N.hex('#fff2a8'))
-          // (les ailerons, en croix à la queue)
-          for (const b of [-1, 1]) p.poly([pt(-3.5, b * 1.1), pt(-6.5, b * 2.6), pt(-6.5, b * 1.1)], COQUE[2])
-          p.poly([pt(1, 0), pt(-2, -1.6), pt(-6.6, -1.6), pt(-6.6, 1.6), pt(-2, 1.6)], N.hex('#1a1422'))
-          p.poly([pt(-2, -1.1), pt(-6.2, -1.1), pt(-6.2, 1.1), pt(-2, 1.1)], COQUE[3])
-          p.poly([pt(-2, -1.1), pt(-6.2, -1.1), pt(-6.2, 0), pt(-2, 0)], COQUE[5])
-          p.poly([pt(0.4, 0), pt(-2, -1.1), pt(-2, 1.1)], N.hex('#ff5a5a'))
-          p.px(Math.round(pt(-0.6, -0.4)[0]), Math.round(pt(-0.6, -0.4)[1]), N.hex('#ffd0c0'))
+          dessinerLeGrosMissile(p, o.x, o.y, ux, uy, o.id)
           continue
         }
         const qx = o.x - ux * 6 * k
@@ -18581,6 +18638,20 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
             etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(30, 80), Math.sin(a) * R.range(30, 80), R.range(0.12, 0.25), R.next() < 0.5 ? N.WHITE : PLASMA_V[3], 1, 1.5)
           }
           break
+        case 'silo':
+          // (UN MISSILE SORT DU SILO — voir `Arme.silo` : son départ, une bouffée de fumée blanche qui jaillit du toit et
+          // roule tout autour, quelques étincelles)
+          jouer('minimissile')
+          for (let i = 0; i < 10; i++) {
+            const a = R.range(0, Math.PI * 2)
+            const vit = R.range(15, 40)
+            feuDesConsumes.spawn(N.P.SMOKE, ev.x + Math.cos(a) * 2, ev.y + Math.sin(a) * 2, Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.5, 0.9), N.hex('#d8d4e0'), R.range(2, 3.2))
+          }
+          for (let i = 0; i < 6; i++) {
+            const a = R.range(0, Math.PI * 2)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(40, 90), Math.sin(a) * R.range(40, 90), R.range(0.12, 0.25), [N.WHITE, FEU[6]][Math.floor(R.next() * 2)], 1, 2)
+          }
+          break
         case 'tornade':
           // (une tornade part : le souffle du vent qui se lève — sauf s'il a sonné en avance)
           if (t - (armeAnnonceeA.get(ev.arme) ?? -10) < 0.4) armeAnnonceeA.delete(ev.arme)
@@ -19169,7 +19240,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         // les mini-missiles laissent une traînée de fumée
         // (et l'obus en cloche une fumée plus grosse, là où il est à l'écran — en l'air)
         for (const o of m.obus) if (o.arme === 'obusier' && R.next() < 0.7) feuDesConsumes.spawn(N.P.SMOKE, o.x - o.vx * 0.04, o.y - hauteurEnCloche(o).h - o.vy * 0.04, R.range(-3, 3), R.range(-3, 3), R.range(0.4, 0.6), FUMEE_DU_FEU, R.range(1.3, 1.9) * (o.taille ?? 1))
-        for (const o of m.obus) if ((o.arme === 'minimissile' || o.arme === 'roquettes' || o.missile === true) && o.collee === undefined && R.next() < 0.6) feuDesConsumes.spawn(N.P.SMOKE, o.x - o.vx * 0.03, o.y - o.vy * 0.03, R.range(-3, 3), R.range(-3, 3), R.range(0.3, 0.5), FUMEE_DU_FEU, R.range(0.9, 1.4))
+        for (const o of m.obus) if ((o.arme === 'minimissile' || o.arme === 'roquettes' || o.missile === true) && o.collee === undefined && o.silo === undefined && R.next() < 0.6) feuDesConsumes.spawn(N.P.SMOKE, o.x - o.vx * 0.03, o.y - o.vy * 0.03, R.range(-3, 3), R.range(-3, 3), R.range(0.3, 0.5), FUMEE_DU_FEU, R.range(0.9, 1.4))
         // les insectes rongés : des gouttes d'acide naissent sur eux et s'évaporent (plus sur un gros — voir `gouttesDAcide`)
         for (const e of m.ennemis) {
           if (e.acide === undefined || e.acide.jusque <= m.t || e.asteroide !== undefined) continue

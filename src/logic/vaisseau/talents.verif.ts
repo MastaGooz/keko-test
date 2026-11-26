@@ -184,9 +184,8 @@ verifier('le délai passé, ce qui restait à choisir part en réserve', reserve
       const depart = id === 'laser' ? base : id === 'mitraille' || id === 'minimissile' ? { ...C, armes: [{ ...laser, id, place: 0 }] } : avecLesBonus(base, ajouterLeBonus([], carteSpeciale(mu(`arme-${id}`))))
       if (JSON.stringify(v.appliquer(depart)) === JSON.stringify(depart)) sansEffet += ` ${v.id}`
     }
-  // (les armes EN REVUE, leurs variations pas encore toutes tranchées — les missiles, Keko, 26/11 : Azote liquide retirée,
-  // Déluge et Bordée ajoutées ; Salve, Dispersion, Lance-missiles et Satellites à revoir)
-  const EN_REVUE: Record<string, number> = { minimissile: 9 }
+  // (les armes EN REVUE, leurs variations pas encore toutes tranchées — aucune depuis le Silo des missiles, 26/11)
+  const EN_REVUE: Record<string, number> = {}
   verifier(`l'Empire a ${ARMES_DE_FACTION.filter((x) => x.race === 'humains').length} nouvelles armes ; six variations par arme (${ids.map((id) => `${id} ${MUTATIONS.filter((x) => x.sorte === 'variation' && x.arme === id).length}`).join(', ')}) ; aucune sans effet (${sansEffet || 'aucune'})`, ARMES_DE_FACTION.filter((x) => x.race === 'humains').length === 6 && ids.every((id) => MUTATIONS.filter((x) => x.sorte === 'variation' && x.arme === id).length === (EN_REVUE[id] ?? 6)) && sansEffet === '')
 }
 {
