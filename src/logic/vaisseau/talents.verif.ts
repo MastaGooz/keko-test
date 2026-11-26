@@ -129,6 +129,10 @@ verifier('le délai passé, ce qui restait à choisir part en réserve', reserve
   const gr = armeDeFaction('grenades')!.armes()[0]
   const gf = avecLesBonus({ ...C, armes: [{ ...gr, place: 0 }] }, ajouterLeBonus(ajouterLeBonus([], carte({ sorte: 'arme', arme: 'grenades' }, 'portee', 'legendaire')), spe('grenades-fragmentation'))).armes[0]
   verifier(`« Zone et portée » légendaire sur les grenades : l'explosion ${gf.zone?.rayon} (28), les éclats de la Fragmentation vont à ${gf.fragments!.vitesse * gf.fragments!.vie} (40)`, gf.zone?.rayon === 35 && gf.fragments!.vitesse * gf.fragments!.vie === 50)
+  // (LA CHASSE DE L'ESCORTE CHOISIT SA PROIE PLUS LOIN — 26/11)
+  const es = armeDeFaction('escorte')!.armes()[0]
+  const ec = avecLesBonus({ ...C, armes: [{ ...es, place: 0 }] }, ajouterLeBonus(ajouterLeBonus([], carte({ sorte: 'arme', arme: 'escorte' }, 'portee', 'legendaire')), spe('escorte-chasse'))).armes[0]
+  verifier(`« Zone et portée » légendaire sur l'escorte en Chasse : sa proie se choisit à ${ec.orbite?.laisse} du vaisseau (160)`, ec.orbite?.laisse === 200 && ec.orbite.chasse === true)
   verifier(`« Zone et portée » légendaire (+25 %), prise AVANT les variations : l'onde de l'Impulsion ${av.zone?.rayon} (16), la Détonation ${av.detonation?.rayon} (24), le Ricochet ${av.ricochet?.portee} (80) ; prise après : ${ap.zone?.rayon}, ${ap.detonation?.rayon}, ${ap.ricochet?.portee} ; « toutes les armes » (+12,5 %) : ${gl.zone?.rayon}, ${gl.detonation?.rayon}, ${gl.ricochet?.portee}`, [av, ap].every((a) => a.zone?.rayon === 20 && a.detonation?.rayon === 30 && a.ricochet?.portee === 100 && a.portee === 150) && gl.zone?.rayon === 18 && gl.detonation?.rayon === 27 && gl.ricochet?.portee === 90)
 }
 {

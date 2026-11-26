@@ -9310,3 +9310,11 @@ Keko : « La double explosion de la grenade, je trouve ça un peu simple et pas 
 - **Le nom** : « Chapelet » (un chapelet de bombes), l'id `grenades-chapelet` ; texte « Chaque grenade explose trois fois, en ligne droite. »
 - **Avec le Barrage**, six chapelets en éventail ; avec le Téléguidage, la ligne suit la course vers la proie.
 - **Mesuré** (`jeu.verif.ts`) : trois explosions, 0,17 s d'écart au pas de 1/60, en ligne et devant, à 28 puis 22,4, de rayons 28 / 22,4 / 17,9 ; l'insecte au centre de la première perd 34, puis 20 (dans la deuxième), rien de la troisième. En capture, sans cible, les trois grenades lancées droit devant tracent trois courtes lignes de feu qui montent en rapetissant.
+### L'escorte vérifiée : « Zone et portée » allonge la distance de la Chasse (26/11)
+
+Keko : « Ok, et maintenant voyons l'escorte. » Mesuré à +25 % sur la base et ses six variations :
+
+- **Cadence** : 0,45 → 0,36 s entre deux tirs ; avec les Mini-missiles (1,125 s), 0,9 s. La Cadence montante multiplie la cadence de l'arme, la carte s'y ajoute.
+- **Zone et portée** : la portée 110 → 137,5 (la vie des balles suit) ; l'explosion des Mini-missiles 11 → 13,75 ; ces missiles volent 224 (140 × 1,6), au-delà de la portée.
+- **CE QUI MANQUAIT : LA CHASSE.** Sa proie se choisit à `orbite.laisse` du vaisseau (160), qui ne grandissait pas ; en chasse, les avions tournent à 34 de leur cible, la portée de leurs balles ne leur servait donc à rien. `armeAmelioree('portee')` grandit désormais `orbite.laisse` (160 → 200 en légendaire). Test dans `talents.verif.ts`.
+- **Durée** : pas au pool (rien n'est posé). La Désignation (3 s) et la montée de la Cadence montante (3 s) ne la suivent pas ; même question que le Sillon du railgun, posée à Keko.
