@@ -9453,3 +9453,19 @@ Keko : « une variation qui déclenche une explosion en cône derrière la cible
 - **Le texte tient en quatre lignes** : « L'explosion projette un cône derrière la cible. » La première version débordait en capture.
 - **Test** : un insecte dans l'axe, hors de l'explosion ronde, prend 6 (0 sans la carte). Un insecte sur le côté, à la même distance, n'est pas touché. La cible ne prend que le coup.
 - Allonge, ouverture et part sont de moi, à rejuger. Les missiles ont neuf variations (`EN_REVUE` 9).
+### La traînée en bouffées, le Souffle fait de l'explosion (26/11)
+
+Keko : « la traînée est trop linéaire au niveau de la texture ; je voyais plus des petites particules de fumée un peu
+blanchâtres, dessinées au fur et à mesure de son avancement, pas un trait blanc aussi flat » — et pour le Souffle : « la
+même texture que l'explosion, mais en forme de cône ; là c'est juste un triangle, c'est moche ».
+
+- **La traînée du gros missile** : une bouffée tous les 3 pixels de course (au lieu d'un disque tous les 1,5), chacune sa
+  taille et sa dérive de côté, dessinée comme la fumée de pixelfx — un corps, un cœur plus dense, un dessus éclairé tant
+  qu'elle est jeune (`disc`) —, blanche à sa naissance, puis gris clair, qui gonfle et s'efface en 0,7 s. Les
+  mini-missiles du Déluge gardent leur filet.
+- **Le Souffle** : plus de cône peint (`souffles` et son `poly` retirés). L'événement sème dans le cône les particules de
+  l'explosion du missile — `FIRE` (40 à la taille du missile, au hasard sur la surface, plus grosses vers la pointe,
+  allumées avec un retard proportionnel à la distance : la déflagration court en un dixième de seconde), `EMBER`
+  projetées dans le cône, et un peu de `SMOKE` à la pointe. La taille suit la longueur du cône (`longueur / 50`).
+- Vérifié en capture : la traînée se lit en bouffées séparées ; le cône en jet de boules de feu jaunes, puis orange,
+  puis rouges.

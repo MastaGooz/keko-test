@@ -790,9 +790,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const etincelles = new Grains(R)
   const morceaux = new N.Bits({ ground: () => Infinity })
   const flashs: { x: number; y: number; t0: number; r: number; c?: number[] }[] = []
-  /** LES SOUFFLES DES MISSILES (voir `Arme.souffle`) : un cône de feu qui s'ouvre de l'impact et s'éteint. */
-  let souffles: { x: number; y: number; cap: number; longueur: number; ouverture: number; t0: number }[] = []
-  const DUREE_DU_SOUFFLE = 0.35
   const pops: { x: number; y: number; t0: number; c: number[] }[] = []
   /** LE SCORE EN PIXELS (Keko : « dessiner le score en haut en pixel ») : une pépite ramassée VOLE du vaisseau au compteur, qui ne compte qu'à son arrivée, et s'allume. */
   const envols: { x: number; y: number; t0: number; minerai: Minerai; trace: [number, number][] }[] = []
@@ -11541,7 +11538,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * `DUREE_DE_LA_FUMEE`, et la fumée s'élargit et pâlit en vieillissant — un fil blanc neuf derrière le missile, une brume
    * blanche plus large qui se dissipe. Le missile parti, sa traînée finit de s'éteindre. Rien dans la règle.
    */
-  const fumeesDesMissiles = new Map<number, { pts: { x: number; y: number; t: number }[]; k: number }>()
+  const fumeesDesMissiles = new Map<number, { pts: { x: number; y: number; t: number; g: number }[]; k: number }>()
   const DUREE_DE_LA_FUMEE = 0.7
   /** LA TAILLE DU MISSILE (voir `dessinerLesTirs`) : son dessin, une fois et demie celui des autres missiles. */
   const GROS_MISSILE = 1.5
@@ -11558,7 +11555,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const x = o.x - (o.vx / l) * queue
       const y = o.y - (o.vy / l) * queue
       const der = f.pts[f.pts.length - 1]
-      if (der === undefined || Math.hypot(x - der.x, y - der.y) >= 1.5) f.pts.push({ x, y, t })
+      if (der === undefined || Math.hypot(x - der.x, y - der.y) >= (f.k >= 2 ? 3 : 1.5)) f.pts.push({ x, y, t, g: R.next() })
     }
     for (const [id, f] of fumeesDesMissiles) {
       while (f.pts.length > 0 && t - f.pts[0].t > DUREE_DE_LA_FUMEE) f.pts.shift()
@@ -11570,11 +11567,24 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // lisse, ça casse avec la DA » : plus de lueur floue ; des disques de pixels opaques, tramés par l'alpha du peintre (la
       // trame ordonnée de pixelfx), du plus vieux au plus neuf — blancs et pleins derrière la queue, puis gris clair, plus
       // larges et plus clairsemés en vieillissant)
+      // (… EN BOUFFÉES, PAS EN TRAIT — Keko, 26/11 : « trop linéaire ; je voyais plus des petites particules de fumée un peu
+      // blanchâtres, dessinées au fur et à mesure de son avancement » : une bouffée tous les 3 pixels de course, chacune
+      // sa taille et sa dérive de côté, faite comme la fumée de pixelfx — un corps, un cœur plus dense, un dessus éclairé
+      // tant qu'elle est jeune —, blanche à sa naissance, qui gonfle, grisaille et s'efface)
       if (f.k >= 2) {
         for (const q of f.pts) {
-          const u = Math.min(1, (t - q.t) / DUREE_DE_LA_FUMEE)
-          const c = u < 0.2 ? N.WHITE : u < 0.55 ? N.hex('#dcd8e4') : N.hex('#aaa6b8')
-          p.circle(q.x, q.y, 1.2 + 2.4 * u, c, 0.95 * (1 - u) ** 1.3)
+          const age = t - q.t
+          const u = Math.min(1, age / DUREE_DE_LA_FUMEE)
+          const da = q.g * Math.PI * 2
+          const derive = 0.5 + 3.5 * sortie(u)
+          const x = q.x + Math.cos(da) * derive
+          const y = q.y + Math.sin(da) * derive
+          const r = (1.2 + 0.9 * ((q.g * 7.31) % 1)) * (1 + 1.5 * sortie(u))
+          const a = Math.min(1, age / 0.05) * (1 - u) ** 1.2
+          const c = u < 0.3 ? N.WHITE : u < 0.65 ? N.hex('#e2dee8') : N.hex('#b8b4c4')
+          p.disc(x, y, r, c, 0.5 * a)
+          p.disc(x + r * 0.05, y + r * 0.06, r * 0.74, c, 0.75 * a)
+          if (u < 0.5) p.disc(x - r * 0.22, y - r * 0.3, r * 0.5, N.WHITE, 0.5 * a * (1 - 2 * u))
         }
         continue
       }
@@ -17395,36 +17405,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         if (long && u < 0.5) N.sparkle(p, sx + Math.cos(a) * l, sy + Math.sin(a) * l, 2, N.WHITE, PEPITE[3], 0.9 * fond)
       }
     }
-    // (LE SOUFFLE — Keko, 26/11, voir `Arme.souffle` : un cône de feu en pixels, tramé par l'alpha, qui jaillit de l'impact
-    // en une fraction de seconde puis s'éteint — trois couches, le rouge sombre au bord, l'orange, le cœur jaune au départ)
-    souffles = souffles.filter((so) => t - so.t0 < DUREE_DU_SOUFFLE)
-    for (const so of souffles) {
-      const u = (t - so.t0) / DUREE_DU_SOUFFLE
-      const portee = so.longueur * sortie(Math.min(1, u / 0.35))
-      const coin = (l: number, ouv: number): number[][] => {
-        const pts = [[so.x, so.y]]
-        for (let k = 0; k <= 6; k++) {
-          const a = so.cap - ouv + (2 * ouv * k) / 6
-          pts.push([so.x + Math.cos(a) * l, so.y + Math.sin(a) * l])
-        }
-        return pts
-      }
-      // (… UN JET DE FEU, PAS UN GRILLAGE — vu en capture : en trois aplats tramés, il se lisait en filet rouge sombre ; un
-      // seul cône dont la couleur suit la distance à l'impact — blanc-jaune au départ, orange, rouge à la pointe — et qui
-      // refroidit en vieillissant ; la trame l'effrite vers la pointe et sur les bords)
-      const L = Math.max(1, portee)
-      const RAMPE = [N.hex('#fff2a8'), FEU[7], FEU[6], FEU[5], FEU[4], FEU[3], FEU[2]]
-      const ecartDe = (x: number, y: number): number => {
-        let e = Math.abs(Math.atan2(y - so.y, x - so.x) - so.cap) % (Math.PI * 2)
-        if (e > Math.PI) e = Math.PI * 2 - e
-        return Math.min(1, e / Math.max(0.01, so.ouverture))
-      }
-      p.poly(
-        coin(portee, so.ouverture),
-        (x, y) => RAMPE[Math.min(RAMPE.length - 1, Math.floor((Math.hypot(x - so.x, y - so.y) / L) * 4 + u * 4 + ecartDe(x, y) * 1.5))],
-        (x, y) => (1 - u) * (1 - 0.55 * (Math.hypot(x - so.x, y - so.y) / L)) * (1 - 0.45 * ecartDe(x, y) ** 2),
-      )
-    }
     for (const f of flashs) {
       const u = (t - f.t0) / 0.4
       if (f.r === 0) {
@@ -18348,16 +18328,34 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           if (typeof navigator.vibrate === 'function') vibrer(25)
           break
         case 'souffle':
-          // (LE SOUFFLE DU MISSILE — voir `Arme.souffle` et `souffles` : le cône de feu, des flammes projetées dedans, un
-          // second « boum », une petite secousse)
-          souffles.push({ x: ev.x, y: ev.y, cap: ev.cap, longueur: ev.longueur, ouverture: ev.ouverture, t0: t })
-          jouer('explosionMini', { dx: ev.x - v.x, dy: ev.y - v.y })
-          for (let i = 0; i < 22; i++) {
-            const a = ev.cap + R.range(-1, 1) * ev.ouverture
-            const vit = (ev.longueur / 0.3) * R.range(0.5, 1.1)
-            feuDesConsumes.spawn(N.P.FIRE, ev.x, ev.y, Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.2, 0.35), 0, R.range(1.2, 2.2), R.range(0, 0.05), R.next() < 0.5 ? 1 : 0)
+          // (LE SOUFFLE DU MISSILE — voir `Arme.souffle` : un second « boum », une petite secousse, et LE CÔNE FAIT DE LA
+          // MATIÈRE DE L'EXPLOSION — Keko, 26/11 : « la même texture que l'explosion, mais en forme de cône ; là c'est juste
+          // un triangle, c'est moche » : plus de dessin à plat ; les boules de feu du missile, ses braises et sa fumée,
+          // semées dans tout le cône — plus nombreuses et plus grosses vers la pointe, où il est large — et allumées de
+          // l'impact vers la pointe, en un dixième de seconde : la déflagration court)
+          {
+            jouer('explosionMini', { dx: ev.x - v.x, dy: ev.y - v.y })
+            const sz = Math.max(0.6, ev.longueur / 50)
+            for (let i = 0; i < Math.round(40 * sz); i++) {
+              // (au hasard sur la surface du cône : la racine carrée y répartit également)
+              const f = 0.06 + 0.9 * Math.sqrt(R.next())
+              const a = ev.cap + R.range(-0.85, 0.85) * ev.ouverture
+              const d = ev.longueur * f
+              const vit = R.range(15, 45) * sz
+              feuDesConsumes.spawn(N.P.FIRE, ev.x + Math.cos(a) * d, ev.y + Math.sin(a) * d, Math.cos(a) * vit, Math.sin(a) * vit - 8, R.range(0.25, 0.45), 0, (1.6 + 2.4 * f) * R.range(0.8, 1.2) * (0.5 + 0.5 * sz), 0.1 * f, R.next() < 0.5 ? 1 : 0)
+            }
+            for (let i = 0; i < Math.round(8 * sz); i++) {
+              const a = ev.cap + R.range(-1, 1) * ev.ouverture
+              const vit = R.range(80, 160) * sz
+              feuDesConsumes.spawn(N.P.EMBER, ev.x, ev.y, Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.3, 0.6), 0, 1)
+            }
+            for (let i = 0; i < Math.round(3 * sz); i++) {
+              const a = ev.cap + R.range(-0.6, 0.6) * ev.ouverture
+              const d = ev.longueur * R.range(0.55, 0.95)
+              feuDesConsumes.spawn(N.P.SMOKE, ev.x + Math.cos(a) * d, ev.y + Math.sin(a) * d, Math.cos(a) * 6, Math.sin(a) * 6 - 4, R.range(0.6, 1), FUMEE_DU_FEU, R.range(2.5, 3.5) * sz, 0.1)
+            }
+            secousse = Math.max(secousse, 0.15)
           }
-          secousse = Math.max(secousse, 0.15)
           break
         case 'detonation':
           // (LA RÉPLIQUE DE L'OBUSIER — voir `Arme.replique` : un insecte frappé d'un critique explose — une petite boule de
