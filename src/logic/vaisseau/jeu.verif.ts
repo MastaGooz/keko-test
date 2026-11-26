@@ -1,12 +1,18 @@
 /**
  * Vérifications du vaisseau, sans navigateur : le temps est injecté.
  */
-import { ELEMENTAIRES, type Arme, placeDuDrone, recompenseDeFin, tableauVide, chanceDePlaque, ajouterUnPilote, avancerLEquipage, etatDuPilote, partDe, gabaritDInsecte, rayonDe, rocheDeLaTempete, vieMultipliee, cadenceDeLaVague, asteroideDeLaCase, coupeDUnCube, asteroidesAutour, avancer, avancerLeMonde, encaisser, purger, impactDuRayon, lancerLaBombe, larguer, porteeDeLaBombe, MINERAIS, nouveauMonde, nouveauVaisseau, solidite, voler, totalDe, stationDeLaCase, stationLaPlusProche, VAISSEAU, verrouiller, ennemiLePlusProche, type ConfigVaisseau, type Ennemi, type Evenement, type Vaisseau, xpDuNiveau, gemmesDuButin, tire, type Pepite, type SorteDInsecte } from './jeu.ts'
+import { ELEMENTAIRES, probaDeCritique, type Arme, placeDuDrone, recompenseDeFin, tableauVide, chanceDePlaque, ajouterUnPilote, avancerLEquipage, etatDuPilote, partDe, gabaritDInsecte, rayonDe, rocheDeLaTempete, vieMultipliee, cadenceDeLaVague, asteroideDeLaCase, coupeDUnCube, asteroidesAutour, avancer, avancerLeMonde, encaisser, purger, impactDuRayon, lancerLaBombe, larguer, porteeDeLaBombe, MINERAIS, nouveauMonde, nouveauVaisseau, solidite, voler, totalDe, stationDeLaCase, stationLaPlusProche, VAISSEAU, verrouiller, ennemiLePlusProche, type ConfigVaisseau, type Ennemi, type Evenement, type Vaisseau, xpDuNiveau, gemmesDuButin, tire, type Pepite, type SorteDInsecte } from './jeu.ts'
 import { acheter, configDuHangar, hangarNeuf, monter, pieceDe } from './hangar.ts'
 import { depuisTexte, retirerLesPilotes, retirerUnPilote, versTexte, vuDu, vuDuSecond } from './reseau.ts'
 
 /** Les règles sont vérifiées SANS la zone calme de la base (le rival naît où que soit le joueur) et AVEC les extracteurs par case (éteints en jeu pour l'instant) ; la base et la station seule ont leurs propres vérifications, plus bas. */
 const C: ConfigVaisseau = { ...VAISSEAU, base: { ...VAISSEAU.base, calme: 0 }, station: { ...VAISSEAU.station, seule: false } }
+
+/**
+ * « TOUT CRITIQUE » pour un test (Keko, 26/11 : chaque point de chance est un tirage à 1 %, 100 % n'est plus certain — voir
+ * `probaDeCritique`) : 3 000 points, un coup sur 10¹³ n'est pas critique.
+ */
+const TOUT_CRITIQUE = 30
 
 let echecs = 0
 function verifier(quoi: string, vrai: boolean): void {
@@ -1548,7 +1554,7 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
 // critique de la partie arrêtait le jeu) ; le facteur est celui du vaisseau plus celui de l'arme
 {
   const insecte = (id: number, x: number, y: number) => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv: 1000, fait: 'marche' as const, roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, calmeA: 1e9 })
-  const rail = { id: 'rail', cadence: 2.6, degats: 16, portee: 220, vitesse: 0, vie: 0, dispersion: 0, guide: false, rail: { largeur: 3 }, critique: 1, critiques: 0.5 }
+  const rail = { id: 'rail', cadence: 2.6, degats: 16, portee: 220, vitesse: 0, vie: 0, dispersion: 0, guide: false, rail: { largeur: 3 }, critique: TOUT_CRITIQUE, critiques: 0.5 }
   const cfg = { ...VAISSEAU, champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, armes: [rail], ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, pv: 1000 }, passifs: { ...VAISSEAU.passifs, critique: 0, critiqueFacteur: 1.5 } }
   const w = nouveauMonde(cfg, 3)
   w.ennemis.push(insecte(1, 0, -60))
@@ -3247,7 +3253,7 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
 // lui, qui arrivent l'une après l'autre ; critiques à leur tour, elles n'en relancent pas ; l'insecte mort, rien ne part
 {
   const essai = (pv: number): { balles: number; touches: number[]; perdu: number } => {
-    const cfg: ConfigVaisseau = { ...VAISSEAU, coque: 1e9, armes: [{ id: 'mitraille', cadence: 1e9, degats: 10, portee: 150, vitesse: 300, vie: 1, dispersion: 0, guide: false, tousSens: true, infaillible: true, riposte: { nombre: 3, part: 0.5, vitesse: 750 } } as Arme], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false }, passifs: { ...VAISSEAU.passifs, critique: 1 } }
+    const cfg: ConfigVaisseau = { ...VAISSEAU, coque: 1e9, armes: [{ id: 'mitraille', cadence: 1e9, degats: 10, portee: 150, vitesse: 300, vie: 1, dispersion: 0, guide: false, tousSens: true, infaillible: true, riposte: { nombre: 3, part: 0.5, vitesse: 750 } } as Arme], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false }, passifs: { ...VAISSEAU.passifs, critique: TOUT_CRITIQUE } }
     const w = nouveauMonde(cfg, 5)
     w.invasion.prochainA = 1e9
     const e: Ennemi = { id: 840, corps: { ...nouveauVaisseau(), x: 60, y: 0 }, pv, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9 }
@@ -3290,6 +3296,33 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   verifier(`une roche à côté de l'insecte visé : l'explosion lui prend ${1e9 - z.roche.pv} (plus de 0), sans état (« ${etats(z.roche)} ») ; l'insecte en a (« ${etats(z.insecte)} ») ; le ricochet, sans autre insecte, lui prend ${Math.round(1e9 - r.roche.pv)}`, z.roche.pv < 1e9 && etats(z.roche) === '' && etats(z.insecte) === 'feu, givre, corrosion, électrocution' && r.roche.pv < 1e9)
 }
 
+// LA CHANCE DE CRITIQUE, UN TIRAGE À 1 % PAR POINT (Keko, 26/11 — voir `probaDeCritique`) : jamais certaine ; et mesurée
+// sur 4 000 balles à 100 %, à 63 %
+{
+  const p = (points: number): number => Math.round(probaDeCritique(points / 100) * 1000) / 10
+  const cfg: ConfigVaisseau = { ...VAISSEAU, coque: 1e9, armes: [{ id: 'mitraille', cadence: 0.01, degats: 1, portee: 150, vitesse: 3000, vie: 1, dispersion: 0, guide: false, tousSens: true, infaillible: true } as Arme], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false }, passifs: { ...VAISSEAU.passifs, critique: 1 } }
+  const w = nouveauMonde(cfg, 5)
+  w.invasion.prochainA = 1e9
+  w.ennemis.push({ id: 890, corps: { ...nouveauVaisseau(), x: 40, y: 0 }, pv: 1e9, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9 })
+  let coups = 0
+  let crits = 0
+  for (let i = 0; i < 60 * 80 && coups < 4000; i++) for (const ev of avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements) if (ev.type === 'ennemiTouche') (coups += 1), (crits += ev.critique ? 1 : 0)
+  verifier(`la chance de critique, 1 % par point : 1 → ${p(1)} %, 10 → ${p(10)} %, 25 → ${p(25)} %, 50 → ${p(50)} %, 100 → ${p(100)} %, 200 → ${p(200)} % ; à 100 %, ${Math.round((crits / coups) * 1000) / 10} % de critiques sur ${coups} coups (63)`, p(1) === 1 && p(100) === 63.4 && p(200) < 100 && coups >= 3000 && Math.abs(crits / coups - 0.634) < 0.03)
+}
+
+// LES PERFORANTES DE LA MITRAILLEUSE TOUCHENT TROIS INSECTES AU PLUS (Keko, 26/11 — voir `Arme.traverse`) : cinq en ligne,
+// les trois premiers touchés, pas les deux derniers
+{
+  const cfg: ConfigVaisseau = { ...VAISSEAU, coque: 1e9, armes: [{ id: 'mitraille', cadence: 1e9, degats: 10, portee: 150, vitesse: 300, vie: 1, dispersion: 0, guide: false, tousSens: true, infaillible: true, perforant: true, traverse: 3 } as Arme], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false }, passifs: { ...VAISSEAU.passifs, critique: 0 } }
+  const w = nouveauMonde(cfg, 5)
+  w.invasion.prochainA = 1e9
+  const ligne = [40, 55, 70, 85, 100].map((x, k): Ennemi => ({ id: 880 + k, corps: { ...nouveauVaisseau(), x, y: 0 }, pv: 1e9, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9 }))
+  w.ennemis.push(...ligne)
+  for (let i = 0; i < 60; i++) avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+  const touches = ligne.map((e) => (e.pv < 1e9 ? 1 : 0))
+  verifier(`les Perforantes de la mitrailleuse : cinq insectes en ligne, touchés ${touches.join(' ')} (1 1 1 0 0)`, touches.join() === '1,1,1,0,0')
+}
+
 // LA TRAÇANTE (Keko, 26/11 — voir `Arme.tracante`) : un tir sur huit, cinq fois plus fort, les deux ailes comptant ensemble
 {
   const cfg: ConfigVaisseau = { ...VAISSEAU, coque: 1e9, alternance: true, armes: [0, 1].map((place) => ({ id: 'mitraille', cadence: 0.2, degats: 10, portee: 150, vitesse: 600, vie: 1, dispersion: 0, guide: false, tousSens: true, infaillible: true, place, tracante: { tous: 8, facteur: 5 } }) as Arme), champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false }, passifs: { ...VAISSEAU.passifs, critique: 0 } }
@@ -3329,7 +3362,7 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
 // LA DÉSIGNATION (Keko, 24/11 — voir `Arme.designation`) : un critique de l'arme qui désigne marque l'insecte 3 s ; une
 // autre arme, à 0 % de critique, en fait alors environ 25 % sur lui — et 0 sur un insecte non désigné
 {
-  const cfgDe = (arme: Partial<Arme>, critique: number): ConfigVaisseau => ({ ...VAISSEAU, coque: 1e9, armes: [{ id: 'escorte', cadence: 0.05, degats: 1, portee: 150, vitesse: 600, vie: 1, dispersion: 0, guide: false, tousSens: true, infaillible: true, ...arme } as Arme], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false }, passifs: { ...VAISSEAU.passifs, critique } })
+  const cfgDe = (arme: Partial<Arme>, critique: number): ConfigVaisseau => ({ ...VAISSEAU, coque: 1e9, armes: [{ id: 'escorte', cadence: 0.05, degats: 1, portee: 150, vitesse: 600, vie: 1, dispersion: 0, guide: false, tousSens: true, infaillible: true, ...arme } as Arme], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false }, passifs: { ...VAISSEAU.passifs, critique: critique >= 1 ? TOUT_CRITIQUE : critique } })
   const insecte = (): Ennemi => ({ id: 830, corps: { ...nouveauVaisseau(), x: 60, y: 0 }, pv: 1e9, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9 })
   // (le marquage)
   const cm = cfgDe({ designation: { duree: 3, bonus: 0.25 } }, 1)
@@ -3522,7 +3555,7 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
 {
   const etourdis = (critique: number): { zone: number; couronne: number; touchesParEclats: number } => {
     const grenades = { id: 'grenades', cadence: 99, degats: 34, portee: 110, vitesse: 150, vie: 1.2, dispersion: 0, guide: false, tousSens: true, zone: { rayon: 28 }, minuterie: { duree: 1.2, frein: 3 }, etourdissement: { duree: 1 }, fragments: { nombre: 6, degats: 8, vitesse: 160, vie: 0.25 } }
-    const cfg = { ...VAISSEAU, coque: 1e9, armes: [grenades], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false }, passifs: { ...VAISSEAU.passifs, critique } }
+    const cfg = { ...VAISSEAU, coque: 1e9, armes: [grenades], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false }, passifs: { ...VAISSEAU.passifs, critique: critique >= 1 ? TOUT_CRITIQUE : critique } }
     const w = nouveauMonde(cfg, 5)
     w.invasion.prochainA = 1e9
     const places: [number, number][] = [[90, 0], [90, 15], ...Array.from({ length: 12 }, (_, k): [number, number] => [90 + Math.cos((k / 12) * Math.PI * 2) * 36, Math.sin((k / 12) * Math.PI * 2) * 36])]
@@ -3614,7 +3647,7 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
 {
   const essai = (a: Partial<Arme>, critique: number): { zones: { x: number; y: number; rayon: number; t: number }[]; petites: number; pris: number; voisin: number } => {
     const obusier = { id: 'obusier', cadence: 99, degats: 60, portee: 150, vitesse: 110, vie: 2.2, dispersion: 0, guide: false, tousSens: true, zone: { rayon: 40 }, cloche: { vol: 0.8 }, ...a }
-    const cfg = { ...VAISSEAU, coque: 1e9, armes: [obusier], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false }, passifs: { ...VAISSEAU.passifs, critique } }
+    const cfg = { ...VAISSEAU, coque: 1e9, armes: [obusier], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false }, passifs: { ...VAISSEAU.passifs, critique: critique >= 1 ? TOUT_CRITIQUE : critique } }
     const w = nouveauMonde(cfg, 5)
     w.invasion.prochainA = 1e9
     const cible: Ennemi = { id: 660, corps: { ...nouveauVaisseau(), x: 120, y: 0 }, pv: 1e6, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9 }
@@ -3642,7 +3675,7 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   // les mini-obus atteignent brûlent ; sans, aucun ; un insecte à 55, à 17 d'un voisin critiqué : la réplique l'enflamme)
   const enFeu = (a: Partial<Arme>, critique: number, places: [number, number][]): boolean[] => {
     const obusier = { id: 'obusier', cadence: 99, degats: 60, portee: 150, vitesse: 110, vie: 2.2, dispersion: 0, guide: false, tousSens: true, zone: { rayon: 40 }, cloche: { vol: 0.8 }, incendiaire: { duree: 3, dps: 10 }, ...a }
-    const cfg = { ...VAISSEAU, coque: 1e9, armes: [obusier], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false }, passifs: { ...VAISSEAU.passifs, critique } }
+    const cfg = { ...VAISSEAU, coque: 1e9, armes: [obusier], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false }, passifs: { ...VAISSEAU.passifs, critique: critique >= 1 ? TOUT_CRITIQUE : critique } }
     const w = nouveauMonde(cfg, 5)
     w.invasion.prochainA = 1e9
     const es = [[120, 0] as [number, number], ...places].map(([x, y], k): Ennemi => ({ id: 670 + k, corps: { ...nouveauVaisseau(), x, y }, pv: 1e6, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9 }))
@@ -3792,7 +3825,7 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   // chacun la fait exploser sur 16, 60 % des dégâts, une explosion qui tire aussi son critique ; le voisin à 12 d'elle,
   // hors du rayon, est pris dans chacune ; sans la carte, il n'a rien)
   const eclate = (avec: boolean): { cible: number; voisin: number; explosions: number; critiques: number } => {
-    const cfg4 = { ...cfg, passifs: { ...cfg.passifs, critique: 1 }, armes: [{ ...lien, lien: { ...lien.lien, ...(avec ? { eclat: { rayon: 16, part: 0.6 } } : {}) } }] }
+    const cfg4 = { ...cfg, passifs: { ...cfg.passifs, critique: TOUT_CRITIQUE }, armes: [{ ...lien, lien: { ...lien.lien, ...(avec ? { eclat: { rayon: 16, part: 0.6 } } : {}) } }] }
     const w4 = nouveauMonde(cfg4, 8)
     w4.invasion.prochainA = 1e9
     const [ci, vo] = [[60, 0], [60, 12]].map(([x, y], k): Ennemi => ({ id: 980 + k, corps: { ...nouveauVaisseau(), x, y }, pv: 1e9, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9 }))
@@ -4342,7 +4375,7 @@ for (const vortex of [true, false]) {
 {
   const essai = (accu: boolean): number[] => {
     const tesla = { id: 'tesla', cadence: 2.6, degats: 58, portee: 120, vitesse: 0, vie: 0, dispersion: 0, guide: false, sphere: { vitesse: 0, duree: 3, rayon: 20, periode: 0.6, vitesseTir: 0, foudre: { cibles: 1 }, ...(accu ? { accumulateur: 0.2 } : {}) } }
-    const cfg: ConfigVaisseau = { ...VAISSEAU, coque: 1e9, armes: [tesla], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false }, passifs: { ...VAISSEAU.passifs, critique: 1 } }
+    const cfg: ConfigVaisseau = { ...VAISSEAU, coque: 1e9, armes: [tesla], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false }, passifs: { ...VAISSEAU.passifs, critique: TOUT_CRITIQUE } }
     const w = nouveauMonde(cfg, 5)
     w.invasion.prochainA = 1e9
     w.t = 2

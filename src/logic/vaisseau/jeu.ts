@@ -766,6 +766,12 @@ export type Arme = {
    */
   tracante?: { tous: number; facteur: number }
   /**
+   * UN TIR QUI TRAVERSE NE TOUCHE QUE `traverse` INSECTES (les Perforantes de la mitrailleuse — Keko, 26/11 : « limiter les
+   * transpercements à 3 ennemis maximum ; quand il y a d'énormes packs en late game, tu découpes absolument tout ») : le
+   * dernier l'arrête. Sans lui, il traverse tout (voir `Arme.perforant`).
+   */
+  traverse?: number
+  /**
    * LES MISSILES DE L'ESCORTE (Keko, 25/11, à la place des Roquettes) : les drones TIRENT des petits missiles guidés au
    * lieu de leurs balles, qui explosent sur `rayon` — avec l'élément de l'arme et sa Désignation, pas ses traversées ni
    * ses rebonds (la carte espace les tirs et grandit les dégâts). D'abord un missile toutes les 2 s EN PLUS des balles :
@@ -1465,7 +1471,7 @@ export type Choc = { x: number; y: number; force: number; asteroide: number; /**
 /** (un trait du rival armé porte les dégâts de son arme, son nom, et s'il est guidé — absents : le trait d'avant, un point) */
 export type Tir = { id: number; x: number; y: number; vx: number; vy: number; vie: number; degats?: number; guide?: boolean; arme?: string }
 /** Un obus du joueur : un trait qui porte des dégâts, de l'arme qui l'a tiré ; guidé, il tourne vers le rival. */
-export type Obus = Tir & { degats: number; guide: boolean; arme: string; /** Ses ricochets qui restent (voir `Arme.ricochet`), ceux qu'il a déjà touchés (il ne les retouche pas en repartant). */ rebonds?: { n: number; portee: number; part: number }; deja?: number[]; /** Ses dégâts sans le coup critique : un rebond retire le sien (voir `Arme.ricochet`). */ brut?: number; /** Ce qu'il enflamme (voir `Arme.incendiaire`). */ brule?: { duree: number; dps: number }; /** Les éclats de son explosion (voir `Arme.fragments`). */ fragments?: { nombre: number; degats: number; vitesse: number; vie: number }; /** L'insecte auquel il est accroché (voir `Arme.infaillible`). */ verrou?: number; /** Un coup critique (le passif du labo) : ses dégâts sont déjà multipliés. */ critique?: boolean; /** Il explose (voir `Arme.zone`) ; son cœur frappe plus fort (voir `Arme.epicentre`). */ zone?: { rayon: number; degats: number; coeur?: { rayon: number; facteur: number } }; /** Il gèle ce qu'il touche (voir `Arme.gel`). */ gel?: { duree: number; ralenti: number }; /** Il ronge ce qu'il touche (voir `Arme.corrosif`). */ ronge?: { duree: number; bonus: number }; /** Il électrocute ce qu'il touche (voir `Arme.electrocution`). */ electrocution?: { duree: number; chance: number; degats: number; saut: number }; /** Il détone sur un coup critique (voir `Arme.detonation`). */ detonation?: { rayon: number; part: number }; /** Critique, il exécute (voir `Arme.execute`). */ execute?: boolean; /** Il laisse un sillon (voir `Arme.sillon`) : sa durée, ce qu'il fait par seconde, sa largeur, son gel. */ sillon?: { duree: number; dps: number; largeur: number; gel?: { duree: number; ralenti: number }; electrocution?: { duree: number; chance: number; degats: number; saut: number } }; /** Il traverse (voir `Arme.salve`) : les insectes déjà touchés. */ perce?: number[]; /** Une balle de railgun (voir `Arme.balle`) : la part de ses dégâts qu'elle garde à chaque insecte traversé, son calibre. */ balle?: { part: number; calibre: number }; /** Il se brise au premier insecte touché en petits fragments, en cône derrière lui (voir `Arme.salve`). */ eclatement?: { nombre: number; cone: number; vitesse: number; vie: number; degats: number }; /** Un missile d'essaim (voir `Arme.essaim`) : sa cible, sa naissance, sa vitesse de départ, et comment il fonce. */ traque?: { cible: number; nee: number; v0: number; acces: number; pointe: number; braquage: number; chaos: number; pas: number; calme: number; reprise: number; /** L'instant où il a repris une autre cible (la sienne morte) : son chaos repart de là. */ depuis?: number }; /** Une boule de napalm, lancée en cloche (voir `Arme.napalm`) : sa durée de vol au départ ; elle ne touche rien en vol. */ napalm?: { rayon: number; duree: number; dps: number; brulure: number; dpsBrulure: number }; vie0?: number; /** Un obus tiré en cloche (voir `Arme.cloche`) : il ne touche rien en vol, il explose en retombant. */ cloche?: boolean; /** Une grenade à retardement (voir `Arme.minuterie`) : son frein par seconde ; elle ne touche rien, elle explose au bout de sa vie. */ minuterie?: number; /** Il lâche des mini-obus au sommet de sa cloche (voir `Arme.grappe`). */ grappe?: { nombre: number; part: number; zone: number; ecart: number }; /** Ses critiques d'explosion en déclenchent de petites (voir `Arme.replique`). */ replique?: { rayon: number; part: number }; /** Sa taille à l'écran (un mini-obus de la grappe : 0,6). */ taille?: number; /** Son élément gagne toute sa zone quand il éclate, même au contact (l'obusier et ses drones — voir `elementsDansLaZone`). */ embrase?: boolean; /** Son explosion libère une onde de choc (voir `Arme.onde`). */ onde?: { portee: number; part: number; duree: number }; /** Une grenade téléguidée (voir `Arme.teleguidage`) : sa vitesse de chasse. */ teleguidage?: { vitesse: number }; /** Ses critiques d'explosion étourdissent (voir `Arme.etourdissement`). */ etourdissement?: { duree: number }; /** Il explose en chapelet (voir `Arme.chapelet`) ; `cap`, le sens de la ligne, posé à la première explosion. */ chapelet?: { nombre: number; delai: number; ecart: number; taille: number; part: number; cap?: number }; /** Ses critiques désignent (voir `Arme.designation`). */ designation?: { duree: number; bonus: number }; /** Ses critiques ripostent (voir `Arme.riposte`). */ riposte?: { nombre: number; part: number; vitesse: number }; /** Une traçante (voir `Arme.tracante`) : elle se dessine en grosse balle lumineuse. */ tracante?: boolean; /** Une explosion suivante d'un chapelet (voir `Arme.chapelet`) : elle attend là où elle éclatera, rien ne se dessine. */ echo?: boolean; /** Un petit missile de l'escorte (voir `Arme.missiles`) : il se dessine en missile. */ missile?: boolean }
+export type Obus = Tir & { degats: number; guide: boolean; arme: string; /** Ses ricochets qui restent (voir `Arme.ricochet`), ceux qu'il a déjà touchés (il ne les retouche pas en repartant). */ rebonds?: { n: number; portee: number; part: number }; deja?: number[]; /** Ses dégâts sans le coup critique : un rebond retire le sien (voir `Arme.ricochet`). */ brut?: number; /** Ce qu'il enflamme (voir `Arme.incendiaire`). */ brule?: { duree: number; dps: number }; /** Les éclats de son explosion (voir `Arme.fragments`). */ fragments?: { nombre: number; degats: number; vitesse: number; vie: number }; /** L'insecte auquel il est accroché (voir `Arme.infaillible`). */ verrou?: number; /** Un coup critique (le passif du labo) : ses dégâts sont déjà multipliés. */ critique?: boolean; /** Il explose (voir `Arme.zone`) ; son cœur frappe plus fort (voir `Arme.epicentre`). */ zone?: { rayon: number; degats: number; coeur?: { rayon: number; facteur: number } }; /** Il gèle ce qu'il touche (voir `Arme.gel`). */ gel?: { duree: number; ralenti: number }; /** Il ronge ce qu'il touche (voir `Arme.corrosif`). */ ronge?: { duree: number; bonus: number }; /** Il électrocute ce qu'il touche (voir `Arme.electrocution`). */ electrocution?: { duree: number; chance: number; degats: number; saut: number }; /** Il détone sur un coup critique (voir `Arme.detonation`). */ detonation?: { rayon: number; part: number }; /** Critique, il exécute (voir `Arme.execute`). */ execute?: boolean; /** Il laisse un sillon (voir `Arme.sillon`) : sa durée, ce qu'il fait par seconde, sa largeur, son gel. */ sillon?: { duree: number; dps: number; largeur: number; gel?: { duree: number; ralenti: number }; electrocution?: { duree: number; chance: number; degats: number; saut: number } }; /** Il traverse (voir `Arme.salve`) : les insectes déjà touchés. */ perce?: number[]; /** Une balle de railgun (voir `Arme.balle`) : la part de ses dégâts qu'elle garde à chaque insecte traversé, son calibre. */ balle?: { part: number; calibre: number }; /** Il se brise au premier insecte touché en petits fragments, en cône derrière lui (voir `Arme.salve`). */ eclatement?: { nombre: number; cone: number; vitesse: number; vie: number; degats: number }; /** Un missile d'essaim (voir `Arme.essaim`) : sa cible, sa naissance, sa vitesse de départ, et comment il fonce. */ traque?: { cible: number; nee: number; v0: number; acces: number; pointe: number; braquage: number; chaos: number; pas: number; calme: number; reprise: number; /** L'instant où il a repris une autre cible (la sienne morte) : son chaos repart de là. */ depuis?: number }; /** Une boule de napalm, lancée en cloche (voir `Arme.napalm`) : sa durée de vol au départ ; elle ne touche rien en vol. */ napalm?: { rayon: number; duree: number; dps: number; brulure: number; dpsBrulure: number }; vie0?: number; /** Un obus tiré en cloche (voir `Arme.cloche`) : il ne touche rien en vol, il explose en retombant. */ cloche?: boolean; /** Une grenade à retardement (voir `Arme.minuterie`) : son frein par seconde ; elle ne touche rien, elle explose au bout de sa vie. */ minuterie?: number; /** Il lâche des mini-obus au sommet de sa cloche (voir `Arme.grappe`). */ grappe?: { nombre: number; part: number; zone: number; ecart: number }; /** Ses critiques d'explosion en déclenchent de petites (voir `Arme.replique`). */ replique?: { rayon: number; part: number }; /** Sa taille à l'écran (un mini-obus de la grappe : 0,6). */ taille?: number; /** Son élément gagne toute sa zone quand il éclate, même au contact (l'obusier et ses drones — voir `elementsDansLaZone`). */ embrase?: boolean; /** Son explosion libère une onde de choc (voir `Arme.onde`). */ onde?: { portee: number; part: number; duree: number }; /** Une grenade téléguidée (voir `Arme.teleguidage`) : sa vitesse de chasse. */ teleguidage?: { vitesse: number }; /** Ses critiques d'explosion étourdissent (voir `Arme.etourdissement`). */ etourdissement?: { duree: number }; /** Il explose en chapelet (voir `Arme.chapelet`) ; `cap`, le sens de la ligne, posé à la première explosion. */ chapelet?: { nombre: number; delai: number; ecart: number; taille: number; part: number; cap?: number }; /** Ses critiques désignent (voir `Arme.designation`). */ designation?: { duree: number; bonus: number }; /** Ses critiques ripostent (voir `Arme.riposte`). */ riposte?: { nombre: number; part: number; vitesse: number }; /** Une traçante (voir `Arme.tracante`) : elle se dessine en grosse balle lumineuse. */ tracante?: boolean; /** Combien d'insectes il touche au plus en traversant (voir `Arme.traverse`). */ traverse?: number; /** Une explosion suivante d'un chapelet (voir `Arme.chapelet`) : elle attend là où elle éclatera, rien ne se dessine. */ echo?: boolean; /** Un petit missile de l'escorte (voir `Arme.missiles`) : il se dessine en missile. */ missile?: boolean }
 /** Une bombe en vol (la capacité active d'essai). */
 export type Bombe = Tir
 /** Le rival : un vaisseau comme l'autre, des points, ce qu'il fait, sa roche, son laser, son prochain tir, son butin. */
@@ -2795,6 +2801,14 @@ function faireNaitreUnInsecte(c: ConfigVaisseau, m: Monde, ev: Evenement[]): voi
  */
 /** LE CRITIQUE D'UNE ARME : celui du vaisseau (le même pour toutes) plus le sien (voir `Arme.critique`). */
 const chanceDeCritique = (c: ConfigVaisseau, a: Arme | undefined): number => c.passifs.critique + (a?.critique ?? 0)
+/**
+ * LA CHANCE RÉELLE D'UN COUP CRITIQUE pour une chance affichée `ch` (1 = 100 %) — CHAQUE POINT EST UN TIRAGE À 1 % (Keko,
+ * 26/11 : « est-ce que si j'ai 100 % de chance de critique, je fais forcément que des critiques ? je ne voudrais pas ;
+ * à chaque fois qu'on tire, on donne 1 % de chance de critique fois le nombre de pourcentage de chance de critique qu'on
+ * a ; comme ça, on n'a jamais une certitude absolue ») : au moins un des `100 × ch` tirages réussit, 1 − 0,99^(100 ch) —
+ * 1 point, 1 % ; 10, 9,6 % ; 25, 22 % ; 50, 39 % ; 100, 63 % ; 200, 87 %. Jamais certain.
+ */
+export const probaDeCritique = (ch: number): number => (ch <= 0 ? 0 : 1 - Math.pow(0.99, ch * 100))
 const facteurDeCritique = (c: ConfigVaisseau, a: Arme | undefined): number => c.passifs.critiqueFacteur + (a?.critiques ?? 0)
 /**
  * LES CARTES SPÉCIALES D'ÉLÉMENT (Keko, 24/11 : « des cartes spéciales de chaque élément » — multicolores, au pool des
@@ -2845,7 +2859,7 @@ function designer(m: Monde, e: Ennemi, d: { duree: number; bonus: number } | und
 /** UN COUP CRITIQUE SUR `e` ? Sa chance, celle de l'arme et du vaisseau, et de `e` s'il est vulnérable ou désigné ; `u` n'est tiré que si elle n'est pas nulle. */
 const critiqueSur = (c: ConfigVaisseau, m: Monde, a: Arme | undefined, e: Ennemi | undefined, u: () => number): boolean => {
   const ch = chanceDeCritique(c, a) + (vulnerable(c, m, e) ? ELEMENTAIRES.vulnerabilite.chance * (1 + c.renforts.corrosion) : 0) + designe(m, e, a?.designation !== undefined)
-  return ch > 0 && u() < ch
+  return ch > 0 && u() < probaDeCritique(ch)
 }
 /** Le facteur d'un coup critique sur `e` (voir `critiqueSur`). */
 const facteurSur = (c: ConfigVaisseau, m: Monde, a: Arme | undefined, e: Ennemi | undefined): number => facteurDeCritique(c, a) + (vulnerable(c, m, e) ? ELEMENTAIRES.vulnerabilite.facteur * (1 + c.renforts.corrosion) : 0)
@@ -3829,7 +3843,7 @@ function tirerLesSalves(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
     const cap0 = Math.atan2(cible.corps.y - v.y, cible.corps.x - v.x)
     for (let k = 0; k < sa.nombre; k++) {
       const an = cap0 + (k * 2 * Math.PI) / sa.nombre
-      const critique = chanceDeCritique(c, a) > 0 && tire(m.graine, m.prochainId, 12) < chanceDeCritique(c, a)
+      const critique = chanceDeCritique(c, a) > 0 && tire(m.graine, m.prochainId, 12) < probaDeCritique(chanceDeCritique(c, a))
       m.obus.push({ id: m.prochainId++, x: v.x + Math.cos(an) * (c.rayon + 2), y: v.y + Math.sin(an) * (c.rayon + 2), vx: Math.cos(an) * a.vitesse, vy: Math.sin(an) * a.vitesse, vie: a.vie, degats: a.degats * (critique ? facteurDeCritique(c, a) : 1), guide: false, arme: a.id, critique, ...(a.gel === undefined ? {} : { gel: a.gel }), ...(sa.perce === true ? { perce: [] } : {}), ...(sa.eclatement === undefined ? {} : { eclatement: sa.eclatement }) })
     }
     ev.push({ type: 'salve', x: v.x, y: v.y, arme: a.id })
@@ -3887,7 +3901,7 @@ function condenserLesEchardes(c: ConfigVaisseau, m: Monde, ev: Evenement[]): voi
       const p = placeDeLEcharde(c, m, e)
       m.echardes.splice(m.echardes.indexOf(e), 1)
       const an = Math.atan2(cible.corps.y - p.y, cible.corps.x - p.x)
-      const critique = chanceDeCritique(c, a) > 0 && tire(m.graine, m.prochainId, 12) < chanceDeCritique(c, a)
+      const critique = chanceDeCritique(c, a) > 0 && tire(m.graine, m.prochainId, 12) < probaDeCritique(chanceDeCritique(c, a))
       m.obus.push({ id: m.prochainId++, x: p.x, y: p.y, vx: Math.cos(an) * a.vitesse, vy: Math.sin(an) * a.vitesse, vie: a.vie, degats: a.degats * (critique ? facteurDeCritique(c, a) : 1), guide: false, arme: a.id, critique, verrou: cible.id, ...(a.gel === undefined ? {} : { gel: a.gel }) })
       ev.push({ type: 'echarde', x: p.x, y: p.y, arme: a.id })
     }
@@ -3925,7 +3939,7 @@ function tirerLesEssaims(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
       const cible = ordre[k]
       // (il part dans une direction tirée au hasard, à ±`eventail` de sa cible)
       const an = Math.atan2(cible.corps.y - y0, cible.corps.x - x0) + (tire(m.graine, id, 23) - 0.5) * 2 * es.eventail
-      const critique = chanceDeCritique(c, a) > 0 && tire(m.graine, id, 12) < chanceDeCritique(c, a)
+      const critique = chanceDeCritique(c, a) > 0 && tire(m.graine, id, 12) < probaDeCritique(chanceDeCritique(c, a))
       m.obus.push({ id, x: x0, y: y0, vx: Math.cos(an) * a.vitesse, vy: Math.sin(an) * a.vitesse, vie: a.vie, degats: a.degats * (critique ? facteurDeCritique(c, a) : 1), guide: false, arme: a.id, critique, ...effetsDuTir(a), traque: { cible: cible.id, nee: m.t, v0: a.vitesse, acces: es.acces, pointe: es.pointe, braquage: es.braquage, chaos: es.chaos, pas: es.pas * (0.7 + 0.6 * tire(m.graine, id, 24)), calme: es.calme, reprise: es.reprise } })
     }
     ev.push({ type: 'essaim', x: x0, y: y0, arme: a.id })
@@ -4116,7 +4130,7 @@ function menerLesSpheres(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[
       if (Math.hypot(e.corps.x - s.x, e.corps.y - s.y) > sp.rayon + rayonDe(c, e)) continue
       const id = m.prochainId++
       const an = Math.atan2(e.corps.y - s.y, e.corps.x - s.x) + (tire(m.graine, id, 23) - 0.5) * 1.6
-      const critique = chanceDeCritique(c, a) > 0 && tire(m.graine, id, 12) < chanceDeCritique(c, a)
+      const critique = chanceDeCritique(c, a) > 0 && tire(m.graine, id, 12) < probaDeCritique(chanceDeCritique(c, a))
       m.obus.push({ id, x: s.x, y: s.y, vx: Math.cos(an) * sp.vitesseTir, vy: Math.sin(an) * sp.vitesseTir, vie: 1, degats: a.degats * (critique ? facteurDeCritique(c, a) : 1), guide: false, arme: 'arcane', critique, traque: { cible: e.id, nee: m.t, v0: sp.vitesseTir, acces: 200, pointe: 260, braquage: 14, chaos: 0.9, pas: 0.09, calme: 0.3, reprise: 20 } })
       tirs++
     }
@@ -4438,7 +4452,7 @@ function coupDObus(c: ConfigVaisseau, m: Monde, o: Obus, e: Ennemi): { degats: n
   const plus = 1 + c.renforts.corrosion
   const fv = vu ? ELEMENTAIRES.vulnerabilite.facteur * plus : 0
   if (o.critique === true) return { degats: (o.degats * (f + fv)) / f, critique: true }
-  if (tire(m.graine, m.prochainId++, 98) < (vu ? ELEMENTAIRES.vulnerabilite.chance * plus : 0) + d) return { degats: o.degats * (f + fv), critique: true }
+  if (tire(m.graine, m.prochainId++, 98) < probaDeCritique((vu ? ELEMENTAIRES.vulnerabilite.chance * plus : 0) + d)) return { degats: o.degats * (f + fv), critique: true }
   return { degats: o.degats, critique: false }
 }
 
@@ -6229,7 +6243,7 @@ function distanceAuSegment(x: number, y: number, x0: number, y0: number, x1: num
 function effetsDuTir(a: Arme): Partial<Obus> {
   return {
     ...(a.zone === undefined ? {} : { zone: { rayon: a.zone.rayon, degats: a.degats * (a.zone.part ?? 1), ...(a.epicentre === undefined ? {} : { coeur: { ...a.epicentre } }) } }),
-    ...(a.perforant === true ? { perce: [] } : {}),
+    ...(a.perforant === true ? { perce: [], ...(a.traverse === undefined ? {} : { traverse: a.traverse }) } : {}),
     ...(a.balle === undefined ? {} : { balle: { ...a.balle } }),
     ...(a.ricochet === undefined ? {} : { rebonds: { n: a.ricochet.rebonds, portee: a.ricochet.portee, part: a.ricochet.part } }),
     ...(a.incendiaire === undefined ? {} : { brule: { ...a.incendiaire } }),
@@ -6467,7 +6481,7 @@ function menerLesTourelles(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenemen
     const angle = tu.cap + (tire(m.graine, m.prochainId, 11) - 0.5) * 2 * a.dispersion
     const x0 = tu.x + Math.cos(tu.cap) * 4
     const y0 = tu.y + Math.sin(tu.cap) * 4
-    const critique = chanceDeCritique(c, a) > 0 && tire(m.graine, m.prochainId, 12) < chanceDeCritique(c, a)
+    const critique = chanceDeCritique(c, a) > 0 && tire(m.graine, m.prochainId, 12) < probaDeCritique(chanceDeCritique(c, a))
     m.obus.push({ id: m.prochainId++, x: x0, y: y0, vx: Math.cos(angle) * a.vitesse, vy: Math.sin(angle) * a.vitesse, vie: a.vie, degats: a.degats * (critique ? facteurDeCritique(c, a) : 1), guide: false, arme: a.id, critique })
     ev.push({ type: 'obus', x: x0, y: y0, arme: a.id })
   }
@@ -6608,7 +6622,7 @@ function menerLesDrones(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]
     const temps = dist / a.vitesse
     const vise = Math.atan2(cible.corps.y + cible.corps.vy * temps - d.y, cible.corps.x + cible.corps.vx * temps - d.x)
     const angle = vise + (tire(m.graine, m.prochainId, 11) - 0.5) * 2 * a.dispersion
-    const critique = chanceDeCritique(c, a) > 0 && tire(m.graine, m.prochainId, 12) < chanceDeCritique(c, a)
+    const critique = chanceDeCritique(c, a) > 0 && tire(m.graine, m.prochainId, 12) < probaDeCritique(chanceDeCritique(c, a))
     // (UN PETIT MISSILE au lieu de la balle — voir `Arme.missiles` : guidé, il explose, sans traverser ni rebondir)
     const mi = a.missiles
     if (mi !== undefined) {
@@ -7138,7 +7152,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
       const x0 = bo === undefined ? v.x + Math.cos(angle) * (c.rayon + 3) : v.x + Math.cos(v.cap) * bo.x - Math.sin(v.cap) * bo.y
       const y0 = bo === undefined ? v.y + Math.sin(angle) * (c.rayon + 3) : v.y + Math.sin(v.cap) * bo.x + Math.cos(v.cap) * bo.y
       // (le coup critique du labo : tiré du même hachage que la dispersion, sur une autre clé)
-      const critique = chanceDeCritique(c, arme) > 0 && tire(m.graine, m.prochainId, 12) < chanceDeCritique(c, arme)
+      const critique = chanceDeCritique(c, arme) > 0 && tire(m.graine, m.prochainId, 12) < probaDeCritique(chanceDeCritique(c, arme))
       m.obus.push({ id: m.prochainId++, x: x0, y: y0, vx: Math.cos(angle) * vitesseDuTir, vy: Math.sin(angle) * vitesseDuTir, vie: vieDuTir, degats: degatsDuTir * (critique ? facteurDeCritique(c, arme) : 1), guide: arme.guide, arme: arme.id, critique, ...(arme.infaillible === true && cibleDuTir !== null ? { verrou: cibleDuTir.id } : {}), ...effetsDuTir(arme), ...(trace ? { tracante: true } : {}), ...(arme.napalm === undefined ? {} : { napalm: arme.napalm, vie0: vieDuTir }), ...(arme.plasma === undefined ? {} : { zone: arme.plasma, perce: [], vie0: vieDuTir }), ...(arme.cloche !== undefined ? { cloche: true, vie0: vieDuTir } : {}), ...(arme.minuterie !== undefined ? { minuterie: arme.minuterie.frein, vie0: vieDuTir } : {}), brut: degatsDuTir })
       if (g === 0) ev.push({ type: 'obus', x: x0, y: y0, arme: arme.id, ...(trace ? { tracante: true } : {}) })
     }
@@ -7306,6 +7320,11 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
           o.degats = Math.max(1, Math.round(o.degats * ba.part))
         }
         if (e.pv <= 0) abattre(e)
+        // (LE DERNIER QU'IL PEUT TRAVERSER L'ARRÊTE — voir `Arme.traverse`)
+        if (o.traverse !== undefined && o.perce.length >= o.traverse) {
+          fini = true
+          break
+        }
       }
     }
     // (un obus en cloche non plus : il passe au-dessus — voir `Arme.cloche`)

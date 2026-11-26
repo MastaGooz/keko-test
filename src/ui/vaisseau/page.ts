@@ -1924,16 +1924,17 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         const rampe = repos < 0.04 ? [N.WHITE, N.WHITE, N.WHITE, N.WHITE, N.WHITE] : repos > 0.4 ? RAMPE_DU_COUP.slice(2).concat([N.hex('#c98a4a'), N.hex('#a0603a')]) : RAMPE_DU_COUP
         petitsChiffres(p, dit, x, y, rampe, G, a, PETITS_CHIFFRES, false, G)
       } else {
-        // UN COUP CRITIQUE : il FRAPPE — deux fois plus grand l'espace de deux images, puis à sa taille (ses chiffres en
-        // gras, voir `CHIFFRES_DU_CRITIQUE`) —, TREMBLE, FLAMBE du jaune au rouge (sa rampe défile), lance une gerbe
-        // d'étincelles, et monte plus haut
-        const e = (age < 0.05 ? 2 : 1) * G
+        // UN COUP CRITIQUE : il FRAPPE (ses chiffres en gras, voir `CHIFFRES_DU_CRITIQUE`), TREMBLE, FLAMBE du jaune au
+        // rouge (sa rampe défile), lance une gerbe d'étincelles, et monte plus haut
+        // (PLUS DE BLANC EN GRAND À SA NAISSANCE — Keko, 26/11 : « les chiffres apparaissent en blanc et en gros, et après
+        // deviennent colorés ; c'est assez moche » : deux fois plus grand et blanc les 0,05 premières secondes)
+        const e = G
         const tremble = age < 0.25 ? Math.round(Math.sin(t * 95) * 1.5 * G * (1 - age / 0.25)) : 0
         const monte = 14 * G * (1 - Math.exp(-age * 5))
         const x = bx + cote * 4 * G * (1 - Math.exp(-age * 5)) + tremble
         const y = by - 3 * G - monte + (repos < 0.12 ? -2 * G * Math.sin((repos / 0.12) * Math.PI) : 0)
         const cran = Math.floor(t * 18) % 2
-        const rampe = age < 0.05 ? [N.WHITE, N.WHITE, N.WHITE, N.WHITE, N.WHITE] : cran === 0 ? RAMPE_EN_FLAMMES : RAMPE_DU_CRITIQUE
+        const rampe = cran === 0 ? RAMPE_EN_FLAMMES : RAMPE_DU_CRITIQUE
         if (age < 0.3) p.glow(x, y, 12 * G, N.hex('#ff8a1a'), 0.45 * (1 - age / 0.3))
         // (la gerbe : huit étincelles qui partent du chiffre et s'éteignent)
         if (age < 0.35)

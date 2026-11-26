@@ -484,7 +484,9 @@ export const MUTATIONS: Mutation[] = [
   // déjà le laser avec l'élément acide ; je propose d'utiliser l'élément électrique pour les mitraillettes » ; l'électrocution
   // aux chiffres du vortex, des balles bleutées ; le nom, de moi — « Électrique » est au railgun)
   variation('mitraille-chargee', 'mitraille', 'Balles chargées', 'Les balles appliquent électrocution.', changerA('mitraille', (a) => ({ ...a, electrocution: { ...ELECTROCUTION_DU_VORTEX } }))),
-  variation('mitraille-perforante', 'mitraille', 'Perforantes', 'Les balles traversent les ennemis.', changerA('mitraille', V.perforant)),
+  // (… TROIS AU PLUS — Keko, 26/11 : « limiter les transpercements des balles de mitraillette à 3 ennemis maximum ; quand il
+  // y a d'énormes packs en late game, tu découpes absolument tout » — voir `Arme.traverse`)
+  variation('mitraille-perforante', 'mitraille', 'Perforantes', 'Les balles traversent jusqu’à trois ennemis.', changerA('mitraille', (a) => ({ ...V.perforant(a), traverse: 3 }))),
   // (« RIPOSTE », SA VARIATION SUR COUP CRITIQUE — Keko, 26/11 : « à chaque fois que la mitraillette fait un coup critique sur
   // un ennemi, elle lance 3 autres projectiles très rapides sur le même ennemi, s'il a survécu » ; « les 3 nouveaux
   // projectiles ne déclenchent pas eux-mêmes des projectiles rapides » ; la moitié des dégâts chacune, 750 de vitesse — deux
