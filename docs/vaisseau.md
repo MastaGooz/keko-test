@@ -9395,3 +9395,8 @@ Keko : « Je trouve qu'il n'y a pas assez de différence entre les missiles du d
 - **Le missile** (au vortex seulement : la page lui donne `zigzag: TRAJECTOIRE_DU_MISSILE` ; le Nova Drifter garde son missile guidé) vole comme un missile d'essaim (`traquer`), accroché à la cible du tir : il part à 110, sa vitesse d'avant, monte à 260 en une seconde (`acces` 150 × âge²), zigzague de 0,7 rad au plus, ses écarts s'éteignant en 0,9 s (`Arme.zigzag`). Sa cible morte, il en reprend une à moins de 60.
 - **Le Déluge** : ses mini-missiles à la moitié de la taille du missile à l'écran (`essaim.taille`, `Obus.taille`), de 80 à 340 en une seconde, des écarts plus vifs (1,2 rad, s'éteignant en 0,8 s).
 - Chiffres de moi. Test dans `jeu.verif.ts` : parti à 108, à 204 au contact d'une cible à 140, écarté de sa ligne de 0,26 rad, il touche.
+### Les mini-missiles du Déluge à leurs couleurs (26/11)
+
+Keko : « peut-être donne-leur une couleur un petit peu plus différente des missiles de base, pour les missiles de la volée de missiles, histoire de les différencier encore un petit peu. »
+
+- Un corps doré (le jaune de la mitrailleuse), la pointe blanche, une flamme et sa lueur bleues (`FLAMME_DU_DELUGE`), le cœur de la flamme blanc-bleu ; le missile garde sa coque grise, sa pointe rouge, sa flamme orange. Le dessin reconnaît un mini-missile à sa `taille` (`Obus.taille`) sur un obus du missile. Couleurs de moi.

@@ -14982,6 +14982,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const MITRAILLE = ['#7a4a08', '#d99a1c', '#ffd23a', '#fff4b0'].map((c) => N.hex(c))
   /** La balle ÉLECTRIQUE de la mitrailleuse (Keko, 26/11 : « une petite teinte bleutée ») : le même trait, d'un bleu pâle. */
   const MITRAILLE_ELECTRIQUE = ['#173a6e', '#4a8ee0', '#9ccfff', '#e8f5ff'].map((c) => N.hex(c))
+  /** La flamme bleue des mini-missiles du Déluge (Keko, 26/11 : à leurs couleurs, voir le dessin des missiles). */
+  const FLAMME_DU_DELUGE = N.hex('#5ad0ff')
   /** Le vert du canon laser, du sombre au blanc. */
   const LASER_VERT = ['#0a3a12', '#1a8a2a', '#36d856', '#8dffa0', '#e8ffe8'].map((c) => N.hex(c))
   /**
@@ -15160,18 +15162,23 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         // (… ET LES MINI-MISSILES DU DÉLUGE, PLUS PETITS — Keko, 26/11 : « transformer les missiles en quelque chose de plus
         // petit » : leur `taille`, voir `Arme.essaim`)
         const k = o.taille ?? (o.arme === 'roquettes' ? 0.65 : 1)
+        // (… À SES COULEURS — Keko, 26/11 : « une couleur un petit peu plus différente des missiles de base, pour les
+        // différencier encore un petit peu » : un corps doré, la pointe blanche, une flamme bleue — le missile, lui, gris,
+        // la pointe rouge, la flamme orange)
+        const deluge = o.taille !== undefined && o.arme === 'minimissile'
         const nx = -uy
         const ny = ux
         const qx = o.x - ux * 6 * k
         const qy = o.y - uy * 6 * k
-        p.line(qx, qy, o.x - ux, o.y - uy, COQUE[5])
+        p.line(qx, qy, o.x - ux, o.y - uy, deluge ? MITRAILLE[2] : COQUE[5])
         if (k >= 1) p.line(qx + nx, qy + ny, o.x - ux + nx, o.y - uy + ny, COQUE[3])
-        p.line(o.x - ux * 1.5 * k, o.y - uy * 1.5 * k, o.x + nx * 0.5, o.y + ny * 0.5, N.hex('#ff5a5a'))
-        p.line(qx - nx * 1.6 * k, qy - ny * 1.6 * k, qx + nx * 2.6 * k, qy + ny * 2.6 * k, COQUE[4])
+        p.line(o.x - ux * 1.5 * k, o.y - uy * 1.5 * k, o.x + nx * 0.5, o.y + ny * 0.5, deluge ? N.WHITE : N.hex('#ff5a5a'))
+        p.line(qx - nx * 1.6 * k, qy - ny * 1.6 * k, qx + nx * 2.6 * k, qy + ny * 2.6 * k, deluge ? MITRAILLE[1] : COQUE[4])
         const fl = (4 + Math.sin(t * 60 + o.id) * 1.2) * k
-        p.line(qx - ux, qy - uy, qx - ux * (1 + fl), qy - uy * (1 + fl), FEU[4])
-        p.line(qx - ux, qy - uy, qx - ux * 2.5 * k, qy - uy * 2.5 * k, N.hex('#fff2a8'))
-        p.glow(qx - ux * 2.5 * k, qy - uy * 2.5 * k, 6 * k, FEU[4], 0.6)
+        const flamme = deluge ? FLAMME_DU_DELUGE : FEU[4]
+        p.line(qx - ux, qy - uy, qx - ux * (1 + fl), qy - uy * (1 + fl), flamme)
+        p.line(qx - ux, qy - uy, qx - ux * 2.5 * k, qy - uy * 2.5 * k, deluge ? N.hex('#e8f9ff') : N.hex('#fff2a8'))
+        p.glow(qx - ux * 2.5 * k, qy - uy * 2.5 * k, 6 * k, flamme, 0.6)
       } else if (o.arme === 'eclats') {
         // (UN GROS ÉCLAT DE GLACE — Keko, 16/11 : « beaucoup plus gros » : un cristal en losange de onze pixels sur cinq,
         // une face claire et une face à l'ombre le long de son arête, un liseré sombre, la pointe blanche, une lueur
