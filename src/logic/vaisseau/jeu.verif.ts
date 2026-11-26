@@ -3784,6 +3784,19 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
     return { cible: Math.round(1e9 - ci.pv), cote: Math.round(1e9 - cote.pv) }
   }
   const [fo, sansFo] = [focale(true), focale(false)]
+  // (PLUSIEURS BALISES À LA FOIS — Keko, 26/11 : la carte Cadence lance la suivante sans attendre la fin de la précédente ;
+  // à 5 s de cadence pour 4,7 s de vie, une seule ; à 2 s, trois en même temps)
+  const enMemeTemps = (cadence: number): number => {
+    const cfg9 = { ...cfg, armes: [{ ...lien, cadence }] }
+    const w9 = nouveauMonde(cfg9, 9)
+    w9.invasion.prochainA = 1e9
+    w9.ennemis.push({ id: 995, corps: { ...nouveauVaisseau(), x: 60, y: 0 }, pv: 1e9, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9 })
+    let max = 0
+    for (let i = 0; i < 60 * 12; i++) (avancerLeMonde(cfg9, w9, 1 / 60, { x: 0, y: 0 }), (max = Math.max(max, w9.balisesLaser.length)))
+    return max
+  }
+  const [une, trois] = [enMemeTemps(5), enMemeTemps(2)]
+  verifier(`plusieurs balises à la fois : à 5 s de cadence, ${une} au plus (1) ; à 2 s, ${trois} (3)`, une === 1 && trois === 3)
   verifier(`la Focalisation : la cible sur le rayon prend ${fo.cible} (896), l'insecte à 4 du rayon ${fo.cote} (544) ; sans la carte, ${sansFo.cible} (512) et ${sansFo.cote} (0)`, Math.abs(fo.cible - 896) < 8 && Math.abs(fo.cote - 544) < 12 && Math.abs(sansFo.cible - 512) < 4 && sansFo.cote === 0)
   verifier(`la Surcharge givrée : la cible sur le rayon givrée (${(vise.geleA ?? -1) > w3.t}), le voisin à 25 de la balise pas avant l'explosion (${avantLaFin}), givré par elle (${(voisin.geleA ?? -1) > w3.t}), touché (${1e9 - voisin.pv})`, fin3 && (vise.geleA ?? -1) > w3.t && avantLaFin && (voisin.geleA ?? -1) > w3.t && voisin.pv < 1e9)
 }

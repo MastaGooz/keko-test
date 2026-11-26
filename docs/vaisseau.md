@@ -9289,3 +9289,10 @@ Keko : « Vérifie que les cartes zone et portée augmentent aussi la distance d
 - **Court-circuit** : déjà juste — son explosion vaut `court.taille` fois le rayon de la boule, qui grandit.
 - **Conduction** : NON — `foudre.rebonds.saut` (45) n'était pas une clé de zone. `armeAmelioree('portee')` le grandit désormais. Le `saut` de l'arc d'électrocution, lui, ne bouge pas : c'est celui du vortex, le même pour toutes les armes (on ne met donc pas `saut` dans `CLES_DE_ZONE`).
 - Mesuré (`talents.verif.ts`), une légendaire (+25 %) : la boule 52,5 (42), le saut 56,25 (45), l'anneau 75 (60), l'explosion 78,75 (63).
+### La Balise laser : plusieurs balises à la fois (26/11)
+
+Keko, devant le constat que la carte Cadence ne servait presque à rien sur la balise : « On autorise plusieurs balises à la fois. »
+
+- **Le constat** : une balise vole 0,7 s puis reste posée 4 s (4,7 s de vie) ; sa cadence est de 5 s, comptée depuis le lancer ; et `menerLesBalisesLaser` ne lançait pas tant qu'une balise de la même arme vivait. Au-delà de +6 % de cadence (5 / 4,7), la carte Cadence ne changeait plus rien.
+- **La règle** : la condition est retirée ; la balise suivante part à la cadence, que la précédente vive ou non. Au départ rien ne change (5 s > 4,7 s, une seule) ; avec la carte Cadence, les balises se chevauchent et plusieurs rayons brûlent ensemble. Le rendu, le son et la Focalisation lisaient déjà chaque balise une à une.
+- Mesuré (`jeu.verif.ts`) : à 5 s de cadence, une balise au plus ; à 2 s, trois en même temps.

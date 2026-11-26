@@ -5804,7 +5804,9 @@ function menerLesBalisesLaser(c: ConfigVaisseau, m: Monde, dt: number, ev: Evene
   const v = m.vaisseau
   c.armes.forEach((a, i) => {
     const li = a.lien
-    if (li === undefined || m.phase !== 'vol' || m.t < (m.armesA[i] ?? 0) || m.balisesLaser.some((b) => b.arme === i)) return
+    // (PLUSIEURS BALISES À LA FOIS — Keko, 26/11 : « on autorise plusieurs balises à la fois » : elle attendait que la
+    // précédente s'éteigne, et la carte Cadence ne servait plus à rien au-delà de +6 % — 5 s de cadence pour 4,7 s de vie)
+    if (li === undefined || m.phase !== 'vol' || m.t < (m.armesA[i] ?? 0)) return
     // (vers le verrouillé à portée, sinon l'insecte le plus proche ; une roche sans insecte)
     const aPortee = (e: Ennemi): boolean => Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= a.portee + rayonDe(c, e)
     const dist = (e: Ennemi): number => Math.hypot(e.corps.x - v.x, e.corps.y - v.y)
