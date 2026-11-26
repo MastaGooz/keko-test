@@ -473,15 +473,18 @@ export const MUTATIONS: Mutation[] = [
   variation('laser-corrosif', 'laser', 'Laser acide', 'Les tirs appliquent corrosion.', changerA('laser', (a) => ({ ...a, corrosif: { duree: 3, bonus: CORROSION_DU_VORTEX } }))),
   // LA MITRAILLEUSE
   variation('mitraille-jumelee', 'mitraille', 'Canons jumelés', 'Chaque tir part en double : deux balles côte à côte.', changerA('mitraille', V.gerbe(2, 0.12, 0.7))),
-  variation('mitraille-tourelle', 'mitraille', 'Tourelle', 'Une mitrailleuse arrose tout autour du vaisseau.', ajouterA('mitraille', (a) => [ajoutee(a, 9, { cadence: a.cadence * 0.9, degats: fois(a, 0.6), portee: a.portee * 0.9 })])),
+  // (LA REVUE DE LA MITRAILLEUSE — Keko, 26/11 : Canons jumelés et Perforantes validées ; « le drone, la tourelle, on le met
+  // de côté pour l'instant », la Percussion aussi — « les balles transperçantes permettent déjà de faire l'équivalent de
+  // dégâts sur des groupes » : dans `VARIATIONS_EN_RESERVE` ; la variation sur coup critique est à venir)
   // (DES NOMS TOUS DIFFÉRENTS — Keko, 25/11 : « on veut vraiment que les noms des cartes spéciales soient différents » ;
   // voir talents.verif.ts : Incendiaires → Phosphore, Drones des missiles → Satellites, Explosives → Percussion,
   // Fragmentation des missiles → Dispersion, de l'obusier → Sous-munitions, Cryogéniques des missiles → Azote liquide,
   // Incendiaires des missiles → Thermite ; et celles en réserve)
-  variation('mitraille-incendiaire', 'mitraille', 'Phosphore', 'Les balles enflamment les ennemis.', changerA('mitraille', V.incendiaire)),
-  variation('mitraille-drones', 'mitraille', 'Drones', 'Deux drones en orbite mitraillent les ennemis proches.', ajouterA('mitraille', (a) => drones(a, { cadence: 0.3, degats: fois(a, 0.6), portee: 70 }))),
+  // (L'ÉLECTRICITÉ, SON ÉLÉMENT, À LA PLACE DU PHOSPHORE — Keko, 26/11 : « l'élément feu va plutôt coller au missile ; on a
+  // déjà le laser avec l'élément acide ; je propose d'utiliser l'élément électrique pour les mitraillettes » ; l'électrocution
+  // aux chiffres du vortex, des balles bleutées ; le nom, de moi — « Électrique » est au railgun)
+  variation('mitraille-chargee', 'mitraille', 'Balles chargées', 'Les balles appliquent électrocution.', changerA('mitraille', (a) => ({ ...a, electrocution: { ...ELECTROCUTION_DU_VORTEX } }))),
   variation('mitraille-perforante', 'mitraille', 'Perforantes', 'Les balles traversent les ennemis.', changerA('mitraille', V.perforant)),
-  variation('mitraille-explosive', 'mitraille', 'Percussion', 'Chaque balle explose à l’impact.', changerA('mitraille', V.explosif)),
   // LES MISSILES
   variation('missile-salve', 'minimissile', 'Salve', 'Chaque tir lâche trois missiles en éventail.', changerA('minimissile', V.gerbe(3, 0.35, 0.6))),
   variation('missile-fragmentation', 'minimissile', 'Dispersion', 'Chaque explosion projette six éclats brûlants tout autour.', changerA('minimissile', V.fragments)),
@@ -675,6 +678,10 @@ export const ARMES_EN_RESERVE: ArmeDeFaction[] = [
   // missiles sur 18, l'obus sur 40 —, dessinées plus petites que le missile)
 ]
 export const VARIATIONS_EN_RESERVE: Mutation[] = [
+  // LA MITRAILLEUSE (Keko, 26/11 : mises de côté ; elles ajoutaient une attaque à côté, ou recoupaient les Perforantes)
+  variation('mitraille-tourelle', 'mitraille', 'Tourelle', 'Une mitrailleuse arrose tout autour du vaisseau.', ajouterA('mitraille', (a) => [ajoutee(a, 9, { cadence: a.cadence * 0.9, degats: fois(a, 0.6), portee: a.portee * 0.9 })])),
+  variation('mitraille-drones', 'mitraille', 'Drones', 'Deux drones en orbite mitraillent les ennemis proches.', ajouterA('mitraille', (a) => drones(a, { cadence: 0.3, degats: fois(a, 0.6), portee: 70 }))),
+  variation('mitraille-explosive', 'mitraille', 'Percussion', 'Chaque balle explose à l’impact.', changerA('mitraille', V.explosif)),
   // LE HARPON
   variation('harpon-barbele', 'harpon', 'Barbelé', 'Les dégâts du câble montent bien plus haut.', changerA('harpon', (a) => ({ ...a, harpon: a.harpon === undefined ? undefined : { ...a.harpon, max: a.harpon.max * 1.5 } }))),
   variation('harpon-treuil', 'harpon', 'Treuil', 'Les dégâts du câble montent deux fois plus vite.', changerA('harpon', (a) => ({ ...a, harpon: a.harpon === undefined ? undefined : { ...a.harpon, montee: a.harpon.montee / 2 } }))),

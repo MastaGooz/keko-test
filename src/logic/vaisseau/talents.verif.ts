@@ -177,7 +177,10 @@ verifier('le délai passé, ce qui restait à choisir part en réserve', reserve
       const depart = id === 'laser' ? base : id === 'mitraille' || id === 'minimissile' ? { ...C, armes: [{ ...laser, id, place: 0 }] } : avecLesBonus(base, ajouterLeBonus([], carteSpeciale(mu(`arme-${id}`))))
       if (JSON.stringify(v.appliquer(depart)) === JSON.stringify(depart)) sansEffet += ` ${v.id}`
     }
-  verifier(`l'Empire a ${ARMES_DE_FACTION.filter((x) => x.race === 'humains').length} nouvelles armes ; six variations par arme (${ids.map((id) => `${id} ${MUTATIONS.filter((x) => x.sorte === 'variation' && x.arme === id).length}`).join(', ')}) ; aucune sans effet (${sansEffet || 'aucune'})`, ARMES_DE_FACTION.filter((x) => x.race === 'humains').length === 6 && ids.every((id) => MUTATIONS.filter((x) => x.sorte === 'variation' && x.arme === id).length === 6) && sansEffet === '')
+  // (les armes EN REVUE, leurs variations pas encore toutes trouvées — la mitrailleuse, Keko, 26/11 : trois validées, la
+  // variation sur coup critique et deux autres à venir)
+  const EN_REVUE: Record<string, number> = { mitraille: 3 }
+  verifier(`l'Empire a ${ARMES_DE_FACTION.filter((x) => x.race === 'humains').length} nouvelles armes ; six variations par arme (${ids.map((id) => `${id} ${MUTATIONS.filter((x) => x.sorte === 'variation' && x.arme === id).length}`).join(', ')}) ; aucune sans effet (${sansEffet || 'aucune'})`, ARMES_DE_FACTION.filter((x) => x.race === 'humains').length === 6 && ids.every((id) => MUTATIONS.filter((x) => x.sorte === 'variation' && x.arme === id).length === (EN_REVUE[id] ?? 6)) && sansEffet === '')
 }
 {
   // LES ÉTATS NE SE PRENNENT QUE POUR TOUTES LES ARMES (Keko, 23/11 : « une augmentation d'un état concerne toujours toutes

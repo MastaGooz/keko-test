@@ -14977,6 +14977,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** Les traits de l'ennemi : un fuseau violet-blanc le long de sa vitesse, une lueur. */
   /** Le jaune des balles de la mitrailleuse du Chasseur, du sombre au clair. */
   const MITRAILLE = ['#7a4a08', '#d99a1c', '#ffd23a', '#fff4b0'].map((c) => N.hex(c))
+  /** La balle ÉLECTRIQUE de la mitrailleuse (Keko, 26/11 : « une petite teinte bleutée ») : le même trait, d'un bleu pâle. */
+  const MITRAILLE_ELECTRIQUE = ['#173a6e', '#4a8ee0', '#9ccfff', '#e8f5ff'].map((c) => N.hex(c))
   /** Le vert du canon laser, du sombre au blanc. */
   const LASER_VERT = ['#0a3a12', '#1a8a2a', '#36d856', '#8dffa0', '#e8ffe8'].map((c) => N.hex(c))
   /**
@@ -15233,12 +15235,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       } else if (o.arme === 'mitraille') {
         // (UNE BALLE JAUNE, BIEN DROITE — Keko, 18/11 : « des projectiles jaunes, un tout petit peu plus gros, bien droits,
         // pas tout tordus » : un trait de cinq pixels sur deux le long de sa course, le bout blanc, une lueur jaune)
+        // (… BLEUTÉE QUAND ELLE ÉLECTROCUTE — sa carte d'élément, Keko, 26/11)
         const nx = -uy
         const ny = ux
-        p.glow(o.x - ux * 2, o.y - uy * 2, 5, MITRAILLE[2], 0.55)
-        p.line(o.x - ux * 5, o.y - uy * 5, o.x - ux, o.y - uy, MITRAILLE[1])
-        p.line(o.x - ux * 4 + nx, o.y - uy * 4 + ny, o.x - ux + nx, o.y - uy + ny, MITRAILLE[2])
-        p.line(o.x - ux * 3, o.y - uy * 3, o.x, o.y, MITRAILLE[3])
+        const M = o.electrocution !== undefined ? MITRAILLE_ELECTRIQUE : MITRAILLE
+        p.glow(o.x - ux * 2, o.y - uy * 2, 5, M[2], 0.55)
+        p.line(o.x - ux * 5, o.y - uy * 5, o.x - ux, o.y - uy, M[1])
+        p.line(o.x - ux * 4 + nx, o.y - uy * 4 + ny, o.x - ux + nx, o.y - uy + ny, M[2])
+        p.line(o.x - ux * 3, o.y - uy * 3, o.x, o.y, M[3])
         p.px(o.x, o.y, N.WHITE)
       } else if (o.arme === 'rafale') {
         p.line(o.x - ux * 2, o.y - uy * 2, o.x, o.y, VERRIERE[2])

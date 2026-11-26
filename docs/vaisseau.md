@@ -9326,3 +9326,12 @@ Keko : « La durée a vraiment pour objectif de faire durer plus longtemps une i
 - **La flaque de napalm en sort** (une zone enflammée) : `POSEES` n'a plus `napalm`.
 - **La balise laser y entre** (`lien`) : posée, elle vit sa vie comme une tourelle ; +25 %, 4 → 5 s. Plusieurs balises à la fois, elles se chevauchent davantage.
 - Restent : tourelles (`pose`), cristaux du Prisme (`balise`), mines, œufs et mini-vers (`ponte`), la boule de la bobine et l'orbe de plasma (`sphere`).
+### La mitrailleuse en revue : l'électricité, trois validées, trois de côté (26/11)
+
+Keko : « l'élément feu va plutôt coller au missile. Et on a déjà le laser avec l'élément acide, donc il reste l'élément gel ou foudre. Je propose d'utiliser l'élément électrique pour les mitraillettes » ; « on change la couleur des tirs pour qu'ils aient une petite teinte bleutée » ; « on va valider le double tir des deux ailes, et les balles de mitraillette qui transpercent » ; « le drone, la tourelle, on le met de côté pour l'instant » ; la Percussion aussi — « les balles transperçantes permettent déjà de faire l'équivalent de dégâts sur des groupes d'ennemis ».
+
+- **Balles chargées** (`mitraille-chargee`), son élément, à la place du Phosphore (retiré) : l'électrocution aux chiffres du vortex (`ELECTROCUTION_DU_VORTEX`). Le nom est de moi : « Électrique » est au railgun, et deux noms ne partagent pas de racine.
+- **Des balles bleutées** : le même trait, d'un bleu pâle (`MITRAILLE_ELECTRIQUE` dans `page.ts`), dès que la balle électrocute.
+- **Validées** : Canons jumelés, Perforantes.
+- **De côté** (`VARIATIONS_EN_RESERVE`) : Tourelle, Drones, Percussion.
+- La vérification des six variations par arme compte la mitrailleuse EN REVUE (`EN_REVUE`, trois) jusqu'à ce que ses trois autres soient trouvées ; la quatrième sera sa variation sur coup critique.
