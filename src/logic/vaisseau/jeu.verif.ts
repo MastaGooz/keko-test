@@ -3290,6 +3290,19 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   verifier(`une roche à côté de l'insecte visé : l'explosion lui prend ${1e9 - z.roche.pv} (plus de 0), sans état (« ${etats(z.roche)} ») ; l'insecte en a (« ${etats(z.insecte)} ») ; le ricochet, sans autre insecte, lui prend ${Math.round(1e9 - r.roche.pv)}`, z.roche.pv < 1e9 && etats(z.roche) === '' && etats(z.insecte) === 'feu, givre, corrosion, électrocution' && r.roche.pv < 1e9)
 }
 
+// LA TRAÇANTE (Keko, 26/11 — voir `Arme.tracante`) : un tir sur huit, cinq fois plus fort, les deux ailes comptant ensemble
+{
+  const cfg: ConfigVaisseau = { ...VAISSEAU, coque: 1e9, alternance: true, armes: [0, 1].map((place) => ({ id: 'mitraille', cadence: 0.2, degats: 10, portee: 150, vitesse: 600, vie: 1, dispersion: 0, guide: false, tousSens: true, infaillible: true, place, tracante: { tous: 8, facteur: 5 } }) as Arme), champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false }, passifs: { ...VAISSEAU.passifs, critique: 0 } }
+  const w = nouveauMonde(cfg, 5)
+  w.invasion.prochainA = 1e9
+  w.ennemis.push({ id: 870, corps: { ...nouveauVaisseau(), x: 60, y: 0 }, pv: 1e9, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9 })
+  const tirs: boolean[] = []
+  for (let i = 0; i < 60 * 4 && tirs.length < 24; i++) for (const ev of avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements) if (ev.type === 'obus') tirs.push(ev.tracante === true)
+  const rangs = tirs.flatMap((x, k) => (x ? [k + 1] : []))
+  const perdu = 1e9 - w.ennemis.find((e) => e.id === 870)!.pv
+  verifier(`la Traçante : sur ${tirs.length} tirs des deux ailes, les traçantes sont les n° ${rangs.join(', ')} (8, 16, 24)`, rangs.join() === '8,16,24' && perdu > 0)
+}
+
 // L'EMBALLEMENT (Keko, 26/11 — voir `Arme.emballement`) : à tirer sans s'arrêter, la cadence double en 4 s ; un arrêt de
 // plus de 0,5 s, et elle repart de la base
 {

@@ -15239,6 +15239,17 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         const nx = -uy
         const ny = ux
         const M = o.electrocution !== undefined ? MITRAILLE_ELECTRIQUE : MITRAILLE
+        // (UNE TRAÇANTE — voir `Arme.tracante` : la même balle, en grand — une traînée de onze pixels sur trois, un cœur blanc,
+        // une lueur large)
+        if (o.tracante === true) {
+          p.glow(o.x - ux * 4, o.y - uy * 4, 11, M[2], 0.7)
+          p.line(o.x - ux * 11, o.y - uy * 11, o.x - ux, o.y - uy, M[1])
+          p.line(o.x - ux * 10 + nx, o.y - uy * 10 + ny, o.x + nx, o.y + ny, M[2])
+          p.line(o.x - ux * 10 - nx, o.y - uy * 10 - ny, o.x - nx, o.y - ny, M[2])
+          p.line(o.x - ux * 8, o.y - uy * 8, o.x + ux, o.y + uy, M[3])
+          p.line(o.x - ux * 4, o.y - uy * 4, o.x + ux, o.y + uy, N.WHITE)
+          continue
+        }
         p.glow(o.x - ux * 2, o.y - uy * 2, 5, M[2], 0.55)
         p.line(o.x - ux * 5, o.y - uy * 5, o.x - ux, o.y - uy, M[1])
         p.line(o.x - ux * 4 + nx, o.y - uy * 4 + ny, o.x - ux + nx, o.y - uy + ny, M[2])
@@ -17595,6 +17606,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           if (t - (armeAnnonceeA.get(ev.arme) ?? -10) < 0.4) armeAnnonceeA.delete(ev.arme)
           else jouer(sonDeLArme(ev.arme) as Son)
           for (let i = 0; i < 2; i++) etincelles.ajouter('etincelle', ev.x, ev.y, R.range(-20, 20), R.range(-20, 20), 0.12, N.WHITE, 1, 1.5)
+          // (UNE TRAÇANTE PART — voir `Arme.tracante` : l'éclair de la bouche, une gerbe, et le coup du canon par-dessus la rafale)
+          if (ev.tracante === true) {
+            flashs.push({ x: ev.x, y: ev.y, t0: t, r: 4 })
+            for (let i = 0; i < 6; i++) etincelles.ajouter('etincelle', ev.x, ev.y, R.range(-40, 40), R.range(-40, 40), R.range(0.1, 0.18), N.WHITE, 1, 1.5)
+            jouer('canon')
+          }
           // (LE RAILGUN ET L'OBUSIER PARTENT LOURD — Keko, 22/11 : « manquent de punch » : l'éclair de la bouche, une
           // gerbe, une secousse et une vibration au départ)
           if (ev.arme === 'railgun' || ev.arme === 'obusier') {

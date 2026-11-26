@@ -494,6 +494,9 @@ export const MUTATIONS: Mutation[] = [
   // continu » : deux fois plus vite au bout de 4 s, perdu après 0,5 s sans tirer — de moi, comme le nom ; voir
   // `Arme.emballement`)
   variation('mitraille-emballement', 'mitraille', 'Emballement', 'Plus le tir dure sans interruption, plus la cadence monte.', changerA('mitraille', (a) => ({ ...a, emballement: { max: 2, duree: 4, repit: 0.5 } }))),
+  // (« TRAÇANTE » — Keko, 26/11 : « ok pour la traçante », proposée : toutes les 8 balles, une grosse balle lumineuse qui fait 5
+  // fois les dégâts — chiffres et nom de moi ; voir `Arme.tracante`)
+  variation('mitraille-tracante', 'mitraille', 'Traçante', 'Toutes les 8 balles, une grosse balle lumineuse cinq fois plus forte.', changerA('mitraille', (a) => ({ ...a, tracante: { tous: 8, facteur: 5 } }))),
   variation('mitraille-riposte', 'mitraille', 'Riposte', 'Un coup critique lance trois balles très rapides sur l’ennemi touché.', changerA('mitraille', (a) => ({ ...a, riposte: { nombre: 3, part: 0.5, vitesse: 750 } }))),
   // LES MISSILES
   variation('missile-salve', 'minimissile', 'Salve', 'Chaque tir lâche trois missiles en éventail.', changerA('minimissile', V.gerbe(3, 0.35, 0.6))),

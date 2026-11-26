@@ -9364,3 +9364,11 @@ Keko : « Assure-toi que toutes les armes et toutes les variations infligent des
 - **Une roche ne blesse plus un insecte** : `heurterLesRoches` l'écarte seulement (il perdait `derive.chocInsecte`, 60) ; `chocInsecte` et `heurteRoche` retirés. Le joueur, lui, perd toujours à la percuter.
 
 **Mesuré** (script hors du dépôt) : chaque arme des douze vaisseaux et des armes de faction, et chacune de leurs variations, 8 s contre une roche seule, puis contre une roche collée à un insecte — toutes blessent la roche seule ; les traînées, les balises du Prisme et la Tentacule, à zéro au premier essai (l'insecte aussi), la blessent quand le vaisseau passe dessus ou avec son ancrage. Tests dans `jeu.verif.ts` : l'explosion sur une roche collée à l'insecte visé, sans aucun état, et le ricochet qui repart sur elle ; six insectes poussés dans une roche, aucun blessé.
+### La Traçante, sixième variation de la mitrailleuse (26/11)
+
+Keko, devant trois propositions (Traçante, Arrosage, Achèvement) : « Ok pour la traçante. »
+
+- `Arme.tracante` `{ tous: 8, facteur: 5 }` : un tir sur huit part cinq fois plus fort ; les deux ailes comptent ensemble (`Monde.tracantes`, par identifiant d'arme), une gerbe des Canons jumelés compte pour un tir (les deux balles sont traçantes). Elle traverse avec Perforantes, électrocute avec Balles chargées, revient plus souvent pendant l'Emballement, et sa Riposte vaut la moitié de ses dégâts.
+- À l'écran : la même balle en grand (`Obus.tracante` — une traînée de onze pixels sur trois, un cœur blanc, une lueur large, bleutée avec Balles chargées), un éclair et une gerbe à la bouche, le coup du canon par-dessus la rafale (l'événement `obus` porte `tracante`).
+- Le nom, 8 et ×5 : de moi.
+- Test dans `jeu.verif.ts` : sur 24 tirs des deux ailes, les traçantes sont les 8ᵉ, 16ᵉ et 24ᵉ. La mitrailleuse a ses six variations ; `EN_REVUE` est vide.
