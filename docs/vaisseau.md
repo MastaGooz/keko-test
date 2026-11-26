@@ -9416,3 +9416,12 @@ Keko : « les missiles qui font des explosions critiques laissent une petite min
 - **Test** (`jeu.verif.ts`) : un critique, une mine, qui suit l'insecte et explose 60 images après l'impact. Tué par l'explosion, la mine reste en place et explose.
 - **Le texte du Déluge débordait** (six lignes, « hasard » coupé, vu en capture) : « Régulièrement, quatre mini-missiles s'abattent au hasard. » Il tient en cinq.
 - Les missiles ont huit variations (`EN_REVUE` 8). Salve, Dispersion, Lance-missiles et Satellites restent à revoir.
+### Les missiles : leur traînée de fumée blanche (26/11)
+
+Keko : « une petite traînée de fumée blanche derrière les missiles, qu'on voit un peu leur trajectoire pendant un court instant ».
+
+- **La page garde, par missile, les points de sa course** (`fumeesDesMissiles`, `dessinerLesFumeesDesMissiles`, appelée dans `dessinerLesTirs`, sous les missiles). Les points partent de la queue et sont pris tous les 1,5 pixels. Rien n'est ajouté à la règle.
+- **Chaque point vit 0,7 s** (`DUREE_DE_LA_FUMEE`). La fumée s'élargit et pâlit en vieillissant : un fil blanc neuf juste derrière le missile, puis une brume blanche plus large qui se dissipe. Le missile parti, sa traînée finit de s'éteindre.
+- **Ont leur traînée** : le missile, les mini-missiles du Déluge (plus fine, à leur taille), les roquettes et les missiles de l'escorte. La mine de la Ventouse n'en a pas.
+- Les petites bouffées grises de la fumée de missile restent.
+- Vu en capture : les zigzags se lisent dans le ciel.

@@ -11533,6 +11533,43 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   // reste 1,2 s, pâlit et ondule en s'éteignant, sous une brume bleue qui s'élargit ; ses anneaux s'écartent et s'éteignent)
   const DUREE_DE_LA_TRAINEE = 1.2
   /**
+   * LA TRAÎNÉE DE FUMÉE DES MISSILES (Keko, 26/11 : « une petite traînée de fumée blanche derrière les missiles, qu'on voit un
+   * peu leur trajectoire pendant un court instant ») : la page garde, par missile, les points de sa course ; chacun vit
+   * `DUREE_DE_LA_FUMEE`, et la fumée s'élargit et pâlit en vieillissant — un fil blanc neuf derrière le missile, une brume
+   * blanche plus large qui se dissipe. Le missile parti, sa traînée finit de s'éteindre. Rien dans la règle.
+   */
+  const fumeesDesMissiles = new Map<number, { pts: { x: number; y: number; t: number }[]; k: number }>()
+  const DUREE_DE_LA_FUMEE = 0.7
+  function dessinerLesFumeesDesMissiles(p: Peintre): void {
+    for (const o of m.obus) {
+      if (!(o.arme === 'minimissile' || o.arme === 'roquettes' || o.missile === true) || o.collee !== undefined) continue
+      let f = fumeesDesMissiles.get(o.id)
+      if (f === undefined) fumeesDesMissiles.set(o.id, (f = { pts: [], k: o.taille ?? (o.arme === 'roquettes' ? 0.65 : 1) }))
+      // (la fumée sort de la queue, pas de l'ogive)
+      const l = Math.hypot(o.vx, o.vy) || 1
+      const x = o.x - (o.vx / l) * 6 * f.k
+      const y = o.y - (o.vy / l) * 6 * f.k
+      const der = f.pts[f.pts.length - 1]
+      if (der === undefined || Math.hypot(x - der.x, y - der.y) >= 1.5) f.pts.push({ x, y, t })
+    }
+    for (const [id, f] of fumeesDesMissiles) {
+      while (f.pts.length > 0 && t - f.pts[0].t > DUREE_DE_LA_FUMEE) f.pts.shift()
+      if (f.pts.length === 0) {
+        fumeesDesMissiles.delete(id)
+        continue
+      }
+      for (let i = 1; i < f.pts.length; i++) {
+        const a = f.pts[i - 1]
+        const b = f.pts[i]
+        const u = Math.min(1, (t - a.t) / DUREE_DE_LA_FUMEE)
+        const r = (1 - u) ** 1.5
+        // (la brume s'élargit en vieillissant ; le fil, blanc, ne reste que neuf)
+        p.glowLine(a.x, a.y, b.x, b.y, (1.5 + 4 * u) * f.k, N.hex('#e8e4ec'), 0.32 * r)
+        if (u < 0.45) p.line(a.x, a.y, b.x, b.y, N.WHITE, 0.6 * (1 - u / 0.45))
+      }
+    }
+  }
+  /**
    * LES SILLONS ÉLECTRIQUES DU RAILGUN (Keko, 23/11 — voir `Arme.sillon`) : le long de la course de la balle, UN ÉCLAIR qui
    * serpente — refrappé quinze fois par seconde, un cœur blanc-bleu, un halo cyan —, des étincelles qui pètent dessus ; il
    * pâlit sur son dernier tiers. GELÉ (Cryogénique), il tire vers le bleu glace et sème des flocons.
@@ -15054,6 +15091,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.px(tr.x, tr.y, N.WHITE)
       p.glow(tr.x, tr.y, 6, VIOLET[3], 0.6)
     }
+    // (la fumée blanche des missiles, sous eux)
+    dessinerLesFumeesDesMissiles(p)
     // les obus du joueur : canon, un fuseau cyan ; mitrailleuse, un tiret court ; missile, un corps clair à pointe rouge et sa flamme
     for (const o of m.obus) {
       // (la seconde explosion d'une grenade attend au sol, invisible — voir `Arme.double`)
