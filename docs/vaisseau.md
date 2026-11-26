@@ -9425,3 +9425,10 @@ Keko : « une petite traînée de fumée blanche derrière les missiles, qu'on v
 - **Ont leur traînée** : le missile, les mini-missiles du Déluge (plus fine, à leur taille), les roquettes et les missiles de l'escorte. La mine de la Ventouse n'en a pas.
 - Les petites bouffées grises de la fumée de missile restent.
 - Vu en capture : les zigzags se lisent dans le ciel.
+### Le missile, plus gros que les mini-missiles du Déluge (26/11)
+
+Keko : « grossis un peu la taille des missiles et élargis un petit peu la traînée de fumée, car comparés aux petits missiles de la volée, on dirait que ce sont les mêmes ; on a l'impression que la volée de missiles est une attaque normale ».
+
+- **Le missile a un vrai corps**, une fois et demie le dessin des autres missiles (`GROS_MISSILE` 1,5). Il est cerné de sombre et éclairé d'un côté, avec une ogive rouge à reflet, quatre ailerons à la queue, une flamme double et une lueur de feu plus large. Les mini-missiles du Déluge, dorés, restent des traits fins à la moitié de la taille. Les roquettes et les missiles de l'escorte gardent leur dessin.
+- **Sa traînée est plus large** : une brume deux fois plus large, et un cœur de fumée blanche épais qui tient un peu plus. Les mini-missiles gardent un filet.
+- Vu en capture : un missile d'une dizaine de pixels à l'ogive rouge sous une large traînée blanche, à côté d'un mini-missile doré au filet fin.

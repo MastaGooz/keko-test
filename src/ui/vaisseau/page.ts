@@ -11540,15 +11540,20 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    */
   const fumeesDesMissiles = new Map<number, { pts: { x: number; y: number; t: number }[]; k: number }>()
   const DUREE_DE_LA_FUMEE = 0.7
+  /** LA TAILLE DU MISSILE (voir `dessinerLesTirs`) : son dessin, une fois et demie celui des autres missiles. */
+  const GROS_MISSILE = 1.5
   function dessinerLesFumeesDesMissiles(p: Peintre): void {
     for (const o of m.obus) {
       if (!(o.arme === 'minimissile' || o.arme === 'roquettes' || o.missile === true) || o.collee !== undefined) continue
       let f = fumeesDesMissiles.get(o.id)
-      if (f === undefined) fumeesDesMissiles.set(o.id, (f = { pts: [], k: o.taille ?? (o.arme === 'roquettes' ? 0.65 : 1) }))
+      // (… PLUS LARGE DERRIÈRE LE MISSILE — Keko, 26/11 : « élargir un petit peu la traînée », pour le distinguer des
+      // mini-missiles du Déluge, à qui reste un filet)
+      if (f === undefined) fumeesDesMissiles.set(o.id, (f = { pts: [], k: o.taille ?? (o.arme === 'roquettes' ? 0.65 : o.arme === 'minimissile' ? 2 : 1) }))
       // (la fumée sort de la queue, pas de l'ogive)
       const l = Math.hypot(o.vx, o.vy) || 1
-      const x = o.x - (o.vx / l) * 6 * f.k
-      const y = o.y - (o.vy / l) * 6 * f.k
+      const queue = o.arme === 'minimissile' && o.taille === undefined ? 7 * GROS_MISSILE : 6 * f.k
+      const x = o.x - (o.vx / l) * queue
+      const y = o.y - (o.vy / l) * queue
       const der = f.pts[f.pts.length - 1]
       if (der === undefined || Math.hypot(x - der.x, y - der.y) >= 1.5) f.pts.push({ x, y, t })
     }
@@ -11566,6 +11571,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         // (la brume s'élargit en vieillissant ; le fil, blanc, ne reste que neuf)
         p.glowLine(a.x, a.y, b.x, b.y, (1.5 + 4 * u) * f.k, N.hex('#e8e4ec'), 0.32 * r)
         if (u < 0.45) p.line(a.x, a.y, b.x, b.y, N.WHITE, 0.6 * (1 - u / 0.45))
+        // (le missile : un cœur de fumée épais, qui tient un peu plus)
+        if (f.k >= 2 && u < 0.7) p.glowLine(a.x, a.y, b.x, b.y, 2.5, N.WHITE, 0.35 * (1 - u / 0.7))
       }
     }
   }
@@ -15224,6 +15231,27 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         const deluge = o.taille !== undefined && o.arme === 'minimissile'
         const nx = -uy
         const ny = ux
+        // (LE MISSILE, PLUS GROS — Keko, 26/11 : « comparé aux petits missiles de la volée, on dirait que ce sont les mêmes ;
+        // on a l'impression que la volée est une attaque normale » : un vrai corps, `GROS_MISSILE` fois le dessin, cerné de
+        // sombre, éclairé d'un côté, l'ogive rouge, quatre ailerons, une flamme double — les mini-missiles, dorés, restent
+        // des traits fins)
+        if (o.arme === 'minimissile' && !deluge) {
+          const g = GROS_MISSILE
+          const pt = (a: number, b: number): number[] => [o.x + ux * a * g + nx * b * g, o.y + uy * a * g + ny * b * g]
+          const fl = 5 + Math.sin(t * 60 + o.id) * 1.4
+          p.glow(pt(-6 - fl * 0.5, 0)[0], pt(-6 - fl * 0.5, 0)[1], 7 * g, FEU[4], 0.6)
+          p.line(pt(-6.5, 0)[0], pt(-6.5, 0)[1], pt(-6.5 - fl, 0)[0], pt(-6.5 - fl, 0)[1], FEU[4])
+          for (const b of [-0.6, 0.6]) p.line(pt(-6.5, b)[0], pt(-6.5, b)[1], pt(-6.5 - fl * 0.6, b)[0], pt(-6.5 - fl * 0.6, b)[1], FEU[3])
+          p.line(pt(-6.5, 0)[0], pt(-6.5, 0)[1], pt(-8.5, 0)[0], pt(-8.5, 0)[1], N.hex('#fff2a8'))
+          // (les ailerons, en croix à la queue)
+          for (const b of [-1, 1]) p.poly([pt(-3.5, b * 1.1), pt(-6.5, b * 2.6), pt(-6.5, b * 1.1)], COQUE[2])
+          p.poly([pt(1, 0), pt(-2, -1.6), pt(-6.6, -1.6), pt(-6.6, 1.6), pt(-2, 1.6)], N.hex('#1a1422'))
+          p.poly([pt(-2, -1.1), pt(-6.2, -1.1), pt(-6.2, 1.1), pt(-2, 1.1)], COQUE[3])
+          p.poly([pt(-2, -1.1), pt(-6.2, -1.1), pt(-6.2, 0), pt(-2, 0)], COQUE[5])
+          p.poly([pt(0.4, 0), pt(-2, -1.1), pt(-2, 1.1)], N.hex('#ff5a5a'))
+          p.px(Math.round(pt(-0.6, -0.4)[0]), Math.round(pt(-0.6, -0.4)[1]), N.hex('#ffd0c0'))
+          continue
+        }
         const qx = o.x - ux * 6 * k
         const qy = o.y - uy * 6 * k
         p.line(qx, qy, o.x - ux, o.y - uy, deluge ? MITRAILLE[2] : COQUE[5])
