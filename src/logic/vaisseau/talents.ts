@@ -257,7 +257,11 @@ export function armeAmelioree(a: Arme, stat: StatDArme, k: number): Arme {
       // (… ET LE RICOCHET VA CHERCHER PLUS LOIN — Keko, 26/11 : « le ricochet doit aussi prendre en compte la zone et
       // portée pour la distance de ricochet » ; il restait à 80)
       const z0 = changer(a, CLES_DE_ZONE, (v) => v * (1 + k))
-      const z = z0.ricochet === undefined ? z0 : { ...z0, ricochet: { ...z0.ricochet, portee: z0.ricochet.portee * (1 + k) } }
+      const z1 = z0.ricochet === undefined ? z0 : { ...z0, ricochet: { ...z0.ricochet, portee: z0.ricochet.portee * (1 + k) } }
+      // (… ET L'ÉCLAIR DE LA CONDUCTION SAUTE PLUS LOIN — Keko, 26/11 ; il restait à 45. Le saut de l'arc d'électrocution, lui,
+      // est celui du vortex, le même pour toutes les armes)
+      const rb = z1.sphere?.foudre?.rebonds
+      const z = rb === undefined ? z1 : { ...z1, sphere: { ...z1.sphere!, foudre: { ...z1.sphere!.foudre!, rebonds: { ...rb, saut: rb.saut * (1 + k) } } } }
       return a.portee > 0 ? { ...z, portee: a.portee * (1 + k), vie: a.vie * (1 + k) } : z
     }
     case 'pose': {

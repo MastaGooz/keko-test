@@ -119,6 +119,12 @@ verifier('le délai passé, ce qui restait à choisir part en réserve', reserve
   const tesla = armeDeFaction('tesla')!.armes()[0]
   const td = armeAmelioree(tesla, 'pose', 0.25)
   verifier(`la bobine tesla a la carte Durée (${statsDeLArme(tesla).join(', ')}) : +25 %, sa boule dure ${td.sphere?.duree} s (3)`, statsDeLArme(tesla).includes('pose') && td.sphere?.duree === 3.75)
+  // (« ZONE ET PORTÉE » SUR LES VARIATIONS DE LA BOBINE — Keko, 26/11 : le saut de la Conduction, l'anneau du Magnétisme,
+  // l'explosion du Court-circuit, qui vaut `taille` fois la boule)
+  const cfgT: ConfigVaisseau = { ...C, armes: [{ ...tesla, place: 0 }] }
+  const bT = ['tesla-conduction', 'tesla-magnetisme', 'tesla-court-circuit'].reduce<Bonus>((b, id) => ajouterLeBonus(b, spe(id)), ajouterLeBonus([], carte({ sorte: 'arme', arme: 'tesla' }, 'portee', 'legendaire')))
+  const tz = avecLesBonus(cfgT, bT).armes[0].sphere!
+  verifier(`« Zone et portée » légendaire sur la bobine : la boule ${tz.rayon} (42), le saut de la Conduction ${tz.foudre?.rebonds?.saut} (45), l'anneau du Magnétisme ${tz.magnetisme?.rayon} (60), l'explosion du Court-circuit ${tz.rayon * tz.court!.taille} (63)`, tz.rayon === 52.5 && tz.foudre?.rebonds?.saut === 56.25 && tz.magnetisme?.rayon === 75 && tz.rayon * tz.court!.taille === 78.75)
   verifier(`« Zone et portée » légendaire (+25 %), prise AVANT les variations : l'onde de l'Impulsion ${av.zone?.rayon} (16), la Détonation ${av.detonation?.rayon} (24), le Ricochet ${av.ricochet?.portee} (80) ; prise après : ${ap.zone?.rayon}, ${ap.detonation?.rayon}, ${ap.ricochet?.portee} ; « toutes les armes » (+12,5 %) : ${gl.zone?.rayon}, ${gl.detonation?.rayon}, ${gl.ricochet?.portee}`, [av, ap].every((a) => a.zone?.rayon === 20 && a.detonation?.rayon === 30 && a.ricochet?.portee === 100 && a.portee === 150) && gl.zone?.rayon === 18 && gl.detonation?.rayon === 27 && gl.ricochet?.portee === 90)
 }
 {

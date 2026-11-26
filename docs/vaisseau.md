@@ -9281,3 +9281,11 @@ Keko : « Pourquoi la carte de durée n'est pas associée à la bobine ? Ça pou
 - La carte Durée n'existait que pour ce qu'une arme POSE (`POSEES` : tourelles, balises, mines, napalm, œufs) ; la boule de la bobine, qui a pourtant sa durée (3 s), n'était vue que comme un tir qui avance. `sphere` rejoint `POSEES` : la Durée paraît au pool de la bobine (et de l'orbe de plasma du Pulsar, la même boule) et grandit `sphere.duree`.
 - Une boule qui dure plus longtemps va plus loin (45/s), décharge plus de fois, et ses variations en profitent : la traînée de Haute tension est plus longue, l'Accumulateur a plus de temps pour monter, le Court-circuit tombe plus tard. Les 2 s de chaque bout de la traînée ne bougent pas.
 - Mesuré (`talents.verif.ts`) : +25 %, la boule dure 3,75 s.
+### Zone et portée sur les variations de la bobine (26/11)
+
+Keko : « Vérifie que les cartes zone et portée augmentent aussi la distance des rebonds de conduction. Et que la carte zone et portée augmente aussi la zone qui attire de magnétisme. Et augmente aussi la taille de l'explosion de court-circuit. »
+
+- **Magnétisme** : déjà juste — son anneau part de `magnetisme.rayon`, une clé de zone.
+- **Court-circuit** : déjà juste — son explosion vaut `court.taille` fois le rayon de la boule, qui grandit.
+- **Conduction** : NON — `foudre.rebonds.saut` (45) n'était pas une clé de zone. `armeAmelioree('portee')` le grandit désormais. Le `saut` de l'arc d'électrocution, lui, ne bouge pas : c'est celui du vortex, le même pour toutes les armes (on ne met donc pas `saut` dans `CLES_DE_ZONE`).
+- Mesuré (`talents.verif.ts`), une légendaire (+25 %) : la boule 52,5 (42), le saut 56,25 (45), l'anneau 75 (60), l'explosion 78,75 (63).
