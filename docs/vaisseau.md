@@ -9469,3 +9469,22 @@ même texture que l'explosion, mais en forme de cône ; là c'est juste un trian
   projetées dans le cône, et un peu de `SMOKE` à la pointe. La taille suit la longueur du cône (`longueur / 50`).
 - Vérifié en capture : la traînée se lit en bouffées séparées ; le cône en jet de boules de feu jaunes, puis orange,
   puis rouges.
+### Le missile tourne en grand, ses explosions à la « Barrel explosion » (26/11)
+
+Keko : « pour toutes les explosions liées aux roquettes, inspire-toi de Barrel Explosion dans pixelfx : pas mal de petites
+particules viennent compléter l'effet et le rendent plus réaliste, des étincelles » — et : « une roquette ne tourne pas à
+90 degrés d'un coup ; parfois elle fait un demi-tour très rapide ; quand ça tourne, ça prend du temps, ça fait des
+trajectoires plus amples ».
+
+- **Le virage** (`TRAJECTOIRE_DU_MISSILE.virage`, 40 ; `traquer`) : la vitesse du missile se mêlait à celle qu'il voulait,
+  ce qui le faisait freiner presque à l'arrêt et repartir à l'envers. Maintenant son CAP tourne d'au plus sa vitesse
+  divisée par le rayon de virage, et sa vitesse suit à part. Passé 0,8 s de vol, le rayon se resserre jusqu'au tiers,
+  pour qu'une cible prise à l'intérieur du virage ne le fasse pas tourner autour sans fin. Le Déluge et les traits
+  arcaniques gardent l'ancien braquage (pas de `virage`). Test : la cible passée derrière lui, il vole à 114 au plus
+  lent (70 sans virage), son virage le plus serré fait 19 de rayon (7 sans), et il la touche.
+- **L'explosion** (`gerbeDeBaril`, page seule) : en plus des boules de feu, de l'onde et de la fumée, ce que la Barrel
+  explosion y met — le cœur (trois images d'une boule blanche cernée de feu, puis l'étoile de lumière à huit rayons du
+  dépôt, `flare`, 0,22 s ; `coeursDeBaril`), une boule de feu qui crève au centre, 26 étincelles vives et brèves (les
+  `etincelles`, sans pesanteur : l'espace n'a pas de sol), 10 braises qui flottent, et 4 morceaux en feu — une braise
+  lancée et, derrière elle, une file de flammes qui s'allument sur son passage. Tout à l'échelle du rayon (le Déluge, en
+  petit ; la mine de la Ventouse aussi). Le cône du Souffle reçoit la même gerbe, dirigée dans le cône, sans second cœur.

@@ -90,6 +90,8 @@ type Noyau = {
   Bits: new (o: Record<string, unknown>) => Morceaux
   B: Record<string, number>
   sparkle(p: Peintre, x: number, y: number, bras: number, c: number, pointe?: number, k?: number): void
+  /** L'étoile de lumière d'une explosion (huit rayons, blancs au cœur), de longueur `L`, d'éclat `k`, dans la rampe du feu. */
+  flare(p: Peintre, x: number, y: number, L: number, k: number, rampe: number[]): void
   Rng: new (graine: number) => { next(): number; range(a: number, b: number): number }
   P: Record<string, number>
   PF: Record<string, number>
@@ -790,6 +792,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const etincelles = new Grains(R)
   const morceaux = new N.Bits({ ground: () => Infinity })
   const flashs: { x: number; y: number; t0: number; r: number; c?: number[] }[] = []
+  /** LES CŒURS DES EXPLOSIONS DE MISSILE (voir `gerbeDeBaril`) : la boule blanche des premières images, puis l'étoile de lumière. */
+  const coeursDeBaril: { x: number; y: number; t0: number; r: number }[] = []
   const pops: { x: number; y: number; t0: number; c: number[] }[] = []
   /** LE SCORE EN PIXELS (Keko : « dessiner le score en haut en pixel ») : une pépite ramassée VOLE du vaisseau au compteur, qui ne compte qu'à son arrivée, et s'allume. */
   const envols: { x: number; y: number; t0: number; minerai: Minerai; trace: [number, number][] }[] = []
@@ -11542,6 +11546,51 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const DUREE_DE_LA_FUMEE = 0.7
   /** LA TAILLE DU MISSILE (voir `dessinerLesTirs`) : son dessin, une fois et demie celui des autres missiles. */
   const GROS_MISSILE = 1.5
+  /**
+   * CE QUE LA « BARREL EXPLOSION » DE PIXELFX AJOUTE À L'EXPLOSION D'UN MISSILE (Keko, 26/11 : « là tu as des petits ronds
+   * de fumée et de feu ; dans Barrel Explosion, pas mal de petites particules complètent l'effet et le rendent plus
+   * réaliste, des étincelles, des choses comme ça — inspire-t'en pour le cône et pour les explosions ») : son cœur (une
+   * boule blanche, puis l'étoile de lumière — `coeursDeBaril`), une boule de feu qui crève au centre, une gerbe
+   * d'étincelles rapides, des braises qui flottent, et des MORCEAUX EN FEU projetés qui traînent leurs flammes ; à
+   * l'échelle `sz` (le rayon de l'explosion sur celui du missile). Avec `cone`, tout part dans le cône du Souffle.
+   * Rien de la règle : l'espace n'a pas de sol, rien ne retombe.
+   */
+  function gerbeDeBaril(x: number, y: number, rayon: number, sz: number, cone?: { cap: number; ouverture: number; longueur: number }): void {
+    const angle = (ouv = 1): number => (cone === undefined ? R.range(0, Math.PI * 2) : cone.cap + R.range(-1, 1) * cone.ouverture * ouv)
+    // (le cône part d'une explosion qui a déjà le sien)
+    if (cone === undefined) coeursDeBaril.push({ x, y, t0: t, r: rayon * 0.45 })
+    // la boule de feu qui crève, au centre
+    for (let i = 0; i < 4; i++) {
+      const a = angle(0.6)
+      feuDesConsumes.spawn(N.P.FIRE, x + R.range(-2, 2) * sz, y + R.range(-2, 2) * sz, Math.cos(a) * R.range(10, 30) * sz, Math.sin(a) * R.range(10, 30) * sz, R.range(0.16, 0.26), 0, R.range(4, 5.5) * sz)
+    }
+    // la gerbe d'étincelles : des traits blancs et jaunes, très vifs, très brefs
+    const portee = cone === undefined ? 1 : cone.longueur / 50
+    for (let i = 0; i < Math.round(26 * sz); i++) {
+      const a = angle(1.1)
+      const vit = R.range(90, 240) * sz * portee
+      etincelles.ajouter('etincelle', x, y, Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.15, 0.4), [N.WHITE, FEU[7], FEU[6], FEU[5]][Math.floor(R.next() * 4)], 1, 3)
+    }
+    // les braises, qui flottent plus longtemps
+    for (let i = 0; i < Math.round(10 * sz); i++) {
+      const a = angle()
+      const vit = R.range(20, 80) * sz * portee
+      feuDesConsumes.spawn(N.P.EMBER, x, y, Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.6, 1.2), 0, R.next() < 0.3 ? 2 : 1)
+    }
+    // les morceaux en feu : une braise lancée, et derrière elle une file de flammes qui s'allument sur son passage
+    for (let i = 0; i < Math.round(4 * sz); i++) {
+      const a = angle(0.9)
+      const vb = R.range(70, 140) * sz * portee
+      const frein = 2.5
+      const vie = R.range(0.3, 0.45)
+      etincelles.ajouter('braise', x, y, Math.cos(a) * vb, Math.sin(a) * vb, vie, N.WHITE, 1, frein)
+      for (let j = 1; j <= 6; j++) {
+        const tj = (j / 6) * vie * 0.9
+        const d = (vb / frein) * (1 - Math.exp(-frein * tj))
+        feuDesConsumes.spawn(N.P.FIRE, x + Math.cos(a) * d, y + Math.sin(a) * d, Math.cos(a) * 6, Math.sin(a) * 6, R.range(0.14, 0.24), 0, (1.7 - j * 0.15) * (0.6 + 0.4 * sz), tj, R.next() < 0.35 ? 1 : 0)
+      }
+    }
+  }
   function dessinerLesFumeesDesMissiles(p: Peintre): void {
     for (const o of m.obus) {
       if (!(o.arme === 'minimissile' || o.arme === 'roquettes' || o.missile === true) || o.collee !== undefined) continue
@@ -17405,6 +17454,24 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         if (long && u < 0.5) N.sparkle(p, sx + Math.cos(a) * l, sy + Math.sin(a) * l, 2, N.WHITE, PEPITE[3], 0.9 * fond)
       }
     }
+    // (LE CŒUR D'UNE EXPLOSION DE MISSILE, celui de la « Barrel explosion » de pixelfx — voir `gerbeDeBaril` : trois images
+    // d'une boule blanche cernée de feu, puis l'étoile de lumière à huit rayons qui s'éteint en 0,22 s)
+    for (let i = coeursDeBaril.length - 1; i >= 0; i--) {
+      const c = coeursDeBaril[i]
+      const u = t - c.t0
+      if (u >= 0.22 || u < 0) {
+        if (u >= 0.22) coeursDeBaril.splice(i, 1)
+        continue
+      }
+      if (u < 0.08) {
+        const k2 = 1 - u / 0.08
+        const r = c.r * (0.85 + 0.15 * k2)
+        p.circle(c.x, c.y, r + 1.4, FEU[2])
+        p.circle(c.x, c.y, r, k2 > 0.45 ? FEU[6] : FEU[5])
+        p.circle(c.x, c.y, r * 0.6, k2 > 0.45 ? N.WHITE : FEU[6])
+      }
+      N.flare(p, c.x, c.y, c.r * 3 * Math.pow(1 - u / 0.22, 1.4), 1 - u / 0.22, FEU)
+    }
     for (const f of flashs) {
       const u = (t - f.t0) / 0.4
       if (f.r === 0) {
@@ -17632,6 +17699,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
             feuDesConsumes.spawn(N.P.EMBER, ev.x, ev.y, Math.cos(a) * R.range(40, 90) * sz, Math.sin(a) * R.range(40, 90) * sz, R.range(0.3, 0.6), 0, 1)
           }
           for (let i = 0; i < Math.round(2 * sz); i++) feuDesConsumes.spawn(N.P.SMOKE, ev.x + R.range(-3, 3) * sz, ev.y + R.range(-3, 3) * sz, R.range(-5, 5), R.range(-8, -2), R.range(0.6, 1), FUMEE_DU_FEU, R.range(2.5, 3.5) * sz)
+          // (… ET LE MISSILE, À LA « BARREL EXPLOSION » — Keko, 26/11 : son cœur, ses étincelles, ses braises, ses morceaux
+          // en feu ; le Déluge et la mine de la Ventouse aussi — voir `gerbeDeBaril`)
+          if (ev.arme === 'minimissile') gerbeDeBaril(ev.x, ev.y, ev.rayon, sz)
           secousse = Math.max(secousse, ev.arme === 'roquettes' ? 0.15 : 0.2)
           break
         }
@@ -18354,6 +18424,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
               const d = ev.longueur * R.range(0.55, 0.95)
               feuDesConsumes.spawn(N.P.SMOKE, ev.x + Math.cos(a) * d, ev.y + Math.sin(a) * d, Math.cos(a) * 6, Math.sin(a) * 6 - 4, R.range(0.6, 1), FUMEE_DU_FEU, R.range(2.5, 3.5) * sz, 0.1)
             }
+            // (… ET SES PETITES PARTICULES, à la « Barrel explosion » : étincelles, braises et morceaux en feu, dans le cône)
+            gerbeDeBaril(ev.x, ev.y, ev.longueur / 2.8, sz, { cap: ev.cap, ouverture: ev.ouverture, longueur: ev.longueur })
             secousse = Math.max(secousse, 0.15)
           }
           break

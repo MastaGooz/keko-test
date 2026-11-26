@@ -3369,6 +3369,41 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   verifier(`le missile zigzague et accélère : de ${Math.round(vitesses[0])} à ${Math.round(Math.max(...vitesses))} (110 → plus de 200), écarté de sa ligne de ${ecartMax.toFixed(2)} rad au plus (plus de 0,05), et il touche (${e.pv < 1e9})`, vitesses[0] < 140 && Math.max(...vitesses) > 200 && ecartMax > 0.05 && e.pv < 1e9)
 }
 
+// LE MISSILE TOURNE EN GRAND (Keko, 26/11 — voir `TRAJECTOIRE_DU_MISSILE.virage`) : sa cible passe derrière lui en vol ;
+// sans rayon de virage, il freinait presque à l'arrêt et repartait à l'envers ; avec, il garde sa vitesse et décrit un arc
+{
+  const vol = (virage: number | undefined): { lent: number; rayon: number; touche: boolean } => {
+    const zz = { ...TRAJECTOIRE_DU_MISSILE, chaos: 0, virage }
+    const cfg: ConfigVaisseau = { ...VAISSEAU, coque: 1e9, armes: [{ id: 'minimissile', cadence: 1e9, degats: 80, portee: 150, vitesse: 110, vie: 3, dispersion: 0, guide: true, tousSens: true, zone: { rayon: 18 }, zigzag: zz } as Arme], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false }, passifs: { ...VAISSEAU.passifs, critique: 0 } }
+    const w = nouveauMonde(cfg, 5)
+    w.invasion.prochainA = 1e9
+    const e: Ennemi = { id: 896, corps: { ...nouveauVaisseau(), x: 140, y: 0 }, pv: 1e9, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9 }
+    w.ennemis.push(e)
+    let lent = Infinity
+    let rayon = Infinity
+    let avant: { cap: number } | null = null
+    for (let i = 0; i < 240 && e.pv === 1e9; i++) {
+      // (lancé, le missile voit sa cible passer derrière lui, et loin du vaisseau)
+      if (i === 15) (e.corps.x = 20), (e.corps.y = 60)
+      avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+      const o = w.obus.find((x) => x.arme === 'minimissile')
+      if (o === undefined) continue
+      const v = Math.hypot(o.vx, o.vy)
+      const cap = Math.atan2(o.vy, o.vx)
+      if (i > 15) lent = Math.min(lent, v)
+      if (avant !== null && i > 15) {
+        const tourne = Math.abs(Math.atan2(Math.sin(cap - avant.cap), Math.cos(cap - avant.cap))) * 60
+        if (tourne > 1e-6) rayon = Math.min(rayon, v / tourne)
+      }
+      avant = { cap }
+    }
+    return { lent: Math.round(lent), rayon: Math.round(rayon), touche: e.pv < 1e9 }
+  }
+  const sans = vol(undefined)
+  const avec = vol(TRAJECTOIRE_DU_MISSILE.virage)
+  verifier(`le missile tourne en grand : sa cible passée derrière lui, il vole à ${avec.lent} au plus lent (sans virage, ${sans.lent}), son virage le plus serré fait ${avec.rayon} de rayon (sans, ${sans.rayon}), et il la touche (${avec.touche})`, avec.lent >= 100 && sans.lent < avec.lent && avec.rayon >= 13 && sans.rayon < avec.rayon && avec.touche)
+}
+
 // LA CHANCE DE CRITIQUE, UN TIRAGE À 1 % PAR POINT (Keko, 26/11 — voir `probaDeCritique`) : jamais certaine ; et mesurée
 // sur 4 000 balles à 100 %, à 63 %
 {
