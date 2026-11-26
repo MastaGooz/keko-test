@@ -99,6 +99,25 @@ verifier('le délai passé, ce qui restait à choisir part en réserve', reserve
   verifier(`une carte « Portée » de +25 % : la Singularité, lancée à ${z.portee} (130), attire à ${z.puits!.rayon} (45), s'effondre à ${z.puits!.eclat} (28) ; sa force ne bouge pas (${z.puits!.force})`, z.puits!.rayon === 56.25 && z.portee === 162.5 && z.puits!.eclat === 35 && z.puits!.force === 70)
 }
 {
+  // (« ZONE ET PORTÉE » GRANDIT L'IMPULSION, LA DÉTONATION ET LE RICOCHET DU LASER, prise avant ou après la variation —
+  // Keko, 26/11 : prise avant, la variation posait sa zone par-dessus, à sa taille de départ)
+  const laser = { id: 'laser', cadence: 1.1, degats: 9, portee: 120, vitesse: 420, vie: 0.7, dispersion: 0, guide: false, infaillible: true } as Arme
+  const cfg: ConfigVaisseau = { ...C, armes: [{ ...laser, place: 0 }] }
+  const zp = carte({ sorte: 'arme', arme: 'laser' }, 'portee', 'legendaire')
+  const spe = (id: string) => carteSpeciale(MUTATIONS.find((x) => x.id === id)!)
+  const vu = (ids: string[], avant: boolean): Arme => {
+    let b: Bonus = avant ? ajouterLeBonus([], zp) : []
+    for (const id of ids) b = ajouterLeBonus(b, spe(id))
+    return avecLesBonus(cfg, avant ? b : ajouterLeBonus(b, zp)).armes[0]
+  }
+  const ids = ['laser-impulsion', 'laser-detonation', 'laser-ricochet']
+  const av = vu(ids, true)
+  const ap = vu(ids, false)
+  const tg = carte({ sorte: 'armes' }, 'portee', 'legendaire')
+  const gl = avecLesBonus(cfg, ajouterLeBonus(ids.reduce<Bonus>((b, id) => ajouterLeBonus(b, spe(id)), []), tg)).armes[0]
+  verifier(`« Zone et portée » légendaire (+25 %), prise AVANT les variations : l'onde de l'Impulsion ${av.zone?.rayon} (16), la Détonation ${av.detonation?.rayon} (24), le Ricochet ${av.ricochet?.portee} (80) ; prise après : ${ap.zone?.rayon}, ${ap.detonation?.rayon}, ${ap.ricochet?.portee} ; « toutes les armes » (+12,5 %) : ${gl.zone?.rayon}, ${gl.detonation?.rayon}, ${gl.ricochet?.portee}`, [av, ap].every((a) => a.zone?.rayon === 20 && a.detonation?.rayon === 30 && a.ricochet?.portee === 100 && a.portee === 150) && gl.zone?.rayon === 18 && gl.detonation?.rayon === 27 && gl.ricochet?.portee === 90)
+}
+{
   // LES CARTES SPÉCIALES (Keko, 22/11 : aux niveaux 10, 20, 30, une nouvelle arme et une variation de l'arme principale au
   // moins ; ensuite, des variations des armes portées ; 4 armes au plus ; 6 armes par faction, 6 variations par arme)
   const laser = { id: 'laser', cadence: 2.2, degats: 90, portee: 120, vitesse: 420, vie: 0.7, dispersion: 0, guide: false, infaillible: true } as Arme

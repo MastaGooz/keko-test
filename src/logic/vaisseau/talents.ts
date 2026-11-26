@@ -129,15 +129,16 @@ export function ajouterLeBonus(b: Bonus, ta: Talent): Bonus {
 /** LA CONFIGURATION AVEC SES BONUS : celle du décollage, chaque stat à `base × (1 + somme)`. */
 export function avecLesBonus(base: ConfigVaisseau, b: Bonus): ConfigVaisseau {
   let c = base
+  // LES CARTES SPÉCIALES D'ABORD, dans l'ordre où on les a prises (une carte spéciale change la configuration elle-même —
+  // voir `MUTATIONS` ; une carte d'élément aussi, malgré sa cible « toutes les armes », 24/11), PUIS LES CARTES NORMALES
+  // PAR-DESSUS — Keko, 26/11 : « s'assurer que Impulsion et Détonation prennent bien en compte les cartes Zone et portée » :
+  // une « Zone et portée » prise avant l'Impulsion grandissait une arme qui n'avait pas encore de zone, et l'onde restait à 16
+  for (const x of b) if (x.stat === 'mutation') c = MUTATIONS.find((mu) => `mutation:${mu.id}` === x.id)?.appliquer(c) ?? c
   for (const x of b) {
     // (« toutes les armes » vient à la fin, ci-dessous : il vaut aussi pour une arme prise après lui)
-    // (… SAUF UNE CARTE D'ÉLÉMENT : spéciale, elle change la configuration ici — sa cible « toutes les armes » la faisait
-    // passer, et elle ne s'appliquait jamais — 24/11)
-    if (x.cible.sorte === 'armes' && x.stat !== 'mutation') continue
+    if (x.stat === 'mutation' || x.cible.sorte === 'armes') continue
     // (le critique d'une arme est à elle : la chance en points, les dégâts critiques en points du facteur — 150 % +12 % : 162 %)
-    // (une carte spéciale change la configuration elle-même — voir `MUTATIONS`)
-    if (x.stat === 'mutation') c = MUTATIONS.find((mu) => `mutation:${mu.id}` === x.id)?.appliquer(c) ?? c
-    else c = x.cible.sorte === 'arme' ? { ...c, armes: c.armes.map((a) => (a.id === (x.cible as { arme: string }).arme ? armeAmelioree(a, x.stat as StatDArme, x.somme) : a)) } : factionAmelioree(c, x.stat as StatDeFaction, x.somme)
+    c = x.cible.sorte === 'arme' ? { ...c, armes: c.armes.map((a) => (a.id === (x.cible as { arme: string }).arme ? armeAmelioree(a, x.stat as StatDArme, x.somme) : a)) } : factionAmelioree(c, x.stat as StatDeFaction, x.somme)
   }
   // TOUTES LES ARMES : chaque arme portée qui a cette stat — même prise après la carte
   for (const x of b) {
@@ -251,7 +252,10 @@ export function armeAmelioree(a: Arme, stat: StatDArme, k: number): Arme {
       return changer(a, CLES_DE_CADENCE, (v) => v / (1 + k))
     case 'portee': {
       // (le tir va plus loin — sa portée, la vie de ses projectiles —, et tout ce qui est une zone grandit d'autant)
-      const z = changer(a, CLES_DE_ZONE, (v) => v * (1 + k))
+      // (… ET LE RICOCHET VA CHERCHER PLUS LOIN — Keko, 26/11 : « le ricochet doit aussi prendre en compte la zone et
+      // portée pour la distance de ricochet » ; il restait à 80)
+      const z0 = changer(a, CLES_DE_ZONE, (v) => v * (1 + k))
+      const z = z0.ricochet === undefined ? z0 : { ...z0, ricochet: { ...z0.ricochet, portee: z0.ricochet.portee * (1 + k) } }
       return a.portee > 0 ? { ...z, portee: a.portee * (1 + k), vie: a.vie * (1 + k) } : z
     }
     case 'pose': {
