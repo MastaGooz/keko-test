@@ -9342,3 +9342,11 @@ Keko : « À chaque fois que la mitraillette fait un coup critique sur un ennemi
 - `Arme.riposte` `{ nombre: 3, part: 0.5, vitesse: 750 }` ; `riposter` dans `jeu.ts` : sur un critique d'un obus qui riposte, si l'insecte survit (pas une roche), trois balles partent du vaisseau, accrochées à lui, chacune 15 % moins vite que la précédente — elles arrivent l'une après l'autre —, la moitié des dégâts du tir chacune, chacune son critique, avec l'élément et les Perforantes de l'arme, SANS riposte.
 - Le nom « Riposte », la moitié des dégâts et la vitesse (deux fois et demie la balle) : de moi.
 - Test dans `jeu.verif.ts` : un critique, trois balles, quatre coups à quatre images différentes ; tué net, aucune.
+### L'Emballement de la mitrailleuse (26/11)
+
+Keko : « Plus la mitraillette tire, plus elle accélère. Et dès qu'elle arrête de tirer en continu, elle perd son bonus de cadence de tir. Je te laisse décider quel serait le bonus de vitesse et quelle serait la durée de tir continu qu'il faut pour atteindre ce bonus maximum. »
+
+- `Arme.emballement` `{ max: 2, duree: 4, repit: 0.5 }` : tant qu'elle tire sans s'arrêter plus de 0,5 s, sa cadence monte en ligne droite jusqu'à deux fois plus vite en 4 s ; un arrêt, elle repart de la base. Les deux ailes partagent le même tir continu (`Monde.emballements`, par identifiant d'arme ; `emballementDe` dit où en est la montée, de 0 à 1, pour un rendu à venir).
+- Mes chiffres : ×2 en 4 s — le double de la base de la mitrailleuse, 5,6 → 11 balles par seconde ; la carte Cadence légendaire donne +25 %. 0,5 s de répit : plus que l'écart entre deux balles d'une aile (0,36 s), moins qu'une vraie pause. Le nom « Emballement » aussi, à juger.
+- Ce n'est pas la Frénésie écartée : elle ne dépend pas des critiques, seulement de la durée du tir ; elle plafonne vite par construction, et c'est voulu — ce qui la casse, c'est l'arrêt.
+- Test dans `jeu.verif.ts` : 6 tirs la première seconde, 10 la cinquième, 6 après un arrêt.

@@ -755,6 +755,13 @@ export type Arme = {
    */
   riposte?: { nombre: number; part: number; vitesse: number }
   /**
+   * L'EMBALLEMENT (la mitrailleuse — Keko, 26/11 : « plus la mitraillette tire, plus elle accélère ; dès qu'elle arrête de
+   * tirer en continu, elle perd son bonus de cadence » ; « je te laisse décider quel serait le bonus et la durée de tir
+   * continu ») : tant qu'elle tire sans s'arrêter plus de `repit` secondes, sa cadence monte en ligne droite jusqu'à `max`
+   * fois en `duree` secondes ; un arrêt, et elle repart de zéro (voir `emballementDe`, `Monde.emballements`).
+   */
+  emballement?: { max: number; duree: number; repit: number }
+  /**
    * LES MISSILES DE L'ESCORTE (Keko, 25/11, à la place des Roquettes) : les drones TIRENT des petits missiles guidés au
    * lieu de leurs balles, qui explosent sur `rayon` — avec l'élément de l'arme et sa Désignation, pas ses traversées ni
    * ses rebonds (la carte espace les tirs et grandit les dégâts). D'abord un missile toutes les 2 s EN PLUS des balles :
@@ -1621,6 +1628,8 @@ export type Monde = {
   rafaleDesAiles: number
   /** L'INSTANT DE LA DERNIÈRE SALVE DES AILES JUMELÉES (voir `Arme.jumele`) : celle qui tire la première entraîne les autres. */
   salveDesAiles: number
+  /** LE TIR CONTINU DE CHAQUE ARME QUI S'EMBALLE (voir `Arme.emballement`), par identifiant d'arme — ses ailes le partagent : depuis quand il dure, son dernier tir. */
+  emballements: Record<string, { depuis: number; dernier: number }>
   /** LES RAYONS CONCENTRÉS (voir `Arme.concentre`) : leur arme, leur cible, leur naissance, ce qu'ils rongent par seconde. */
   faisceaux: { arme: number; cible: number; nee: number; dps: number; /** Ses rebonds de l'image (voir `Arme.concentre`). */ chaine?: number[] }[]
   /** LES SILLONS ÉLECTRIQUES (voir `Arme.sillon`) : un par balle, sa course en segments, sa naissance, ce qu'il fait. */
@@ -1906,7 +1915,7 @@ export function nouveauVaisseau(): Vaisseau {
 }
 
 export function nouveauMonde(c: ConfigVaisseau = VAISSEAU, graine = 1): Monde {
-  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, coqueMax: c.coque, tableau: tableauVide(), bouclier: c.bouclier.points, plaques: Array.from({ length: c.plaques }, () => true), intouchableJusque: -1, corruption: 0, dephaseJusque: -100, plaqueCasseeA: 0, renaitJusque: -100, rochesPrises: [], toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, prochaineDeriveA: c.derive.premier, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, vies: c.invasion.vies, miniBoss: 0, boss: 0, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, harpons: [], rafales: [], rafaleDesAiles: 0, salveDesAiles: -1e9, faisceaux: [], sillons: [], ondes: [], balisesLaser: [], scies: [], balises: [], givres: [], tornades: [], novas: [], echardes: [], spheres: [], puits: [], meteores: [], tentacules: [], nuees: [], rejetons: [], flaquesAcides: [], mines: [], fleaux: [], parasites: [], vrilles: [], liens: [], oeufs: [], brochettes: [], miniVers: [], hypercubes: [], des: [], coupes: [], rayonVu: null }
+  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, coqueMax: c.coque, tableau: tableauVide(), bouclier: c.bouclier.points, plaques: Array.from({ length: c.plaques }, () => true), intouchableJusque: -1, corruption: 0, dephaseJusque: -100, plaqueCasseeA: 0, renaitJusque: -100, rochesPrises: [], toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, prochaineDeriveA: c.derive.premier, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, vies: c.invasion.vies, miniBoss: 0, boss: 0, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, harpons: [], rafales: [], rafaleDesAiles: 0, salveDesAiles: -1e9, emballements: {}, faisceaux: [], sillons: [], ondes: [], balisesLaser: [], scies: [], balises: [], givres: [], tornades: [], novas: [], echardes: [], spheres: [], puits: [], meteores: [], tentacules: [], nuees: [], rejetons: [], flaquesAcides: [], mines: [], fleaux: [], parasites: [], vrilles: [], liens: [], oeufs: [], brochettes: [], miniVers: [], hypercubes: [], des: [], coupes: [], rayonVu: null }
 }
 
 /** Un hachage entier déterministe (celui de pixelfx), et un réel dans [0, 1) qui en sort. */
@@ -6448,6 +6457,14 @@ export function rangDeChasse(e: Ennemi): number {
   return e.sorte === 'cuirassier' ? 3 : e.sorte === 'cornu' ? 2 : 1
 }
 
+/** OÙ EN EST L'EMBALLEMENT D'UNE ARME, de 0 à 1 (voir `Arme.emballement`) : la part de sa montée ; arrêtée plus de `repit`, 0. */
+export function emballementDe(a: Arme, m: Monde, t = m.t): number {
+  const em = a.emballement
+  const tc = m.emballements[a.id]
+  if (em === undefined || tc === undefined || t - tc.dernier > em.repit) return 0
+  return Math.min(1, Math.max(0, (t - tc.depuis) / em.duree))
+}
+
 /** LA CHAUFFE D'UN DRONE, de 0 à 1 : où en est la montée de sa cadence sur la cible qu'il garde (voir `Arme.montee`). */
 export function chauffeDuDrone(a: Arme, d: Drone, t: number): number {
   if (a.montee === undefined || d.tenue === undefined) return 0
@@ -7009,6 +7026,14 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
         vitesseDuTir = Math.max(0, Math.hypot(cible.corps.x + cible.corps.vx * temps - bx, cible.corps.y + cible.corps.vy * temps - by) - (arme.bouche === undefined ? c.rayon + 3 : 0)) / temps
       } else if (arme.napalm !== undefined || arme.plasma !== undefined) vieDuTir = Math.min(arme.vie, Math.max(0, Math.hypot(cible.corps.x + cible.corps.vx * temps - bx, cible.corps.y + cible.corps.vy * temps - by) - (arme.bouche === undefined ? c.rayon + 3 : 0)) / arme.vitesse)
     }
+    // (ELLE S'EMBALLE À TIRER SANS S'ARRÊTER — voir `Arme.emballement` : ce tir prolonge le tir continu, ou en ouvre un)
+    const em = arme.emballement
+    if (em !== undefined) {
+      const tc = m.emballements[arme.id]
+      if (tc === undefined || m.t - tc.dernier > em.repit) m.emballements[arme.id] = { depuis: m.t, dernier: m.t }
+      else tc.dernier = m.t
+    }
+    const cadence = em === undefined ? arme.cadence : arme.cadence / (1 + (em.max - 1) * emballementDe(arme, m))
     // (EN RAFALE : le tir suivant de la rafale vient vite ; la rafale finie, la cadence de l'arme — voir `Arme.rafale`)
     // (ENTRE LES AILES, la rafale est partagée : l'autre aile tire juste après — voir `Arme.rafale`)
     const ra = arme.rafale
@@ -7029,30 +7054,30 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
       // (la rafale finie : toutes les ailes attendent la cadence)
       m.rafaleDesAiles = 0
       c.armes.forEach((b, j) => {
-        if (j === i || b.ajoutee !== true) m.armesA[j] = m.t + arme.cadence
+        if (j === i || b.ajoutee !== true) m.armesA[j] = m.t + cadence
       })
     } else if (arme.jumele === true && c.alternance && arme.ajoutee !== true) {
       // (LES AILES JUMELÉES TIRENT ENSEMBLE — voir `Arme.jumele` : chacune au rythme où les ailes se relayaient ; la première
       // d'une salve entraîne les autres jumelées, tout de suite ; les autres ailes attendent leur tour, comme avant)
       const ailes = c.armes.filter((b) => b.ajoutee !== true).length
-      m.armesA[i] = m.t + arme.cadence / ailes
-      if (m.t - m.salveDesAiles >= arme.cadence / ailes / 2) {
+      m.armesA[i] = m.t + cadence / ailes
+      if (m.t - m.salveDesAiles >= cadence / ailes / 2) {
         m.salveDesAiles = m.t
         c.armes.forEach((b, j) => {
           if (j !== i && b.ajoutee !== true && b.jumele === true) m.armesA[j] = m.t
         })
       }
       c.armes.forEach((b, j) => {
-        if (j !== i && b.ajoutee !== true && b.jumele !== true) m.armesA[j] = Math.max(m.armesA[j] ?? 0, m.t + arme.cadence / ailes)
+        if (j !== i && b.ajoutee !== true && b.jumele !== true) m.armesA[j] = Math.max(m.armesA[j] ?? 0, m.t + cadence / ailes)
       })
     } else {
       if (ra !== undefined) m.rafales[i] = 0
-      m.armesA[i] = m.t + arme.cadence
+      m.armesA[i] = m.t + cadence
       // (À TOUR DE RÔLE ENTRE LES AILES SEULEMENT : une arme ajoutée par une carte spéciale tire à son pas — voir `Arme.ajoutee`)
       if (c.alternance && arme.ajoutee !== true) {
         const ailes = c.armes.filter((b) => b.ajoutee !== true).length
         c.armes.forEach((b, j) => {
-          if (j !== i && b.ajoutee !== true) m.armesA[j] = Math.max(m.armesA[j] ?? 0, m.t + arme.cadence / ailes)
+          if (j !== i && b.ajoutee !== true) m.armesA[j] = Math.max(m.armesA[j] ?? 0, m.t + cadence / ailes)
         })
       }
     }
@@ -7588,7 +7613,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
  * La règle d'un vaisseau ne change pas : le pilote dont c'est le tour est DANS le monde — ses champs sont ceux de
  * `Monde` —, les autres attendent dans `equipage.pilotes` ; `prendreLaMain` les échange.
  */
-export const CHAMPS_DU_PILOTE = ['phase', 'vaisseau', 'coque', 'coqueMax', 'tableau', 'bouclier', 'plaques', 'intouchableJusque', 'corruption', 'dephaseJusque', 'plaqueCasseeA', 'renaitJusque', 'toucheA', 'forage', 'forages', 'tirs', 'obus', 'armesA', 'extraction', 'sorti', 'boostA', 'bombes', 'charges', 'verrou', 'crache', 'drones', 'tourelles', 'flaques', 'balayage', 'rayonVu', 'canal', 'harpons', 'rafales', 'rafaleDesAiles', 'salveDesAiles', 'faisceaux', 'sillons', 'balisesLaser', 'scies', 'balises', 'givres', 'tornades', 'novas', 'echardes', 'spheres', 'puits', 'meteores', 'tentacules', 'nuees', 'rejetons', 'flaquesAcides', 'mines', 'fleaux', 'parasites', 'brochettes', 'hypercubes', 'coupes', 'des', 'oeufs', 'miniVers', 'liens', 'vrilles'] as const
+export const CHAMPS_DU_PILOTE = ['phase', 'vaisseau', 'coque', 'coqueMax', 'tableau', 'bouclier', 'plaques', 'intouchableJusque', 'corruption', 'dephaseJusque', 'plaqueCasseeA', 'renaitJusque', 'toucheA', 'forage', 'forages', 'tirs', 'obus', 'armesA', 'extraction', 'sorti', 'boostA', 'bombes', 'charges', 'verrou', 'crache', 'drones', 'tourelles', 'flaques', 'balayage', 'rayonVu', 'canal', 'harpons', 'rafales', 'rafaleDesAiles', 'salveDesAiles', 'emballements', 'faisceaux', 'sillons', 'balisesLaser', 'scies', 'balises', 'givres', 'tornades', 'novas', 'echardes', 'spheres', 'puits', 'meteores', 'tentacules', 'nuees', 'rejetons', 'flaquesAcides', 'mines', 'fleaux', 'parasites', 'brochettes', 'hypercubes', 'coupes', 'des', 'oeufs', 'miniVers', 'liens', 'vrilles'] as const
 /** Un pilote qui attend son tour : ses champs du monde, l'instant de son retour s'il est abattu, les morsures qu'il doit encaisser. */
 export type Pilote = Pick<Monde, (typeof CHAMPS_DU_PILOTE)[number]> & { retourA: number; morsures: { x: number; y: number; degats: number }[] }
 /** Les pilotes (celui dont c'est le tour, `actif`, a sa place gardée mais périmée : il est dans le monde). */

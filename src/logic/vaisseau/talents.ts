@@ -489,6 +489,11 @@ export const MUTATIONS: Mutation[] = [
   // un ennemi, elle lance 3 autres projectiles très rapides sur le même ennemi, s'il a survécu » ; « les 3 nouveaux
   // projectiles ne déclenchent pas eux-mêmes des projectiles rapides » ; la moitié des dégâts chacune, 750 de vitesse — deux
   // fois et demie la balle —, le nom : de moi ; voir `Arme.riposte`)
+  // (« EMBALLEMENT » — Keko, 26/11 : « plus la mitraillette tire, plus elle accélère ; dès qu'elle arrête de tirer en continu,
+  // elle perd son bonus de cadence de tir ; je te laisse décider quel serait le bonus de vitesse et la durée de tir
+  // continu » : deux fois plus vite au bout de 4 s, perdu après 0,5 s sans tirer — de moi, comme le nom ; voir
+  // `Arme.emballement`)
+  variation('mitraille-emballement', 'mitraille', 'Emballement', 'Plus le tir dure sans interruption, plus la cadence monte.', changerA('mitraille', (a) => ({ ...a, emballement: { max: 2, duree: 4, repit: 0.5 } }))),
   variation('mitraille-riposte', 'mitraille', 'Riposte', 'Un coup critique lance trois balles très rapides sur l’ennemi touché.', changerA('mitraille', (a) => ({ ...a, riposte: { nombre: 3, part: 0.5, vitesse: 750 } }))),
   // LES MISSILES
   variation('missile-salve', 'minimissile', 'Salve', 'Chaque tir lâche trois missiles en éventail.', changerA('minimissile', V.gerbe(3, 0.35, 0.6))),

@@ -3266,6 +3266,29 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   verifier(`la Riposte : un critique, ${vit.balles - 1} balles de riposte (3), qui touchent aux images ${vit.touches.join(', ')} (quatre coups, à des images différentes) ; ${vit.perdu} perdus (${10 * f} + 3 × ${5 * f}) ; l'insecte tué net, ${mort.balles - 1} (0)`, vit.balles === 4 && vit.touches.length === 4 && new Set(vit.touches).size === 4 && Math.abs(vit.perdu - (10 * f + 15 * f)) < 1e-6 && mort.balles === 1)
 }
 
+// L'EMBALLEMENT (Keko, 26/11 — voir `Arme.emballement`) : à tirer sans s'arrêter, la cadence double en 4 s ; un arrêt de
+// plus de 0,5 s, et elle repart de la base
+{
+  const cfg: ConfigVaisseau = { ...VAISSEAU, coque: 1e9, armes: [{ id: 'mitraille', cadence: 0.2, degats: 1, portee: 150, vitesse: 600, vie: 1, dispersion: 0, guide: false, tousSens: true, infaillible: true, emballement: { max: 2, duree: 4, repit: 0.5 } } as Arme], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false } }
+  const w = nouveauMonde(cfg, 5)
+  w.invasion.prochainA = 1e9
+  const e: Ennemi = { id: 850, corps: { ...nouveauVaisseau(), x: 60, y: 0 }, pv: 1e9, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9 }
+  w.ennemis.push(e)
+  const tirs = (secondes: number): number => {
+    let n = 0
+    for (let i = 0; i < 60 * secondes; i++) for (const ev of avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements) if (ev.type === 'obus') n++
+    return n
+  }
+  const debut = tirs(1)
+  tirs(3)
+  const lance = tirs(1)
+  e.corps.x = 1000
+  tirs(1)
+  e.corps.x = 60
+  const repris = tirs(1)
+  verifier(`l'Emballement : ${debut} tirs la première seconde (5), ${lance} la cinquième (10), ${repris} après un arrêt d'une seconde (5)`, debut >= 5 && debut <= 6 && lance >= 9 && lance <= 11 && repris >= 5 && repris <= 6)
+}
+
 // LA DÉSIGNATION (Keko, 24/11 — voir `Arme.designation`) : un critique de l'arme qui désigne marque l'insecte 3 s ; une
 // autre arme, à 0 % de critique, en fait alors environ 25 % sur lui — et 0 sur un insecte non désigné
 {
