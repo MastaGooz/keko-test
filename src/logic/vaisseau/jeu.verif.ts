@@ -3307,12 +3307,12 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
 // LE SOUFFLE (Keko, 26/11 — voir `Arme.souffle`) : le missile explose sur sa cible et souffle un cône derrière elle — un
 // insecte dans l'axe, hors de l'explosion ronde, est touché ; un insecte sur le côté, à la même distance, ne l'est pas
 {
-  const essai = (souffle: boolean): { cible: number; derriere: number; cote: number; souffles: number } => {
+  const essai = (souffle: boolean, grand = false): { cible: number; derriere: number; cote: number; souffles: number } => {
     const cfg: ConfigVaisseau = { ...VAISSEAU, coque: 1e9, armes: [{ id: 'minimissile', cadence: 1e9, degats: 10, portee: 150, vitesse: 300, vie: 1, dispersion: 0, guide: false, tousSens: true, infaillible: true, zone: { rayon: 18 }, ...(souffle ? { souffle: { allonge: 2.8, ouverture: 0.45, part: 0.6 } } : {}) } as Arme], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false }, passifs: { ...VAISSEAU.passifs, critique: 0 } }
     const w = nouveauMonde(cfg, 5)
     w.invasion.prochainA = 1e9
     const insecte = (id: number, x: number, y: number): Ennemi => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv: 1e9, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9 })
-    const cible = insecte(850, 60, 0)
+    const cible = { ...insecte(850, 60, 0), ...(grand ? { grand: true } : {}) }
     const derriere = insecte(851, 95, 0)
     const cote = insecte(852, 60, 35)
     w.ennemis.push(cible, derriere, cote)
@@ -3322,7 +3322,9 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   }
   const avec = essai(true)
   const sans = essai(false)
-  verifier(`le Souffle : ${avec.souffles} souffle (1) ; derrière la cible, ${avec.derriere} perdus (6 — sans la carte ${sans.derriere}) ; sur le côté, ${avec.cote} (0) ; la cible, ${avec.cible} (10, le coup seul)`, avec.souffles === 1 && Math.abs(avec.derriere - 6) < 1e-6 && sans.derriere === 0 && avec.cote === 0 && Math.abs(avec.cible - 10) < 1e-6)
+  // (… ET UN GRAND — mini-boss, boss — PREND LES DEUX, le coup et le souffle : Keko, 26/11)
+  const boss = essai(true, true)
+  verifier(`le Souffle : ${avec.souffles} souffle (1) ; derrière la cible, ${avec.derriere} perdus (6 — sans la carte ${sans.derriere}) ; sur le côté, ${avec.cote} (0) ; la cible, ${avec.cible} (10, le coup seul) ; une cible grande, ${boss.cible} (16, le coup et le souffle)`, avec.souffles === 1 && Math.abs(avec.derriere - 6) < 1e-6 && sans.derriere === 0 && avec.cote === 0 && Math.abs(avec.cible - 10) < 1e-6 && Math.abs(boss.cible - 16) < 1e-6)
 }
 
 // LES ROCHES NE SONT IMMUNISÉES À AUCUNE ARME, SEULEMENT AUX ÉTATS (Keko, 26/11 : « je ne veux pas d'astéroïdes immunisés à

@@ -6459,7 +6459,9 @@ function souffler(c: ConfigVaisseau, m: Monde, o: Obus, x: number, y: number, to
   const a = c.armes.find((z) => z.id === o.arme)
   const degats = Math.max(1, Math.round(o.zone.degats * so.part))
   for (const e of [...m.ennemis]) {
-    if (e === touche) continue
+    // (… SAUF UN GRAND — Keko, 26/11 : « si je tire sur un énorme boss ou un ennemi important, qu'il soit touché à la fois
+    // par l'explosion et par le souffle » : un mini-boss, un boss déborde dans le cône, il prend les deux)
+    if (e === touche && e.grand !== true) continue
     const dx = e.corps.x - x
     const dy = e.corps.y - y
     const d = Math.hypot(dx, dy)

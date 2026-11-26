@@ -9495,3 +9495,9 @@ aussi la trajectoire du cône ». L'événement du Souffle lance en plus 36 éti
 peu freinées (1,2) et assez rapides pour courir jusqu'à sa pointe ; un tiers naissent dans le cône, entre 15 et 60 % de
 sa longueur, au passage du front de la déflagration. Vu en capture : des traits blancs et jaunes qui filent dans le sens
 du cône, à travers ses flammes.
+### Un grand prend le coup et le souffle (26/11)
+
+Keko : « si je tire sur un énorme boss ou un ennemi important avec le Souffle, qu'il soit touché à la fois par
+l'explosion et par le souffle ». La cible du missile était exceptée du cône (elle avait pris le coup) ; un GRAND
+(`Ennemi.grand` : mini-boss, boss) ne l'est plus — il déborde dans le cône, il prend les deux. Les autres insectes
+gardent la règle. Test : la cible prend 10 ; grande, 16 (10 du coup, 6 du souffle).
