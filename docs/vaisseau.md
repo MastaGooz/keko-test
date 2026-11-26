@@ -9350,3 +9350,17 @@ Keko : « Plus la mitraillette tire, plus elle accélère. Et dès qu'elle arrê
 - Mes chiffres : ×2 en 4 s — le double de la base de la mitrailleuse, 5,6 → 11 balles par seconde ; la carte Cadence légendaire donne +25 %. 0,5 s de répit : plus que l'écart entre deux balles d'une aile (0,36 s), moins qu'une vraie pause. Le nom « Emballement » aussi, à juger.
 - Ce n'est pas la Frénésie écartée : elle ne dépend pas des critiques, seulement de la durée du tir ; elle plafonne vite par construction, et c'est voulu — ce qui la casse, c'est l'arrêt.
 - Test dans `jeu.verif.ts` : 6 tirs la première seconde, 10 la cinquième, 6 après un arrêt.
+### Les roches : touchées par toutes les armes, immunisées aux états, sans dégâts aux insectes (26/11)
+
+Keko : « Assure-toi que toutes les armes et toutes les variations infligent des dégâts aux astéroïdes comme ils le font pour les monstres. Je ne veux pas d'astéroïdes immunisés à une arme ou à une variation d'arme. La seule chose auxquelles les astéroïdes sont immunisés, ce sont aux effets de corrosion, feu, glace et foudre. De plus, je ne voudrais plus que les dégâts infligés aux ennemis par les astéroïdes se produisent. Les astéroïdes n'infligent plus que des dégâts aux joueurs quand ils le percutent. On va dire que les ennemis peuvent être percutés par un astéroïde mais ne subissent pas de dégâts. On part du principe que l'ennemi évite l'astéroïde en quelque sorte. »
+
+**Ce qui était cassé, mesuré.** La règle des insectes d'abord (`rochesMasquees`, 20/11) RETIRAIT les roches du monde le temps que les armes tirent, dès qu'un insecte était à portée : seules les balles directes les voyaient encore. Toute explosion, zone, rayon, onde, traînée tombant sur une roche collée à un insecte l'épargnait. S'y ajoutaient des exclusions écrites à la main : le Court-circuit de la bobine, l'Onde de choc de l'obusier, les sillons (Sillon du railgun, Haute tension), la Riposte de la mitrailleuse ; et les rebonds (Ricochet, Conduction, chaîne d'éclairs, Téléguidage, saut des parasites) ne repartaient jamais vers une roche.
+
+**Maintenant.**
+- Les roches masquées restent dans le monde ; seul LE CHOIX D'UNE CIBLE les saute (`Monde.masquees`, `choisissable`). Ce qui passe sur une roche la blesse.
+- Les rebonds et ce qui choisit dans sa propre zone (la foudre de la bobine, l'Intrication) préfèrent les insectes, puis prennent la roche plutôt que de s'arrêter.
+- Les exclusions à la main sont retirées.
+- **Les états épargnent les roches** : `geler`, `enflammer`, `brulerAuContact`, `ronger` rendent tout de suite sur une roche (`electrocuter` et `figer` le faisaient déjà) ; les cartes d'élément aussi (Combustion, Propagation, Foudre, Surtension, Aura glaciale, la flaque de la Dissolution).
+- **Une roche ne blesse plus un insecte** : `heurterLesRoches` l'écarte seulement (il perdait `derive.chocInsecte`, 60) ; `chocInsecte` et `heurteRoche` retirés. Le joueur, lui, perd toujours à la percuter.
+
+**Mesuré** (script hors du dépôt) : chaque arme des douze vaisseaux et des armes de faction, et chacune de leurs variations, 8 s contre une roche seule, puis contre une roche collée à un insecte — toutes blessent la roche seule ; les traînées, les balises du Prisme et la Tentacule, à zéro au premier essai (l'insecte aussi), la blessent quand le vaisseau passe dessus ou avec son ancrage. Tests dans `jeu.verif.ts` : l'explosion sur une roche collée à l'insecte visé, sans aucun état, et le ricochet qui repart sur elle ; six insectes poussés dans une roche, aucun blessé.

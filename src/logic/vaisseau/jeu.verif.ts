@@ -2922,9 +2922,9 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
       avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
       auPlusPres = Math.min(auPlusPres, Math.hypot(ins.corps.x - 100, ins.corps.y))
     }
-    verifier(`une roche entre lui et le vaisseau : l’insecte la contourne (au plus près ${auPlusPres.toFixed(1)} de son centre, elle fait 10, lui 5), sans la heurter, et arrive au vaisseau`, auPlusPres > 15 && ins.heurteA === undefined && r.pv === 500 && Math.hypot(ins.corps.x - 200, ins.corps.y) < 20)
+    verifier(`une roche entre lui et le vaisseau : l’insecte la contourne (au plus près ${auPlusPres.toFixed(1)} de son centre, elle fait 10, lui 5), sans la heurter, et arrive au vaisseau`, auPlusPres > 15 && r.pv === 500 && Math.hypot(ins.corps.x - 200, ins.corps.y) < 20)
   }
-  // (poussé dans une roche, il la heurte : tous deux perdent 60, une fois)
+  // (poussé dans une roche, il la heurte : il en sort, sans dégâts)
   {
     const cfg = { ...base, invasion: { ...base.invasion, premiere: 1e9 } }
     const w = nouveauMonde(cfg, 5)
@@ -2937,9 +2937,9 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
       r.corps = { ...r.corps, x: 100, y: 0, vx: 0, vy: 0 }
       avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
     }
-    verifier(`un insecte entré dans une roche la heurte : il en est sorti, et il perd ${VAISSEAU.derive.chocInsecte}, elle rien (Keko, 21/11) (lui ${120 - ins.pv}, elle ${500 - r.pv}), une fois`, ins.pv === 120 - VAISSEAU.derive.chocInsecte && r.pv === 500 && Math.hypot(ins.corps.x - 100, ins.corps.y) >= 15 - 1e-6)
-    // (… ET CE N'EST PAS UNE ARME : la page n'en fait pas de chiffre — Keko, 23/11 ; voir `Ennemi.horsArmeA`)
-    verifier(`le choc contre la roche n'est pas d'une arme : marqué hors arme (${ins.horsArmeA !== undefined})`, ins.horsArmeA !== undefined)
+    // (… SANS DÉGÂTS, NI POUR L'UN NI POUR L'AUTRE — Keko, 26/11 : « les ennemis peuvent être percutés par un astéroïde mais ne
+    // subissent pas de dégâts » ; il perdait 60)
+    verifier(`un insecte entré dans une roche la heurte : il en est sorti, et ni lui ni elle ne perdent rien (Keko, 21/11 et 26/11) (lui ${120 - ins.pv}, elle ${500 - r.pv})`, ins.pv === 120 && r.pv === 500 && Math.hypot(ins.corps.x - 100, ins.corps.y) >= 15 - 1e-6)
   }
   // (les roches traversent le champ autour du vaisseau)
   {
@@ -3264,6 +3264,30 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   const mort = essai(5)
   const f = VAISSEAU.passifs.critiqueFacteur
   verifier(`la Riposte : un critique, ${vit.balles - 1} balles de riposte (3), qui touchent aux images ${vit.touches.join(', ')} (quatre coups, à des images différentes) ; ${vit.perdu} perdus (${10 * f} + 3 × ${5 * f}) ; l'insecte tué net, ${mort.balles - 1} (0)`, vit.balles === 4 && vit.touches.length === 4 && new Set(vit.touches).size === 4 && Math.abs(vit.perdu - (10 * f + 15 * f)) < 1e-6 && mort.balles === 1)
+}
+
+// LES ROCHES NE SONT IMMUNISÉES À AUCUNE ARME, SEULEMENT AUX ÉTATS (Keko, 26/11 : « je ne veux pas d'astéroïdes immunisés à
+// une arme ou à une variation ; la seule chose à laquelle ils sont immunisés, ce sont les effets de corrosion, feu, glace
+// et foudre ») : une roche collée à l'insecte visé — masquée au choix des cibles — prend l'explosion, sans brûler, geler,
+// être rongée ni électrocutée ; et le ricochet, sans autre insecte, repart sur elle
+{
+  const essai = (arme: Partial<Arme>): { roche: Ennemi; insecte: Ennemi } => {
+    const cfg: ConfigVaisseau = { ...VAISSEAU, coque: 1e9, armes: [{ id: 'canon', cadence: 0.5, degats: 10, portee: 150, vitesse: 600, vie: 1, dispersion: 0, guide: false, tousSens: true, infaillible: true, ...arme } as Arme], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false } }
+    const w = nouveauMonde(cfg, 5)
+    w.invasion.prochainA = 1e9
+    const roche: Ennemi = { id: 860, corps: { ...nouveauVaisseau(), x: 45, y: 0 }, pv: 1e9, fait: 'marche', roche: null, forage: null, tirA: 0, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, grand: true, asteroide: { rayon: 10, graine: 5, angle0: 0, vitesseAngulaire: 0, pvMax: 1e9 } }
+    const insecte: Ennemi = { id: 861, corps: { ...nouveauVaisseau(), x: 45, y: 14 }, pv: 1e9, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9 }
+    w.ennemis.push(roche, insecte)
+    for (let i = 0; i < 60 * 3; i++) {
+      roche.corps = { ...roche.corps, x: 45, y: 0, vx: 0, vy: 0 }
+      avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+    }
+    return { roche, insecte }
+  }
+  const z = essai({ zone: { rayon: 30 }, incendiaire: { duree: 3, dps: 5 }, gel: { duree: 1.5, ralenti: 0.5 }, corrosif: { duree: 3, bonus: 0.2 }, electrocution: { duree: 3, chance: 0, degats: 10, saut: 30 } })
+  const etats = (e: Ennemi): string => [(e.bruleA ?? -1) > 0 ? 'feu' : '', (e.geleA ?? -1) > 0 ? 'givre' : '', e.acide !== undefined ? 'corrosion' : '', e.electrocute !== undefined ? 'électrocution' : ''].filter((x) => x !== '').join(', ')
+  const r = essai({ ricochet: { rebonds: 1, portee: 80, part: 0.7 } })
+  verifier(`une roche à côté de l'insecte visé : l'explosion lui prend ${1e9 - z.roche.pv} (plus de 0), sans état (« ${etats(z.roche)} ») ; l'insecte en a (« ${etats(z.insecte)} ») ; le ricochet, sans autre insecte, lui prend ${Math.round(1e9 - r.roche.pv)}`, z.roche.pv < 1e9 && etats(z.roche) === '' && etats(z.insecte) === 'feu, givre, corrosion, électrocution' && r.roche.pv < 1e9)
 }
 
 // L'EMBALLEMENT (Keko, 26/11 — voir `Arme.emballement`) : à tirer sans s'arrêter, la cadence double en 4 s ; un arrêt de
@@ -4950,7 +4974,9 @@ for (const vortex of [true, false]) {
     for (let id = 1; id <= 4000; id++) if (VAISSEAU.derive.rayonMin + (Tl.courante - VAISSEAU.derive.rayonMin) * tire(77, id, 46) ** k > 24) n++
     return n / 4000
   }
-  verifier(`six insectes heurtent une roche : ${blesses} blessés, la roche à ${roche?.pv} sur 500 ; une courante de plus de 24 : ${Math.round(grosses(0) * 100)} % au départ, ${Math.round(grosses(Tl.montee) * 100)} % après ${Tl.montee / 60} minutes`, roche?.pv === 500 && blesses >= 1 && grosses(0) < 0.18 && grosses(Tl.montee) > 0.22)
+  // (… ET LES INSECTES NON PLUS — Keko, 26/11 : « les ennemis peuvent être percutés par un astéroïde mais ne subissent pas de
+  // dégâts » ; il en fallait au moins un blessé)
+  verifier(`six insectes heurtent une roche : ${blesses} blessés (0), la roche à ${roche?.pv} sur 500 ; une courante de plus de 24 : ${Math.round(grosses(0) * 100)} % au départ, ${Math.round(grosses(Tl.montee) * 100)} % après ${Tl.montee / 60} minutes`, roche?.pv === 500 && blesses === 0 && grosses(0) < 0.18 && grosses(Tl.montee) > 0.22)
 }
 
 // LES PLAQUES SE RÉPARENT, L'EXPÉRIENCE SE GAGNE EN PART, LE BOUCLIER SE RECHARGE EN PART DE LUI-MÊME (Keko, 21/11)
