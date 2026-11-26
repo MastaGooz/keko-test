@@ -9274,3 +9274,10 @@ Keko : « Il faut s'assurer que Impulsion et Détonation prennent bien en compte
 - **L'ordre des cartes** : `avecLesBonus` appliquait les cartes dans l'ordre où on les avait prises. Une « Zone et portée » DU LASER prise avant l'Impulsion grandissait une arme qui n'avait pas encore de zone, puis la variation posait `zone { rayon: 16 }` par-dessus : l'onde restait à 16 (de même la Détonation à 24, et toute variation qui pose une valeur). Désormais, LES CARTES SPÉCIALES S'APPLIQUENT D'ABORD, dans leur ordre, puis les cartes d'arme et de faction, puis « toutes les armes » (qui venait déjà à la fin, donc déjà juste).
 - **Le Ricochet** : `armeAmelioree('portee')` grandit aussi `ricochet.portee` (80), pour le laser comme pour les Rebonds des roquettes en réserve ; le rayon de Concentration qui ricoche lit la même valeur.
 - **Mesuré** (`talents.verif.ts`) : une légendaire (+25 %) prise avant ou après les variations, onde 20 (16), Détonation 30 (24), Ricochet 100 (80), portée 150 ; « toutes les armes » légendaire (+12,5 %) : 18, 27, 90.
+### La carte Durée fait durer la boule de la bobine (26/11)
+
+Keko : « Pourquoi la carte de durée n'est pas associée à la bobine ? Ça pourrait la faire durer plus longtemps. »
+
+- La carte Durée n'existait que pour ce qu'une arme POSE (`POSEES` : tourelles, balises, mines, napalm, œufs) ; la boule de la bobine, qui a pourtant sa durée (3 s), n'était vue que comme un tir qui avance. `sphere` rejoint `POSEES` : la Durée paraît au pool de la bobine (et de l'orbe de plasma du Pulsar, la même boule) et grandit `sphere.duree`.
+- Une boule qui dure plus longtemps va plus loin (45/s), décharge plus de fois, et ses variations en profitent : la traînée de Haute tension est plus longue, l'Accumulateur a plus de temps pour monter, le Court-circuit tombe plus tard. Les 2 s de chaque bout de la traînée ne bougent pas.
+- Mesuré (`talents.verif.ts`) : +25 %, la boule dure 3,75 s.

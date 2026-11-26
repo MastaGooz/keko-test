@@ -187,7 +187,9 @@ const CLES_DE_CADENCE: ReadonlySet<string> = new Set(['cadence', 'tous'])
 /** L'arme a-t-elle une zone (un rayon, une largeur, un éclat) — ce que la carte « Portée » agrandit aussi. */
 export const aUneZone = (a: Arme): boolean => valeurs(a, CLES_DE_ZONE).some((v) => v > 0)
 /** (les branches de ce qu'une arme POSE — tourelles, balises, mines, flaques de napalm, œufs — et leur durée) */
-const POSEES = ['pose', 'balise', 'mine', 'napalm', 'ponte'] as const
+// (… ET LA BOULE QUI DURE — la bobine tesla, l'orbe de plasma —, Keko, 26/11 : « pourquoi la carte de durée n'est pas
+// associée à la bobine ? ça pourrait la faire durer plus longtemps » ; elle n'était qu'un tir qui avance)
+const POSEES = ['pose', 'balise', 'mine', 'napalm', 'ponte', 'sphere'] as const
 const CLES_DU_FEU: ReadonlySet<string> = new Set(['dpsBrulure'])
 const CLES_DU_GIVRE: ReadonlySet<string> = new Set(['ralenti'])
 /** Ce que l'arme pose, et sa durée. */

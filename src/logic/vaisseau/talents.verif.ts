@@ -115,6 +115,10 @@ verifier('le délai passé, ce qui restait à choisir part en réserve', reserve
   const ap = vu(ids, false)
   const tg = carte({ sorte: 'armes' }, 'portee', 'legendaire')
   const gl = avecLesBonus(cfg, ajouterLeBonus(ids.reduce<Bonus>((b, id) => ajouterLeBonus(b, spe(id)), []), tg)).armes[0]
+  // (LA DURÉE FAIT DURER LA BOULE DE LA BOBINE — Keko, 26/11)
+  const tesla = armeDeFaction('tesla')!.armes()[0]
+  const td = armeAmelioree(tesla, 'pose', 0.25)
+  verifier(`la bobine tesla a la carte Durée (${statsDeLArme(tesla).join(', ')}) : +25 %, sa boule dure ${td.sphere?.duree} s (3)`, statsDeLArme(tesla).includes('pose') && td.sphere?.duree === 3.75)
   verifier(`« Zone et portée » légendaire (+25 %), prise AVANT les variations : l'onde de l'Impulsion ${av.zone?.rayon} (16), la Détonation ${av.detonation?.rayon} (24), le Ricochet ${av.ricochet?.portee} (80) ; prise après : ${ap.zone?.rayon}, ${ap.detonation?.rayon}, ${ap.ricochet?.portee} ; « toutes les armes » (+12,5 %) : ${gl.zone?.rayon}, ${gl.detonation?.rayon}, ${gl.ricochet?.portee}`, [av, ap].every((a) => a.zone?.rayon === 20 && a.detonation?.rayon === 30 && a.ricochet?.portee === 100 && a.portee === 150) && gl.zone?.rayon === 18 && gl.detonation?.rayon === 27 && gl.ricochet?.portee === 90)
 }
 {
