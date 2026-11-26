@@ -485,6 +485,11 @@ export const MUTATIONS: Mutation[] = [
   // aux chiffres du vortex, des balles bleutées ; le nom, de moi — « Électrique » est au railgun)
   variation('mitraille-chargee', 'mitraille', 'Balles chargées', 'Les balles appliquent électrocution.', changerA('mitraille', (a) => ({ ...a, electrocution: { ...ELECTROCUTION_DU_VORTEX } }))),
   variation('mitraille-perforante', 'mitraille', 'Perforantes', 'Les balles traversent les ennemis.', changerA('mitraille', V.perforant)),
+  // (« RIPOSTE », SA VARIATION SUR COUP CRITIQUE — Keko, 26/11 : « à chaque fois que la mitraillette fait un coup critique sur
+  // un ennemi, elle lance 3 autres projectiles très rapides sur le même ennemi, s'il a survécu » ; « les 3 nouveaux
+  // projectiles ne déclenchent pas eux-mêmes des projectiles rapides » ; la moitié des dégâts chacune, 750 de vitesse — deux
+  // fois et demie la balle —, le nom : de moi ; voir `Arme.riposte`)
+  variation('mitraille-riposte', 'mitraille', 'Riposte', 'Un coup critique lance trois balles très rapides sur l’ennemi touché.', changerA('mitraille', (a) => ({ ...a, riposte: { nombre: 3, part: 0.5, vitesse: 750 } }))),
   // LES MISSILES
   variation('missile-salve', 'minimissile', 'Salve', 'Chaque tir lâche trois missiles en éventail.', changerA('minimissile', V.gerbe(3, 0.35, 0.6))),
   variation('missile-fragmentation', 'minimissile', 'Dispersion', 'Chaque explosion projette six éclats brûlants tout autour.', changerA('minimissile', V.fragments)),

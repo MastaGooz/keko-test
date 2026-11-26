@@ -3243,6 +3243,29 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   verifier(`les grenades givrées : la cible est givrée (${avec.cible}) ; la couronne hors de la zone, ${avec.couronne} givrés par les éclats (plusieurs), ${sans.couronne} sans eux (0)`, avec.cible && sans.cible && avec.couronne >= 3 && sans.couronne === 0)
 }
 
+// LA RIPOSTE (Keko, 26/11 — voir `Arme.riposte`) : un critique sur un insecte qui survit lance trois balles rapides sur
+// lui, qui arrivent l'une après l'autre ; critiques à leur tour, elles n'en relancent pas ; l'insecte mort, rien ne part
+{
+  const essai = (pv: number): { balles: number; touches: number[]; perdu: number } => {
+    const cfg: ConfigVaisseau = { ...VAISSEAU, coque: 1e9, armes: [{ id: 'mitraille', cadence: 1e9, degats: 10, portee: 150, vitesse: 300, vie: 1, dispersion: 0, guide: false, tousSens: true, infaillible: true, riposte: { nombre: 3, part: 0.5, vitesse: 750 } } as Arme], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false }, passifs: { ...VAISSEAU.passifs, critique: 1 } }
+    const w = nouveauMonde(cfg, 5)
+    w.invasion.prochainA = 1e9
+    const e: Ennemi = { id: 840, corps: { ...nouveauVaisseau(), x: 60, y: 0 }, pv, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9 }
+    w.ennemis.push(e)
+    const vus = new Set<number>()
+    const touches: number[] = []
+    for (let i = 0; i < 60; i++) {
+      for (const ev of avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements) if (ev.type === 'ennemiTouche') touches.push(Math.round(w.t * 60))
+      for (const o of w.obus) vus.add(o.id)
+    }
+    return { balles: vus.size, touches, perdu: pv - e.pv }
+  }
+  const vit = essai(1e9)
+  const mort = essai(5)
+  const f = VAISSEAU.passifs.critiqueFacteur
+  verifier(`la Riposte : un critique, ${vit.balles - 1} balles de riposte (3), qui touchent aux images ${vit.touches.join(', ')} (quatre coups, à des images différentes) ; ${vit.perdu} perdus (${10 * f} + 3 × ${5 * f}) ; l'insecte tué net, ${mort.balles - 1} (0)`, vit.balles === 4 && vit.touches.length === 4 && new Set(vit.touches).size === 4 && Math.abs(vit.perdu - (10 * f + 15 * f)) < 1e-6 && mort.balles === 1)
+}
+
 // LA DÉSIGNATION (Keko, 24/11 — voir `Arme.designation`) : un critique de l'arme qui désigne marque l'insecte 3 s ; une
 // autre arme, à 0 % de critique, en fait alors environ 25 % sur lui — et 0 sur un insecte non désigné
 {

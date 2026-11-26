@@ -9335,3 +9335,10 @@ Keko : « l'élément feu va plutôt coller au missile. Et on a déjà le laser 
 - **Validées** : Canons jumelés, Perforantes.
 - **De côté** (`VARIATIONS_EN_RESERVE`) : Tourelle, Drones, Percussion.
 - La vérification des six variations par arme compte la mitrailleuse EN REVUE (`EN_REVUE`, trois) jusqu'à ce que ses trois autres soient trouvées ; la quatrième sera sa variation sur coup critique.
+### La Riposte, la variation sur coup critique de la mitrailleuse (26/11)
+
+Keko : « À chaque fois que la mitraillette fait un coup critique sur un ennemi, elle lance 3 autres projectiles très rapides sur le même ennemi, s'il a survécu évidemment » ; « les 3 nouveaux projectiles rapides ne déclenchent pas eux-mêmes des projectiles rapides en cas de critique ». (Avant : Frénésie — chaque critique +10 % de cadence 2 s, cumulable à +50 % — écartée par Keko, « on plafonne quasiment en permanence » : mesuré, au plafond dès 20–25 % de critique ; Étincelle, un arc sur critique, refusée : pas d'élément hors de Balles chargées ; un temps de recharge, « assez dommage ».)
+
+- `Arme.riposte` `{ nombre: 3, part: 0.5, vitesse: 750 }` ; `riposter` dans `jeu.ts` : sur un critique d'un obus qui riposte, si l'insecte survit (pas une roche), trois balles partent du vaisseau, accrochées à lui, chacune 15 % moins vite que la précédente — elles arrivent l'une après l'autre —, la moitié des dégâts du tir chacune, chacune son critique, avec l'élément et les Perforantes de l'arme, SANS riposte.
+- Le nom « Riposte », la moitié des dégâts et la vitesse (deux fois et demie la balle) : de moi.
+- Test dans `jeu.verif.ts` : un critique, trois balles, quatre coups à quatre images différentes ; tué net, aucune.
