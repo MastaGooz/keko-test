@@ -2056,8 +2056,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     critique: { nom: 'Critique', effet: 'de chance de critique' },
     critiques: { nom: 'Impact', effet: 'de dégâts critiques' },
     // (« CADENCE ET DURÉE », une seule carte — Keko, 27/11 : « on fusionne zone et portée, mais aussi cadence et durée »)
-    cadence: { nom: 'Cadence et durée', effet: 'de cadence et de durée' },
-    portee: { nom: 'Zone et portée', effet: 'de portée et de zone' },
+    cadence: { nom: 'Cadence / durée', effet: 'de cadence et de durée' },
+    portee: { nom: 'Zone / portée', effet: 'de portée et de zone' },
     // (LES ÉTATS DISENT CE QU'ILS FONT — Keko, 24/11 : « +X % de dégâts infligés aux ennemis affectés par corrosion », « +X %
     // de ralentissement aux ennemis affectés par givre », « +X % de dégâts de l'effet de brûlure » ; le feu s'appelle Brûlure ;
     // les deux premiers prenaient cinq lignes, Keko a choisi de les raccourcir : « sous corrosion », « sous givre »)
