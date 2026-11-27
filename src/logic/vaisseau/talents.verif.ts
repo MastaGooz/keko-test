@@ -191,7 +191,6 @@ verifier('le délai passé, ce qui restait à choisir part en réserve', reserve
 {
   // LA TENTACULE DU KRAKEN (Keko, 27/11) : ses variations — la Méduse, le Fouet refait, la Lacération, l'Envergure, la Langue, la Bouture : les six — changent toutes sa config ;
   // le Fouet AJOUTE une attaque, sans tentacule à lui — la piqûre reste ;
-  // la Bouture a une durée que la carte « Durée » allonge ;
   // la Méduse ouvre les cartes d'électrocution
   const tentacule: Arme = { id: 'tentacule', cadence: 0.42, degats: 50, portee: 55, vitesse: 0, vie: 0, dispersion: 0, guide: false, place: 0, tentacule: { ancres: [[-0.2, -4.8], [-0.2, 4.8]], aller: 0.2, tenue: 0.08, retour: 0.24, virage: 0.35, alterne: true } }
   const depart: ConfigVaisseau = { ...C, armes: [tentacule] }
@@ -203,7 +202,7 @@ verifier('le délai passé, ce qui restait à choisir part en réserve', reserve
   const avecFouet = mu('tentacule-fouet').appliquer(depart)
   const fouet = avecFouet.armes[1]
   verifier(`la Tentacule a ${variations.length} variations (${variations.map((v) => v.nom).join(', ')}), aucune sans effet (${sansEffet.join(', ') || 'aucune'})`, variations.length === 6 && sansEffet.length === 0)
-  verifier(`Bouture : la carte « Durée » +50 % la fait vivre ${armeAmelioree(bouture, 'pose', 0.5).bouture?.duree} s au lieu de 4 ; sans elle, pas de carte « Durée »`, statsDeLArme(bouture).includes('pose') && !statsDeLArme(tentacule).includes('pose') && armeAmelioree(bouture, 'pose', 0.5).bouture?.duree === 6)
+  verifier(`Bouture : pas de carte « Durée » pour la tentacule, même avec elle (${statsDeLArme(bouture).join(', ')})`, !statsDeLArme(bouture).includes('pose') && !statsDeLArme(tentacule).includes('pose'))
   verifier('Méduse : la tentacule électrocute, la carte « Électrocution » paraît', statsDeLArme(meduse).includes('electrocution') && !statsDeLArme(tentacule).includes('electrocution'))
   verifier(`Fouet : la piqûre reste, le fouet s'y ajoute — une seconde arme sans tentacule (${fouet?.degats} toutes les ${fouet?.cadence} s)`, avecFouet.armes.length === 2 && avecFouet.armes[0].tentacule !== undefined && fouet.tentacule === undefined && fouet.fouet !== undefined && fouet.degats === 50 && fouet.cadence === 1.2)
 }

@@ -193,7 +193,9 @@ export const aUneZone = (a: Arme): boolean => valeurs(a, CLES_DE_ZONE).some((v) 
 // créature, une tourelle, ou la bobine tesla, qui est une forme de tourelle […] ça ne concerne pas les traînées, les zones
 // enflammées, les zones gelées » : la flaque de napalm en sort, la balise laser y entre)
 // (… ET LA BOUTURE DE LA TENTACULE — Keko, 27/11 : « la durée du tentacule est affectée par les cartes qui jouent sur la durée »)
-const POSEES = ['pose', 'balise', 'mine', 'ponte', 'sphere', 'lien', 'bouture'] as const
+// (… PUIS PLUS LA BOUTURE — Keko, 27/11 : « on devrait annuler la carte durée sur la tentacule, car elle ne sert que lors du
+// critique, c'est pas hyper clair pour le joueur » : la tentacule n'a plus de carte « Durée », la bouture vit ses 4 s)
+const POSEES = ['pose', 'balise', 'mine', 'ponte', 'sphere', 'lien'] as const
 const CLES_DU_FEU: ReadonlySet<string> = new Set(['dpsBrulure'])
 const CLES_DU_GIVRE: ReadonlySet<string> = new Set(['ralenti'])
 /** Ce que l'arme pose, et sa durée. */
