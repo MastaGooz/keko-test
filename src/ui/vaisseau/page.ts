@@ -11593,13 +11593,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * haut à l'écran — il file droit vers le haut, hors de vue, puis retombe à la verticale sur sa cible.
    */
   const HAUTEUR_DU_SILO = 260
+  const DEPART_DU_SILO = 8
   function positionDuSilo(o: Monde['obus'][number]): { x: number; y: number; ux: number; uy: number; s: number; chute: boolean } {
     const si = o.silo!
     const vie0 = o.vie0 ?? 1
     const age = vie0 - o.vie
     if (age < si.montee) {
       const s = age / si.montee
-      return { x: o.x, y: o.y - HAUTEUR_DU_SILO * s * s, ux: 0, uy: -1, s, chute: false }
+      // (il sort un peu au-dessus du vaisseau, du toit — Keko, 27/11 : on le voyait naître sous lui)
+      return { x: o.x, y: o.y - DEPART_DU_SILO - (HAUTEUR_DU_SILO - DEPART_DU_SILO) * s * s, ux: 0, uy: -1, s, chute: false }
     }
     const s = Math.min(1, (age - si.montee) / Math.max(0.01, vie0 - si.montee))
     return { x: si.tx, y: si.ty - HAUTEUR_DU_SILO * (1 - s * s), ux: 0, uy: 1, s, chute: true }

@@ -3399,6 +3399,28 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   verifier(`le Silo : ${silos} missile (1), pour le cuirassier plutôt que le moucheron tout près (${pourLeGros}) ; rien de touché en vol (${touchesAvant}) ; il explose à l'image ${explose} (vers 72, 1,2 s) sur le cuirassier, qui a bougé : il perd ${1e9 - gros.pv} (240), le moucheron ${1e9 - petit.pv} (0) ; son impact est annoncé, sur lui (${impact})`, silos === 1 && pourLeGros && touchesAvant === 0 && explose >= 70 && explose <= 74 && 1e9 - gros.pv === 240 && petit.pv === 1e9 && impact)
 }
 
+// … ET IL GARDE L'ÉLAN DU VAISSEAU EN MONTANT (Keko, 27/11 : « quand je tire et que je vais vers le haut, on dirait que le
+// missile apparaît sous moi ») : le vaisseau file vers le haut au manche ; à mi-montée, le missile est encore sur lui
+{
+  const cfg: ConfigVaisseau = { ...VAISSEAU, coque: 1e9, armes: [{ id: 'minimissile', cadence: 6, degats: 240, portee: 200, vitesse: 110, vie: 1.8, dispersion: 0, guide: false, tousSens: true, zone: { rayon: 30 }, silo: { montee: 0.45, chute: 0.75 } } as Arme], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9, poussee: 0, vitesseMax: 0 }, derive: { ...VAISSEAU.derive, active: false } }
+  const w = nouveauMonde(cfg, 5)
+  w.invasion.prochainA = 1e9
+  w.vaisseau = { ...w.vaisseau, vx: 0, vy: -80, cap: -Math.PI / 2 }
+  w.armesA[0] = 1e9
+  w.ennemis.push({ id: 862, corps: { ...nouveauVaisseau(), x: 0, y: -150 }, pv: 1e9, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9, sorte: 'cuirassier' })
+  for (let i = 0; i < 20; i++) avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: -1 })
+  w.armesA[0] = 0
+  let ecart = NaN
+  let parcouru = 0
+  const y0 = w.vaisseau.y
+  for (let i = 0; i < 14; i++) {
+    avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: -1 })
+    const o = w.obus.find((x) => x.silo !== undefined)
+    if (o !== undefined) (ecart = Math.hypot(o.x - w.vaisseau.x, o.y - w.vaisseau.y)), (parcouru = y0 - w.vaisseau.y)
+  }
+  verifier(`le Silo garde l'élan du vaisseau : à mi-montée, le vaisseau a filé de ${parcouru.toFixed(0)} et le missile est à ${ecart.toFixed(1)} de lui (moins de 6)`, parcouru > 15 && ecart < 6)
+}
+
 // LE MISSILE TOURNE EN GRAND (Keko, 26/11 — voir `TRAJECTOIRE_DU_MISSILE.virage`) : sa cible passe derrière lui en vol ;
 // sans rayon de virage, il freinait presque à l'arrêt et repartait à l'envers ; avec, il garde sa vitesse et décrit un arc
 {

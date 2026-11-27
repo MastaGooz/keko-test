@@ -4011,7 +4011,9 @@ function tirerLesSilos(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
     if (cible === null) return
     m.armesA[i] = m.t + a.cadence
     const vie = si.montee + si.chute
-    m.obus.push({ id: m.prochainId++, x: v.x, y: v.y, vx: 0, vy: 0, vie, vie0: vie, degats: 0, guide: false, arme: a.id, ...effetsDuTir(a), silo: { cible: cible.id, montee: si.montee, tx: cible.corps.x, ty: cible.corps.y } })
+    // (IL GARDE L'ÉLAN DU VAISSEAU PENDANT SA MONTÉE — Keko, 27/11 : « quand je tire et que je vais vers le haut, on dirait
+    // que le missile apparaît sous moi » : parti du point de tir, il restait en arrière d'un vaisseau qui file)
+    m.obus.push({ id: m.prochainId++, x: v.x, y: v.y, vx: v.vx, vy: v.vy, vie, vie0: vie, degats: 0, guide: false, arme: a.id, ...effetsDuTir(a), silo: { cible: cible.id, montee: si.montee, tx: cible.corps.x, ty: cible.corps.y } })
     ev.push({ type: 'silo', x: v.x, y: v.y, cible: cible.id, arme: a.id })
   })
 }
@@ -7420,7 +7422,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
       const sc = o.silo
       const cible = m.ennemis.find((e) => e.id === sc.cible)
       if (cible !== undefined) (sc.tx = cible.corps.x), (sc.ty = cible.corps.y)
-      if ((o.vie0 ?? 0) - o.vie >= sc.montee) (o.x = sc.tx), (o.y = sc.ty)
+      if ((o.vie0 ?? 0) - o.vie >= sc.montee) (o.x = sc.tx), (o.y = sc.ty), (o.vx = 0), (o.vy = 0)
     }
     if (bouge) {
       o.x += o.vx * dt
