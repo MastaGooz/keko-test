@@ -684,20 +684,15 @@ export const MUTATIONS: Mutation[] = [
   variation('tentacule-meduse', 'tentacule', 'Méduse', 'Les piqûres appliquent électrocution.', changerA('tentacule', (a) => ({ ...a, electrocution: { ...ELECTROCUTION_DU_VORTEX } }))),
   // (« TENAILLE » RETIRÉE — Keko, 27/11 : « enlève aussi l'attaque avec les doubles tentacules » : la règle reste,
   // `Arme.tentacule.paire`)
-  // (« FOUET » — Keko : « il faudrait que ce soit une attaque supplémentaire ; on ne transforme pas la pointe du tentacule qui
-  // pique en fouet » : toutes les 2 s, un arc de 115°, 60 % des dégâts, en 0,25 s — chiffres de moi ; voir `Arme.fouet`)
-  variation('tentacule-fouet', 'tentacule', 'Fouet', 'Régulièrement, une tentacule fouette en arc de cercle.', ajouterA('tentacule', (a) => [ajoutee(a, 9, { cadence: 2, degats: fois(a, 0.6), tentacule: undefined, fouet: { ouverture: 1, duree: 0.25 } })])),
+  // (« FOUET » RETIRÉ — Keko, 27/11 : « enlève le balayage maintenant » : la règle reste, `Arme.fouet`)
   // (« EMPALEMENT » RETIRÉ — Keko, 27/11 : « c'est hyper moche en fait ; ça rend pas bien ; tu peux l'enlever pour que je
   // teste sans » : la règle reste, `Arme.tentacule.empale`, et son dessin, la tentacule droite qui traverse)
   // (« BOUTURE », SA VARIATION SUR COUP CRITIQUE — Keko : « un mini tentacule pousse sur l'ennemi touché, qui se met à attaquer
   // les ennemis proches » : 4 s, une piqûre toutes les 0,5 s à 30, 40 % des dégâts — chiffres et nom de moi ; voir
   // `Arme.bouture`)
   variation('tentacule-bouture', 'tentacule', 'Bouture', 'Un critique fait pousser sur l’ennemi une tentacule qui attaque.', changerA('tentacule', (a) => ({ ...a, bouture: { duree: 4, periode: 0.5, portee: 30, part: 0.4 } }))),
-  // (« MARIONNETTE » — Keko : « on laisse le tentacule planté dans la cible, ce qui garde la cible sous notre contrôle, à une
-  // certaine distance du vaisseau […] et il attaque les ennemis qui sont dans la zone » ; jamais un mini-boss ni un boss : une
-  // toutes les 6 s au plus, 4 s, une morsure toutes les 0,5 s à 50 % des dégâts fois la sienne — chiffres de moi ; voir
-  // `Arme.marionnette`)
-  variation('tentacule-marionnette', 'tentacule', 'Marionnette', 'Régulièrement, une piqûre retourne sa cible contre les siens.', changerA('tentacule', (a) => ({ ...a, marionnette: { tous: 6, duree: 4, periode: 0.5, part: 0.5 } }))),
+  // (« MARIONNETTE » RETIRÉE — Keko, 27/11 : « enlève le marionnettiste ; laisse-moi juste le Kraken de base » : la règle
+  // reste, `Arme.marionnette`)
   // LES CARTES D'ÉLÉMENT (Keko, 24/11 : « des cartes spéciales de chaque élément » ; « des cartes multicolores spéciales qu'on
   // proposera dans le pool des cartes spéciales, si le joueur a au moins une attaque avec l'élément en question » — voir
   // `ELEMENTAIRES` pour leurs chiffres ; leurs noms et leurs textes sont de moi)
