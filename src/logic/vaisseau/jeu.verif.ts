@@ -1601,7 +1601,7 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   const verrou = fouetter([[40, 0], [25, 10], [-10, 45]], 3, 0.2)
   verifier('un insecte verrouillé : elle va sur lui', verrou.pv[2] === 6 && verrou.pv[0] === 0 && verrou.pv[1] === 0)
   // (… TOUR À TOUR, SES SIX TENTACULES DU CORPS — Keko, 19/11 : une seule part à la fois, de la racine du côté de la cible)
-  const RACINES: [number, number][] = [[-0.2, -4.8], [-0.2, 4.8], [-3.2, -4.5], [-3.2, 4.5], [-5.4, -2.2], [-5.4, 2.2]]
+  const RACINES: [number, number][] = [[0.9, -4.3], [0.9, 4.3], [-1.1, -5.2], [-1.1, 5.2], [-3.3, -4.9], [-3.3, 4.9]]
   const corps = { ...tentacule, cadence: 0.42, tentacule: { ancres: RACINES, aller: 0.2, tenue: 0.08, retour: 0.24, virage: 0.35, alterne: true } }
   const cfgCorps = { ...cfg, armes: [corps] }
   const tourATour = (places: [number, number][], duree: number) => {

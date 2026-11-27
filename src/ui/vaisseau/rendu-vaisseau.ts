@@ -1010,7 +1010,13 @@ const AVANCE_DE_L_ABDOMEN_DU_KRAKEN = 3.4
  * LES RACINES DES SIX TENTACULES DU KRAKEN, sur son abdomen, en unités du vaisseau — la règle les reçoit d'ici quand la
  * Tentacule est montée (`Arme.tentacule.ancres`, Keko, 19/11 : « qu'il utilise ses tentacules arrière »).
  */
-export const RACINES_DU_KRAKEN: [number, number][] = ([[-3.6, -4.8], [-3.6, 4.8], [-6.6, -4.5], [-6.6, 4.5], [-8.8, -2.2], [-8.8, 2.2]] as [number, number][]).map(([x, y]): [number, number] => [x + AVANCE_DE_L_ABDOMEN_DU_KRAKEN, y])
+// (… TROIS DE CHAQUE CÔTÉ, VRAIMENT LATÉRALES — Keko, 27/11 : « ses tentacules devraient être vraiment latérales et pas
+// vers l'arrière ; un petit bout d'abdomen arrière qui viendrait remplacer les 2 tentacules arrière, et 3 tentacules de
+// chaque côté ; là, on dirait qu'il a des jambes » : les trois paires le long des flancs de l'abdomen, au plus large, et la
+// paire de la pointe a laissé sa place à la queue — voir `formesDeLaCoque`)
+export const RACINES_DU_KRAKEN: [number, number][] = ([[-2.5, -4.3], [-2.5, 4.3], [-4.5, -5.2], [-4.5, 5.2], [-6.7, -4.9], [-6.7, 4.9]] as [number, number][]).map(([x, y]): [number, number] => [x + AVANCE_DE_L_ABDOMEN_DU_KRAKEN, y])
+/** L'angle au repos de chaque paire de tentacules, depuis l'avant (en degrés) : en éventail autour du travers. */
+const ANGLES_DES_RACINES_DU_KRAKEN = [70, 90, 110]
 /**
  * LES SIX TENTACULES DU KRAKEN AU REPOS, en unités du vaisseau, chacune de sa racine à son bout (huit points) : À L'ARRÊT
  * elles s'écartent en étoile, chacune dans le prolongement de sa racine ; QUAND IL POUSSE (`flamme`), elles se rabattent
@@ -1020,7 +1026,7 @@ export const RACINES_DU_KRAKEN: [number, number][] = ([[-3.6, -4.8], [-3.6, 4.8]
 export function cordesDuKraken(flamme: number, t: number, devie = 0): [number, number][][] {
   const nage = Math.min(1, Math.max(0, flamme))
   return RACINES_DU_KRAKEN.map(([x0, y0], k) => {
-    const repos = Math.atan2(y0, x0 + 1.2)
+    const repos = (Math.sign(y0) * (ANGLES_DES_RACINES_DU_KRAKEN[Math.floor(k / 2)] ?? 90) * Math.PI) / 180
     let ecart = Math.PI + y0 * 0.04 - repos
     while (ecart > Math.PI) ecart -= 2 * Math.PI
     while (ecart < -Math.PI) ecart += 2 * Math.PI
@@ -1854,6 +1860,12 @@ export function formesDeLaCoque(cran: number, t = 0, motif?: MotifDuVer, noyau?:
       f.push(...faux([[5, sg * 2.9], [6.6, sg * 5.1], [8.6, sg * 5.6], [9.8, sg * 4.6]], 0.85))
       f.push(...faux([[3.4, sg * 3.2], [4.2, sg * 5.4], [5.8, sg * 6.4], [7.2, sg * 6.2]], 0.7))
     }
+    // (… ET SA QUEUE — Keko, 27/11 : « un petit bout d'abdomen arrière qui viendrait remplacer les 2 tentacules arrière » :
+    // un segment plus étroit qui s'effile derrière l'abdomen, sous lui, sa chair entre deux côtes, l'échine qui continue)
+    abdomen.push({ pts: [[-8.2, -2.5], [-9.6, -2.7], [-11.2, -2.3], [-12.6, -1.4], [-13.4, 0], [-12.6, 1.4], [-11.2, 2.3], [-9.6, 2.7], [-8.2, 2.5]], mat: 'chitine', relief: 'cyl' })
+    abdomen.push({ pts: ovale(-10.7, 0, 1.9, 1.35, 16), mat: 'chair', relief: 'dome', dome: { x: -10.7, y: 0, rx: 1.9, ry: 1.35 } })
+    for (const [x, w] of [[-10, 2.6], [-11.7, 1.9]] as [number, number][]) abdomen.push({ pts: [[x + 0.3, -w], [x + 0.6, -w * 0.45], [x + 0.7, 0], [x + 0.6, w * 0.45], [x + 0.3, w], [x - 0.3, w * 0.95], [x + 0.05, w * 0.45], [x + 0.15, 0], [x + 0.05, -w * 0.45], [x - 0.3, -w * 0.95]], mat: 'chitine', relief: 'plat' })
+    for (const [x, k] of [[-9.6, 0.8], [-11, 0.65], [-12.3, 0.5]] as [number, number][]) abdomen.push({ pts: [[x + 0.7 * k, 0], [x - 0.3 * k, -1.35 * k], [x - 1.1 * k, -1.15 * k], [x - 0.5 * k, 0], [x - 1.1 * k, 1.15 * k], [x - 0.3 * k, 1.35 * k]], mat: 'graphite', relief: 'plat' })
     // L'ABDOMEN : sa carapace, ses deux sacs de chair, l'échine cuirassée qui le partage, les pustules de bile des sacs
     abdomen.push({ pts: [[-1.2, -2.2], [-2.6, -4.3], [-4.4, -5.3], [-6.6, -5], [-8.4, -3.4], [-9.4, -1.2], [-9.4, 1.2], [-8.4, 3.4], [-6.6, 5], [-4.4, 5.3], [-2.6, 4.3], [-1.2, 2.2]], mat: 'chitine', relief: 'cyl' })
     // (… DES SACS ALLONGÉS, BARRÉS DE CÔTES — mesuré à la capture : deux dômes ronds côte à côte, ça ne se lisait pas

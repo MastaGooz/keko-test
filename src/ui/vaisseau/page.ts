@@ -13516,16 +13516,30 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (corde === undefined) return
     const [ax, ay] = monde(corde[0])
     const [bx, by] = monde(corde[corde.length - 1])
+    // (L'EMPALEMENT — Keko, 27/11 : « que toute la tentacule traverse l'ennemi plutôt que de créer un bout bizarre qui
+    // dépasse » : son bout va au-delà de la cible, dans l'axe de sa racine à elle, jusqu'où l'empalement frappe — et elle
+    // part droite, en lance, pour passer par la cible)
+    const emp = CONF.armes[tn.arme]?.tentacule?.empale
+    let gx = tn.tx
+    let gy = tn.ty
+    if (emp !== undefined) {
+      const cible = m.ennemis.find((x) => x.id === tn.cible)
+      const d = Math.hypot(tn.tx - ax, tn.ty - ay) || 1
+      const au = (cible !== undefined ? rayonDe(CONF, cible) : 4) + emp.allonge
+      gx = tn.tx + ((tn.tx - ax) / d) * au
+      gy = tn.ty + ((tn.ty - ay) / d) * au
+    }
     const e = 1 - Math.pow(1 - tn.u, 2)
-    const fx = bx + (tn.tx - bx) * e
-    const fy = by + (tn.ty - by) * e
+    const fx = bx + (gx - bx) * e
+    const fy = by + (gy - by) * e
     const L = Math.hypot(fx - ax, fy - ay) || 1
     // (l'arc passe par le flanc de sa racine)
     const cote = Math.sign(RACINES_DU_KRAKEN[tn.ancre]?.[1] ?? 1) || 1
     const lx = -sa * cote
     const ly = ca * cote
-    const cx = (ax + fx) / 2 + lx * L * 0.32
-    const cy = (ay + fy) / 2 + ly * L * 0.32
+    const arc = emp !== undefined ? 0 : 0.32
+    const cx = (ax + fx) / 2 + lx * L * arc
+    const cy = (ay + fy) / 2 + ly * L * arc
     const plantee = tn.fait === 'plantee'
     const n = Math.max(8, Math.ceil(L / 1.4))
     const pts: [number, number][] = []
@@ -13687,28 +13701,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       if (a?.electrocution !== undefined) dessinerDesFilamentsElectriques(p, pts, detente > 0.6 ? [b.tx, b.ty] : null, b.id)
     }
   }
-  /** L'AIGUILLE DE L'EMPALEMENT (voir `Arme.tentacule.empale`) : un dard d'os qui jaillit à travers la cible, et s'efface. */
-  let aiguillesEmpalees: { x0: number; y0: number; x1: number; y1: number; t0: number }[] = []
-  const DUREE_DE_L_AIGUILLE = 0.2
-  function dessinerLesAiguillesEmpalees(p: Peintre): void {
-    for (const ai of aiguillesEmpalees) {
-      const age = t - ai.t0
-      const sort = Math.min(1, age / 0.05)
-      const k = age < 0.1 ? 1 : 1 - (age - 0.1) / (DUREE_DE_L_AIGUILLE - 0.1)
-      const x1 = ai.x0 + (ai.x1 - ai.x0) * sort
-      const y1 = ai.y0 + (ai.y1 - ai.y0) * sort
-      const L = Math.hypot(ai.x1 - ai.x0, ai.y1 - ai.y0) || 1
-      const nx = -(ai.y1 - ai.y0) / L
-      const ny = (ai.x1 - ai.x0) / L
-      p.line(ai.x0 + nx, ai.y0 + ny, x1, y1, OS[0], k)
-      p.line(ai.x0 - nx * 0.5, ai.y0 - ny * 0.5, x1, y1, OS[2], k)
-      p.line(ai.x0, ai.y0, x1, y1, OS[1], k)
-      p.dot(x1, y1, OS[3], k)
-    }
-  }
   function dessinerLesTentacules(p: Peintre): void {
-    aiguillesEmpalees = aiguillesEmpalees.filter((ai) => t - ai.t0 < DUREE_DE_L_AIGUILLE)
-    if ((m.tentacules.length === 0 && m.fouets.length === 0 && m.boutures.length === 0 && aiguillesEmpalees.length === 0) || m.phase !== 'vol') return
+    if ((m.tentacules.length === 0 && m.fouets.length === 0 && m.boutures.length === 0) || m.phase !== 'vol') return
     p.place(W / 2 - camera.x, centreY() - camera.y)
     dessinerLesBoutures(p)
     dessinerLesFouets(p)
@@ -13760,7 +13754,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.px(Math.round(x1 + ux * (4 + enfonce)), Math.round(y1 + uy * (4 + enfonce)), OS[3])
       if (plantee) p.glow(tn.tx, tn.ty, 5, BILE[1], 0.35)
     }
-    dessinerLesAiguillesEmpalees(p)
     p.place(0, 0)
   }
   /**
@@ -18638,11 +18631,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           toucheEnnemiA.set(ev.id, t)
           break
         case 'empale':
-          // (L'EMPALEMENT : le dard d'os jaillit à travers la cible, des éclats d'os et de bile à sa pointe)
-          aiguillesEmpalees.push({ x0: ev.x0, y0: ev.y0, x1: ev.x1, y1: ev.y1, t0: t })
+          // (L'EMPALEMENT : la tentacule traverse la cible — voir `dessinerUneTentaculeProjetee` —, des éclats d'os et de bile
+          // jaillissent de l'autre côté)
           for (let i = 0; i < 5; i++) {
             const a = Math.atan2(ev.y1 - ev.y0, ev.x1 - ev.x0) + R.range(-0.6, 0.6)
-            etincelles.ajouter('etincelle', ev.x1, ev.y1, Math.cos(a) * R.range(30, 70), Math.sin(a) * R.range(30, 70), R.range(0.15, 0.3), i % 2 === 0 ? OS[2] : BILE[1], 1, 1.5)
+            etincelles.ajouter('etincelle', ev.x0, ev.y0, Math.cos(a) * R.range(30, 70), Math.sin(a) * R.range(30, 70), R.range(0.15, 0.3), i % 2 === 0 ? OS[2] : BILE[1], 1, 1.5)
           }
           break
         case 'fouet':
