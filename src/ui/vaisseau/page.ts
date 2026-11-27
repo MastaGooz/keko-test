@@ -14815,6 +14815,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** L'instant du dernier claquement de tentacule (trois à la fois : un seul son). */
   let fouetSonneA = -10
   let piqureDeBoutureA = -10
+  let morsureDeMarionnetteA = -10
   /** L'instant du dernier craquement de givre (voir l'événement `gele`). */
   let geleSonneA = -10
   let etourdiSonneA = -10
@@ -15293,6 +15294,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           p.ring(sx, sy, r, 1, c, k)
           p.dot(sx, sy, N.hex('#ffb0a8'), k)
           p.glow(sx, sy, r + 3, c, 0.25 * k)
+        }
+        // (C'EST UNE MARIONNETTE — Keko, 27/11, voir `Arme.marionnette` : la tentacule plantée en lui le tient ; il bat d'une
+        // lueur de bile, cerné de vert, et pâlit dans sa dernière demi-seconde)
+        if ((e.marionnetteA ?? -1) > m.t) {
+          const r = rayonDe(CONF, e)
+          const k = Math.min(1, ((e.marionnetteA ?? 0) - m.t) / 0.5)
+          const bat = 0.5 + 0.5 * Math.sin(t * 9 + e.id)
+          p.glow(sx, sy, r + 5, BILE[1], (0.25 + 0.2 * bat) * k)
+          p.ring(sx, sy, r + 1, 1, BILE[1], (0.45 + 0.35 * bat) * k)
         }
         // (IL EST ÉTOURDI — « Étourdissement », Keko, 24/11, voir `Arme.etourdissement` : trois étoiles jaunes qui tournent
         // au-dessus de lui)
@@ -18659,6 +18669,33 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           for (let i = 0; i < 3; i++) {
             const a = R.range(0, Math.PI * 2)
             etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(15, 35), Math.sin(a) * R.range(15, 35), R.range(0.1, 0.2), BILE[1], 1, 1)
+          }
+          break
+        case 'marionnette':
+          // (LA TENTACULE PREND SA MARIONNETTE : le « blop » de chair, une giclée de bile)
+          jouer('ponte', { dx: ev.x - v.x, dy: ev.y - v.y })
+          for (let i = 0; i < 8; i++) {
+            const a = R.range(0, Math.PI * 2)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(15, 45), Math.sin(a) * R.range(15, 45), R.range(0.15, 0.3), i % 2 === 0 ? BILE[2] : BILE[1], 1, 1.5)
+          }
+          break
+        case 'morsureMarionnette':
+          // (elle mord : la morsure des mini-vers, plus rare)
+          if (t - morsureDeMarionnetteA > 0.2) {
+            morsureDeMarionnetteA = t
+            jouer('morsureVer', { dx: ev.x - v.x, dy: ev.y - v.y })
+          }
+          for (let i = 0; i < 3; i++) {
+            const a = R.range(0, Math.PI * 2)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(15, 35), Math.sin(a) * R.range(15, 35), R.range(0.1, 0.2), CHAIR[4], 1, 1)
+          }
+          break
+        case 'marionnetteFinie':
+          // (la tentacule s'arrache : le « tchk » de l'aiguille, des lambeaux de chair et de bile)
+          jouer('piqure', { dx: ev.x - v.x, dy: ev.y - v.y })
+          for (let i = 0; i < 8; i++) {
+            const a = R.range(0, Math.PI * 2)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(10, 30), Math.sin(a) * R.range(10, 30), R.range(0.2, 0.35), i % 2 === 0 ? CHAIR[3] : BILE[1], 1, 1)
           }
           break
         case 'boutureFinie':

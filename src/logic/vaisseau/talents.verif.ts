@@ -202,11 +202,13 @@ verifier('le délai passé, ce qui restait à choisir part en réserve', reserve
   const bouture = mu('tentacule-bouture').appliquer(depart).armes[0]
   const empale = mu('tentacule-empalement').appliquer(depart).armes[0]
   const meduse = mu('tentacule-meduse').appliquer(depart).armes[0]
-  verifier(`la Tentacule a ${variations.length} variations (${variations.map((v) => v.nom).join(', ')}), aucune sans effet (${sansEffet.join(', ') || 'aucune'})`, variations.length === 5 && sansEffet.length === 0)
+  const marionnette = mu('tentacule-marionnette').appliquer(depart).armes[0]
+  verifier(`la Tentacule a ${variations.length} variations (${variations.map((v) => v.nom).join(', ')}), aucune sans effet (${sansEffet.join(', ') || 'aucune'})`, variations.length === 6 && sansEffet.length === 0)
   verifier(`Fouet : une seconde arme « tentacule », sans tentacule, qui fouette (${fouet?.degats} toutes les ${fouet?.cadence} s)`, avecFouet.armes.length === 2 && fouet.tentacule === undefined && fouet.fouet !== undefined && fouet.degats === 30)
   verifier(`Bouture : la carte « Durée » +50 % la fait vivre ${armeAmelioree(bouture, 'pose', 0.5).bouture?.duree} s au lieu de 4 ; sans elle, pas de carte « Durée »`, statsDeLArme(bouture).includes('pose') && !statsDeLArme(tentacule).includes('pose') && armeAmelioree(bouture, 'pose', 0.5).bouture?.duree === 6)
   verifier(`Empalement : « Zone et portée » +50 % pousse l'aiguille à ${armeAmelioree(empale, 'portee', 0.5).tentacule?.empale?.allonge} derrière la cible au lieu de 40`, armeAmelioree(empale, 'portee', 0.5).tentacule?.empale?.allonge === 60)
   verifier('Méduse : la tentacule électrocute, la carte « Électrocution » paraît', statsDeLArme(meduse).includes('electrocution') && !statsDeLArme(tentacule).includes('electrocution'))
+  verifier(`Marionnette : la carte « Durée » +50 % la tient ${armeAmelioree(marionnette, 'pose', 0.5).marionnette?.duree} s au lieu de 4, son minuteur ne bouge pas (${armeAmelioree(marionnette, 'pose', 0.5).marionnette?.tous} s)`, statsDeLArme(marionnette).includes('pose') && armeAmelioree(marionnette, 'pose', 0.5).marionnette?.duree === 6 && armeAmelioree(marionnette, 'pose', 0.5).marionnette?.tous === 6)
 }
 {
   // LES ÉTATS NE SE PRENNENT QUE POUR TOUTES LES ARMES (Keko, 23/11 : « une augmentation d'un état concerne toujours toutes

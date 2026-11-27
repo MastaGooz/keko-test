@@ -193,7 +193,8 @@ export const aUneZone = (a: Arme): boolean => valeurs(a, CLES_DE_ZONE).some((v) 
 // créature, une tourelle, ou la bobine tesla, qui est une forme de tourelle […] ça ne concerne pas les traînées, les zones
 // enflammées, les zones gelées » : la flaque de napalm en sort, la balise laser y entre)
 // (… ET LA BOUTURE DE LA TENTACULE — Keko, 27/11 : « la durée du tentacule est affectée par les cartes qui jouent sur la durée »)
-const POSEES = ['pose', 'balise', 'mine', 'ponte', 'sphere', 'lien', 'bouture'] as const
+// (… ET LA MARIONNETTE, le temps que la tentacule la tient)
+const POSEES = ['pose', 'balise', 'mine', 'ponte', 'sphere', 'lien', 'bouture', 'marionnette'] as const
 const CLES_DU_FEU: ReadonlySet<string> = new Set(['dpsBrulure'])
 const CLES_DU_GIVRE: ReadonlySet<string> = new Set(['ralenti'])
 /** Ce que l'arme pose, et sa durée. */
@@ -693,6 +694,11 @@ export const MUTATIONS: Mutation[] = [
   // les ennemis proches » : 4 s, une piqûre toutes les 0,5 s à 30, 40 % des dégâts — chiffres et nom de moi ; voir
   // `Arme.bouture`)
   variation('tentacule-bouture', 'tentacule', 'Bouture', 'Un critique fait pousser sur l’ennemi une tentacule qui attaque.', changerA('tentacule', (a) => ({ ...a, bouture: { duree: 4, periode: 0.5, portee: 30, part: 0.4 } }))),
+  // (« MARIONNETTE » — Keko : « on laisse le tentacule planté dans la cible, ce qui garde la cible sous notre contrôle, à une
+  // certaine distance du vaisseau […] et il attaque les ennemis qui sont dans la zone » ; jamais un mini-boss ni un boss : une
+  // toutes les 6 s au plus, 4 s, une morsure toutes les 0,5 s à 50 % des dégâts fois la sienne — chiffres de moi ; voir
+  // `Arme.marionnette`)
+  variation('tentacule-marionnette', 'tentacule', 'Marionnette', 'Régulièrement, une piqûre retourne sa cible contre les siens.', changerA('tentacule', (a) => ({ ...a, marionnette: { tous: 6, duree: 4, periode: 0.5, part: 0.5 } }))),
   // LES CARTES D'ÉLÉMENT (Keko, 24/11 : « des cartes spéciales de chaque élément » ; « des cartes multicolores spéciales qu'on
   // proposera dans le pool des cartes spéciales, si le joueur a au moins une attaque avec l'élément en question » — voir
   // `ELEMENTAIRES` pour leurs chiffres ; leurs noms et leurs textes sont de moi)
