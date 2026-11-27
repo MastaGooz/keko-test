@@ -9535,3 +9535,6 @@ Keko : « à la place de "Faites ceci pour débloquer ce vaisseau", plutôt "Ce 
 ### Verrouillés : plus d'aperçu, plus de statistiques (27/11)
 
 Keko : « pour les armes verrouillées, masque complètement l'encadré de prévisualisation ; pour les vaisseaux verrouillés, masque les statistiques et le passif de la faction ». Une arme verrouillée choisie n'a plus que sa plaque : « ??? » et l'encart d'or. La fiche d'un vaisseau verrouillé garde son bandeau (médaillon, « ??? », la race) et sa hauteur — la grille ne bouge pas —, mais ni jauges ni encart de défense : l'encart d'or seul, au milieu de la place qui reste.
+### La fiche d'un vaisseau verrouillé réduite (27/11)
+
+Keko : « tu as laissé l'encadré de fond assez grand, avec le message au milieu un peu bizarre ; fais comme pour les armes, réduis l'encadré à juste les points d'interrogation et le message ». La plaque d'un vaisseau verrouillé n'entoure plus que le bandeau (médaillon, « ??? », la race) et l'encart d'or, juste dessous. La grille garde la place de la fiche entière (`hauteurDeLaFicheDuVaisseau`) : elle ne bouge pas d'un vaisseau à l'autre.

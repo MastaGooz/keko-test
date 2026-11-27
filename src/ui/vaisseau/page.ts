@@ -6665,7 +6665,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * luit doucement, le texte en or clair — `DEBLOCAGE_A_VENIR`, en attendant les vraies conditions)
    */
   function dessinerLaFicheEnBandeau(p: Peintre, y: number, mo: ReturnType<typeof modeleDeVaisseau>, aSoi: boolean, cache: boolean, jauges: Jauge[], repere: ((j: Jauge) => number | null) | null, depuis: number, dit: string[], action: ((xd: number, yc: number) => void) | null, armement: (() => void) | null): number {
-    const hd = hauteurDeLaFicheDuVaisseau(mo)
+    // (VERROUILLÉ, LA PLAQUE SE RÉDUIT au bandeau et à l'encart d'or — Keko, 27/11 : « fais comme pour les armes, réduis
+    // l'encadré » ; la grille garde la place de la fiche entière, `hauteurDeLaFicheDuVaisseau`, et ne bouge pas)
+    const hd = cache ? 2 + HAUT_DU_BANDEAU + 4 + 3 * INTERLIGNE + 2 + 4 : hauteurDeLaFicheDuVaisseau(mo)
     const [sombre, moyen, clair] = TEINTES_DES_RACES[mo.race]
     const [haut, bas, halo] = FONDS_DES_RACES[mo.race]
     const R = RAYON_DU_BANDEAU
@@ -6687,11 +6689,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     ecrire(p, lignesDuNomDeRace(mo.race)[0], tx, my + 4, aSoi ? clair : COQUE[3])
     if (action !== null) action(bx + bw - 5, Math.round(my))
     // (VERROUILLÉ : NI SES JAUGES NI CE QUI DÉFEND SA RACE — Keko, 27/11 : « masque les statistiques et le passif de la
-    // faction » — ; l'encart d'or seul, au milieu de la place qui reste : la fiche garde sa hauteur, la grille ne bouge pas)
+    // faction » — ; l'encart d'or seul, sous le bandeau)
     if (cache) {
-      const y0 = by + HAUT_DU_BANDEAU + 4
-      const hb = 3 * INTERLIGNE + 2
-      dessinerLEncartVerrouille(p, y0 + Math.max(0, Math.round((y + hd - 3 - y0 - hb) / 2)), Math.min(y + hd - 3 - y0, hb), DEBLOCAGE_A_VENIR)
+      dessinerLEncartVerrouille(p, by + HAUT_DU_BANDEAU + 4, 3 * INTERLIGNE + 2, DEBLOCAGE_A_VENIR)
       return hd
     }
     // LES JAUGES, sur toute la largeur
