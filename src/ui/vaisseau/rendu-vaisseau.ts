@@ -1024,7 +1024,7 @@ const ANGLES_DES_RACINES_DU_KRAKEN = [70, 90, 110]
  * projetée (voir `Allure.kraken`).
  */
 // (… ET L'ENVERGURE — Keko, 27/11 : « on les fait se déployer en ondulant beaucoup plus loin » : `allonge`, de 0 à 1, étire
-// chaque maillon jusqu'à 2,4 fois et creuse leur houle, plus lente et plus ample)
+// chaque maillon jusqu'à 2,4 fois et creuse leur houle, plus ample)
 export function cordesDuKraken(flamme: number, t: number, devie = 0, allonge = 0): [number, number][][] {
   const nage = Math.min(1, Math.max(0, flamme))
   return RACINES_DU_KRAKEN.map(([x0, y0], k) => {
@@ -1037,7 +1037,11 @@ export function cordesDuKraken(flamme: number, t: number, devie = 0, allonge = 0
     let y = y0
     const c: [number, number][] = [[x, y]]
     for (let i = 0; i < 7; i++) {
-      an += Math.sin(t * (2.4 - 0.9 * allonge) + k * 1.3 - i * 0.8) * 0.17 * (1.4 - 0.6 * nage) * (1 + 0.7 * allonge) + devie * 0.03
+      // (LA HOULE GARDE SON RYTHME — Keko, 27/11 : « les tentacules latérales qui n'attaquent pas ont des allers-retours
+      // bizarres » : sa fréquence baissait avec `allonge`, or elle multiplie le temps écoulé — au moindre pas du déploiement,
+      // sa phase bondissait de plusieurs tours, et les bras fouettaient dans tous les sens tant qu'il montait ou retombait ;
+      // seule son ampleur grandit désormais)
+      an += Math.sin(t * 2.4 + k * 1.3 - i * 0.8) * 0.17 * (1.4 - 0.6 * nage) * (1 + 0.7 * allonge) + devie * 0.03
       x += Math.cos(an) * 1.8 * (1 + 1.4 * allonge)
       y += Math.sin(an) * 1.8 * (1 + 1.4 * allonge)
       c.push([x, y])
