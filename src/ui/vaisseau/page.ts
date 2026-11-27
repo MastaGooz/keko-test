@@ -12209,6 +12209,55 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     for (const e of touches) if (Math.hypot(e.corps.x - v.x, e.corps.y - v.y) < Math.hypot(proche.corps.x - v.x, proche.corps.y - v.y)) proche = e
     return { fort: Math.min(1, 0.7 + 0.1 * (touches.length - 1)), dx: proche.corps.x - v.x, dy: proche.corps.y - v.y }
   }
+  /**
+   * LA LANGUE-HARPON DU KRAKEN (Keko, 27/11 : « il faudrait qu'il sorte de la gueule du Kraken, comme une langue harpon » —
+   * voir `Arme.harpon.langue`) : de la gueule à sa proie, UNE LANGUE de chair rouge, mouillée — épaisse à la gueule, fine au
+   * bout, cernée de sombre, un sillon au milieu, un reflet sur le dessus — ; lancée, elle ondule en se déroulant ; plantée,
+   * elle se tend et vibre, et des GORGÉES remontent le long d'elle, de la proie vers la gueule, de plus en plus vite à
+   * mesure qu'elle ronge ; au bout, UN DARD D'OS à deux barbes ; une lueur rouge grandit sur la proie.
+   */
+  const ROUGE_DE_LANGUE = ['#2a0810', '#7a1626', '#b82c3c', '#e2565e', '#ff9c98', '#ffd6cc'].map((c) => N.hex(c))
+  function dessinerLaLangue(p: Peintre, h: (typeof m.harpons)[number], hp: { montee: number; langue?: [number, number] }): void {
+    const E = echelleVue()
+    const ca = Math.cos(v.cap)
+    const sa = Math.sin(v.cap)
+    const [gx, gy] = hp.langue ?? [7.8, 0]
+    const ax = v.x + (gx * ca - gy * sa) * E
+    const ay = v.y + (gx * sa + gy * ca) * E
+    const L = Math.hypot(h.x - ax, h.y - ay) || 1
+    const ux = (h.x - ax) / L
+    const uy = (h.y - ay) / L
+    const nx = -uy
+    const ny = ux
+    const tendue = h.plante !== null
+    const part = tendue ? Math.min(1, (m.t - h.plante!) / hp.montee) : 0
+    const Lg = ROUGE_DE_LANGUE
+    const n = Math.max(6, Math.ceil(L / 0.8))
+    // (elle pend un peu de côté ; lancée, elle ondule ; tendue, elle vibre)
+    const pend = L * 0.1 * Math.sin(t * 1.5 + h.cible)
+    const pts: [number, number][] = []
+    for (let i = 0; i <= n; i++) {
+      const q = i / n
+      const o = Math.sin(Math.PI * q) * (pend * (tendue ? 0.5 : 1) + (tendue ? Math.sin(q * 30 + t * 50) * 0.3 : Math.sin(q * 9 - t * 26) * 1.8))
+      pts.push([ax + ux * L * q + nx * o, ay + uy * L * q + ny * o])
+    }
+    // (les gorgées : des renflements qui remontent de la proie vers la gueule)
+    const gorgee = (q: number): number => (tendue ? Math.pow(Math.max(0, Math.sin(Math.PI * 2 * (q * 2.5 + t * (0.9 + 2.2 * part)))), 6) : 0)
+    const epais = (i: number): number => (0.85 - 0.45 * (i / n) + 0.4 * gorgee(i / n)) * E
+    for (let i = 0; i <= n; i++) p.circle(pts[i][0], pts[i][1], epais(i) + 0.7, Lg[0])
+    for (let i = 0; i <= n; i++) p.circle(pts[i][0], pts[i][1], epais(i), gorgee(i / n) > 0.4 ? Lg[3] : Lg[2])
+    // (le sillon du milieu, et le reflet mouillé sur le dessus)
+    for (let i = 1; i < n; i += 2) p.dot(pts[i][0], pts[i][1], Lg[1], 0.8)
+    for (let i = 0; i <= n; i += 3) p.dot(pts[i][0] - nx * epais(i) * 0.5, pts[i][1] - ny * epais(i) * 0.5, gorgee(i / n) > 0.4 ? Lg[5] : Lg[4], 0.9)
+    // (le dard d'os, à deux barbes)
+    const pt = (a: number, b: number): number[] => [h.x + ux * a + nx * b, h.y + uy * a + ny * b]
+    p.poly([pt(4.2, 0), pt(-1, -1.5), pt(-1, 1.5)], Lg[0])
+    p.poly([pt(3.4, 0), pt(-0.4, -0.9), pt(-0.4, 0.9)], OS[2])
+    for (const sg of [-1, 1]) p.line(pt(0.2, sg * 1)[0], pt(0.2, sg * 1)[1], pt(-2.2, sg * 2.5)[0], pt(-2.2, sg * 2.5)[1], OS[1])
+    p.px(Math.round(pt(3.2, 0)[0]), Math.round(pt(3.2, 0)[1]), OS[3])
+    if (tendue) p.glow(h.x, h.y, 5 + 6 * part, Lg[2], 0.25 + 0.4 * part)
+    if (CONF.armes[h.arme]?.electrocution !== undefined) dessinerDesFilamentsElectriques(p, pts, null, h.cible)
+  }
   const DUREE_DE_LA_CASSURE = 0.25
   function dessinerLesHarpons(p: Peintre): void {
     for (let i = cassuresDuHarpon.length - 1; i >= 0; i--) if (t - cassuresDuHarpon[i].t0 > DUREE_DE_LA_CASSURE) cassuresDuHarpon.splice(i, 1)
@@ -12223,6 +12272,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     for (const h of m.harpons) {
       const hp = CONF.armes[h.arme]?.harpon
       if (hp === undefined) continue
+      if (hp.langue !== undefined) {
+        dessinerLaLangue(p, h, hp)
+        continue
+      }
       const L0 = Math.hypot(h.x - v.x, h.y - v.y) || 1
       const ux = (h.x - v.x) / L0
       const uy = (h.y - v.y) / L0
@@ -18850,7 +18903,21 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           secousse = Math.max(secousse, 0.45)
           if (typeof navigator.vibrate === 'function') vibrer(25)
           break
+        case 'langue':
+          // (LA LANGUE-HARPON part de la gueule : un claquement mouillé)
+          jouer('fouet', { dx: 0, dy: 0 })
+          break
         case 'harponPlante':
+          // (LA LANGUE DU KRAKEN se plante : le « tchk » charnu de l'aiguille, une giclée de sang, une petite secousse)
+          if (ev.langue === true) {
+            jouer('piqure', { dx: ev.x - v.x, dy: ev.y - v.y })
+            for (let i = 0; i < 8; i++) {
+              const a = R.range(0, Math.PI * 2)
+              etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(30, 80), Math.sin(a) * R.range(30, 80), R.range(0.12, 0.3), i % 2 === 0 ? ROUGE_DE_LANGUE[4] : BILE[1], 1, 1.5)
+            }
+            secousse = Math.max(secousse, 0.15)
+            break
+          }
           // (LE HARPON SE PLANTE — voir `Arme.harpon` : son choc, un éclair, une gerbe d'acier et de sang, une petite secousse)
           jouer('harponPlante', { dx: ev.x - v.x, dy: ev.y - v.y })
           flashs.push({ x: ev.x, y: ev.y, t0: t, r: 4 })
@@ -18862,6 +18929,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           secousse = Math.max(secousse, 0.25)
           break
         case 'harponCasse':
+          // (la langue lâche : en silence, elle rentre)
+          if (ev.langue === true) break
           // (le câble casse : son claquement, ses deux bouts qui se détendent)
           jouer('harponCasse', { dx: ev.x - v.x, dy: ev.y - v.y })
           cassuresDuHarpon.push({ x0: v.x, y0: v.y, x1: ev.x, y1: ev.y, t0: t })

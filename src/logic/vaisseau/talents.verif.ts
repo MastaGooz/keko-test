@@ -189,7 +189,7 @@ verifier('le délai passé, ce qui restait à choisir part en réserve', reserve
   verifier(`l'Empire a ${ARMES_DE_FACTION.filter((x) => x.race === 'humains').length} nouvelles armes ; six variations par arme (${ids.map((id) => `${id} ${MUTATIONS.filter((x) => x.sorte === 'variation' && x.arme === id).length}`).join(', ')}) ; aucune sans effet (${sansEffet || 'aucune'})`, ARMES_DE_FACTION.filter((x) => x.race === 'humains').length === 6 && ids.every((id) => MUTATIONS.filter((x) => x.sorte === 'variation' && x.arme === id).length === (EN_REVUE[id] ?? 6)) && sansEffet === '')
 }
 {
-  // LA TENTACULE DU KRAKEN (Keko, 27/11) : ses variations — la Méduse, le Fouet refait, la Lacération, l'Envergure, la Bouture — changent toutes sa config ;
+  // LA TENTACULE DU KRAKEN (Keko, 27/11) : ses variations — la Méduse, le Fouet refait, la Lacération, l'Envergure, la Langue, la Bouture : les six — changent toutes sa config ;
   // le Fouet AJOUTE une attaque, sans tentacule à lui — la piqûre reste ;
   // la Bouture a une durée que la carte « Durée » allonge ;
   // la Méduse ouvre les cartes d'électrocution
@@ -202,7 +202,7 @@ verifier('le délai passé, ce qui restait à choisir part en réserve', reserve
   const meduse = mu('tentacule-meduse').appliquer(depart).armes[0]
   const avecFouet = mu('tentacule-fouet').appliquer(depart)
   const fouet = avecFouet.armes[1]
-  verifier(`la Tentacule a ${variations.length} variations (${variations.map((v) => v.nom).join(', ')}), aucune sans effet (${sansEffet.join(', ') || 'aucune'})`, variations.length === 5 && sansEffet.length === 0)
+  verifier(`la Tentacule a ${variations.length} variations (${variations.map((v) => v.nom).join(', ')}), aucune sans effet (${sansEffet.join(', ') || 'aucune'})`, variations.length === 6 && sansEffet.length === 0)
   verifier(`Bouture : la carte « Durée » +50 % la fait vivre ${armeAmelioree(bouture, 'pose', 0.5).bouture?.duree} s au lieu de 4 ; sans elle, pas de carte « Durée »`, statsDeLArme(bouture).includes('pose') && !statsDeLArme(tentacule).includes('pose') && armeAmelioree(bouture, 'pose', 0.5).bouture?.duree === 6)
   verifier('Méduse : la tentacule électrocute, la carte « Électrocution » paraît', statsDeLArme(meduse).includes('electrocution') && !statsDeLArme(tentacule).includes('electrocution'))
   verifier(`Fouet : la piqûre reste, le fouet s'y ajoute — une seconde arme sans tentacule (${fouet?.degats} toutes les ${fouet?.cadence} s)`, avecFouet.armes.length === 2 && avecFouet.armes[0].tentacule !== undefined && fouet.tentacule === undefined && fouet.fouet !== undefined && fouet.degats === 50 && fouet.cadence === 1.2)

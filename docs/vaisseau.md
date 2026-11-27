@@ -9665,3 +9665,14 @@ Keko : « lorsque le Kraken est immobile, ses tentacules s'étendent de plus en 
   - Elle ÉTAIT déjà multiplicative, et un test le fixe maintenant : les cartes « Zone et portée » s'additionnent entre elles, puis l'Envergure multiplie le tout par 2. Avec +50 % de portée : 55 × 1,5 × 2 = 165. Aucune carte ne grandit son facteur.
   - Déployée à fond, chaque coup de la piqûre, de la Lacération ou du Fouet REPOUSSE l'insecte de 12, à l'opposé du vaisseau (`deploiement.recul`, événement `repousse`, un souffle clair). Pas la Bouture, pas un grand, pas une roche. Le même insecte n'est repoussé qu'une fois toutes les 0,8 s : un minuteur à lui, pas la cadence. Chiffres de moi.
   - Texte : « Sans propulsion, la portée double, puis les coups repoussent. » (cinq lignes, vérifié en capture).
+### La Langue, sixième carte de la Tentacule (27/11)
+
+Keko : « ok pour le harpon », puis « il faudrait qu'il sorte de la gueule du Kraken, comme une langue harpon ». C'est le harpon mis de côté le 23/11 (« mieux aux Xénoïdes, en mode tentacule harpon »), sa règle `Arme.harpon` reprise telle quelle avec un champ `langue` (la gueule d'où il part). La carte s'appelle « Langue » : « Harpon » est le nom de l'arme en réserve, et `talents.verif.ts` refuse les doublons.
+
+- UNE ATTAQUE EN PLUS, la piqûre reste : `ajoutee(a, 11, { cadence: 1.5, degats: 60 % de la tentacule, harpon: { vitesse: 300, max: 4, montee: 4, rupture: 1.3, impact: 1.67, langue: [7.8, 0] } })`. Chiffres de moi.
+- La langue part de la gueule vers l'ennemi qui a LE PLUS DE VIE à portée (le verrouillé d'abord). En se plantant, elle frappe d'un coup de tentacule (30 × 1,67 = 50). Puis elle le ronge de 30 par seconde, jusqu'à 120 par seconde au bout de 4 s. C'est un plafond fixe, pas un pourcentage de vie.
+- Elle lâche si la proie meurt ou sort de 1,3 fois la portée, et repart 1,5 s après. Sa portée suit l'Envergure (`porteeTentaculaire`).
+- Elle porte l'élément (l'électrocution de la Méduse, à la plantée puis relancée avant qu'elle ne s'éteigne) et fait pousser une Bouture sur un critique de la plantée.
+- Le dessin (`dessinerLaLangue`) : une langue rouge mouillée, épaisse à la gueule et fine au bout, un sillon au milieu, un reflet. Lancée, elle ondule. Plantée, elle se tend et vibre, et des gorgées remontent de la proie vers la gueule, de plus en plus vite. Au bout, un dard d'os à deux barbes, et une lueur rouge qui grandit sur la proie.
+- Texte : « Une langue harponne l'ennemi le plus résistant et le ronge. » (cinq lignes, vérifié en capture).
+- La Tentacule a ses six cartes : Méduse, Fouet, Lacération, Envergure, Langue, Bouture.

@@ -694,6 +694,12 @@ export const MUTATIONS: Mutation[] = [
   // le balayage bénéficie de cette portée » : jusqu'au double en 3 s sans pousser — pas « immobile » : dès que la propulsion s'arrête —, repliée en 0,4 s quand il pousse — chiffres
   // de moi ; voir `Arme.deploiement`)
   variation('tentacule-envergure', 'tentacule', 'Envergure', 'Sans propulsion, la portée double, puis les coups repoussent.', changerA('tentacule', (a) => ({ ...a, deploiement: { max: 2, montee: 3, descente: 0.4, seuil: 0.05, recul: { distance: 12, tous: 0.8 } } }))),
+  // (« LANGUE » — « Harpon » est le nom de l'arme mise de côté — Keko, 27/11 : la carte anti-boss de la Tentacule, le harpon mis de côté le 23/11 pour les Xénoïdes ; « il
+  // faudrait qu'il sorte de la gueule du Kraken, comme une langue harpon » : UNE ATTAQUE EN PLUS — la piqûre reste —, la
+  // langue part de la gueule sur l'ennemi le plus résistant à portée, s'y plante (un coup de la tentacule) et le ronge de 60 %
+  // des dégâts de la tentacule par seconde, jusqu'à quatre fois plus en 4 s ; elle lâche s'il sort de 1,3 fois la portée, et
+  // repart 1,5 s après — chiffres de moi ; voir `Arme.harpon.langue`)
+  variation('tentacule-langue', 'tentacule', 'Langue', 'Une langue harponne l’ennemi le plus résistant et le ronge.', ajouterA('tentacule', (a) => [ajoutee(a, 11, { cadence: 1.5, degats: fois(a, 0.6), tentacule: undefined, deploiement: undefined, harpon: { vitesse: 300, max: 4, montee: 4, rupture: 1.3, impact: 1.67, langue: [7.8, 0] } })])),
   // (« BOUTURE », SA VARIATION SUR COUP CRITIQUE — Keko : « un mini tentacule pousse sur l'ennemi touché, qui se met à attaquer
   // les ennemis proches » : 4 s, une piqûre toutes les 0,5 s à 30, 40 % des dégâts — chiffres et nom de moi ; voir
   // `Arme.bouture` ; elle grandit de 25 % à chaque critique qui la relance, jusqu'au double — Keko, 27/11, chiffres de moi)

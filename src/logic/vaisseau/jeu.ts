@@ -821,7 +821,11 @@ export type Arme = {
    * L'état est `Monde.harpons`. *Les chiffres sont de moi.* (EN SE PLANTANT, IL FRAPPE de `impact` fois ses dégâts : sans ce
    * coup, la montée du câble faisait traîner chaque petit insecte — mesuré, 0,28 sur la vague.)
    */
-  harpon?: { vitesse: number; max: number; montee: number; rupture: number; impact: number }
+  // (… ET LA LANGUE-HARPON DU KRAKEN — Keko, 27/11 : le harpon, mis de côté le 23/11 « pour les Xénoïdes, en mode tentacule
+  // harpon », revient en carte de la Tentacule ; « il faudrait qu'il sorte de la gueule du Kraken, comme une langue
+  // harpon » : `langue`, la gueule d'où il part, en unités du vaisseau — il sonne et se dessine en chair, applique l'élément
+  // de l'arme en se plantant et tant qu'il tient, fait pousser une bouture sur un critique, et sa portée suit l'Envergure)
+  harpon?: { vitesse: number; max: number; montee: number; rupture: number; impact: number; langue?: [number, number] }
   /**
    * UNE BALISE LASER (la sixième arme de l'Empire, Keko, 23/11 : « le vaisseau lance une balise, et durant tout le temps où
    * la balise est active, un rayon laser rouge est tracé entre la balise et le vaisseau ; tous les ennemis traversés par le
@@ -1933,7 +1937,7 @@ export type Evenement =
   /** La bobine tesla foudroie un insecte (voir `Arme.sphere.foudre`). */
   | { type: 'foudre'; x0: number; y0: number; x1: number; y1: number }
   /** Un harpon se plante dans sa cible, ou son câble casse (voir `Arme.harpon`). */
-  | { type: 'harponPlante'; x: number; y: number; id: number }
+  | { type: 'harponPlante'; x: number; y: number; id: number; /** La langue-harpon du Kraken (voir `Arme.harpon.langue`). */ langue?: boolean }
   /** Un coup critique détone (voir `Arme.detonation`). */
   | { type: 'detonation'; x: number; y: number; rayon: number; arme?: string }
   /** Le souffle d'un missile (voir `Arme.souffle`) : le cône part de (x, y) vers `cap`, sur `longueur`, `ouverture` de chaque côté. */
@@ -1942,7 +1946,7 @@ export type Evenement =
   | { type: 'sillon'; x: number; y: number; gel: boolean; electrique: boolean }
   /** Un coup critique exécute un insecte qui en aurait réchappé (voir `Arme.execute`) : où, et sa taille. */
   | { type: 'execution'; x: number; y: number; rayon: number }
-  | { type: 'harponCasse'; x: number; y: number }
+  | { type: 'harponCasse'; x: number; y: number; langue?: boolean }
   /** La balle du railgun traverse un insecte (voir `Arme.balle`), là où il est, filant à `cap`. */
   | { type: 'balleTraverse'; x: number; y: number; cap: number }
   /** Une tentacule s'étend vers un insecte, le pique (voir `Arme.tentacule`). */
@@ -1954,6 +1958,8 @@ export type Evenement =
   | { type: 'bouture'; x: number; y: number }
   | { type: 'coupDeBouture'; x: number; y: number }
   | { type: 'boutureFinie'; x: number; y: number }
+  /** La langue-harpon part de la gueule (voir `Arme.harpon.langue`). */
+  | { type: 'langue'; x: number; y: number }
   /** Un coup de l'Envergure repousse un insecte (voir `Arme.deploiement.recul`) : où il était, et vers où (un vecteur unité). */
   | { type: 'repousse'; x: number; y: number; ux: number; uy: number }
   /** Un coup de la lacération (voir `Arme.tentacule.lacere`) : où, depuis quelle racine (son rang), le combientième. */
@@ -6359,7 +6365,7 @@ function harponner(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]): vo
       if (m.phase !== 'vol' || m.t < (m.armesA[i] ?? 0)) return
       // (sa cible : le verrouillé à portée ; sinon l'insecte qui a le plus de points de vie — un qu'aucun autre harpon ne
       // tient, s'il y en a ; une roche sans insecte)
-      const aPortee = (e: Ennemi): boolean => Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= a.portee + rayonDe(c, e)
+      const aPortee = (e: Ennemi): boolean => Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= (hp.langue !== undefined ? porteeTentaculaire(c, m, a) : a.portee) + rayonDe(c, e)
       const tenus = new Set(m.harpons.map((x) => x.cible))
       let cible: Ennemi | null = null
       const ve = ennemiVerrouille(m)
@@ -6368,17 +6374,19 @@ function harponner(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]): vo
       if (cible === null) for (const e of m.ennemis) if (choisissable(m, e) && aPortee(e) && (cible === null || Math.hypot(e.corps.x - v.x, e.corps.y - v.y) < Math.hypot(cible.corps.x - v.x, cible.corps.y - v.y))) cible = e
       if (cible === null) return
       const an = Math.atan2(cible.corps.y - v.y, cible.corps.x - v.x)
-      const x0 = v.x + Math.cos(an) * (c.rayon + 2)
-      const y0 = v.y + Math.sin(an) * (c.rayon + 2)
-      m.harpons.push({ arme: i, x: x0, y: y0, vx: Math.cos(an) * hp.vitesse, vy: Math.sin(an) * hp.vitesse, cible: cible.id, plante: null, reste: a.portee * 2 })
-      ev.push({ type: 'obus', x: x0, y: y0, arme: a.id })
+      // (la langue part de la gueule ; le harpon, du bord du vaisseau)
+      const gueule = hp.langue === undefined ? null : ancreDansLeMonde(v, hp.langue)
+      const x0 = gueule?.x ?? v.x + Math.cos(an) * (c.rayon + 2)
+      const y0 = gueule?.y ?? v.y + Math.sin(an) * (c.rayon + 2)
+      m.harpons.push({ arme: i, x: x0, y: y0, vx: Math.cos(an) * hp.vitesse, vy: Math.sin(an) * hp.vitesse, cible: cible.id, plante: null, reste: a.portee * 4 })
+      ev.push(hp.langue !== undefined ? { type: 'langue', x: x0, y: y0 } : { type: 'obus', x: x0, y: y0, arme: a.id })
       return
     }
     const e = m.ennemis.find((x) => x.id === h.cible)
     const casse = (): void => {
       m.harpons = m.harpons.filter((x) => x !== h)
       m.armesA[i] = m.t + a.cadence
-      ev.push({ type: 'harponCasse', x: h.x, y: h.y })
+      ev.push({ type: 'harponCasse', x: h.x, y: h.y, ...(hp.langue !== undefined ? { langue: true } : {}) })
     }
     if (e === undefined || m.phase !== 'vol') return casse()
     if (h.plante === null) {
@@ -6391,10 +6399,12 @@ function harponner(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]): vo
         h.plante = m.t
         h.x = e.corps.x
         h.y = e.corps.y
-        ev.push({ type: 'harponPlante', x: e.corps.x, y: e.corps.y, id: e.id })
+        ev.push({ type: 'harponPlante', x: e.corps.x, y: e.corps.y, id: e.id, ...(hp.langue !== undefined ? { langue: true } : {}) })
         const critique = critiqueTire(c, m, a, e)
+        if (hp.langue !== undefined) effetsDuCoup(c, m, a, e, ev)
         e.pv -= a.degats * hp.impact * (critique ? facteurSur(c, m, a, e) : 1)
         ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })
+        if (hp.langue !== undefined && critique && a.bouture !== undefined && e.pv > 0) bouturer(c, m, a.bouture, i, e, v.x, v.y, ev)
         if (e.pv <= 0) {
           if (a.fragments !== undefined) fragmenter(m, e.corps.x, e.corps.y, a.fragments, e, elementDe(a))
           abattreLEnnemi(c, m, e, ev)
@@ -6412,7 +6422,9 @@ function harponner(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]): vo
     }
     h.x = e.corps.x
     h.y = e.corps.y
-    if (Math.hypot(e.corps.x - v.x, e.corps.y - v.y) > a.portee * hp.rupture + rayonDe(c, e)) return casse()
+    if (Math.hypot(e.corps.x - v.x, e.corps.y - v.y) > (hp.langue !== undefined ? porteeTentaculaire(c, m, a) : a.portee) * hp.rupture + rayonDe(c, e)) return casse()
+    // (la langue garde son élément sur sa proie : l'électrocution de la Méduse, relancée avant qu'elle ne s'éteigne)
+    if (hp.langue !== undefined && a.electrocution !== undefined && (e.electrocute === undefined || e.electrocute.jusque - m.t < 1)) effetsDuCoup(c, m, a, e, ev)
     const part = Math.min(1, (m.t - h.plante) / hp.montee)
     e.pv -= a.degats * (1 + (hp.max - 1) * part) * dt
     // (les cartes : le câble gèle et ralentit, enflamme ce qu'il tient ; à sa mort, des éclats)

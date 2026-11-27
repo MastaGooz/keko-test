@@ -1731,6 +1731,33 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
     const gros = repousser(true, 1.5)
     verifier(`Envergure : déployée à fond, la piqûre repousse l'insecte de 12 — de 60 à ${petit.x.toFixed(1)} en 1,5 s, ${petit.n} fois pour ${petit.coups} coups (une fois toutes les 0,8 s au plus) ; un grand n'est pas repoussé (${gros.x.toFixed(1)}, ${gros.n} fois)`, petit.n === 2 && petit.coups > petit.n && petit.x > 83 && petit.x < 86 && gros.x < 63 && gros.n === 0)
   }
+  // (HARPON : la langue part de la gueule sur l'insecte le plus résistant à portée, s'y plante, le ronge de plus en plus fort ;
+  // elle lâche s'il sort de 1,3 fois la portée, et repart après sa cadence)
+  {
+    const langue: Arme = { id: 'tentacule', cadence: 1.5, degats: 30, portee: 55, vitesse: 0, vie: 0, dispersion: 0, guide: false, harpon: { vitesse: 300, max: 4, montee: 4, rupture: 1.3, impact: 1.67, langue: [7.8, 0] } }
+    const conf = { ...sansCritique, armes: [langue] }
+    const w = nouveauMonde(conf, 3)
+    w.ennemis.push({ ...insecte(1, 30, -20), pv: 200 }, { ...insecte(2, 40, 10), pv: 5000 })
+    w.verrou = null
+    const ev: Evenement[] = []
+    const pas = (n: number, loin = false): void => {
+      for (let i = 0; i < n; i++) {
+        w.ennemis.forEach((e) => (e.corps = { ...e.corps, ...(loin && e.id === 2 ? { x: 80, y: 0 } : {}), vx: 0, vy: 0 }))
+        w.vaisseau = { ...w.vaisseau, x: 0, y: 0, vx: 0, vy: 0, cap: 0 }
+        ev.push(...avancerLeMonde(conf, w, 1 / 60, { x: 0, y: 0 }).evenements)
+      }
+    }
+    pas(60)
+    const apres1 = 5000 - w.ennemis.find((e) => e.id === 2)!.pv
+    pas(240)
+    const apres5 = 5000 - w.ennemis.find((e) => e.id === 2)!.pv
+    const d0 = w.ennemis.find((e) => e.id === 2)!.pv
+    pas(60)
+    const parSeconde = d0 - w.ennemis.find((e) => e.id === 2)!.pv
+    verifier(`Harpon : la langue part de la gueule et se plante dans le plus résistant (${w.harpons[0]?.cible}), pas le plus proche (${200 - w.ennemis.find((e) => e.id === 1)!.pv} de dégâts sur lui) ; elle le ronge de plus en plus fort — ${apres1.toFixed(0)} après 1 s, ${apres5.toFixed(0)} après 5 s, puis ${parSeconde.toFixed(0)} par seconde, quatre fois ses 30`, ev.some((e) => e.type === 'langue') && w.harpons[0]?.cible === 2 && w.ennemis.find((e) => e.id === 1)!.pv === 200 && apres1 > 50 && apres1 < 110 && Math.abs(parSeconde - 120) < 1)
+    pas(10, true)
+    verifier(`Harpon : l'insecte sorti de 1,3 fois la portée, elle lâche (${w.harpons.filter((h) => h.cible === 2).length} sur lui)`, ev.some((e) => e.type === 'harponCasse') && !w.harpons.some((h) => h.cible === 2 && h.plante !== null))
+  }
   // (BOUTURE : un critique fait pousser une petite tentacule sur l'insecte, au bord qui fait face au coup ; elle pique ses
   // voisins, pas lui ; un nouveau critique la fait repartir, sans en ajouter une seconde ; son hôte mort, elle meurt)
   {
