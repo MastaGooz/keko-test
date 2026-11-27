@@ -687,9 +687,8 @@ export const MUTATIONS: Mutation[] = [
   // (« FOUET » — Keko : « il faudrait que ce soit une attaque supplémentaire ; on ne transforme pas la pointe du tentacule qui
   // pique en fouet » : toutes les 2 s, un arc de 115°, 60 % des dégâts, en 0,25 s — chiffres de moi ; voir `Arme.fouet`)
   variation('tentacule-fouet', 'tentacule', 'Fouet', 'Régulièrement, une tentacule fouette en arc de cercle.', ajouterA('tentacule', (a) => [ajoutee(a, 9, { cadence: 2, degats: fois(a, 0.6), tentacule: undefined, fouet: { ouverture: 1, duree: 0.25 } })])),
-  // (« EMPALEMENT » — Keko : « ça transperce la cible principale et ça touche toutes les cibles derrière sur la distance de
-  // l'empalement » : 40 au-delà de son bord, de moi ; voir `Arme.tentacule.empale`)
-  variation('tentacule-empalement', 'tentacule', 'Empalement', 'L’aiguille transperce sa cible et touche tous les ennemis derrière elle.', changerA('tentacule', (a) => (a.tentacule === undefined ? a : { ...a, tentacule: { ...a.tentacule, empale: { allonge: 40, largeur: 3 } } }))),
+  // (« EMPALEMENT » RETIRÉ — Keko, 27/11 : « c'est hyper moche en fait ; ça rend pas bien ; tu peux l'enlever pour que je
+  // teste sans » : la règle reste, `Arme.tentacule.empale`, et son dessin, la tentacule droite qui traverse)
   // (« BOUTURE », SA VARIATION SUR COUP CRITIQUE — Keko : « un mini tentacule pousse sur l'ennemi touché, qui se met à attaquer
   // les ennemis proches » : 4 s, une piqûre toutes les 0,5 s à 30, 40 % des dégâts — chiffres et nom de moi ; voir
   // `Arme.bouture`)
