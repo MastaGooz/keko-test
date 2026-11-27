@@ -18,7 +18,7 @@ import { drawWord, spell } from 'pixelfx/fx/ui/_lib'
 import { firePuff, hotFirst, smokePuff } from 'pixelfx/fx/fire/_lib'
 import { VOLT, bowed, crackle, stroke, zigzag } from 'pixelfx/fx/lightning/_lib'
 import { Panes, snowflake } from 'pixelfx/fx/ice/_lib'
-import { slash as slashDuDepot } from 'pixelfx/fx/melee/_lib'
+import { slash as slashDuDepot, through as entailleQuiPasse, slashEnd as boutDuSlash } from 'pixelfx/fx/melee/_lib'
 import { textWidth } from 'pixelfx'
 import { pixelsDeLIcone } from './icones-armes.ts'
 import { HAUT_ACCENTS } from './police.ts'
@@ -40,6 +40,7 @@ import { animerAstre, astresVisibles, demiTailleDeLAstre, peindreAstre, rayonQui
 import * as EXPLOSION from '../pixelfx/fx/keko/explosion-espace.js'
 import * as EXPLOSION_OBUS from '../pixelfx/fx/keko/explosion-obus.js'
 import * as EXPLOSION_LASER from '../pixelfx/fx/keko/explosion-laser.js'
+import * as PERCEE_DE_LA_PIQURE from '../pixelfx/fx/keko/percee.js'
 import * as ECLATEMENT_ORGANIQUE from '../pixelfx/fx/keko/eclatement-organique.js'
 import * as EFFONDREMENT_NEANT from '../pixelfx/fx/keko/effondrement-neant.js'
 import * as TELEPORTATION from '../pixelfx/fx/keko/teleportation.js'
@@ -13721,82 +13722,27 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
   }
   /**
-   * LA PERCÉE DE LA PIQÛRE (Keko, 27/11 : « un effet de slash perçant pour l'attaque normale du tentacule » ; puis « je
-   * voulais une animation en mode thrust, un peu comme l'animation slash, mais en version perforante ; on veut vraiment une
-   * pointe qui slash vers l'avant » — la gerbe de traits en éventail, « plein de petites particules qui avancent », refusée) :
-   * LA RECETTE DU SLASH DU FOUET (le « Sword slash » de pixelfx) SUR UNE LIGNE DROITE — une lame en aiguille, dans l'axe de la
-   * piqûre, qui JAILLIT À TRAVERS LA CIBLE d'un coup (outExpo), tient, puis sa queue rattrape sa pointe ; effilée à sa queue,
-   * pleine près de sa pointe, pointue au bout ; blanche au cœur, elle refroidit vers ses bords, avec l'âge et vers sa queue ;
-   * un pointillé reste là où elle est passée, et sa pointe brille en arrivant. La rampe de la chair, de l'éclair avec la Méduse.
+   * LES ENTAILLES DE LA LACÉRATION (Keko, 27/11 : « on va utiliser le visuel de Dagger Flurry qu'il y a dans PixelFX » —
+   * voir `Arme.tentacule.lacere`) : à chaque coup de la rafale, UN PETIT CROISSANT du « Dagger flurry » du dépôt (`slash` de
+   * son `_lib`) qui passe sur l'insecte, chacun sous un autre angle et dans l'autre sens que le précédent, en miniature ; il
+   * file, tient, s'efface ; son bout brille. La rampe de la chair, de l'éclair avec la Méduse.
    */
-  let percees: { x: number; y: number; ux: number; uy: number; t0: number; elec: boolean }[] = []
-  const PERCEE = { arriere: 10, avant: 30, largeur: 5.5, file: 0.07, tient: 0.05, rentre: 0.2 }
-  const DUREE_DE_LA_PERCEE = PERCEE.file + PERCEE.tient + PERCEE.rentre + 0.2
-  function dessinerLesPercees(p: Peintre): void {
-    const borne = (x: number): number => Math.max(0, Math.min(1, x))
-    const lisse = (a: number, b: number, x: number): number => {
-      const q = borne((x - a) / (b - a))
-      return q * q * (3 - 2 * q)
-    }
-    const expo = (x: number): number => (x >= 1 ? 1 : 1 - Math.pow(2, -10 * x))
-    const P = PERCEE
-    const vie = P.file + P.tient + P.rentre
-    for (const pe of percees) {
-      const u = t - pe.t0
-      const C = pe.elec ? COULEURS_VOLT.slice(1) : [...CHAIR, N.WHITE]
-      const n = C.length
-      const tete = expo(borne(u / P.file))
-      const queue = lisse(P.file + P.tient, vie, u)
-      const age = borne(u / vie)
-      const A = -P.arriere
-      const B = P.avant
-      const sT = A + (B - A) * queue
-      const sH = A + (B - A) * tete
-      const L = (s_: number): [number, number] => [pe.x + pe.ux * s_, pe.y + pe.uy * s_]
-      // (la lame)
-      if (queue < 1 && sH - sT > 0.5) {
-        const Wm = P.largeur * (1 - queue * 0.55)
-        const [x0, y0] = L(sT)
-        const [x1, y1] = L(sH)
-        p.shade(Math.min(x0, x1) - Wm - 1, Math.min(y0, y1) - Wm - 1, Math.max(x0, x1) + Wm + 1, Math.max(y0, y1) + Wm + 1, (x, y, out) => {
-          const dx = x - pe.x
-          const dy = y - pe.y
-          const s_ = dx * pe.ux + dy * pe.uy
-          if (s_ < sT || s_ > sH) return
-          const v = (s_ - sT) / (sH - sT)
-          const w = Wm * Math.pow(Math.sin(Math.PI * Math.pow(v, 2.2)), 0.6)
-          const o = Math.abs(-dx * pe.uy + dy * pe.ux)
-          if (w < 0.35 || o > w) return
-          const q = o / w
-          const ci = q < 0.22 && age < 0.5 ? 0 : Math.round(q * (n - 1) * 0.75 + age * 2.4 - v * 0.8 + 0.4)
-          out.c = C[n - 1 - Math.max(0, Math.min(n - 1, ci))]
-          out.a = Math.min(1, v / 0.4)
-        })
-        // (la lumière qui court sur elle, plus forte vers sa pointe)
-        for (let s_ = sT; s_ <= sH; s_ += 2.5) {
-          const [gx, gy] = L(s_)
-          p.glow(gx, gy, 4 + Wm, C[n - 3], 0.22 * (1 - age) * ((s_ - sT) / Math.max(1, sH - sT)))
-        }
-      }
-      // (le pointillé, là où elle est passée)
-      const trace = 0.7 * (1 - borne((u - P.file - P.tient) / (P.rentre + 0.2)))
-      if (queue > 0.02 && trace > 0)
-        for (let s_ = A; s_ <= sT; s_ += 0.6) {
-          const [dx_, dy_] = L(s_)
-          p.dot(dx_, dy_, C[2], trace * (0.4 + (0.6 * (s_ - A)) / (B - A)))
-        }
-      // (sa pointe brille en arrivant)
-      const g = u - P.file * 0.6
-      if (g > 0 && g < 0.22) {
-        const [bx, by] = L(B)
-        const k = Math.min(1, g / 0.05)
-        N.sparkle(p, bx, by, 7 * (1 - Math.pow(1 - k, 3)) * (1 - g / 0.22), C[5], C[3], 0.6)
+  let entailles: { s: Record<string, unknown>; t0: number }[] = []
+  const VIE_D_UNE_ENTAILLE = 0.035 + 0.03 + 0.13 + 0.05
+  function dessinerLesEntailles(p: Peintre): void {
+    for (const en of entailles) {
+      slashDuDepot(p, en.s, t)
+      const g = t - en.t0 - 0.035 * 0.6
+      if (g > 0 && g < 0.12) {
+        const b = boutDuSlash(en.s) as { x: number; y: number }
+        const rampe = en.s.ramp as number[]
+        N.sparkle(p, b.x, b.y, 3.5 * Math.min(1, g / 0.03) * (1 - g / 0.12), rampe[5], rampe[3], 0.4)
       }
     }
   }
   function dessinerLesTentacules(p: Peintre): void {
-    percees = percees.filter((pe) => t - pe.t0 < DUREE_DE_LA_PERCEE)
-    if ((m.tentacules.length === 0 && m.fouets.length === 0 && m.boutures.length === 0 && percees.length === 0) || m.phase !== 'vol') return
+    entailles = entailles.filter((en) => t - en.t0 < VIE_D_UNE_ENTAILLE)
+    if ((m.tentacules.length === 0 && m.fouets.length === 0 && m.boutures.length === 0 && entailles.length === 0) || m.phase !== 'vol') return
     p.place(W / 2 - camera.x, centreY() - camera.y)
     dessinerLesBoutures(p)
     dessinerLesFouets(p)
@@ -13848,7 +13794,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.px(Math.round(x1 + ux * (4 + enfonce)), Math.round(y1 + uy * (4 + enfonce)), OS[3])
       if (plantee) p.glow(tn.tx, tn.ty, 5, BILE[1], 0.35)
     }
-    dessinerLesPercees(p)
+    dessinerLesEntailles(p)
     p.place(0, 0)
   }
   /**
@@ -14903,6 +14849,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** L'instant du dernier claquement de tentacule (trois à la fois : un seul son). */
   let fouetSonneA = -10
   let piqureDeBoutureA = -10
+  let piqureDeLacerationA = -10
   /** L'instant du dernier craquement de givre (voir l'événement `gele`). */
   let geleSonneA = -10
   let etourdiSonneA = -10
@@ -18741,6 +18688,22 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
             etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(15, 35), Math.sin(a) * R.range(15, 35), R.range(0.1, 0.2), BILE[1], 1, 1)
           }
           break
+        case 'laceration': {
+          // (UN COUP DE LA RAFALE : son entaille — voir `dessinerLesEntailles` —, un « tchk » plus rare, trois étincelles)
+          const elec = CONF.armes.some((a) => a.tentacule !== undefined && a.electrocution !== undefined)
+          const rampe = elec ? COULEURS_VOLT.slice(1) : [...CHAIR, N.WHITE]
+          const sens = ev.n % 2 === 0 ? 1 : -1
+          entailles.push({ s: entailleQuiPasse(ev.x, ev.y, R.range(0, Math.PI * 2), sens, R.range(10, 12.5), R.range(2.3, 2.8), 0.55, { W: R.range(4.2, 5.2), t0: t, sweep: 0.035, hold: 0.03, trail: 0.13, ramp: rampe }), t0: t })
+          if (t - piqureDeLacerationA > 0.09) {
+            piqureDeLacerationA = t
+            jouer('piqure', { dx: ev.x - v.x, dy: ev.y - v.y })
+          }
+          for (let i = 0; i < 3; i++) {
+            const a = R.range(0, Math.PI * 2)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(40, 110), Math.sin(a) * R.range(40, 110), R.range(0.1, 0.22), i === 0 ? N.WHITE : rampe[5], 1, 1)
+          }
+          break
+        }
         case 'boutureFinie':
           // (elle se flétrit : quelques lambeaux de chair qui retombent)
           for (let i = 0; i < 4; i++) {
@@ -18749,11 +18712,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           }
           break
         case 'piqure': {
-          // (l'aiguille se plante : son « tchk » charnu, une giclée de bile, et sa percée — voir `dessinerLesPercees`)
+          // (l'aiguille se plante : son « tchk » charnu, une giclée de bile, et SA PERCÉE — Keko, 27/11 : « une version
+          // miniature de l'animation thrust de PixelFX, catégorie mêlée » : `keko/percee`, le « Thrust » du dépôt sans son
+          // personnage, à 0,4, tourné dans l'axe de la piqûre, aux couleurs de la chair — de l'éclair avec la Méduse ; la lame
+          // et la gerbe en éventail dessinées à la main, refusées)
           jouer('piqure', { dx: ev.x - v.x, dy: ev.y - v.y })
-          const dp = Math.hypot(ev.x - v.x, ev.y - v.y) || 1
           const elec = CONF.armes.some((a) => a.tentacule !== undefined && a.electrocution !== undefined)
-          percees.push({ x: ev.x, y: ev.y, ux: (ev.x - v.x) / dp, uy: (ev.y - v.y) / dp, t0: t, elec })
+          const rampe = elec ? COULEURS_VOLT.slice(1) : [...CHAIR, N.WHITE]
+          const enHex = (c: number): string => '#' + [c & 255, (c >>> 8) & 255, (c >>> 16) & 255].map((x) => x.toString(16).padStart(2, '0')).join('')
+          effets.push({ fx: N.createFx(PERCEE_DE_LA_PIQURE as Module, { x: ev.x - camera.x + W / 2, y: ev.y - camera.y + centreY(), angle: Math.atan2(ev.y - v.y, ev.x - v.x), size: 0.4, palette: rampe.map(enHex), sparks: [N.WHITE, rampe[5], rampe[4], rampe[3]].map(enHex), seed: Math.round(ev.x * 7 + ev.y) }), x: ev.x, y: ev.y })
           for (let i = 0; i < 6; i++) {
             const a = R.range(0, Math.PI * 2)
             etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(20, 55), Math.sin(a) * R.range(20, 55), R.range(0.15, 0.3), R.next() < 0.5 ? BILE[1] : BILE[2], 1, 1.5)

@@ -20,6 +20,7 @@ import * as materialisation from './materialisation.js'
 import * as queteTerminee from './quete-terminee.js'
 import * as eclatementOrganique from './eclatement-organique.js'
 import * as effondrementNeant from './effondrement-neant.js'
+import * as percee from './percee.js'
 
 export const NOS_EFFETS: Record<string, unknown> = {
   'keko/frappe-du-niveau': frappeDuNiveau,
@@ -38,4 +39,5 @@ export const NOS_EFFETS: Record<string, unknown> = {
   'keko/quete-terminee': queteTerminee,
   'keko/eclatement-organique': eclatementOrganique,
   'keko/effondrement-neant': effondrementNeant,
+  'keko/percee': percee,
 }

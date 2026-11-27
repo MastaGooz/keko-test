@@ -686,6 +686,11 @@ export const MUTATIONS: Mutation[] = [
   // intervalle un petit peu plus long » : UNE ATTAQUE EN PLUS, toutes les 1,2 s — la piqûre reste —, une des tentacules du
   // Kraken balaie un arc de 115° à la distance de l'insecte visé, dégâts entiers — chiffres de moi ; voir `Arme.fouet`)
   variation('tentacule-fouet', 'tentacule', 'Fouet', 'Régulièrement, une tentacule fouette en arc de cercle.', ajouterA('tentacule', (a) => [ajoutee(a, 9, { cadence: 1.2, tentacule: undefined, fouet: { ouverture: 1, duree: 0.25 } })])),
+  // (« LACÉRATION » — Keko, 27/11 : « l'attaque devient une attaque avec toutes les tentacules à tour de rôle très rapide ; le
+  // visuel de Dagger Flurry ; le délai entre les attaques devient le délai entre les lacérations ; chaque attaque inflige
+  // 6 coups ; si la cible meurt, les autres coups se reportent sur un autre ennemi à portée » : six coups, un toutes les
+  // 0,055 s — le rythme du Dagger Flurry —, 40 % des dégâts chacun — chiffres de moi ; voir `Arme.tentacule.lacere`)
+  variation('tentacule-laceration', 'tentacule', 'Lacération', 'Chaque attaque devient une rafale de six coups de tentacule.', changerA('tentacule', (a) => (a.tentacule === undefined ? a : { ...a, tentacule: { ...a.tentacule, lacere: { coups: 6, intervalle: 0.055, part: 0.4 } } }))),
   // (« BOUTURE », SA VARIATION SUR COUP CRITIQUE — Keko : « un mini tentacule pousse sur l'ennemi touché, qui se met à attaquer
   // les ennemis proches » : 4 s, une piqûre toutes les 0,5 s à 30, 40 % des dégâts — chiffres et nom de moi ; voir
   // `Arme.bouture`)

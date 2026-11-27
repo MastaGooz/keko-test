@@ -1662,6 +1662,31 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
     const bras = jouerAvec(fouet, [[45, 0], [20, 4], [47, 12]], 0.6, 1)
     verifier(`Fouet : le slash est tracé à la distance de l'insecte visé (${bras.w.fouets[0]?.rayon.toFixed(1) ?? 'fini'}) ; il frappe le visé et son voisin dans sa bande (${bras.pv[0]}, ${bras.pv[2]}), pas celui que le bras survole, plus près (${bras.pv[1]})`, bras.pv[0] === 6 && bras.pv[2] === 6 && bras.pv[1] === 0)
   }
+  // (LACÉRATION : une rafale de six coups, un par racine, au lieu d'une tentacule ; la cible morte, les coups suivants vont
+  // sur l'insecte le plus proche à portée ; la suivante, `cadence` après la fin de la rafale)
+  {
+    const lacere = { ...corps, tentacule: { ...corps.tentacule, lacere: { coups: 6, intervalle: 0.055, part: 0.4 } } }
+    const un = jouerAvec(lacere, [[30, -20]], 0.4)
+    const coups = un.ev.filter((e) => e.type === 'laceration')
+    verifier(`Lacération : une rafale de six coups (${coups.length}) en ${(0.055 * 5).toFixed(3)} s, chacun d'une autre racine (${coups.map((e) => (e.type === 'laceration' ? e.ancre : -1)).join(', ')}), à 40 % — ${un.pv[0]} de dégâts ; pas de piqûre`, coups.length === 6 && new Set(coups.map((e) => (e.type === 'laceration' ? e.ancre : -1))).size === 6 && un.pv[0] === 12 && un.ev.every((e) => e.type !== 'piqure'))
+    const deux = jouerAvec(lacere, [[30, -20]], 1.1)
+    const n2 = deux.ev.filter((e) => e.type === 'laceration').length
+    verifier(`Lacération : la suivante part 0,42 s après la fin de la rafale (${n2} coups en 1,1 s : deux rafales)`, n2 === 12)
+    // (la cible meurt au deuxième coup : les quatre autres vont sur son voisin)
+    const conf = { ...sansCritique, armes: [lacere] }
+    const w = nouveauMonde(conf, 3)
+    w.ennemis.push({ ...insecte(1, 30, -20), pv: 3 }, insecte(2, 35, 10), insecte(3, 200, 0))
+    w.verrou = null
+    const ev: Evenement[] = []
+    for (let i = 0; i < 24; i++) {
+      for (const e of w.ennemis) e.corps = { ...e.corps, vx: 0, vy: 0 }
+      w.vaisseau = { ...w.vaisseau, x: 0, y: 0, vx: 0, vy: 0, cap: 0 }
+      ev.push(...avancerLeMonde(conf, w, 1 / 60, { x: 0, y: 0 }).evenements)
+    }
+    const voisin = 1000 - (w.ennemis.find((e) => e.id === 2)?.pv ?? 1000)
+    const loin = 1000 - (w.ennemis.find((e) => e.id === 3)?.pv ?? 1000)
+    verifier(`Lacération : la cible morte au deuxième coup, les quatre autres se reportent sur l'insecte à portée (${voisin} = 4 × 2), pas sur le lointain (${loin})`, !w.ennemis.some((e) => e.id === 1) && voisin === 8 && loin === 0)
+  }
   // (BOUTURE : un critique fait pousser une petite tentacule sur l'insecte, au bord qui fait face au coup ; elle pique ses
   // voisins, pas lui ; un nouveau critique la fait repartir, sans en ajouter une seconde ; son hôte mort, elle meurt)
   {
