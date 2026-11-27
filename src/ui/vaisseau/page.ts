@@ -13511,6 +13511,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * l'insecte ; plantée, elle tremble ; au retour, son bout revient à sa place. Chair et chitine en bandes, comme au corps,
    * aux couleurs de son apparence ; le crochet d'os au bout.
    */
+  /** LA LACÉRATION (voir `dessinerUneTentaculeProjetee`) : la courbure de chaque racine (part de la longueur, vers son flanc), et l'écart de son bout sur la cible. */
+  const ARCS_DE_LA_LACERATION = [0.62, 0.62, 0.3, 0.3, -0.22, -0.22]
+  const ECARTS_DE_LA_LACERATION = [-4, 4, -1.5, 1.5, 3, -3]
   function dessinerUneTentaculeProjetee(p: Peintre, tn: (typeof m.tentacules)[number]): void {
     const E = echelleVue()
     const ca = Math.cos(v.cap)
@@ -13521,15 +13524,29 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const [ax, ay] = monde(corde[0])
     const [bx, by] = monde(corde[corde.length - 1])
     const e = 1 - Math.pow(1 - tn.u, 2)
-    const fx = bx + (tn.tx - bx) * e
-    const fy = by + (tn.ty - by) * e
+    // (… le bout d'une lacération tombe un peu à côté des autres, perpendiculairement à l'axe)
+    const ecartDuBout = CONF.armes[tn.arme]?.tentacule?.lacere !== undefined ? (ECARTS_DE_LA_LACERATION[tn.ancre] ?? 0) : 0
+    const dAx = tn.tx - v.x
+    const dAy = tn.ty - v.y
+    const dA = Math.hypot(dAx, dAy) || 1
+    const tx_ = tn.tx - (dAy / dA) * ecartDuBout
+    const ty_ = tn.ty + (dAx / dA) * ecartDuBout
+    const fx = bx + (tx_ - bx) * e
+    const fy = by + (ty_ - by) * e
     const L = Math.hypot(fx - ax, fy - ay) || 1
     // (l'arc passe par le flanc de sa racine)
     const cote = Math.sign(RACINES_DU_KRAKEN[tn.ancre]?.[1] ?? 1) || 1
     const lx = -sa * cote
     const ly = ca * cote
-    const cx = (ax + fx) / 2 + lx * L * 0.32
-    const cy = (ay + fy) / 2 + ly * L * 0.32
+    // (… LA LACÉRATION : SIX COURBES — Keko, 27/11 : « que chaque tentacule ait une trajectoire, une courbure un peu différente
+    // des autres ; là, on voit mal qu'il y en a 6, vu qu'elles se superposent toutes » : la paire de devant en grand arc, celle
+    // du milieu en arc moyen, celle de derrière qui se croise de l'autre côté ; et leurs bouts tombent un peu à côté l'un de
+    // l'autre sur la cible)
+    const lacere = CONF.armes[tn.arme]?.tentacule?.lacere !== undefined
+    const arc = lacere ? (ARCS_DE_LA_LACERATION[tn.ancre] ?? 0.32) : 0.32
+    const ecart = lacere ? (ECARTS_DE_LA_LACERATION[tn.ancre] ?? 0) : 0
+    const cx = (ax + fx) / 2 + lx * L * arc + lx * ecart * 0.5
+    const cy = (ay + fy) / 2 + ly * L * arc + ly * ecart * 0.5
     const plantee = tn.fait === 'plantee'
     const n = Math.max(8, Math.ceil(L / 1.4))
     const pts: [number, number][] = []
@@ -13743,11 +13760,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   }
   /**
    * LE TUBE DE LA MARIONNETTE (Keko, 27/11 : « un nouveau type de tentacule qui ressemblera plutôt à un tube, un tube
-   * intestinal, qui part de la tête du Kraken et se plante sur l'ennemi » — voir `Arme.marionnette`) : de la gueule à
-   * l'insecte, un boyau de chair épais et mou qui pend un peu et ondule, cerné de sombre, ses plis en anneaux plus foncés ;
-   * des renflements de bile le parcourent de la gueule vers l'insecte, comme s'il le nourrissait ; une ventouse le tient
-   * sur lui. Lancé, il file de la gueule à l'insecte.
+   * intestinal, qui part de la tête du Kraken et se plante sur l'ennemi » — voir `Arme.marionnette` ; puis « un peu trop
+   * gros et pas assez une texture d'intestin ; et les petites bandes vertes, c'est bizarre ; faudrait le retravailler
+   * complètement ») : UN INTESTIN, de la gueule à l'insecte — fin, d'épaisseur égale, mou : il pend et ondule ; fait de
+   * poches rondes serrées par des étranglements (les haustrations du côlon), qui glissent lentement de la gueule vers
+   * l'insecte (le péristaltisme) ; rose saumon, plus sombre dans les plis, un reflet mouillé sur chaque poche et un fin
+   * vaisseau sanguin qui court dessus ; au bout, une bouche de chair ourlée, collée à l'insecte. Lancé, il file de la gueule
+   * à l'insecte.
    */
+  const ROSE_D_INTESTIN = ['#3a1018', '#7a2a34', '#b4515a', '#da7e7c', '#f2aea4', '#ffe0d6'].map((c) => N.hex(c))
+  const VEINE = N.hex('#8a1f2c')
   function dessinerLesTubes(p: Peintre): void {
     const E = echelleVue()
     const ca = Math.cos(v.cap)
@@ -13755,6 +13777,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const [gx, gy] = ANCRES_DU_KRAKEN[0] ?? [7.2, 0]
     const ax = v.x + ((gx + 0.6) * ca - gy * sa) * E
     const ay = v.y + ((gx + 0.6) * sa + gy * ca) * E
+    const I = ROSE_D_INTESTIN
     for (const mo of m.marionnettes) {
       const h = m.ennemis.find((e) => e.id === mo.hote)
       const ma = CONF.armes[mo.arme]?.marionnette
@@ -13766,32 +13789,41 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const L = Math.hypot(fx - ax, fy - ay) || 1
       const nx = -(fy - ay) / L
       const ny = (fx - ax) / L
-      // (il pend un peu, d'un côté puis de l'autre)
-      const pend = Math.sin(t * 1.7 + mo.hote) * L * 0.12
+      // (il pend un peu, d'un côté puis de l'autre, et ondule)
+      const pend = Math.sin(t * 1.3 + mo.hote) * L * 0.14
       const cx = (ax + fx) / 2 + nx * pend
       const cy = (ay + fy) / 2 + ny * pend
-      const n = Math.max(8, Math.ceil(L / 1.2))
+      const n = Math.max(10, Math.ceil(L / 0.7))
       const pts: [number, number][] = []
       for (let i = 0; i <= n; i++) {
         const q = i / n
         const r = 1 - q
-        const onde = Math.sin(Math.PI * q) * Math.sin(t * 5 + mo.hote - q * 7) * 0.7
+        const onde = Math.sin(Math.PI * q) * Math.sin(t * 3 + mo.hote - q * 9) * 0.9
         pts.push([r * r * ax + 2 * r * q * cx + q * q * fx + nx * onde, r * r * ay + 2 * r * q * cy + q * q * fy + ny * onde])
       }
-      // (son épaisseur : un boyau, avec des renflements qui courent de la gueule vers l'insecte)
-      const renfle = (q: number): number => (mo.plantee ? Math.pow(Math.max(0, Math.sin(Math.PI * 2 * (q * 3 - t * 1.6))), 4) : 0)
-      const epais = (i: number): number => (1.55 + 1 * renfle(i / n)) * E
-      for (let i = 0; i <= n; i++) p.circle(pts[i][0], pts[i][1], epais(i) + 0.8, CHAIR[0])
-      for (let i = 0; i <= n; i++) {
-        const pli = Math.floor((i / n) * L * 0.45 + 0.5) % 2 === 0
-        p.circle(pts[i][0], pts[i][1], epais(i), renfle(i / n) > 0.45 ? BILE[1] : pli ? CHAIR[3] : CHAIR[1])
+      // (ses poches : une tous les 3,2 pixels de longueur, qui glissent vers l'insecte ; épaisse au milieu de la poche, serrée
+      // à l'étranglement)
+      const poche = (i: number): number => {
+        const s_ = ((i / n) * L) / 3.2 - t * 1.1
+        return Math.abs(Math.sin(Math.PI * s_))
       }
-      for (let i = 0; i <= n; i++) p.circle(pts[i][0] - 0.5, pts[i][1] - 0.5, Math.max(0.5, epais(i) * 0.4), renfle(i / n) > 0.45 ? BILE[2] : CHAIR[4])
-      // (la ventouse, sur l'insecte)
+      const rayonDe_ = (i: number): number => (0.48 + 0.3 * Math.pow(poche(i), 0.6)) * E
+      for (let i = 0; i <= n; i++) p.circle(pts[i][0], pts[i][1], rayonDe_(i) + 0.7, I[0])
+      for (let i = 0; i <= n; i++) p.circle(pts[i][0], pts[i][1], rayonDe_(i), poche(i) < 0.35 ? I[1] : poche(i) < 0.7 ? I[2] : I[3])
+      // (le reflet mouillé, sur le haut de chaque poche)
+      for (let i = 0; i <= n; i++) if (poche(i) > 0.8) p.dot(pts[i][0] - nx * rayonDe_(i) * 0.45, pts[i][1] - ny * rayonDe_(i) * 0.45, poche(i) > 0.95 ? I[5] : I[4])
+      // (un fin vaisseau sanguin qui serpente dessus)
+      for (let i = 1; i < n; i += 1) {
+        const o = Math.sin((i / n) * L * 0.55 + mo.hote) * rayonDe_(i) * 0.5
+        p.dot(pts[i][0] + nx * o, pts[i][1] + ny * o, VEINE, 0.7)
+      }
+      // (la bouche, ourlée, collée à l'insecte)
       if (mo.plantee) {
-        p.ring(fx, fy, 2.2 * E, 1, CHAIR[0])
-        p.ring(fx, fy, 1.6 * E, 1, CHAIR[4])
-        p.glow(fx, fy, 6, BILE[1], 0.3 + 0.15 * Math.sin(t * 8))
+        const rb = 0.95 * E
+        p.circle(fx, fy, rb + 0.8, I[0])
+        p.circle(fx, fy, rb, I[3])
+        p.circle(fx, fy, rb * 0.55, I[1])
+        p.dot(fx - rb * 0.4, fy - rb * 0.4, I[5])
       }
       if (CONF.armes[mo.arme]?.electrocution !== undefined) dessinerDesFilamentsElectriques(p, pts, null, mo.hote)
     }

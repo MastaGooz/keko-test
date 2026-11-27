@@ -696,7 +696,7 @@ export const MUTATIONS: Mutation[] = [
   // la tête du Kraken et se plante sur l'ennemi ; il attaque les autres ennemis, et sert de leurre » : un tube toutes les 6 s,
   // planté en 0,15 s, 4 s de contrôle, une morsure toutes les 0,5 s à 50 % fois la sienne, leurre à 60 — chiffres de moi ;
   // jamais un grand ; voir `Arme.marionnette`)
-  variation('tentacule-marionnette', 'tentacule', 'Marionnette', 'Un tube prend un ennemi, qui attaque et attire les siens.', changerA('tentacule', (a) => ({ ...a, marionnette: { tous: 6, aller: 0.15, duree: 4, periode: 0.5, part: 0.5, leurre: 60 } }))),
+  variation('tentacule-marionnette', 'tentacule', 'Marionnette', 'Un tube prend un ennemi, qui attaque et attire les siens.', changerA('tentacule', (a) => ({ ...a, marionnette: { tous: 6, aller: 0.15, duree: 4, periode: 0.5, part: 0.5, leurre: 60, laisse: 80, elan: 1.4 } }))),
   // (« BOUTURE », SA VARIATION SUR COUP CRITIQUE — Keko : « un mini tentacule pousse sur l'ennemi touché, qui se met à attaquer
   // les ennemis proches » : 4 s, une piqûre toutes les 0,5 s à 30, 40 % des dégâts — chiffres et nom de moi ; voir
   // `Arme.bouture` ; elle grandit de 25 % à chaque critique qui la relance, jusqu'au double — Keko, 27/11, chiffres de moi)

@@ -1690,7 +1690,7 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   // (MARIONNETTE : le tube part de la gueule, se plante ; l'insecte chasse et mord son voisin sans quitter la portée du
   // vaisseau, aucune arme ne le vise plus ; à la fin, il meurt ; jamais un grand ; ET C'EST UN LEURRE)
   {
-    const marionnette = { ...corps, marionnette: { tous: 6, aller: 0.15, duree: 4, periode: 0.5, part: 0.5, leurre: 60 } }
+    const marionnette = { ...corps, marionnette: { tous: 6, aller: 0.15, duree: 4, periode: 0.5, part: 0.5, leurre: 60, laisse: 80, elan: 1.4 } }
     const jouerLibre = (conf: ConfigVaisseau, w: ReturnType<typeof nouveauMonde>, duree: number, fixes: Map<number, [number, number]>) => {
       const ev: Evenement[] = []
       let loin = 0
@@ -1719,7 +1719,16 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
     const voisin = 1000 - (w.ennemis.find((e) => e.id === 2)?.pv ?? 1000)
     const morsures = tenue.ev.filter((e) => e.type === 'morsureMarionnette').length
     verifier(`Marionnette : le tube part de la gueule et se plante en 0,15 s (${p?.plantee}, sur ${p?.hote}) ; aucune arme ne vise plus l'insecte (il a ${pris?.pv} points sur 1000)`, prise.ev.some((e) => e.type === 'tubeLance') && prise.ev.some((e) => e.type === 'marionnette') && p?.plantee === true && p.hote === 1 && pris?.pv === 1000)
-    verifier(`Marionnette : il mord son voisin (${morsures} morsures, ${voisin} de dégâts avec les piqûres) sans s'éloigner du vaisseau au-delà de 55 (${tenue.loin.toFixed(1)})`, morsures >= 2 && voisin >= 3 * morsures && tenue.loin <= 55.01)
+    verifier(`Marionnette : il mord son voisin (${morsures} morsures, ${voisin} de dégâts avec les piqûres) sans s'éloigner du vaisseau au-delà de son périmètre, 80 (${tenue.loin.toFixed(1)})`, morsures >= 2 && voisin >= 3 * morsures && tenue.loin <= 80.01)
+    // (… IL VA CHERCHER UN INSECTE HORS DE LA PORTÉE DE LA TENTACULE, DANS SON PÉRIMÈTRE : à 72 du vaisseau)
+    const w2 = nouveauMonde(conf, 3)
+    w2.ennemis.push(insecte(1, 30, -20), insecte(2, 0, 900))
+    w2.verrou = null
+    const f2 = new Map<number, [number, number]>([[2, [0, 900]]])
+    jouerLibre(conf, w2, 0.3, f2)
+    f2.set(2, [60, 40])
+    const loinV = jouerLibre(conf, w2, 2.5, f2)
+    verifier(`Marionnette : il va mordre un insecte à 72 du vaisseau, hors de portée de la tentacule mais dans son périmètre (${loinV.ev.filter((e) => e.type === 'morsureMarionnette').length} morsures)`, loinV.ev.some((e) => e.type === 'morsureMarionnette'))
     const fin = jouerLibre(conf, w, 2, fixes)
     verifier(`Marionnette : au bout de 4 s, le tube s'arrache et l'insecte meurt ; le suivant attend son minuteur (${w.marionnettesA[0]?.toFixed(2)} s, 6 après le départ)`, fin.ev.some((e) => e.type === 'marionnetteFinie') && !w.ennemis.some((e) => e.id === 1) && Math.abs((w.marionnettesA[0] ?? 0) - 6) < 0.05)
     const g = nouveauMonde(conf, 3)

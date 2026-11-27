@@ -1209,7 +1209,10 @@ export type Arme = {
    * LEURRE : tout insecte qui n'est pas un grand, à `leurre` de lui, le chasse et le mord au lieu du vaisseau. À la fin, le
    * tube s'arrache et le tue. L'état est `Monde.marionnettes`, `Ennemi.marionnetteA`.
    */
-  marionnette?: { tous: number; aller: number; duree: number; periode: number; part: number; leurre: number }
+  // (… ELLE VA CHERCHER LES AUTRES — Keko, 27/11 : « il faudrait que l'ennemi contrôlé se déplace vers les autres ennemis
+  // pour les attaquer également, du moment qu'ils sont dans le périmètre maximum autorisé par cette carte » : son périmètre
+  // est `laisse`, à elle — plus la portée de la tentacule —, et elle y fonce `elan` fois plus vite qu'un insecte)
+  marionnette?: { tous: number; aller: number; duree: number; periode: number; part: number; leurre: number; laisse: number; elan: number }
   /**
    * UN ESSAIM D'INSECTES EN NUAGE (la deuxième arme du Kraken, Keko, 16/11 : « un essaim d'insectes, tout petits mais en
    * nuage, qui flotte autour du vaisseau ») : un nuage de `rayon` qui SUIT le vaisseau sur un ressort (`raideur`,
@@ -4800,12 +4803,12 @@ function menerLesMarionnettes(c: ConfigVaisseau, m: Monde, dt: number, ev: Evene
     let dp = Infinity
     for (const e of m.ennemis) {
       if (e === hote || e.asteroide !== undefined || !choisissable(m, e)) continue
-      if (Math.hypot(e.corps.x - v.x, e.corps.y - v.y) > a.portee + rayonDe(c, e)) continue
+      if (Math.hypot(e.corps.x - v.x, e.corps.y - v.y) > ma.laisse + rayonDe(c, e)) continue
       const d = Math.hypot(e.corps.x - hote.corps.x, e.corps.y - hote.corps.y) - rayonDe(c, e) - rh
       if (d < dp) (dp = d), (proie = e)
     }
     // (il fond sur elle à sa vitesse d'insecte ; sans proie, il ralentit)
-    const vit = c.ennemi.vitesseMax * gabaritDInsecte(c, hote).vitesse
+    const vit = c.ennemi.vitesseMax * gabaritDInsecte(c, hote).vitesse * ma.elan
     const b = hote.corps
     let vx = b.vx * Math.max(0, 1 - 4 * dt)
     let vy = b.vy * Math.max(0, 1 - 4 * dt)
@@ -4816,9 +4819,9 @@ function menerLesMarionnettes(c: ConfigVaisseau, m: Monde, dt: number, ev: Evene
     }
     let x = b.x + vx * dt
     let y = b.y + vy * dt
-    // (LA LAISSE : planté dans le tube, il ne s'éloigne pas du vaisseau au-delà de sa portée)
+    // (LA LAISSE : planté dans le tube, il ne s'éloigne pas du vaisseau au-delà du périmètre de la carte)
     const dv = Math.hypot(x - v.x, y - v.y)
-    if (dv > a.portee) (x = v.x + ((x - v.x) / dv) * a.portee), (y = v.y + ((y - v.y) / dv) * a.portee)
+    if (dv > ma.laisse) (x = v.x + ((x - v.x) / dv) * ma.laisse), (y = v.y + ((y - v.y) / dv) * ma.laisse)
     hote.corps = { ...b, x, y, vx, vy, cap: proie !== undefined ? Math.atan2(vy, vx) : b.cap }
     if (proie === undefined || dp > 2 || m.t < p.mordA) continue
     p.mordA = m.t + ma.periode
