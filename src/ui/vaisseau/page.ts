@@ -18,6 +18,7 @@ import { drawWord, spell } from 'pixelfx/fx/ui/_lib'
 import { firePuff, hotFirst, smokePuff } from 'pixelfx/fx/fire/_lib'
 import { VOLT, bowed, crackle, stroke, zigzag } from 'pixelfx/fx/lightning/_lib'
 import { Panes, snowflake } from 'pixelfx/fx/ice/_lib'
+import { slash as slashDuDepot } from 'pixelfx/fx/melee/_lib'
 import { textWidth } from 'pixelfx'
 import { pixelsDeLIcone } from './icones-armes.ts'
 import { HAUT_ACCENTS } from './police.ts'
@@ -13623,8 +13624,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   }
   /** La racine (son rang dans `RACINES_DU_KRAKEN`) de la tentacule qui fouette : celle du milieu de son flanc. */
   const racineDuFouet = (f: (typeof m.fouets)[number]): number => (f.cote < 0 ? 2 : 3)
-  /** L'écart d'angle de `a` à `b`, ramené dans ]−π, π]. */
-  const angleEntre = (a: number, b: number): number => Math.atan2(Math.sin(b - a), Math.cos(b - a))
   /**
    * LE FOUET (Keko, 27/11 : « j'aime bien l'idée du balayage, mais il était mal exécuté ; prendre le même tentacule et le
    * déplacer comme un fouet, et laisser une traînée de slash » ; « que le fouet et le slash remplacent le coup normal » —
@@ -13656,34 +13655,17 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const s_ = (age - DEPLOIEMENT_DU_FOUET) / fo.duree
       // (son bout : il se déploie jusqu'au bord de départ, balaie l'arc, revient à sa place)
       const bout = s_ < 0 ? entre(repos, auBord(angle(0)), lisse(Math.max(0, age / DEPLOIEMENT_DU_FOUET))) : s_ <= 1 ? auBord(angle(s_)) : entre(auBord(angle(1)), repos, lisse(Math.min(1, ((s_ - 1) * fo.duree) / RETRAIT_DU_FOUET)))
-      // (LE SLASH, sous elle : de la queue — où était le dard un peu plus tôt — à la tête — où il est —, sur l'arc qu'il trace)
-      const fondu = s_ <= 1 ? 0 : Math.min(1, ((s_ - 1) * fo.duree) / 0.14)
-      if (s_ > 0 && fondu < 1) {
-        const uTete = Math.min(1, s_)
-        const uQueue0 = Math.max(0, uTete - 0.6)
-        const uQueue = uQueue0 + (uTete - uQueue0) * fondu
-        const queue = angle(uQueue)
-        const ecart = angleEntre(queue, angle(uTete))
-        const nb = Math.max(4, Math.ceil((Math.abs(ecart) * R) / 1.2))
-        const W = 4.5 * (1 - 0.5 * fondu)
-        const elec = a.electrocution !== undefined
-        const couches: [number, number, number, number][] = [
-          [1, 0.35, elec ? COULEURS_VOLT[4] : CHAIR[4], 0.55],
-          [0.55, 0.22, elec ? COULEURS_VOLT[6] : CHAIR[5], 0.85],
-          [0.2, 0.12, N.WHITE, 1],
-        ]
-        for (const [dedans, dehors, c, al] of couches) {
-          const ext: [number, number][] = []
-          const int: [number, number][] = []
-          for (let j = 0; j <= nb; j++) {
-            const q = j / nb
-            const an = queue + ecart * q
-            const w = W * Math.pow(Math.sin(Math.PI * q), 0.6)
-            ext.push([v.x + Math.cos(an) * (R + w * dehors), v.y + Math.sin(an) * (R + w * dehors)])
-            int.push([v.x + Math.cos(an) * (R - w * dedans), v.y + Math.sin(an) * (R - w * dedans)])
-          }
-          p.poly([...ext, ...int.reverse()], c, al * (1 - fondu))
-        }
+      // (LE SLASH, sous elle — Keko, 27/11 : « regarde la catégorie mêlée de pixelfx pour t'inspirer des effets de slash » : le
+      // croissant du « Sword slash » du dépôt (`slash` de son `_lib`) : il file avec le dard, tient, puis sa queue le rattrape ;
+      // blanc au fil, il refroidit vers l'intérieur et avec l'âge, la rampe de la chair — de l'éclair avec la Méduse — ; un
+      // pointillé reste là où il est passé. Son arc est celui que la règle frappe, à la distance de l'insecte visé)
+      const rampe = a.electrocution !== undefined ? COULEURS_VOLT.slice(1) : [...CHAIR, N.WHITE]
+      slashDuDepot(p, { cx: v.x, cy: v.y, R: R + 3, sy: 1, rot: 0, k: 0, a0: f.cap - f.sens * fo.ouverture, dir: f.sens, span: 2 * fo.ouverture, W: 7, t0: DEPLOIEMENT_DU_FOUET, sweep: fo.duree, hold: 0.04, trail: 0.16, ramp: rampe }, age)
+      // (le dard brille quand il arrive au bout de l'arc)
+      const g = s_ - 1
+      if (g > -0.2 && g < 0.6) {
+        const [gx, gy] = auBord(angle(1))
+        N.sparkle(p, gx, gy, 7 * Math.min(1, (g + 0.2) / 0.2) * (1 - Math.max(0, g) / 0.6), rampe[5], rampe[3], 0.6)
       }
       // (LE BRAS : de sa racine à son bout ; quand il file, son milieu traîne derrière, du côté d'où il vient)
       const L = Math.hypot(bout[0] - ax, bout[1] - ay) || 1
@@ -13736,8 +13718,76 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       if (a?.electrocution !== undefined) dessinerDesFilamentsElectriques(p, pts, detente > 0.6 ? [b.tx, b.ty] : null, b.id)
     }
   }
+  /**
+   * LA PERCÉE DE LA PIQÛRE (Keko, 27/11 : « ajoute également un effet de slash perçant pour l'attaque normale du
+   * tentacule » ; d'après le « Thrust » de pixelfx) : à chaque piqûre, une gerbe de traits file vers le point touché dans
+   * l'axe de la tentacule et s'y referme, une longue étoile à quatre branches y éclate — la longue vers l'avant —, un anneau
+   * de percée s'en détache devant. La rampe de la chair, celle de l'éclair avec la Méduse.
+   */
+  let percees: { x: number; y: number; ux: number; uy: number; t0: number; elec: boolean }[] = []
+  const DUREE_DE_LA_PERCEE = 0.32
+  function dessinerLesPercees(p: Peintre): void {
+    const borne = (x: number): number => Math.max(0, Math.min(1, x))
+    const lisse = (a: number, b: number, x: number): number => {
+      const q = borne((x - a) / (b - a))
+      return q * q * (3 - 2 * q)
+    }
+    const expo = (x: number): number => (x >= 1 ? 1 : 1 - Math.pow(2, -10 * x))
+    const rebond = (x: number): number => 1 + 2.70158 * Math.pow(x - 1, 3) + 1.70158 * Math.pow(x - 1, 2)
+    const SORT = 0.05
+    const TIENT = 0.04
+    const RENTRE = 0.14
+    for (const pe of percees) {
+      const q = t - pe.t0
+      const C = pe.elec ? COULEURS_VOLT.slice(1) : [...CHAIR, N.WHITE]
+      const nx = -pe.uy
+      const ny = pe.ux
+      const L = 22
+      // (la gerbe : chaque trait file de loin derrière jusqu'au point, tient, puis est avalé par lui ; le milieu le plus chaud)
+      const rentre = lisse(SORT + TIENT, SORT + TIENT + RENTRE, q)
+      if (rentre < 1)
+        for (const [off, chaud, long] of [[-4, false, 0.75], [-2, false, 0.92], [0, true, 1], [2, false, 0.88], [4, false, 0.7]] as [number, boolean, number][]) {
+          const d0 = L * long
+          const tete = -d0 + d0 * expo(borne(q / SORT))
+          const queue = -d0 + d0 * rentre
+          for (let d = queue; d <= tete; d += 0.5) {
+            const w = (d - queue) / Math.max(1, tete - queue)
+            const o = (off * -d) / d0
+            const c = w > 0.88 ? N.WHITE : chaud ? (w > 0.35 ? C[6] : C[5]) : w > 0.55 ? C[5] : w > 0.25 ? C[4] : C[3]
+            p.dot(pe.x + pe.ux * d + nx * o, pe.y + pe.uy * d + ny * o, c, w < 0.12 ? w / 0.12 : 1)
+          }
+        }
+      const s_ = q - SORT
+      // (la longue étoile : la branche avant longue, l'arrière moins, les côtés courts)
+      if (s_ >= 0 && s_ < 0.25) {
+        const g = rebond(borne(s_ / 0.04)) * (1 - lisse(0.06, 0.25, s_))
+        const Ls = 14 * g
+        if (Ls >= 1) {
+          for (const [dx, dy, len] of [[pe.ux, pe.uy, Ls], [-pe.ux, -pe.uy, Ls * 0.7], [nx, ny, Ls * 0.42], [-nx, -ny, Ls * 0.42]] as [number, number, number][])
+            for (let d = 1; d <= len; d += 0.5) {
+              const u = d / len
+              p.dot(pe.x + dx * d, pe.y + dy * d, u < 0.3 ? N.WHITE : u < 0.65 ? C[5] : C[4], u < 0.7 ? 1 : 1 - (u - 0.7) / 0.35)
+            }
+          p.px(Math.round(pe.x), Math.round(pe.y), N.WHITE)
+          p.glow(pe.x, pe.y, 6 + Ls * 1.3, C[4], 0.35 * (1 - s_ / 0.25))
+          p.glow(pe.x, pe.y, 3 + Ls * 0.4, N.WHITE, 0.3 * (1 - s_ / 0.25))
+        }
+      }
+      // (l'anneau de percée : une ellipse aplatie dans l'axe, qui part devant et s'ouvre)
+      if (s_ >= 0 && s_ < 0.16) {
+        const k = s_ / 0.16
+        const e = 1 - Math.pow(1 - k, 3)
+        const ra = 1.5 + 3 * e
+        const rb = 3 + 7 * e
+        const cx = pe.x + pe.ux * (3 + 7 * k)
+        const cy = pe.y + pe.uy * (3 + 7 * k)
+        for (let a = 0; a < Math.PI * 2; a += 0.06) p.dot(cx + pe.ux * Math.cos(a) * ra + nx * Math.sin(a) * rb, cy + pe.uy * Math.cos(a) * ra + ny * Math.sin(a) * rb, k < 0.3 ? N.WHITE : C[5], 1.15 - k)
+      }
+    }
+  }
   function dessinerLesTentacules(p: Peintre): void {
-    if ((m.tentacules.length === 0 && m.fouets.length === 0 && m.boutures.length === 0) || m.phase !== 'vol') return
+    percees = percees.filter((pe) => t - pe.t0 < DUREE_DE_LA_PERCEE)
+    if ((m.tentacules.length === 0 && m.fouets.length === 0 && m.boutures.length === 0 && percees.length === 0) || m.phase !== 'vol') return
     p.place(W / 2 - camera.x, centreY() - camera.y)
     dessinerLesBoutures(p)
     dessinerLesFouets(p)
@@ -13789,6 +13839,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.px(Math.round(x1 + ux * (4 + enfonce)), Math.round(y1 + uy * (4 + enfonce)), OS[3])
       if (plantee) p.glow(tn.tx, tn.ty, 5, BILE[1], 0.35)
     }
+    dessinerLesPercees(p)
     p.place(0, 0)
   }
   /**
@@ -18688,14 +18739,17 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
             etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(8, 20), Math.sin(a) * R.range(8, 20), R.range(0.2, 0.35), CHAIR[3], 1, 1)
           }
           break
-        case 'piqure':
-          // (l'aiguille se plante : son « tchk » charnu, une giclée de bile)
+        case 'piqure': {
+          // (l'aiguille se plante : son « tchk » charnu, une giclée de bile, et sa percée — voir `dessinerLesPercees`)
           jouer('piqure', { dx: ev.x - v.x, dy: ev.y - v.y })
+          const dp = Math.hypot(ev.x - v.x, ev.y - v.y) || 1
+          percees.push({ x: ev.x, y: ev.y, ux: (ev.x - v.x) / dp, uy: (ev.y - v.y) / dp, t0: t, elec: CONF.armes.some((a) => a.tentacule !== undefined && a.electrocution !== undefined) })
           for (let i = 0; i < 6; i++) {
             const a = R.range(0, Math.PI * 2)
             etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(20, 55), Math.sin(a) * R.range(20, 55), R.range(0.15, 0.3), R.next() < 0.5 ? BILE[1] : BILE[2], 1, 1.5)
           }
           break
+        }
         case 'sphere':
           // (une sphère part : la décharge — sauf si elle a sonné en avance —, des grains de plasma à la bouche)
           if (t - (armeAnnonceeA.get(ev.arme) ?? -10) < 0.4) armeAnnonceeA.delete(ev.arme)

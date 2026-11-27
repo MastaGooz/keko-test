@@ -1155,7 +1155,7 @@ export type Arme = {
    * frappé une fois. L'état est `Monde.fouets`.
    * (… REFAIT — Keko, 27/11 : « prendre le même tentacule et le déplacer comme un fouet, et laisser une traînée de slash » :
    * c'est l'une des six tentacules du Kraken, celle du milieu du flanc tourné vers l'insecte (`cote`) ; elle se déploie en
-   * `DEPLOIEMENT_DU_FOUET`, balaie en accélérant (`balayageDuFouet`), se retire en `RETRAIT_DU_FOUET`)
+   * `DEPLOIEMENT_DU_FOUET`, balaie d'un coup (`balayageDuFouet`), se retire en `RETRAIT_DU_FOUET`)
    * (… ET SEUL LE SLASH FRAPPE — Keko, 27/11 : « il faut uniquement que le slash touche les ennemis, et que la distance du
    * slash par rapport au vaisseau s'adapte en fonction de la proximité de la cible principale ; là, le bras du tentacule
    * touche également » : l'arc est tracé à la distance de l'insecte visé (`rayon`, de `RAYON_MIN_DU_FOUET` à `portee`), et
@@ -4660,8 +4660,12 @@ export const DEPLOIEMENT_DU_FOUET = 0.12
 export const BANDE_DU_FOUET = 6
 export const RAYON_MIN_DU_FOUET = 14
 export const RETRAIT_DU_FOUET = 0.22
-/** La part de son arc qu'un fouet a balayée, à la part `u` de son balayage : il part lentement, file au milieu, freine au bout (de 0 à 1). */
-export const balayageDuFouet = (u: number): number => u * u * (3 - 2 * u)
+/**
+ * La part de son arc qu'un fouet a balayée, à la part `u` de son balayage (de 0 à 1) : il FILE D'UN COUP et freine au bout —
+ * le « outExpo » du slash de pixelfx (Keko, 27/11 : « regarde la catégorie mêlée de pixelfx pour t'inspirer des effets de
+ * slash, ils sont beaucoup plus jolis »), pour que le dard et le croissant aillent ensemble.
+ */
+export const balayageDuFouet = (u: number): number => (u >= 1 ? 1 : 1 - Math.pow(2, -10 * u))
 
 /** Un insecte EMPOISONNÉ (voir `Ennemi.poison`) : jusqu'à `duree` d'ici — le plus long et le plus fort l'emportent. */
 function empoisonner(m: Monde, e: Ennemi, po: { duree: number; dps: number }): void {

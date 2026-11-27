@@ -12,3 +12,5 @@ declare module 'pixelfx/fx/fire/_lib'
 declare module 'pixelfx/fx/lightning/_lib'
 /** Les aides des effets de glace du dépôt (les flocons) : le givre du Frimas s'en sert. */
 declare module 'pixelfx/fx/ice/_lib'
+/** Les aides des effets de mêlée du dépôt (le croissant d'un slash) : le Fouet de la Tentacule s'en sert. */
+declare module 'pixelfx/fx/melee/_lib'
