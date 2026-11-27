@@ -6682,7 +6682,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     p.glow(mx, my, R + 14, halo, 0.55)
     p.rect(bx, by, bw, 1, moyen)
     p.rect(bx, by + HAUT_DU_BANDEAU - 1, bw, 1, sombre)
-    dessinerLIdentiteDeRace(p, mo.race, mx, Math.round(my - R), aSoi, false, R)
+    // (VERROUILLÉ, LE SYMBOLE DE LA RACE GARDE SES COULEURS — Keko, 27/11 : « ne mets pas le symbole de faction grisé »)
+    dessinerLIdentiteDeRace(p, mo.race, mx, Math.round(my - R), aSoi || cache, false, R)
     const tx = mx + R + 8
     const nom = cache ? '???' : mo.nom
     motEnRelief(p, nom, tx + largeurDe(nom, GRAS) / 2, my - 9, aSoi && !cache)

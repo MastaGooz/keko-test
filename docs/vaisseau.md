@@ -9538,3 +9538,6 @@ Keko : « pour les armes verrouillées, masque complètement l'encadré de prév
 ### La fiche d'un vaisseau verrouillé réduite (27/11)
 
 Keko : « tu as laissé l'encadré de fond assez grand, avec le message au milieu un peu bizarre ; fais comme pour les armes, réduis l'encadré à juste les points d'interrogation et le message ». La plaque d'un vaisseau verrouillé n'entoure plus que le bandeau (médaillon, « ??? », la race) et l'encart d'or, juste dessous. La grille garde la place de la fiche entière (`hauteurDeLaFicheDuVaisseau`) : elle ne bouge pas d'un vaisseau à l'autre.
+### Verrouillé, le symbole de la race garde ses couleurs (27/11)
+
+Keko : « ne mets pas le symbole de faction grisé quand c'est verrouillé ». Sur la fiche d'un vaisseau verrouillé, le médaillon de la race se dessine comme pour un vaisseau qu'on a (`aSoi || cache` dans `dessinerLaFicheEnBandeau`) ; le nom reste « ??? », le nom de la race garde son gris.
