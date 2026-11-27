@@ -1625,6 +1625,60 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   verifier(`ses six tentacules : un insecte à gauche devant, seules celles de gauche partent (${[...gauche.parties].join(', ')}), jamais plus de deux dehors (${gauche.auPlus}) ; ${nGauche} piqûres en 4 s — 14 points par seconde`, [...gauche.parties].every((k) => RACINES[k][1] < 0) && gauche.auPlus <= 2 && nGauche >= 8 && nGauche <= 10 && gauche.pv[0] === 6 * nGauche)
   const loin = tourATour([[80, 0]], 1)
   verifier('un insecte à plus de 55 du vaisseau : aucune ne part', loin.ev.every((e) => e.type !== 'tentacule') && loin.pv[0] === 0)
+
+  // LES CARTES SPÉCIALES DE LA TENTACULE (Keko, 27/11)
+  const sansCritique = { ...cfgCorps, passifs: { ...cfgCorps.passifs, critique: 0 } }
+  const jouerAvec = (arme: Arme, places: [number, number][], duree: number, verrou: number | null = null, autres: Partial<ConfigVaisseau> = {}) => {
+    const conf = { ...sansCritique, ...autres, armes: [arme] }
+    const w = nouveauMonde(conf, 3)
+    places.forEach(([x, y], k) => w.ennemis.push(insecte(k + 1, x, y)))
+    w.verrou = verrou
+    const ev: Evenement[] = []
+    let auPlus = 0
+    let boutures = 0
+    for (let i = 0; i < 60 * duree; i++) {
+      w.ennemis.forEach((e) => (e.corps = { ...e.corps, x: places[e.id - 1][0], y: places[e.id - 1][1], vx: 0, vy: 0 }))
+      w.vaisseau = { ...w.vaisseau, x: 0, y: 0, vx: 0, vy: 0, cap: 0 }
+      ev.push(...avancerLeMonde(conf, w, 1 / 60, { x: 0, y: 0 }).evenements)
+      auPlus = Math.max(auPlus, w.tentacules.filter((tn) => tn.fait !== 'repos').length)
+      boutures = Math.max(boutures, w.boutures.length)
+    }
+    const pv = places.map((_, k) => 1000 - (w.ennemis.find((e) => e.id === k + 1)?.pv ?? 1000))
+    return { w, ev, auPlus, boutures, pv, conf }
+  }
+  // (MÉDUSE : les piqûres électrocutent)
+  const meduse = jouerAvec({ ...corps, electrocution: { duree: 6, chance: 0, degats: 60, saut: 45 } }, [[30, -20]], 0.4)
+  verifier(`Méduse : la piqûre électrocute (${meduse.pv[0]} de dégâts)`, meduse.pv[0] === 6 && meduse.w.ennemis[0].electrocute !== undefined)
+  // (TENAILLE : deux à la fois, sur la même cible, une de chaque flanc)
+  const tenaille = jouerAvec({ ...corps, tentacule: { ...corps.tentacule, paire: true } }, [[30, -20]], 4)
+  const nTenaille = tenaille.ev.filter((e) => e.type === 'piqure').length
+  verifier(`Tenaille : deux tentacules à la fois sur un même insecte (au plus ${tenaille.auPlus} dehors) — ${nTenaille} piqûres en 4 s, le double d'une seule (${nGauche})`, tenaille.auPlus >= 2 && nTenaille >= 2 * nGauche - 1 && tenaille.pv[0] === 6 * nTenaille)
+  // (EMPALEMENT : derrière la cible, dans l'axe de l'aiguille — de sa racine à elle —, jusqu'à 40 au-delà de son bord)
+  {
+    const [rx, ry] = RACINES[0]
+    const l = Math.hypot(30 - rx, 0 - ry)
+    const [ux, uy] = [(30 - rx) / l, (0 - ry) / l]
+    const places: [number, number][] = [[30, 0], [30 + ux * 45, uy * 45], [30 + ux * 60, uy * 60], [70, 25]]
+    const em = jouerAvec({ ...corps, tentacule: { ...corps.tentacule, empale: { allonge: 40, largeur: 3 } } }, places, 0.3)
+    verifier(`Empalement : la cible et l'insecte derrière elle, à 45, de la même piqûre (${em.pv.join(', ')}) ; ni celui à 60, ni celui hors de l'axe`, em.pv[0] === 6 && em.pv[1] === 6 && em.pv[2] === 0 && em.pv[3] === 0 && em.ev.some((e) => e.type === 'empale'))
+  }
+  // (FOUET : une attaque à côté — un arc de ±1 autour de l'insecte visé, une fois chacun, à portée)
+  {
+    const fouet: Arme = { id: 'tentacule', cadence: 2, degats: 6, portee: 55, vitesse: 0, vie: 0, dispersion: 0, guide: false, fouet: { ouverture: 1, duree: 0.25 } }
+    const fo = jouerAvec(fouet, [[30, 0], [30, 15], [-30, 0], [80, 0]], 0.6)
+    verifier(`Fouet : un coup en arc — le visé et son voisin dans l'arc frappés une fois (${fo.pv.join(', ')}), ni celui de derrière ni le lointain`, fo.ev.filter((e) => e.type === 'fouet').length === 1 && fo.pv[0] === 6 && fo.pv[1] === 6 && fo.pv[2] === 0 && fo.pv[3] === 0 && fo.w.fouets.every((f) => f.fini))
+  }
+  // (BOUTURE : un critique fait pousser une petite tentacule sur l'insecte, au bord qui fait face au coup ; elle pique ses
+  // voisins, pas lui ; un nouveau critique la fait repartir, sans en ajouter une seconde ; son hôte mort, elle meurt)
+  {
+    const bouture = { ...corps, critique: 50, bouture: { duree: 4, periode: 0.5, portee: 30, part: 0.4 } }
+    const bo = jouerAvec(bouture, [[30, 0], [30, 25]], 2, 1)
+    const b = bo.w.boutures[0]
+    verifier(`Bouture : une seule sur l'hôte malgré ${bo.ev.filter((e) => e.type === 'piqure').length} critiques (${bo.boutures}), au bord qui fait face au vaisseau (dx ${b?.dx.toFixed(1)}), qui repart à chaque critique (fin à ${b?.jusque.toFixed(2)} s, à ${bo.w.t.toFixed(2)} s) ; le voisin piqué par elle seule (${bo.pv[1]}), sans bouture à lui`, bo.boutures === 1 && b !== undefined && b.hote === 1 && b.dx < 0 && b.jusque > bo.w.t + 3 && bo.pv[1] > 0 && bo.w.boutures.every((x) => x.hote === 1))
+    bo.w.ennemis = bo.w.ennemis.filter((e) => e.id !== 1)
+    const fin = avancerLeMonde(bo.conf, bo.w, 1 / 60, { x: 0, y: 0 }).evenements
+    verifier('Bouture : son hôte disparu, elle se flétrit', bo.w.boutures.length === 0 && fin.some((e) => e.type === 'boutureFinie'))
+  }
 }
 
 // LE NUAGE D'INSECTES DU KRAKEN (Keko, 16/11) : il reste autour du vaisseau ; vers les insectes à portée, il étend des

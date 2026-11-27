@@ -192,7 +192,8 @@ export const aUneZone = (a: Arme): boolean => valeurs(a, CLES_DE_ZONE).some((v) 
 // (LA DURÉE EST CELLE DE CE QUI A UNE VIE À SOI — Keko, 26/11 : « faire durer plus longtemps une invocation, comme une
 // créature, une tourelle, ou la bobine tesla, qui est une forme de tourelle […] ça ne concerne pas les traînées, les zones
 // enflammées, les zones gelées » : la flaque de napalm en sort, la balise laser y entre)
-const POSEES = ['pose', 'balise', 'mine', 'ponte', 'sphere', 'lien'] as const
+// (… ET LA BOUTURE DE LA TENTACULE — Keko, 27/11 : « la durée du tentacule est affectée par les cartes qui jouent sur la durée »)
+const POSEES = ['pose', 'balise', 'mine', 'ponte', 'sphere', 'lien', 'bouture'] as const
 const CLES_DU_FEU: ReadonlySet<string> = new Set(['dpsBrulure'])
 const CLES_DU_GIVRE: ReadonlySet<string> = new Set(['ralenti'])
 /** Ce que l'arme pose, et sa durée. */
@@ -270,7 +271,10 @@ export function armeAmelioree(a: Arme, stat: StatDArme, k: number): Arme {
       const z3 = z2.fragments === undefined ? z2 : { ...z2, fragments: { ...z2.fragments, vie: z2.fragments.vie * (1 + k) } }
       // (… ET DES DRONES CHASSENT PLUS LOIN — la Chasse de l'escorte, 26/11 : sa proie se choisit à `laisse` du vaisseau,
       // qui restait à 160 ; en chasse ils tournent à 34 de leur cible, la portée de leurs balles ne leur servait à rien)
-      const z = z3.orbite?.laisse === undefined ? z3 : { ...z3, orbite: { ...z3.orbite, laisse: z3.orbite.laisse * (1 + k) } }
+      const z4 = z3.orbite?.laisse === undefined ? z3 : { ...z3, orbite: { ...z3.orbite, laisse: z3.orbite.laisse * (1 + k) } }
+      // (… ET L'AIGUILLE DE L'EMPALEMENT VA PLUS LOIN derrière sa cible — 27/11 ; sa largeur, elle, grandit avec la zone)
+      const ep = z4.tentacule?.empale
+      const z = ep === undefined ? z4 : { ...z4, tentacule: { ...z4.tentacule!, empale: { ...ep, allonge: ep.allonge * (1 + k) } } }
       return a.portee > 0 ? { ...z, portee: a.portee * (1 + k), vie: a.vie * (1 + k) } : z
     }
     case 'pose': {
@@ -671,6 +675,24 @@ export const MUTATIONS: Mutation[] = [
   // guidé qui explose sur 11, cadence ×2,5 et dégâts ×2,5 — les dégâts par seconde des balles sur une cible, la zone en
   // plus ; voir `Arme.missiles`)
   variation('escorte-missiles', 'escorte', 'Mini-missiles','Les mini-avions tirent des missiles guidés qui explosent.', changerA('escorte', (a) => ({ ...a, cadence: a.cadence * 2.5, degats: fois(a, 2.5), missiles: { rayon: 11, vitesse: 140, vie: 1.6 } }))),
+  // LA TENTACULE DU KRAKEN (Keko, 27/11 : « on va faire le même travail qu'on a fait pour le chasseur et l'empire » ; Venin,
+  // la corrosion, refusé — « on a déjà pas mal d'éléments de type toxique avec les Xénoïdes » —, la Ponction — un soin pris
+  // sur les piqûres, « des quantités de points de vie astronomiques » —, la Projection, l'Étreinte et l'Enchaînement retirés)
+  // (« MÉDUSE », SON ÉLÉMENT — Keko : « l'élément électrique, un petit peu comme les crochets d'une méduse » ; le nom, de moi,
+  // « Électrique » est au railgun)
+  variation('tentacule-meduse', 'tentacule', 'Méduse', 'Les piqûres appliquent électrocution.', changerA('tentacule', (a) => ({ ...a, electrocution: { ...ELECTROCUTION_DU_VORTEX } }))),
+  // (« TENAILLE » — Keko : « c'est pas mal » — voir `Arme.tentacule.paire`)
+  variation('tentacule-tenaille', 'tentacule', 'Tenaille', 'Deux tentacules frappent ensemble la même cible.', changerA('tentacule', (a) => (a.tentacule === undefined ? a : { ...a, tentacule: { ...a.tentacule, paire: true } }))),
+  // (« FOUET » — Keko : « il faudrait que ce soit une attaque supplémentaire ; on ne transforme pas la pointe du tentacule qui
+  // pique en fouet » : toutes les 2 s, un arc de 115°, 60 % des dégâts, en 0,25 s — chiffres de moi ; voir `Arme.fouet`)
+  variation('tentacule-fouet', 'tentacule', 'Fouet', 'Régulièrement, une tentacule fouette en arc de cercle.', ajouterA('tentacule', (a) => [ajoutee(a, 9, { cadence: 2, degats: fois(a, 0.6), tentacule: undefined, fouet: { ouverture: 1, duree: 0.25 } })])),
+  // (« EMPALEMENT » — Keko : « ça transperce la cible principale et ça touche toutes les cibles derrière sur la distance de
+  // l'empalement » : 40 au-delà de son bord, de moi ; voir `Arme.tentacule.empale`)
+  variation('tentacule-empalement', 'tentacule', 'Empalement', 'L’aiguille transperce sa cible et touche tous les ennemis derrière elle.', changerA('tentacule', (a) => (a.tentacule === undefined ? a : { ...a, tentacule: { ...a.tentacule, empale: { allonge: 40, largeur: 3 } } }))),
+  // (« BOUTURE », SA VARIATION SUR COUP CRITIQUE — Keko : « un mini tentacule pousse sur l'ennemi touché, qui se met à attaquer
+  // les ennemis proches » : 4 s, une piqûre toutes les 0,5 s à 30, 40 % des dégâts — chiffres et nom de moi ; voir
+  // `Arme.bouture`)
+  variation('tentacule-bouture', 'tentacule', 'Bouture', 'Un critique fait pousser sur l’ennemi une tentacule qui attaque.', changerA('tentacule', (a) => ({ ...a, bouture: { duree: 4, periode: 0.5, portee: 30, part: 0.4 } }))),
   // LES CARTES D'ÉLÉMENT (Keko, 24/11 : « des cartes spéciales de chaque élément » ; « des cartes multicolores spéciales qu'on
   // proposera dans le pool des cartes spéciales, si le joueur a au moins une attaque avec l'élément en question » — voir
   // `ELEMENTAIRES` pour leurs chiffres ; leurs noms et leurs textes sont de moi)

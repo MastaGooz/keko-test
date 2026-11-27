@@ -189,6 +189,26 @@ verifier('le délai passé, ce qui restait à choisir part en réserve', reserve
   verifier(`l'Empire a ${ARMES_DE_FACTION.filter((x) => x.race === 'humains').length} nouvelles armes ; six variations par arme (${ids.map((id) => `${id} ${MUTATIONS.filter((x) => x.sorte === 'variation' && x.arme === id).length}`).join(', ')}) ; aucune sans effet (${sansEffet || 'aucune'})`, ARMES_DE_FACTION.filter((x) => x.race === 'humains').length === 6 && ids.every((id) => MUTATIONS.filter((x) => x.sorte === 'variation' && x.arme === id).length === (EN_REVUE[id] ?? 6)) && sansEffet === '')
 }
 {
+  // LA TENTACULE DU KRAKEN (Keko, 27/11) : ses variations — cinq tranchées, la sixième à venir — changent toutes sa config ;
+  // le Fouet AJOUTE une attaque, sans tentacule à lui ; la Bouture a une durée que la carte « Durée » allonge ; l'aiguille de
+  // l'Empalement s'allonge avec « Zone et portée » ; la Méduse ouvre les cartes d'électrocution
+  const tentacule: Arme = { id: 'tentacule', cadence: 0.42, degats: 50, portee: 55, vitesse: 0, vie: 0, dispersion: 0, guide: false, place: 0, tentacule: { ancres: [[-0.2, -4.8], [-0.2, 4.8]], aller: 0.2, tenue: 0.08, retour: 0.24, virage: 0.35, alterne: true } }
+  const depart: ConfigVaisseau = { ...C, armes: [tentacule] }
+  const variations = MUTATIONS.filter((x) => x.sorte === 'variation' && x.arme === 'tentacule')
+  const sansEffet = variations.filter((v) => JSON.stringify(v.appliquer(depart)) === JSON.stringify(depart)).map((v) => v.id)
+  const mu = (id: string): Mutation => MUTATIONS.find((x) => x.id === id)!
+  const avecFouet = mu('tentacule-fouet').appliquer(depart)
+  const fouet = avecFouet.armes[1]
+  const bouture = mu('tentacule-bouture').appliquer(depart).armes[0]
+  const empale = mu('tentacule-empalement').appliquer(depart).armes[0]
+  const meduse = mu('tentacule-meduse').appliquer(depart).armes[0]
+  verifier(`la Tentacule a ${variations.length} variations (${variations.map((v) => v.nom).join(', ')}), aucune sans effet (${sansEffet.join(', ') || 'aucune'})`, variations.length === 5 && sansEffet.length === 0)
+  verifier(`Fouet : une seconde arme « tentacule », sans tentacule, qui fouette (${fouet?.degats} toutes les ${fouet?.cadence} s)`, avecFouet.armes.length === 2 && fouet.tentacule === undefined && fouet.fouet !== undefined && fouet.degats === 30)
+  verifier(`Bouture : la carte « Durée » +50 % la fait vivre ${armeAmelioree(bouture, 'pose', 0.5).bouture?.duree} s au lieu de 4 ; sans elle, pas de carte « Durée »`, statsDeLArme(bouture).includes('pose') && !statsDeLArme(tentacule).includes('pose') && armeAmelioree(bouture, 'pose', 0.5).bouture?.duree === 6)
+  verifier(`Empalement : « Zone et portée » +50 % pousse l'aiguille à ${armeAmelioree(empale, 'portee', 0.5).tentacule?.empale?.allonge} derrière la cible au lieu de 40`, armeAmelioree(empale, 'portee', 0.5).tentacule?.empale?.allonge === 60)
+  verifier('Méduse : la tentacule électrocute, la carte « Électrocution » paraît', statsDeLArme(meduse).includes('electrocution') && !statsDeLArme(tentacule).includes('electrocution'))
+}
+{
   // LES ÉTATS NE SE PRENNENT QUE POUR TOUTES LES ARMES (Keko, 23/11 : « une augmentation d'un état concerne toujours toutes
   // les armes ») : un laser corrosif — jamais de carte d'état à une arme ; la corrosion de toutes les armes paraît, au
   // bonus entier ; ni feu ni givre, que rien n'applique ; un laser nu, aucune carte d'état

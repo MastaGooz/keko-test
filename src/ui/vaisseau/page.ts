@@ -12,7 +12,7 @@
  */
 import './vaisseau.css'
 import * as noyau from 'pixelfx'
-import { ELEMENTAIRES, TRAJECTOIRE_DU_MISSILE, anneauMagnetique, rayonDeLOnde, ennemisDuLien, ajouterUnPilote, avancerLEquipage, prendreLaMain, type SorteDInsecte, SORTES_D_INSECTES, gabaritDInsecte, gemmesDuButin, butinDeLaRoche, pointDeRetour, rayonDe, rocheDeLaTempete, vieMultipliee, degatsMultiplies, placeDeLEcharde, frontDeLaNova, ancreDansLeMonde, zoneDuDe, coupeDUnCube, formeDeLaCoupe, liesAuDrain, encaisser, type Ennemi, type Evenement, type Monde, impactDuRayon, asteroidesVisibles, avancerLeMonde, finDuTrio, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur, xpDuNiveau, ennemiLePlusProche, ennemiVerrouille, chauffeDuDrone,focaleDuLien,ondeDuLien,verrouiller, angleDuBalayage, aPlusieurs, alliesAuRetour, recompenseDeFin, type LigneDeRecompense } from '../../logic/vaisseau/jeu.ts'
+import { ELEMENTAIRES, TRAJECTOIRE_DU_MISSILE, anneauMagnetique, rayonDeLOnde, ennemisDuLien, ajouterUnPilote, avancerLEquipage, prendreLaMain, type SorteDInsecte, SORTES_D_INSECTES, gabaritDInsecte, gemmesDuButin, butinDeLaRoche, pointDeRetour, rayonDe, rocheDeLaTempete, vieMultipliee, degatsMultiplies, placeDeLEcharde, frontDeLaNova, ancreDansLeMonde, RETRAIT_DU_FOUET, zoneDuDe, coupeDUnCube, formeDeLaCoupe, liesAuDrain, encaisser, type Ennemi, type Evenement, type Monde, impactDuRayon, asteroidesVisibles, avancerLeMonde, finDuTrio, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur, xpDuNiveau, ennemiLePlusProche, ennemiVerrouille, chauffeDuDrone,focaleDuLien,ondeDuLien,verrouiller, angleDuBalayage, aPlusieurs, alliesAuRetour, recompenseDeFin, type LigneDeRecompense } from '../../logic/vaisseau/jeu.ts'
 import { PIECES, ETALONS as ETALONS_DU_BANC, acheter, ajouterLesPiecesDEssai, capacite, poidsTotal, POIDS_SERIE, configDuHangar, demonter, demonterA, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, montantCourt, monteeA, monter, monterA, peutAcheter, peutMonter, perdreLesMontees, estDeBase, exemplaires, libres, pieceDe, piecesDe, placeLourde, possede, aimantMonte, radarMonte, type Jauge, type Piece, type Sorte } from '../../logic/vaisseau/hangar.ts'
 import { drawWord, spell } from 'pixelfx/fx/ui/_lib'
 import { firePuff, hotFirst, smokePuff } from 'pixelfx/fx/fire/_lib'
@@ -13558,10 +13558,160 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const pointe = crochet(POINTE_DU_CROCHET, 0)
     p.px(Math.round(pointe[0]), Math.round(pointe[1]), OS[3])
     if (plantee) p.glow(tn.tx, tn.ty, 5, BILE[1], 0.35)
+    // (MÉDUSE — Keko, 27/11 : « des tentacules qui électrifient, un peu comme les crochets d'une méduse » : des étincelles
+    // courent le long d'elle, et, plantée, un petit éclair crépite de son dard à sa proie)
+    if (CONF.armes[tn.arme]?.electrocution !== undefined) dessinerDesFilamentsElectriques(p, pts, plantee ? [tn.tx, tn.ty] : null, tn.ancre)
+  }
+  /** Des étincelles qui courent sur un bras de chair électrique (la Méduse), et l'éclair de son bout à `vers`. */
+  function dessinerDesFilamentsElectriques(p: Peintre, pts: [number, number][], vers: [number, number] | null, graine: number): void {
+    const n = pts.length - 1
+    const image = Math.floor(t * 20)
+    for (let i = 1; i <= n; i++) {
+      const h = Math.sin(i * 12.9898 + image * 78.233 + graine * 3.7) * 43758.5453
+      if (h - Math.floor(h) > 0.22) continue
+      p.dot(pts[i][0] + (h % 1.7) - 0.8, pts[i][1] + ((h * 3) % 1.7) - 0.8, COULEURS_VOLT[(i + image) % 2 === 0 ? 6 : 4], 0.9)
+    }
+    if (vers === null) return
+    p.glow(pts[n][0], pts[n][1], 4, COULEURS_VOLT[4], 0.3 + 0.15 * Math.sin(t * 40 + graine))
+    // (l'éclair : trois coudes tirés à chaque image, du bout à la proie)
+    let [x, y] = pts[n]
+    for (let k = 1; k <= 3; k++) {
+      const h = Math.sin(k * 91.7 + image * 13.1 + graine) * 9999
+      const nx = pts[n][0] + ((vers[0] - pts[n][0]) * k) / 3 + (k < 3 ? (h % 3) - 1.5 : 0)
+      const ny = pts[n][1] + ((vers[1] - pts[n][1]) * k) / 3 + (k < 3 ? ((h * 7) % 3) - 1.5 : 0)
+      p.line(x, y, nx, ny, COULEURS_VOLT[6], 0.9)
+      ;[x, y] = [nx, ny]
+    }
+    p.glow(vers[0], vers[1], 6, COULEURS_VOLT[4], 0.5)
+  }
+  /** UN BRAS DE CHAIR — le fouet, la bouture : les points `pts`, d'une épaisseur de `e0` à la racine à `e1` au bout, en bandes de chair et de chitine aux couleurs de l'apparence, cerné. */
+  function dessinerUnBrasDeChair(p: Peintre, pts: [number, number][], e0: number, e1: number, bandes = 7): void {
+    const n = pts.length - 1
+    if (n < 1) return
+    const ru = rampesDuJoueur()
+    const chair = ru?.chair ?? [0, 0, ...tonsDeLaMatiere('chair')]
+    const chitine = ru?.chitine ?? [0, 0, ...tonsDeLaMatiere('chitine')]
+    const ep = (i: number): number => e0 + (e1 - e0) * (i / n)
+    for (let i = 0; i <= n; i++) p.circle(pts[i][0], pts[i][1], ep(i) + 0.8, CHAIR[0])
+    for (let i = 0; i <= n; i++) p.circle(pts[i][0], pts[i][1], ep(i), Math.floor((i / n) * bandes) % 2 === 0 ? chair[3] : chitine[3])
+    for (let i = 0; i <= n; i++) p.circle(pts[i][0] - 0.5, pts[i][1] - 0.5, Math.max(0.5, ep(i) * 0.45), Math.floor((i / n) * bandes) % 2 === 0 ? chair[4] : chitine[4])
+  }
+  /** Les points d'une courbe de (ax, ay) à (bx, by), bombée de `bombe` (en part de sa longueur, signée) sur sa normale. */
+  function courbeDeChair(ax: number, ay: number, bx: number, by: number, bombe: number, pas = 1.3): [number, number][] {
+    const L = Math.hypot(bx - ax, by - ay) || 1
+    const nx = -(by - ay) / L
+    const ny = (bx - ax) / L
+    const cx = (ax + bx) / 2 + nx * bombe * L
+    const cy = (ay + by) / 2 + ny * bombe * L
+    const n = Math.max(4, Math.ceil(L / pas))
+    const pts: [number, number][] = []
+    for (let i = 0; i <= n; i++) {
+      const s = i / n
+      const q = 1 - s
+      pts.push([q * q * ax + 2 * q * s * cx + s * s * bx, q * q * ay + 2 * q * s * cy + s * s * by])
+    }
+    return pts
+  }
+  /**
+   * LE FOUET (Keko, 27/11 : « une attaque supplémentaire, qui fait un fouet et décrit un arc de cercle » — voir `Arme.fouet`) :
+   * une longue tentacule sort de la proue et balaie son arc, son bout en retard sur sa racine comme un fouet qui claque, une
+   * traînée de chair pâle derrière lui ; son balayage fini, elle se rétracte.
+   */
+  function dessinerLesFouets(p: Peintre): void {
+    for (const f of m.fouets) {
+      const a = CONF.armes[f.arme]
+      const fo = a?.fouet
+      if (a === undefined || fo === undefined) continue
+      const brut = (m.t - f.depuis) / fo.duree
+      const u = Math.min(1, brut)
+      // (il jaillit en un quart de son balayage, et se rétracte après)
+      const long = a.portee * (brut < 0.25 ? 1 - Math.pow(1 - brut / 0.25, 2) : brut <= 1 ? 1 : Math.max(0, 1 - (brut - 1) / (RETRAIT_DU_FOUET - 1)))
+      const e = u * u * (3 - 2 * u)
+      const theta = f.cap + f.sens * fo.ouverture * (2 * e - 1)
+      // (LA TRAÎNÉE : l'arc balayé, pâle, qui s'efface derrière lui)
+      const passe = 2 * fo.ouverture * e
+      for (let k = 0; k <= 14; k++) {
+        const w = k / 14
+        const an = theta - f.sens * passe * w
+        const alpha = (1 - w) * 0.55 * (brut <= 1 ? 1 : Math.max(0, 1 - (brut - 1) / 0.3))
+        if (alpha <= 0.02) continue
+        for (const r of [0.75, 0.9]) p.dot(v.x + Math.cos(an) * a.portee * r, v.y + Math.sin(an) * a.portee * r, CHAIR[4], alpha * (r === 0.9 ? 1 : 0.6))
+      }
+      if (long < 2) continue
+      // (LE BRAS : sa racine à la proue, chaque point en retard d'autant plus qu'il est loin d'elle)
+      const n = Math.max(6, Math.ceil(long / 1.4))
+      const retard = brut <= 1 ? 0.55 * Math.sin(Math.PI * u) : 0
+      const pts: [number, number][] = []
+      const x0 = v.x + Math.cos(v.cap) * 4
+      const y0 = v.y + Math.sin(v.cap) * 4
+      for (let i = 0; i <= n; i++) {
+        const s = i / n
+        const an = theta - f.sens * retard * Math.pow(s, 1.6)
+        pts.push([x0 + (Math.cos(an) * long - (x0 - v.x)) * s, y0 + (Math.sin(an) * long - (y0 - v.y)) * s])
+      }
+      dessinerUnBrasDeChair(p, pts, 1.6, 0.5, 9)
+      const [bx, by] = pts[n]
+      p.px(Math.round(bx), Math.round(by), OS[3])
+      if (brut <= 1) p.glow(bx, by, 5, CHAIR[5], 0.3)
+      if (a.electrocution !== undefined) dessinerDesFilamentsElectriques(p, pts, null, f.arme)
+    }
+  }
+  /**
+   * LES BOUTURES (Keko, 27/11 : « sur un coup critique, un mini tentacule pousse sur l'ennemi touché » — voir `Arme.bouture`) :
+   * un bourgeon de chair au bord de l'insecte, là où il a été touché, d'où une petite tentacule à dard ondule ; elle se
+   * détend vers sa proie et revient ; elle pousse à sa naissance et se flétrit à sa fin.
+   */
+  function dessinerLesBoutures(p: Peintre): void {
+    for (const b of m.boutures) {
+      const hote = m.ennemis.find((e) => e.id === b.hote)
+      const rx = (hote?.corps.x ?? b.x - b.dx) + b.dx
+      const ry = (hote?.corps.y ?? b.y - b.dy) + b.dy
+      const taille = Math.min(1, (m.t - b.nee) / 0.25) * Math.min(1, Math.max(0, (b.jusque - m.t) / 0.3))
+      if (taille <= 0.02) continue
+      // (au repos, elle se dresse vers l'extérieur de l'insecte et ondule)
+      const d = Math.hypot(b.dx, b.dy) || 1
+      const ond = Math.sin(t * 5 + b.id) * 0.6
+      const ox = b.dx / d
+      const oy = b.dy / d
+      const repos: [number, number] = [rx + (ox * Math.cos(ond) - oy * Math.sin(ond)) * 7 * taille, ry + (ox * Math.sin(ond) + oy * Math.cos(ond)) * 7 * taille]
+      // (le coup : elle se détend en 0,08 s jusqu'à sa proie, revient en 0,17)
+      const age = m.t - b.frappe
+      const detente = age < 0 || age > 0.25 ? 0 : age < 0.08 ? age / 0.08 : 1 - (age - 0.08) / 0.17
+      const bout: [number, number] = [repos[0] + (b.tx - repos[0]) * detente, repos[1] + (b.ty - repos[1]) * detente]
+      const pts = courbeDeChair(rx, ry, bout[0], bout[1], 0.25 * Math.sin(t * 4 + b.id), 1.1)
+      p.circle(rx, ry, 2 * taille + 0.8, CHAIR[0])
+      p.circle(rx, ry, 2 * taille, CHAIR[3])
+      dessinerUnBrasDeChair(p, pts, 1.1 * taille, 0.45, 4)
+      p.px(Math.round(bout[0]), Math.round(bout[1]), OS[3])
+      const a = CONF.armes[b.arme]
+      if (a?.electrocution !== undefined) dessinerDesFilamentsElectriques(p, pts, detente > 0.6 ? [b.tx, b.ty] : null, b.id)
+    }
+  }
+  /** L'AIGUILLE DE L'EMPALEMENT (voir `Arme.tentacule.empale`) : un dard d'os qui jaillit à travers la cible, et s'efface. */
+  let aiguillesEmpalees: { x0: number; y0: number; x1: number; y1: number; t0: number }[] = []
+  const DUREE_DE_L_AIGUILLE = 0.2
+  function dessinerLesAiguillesEmpalees(p: Peintre): void {
+    for (const ai of aiguillesEmpalees) {
+      const age = t - ai.t0
+      const sort = Math.min(1, age / 0.05)
+      const k = age < 0.1 ? 1 : 1 - (age - 0.1) / (DUREE_DE_L_AIGUILLE - 0.1)
+      const x1 = ai.x0 + (ai.x1 - ai.x0) * sort
+      const y1 = ai.y0 + (ai.y1 - ai.y0) * sort
+      const L = Math.hypot(ai.x1 - ai.x0, ai.y1 - ai.y0) || 1
+      const nx = -(ai.y1 - ai.y0) / L
+      const ny = (ai.x1 - ai.x0) / L
+      p.line(ai.x0 + nx, ai.y0 + ny, x1, y1, OS[0], k)
+      p.line(ai.x0 - nx * 0.5, ai.y0 - ny * 0.5, x1, y1, OS[2], k)
+      p.line(ai.x0, ai.y0, x1, y1, OS[1], k)
+      p.dot(x1, y1, OS[3], k)
+    }
   }
   function dessinerLesTentacules(p: Peintre): void {
-    if (m.tentacules.length === 0 || m.phase !== 'vol') return
+    aiguillesEmpalees = aiguillesEmpalees.filter((ai) => t - ai.t0 < DUREE_DE_L_AIGUILLE)
+    if ((m.tentacules.length === 0 && m.fouets.length === 0 && m.boutures.length === 0 && aiguillesEmpalees.length === 0) || m.phase !== 'vol') return
     p.place(W / 2 - camera.x, centreY() - camera.y)
+    dessinerLesBoutures(p)
+    dessinerLesFouets(p)
     for (const tn of m.tentacules) {
       const te = CONF.armes[tn.arme]?.tentacule
       if (te === undefined || tn.u <= 0.01) continue
@@ -13610,6 +13760,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.px(Math.round(x1 + ux * (4 + enfonce)), Math.round(y1 + uy * (4 + enfonce)), OS[3])
       if (plantee) p.glow(tn.tx, tn.ty, 5, BILE[1], 0.35)
     }
+    dessinerLesAiguillesEmpalees(p)
     p.place(0, 0)
   }
   /**
@@ -14663,6 +14814,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   }
   /** L'instant du dernier claquement de tentacule (trois à la fois : un seul son). */
   let fouetSonneA = -10
+  let piqureDeBoutureA = -10
   /** L'instant du dernier craquement de givre (voir l'événement `gele`). */
   let geleSonneA = -10
   let etourdiSonneA = -10
@@ -18474,6 +18626,47 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           // (le nuage mord : l'insecte blanchit ; plus de son à chaque morsure — Keko, 20/11 : « pas un son par à-coups » —,
           // c'est le bourdonnement continu de la nuée qui enfle, voir `regler`)
           toucheEnnemiA.set(ev.id, t)
+          break
+        case 'empale':
+          // (L'EMPALEMENT : le dard d'os jaillit à travers la cible, des éclats d'os et de bile à sa pointe)
+          aiguillesEmpalees.push({ x0: ev.x0, y0: ev.y0, x1: ev.x1, y1: ev.y1, t0: t })
+          for (let i = 0; i < 5; i++) {
+            const a = Math.atan2(ev.y1 - ev.y0, ev.x1 - ev.x0) + R.range(-0.6, 0.6)
+            etincelles.ajouter('etincelle', ev.x1, ev.y1, Math.cos(a) * R.range(30, 70), Math.sin(a) * R.range(30, 70), R.range(0.15, 0.3), i % 2 === 0 ? OS[2] : BILE[1], 1, 1.5)
+          }
+          break
+        case 'fouet':
+          // (LE FOUET part : le claquement mouillé de la tentacule)
+          if (t - fouetSonneA > 0.12) {
+            fouetSonneA = t
+            jouer('fouet', { dx: ev.x - v.x, dy: ev.y - v.y })
+          }
+          break
+        case 'bouture':
+          // (UNE BOUTURE POUSSE : un « blop » de chair, une giclée de bile là où elle sort)
+          jouer('ponte', { dx: ev.x - v.x, dy: ev.y - v.y })
+          for (let i = 0; i < 6; i++) {
+            const a = R.range(0, Math.PI * 2)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(15, 40), Math.sin(a) * R.range(15, 40), R.range(0.15, 0.3), i % 2 === 0 ? CHAIR[4] : BILE[1], 1, 1.5)
+          }
+          break
+        case 'coupDeBouture':
+          // (elle pique : le « tchk » de l'aiguille, plus rare — elles sont nombreuses)
+          if (t - piqureDeBoutureA > 0.15) {
+            piqureDeBoutureA = t
+            jouer('piqure', { dx: ev.x - v.x, dy: ev.y - v.y })
+          }
+          for (let i = 0; i < 3; i++) {
+            const a = R.range(0, Math.PI * 2)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(15, 35), Math.sin(a) * R.range(15, 35), R.range(0.1, 0.2), BILE[1], 1, 1)
+          }
+          break
+        case 'boutureFinie':
+          // (elle se flétrit : quelques lambeaux de chair qui retombent)
+          for (let i = 0; i < 4; i++) {
+            const a = R.range(0, Math.PI * 2)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(8, 20), Math.sin(a) * R.range(8, 20), R.range(0.2, 0.35), CHAIR[3], 1, 1)
+          }
           break
         case 'piqure':
           // (l'aiguille se plante : son « tchk » charnu, une giclée de bile)
