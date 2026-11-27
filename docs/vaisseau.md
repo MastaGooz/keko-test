@@ -9523,3 +9523,6 @@ bien ciblé qui tombe sur un boss. » La frappe nucléaire proposée d'abord, «
 - **Les quatre anciennes cartes retirées** : Salve, Dispersion, Lance-missiles, Satellites. Les missiles ont leurs six :
   Thermite, Déluge, Bordée, Ventouse, Souffle, Silo ; `talents.verif.ts` n'a plus d'arme en revue.
 - Chiffres et nom de moi : 6 s, 200, ×3, 16 de rayon, les durées de montée et de chute.
+### Le Silo frappe plus fort, et ça se voit (27/11)
+
+Keko : « le silo devra avoir une explosion un peu plus puissante que les missiles de base. Et visuellement un petit peu plus impressionnante. » Son explosion était de ×3 sur 16, plus petite que les 18 du missile : elle passe à **×4 sur 30** (chiffres de moi). La règle annonce l'impact par un événement à lui, `impactDuSilo`, juste après son `explosionDeZone` ; la page l'ajoute à l'explosion du missile (déjà à sa taille) : le grondement de l'obus, un grand éclair blanc et une seconde étoile de lumière, une onde de choc épaisse au front clair jusqu'à deux fois la zone en 0,45 s, un cratère roussi qui s'efface en 1,6 s (`impactsDuSilo`), une jupe de poussière qui roule au ras du sol, une colonne de feu qui monte de l'impact, une seconde gerbe de baril, une forte secousse et une vibration.

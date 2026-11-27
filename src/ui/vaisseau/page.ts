@@ -10605,6 +10605,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   }
   /** L'ONDE D'UNE EXPLOSION DE MINI-MISSILE : un anneau orange qui s'ouvre jusqu'à son rayon, en 0,25 s. */
   let ondesDeZone: { x: number; y: number; t0: number; r: number; s: number }[] = []
+  /** LES IMPACTS DU SILO (voir `Arme.silo`) : leur onde de poussière et leur cratère, par-dessus l'explosion du missile. */
+  let impactsDuSilo: { x: number; y: number; t0: number; r: number }[] = []
   /** LES EXPLOSIONS DE GLACE (les grenades givrées — voir `dessinerLesExplosionsDeGlace`). */
   let explosionsDeGlace: { x: number; y: number; t0: number; r: number; g: number }[] = []
   /**
@@ -10759,6 +10761,24 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // (le cœur de l'explosion : une lueur chaude qui s'éteint — à la place de l'éclair des chocs, dont l'anneau s'ouvrait
       // jusqu'à presque trois fois son rayon : c'était lui, le grand cercle)
       p.glow(ox, oy, (12 * (1 - u) + 4) * o.s, FEU[5], 0.8 * (1 - u))
+    }
+    // (L'IMPACT DU SILO — Keko, 27/11 : « visuellement un petit peu plus impressionnante » : un cratère roussi qui
+    // s'efface en 1,6 s, et une onde de choc épaisse, au front clair, qui court jusqu'à deux fois la zone en 0,45 s)
+    impactsDuSilo = impactsDuSilo.filter((o) => t - o.t0 < 1.6)
+    for (const o of impactsDuSilo) {
+      const age = t - o.t0
+      const ox = o.x - camera.x + W / 2
+      const oy = o.y - camera.y + centreY()
+      const fin = 1 - age / 1.6
+      p.disc(ox, oy, o.r * 0.55, N.hex('#1a0f0c'), (d) => (0.55 - 0.4 * d) * fin)
+      p.disc(ox, oy, o.r * 0.3, FEU[2], (d) => 0.5 * (1 - d) * Math.max(0, 1 - age / 0.8))
+      if (age < 0.45) {
+        const u = age / 0.45
+        const r = o.r * (0.4 + 1.6 * Math.sqrt(u))
+        p.ring(ox, oy, r, 1, u < 0.25 ? N.WHITE : N.hex('#f0e2c4'), 1 - u)
+        p.ring(ox, oy, r - 1.5, 1, N.hex('#c8b89c'), 0.7 * (1 - u))
+        p.ring(ox, oy, r - 3, 1, N.hex('#8a7c6c'), 0.45 * (1 - u))
+      }
     }
     if (parametres.has('consume') && enJeu && m.phase === 'vol' && t - bancConsumeA > 1.6) {
       bancConsumeA = t
@@ -18652,6 +18672,32 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
             etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(40, 90), Math.sin(a) * R.range(40, 90), R.range(0.12, 0.25), [N.WHITE, FEU[6]][Math.floor(R.next() * 2)], 1, 2)
           }
           break
+        case 'impactDuSilo': {
+          // (LE SILO TOUCHE LE SOL — Keko, 27/11 : « une explosion un peu plus puissante que les missiles de base, et
+          // visuellement un petit peu plus impressionnante » ; par-dessus l'explosion du missile, déjà à sa taille : le
+          // grondement de l'obus, un grand éclair blanc et une seconde étoile de lumière, l'onde de poussière et le cratère
+          // — `impactsDuSilo` —, une jupe de poussière qui roule au ras du sol, une COLONNE DE FEU qui monte de l'impact,
+          // le chemin du missile à l'envers, deux fois plus d'étincelles et de morceaux en feu, une forte secousse)
+          const sz = ev.rayon / RAYON_DU_MISSILE
+          jouer('impactObus', { dx: ev.x - v.x, dy: ev.y - v.y })
+          flashs.push({ x: ev.x, y: ev.y, t0: t, r: ev.rayon * 0.6, c: [N.WHITE, N.WHITE, FEU[6], FEU[7], FEU[6]] })
+          coeursDeBaril.push({ x: ev.x, y: ev.y, t0: t + 0.04, r: ev.rayon * 0.7 })
+          impactsDuSilo.push({ x: ev.x, y: ev.y, t0: t, r: ev.rayon })
+          for (let i = 0; i < 18; i++) {
+            const a = (i / 18) * Math.PI * 2 + R.range(-0.15, 0.15)
+            const vit = R.range(45, 75) * sz
+            feuDesConsumes.spawn(N.P.SMOKE, ev.x + Math.cos(a) * ev.rayon * 0.3, ev.y + Math.sin(a) * ev.rayon * 0.3, Math.cos(a) * vit, Math.sin(a) * vit, R.range(0.7, 1.1), N.hex('#b8ab98'), R.range(2.5, 3.8), R.range(0, 0.06))
+          }
+          for (let i = 0; i < 14; i++) {
+            const j = i / 14
+            feuDesConsumes.spawn(N.P.FIRE, ev.x + R.range(-2, 2) * sz, ev.y - j * 14 * sz, R.range(-6, 6), -R.range(50, 110) * (1 - 0.5 * j), R.range(0.3, 0.55), 0, R.range(3, 4.5) * sz * (1 - 0.4 * j), j * 0.12, R.next() < 0.6 ? 1 : 0)
+          }
+          for (let i = 0; i < 4; i++) feuDesConsumes.spawn(N.P.SMOKE, ev.x + R.range(-3, 3), ev.y - 18 * sz - i * 6, R.range(-4, 4), -R.range(15, 30), R.range(0.9, 1.4), FUMEE_DU_FEU, R.range(3.5, 5) * sz, 0.15 + i * 0.05)
+          gerbeDeBaril(ev.x, ev.y, ev.rayon * 0.6, sz)
+          secousse = Math.max(secousse, 0.7)
+          if (typeof navigator.vibrate === 'function') vibrer(50)
+          break
+        }
         case 'tornade':
           // (une tornade part : le souffle du vent qui se lève — sauf s'il a sonné en avance)
           if (t - (armeAnnonceeA.get(ev.arme) ?? -10) < 0.4) armeAnnonceeA.delete(ev.arme)

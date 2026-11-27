@@ -3385,6 +3385,7 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
   let pourLeGros = false
   let touchesAvant = 0
   let explose = -1
+  let impact = false
   for (let i = 0; i < 90 && explose < 0; i++) {
     // (il bouge pendant la chute : le missile le suit)
     if (i === 40) gros.corps.y = 30
@@ -3392,9 +3393,10 @@ verifier('la plaque de verglas de la nova est aussi grande que la nova', pieceDe
       if (ev.type === 'silo') (silos += 1), (pourLeGros = ev.cible === gros.id)
       if (ev.type === 'ennemiTouche' && i < 70) touchesAvant += 1
       if (ev.type === 'explosionDeZone') explose = i
+      if (ev.type === 'impactDuSilo') impact = ev.x === gros.corps.x && ev.y === gros.corps.y
     }
   }
-  verifier(`le Silo : ${silos} missile (1), pour le cuirassier plutôt que le moucheron tout près (${pourLeGros}) ; rien de touché en vol (${touchesAvant}) ; il explose à l'image ${explose} (vers 72, 1,2 s) sur le cuirassier, qui a bougé : il perd ${1e9 - gros.pv} (240), le moucheron ${1e9 - petit.pv} (0)`, silos === 1 && pourLeGros && touchesAvant === 0 && explose >= 70 && explose <= 74 && 1e9 - gros.pv === 240 && petit.pv === 1e9)
+  verifier(`le Silo : ${silos} missile (1), pour le cuirassier plutôt que le moucheron tout près (${pourLeGros}) ; rien de touché en vol (${touchesAvant}) ; il explose à l'image ${explose} (vers 72, 1,2 s) sur le cuirassier, qui a bougé : il perd ${1e9 - gros.pv} (240), le moucheron ${1e9 - petit.pv} (0) ; son impact est annoncé, sur lui (${impact})`, silos === 1 && pourLeGros && touchesAvant === 0 && explose >= 70 && explose <= 74 && 1e9 - gros.pv === 240 && petit.pv === 1e9 && impact)
 }
 
 // LE MISSILE TOURNE EN GRAND (Keko, 26/11 — voir `TRAJECTOIRE_DU_MISSILE.virage`) : sa cible passe derrière lui en vol ;

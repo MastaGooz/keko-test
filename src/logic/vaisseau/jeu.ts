@@ -1825,6 +1825,8 @@ export type Evenement =
   | { type: 'flaque'; x: number; y: number; rayon: number }
   /** Un mini-missile explose (voir `Arme.zone`). */
   | { type: 'explosionDeZone'; x: number; y: number; rayon: number; /** L'arme qui éclate (l'orbe de plasma a sa gerbe à elle). */ arme?: string; /** Le rayon de son cœur (voir `Arme.epicentre`). */ coeur?: number }
+  /** Le missile du Silo touche le sol, juste après son `explosionDeZone` (voir `Arme.silo`). */
+  | { type: 'impactDuSilo'; x: number; y: number; rayon: number }
   | { type: 'tourelleFinie'; x: number; y: number }
   /** Un obus touche le rival. */
   | { type: 'ennemiTouche'; id: number; x: number; y: number; critique: boolean }
@@ -7605,6 +7607,9 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
       // sans contact, le feu et le gel de ses cartes ne prendraient nulle part)
       if (o.cloche === true || o.minuterie !== undefined || o.embrase === true || o.collee !== undefined || o.silo !== undefined) elementsDansLaZone(c, m, o, o.x, o.y, o.zone.rayon, ev)
       const critiques = exploser(c, m, o.x, o.y, o.zone, null, ev, o.arme)
+      // (LE SILO FRAPPE PLUS FORT QU'UN MISSILE, ET ÇA SE VOIT — Keko, 27/11 : son impact a son événement, que la page
+      // ajoute à l'explosion du missile)
+      if (o.silo !== undefined) ev.push({ type: 'impactDuSilo', x: o.x, y: o.y, rayon: o.zone.rayon })
       souffler(c, m, o, o.x, o.y, null, ev)
       // (L'ÉTOURDISSEMENT : les critiques de l'explosion seule — pas ses éclats — voir `Arme.etourdissement`)
       const et = o.etourdissement

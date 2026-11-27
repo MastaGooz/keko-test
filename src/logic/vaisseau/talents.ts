@@ -521,9 +521,11 @@ export const MUTATIONS: Mutation[] = [
   variation('missile-souffle', 'minimissile', 'Souffle', 'L’explosion projette un cône derrière la cible.', changerA('minimissile', (a) => ({ ...a, souffle: { allonge: 2.8, ouverture: 0.45, part: 0.6 } }))),
   variation('missile-ventouse', 'minimissile', 'Ventouse', 'Un impact critique colle sur l’ennemi une mine qui explose peu après.', changerA('minimissile', (a) => ({ ...a, ventouse: { delai: 1, rayon: 14, part: 0.75 } }))),  // (« SILO » — Keko, 26/11 : « un missile tiré depuis un silo, qui ciblerait l'ennemi le plus fort ; un peu plus fréquent
   // qu'une fois toutes les 10 secondes ; un genre de ciblage vers le plus gros ennemi, chose que n'ont pas les cartes de
-  // l'obusier » : toutes les 6 s, trois fois les dégâts du missile, sur 16, à 200 du vaisseau — chiffres et nom de moi ;
+  // l'obusier » : toutes les 6 s, quatre fois les dégâts du missile, sur 30, à 200 du vaisseau — chiffres et nom de moi ;
   // voir `Arme.silo`. La cadence des missiles le presse, comme le Déluge)
-  variation('missile-silo', 'minimissile', 'Silo', 'Régulièrement, un missile s’abat à la verticale sur l’ennemi le plus fort.', ajouterA('minimissile', (a) => [ajoutee(a, 9, { cadence: 6, degats: fois(a, 3), portee: 200, guide: false, dispersion: 0, zone: { rayon: 16 }, silo: { montee: 0.45, chute: 0.75 } })])),
+  // (… ET UNE EXPLOSION PLUS PUISSANTE QUE CELLE DU MISSILE — Keko, 27/11 : elle était de ×3 sur 16, plus petite que les
+  // 18 du missile ; ×4 sur 30)
+  variation('missile-silo', 'minimissile', 'Silo', 'Régulièrement, un missile s’abat à la verticale sur l’ennemi le plus fort.', ajouterA('minimissile', (a) => [ajoutee(a, 9, { cadence: 6, degats: fois(a, 4), portee: 200, guide: false, dispersion: 0, zone: { rayon: 30 }, silo: { montee: 0.45, chute: 0.75 } })])),
   // LE RAILGUN
   // (L'EXÉCUTION, SA CARTE SUR COUP CRITIQUE, À LA PLACE D'INCENDIAIRE — Keko, 23/11 : « on ne fait pas incendiaire : un seul
   // élément par arme » ; « les coups critiques tuent instantanément les ennemis faibles » — voir `Arme.execute`)
