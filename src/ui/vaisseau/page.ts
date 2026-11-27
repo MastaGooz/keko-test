@@ -5997,15 +5997,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // dans la fiche des vaisseaux)
     const bas = 21 + 3 * INTERLIGNE + 3
     const hA = Math.max(64, Math.min(110, H - y - 4 - bas))
-    plaque(p, 4, y, W - 8, hA + bas, 'encre')
-    // (VERROUILLÉE : pas d'aperçu — il la montrerait —, un puits sombre et la silhouette de son icône ; « ??? » ; à la place
-    // de ce qu'elle fait, l'encart d'or des vaisseaux verrouillés — voir `armeVerrouillee`)
+    // (VERROUILLÉE : pas d'aperçu — il la montrerait ; plus même son cadre, Keko, 27/11 : « masque complètement l'encadré
+    // de prévisualisation » — ; « ??? » ; à la place de ce qu'elle fait, l'encart d'or des vaisseaux verrouillés — voir
+    // `armeVerrouillee`)
     if (armeVerrouillee(choisie.id)) {
-      plaque(p, 8, y + 4, W - 16, hA, 'creux')
-      dessinerLaCaseDArme(p, choisie.id, W / 2 - TAILLE_DE_LA_CASE / 2, y + 4 + hA / 2 - TAILLE_DE_LA_CASE / 2, modeleDeVaisseau(flotte.actif).race)
-      motEnRelief(p, '???', W / 2, y + hA + 9, false)
-      dessinerLEncartVerrouille(p, y + hA + 19, 3 * INTERLIGNE + 2, ARME_A_VENIR)
+      plaque(p, 4, y, W - 8, 19 + 3 * INTERLIGNE + 2 + 4, 'encre')
+      motEnRelief(p, '???', W / 2, y + 5, false)
+      dessinerLEncartVerrouille(p, y + 17, 3 * INTERLIGNE + 2, ARME_A_VENIR)
     } else {
+      plaque(p, 4, y, W - 8, hA + bas, 'encre')
       dessinerLApercuDeLArme(p, 8, y + 4, W - 16, hA, choisie.id)
       motEnRelief(p, choisie.nom, W / 2, y + hA + 9, aSoi)
       const centre = Math.round(((3 - lignes.length) * INTERLIGNE) / 2)
@@ -6686,6 +6686,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     motEnRelief(p, nom, tx + largeurDe(nom, GRAS) / 2, my - 9, aSoi && !cache)
     ecrire(p, lignesDuNomDeRace(mo.race)[0], tx, my + 4, aSoi ? clair : COQUE[3])
     if (action !== null) action(bx + bw - 5, Math.round(my))
+    // (VERROUILLÉ : NI SES JAUGES NI CE QUI DÉFEND SA RACE — Keko, 27/11 : « masque les statistiques et le passif de la
+    // faction » — ; l'encart d'or seul, au milieu de la place qui reste : la fiche garde sa hauteur, la grille ne bouge pas)
+    if (cache) {
+      const y0 = by + HAUT_DU_BANDEAU + 4
+      const hb = 3 * INTERLIGNE + 2
+      dessinerLEncartVerrouille(p, y0 + Math.max(0, Math.round((y + hd - 3 - y0 - hb) / 2)), Math.min(y + hd - 3 - y0, hb), DEBLOCAGE_A_VENIR)
+      return hd
+    }
     // LES JAUGES, sur toute la largeur
     let yy = by + HAUT_DU_BANDEAU + 4
     const colonne = Math.max(...jauges.map((j) => largeurDe(j.nom)), largeurDe('Maniabilité')) + 6
@@ -6710,9 +6718,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       })
       yy += he + 3
     }
-    // CE QU'EST LE VAISSEAU — ou, verrouillé, comment le débloquer
-    if (cache) dessinerLEncartVerrouille(p, yy, Math.min(y + hd - 3 - yy, 3 * INTERLIGNE + 2), DEBLOCAGE_A_VENIR)
-    else if (armement !== null && aSoi) {
+    // CE QU'EST LE VAISSEAU (verrouillé, l'encart d'or a déjà tout pris, plus haut)
+    if (armement !== null && aSoi) {
       // L'ARMEMENT, À LA PLACE DE CE QU'EST LE VAISSEAU (Keko, 21/11 : « enlever la description des vaisseaux dans la grille
       // de sélection, et mettre à cet endroit un bouton armement avec l'arme actuelle, son icône, et une possibilité de la
       // changer ») : une rangée creuse — la case de son arme, « ARMEMENT » et son nom, « Changer » à droite ; toute la
