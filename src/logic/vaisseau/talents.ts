@@ -682,8 +682,8 @@ export const MUTATIONS: Mutation[] = [
   // (« MÉDUSE », SON ÉLÉMENT — Keko : « l'élément électrique, un petit peu comme les crochets d'une méduse » ; le nom, de moi,
   // « Électrique » est au railgun)
   variation('tentacule-meduse', 'tentacule', 'Méduse', 'Les piqûres appliquent électrocution.', changerA('tentacule', (a) => ({ ...a, electrocution: { ...ELECTROCUTION_DU_VORTEX } }))),
-  // (« TENAILLE » — Keko : « c'est pas mal » — voir `Arme.tentacule.paire`)
-  variation('tentacule-tenaille', 'tentacule', 'Tenaille', 'Deux tentacules frappent ensemble la même cible.', changerA('tentacule', (a) => (a.tentacule === undefined ? a : { ...a, tentacule: { ...a.tentacule, paire: true } }))),
+  // (« TENAILLE » RETIRÉE — Keko, 27/11 : « enlève aussi l'attaque avec les doubles tentacules » : la règle reste,
+  // `Arme.tentacule.paire`)
   // (« FOUET » — Keko : « il faudrait que ce soit une attaque supplémentaire ; on ne transforme pas la pointe du tentacule qui
   // pique en fouet » : toutes les 2 s, un arc de 115°, 60 % des dégâts, en 0,25 s — chiffres de moi ; voir `Arme.fouet`)
   variation('tentacule-fouet', 'tentacule', 'Fouet', 'Régulièrement, une tentacule fouette en arc de cercle.', ajouterA('tentacule', (a) => [ajoutee(a, 9, { cadence: 2, degats: fois(a, 0.6), tentacule: undefined, fouet: { ouverture: 1, duree: 0.25 } })])),
