@@ -1831,10 +1831,10 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
     verifier(`Lucioles : l'insecte mordu brûle (jusqu'à ${lu.w.ennemis[0].bruleA?.toFixed(1)} s)`, (lu.w.ennemis[0].bruleA ?? -1) > lu.w.t)
     // (ÉCLOSION : un critique pond ; l'insecte pondu qui meurt éclate en un nuage, qui mord son voisin hors de portée de la
     // nuée, et ne pond pas)
-    const ecl = { ...nuee, eclosion: { delai: 3, duree: 2, rayon: 20, part: 0.5 } } as Arme
-    const ec = jouerN(ecl, [[50, 0, 15], [72, 0, 1000]], 3, 100)
+    const ecl = { ...nuee, eclosion: { delai: 3, duree: 3, rayon: 20, part: 0.5, vitesse: 55 } } as Arme
+    const ec = jouerN(ecl, [[50, 0, 15], [120, 0, 1000]], 6, 100)
     const voisin = 1000 - (ec.w.ennemis.find((e) => e.id === 2)?.pv ?? 1000)
-    verifier(`Éclosion : l'insecte pondu meurt et éclate (${ec.ev.filter((e) => e.type === 'eclosionDeNuee').length} nuage) ; son voisin à 72, hors de portée de la nuée, est mordu par lui (${voisin.toFixed(1)}) et n'est pas pondu`, ec.ev.filter((e) => e.type === 'eclosionDeNuee').length === 1 && voisin > 5 && ec.w.ennemis.find((e) => e.id === 2)?.oeuf === undefined && ec.w.eclosions.length === 0)
+    verifier(`Éclosion : l'insecte pondu meurt et éclate (${ec.ev.filter((e) => e.type === 'eclosionDeNuee').length} nuage) ; il vole jusqu'à l'insecte à 120, loin de la nuée et de l'éclosion, et le mord (${voisin.toFixed(1)}) et n'est pas pondu`, ec.ev.filter((e) => e.type === 'eclosionDeNuee').length === 1 && voisin > 5 && ec.w.ennemis.find((e) => e.id === 2)?.oeuf === undefined && ec.w.eclosions.length === 0)
     // (ESSAIMAGE : à sa taille maximale, elle se dédouble — mi-taille, une nuée fille, une seule, qui s'éteint au bout de sa durée)
     const ess = { ...nuee, nuee: { ...nuee.nuee, festin: { pas: 0.2, max: 1, fonte: 10 } }, essaimage: { duree: 2, vitesse: 60, rayon: 18, part: 1, laisse: 150, morsures: 3 } } as Arme
     const es = jouerN(ess, [[40, 0, 1e6]], 2.3)

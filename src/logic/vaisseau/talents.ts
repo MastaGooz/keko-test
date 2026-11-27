@@ -714,8 +714,8 @@ export const MUTATIONS: Mutation[] = [
   // (« LUCIOLES », SON ÉLÉMENT, la brûlure — pas un toxique de plus chez les Xénoïdes ; au vortex la brûlure est la même
   // pour toutes les sources)
   variation('nuee-lucioles', 'nuee', 'Lucioles', 'Les morsures appliquent brûlure.', changerA('nuee', (a) => ({ ...a, incendiaire: { duree: 3, dps: 2 } }))),
-  // (« ÉCLOSION », SA VARIATION SUR COUP CRITIQUE : pondu 3 s ; mort, un nuage de 20, 2 s, la moitié du budget — chiffres de moi)
-  variation('nuee-eclosion', 'nuee', 'Éclosion', 'Un critique pond dans l’ennemi : s’il meurt, il éclate en un nuage qui mord.', changerA('nuee', (a) => ({ ...a, eclosion: { delai: 3, duree: 2, rayon: 20, part: 0.5 } }))),
+  // (« ÉCLOSION », SA VARIATION SUR COUP CRITIQUE : pondu 3 s ; mort, un nuage de larves de 20, 3 s, la moitié du budget, qui vole à 55 vers l'insecte le plus proche — chiffres de moi)
+  variation('nuee-eclosion', 'nuee', 'Éclosion', 'Un ennemi pondu par un critique libère des larves à sa mort.', changerA('nuee', (a) => ({ ...a, eclosion: { delai: 3, duree: 3, rayon: 20, part: 0.5, vitesse: 55 } }))),
   // (« ESSAIMAGE » : toutes les 20 morsures, 6 s, 60 de vitesse, un nuage de 18, le budget de base, à 150 du vaisseau au plus —
   // chiffres de moi)
   variation('nuee-essaimage', 'nuee', 'Essaimage', 'Bien nourrie, la nuée se dédouble : un second nuage chasse seul.', changerA('nuee', (a) => ({ ...a, essaimage: { duree: 6, vitesse: 60, rayon: 18, part: 1, laisse: 150, morsures: 20 } }))),

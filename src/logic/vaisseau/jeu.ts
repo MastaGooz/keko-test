@@ -1259,7 +1259,9 @@ export type Arme = {
    * — `part` du budget de la nuée, partagé, avec son élément — et NE POND PAS : l'effet ne s'entretient pas seul. L'état est
    * `Ennemi.oeuf`, `Monde.eclosions`.
    */
-  eclosion?: { delai: number; duree: number; rayon: number; part: number }
+  // (… ET IL SUIT LES ENNEMIS — Keko, 27/11 : « il faudrait que le nuage qui apparaît suive les ennemis et ne reste pas sur
+  // place ; sinon, je trouve ça un peu trop faible » : il vole à `vitesse` vers l'insecte le plus proche de lui)
+  eclosion?: { delai: number; duree: number; rayon: number; part: number; vitesse: number }
   /**
    * L'ESSAIMAGE (la Nuée — Keko, 27/11 : « la durée augmente le temps du deuxième essaim ») : quand la nuée atteint sa taille
    * maximale (`festin.max`), elle SE DÉDOUBLE — elle retombe à mi-taille, et un second nuage, de `rayon`, part chasser seul
@@ -5968,6 +5970,19 @@ function menerLesPetitsNuages(c: ConfigVaisseau, m: Monde, dt: number, ev: Evene
     if (a?.nuee === undefined || a.eclosion === undefined || m.t >= n.jusque || m.phase !== 'vol') {
       m.eclosions.splice(k, 1)
       continue
+    }
+    // (il fond sur l'insecte le plus proche de lui)
+    let proie: Ennemi | undefined
+    let dp = Infinity
+    for (const e of m.ennemis) {
+      if (e.asteroide !== undefined || e.pv <= 0) continue
+      const d = Math.hypot(e.corps.x - n.x, e.corps.y - n.y)
+      if (d < dp) (dp = d), (proie = e)
+    }
+    if (proie !== undefined && dp > 0.5) {
+      const pas = Math.min(dp, a.eclosion.vitesse * dt)
+      n.x += ((proie.corps.x - n.x) / dp) * pas
+      n.y += ((proie.corps.y - n.y) / dp) * pas
     }
     mordre(a, n.arme, n, a.eclosion.rayon, a.nuee.budget * a.eclosion.part, false)
   }

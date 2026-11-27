@@ -14081,7 +14081,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const ec = CONF.armes[n.arme]?.eclosion
       if (ec === undefined) continue
       const u = (m.t - n.nee) / Math.max(0.01, n.jusque - n.nee)
-      dessinerUnPetitNuage(p, n.x, n.y, ec.rayon * Math.min(1, u * 6) * (0.85 + 0.15 * u), Math.round(34 * (1 - 0.6 * u * u)), CONF.armes[n.arme]?.incendiaire !== undefined, Math.round(n.nee * 97))
+      // (DES LARVES, plus grosses que les moucherons de la nuée — Keko, 27/11 : « des insectes un petit peu plus gros que la nuée
+      // pour la distinguer, lui donner une identité »)
+      dessinerUnPetitNuage(p, n.x, n.y, ec.rayon * Math.min(1, u * 6) * (0.85 + 0.15 * u), Math.round(16 * (1 - 0.5 * u * u)), CONF.armes[n.arme]?.incendiaire !== undefined, Math.round(n.nee * 97), true)
     }
     for (const n of m.nueesFilles) {
       const es = CONF.armes[n.arme]?.essaimage
@@ -14095,7 +14097,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const BRAISE_DES_LUCIOLES = ['#5a1a06', '#ff8a2a', '#ff5a1a', '#ffd23a', '#fff2b0'].map((c) => N.hex(c))
   const luciole = (j: number, tic: number): number => (alea(j, tic, 52) < 0.3 ? BRAISE_DES_LUCIOLES[4] : j % 3 === 0 ? BRAISE_DES_LUCIOLES[2] : BRAISE_DES_LUCIOLES[3])
   /** Un petit nuage de moucherons, de rayon `R`, de `combien` moucherons — ceux de la nuée, qui tournent, tremblent et battent de l'aile ; `feu` : des lucioles. */
-  function dessinerUnPetitNuage(p: Peintre, cx: number, cy: number, R: number, combien: number, feu: boolean, graine: number): void {
+  function dessinerUnPetitNuage(p: Peintre, cx: number, cy: number, R: number, combien: number, feu: boolean, graine: number, larves = false): void {
     if (R < 1 || combien <= 0) return
     p.disc(cx, cy, R, feu ? BRAISE_DES_LUCIOLES[0] : BILE[0], (d) => 0.2 * (1 - d * d))
     const tic = Math.floor(t * 24)
@@ -14105,6 +14107,19 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const r = R * (0.2 + 0.8 * Math.sqrt(alea(g, 1, 46))) * (0.85 + 0.15 * Math.sin(t * (3 + alea(g, 1, 47) * 4) + j))
       const ix = Math.round(cx + Math.cos(a) * r + (alea(g, tic, 49) - 0.5) * 1.2)
       const iy = Math.round(cy + Math.sin(a) * r * 0.85 + (alea(g, tic, 50) - 0.5) * 1.2)
+      if (larves) {
+        // (une larve : un corps pâle et dodu de trois pixels, cerné, une tête sombre du côté où elle va, deux ailes qui battent)
+        const sens = j % 2 === 0 ? 1 : -1
+        const corps = feu ? BRAISE_DES_LUCIOLES[3] : CHAIR[5]
+        p.rect(ix - 2, iy - 1, 5, 3, CHAIR[0])
+        p.rect(ix - 1, iy, 3, 1, corps)
+        p.px(ix + sens * 2, iy, CHITINE_SOMBRE)
+        p.px(ix, iy - 1, feu ? BRAISE_DES_LUCIOLES[4] : BILE[2])
+        const aile = alea(g, tic, 51) < 0.5 ? -2 : 2
+        p.px(ix, iy + aile, feu ? BRAISE_DES_LUCIOLES[2] : N.WHITE)
+        if (feu) p.glow(ix, iy, 3, BRAISE_DES_LUCIOLES[1], 0.3)
+        continue
+      }
       p.px(ix, iy, CHITINE_SOMBRE)
       const bat = alea(g, tic, 51) < 0.5 ? 1 : -1
       p.px(ix + bat, iy - 1, feu ? luciole(g, tic) : alea(g, tic, 52) < 0.25 ? N.WHITE : j % 4 === 0 ? CHAIR[4] : BILE[2])
