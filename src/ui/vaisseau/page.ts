@@ -1275,8 +1275,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const armeDe = (id: string): string => {
     const l = ARMES_PAR_VAISSEAU[id] ?? ARMES_PAR_VAISSEAU.chasseur
     const a = (armesChoisies[id] ??= chargerArme(id))
-    return l.includes(a) ? a : l[0]
+    return l.includes(a) && !armeVerrouillee(a) ? a : l[0]
   }
+  /**
+   * SEULE LA PREMIÈRE ARME DE CHAQUE VAISSEAU EST OUVERTE AU VORTEX (Keko, 27/11 : « verrouille toutes les armes des
+   * vaisseaux, à part la première ; pour le chasseur, seul le canon laser est disponible au début ») : les autres, au
+   * panneau des armes, n'ont que la silhouette de leur icône, « ??? » pour nom, et « Cette arme n'est pas encore
+   * disponible. » à la place de ce qu'elles font ; elles ne s'équipent pas. `&tous` les ouvre, comme les vaisseaux, et
+   * `&arme=ID` décolle encore avec celle-là, pour l'essayer d'un lien. Les cartes du vol n'en savent rien.
+   */
+  const armeVerrouillee = (id: string): boolean => parametres.has('vortex') &&!parametres.has('tous') && parametres.get('arme') !== id && !Object.values(ARMES_PAR_VAISSEAU).some((l) => l[0] === id)
   const choisirLArme = (id: string): void => {
     armesChoisies[flotte.actif] = id
     sauverArme(flotte.actif, id)
@@ -5897,7 +5905,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** Le bouton « Changer » d'une arme : son mot, en courant, et cinq pixels de chaque côté. */
   const LARGEUR_DE_CHANGER = textWidth('Changer', TEXTE) + 10
   const couleursDesIcones = new Map<string, number>()
+  // (UNE ARME VERROUILLÉE n'y est que la silhouette de son icône, comme le vaisseau verrouillé — voir `armeVerrouillee`)
   function dessinerLaCaseDArme(p: Peintre, id: string, x0: number, y0: number, race: Race, vive = false): void {
+    const ombre = armeVerrouillee(id) ? N.hex('#05060a') : null
     const x = Math.round(x0)
     const y = Math.round(y0)
     const T = TAILLE_DE_LA_CASE
@@ -5912,7 +5922,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     for (const [px, py, c] of pixelsDeLIcone(id)) {
       let n = couleursDesIcones.get(c)
       if (n === undefined) couleursDesIcones.set(c, (n = N.hex(c)))
-      p.rect(x + 2 + px, y + 2 + py, 1, 1, n)
+      p.rect(x + 2 + px, y + 2 + py, 1, 1, ombre ?? n)
     }
   }
   function dessinerLesArmesEnListe(p: Peintre, voile: boolean, partie: 'tout' | 'liste' | 'fiche'): void {
@@ -5927,7 +5937,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // missiles, et c'est tout ; la salamandre, le lance-flammes »)
     const toutes = armesDuVortex().map((id) => pieceDe(id)).filter((pc): pc is NonNullable<typeof pc> => pc !== undefined)
     const choisie = toutes.find((pc) => pc.id === armeChoisie) ?? toutes[0]
-    const aSoi = armesDuVortex().includes(choisie.id)
+    const aSoi = armesDuVortex().includes(choisie.id) && !armeVerrouillee(choisie.id)
     if (partie !== 'fiche') {
       enTete(p, y, 'Armes', fermerLArmement)
       y += HT + 3
@@ -5945,11 +5955,11 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       toutes.forEach((pc, i) => {
         const ly = yl + i * RANG_D_ARME
         const equipee = pc.id === armeDuVortex()
-        const a = armesDuVortex().includes(pc.id)
+        const a = armesDuVortex().includes(pc.id) && !armeVerrouillee(pc.id)
         const ici = i === iSel
         dessinerLaCaseDArme(p, pc.id, 12, ly + 2, race, equipee)
         const ym = ly + Math.round(RANG_D_ARME / 2) - 4
-        ecrire(p, pc.nom, 12 + TAILLE_DE_LA_CASE + 6, ym, !a ? (ici ? COQUE[4] : COQUE[3]) : ici ? N.hex('#f6ecd2') : COQUE[5])
+        ecrire(p, armeVerrouillee(pc.id) ? '???' : pc.nom, 12 + TAILLE_DE_LA_CASE + 6, ym, !a ? (ici ? COQUE[4] : COQUE[3]) : ici ? N.hex('#f6ecd2') : COQUE[5])
         if (equipee) p.text('EQUIPE', W - 10, ym + 1, PEPITE[2], { align: 'right' })
         else if (!a) p.text('VERROUILLE', W - 10, ym + 1, COQUE[3], { align: 'right' })
         zone(4, ly, W - 8, RANG_D_ARME, () => (armeChoisie = pc.id), ici ? null : 'clic')
@@ -5988,10 +5998,19 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const bas = 21 + 3 * INTERLIGNE + 3
     const hA = Math.max(64, Math.min(110, H - y - 4 - bas))
     plaque(p, 4, y, W - 8, hA + bas, 'encre')
-    dessinerLApercuDeLArme(p, 8, y + 4, W - 16, hA, choisie.id)
-    motEnRelief(p, choisie.nom, W / 2, y + hA + 9, aSoi)
-    const centre = Math.round(((3 - lignes.length) * INTERLIGNE) / 2)
-    lignes.forEach((li, i) => ecrire(p, li, W / 2, y + hA + 21 + centre + i * INTERLIGNE, COQUE[4], { align: 'center' }))
+    // (VERROUILLÉE : pas d'aperçu — il la montrerait —, un puits sombre et la silhouette de son icône ; « ??? » ; à la place
+    // de ce qu'elle fait, l'encart d'or des vaisseaux verrouillés — voir `armeVerrouillee`)
+    if (armeVerrouillee(choisie.id)) {
+      plaque(p, 8, y + 4, W - 16, hA, 'creux')
+      dessinerLaCaseDArme(p, choisie.id, W / 2 - TAILLE_DE_LA_CASE / 2, y + 4 + hA / 2 - TAILLE_DE_LA_CASE / 2, modeleDeVaisseau(flotte.actif).race)
+      motEnRelief(p, '???', W / 2, y + hA + 9, false)
+      dessinerLEncartVerrouille(p, y + hA + 19, 3 * INTERLIGNE + 2, ARME_A_VENIR)
+    } else {
+      dessinerLApercuDeLArme(p, 8, y + 4, W - 16, hA, choisie.id)
+      motEnRelief(p, choisie.nom, W / 2, y + hA + 9, aSoi)
+      const centre = Math.round(((3 - lignes.length) * INTERLIGNE) / 2)
+      lignes.forEach((li, i) => ecrire(p, li, W / 2, y + hA + 21 + centre + i * INTERLIGNE, COQUE[4], { align: 'center' }))
+    }
     if (u0 < 1) p.rect(0, HAUT_BARRE, W, H - HAUT_BARRE, NUIT, 1 - u0)
     zone(0, 0, W, H, () => {}, null)
   }
@@ -6692,17 +6711,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       yy += he + 3
     }
     // CE QU'EST LE VAISSEAU — ou, verrouillé, comment le débloquer
-    if (cache) {
-      const lignes = replier(DEBLOCAGE_A_VENIR, W - 16 - 26)
-      const hb = Math.min(y + hd - 3 - yy, 3 * INTERLIGNE + 2)
-      plaque(p, 8, yy, W - 16, hb, 'creux', { bord: PEPITE[2] })
-      const lx = 16
-      const ly = yy + Math.round(hb / 2) - 5
-      p.glow(lx + 3, ly + 6, 11, PEPITE[2], 0.22 + 0.12 * Math.sin(t * 3))
-      dessinerUnCadenas(p, lx, ly)
-      const y0 = yy + Math.round((hb - lignes.length * INTERLIGNE) / 2) + 1
-      lignes.forEach((li, i) => ecrire(p, li, lx + 14, y0 + i * INTERLIGNE, PEPITE[3]))
-    } else if (armement !== null && aSoi) {
+    if (cache) dessinerLEncartVerrouille(p, yy, Math.min(y + hd - 3 - yy, 3 * INTERLIGNE + 2), DEBLOCAGE_A_VENIR)
+    else if (armement !== null && aSoi) {
       // L'ARMEMENT, À LA PLACE DE CE QU'EST LE VAISSEAU (Keko, 21/11 : « enlever la description des vaisseaux dans la grille
       // de sélection, et mettre à cet endroit un bouton armement avec l'arme actuelle, son icône, et une possibilité de la
       // changer ») : une rangée creuse — la case de son arme, « ARMEMENT » et son nom, « Changer » à droite ; toute la
@@ -6722,8 +6732,21 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     } else dit.forEach((li, i) => ecrire(p, li, 10, yy + i * INTERLIGNE, COQUE[4]))
     return hd
   }
-  /** Ce qu'un vaisseau verrouillé dit pour être débloqué — EN ATTENDANT les vraies conditions (Keko, 21/11 : « un placeholder »). */
-  const DEBLOCAGE_A_VENIR = 'Faites ceci pour débloquer ce vaisseau.'
+  /** Ce qu'un vaisseau verrouillé dit — EN ATTENDANT les vraies conditions (Keko, 21/11 : « un placeholder » ; 27/11 : « plutôt "Ce vaisseau n'est pas encore disponible" »). */
+  const DEBLOCAGE_A_VENIR = 'Ce vaisseau n’est pas encore disponible.'
+  /** … et une arme verrouillée (voir `armeVerrouillee`). */
+  const ARME_A_VENIR = 'Cette arme n’est pas encore disponible.'
+  /** L'encart d'un verrouillé : creux, au liseré d'or, un cadenas d'or qui luit doucement, le texte en or clair. */
+  function dessinerLEncartVerrouille(p: Peintre, yy: number, hb: number, texte: string): void {
+    const lignes = replier(texte, W - 16 - 26)
+    plaque(p, 8, yy, W - 16, hb, 'creux', { bord: PEPITE[2] })
+    const lx = 16
+    const ly = yy + Math.round(hb / 2) - 5
+    p.glow(lx + 3, ly + 6, 11, PEPITE[2], 0.22 + 0.12 * Math.sin(t * 3))
+    dessinerUnCadenas(p, lx, ly)
+    const y0 = yy + Math.round((hb - lignes.length * INTERLIGNE) / 2) + 1
+    lignes.forEach((li, i) => ecrire(p, li, lx + 14, y0 + i * INTERLIGNE, PEPITE[3]))
+  }
   /** Un petit cadenas d'or, cerné d'encre : 9 de large, 11 de haut, `x`, `y` son coin haut gauche. */
   function dessinerUnCadenas(p: Peintre, x: number, y: number): void {
     const encre = MATIERES.encre.contour
