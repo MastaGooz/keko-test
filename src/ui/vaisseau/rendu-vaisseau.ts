@@ -884,7 +884,7 @@ export type Allure = {
    * accroché à son dos, qui part quand un rejeton naît et repousse ; `sorties`, les tentacules projetées en ce moment
    * (leurs rangs dans `RACINES_DU_KRAKEN`) : le corps ne les dessine pas, la page les dessine tendues vers leur cible.
    */
-  kraken?: { crochets?: boolean; rejeton?: number; sorties?: number[] }
+  kraken?: { crochets?: boolean; rejeton?: number; sorties?: number[]; /** L'Envergure : de 0 à 1, les tentacules au repos s'allongent en ondulant (voir `Arme.deploiement`). */ allonge?: number }
   /**
    * LA VOUIVRE ET SES ARMES (Keko, 19/11 : « il faut que chaque arme se voie sur le vaisseau ») : `tete`, le Crachat acide
    * monté — une tête au bout d'un cou, d'où l'acide est craché ; `mine`, les Mines toxiques montées — la taille (0 à 1) de
@@ -1023,7 +1023,9 @@ const ANGLES_DES_RACINES_DU_KRAKEN = [70, 90, 110]
  * derrière et traînent ; une houle les parcourt. Le corps les dessine ; la page en lit le bout, d'où part une tentacule
  * projetée (voir `Allure.kraken`).
  */
-export function cordesDuKraken(flamme: number, t: number, devie = 0): [number, number][][] {
+// (… ET L'ENVERGURE — Keko, 27/11 : « on les fait se déployer en ondulant beaucoup plus loin » : `allonge`, de 0 à 1, étire
+// chaque maillon jusqu'à 2,4 fois et creuse leur houle, plus lente et plus ample)
+export function cordesDuKraken(flamme: number, t: number, devie = 0, allonge = 0): [number, number][][] {
   const nage = Math.min(1, Math.max(0, flamme))
   return RACINES_DU_KRAKEN.map(([x0, y0], k) => {
     const repos = (Math.sign(y0) * (ANGLES_DES_RACINES_DU_KRAKEN[Math.floor(k / 2)] ?? 90) * Math.PI) / 180
@@ -1035,9 +1037,9 @@ export function cordesDuKraken(flamme: number, t: number, devie = 0): [number, n
     let y = y0
     const c: [number, number][] = [[x, y]]
     for (let i = 0; i < 7; i++) {
-      an += Math.sin(t * 2.4 + k * 1.3 - i * 0.8) * 0.17 * (1.4 - 0.6 * nage) + devie * 0.03
-      x += Math.cos(an) * 1.8
-      y += Math.sin(an) * 1.8
+      an += Math.sin(t * (2.4 - 0.9 * allonge) + k * 1.3 - i * 0.8) * 0.17 * (1.4 - 0.6 * nage) * (1 + 0.7 * allonge) + devie * 0.03
+      x += Math.cos(an) * 1.8 * (1 + 1.4 * allonge)
+      y += Math.sin(an) * 1.8 * (1 + 1.4 * allonge)
       c.push([x, y])
     }
     return c
@@ -2682,7 +2684,7 @@ function formesDuVaisseauNu(a: Allure, flamme: number, t: number, vise = 0, devi
   // QUAND IL POUSSE (`flamme`), ils se rabattent derrière et traînent ; une houle les parcourt de la racine au bout)
   if (a.coque === 10) {
     const sorties = new Set(a.kraken?.sorties ?? [])
-    cordesDuKraken(flamme, t, devie).forEach((c, k) => {
+    cordesDuKraken(flamme, t, devie, a.kraken?.allonge ?? 0).forEach((c, k) => {
       if (sorties.has(k)) return
       const n = c.length - 1
       for (let i = 0; i < n; i++) f.unshift({ pts: barre(c[i][0], c[i][1], c[i + 1][0], c[i + 1][1], 1.7 * (1 - i / (n + 1.5))), mat: i % 2 === 0 ? 'chair' : 'chitine', relief: 'plat' })

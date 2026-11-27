@@ -1263,7 +1263,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
 
   // ---------------------------------------------------------------- le hangar, en pixels
   /** L'allure du vaisseau : les crans des pièces montées et ses armes PLACE PAR PLACE ('' : une place libre — la place 1 est l'aile gauche, la 2 la droite), lus par le dessin (le rival est de série, sans arme) ; `bouclier` : la part du bouclier qui reste, pour son anneau. */
-  type Allure = { /** Le ver : ses anneaux sur le chemin de sa tête (voir `cheminDuVer`). */ chemin?: [number, number][]; propulseur: number; coque: number; /** Le cran de la foreuse montée, 0 sans foreuse. */ foreuse: number; radar: boolean; aimant: boolean; armes: string[]; bouclier: number; outils?: ({ famille: string; cran: number } | null)[]; foreusePlace?: number; vises?: number[]; habit?: Habit; /** Le Kraken et ses armes (voir `Allure.kraken` du rendu). */ kraken?: { crochets?: boolean; rejeton?: number; sorties?: number[] }; /** La Vouivre et ses armes (voir `Allure.vouivre` du rendu). */ vouivre?: { tete?: boolean; mine?: number; reserve?: boolean }; /** Le Ver et ses armes (voir `Allure.ver` du rendu). */ ver?: { oeufs?: boolean; parasite?: number; epine?: number }; /** La Sentinelle et ses armes (voir `Allure.sentinelle` du rendu). */ sentinelle?: { tempete?: boolean; chaine?: boolean }; /** Le Frimas et ses armes. */ frimas?: { nova?: boolean; eclats?: boolean; blizzard?: boolean }; /** Le Pulsar et ses armes. */ pulsar?: { orbe?: boolean; missiles?: boolean; decharge?: boolean }; /** Le noyau du Prisme, du Néant, du Tesseract : l'arme montée (voir `Allure.noyau` du rendu). */ noyau?: string }
+  type Allure = { /** Le ver : ses anneaux sur le chemin de sa tête (voir `cheminDuVer`). */ chemin?: [number, number][]; propulseur: number; coque: number; /** Le cran de la foreuse montée, 0 sans foreuse. */ foreuse: number; radar: boolean; aimant: boolean; armes: string[]; bouclier: number; outils?: ({ famille: string; cran: number } | null)[]; foreusePlace?: number; vises?: number[]; habit?: Habit; /** Le Kraken et ses armes (voir `Allure.kraken` du rendu). */ kraken?: { crochets?: boolean; rejeton?: number; sorties?: number[]; allonge?: number }; /** La Vouivre et ses armes (voir `Allure.vouivre` du rendu). */ vouivre?: { tete?: boolean; mine?: number; reserve?: boolean }; /** Le Ver et ses armes (voir `Allure.ver` du rendu). */ ver?: { oeufs?: boolean; parasite?: number; epine?: number }; /** La Sentinelle et ses armes (voir `Allure.sentinelle` du rendu). */ sentinelle?: { tempete?: boolean; chaine?: boolean }; /** Le Frimas et ses armes. */ frimas?: { nova?: boolean; eclats?: boolean; blizzard?: boolean }; /** Le Pulsar et ses armes. */ pulsar?: { orbe?: boolean; missiles?: boolean; decharge?: boolean }; /** Le noyau du Prisme, du Néant, du Tesseract : l'arme montée (voir `Allure.noyau` du rendu). */ noyau?: string }
   /**
    * L'ARME DU JEU DU VORTEX (Keko, 15/11 : « Arme et le nom de l'arme, avec un bouton pour changer ») : le canon, un par
    * aile — LA MÊME SUR LES DEUX AILES, et c'est elle que le vaisseau porte au hangar comme en vol, et qui tire.
@@ -10161,7 +10161,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const blanchi = t - toucheA < 0.1 || m.phase === 'extrait' || t - arriveA < REFROIDI_A
     const al0 = allureMontee(CONF.bouclier.points > 0 ? m.bouclier / CONF.bouclier.points : 0)
     const sorties = [...m.tentacules.filter((tn) => tn.fait !== 'repos' && CONF.armes[tn.arme]?.tentacule?.alterne === true).map((tn) => tn.ancre), ...m.fouets.map(racineDuFouet)]
-    const al = { ...al0, vises, ...(al0.coque === 14 ? { chemin: cheminDuVer() } : {}), ...(al0.kraken !== undefined && sorties.length > 0 ? { kraken: { ...al0.kraken, sorties } } : {}) }
+    const al = { ...al0, vises, ...(al0.coque === 14 ? { chemin: cheminDuVer() } : {}), ...(al0.kraken !== undefined && (sorties.length > 0 || m.deploiement > 0) ? { kraken: { ...al0.kraken, sorties, allonge: m.deploiement } } : {}) }
     // LA FLAMME TRAÎNE (Keko, 13/11 : « que la flamme du réacteur se déplace un petit peu comme les particules sur les
     // côtés, au lieu d'être rigide ») : sa pointe se déporte à l'opposé du glissement de côté du vaisseau, et reste en
     // arrière quand il vire ; un ressort l'y amène et l'en ramène, un frémissement la fait vivre
@@ -13524,7 +13524,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const ca = Math.cos(v.cap)
     const sa = Math.sin(v.cap)
     const monde = ([x, y]: [number, number]): [number, number] => [v.x + (x * ca - y * sa) * E, v.y + (x * sa + y * ca) * E]
-    const corde = cordesDuKraken(flamme, t, devieDeLaFlamme)[tn.ancre]
+    const corde = cordesDuKraken(flamme, t, devieDeLaFlamme, m.deploiement)[tn.ancre]
     if (corde === undefined) return
     const [ax, ay] = monde(corde[0])
     const [bx, by] = monde(corde[corde.length - 1])
@@ -13666,7 +13666,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const a = CONF.armes[f.arme]
       const fo = a?.fouet
       if (a === undefined || fo === undefined) continue
-      const corde = cordesDuKraken(flamme, t, devieDeLaFlamme)[racineDuFouet(f)]
+      const corde = cordesDuKraken(flamme, t, devieDeLaFlamme, m.deploiement)[racineDuFouet(f)]
       if (corde === undefined) continue
       const [ax, ay] = monde(corde[0])
       const repos = monde(corde[corde.length - 1])

@@ -690,6 +690,10 @@ export const MUTATIONS: Mutation[] = [
   // chaque attaque, en la faisant onduler rapidement pour faire 3 slash » : la tentacule reste et frappe trois fois, une
   // toutes les 0,1 s, 45 % des dégâts chacune — chiffres de moi ; voir `Arme.tentacule.lacere`)
   variation('tentacule-laceration', 'tentacule', 'Lacération', 'À chaque attaque, la tentacule frappe trois fois de suite.', changerA('tentacule', (a) => (a.tentacule === undefined ? a : { ...a, tentacule: { ...a.tentacule, lacere: { coups: 3, intervalle: 0.1, part: 0.45 } } }))),
+  // (« ENVERGURE » — Keko, 27/11 : « quand le Kraken est immobile, sa portée augmente progressivement jusqu'à un maximum ;
+  // le balayage bénéficie de cette portée » : jusqu'au double en 3 s d'immobilité, repliée en 0,4 s quand il bouge — chiffres
+  // de moi ; voir `Arme.deploiement`)
+  variation('tentacule-envergure', 'tentacule', 'Envergure', 'Immobile, les tentacules s’étendent et frappent de plus en plus loin.', changerA('tentacule', (a) => ({ ...a, deploiement: { max: 2, montee: 3, descente: 0.4, seuil: 12 } }))),
   // (« BOUTURE », SA VARIATION SUR COUP CRITIQUE — Keko : « un mini tentacule pousse sur l'ennemi touché, qui se met à attaquer
   // les ennemis proches » : 4 s, une piqûre toutes les 0,5 s à 30, 40 % des dégâts — chiffres et nom de moi ; voir
   // `Arme.bouture` ; elle grandit de 25 % à chaque critique qui la relance, jusqu'au double — Keko, 27/11, chiffres de moi)

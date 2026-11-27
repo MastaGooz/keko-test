@@ -9648,3 +9648,11 @@ Keko : « à la place d'attaquer une tentacule par tentacule, l'attaque devient 
 ### La Marionnette abandonnée (27/11)
 
 Keko : « on va laisser tomber le contrôle mental, je suis pas fan ». La carte et tout son code sont supprimés, comme la Tenaille et l'Empalement : le tube intestinal, le leurre dans la conduite des insectes (`leurreDe`), `Monde.marionnettes`, `Ennemi.marionnetteA`, ses événements, son dessin et ses tests. Restent la protection de la règle du son annoncé (un insecte bien à portée, voir plus haut) et tout ce qui n'était pas à elle. La Tentacule garde quatre cartes : Méduse, Fouet, Lacération, Bouture.
+### L'Envergure, cinquième carte de la Tentacule (27/11)
+
+Keko : « lorsque le Kraken est immobile, ses tentacules s'étendent de plus en plus loin ; elles ont déjà un mode flottant quand on ne bouge pas où elles s'écartent, on va continuer là-dessus en les faisant se déployer en ondulant beaucoup plus loin et en attaquant avec une portée beaucoup plus grande ; évidemment, le balayage bénéficie de cette portée ; quand le Kraken est immobile, sa portée augmente progressivement jusqu'à un maximum ».
+
+- `Arme.deploiement` : `{ max: 2, montee: 3, descente: 0.4, seuil: 12 }`, chiffres de moi. Sous 12 de vitesse, LE DÉPLOIEMENT (`Monde.deploiement`, `deployerLesTentacules`) monte de 0 à 1 en 3 s. Au-dessus, il retombe en 0,4 s.
+- La portée de la tentacule et du Fouet est multipliée par 1 + le déploiement (`porteeTentaculaire`), jusqu'au double, 110 au lieu de 55. Le choix de la cible, la Lacération et l'arc du Fouet s'en servent.
+- À l'image, les six tentacules au repos s'allongent avec le déploiement, jusqu'à 2,4 fois, et leur houle devient plus lente et plus ample (`cordesDuKraken(…, allonge)`, `Allure.kraken.allonge`). Les tentacules projetées partent de leur bout.
+- Texte : « Immobile, les tentacules s'étendent et frappent de plus en plus loin. » (vérifié en capture, cinq lignes).
