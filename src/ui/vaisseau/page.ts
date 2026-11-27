@@ -13519,9 +13519,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * l'insecte ; plantée, elle tremble ; au retour, son bout revient à sa place. Chair et chitine en bandes, comme au corps,
    * aux couleurs de son apparence ; le crochet d'os au bout.
    */
-  /** LA LACÉRATION (voir `dessinerUneTentaculeProjetee`) : la courbure de chaque racine (part de la longueur, vers son flanc), et l'écart de son bout sur la cible. */
-  const ARCS_DE_LA_LACERATION = [0.62, 0.62, 0.3, 0.3, -0.22, -0.22]
-  const ECARTS_DE_LA_LACERATION = [-4, 4, -1.5, 1.5, 3, -3]
   function dessinerUneTentaculeProjetee(p: Peintre, tn: (typeof m.tentacules)[number]): void {
     const E = echelleVue()
     const ca = Math.cos(v.cap)
@@ -13531,32 +13528,29 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (corde === undefined) return
     const [ax, ay] = monde(corde[0])
     const [bx, by] = monde(corde[corde.length - 1])
-    // (… UN COUP DE LACÉRATION JAILLIT en 0,035 s — la règle le plante d'un coup : à l'image, il file — Keko, 27/11)
-    const jaillit = CONF.armes[tn.arme]?.tentacule?.lacere !== undefined && tn.fait === 'plantee' ? Math.min(1, (m.t - tn.depuis) / 0.035) : tn.u
-    const e = 1 - Math.pow(1 - jaillit, 2)
-    // (… le bout d'une lacération tombe un peu à côté des autres, perpendiculairement à l'axe)
-    const ecartDuBout = CONF.armes[tn.arme]?.tentacule?.lacere !== undefined ? (ECARTS_DE_LA_LACERATION[tn.ancre] ?? 0) : 0
-    const dAx = tn.tx - v.x
-    const dAy = tn.ty - v.y
-    const dA = Math.hypot(dAx, dAy) || 1
-    const tx_ = tn.tx - (dAy / dA) * ecartDuBout
-    const ty_ = tn.ty + (dAx / dA) * ecartDuBout
-    const fx = bx + (tx_ - bx) * e
-    const fy = by + (ty_ - by) * e
+    // (LA LACÉRATION — Keko, 27/11 : « 3 coups rapides avec une seule tentacule, en la faisant onduler rapidement » : plantée,
+    // entre deux coups, elle se RECULE d'un tiers et revient frapper — et, à chaque coup, elle FOUETTE de l'autre côté :
+    // son arc passe d'un flanc à l'autre — voir `Arme.tentacule.lacere`)
+    const la = CONF.armes[tn.arme]?.tentacule?.lacere
+    let recul = 0
+    let fouette = 1
+    if (la !== undefined && tn.fait === 'plantee') {
+      const q = (m.t - (tn.frappeA ?? tn.depuis)) / la.intervalle
+      if ((tn.faits ?? 0) < la.coups) recul = Math.sin(Math.PI * Math.max(0, Math.min(1, (q - 0.25) / 0.75))) * 0.38
+      // (le coup qui vient de partir, une fois sur deux de l'autre côté ; il tremble en arrivant)
+      fouette = ((tn.faits ?? 1) % 2 === 1 ? 1 : -1) * (1 + 0.6 * Math.max(0, 1 - q * 3))
+    }
+    const e = (1 - Math.pow(1 - tn.u, 2)) * (1 - recul)
+    const fx = bx + (tn.tx - bx) * e
+    const fy = by + (tn.ty - by) * e
     const L = Math.hypot(fx - ax, fy - ay) || 1
     // (l'arc passe par le flanc de sa racine)
     const cote = Math.sign(RACINES_DU_KRAKEN[tn.ancre]?.[1] ?? 1) || 1
     const lx = -sa * cote
     const ly = ca * cote
-    // (… LA LACÉRATION : SIX COURBES — Keko, 27/11 : « que chaque tentacule ait une trajectoire, une courbure un peu différente
-    // des autres ; là, on voit mal qu'il y en a 6, vu qu'elles se superposent toutes » : la paire de devant en grand arc, celle
-    // du milieu en arc moyen, celle de derrière qui se croise de l'autre côté ; et leurs bouts tombent un peu à côté l'un de
-    // l'autre sur la cible)
-    const lacere = CONF.armes[tn.arme]?.tentacule?.lacere !== undefined
-    const arc = lacere ? (ARCS_DE_LA_LACERATION[tn.ancre] ?? 0.32) : 0.32
-    const ecart = lacere ? (ECARTS_DE_LA_LACERATION[tn.ancre] ?? 0) : 0
-    const cx = (ax + fx) / 2 + lx * L * arc + lx * ecart * 0.5
-    const cy = (ay + fy) / 2 + ly * L * arc + ly * ecart * 0.5
+    const arc = 0.32 * fouette
+    const cx = (ax + fx) / 2 + lx * L * arc
+    const cy = (ay + fy) / 2 + ly * L * arc
     const plantee = tn.fait === 'plantee'
     const n = Math.max(8, Math.ceil(L / 1.4))
     const pts: [number, number][] = []
