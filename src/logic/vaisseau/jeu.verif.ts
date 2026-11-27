@@ -867,6 +867,20 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   const verrouille = w.verrou === 2 && ennemiLePlusProche(w, 200)?.x === 40
   verrouiller(w, 2)
   verifier('une seconde tape déverrouille : le nez revient au plus proche ; un id inconnu ne verrouille rien', verrouille && w.verrou === null && ennemiLePlusProche(w, 200)?.x === -30 && (verrouiller(w, 99), w.verrou === null))
+  {
+    // (LE NEZ S'Y TIENT — Keko, 27/11 : deux insectes à la même distance ne se le disputent plus)
+    const wn = nouveauMonde(VAISSEAU, 3)
+    const ins = (id: number, x: number, y: number) => ({ id, corps: { ...nouveauVaisseau(), x, y }, pv: 10, fait: 'marche' as const, roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 } })
+    wn.ennemis.push(ins(1, 40, 0), ins(2, -41, 0))
+    const garde: { id: number | null } = { id: null }
+    const a1 = ennemiLePlusProche(wn, 200, garde)?.x
+    wn.ennemis[1].corps = { ...wn.ennemis[1].corps, x: -39 }
+    const a2 = ennemiLePlusProche(wn, 200, garde)?.x
+    const sans = ennemiLePlusProche(wn, 200)?.x
+    wn.ennemis[1].corps = { ...wn.ennemis[1].corps, x: -25 }
+    const a3 = ennemiLePlusProche(wn, 200, garde)?.x
+    verifier(`le nez se tient à son insecte : l'autre passe à peine plus près (39 contre 40), il ne change pas (${a1}, ${a2} ; sans tenue : ${sans}) ; nettement plus près (25), il change (${a3})`, a1 === 40 && a2 === 40 && sans === -39 && a3 === -25)
+  }
   verrouiller(w, 2)
   w.ennemis = w.ennemis.filter((e) => e.id !== 2)
   avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })

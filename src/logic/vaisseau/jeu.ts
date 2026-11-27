@@ -7100,18 +7100,32 @@ export function ennemiVerrouille(m: Monde): Ennemi | null {
 /**
  * Où est l'ennemi le plus proche du joueur, à `portee` au plus — ou null. (Le jeu du vortex y tourne son nez tout seul.)
  * L'ENNEMI VERROUILLÉ PASSE DEVANT, s'il est à `portee` ; plus loin, c'est le plus proche.
+ * (… ET IL S'Y TIENT — Keko, 27/11 : « parfois le Kraken change d'orientation très vite (oscille), et les tentacules
+ * tremblent bizarrement » : deux insectes à la même distance, de part et d'autre, se disputaient le nez d'une image à
+ * l'autre. `garde` retient celui qu'on regarde : tant qu'il est à `portee`, un autre ne le remplace que s'il est NETTEMENT
+ * plus près — à moins de `TENUE_DU_REGARD` fois sa distance.)
  */
-export function ennemiLePlusProche(m: Monde, portee: number): Vecteur | null {
+export const TENUE_DU_REGARD = 0.75
+export function ennemiLePlusProche(m: Monde, portee: number, garde?: { id: number | null }): Vecteur | null {
   const v = m.vaisseau
   const ve = ennemiVerrouille(m)
-  if (ve !== null && Math.hypot(ve.corps.x - v.x, ve.corps.y - v.y) <= portee) return { x: ve.corps.x, y: ve.corps.y }
-  let cible: Vecteur | null = null
+  if (ve !== null && Math.hypot(ve.corps.x - v.x, ve.corps.y - v.y) <= portee) {
+    if (garde !== undefined) garde.id = ve.id
+    return { x: ve.corps.x, y: ve.corps.y }
+  }
+  let cible: Ennemi | null = null
   let dc = portee
   for (const e of m.ennemis) {
     const d = Math.hypot(e.corps.x - v.x, e.corps.y - v.y)
-    if (d <= dc) (dc = d), (cible = { x: e.corps.x, y: e.corps.y })
+    if (d <= dc) (dc = d), (cible = e)
   }
-  return cible
+  if (garde !== undefined) {
+    const tenu = garde.id === null ? undefined : m.ennemis.find((e) => e.id === garde.id)
+    const dt = tenu === undefined ? Infinity : Math.hypot(tenu.corps.x - v.x, tenu.corps.y - v.y)
+    if (tenu !== undefined && dt <= portee && dc >= dt * TENUE_DU_REGARD) cible = tenu
+    garde.id = cible?.id ?? null
+  }
+  return cible === null ? null : { x: cible.corps.x, y: cible.corps.y }
 }
 
 /** Ce qu'il faut d'expérience pour passer du niveau `n` au suivant. */

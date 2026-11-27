@@ -9534,7 +9534,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         }
       }
       // (… D'ASSEZ LOIN pour être prêt, même avec une arme courte : le lance-flammes ne porte qu'à 45)
-      const cible = enJeu && m.phase === 'vol' ? ennemiLePlusProche(m, Math.max(110, Math.max(0, ...CONF.armes.map((a) => a.portee)) * 1.35)) : null
+      const cible = enJeu && m.phase === 'vol' ? ennemiLePlusProche(m, Math.max(110, Math.max(0, ...CONF.armes.map((a) => a.portee)) * 1.35), nezSur) : null
       if (cible === null) return undefined
       const d = Math.hypot(cible.x - v.x, cible.y - v.y) || 1
       return { x: (cible.x - v.x) / d, y: (cible.y - v.y) / d }
@@ -14924,6 +14924,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** L'instant du dernier claquement de tentacule (trois à la fois : un seul son). */
   let fouetSonneA = -10
   let piqureDeBoutureA = -10
+  /** L'insecte que le nez regarde : il s'y tient (voir `ennemiLePlusProche`). */
+  const nezSur: { id: number | null } = { id: null }
   let piqureDeLacerationA = -10
   /** L'instant du dernier craquement de givre (voir l'événement `gele`). */
   let geleSonneA = -10

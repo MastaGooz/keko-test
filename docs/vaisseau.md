@@ -9676,3 +9676,6 @@ Keko : « ok pour le harpon », puis « il faudrait qu'il sorte de la gueule du 
 - Le dessin (`dessinerLaLangue`) : une langue rouge mouillée, épaisse à la gueule et fine au bout, un sillon au milieu, un reflet. Lancée, elle ondule. Plantée, elle se tend et vibre, et des gorgées remontent de la proie vers la gueule, de plus en plus vite. Au bout, un dard d'os à deux barbes, et une lueur rouge qui grandit sur la proie.
 - Texte : « Une langue harponne l'ennemi le plus résistant et le ronge. » (cinq lignes, vérifié en capture).
 - La Tentacule a ses six cartes : Méduse, Fouet, Lacération, Envergure, Langue, Bouture.
+### Le nez qui oscillait (27/11)
+
+Keko : « parfois le Kraken change d'orientation très vite (oscille), et les tentacules tremblent bizarrement ». Au vortex, le nez se tourne seul vers l'insecte le plus proche (`ennemiLePlusProche`). Quand deux insectes étaient à la même distance de part et d'autre, « le plus proche » changeait d'une image à l'autre et le nez balançait entre les deux, ce qui secouait les tentacules, plus visibles que sur les autres vaisseaux. Le nez SE TIENT maintenant à son insecte (`garde`, `nezSur` dans la page) : tant qu'il est à portée, un autre ne le remplace que s'il est nettement plus près, à moins de 0,75 fois sa distance (`TENUE_DU_REGARD`). Vaut pour tous les vaisseaux. Le verrou passe toujours devant.
