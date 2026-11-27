@@ -193,8 +193,7 @@ export const aUneZone = (a: Arme): boolean => valeurs(a, CLES_DE_ZONE).some((v) 
 // créature, une tourelle, ou la bobine tesla, qui est une forme de tourelle […] ça ne concerne pas les traînées, les zones
 // enflammées, les zones gelées » : la flaque de napalm en sort, la balise laser y entre)
 // (… ET LA BOUTURE DE LA TENTACULE — Keko, 27/11 : « la durée du tentacule est affectée par les cartes qui jouent sur la durée »)
-// (… ET LA MARIONNETTE, le temps que le tube la tient)
-const POSEES = ['pose', 'balise', 'mine', 'ponte', 'sphere', 'lien', 'bouture', 'marionnette'] as const
+const POSEES = ['pose', 'balise', 'mine', 'ponte', 'sphere', 'lien', 'bouture'] as const
 const CLES_DU_FEU: ReadonlySet<string> = new Set(['dpsBrulure'])
 const CLES_DU_GIVRE: ReadonlySet<string> = new Set(['ralenti'])
 /** Ce que l'arme pose, et sa durée. */
@@ -679,7 +678,7 @@ export const MUTATIONS: Mutation[] = [
   // (« MÉDUSE », SON ÉLÉMENT — Keko : « l'élément électrique, un petit peu comme les crochets d'une méduse » ; le nom, de moi,
   // « Électrique » est au railgun)
   variation('tentacule-meduse', 'tentacule', 'Méduse', 'Les piqûres appliquent électrocution.', changerA('tentacule', (a) => ({ ...a, electrocution: { ...ELECTROCUTION_DU_VORTEX } }))),
-  // (LA TENAILLE, L'EMPALEMENT ET LA MARIONNETTE, essayés puis SUPPRIMÉS — Keko, 27/11 : « toutes les autres, je les trouve
+  // (LA TENAILLE, L'EMPALEMENT ET LA MARIONNETTE — deux fois —, essayés puis SUPPRIMÉS — Keko, 27/11 : « toutes les autres, je les trouve
   // pas terribles, donc on supprime tout ; au final, on a notre élément et notre effet critique » — voir docs/vaisseau.md)
   // (« FOUET », REFAIT — Keko, 27/11 : « j'aime quand même bien l'idée du balayage, mais il était mal exécuté ; prendre le
   // même tentacule et le déplacer comme un fouet, et laisser une traînée de slash » ; il a d'abord remplacé la piqûre, puis
@@ -691,11 +690,6 @@ export const MUTATIONS: Mutation[] = [
   // chaque attaque, en la faisant onduler rapidement pour faire 3 slash » : la tentacule reste et frappe trois fois, une
   // toutes les 0,1 s, 45 % des dégâts chacune — chiffres de moi ; voir `Arme.tentacule.lacere`)
   variation('tentacule-laceration', 'tentacule', 'Lacération', 'À chaque attaque, la tentacule frappe trois fois de suite.', changerA('tentacule', (a) => (a.tentacule === undefined ? a : { ...a, tentacule: { ...a.tentacule, lacere: { coups: 3, intervalle: 0.1, part: 0.45 } } }))),
-  // (« MARIONNETTE », REMISE AVEC SON TUBE — Keko, 27/11 : « un nouveau type de tentacule, un tube intestinal, qui part de
-  // la tête du Kraken et se plante sur l'ennemi ; il attaque les autres ennemis, et sert de leurre » : un tube toutes les 6 s,
-  // planté en 0,15 s, 4 s de contrôle, une morsure toutes les 0,5 s à 50 % fois la sienne, leurre à 60 — chiffres de moi ;
-  // jamais un grand ; voir `Arme.marionnette`)
-  variation('tentacule-marionnette', 'tentacule', 'Marionnette', 'Un tube prend un ennemi, qui attaque et attire les siens.', changerA('tentacule', (a) => ({ ...a, marionnette: { tous: 6, aller: 0.15, duree: 4, periode: 0.5, part: 0.5, leurre: 60, laisse: 80, elan: 1.4 } }))),
   // (« BOUTURE », SA VARIATION SUR COUP CRITIQUE — Keko : « un mini tentacule pousse sur l'ennemi touché, qui se met à attaquer
   // les ennemis proches » : 4 s, une piqûre toutes les 0,5 s à 30, 40 % des dégâts — chiffres et nom de moi ; voir
   // `Arme.bouture` ; elle grandit de 25 % à chaque critique qui la relance, jusqu'au double — Keko, 27/11, chiffres de moi)

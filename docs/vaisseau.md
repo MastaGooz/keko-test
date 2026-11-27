@@ -9644,3 +9644,7 @@ Keko : « à la place d'attaquer une tentacule par tentacule, l'attaque devient 
   - La Nuée mordait tout à sa portée, l'arc d'électrocution de la Méduse sautait sur l'insecte le plus proche, et le slash du Fouet frappait toute sa bande.
   - Les trois l'épargnent désormais, et `coupDeTentacule` ne la frappe jamais.
   - Elle reste blessée par les insectes qu'elle leurre (c'est le leurre), et le tube la tue à la fin des 4 s, comme prévu depuis le début.
+
+### La Marionnette abandonnée (27/11)
+
+Keko : « on va laisser tomber le contrôle mental, je suis pas fan ». La carte et tout son code sont supprimés, comme la Tenaille et l'Empalement : le tube intestinal, le leurre dans la conduite des insectes (`leurreDe`), `Monde.marionnettes`, `Ennemi.marionnetteA`, ses événements, son dessin et ses tests. Restent la protection de la règle du son annoncé (un insecte bien à portée, voir plus haut) et tout ce qui n'était pas à elle. La Tentacule garde quatre cartes : Méduse, Fouet, Lacération, Bouture.
