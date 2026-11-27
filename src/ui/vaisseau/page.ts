@@ -12,7 +12,7 @@
  */
 import './vaisseau.css'
 import * as noyau from 'pixelfx'
-import { ELEMENTAIRES, TRAJECTOIRE_DU_MISSILE, anneauMagnetique, rayonDeLOnde, ennemisDuLien, ajouterUnPilote, avancerLEquipage, prendreLaMain, type SorteDInsecte, SORTES_D_INSECTES, gabaritDInsecte, gemmesDuButin, butinDeLaRoche, pointDeRetour, rayonDe, rocheDeLaTempete, vieMultipliee, degatsMultiplies, placeDeLEcharde, frontDeLaNova, ancreDansLeMonde, RETRAIT_DU_FOUET, zoneDuDe, coupeDUnCube, formeDeLaCoupe, liesAuDrain, encaisser, type Ennemi, type Evenement, type Monde, impactDuRayon, asteroidesVisibles, avancerLeMonde, finDuTrio, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur, xpDuNiveau, ennemiLePlusProche, ennemiVerrouille, chauffeDuDrone,focaleDuLien,ondeDuLien,verrouiller, angleDuBalayage, aPlusieurs, alliesAuRetour, recompenseDeFin, type LigneDeRecompense } from '../../logic/vaisseau/jeu.ts'
+import { ELEMENTAIRES, TRAJECTOIRE_DU_MISSILE, anneauMagnetique, rayonDeLOnde, ennemisDuLien, ajouterUnPilote, avancerLEquipage, prendreLaMain, type SorteDInsecte, SORTES_D_INSECTES, gabaritDInsecte, gemmesDuButin, butinDeLaRoche, pointDeRetour, rayonDe, rocheDeLaTempete, vieMultipliee, degatsMultiplies, placeDeLEcharde, frontDeLaNova, ancreDansLeMonde, RETRAIT_DU_FOUET, DEPLOIEMENT_DU_FOUET, balayageDuFouet, zoneDuDe, coupeDUnCube, formeDeLaCoupe, liesAuDrain, encaisser, type Ennemi, type Evenement, type Monde, impactDuRayon, asteroidesVisibles, avancerLeMonde, finDuTrio, lancerLaBombe, porteeDeLaBombe, cargaisonVide, larguer, centreQuiSuit, directionDuManche, MANCHE, MINERAIS, nouveauMonde, partDeLaPostcombustion, postcombustion, rechargeDeLaPostcombustion, solidite, stationDeLaCase, stationLaPlusProche, tire, totalDe, VAISSEAU as C, type Cargaison, type ConfigVaisseau, type Minerai, type Forage, type Vaisseau, type Vecteur, xpDuNiveau, ennemiLePlusProche, ennemiVerrouille, chauffeDuDrone,focaleDuLien,ondeDuLien,verrouiller, angleDuBalayage, aPlusieurs, alliesAuRetour, recompenseDeFin, type LigneDeRecompense } from '../../logic/vaisseau/jeu.ts'
 import { PIECES, ETALONS as ETALONS_DU_BANC, acheter, ajouterLesPiecesDEssai, capacite, poidsTotal, POIDS_SERIE, configDuHangar, demonter, demonterA, EMPLACEMENTS, estMontee, FICHES_MINERAI, foreuseMontee, hangarNeuf, jaugesDe, montantCourt, monteeA, monter, monterA, peutAcheter, peutMonter, perdreLesMontees, estDeBase, exemplaires, libres, pieceDe, piecesDe, placeLourde, possede, aimantMonte, radarMonte, type Jauge, type Piece, type Sorte } from '../../logic/vaisseau/hangar.ts'
 import { drawWord, spell } from 'pixelfx/fx/ui/_lib'
 import { firePuff, hotFirst, smokePuff } from 'pixelfx/fx/fire/_lib'
@@ -10148,7 +10148,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     })
     const blanchi = t - toucheA < 0.1 || m.phase === 'extrait' || t - arriveA < REFROIDI_A
     const al0 = allureMontee(CONF.bouclier.points > 0 ? m.bouclier / CONF.bouclier.points : 0)
-    const sorties = m.tentacules.filter((tn) => tn.fait !== 'repos' && CONF.armes[tn.arme]?.tentacule?.alterne === true).map((tn) => tn.ancre)
+    const sorties = [...m.tentacules.filter((tn) => tn.fait !== 'repos' && CONF.armes[tn.arme]?.tentacule?.alterne === true).map((tn) => tn.ancre), ...m.fouets.map(racineDuFouet)]
     const al = { ...al0, vises, ...(al0.coque === 14 ? { chemin: cheminDuVer() } : {}), ...(al0.kraken !== undefined && sorties.length > 0 ? { kraken: { ...al0.kraken, sorties } } : {}) }
     // LA FLAMME TRAÎNE (Keko, 13/11 : « que la flamme du réacteur se déplace un petit peu comme les particules sur les
     // côtés, au lieu d'être rigide ») : sa pointe se déporte à l'opposé du glissement de côté du vaisseau, et reste en
@@ -13516,30 +13516,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (corde === undefined) return
     const [ax, ay] = monde(corde[0])
     const [bx, by] = monde(corde[corde.length - 1])
-    // (L'EMPALEMENT — Keko, 27/11 : « que toute la tentacule traverse l'ennemi plutôt que de créer un bout bizarre qui
-    // dépasse » : son bout va au-delà de la cible, dans l'axe de sa racine à elle, jusqu'où l'empalement frappe — et elle
-    // part droite, en lance, pour passer par la cible)
-    const emp = CONF.armes[tn.arme]?.tentacule?.empale
-    let gx = tn.tx
-    let gy = tn.ty
-    if (emp !== undefined) {
-      const cible = m.ennemis.find((x) => x.id === tn.cible)
-      const d = Math.hypot(tn.tx - ax, tn.ty - ay) || 1
-      const au = (cible !== undefined ? rayonDe(CONF, cible) : 4) + emp.allonge
-      gx = tn.tx + ((tn.tx - ax) / d) * au
-      gy = tn.ty + ((tn.ty - ay) / d) * au
-    }
     const e = 1 - Math.pow(1 - tn.u, 2)
-    const fx = bx + (gx - bx) * e
-    const fy = by + (gy - by) * e
+    const fx = bx + (tn.tx - bx) * e
+    const fy = by + (tn.ty - by) * e
     const L = Math.hypot(fx - ax, fy - ay) || 1
     // (l'arc passe par le flanc de sa racine)
     const cote = Math.sign(RACINES_DU_KRAKEN[tn.ancre]?.[1] ?? 1) || 1
     const lx = -sa * cote
     const ly = ca * cote
-    const arc = emp !== undefined ? 0 : 0.32
-    const cx = (ax + fx) / 2 + lx * L * arc
-    const cy = (ay + fy) / 2 + ly * L * arc
+    const cx = (ax + fx) / 2 + lx * L * 0.32
+    const cy = (ay + fy) / 2 + ly * L * 0.32
     const plantee = tn.fait === 'plantee'
     const n = Math.max(8, Math.ceil(L / 1.4))
     const pts: [number, number][] = []
@@ -13551,10 +13537,23 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const py = q * q * ay + 2 * q * s_ * cy + s_ * s_ * fy
       pts.push([px + lx * onde, py + ly * onde])
     }
+    peindreUneTentaculeDuKraken(p, pts, E, plantee, cote)
+    if (plantee) p.glow(tn.tx, tn.ty, 5, BILE[1], 0.35)
+    // (MÉDUSE — Keko, 27/11 : « des tentacules qui électrifient, un peu comme les crochets d'une méduse » : des étincelles
+    // courent le long d'elle, et, plantée, un petit éclair crépite de son dard à sa proie)
+    if (CONF.armes[tn.arme]?.electrocution !== undefined) dessinerDesFilamentsElectriques(p, pts, plantee ? [tn.tx, tn.ty] : null, tn.ancre)
+  }
+  /**
+   * UNE TENTACULE DU KRAKEN, tendue hors de son corps — la piqûre, le fouet : ses points `pts` de la racine au bout, à
+   * l'échelle `E` ; chair et chitine en bandes aux couleurs de l'apparence, cernées ; le dard d'os au bout, sur sa tangente,
+   * tourné du côté `cote` ; `vibre` : plantée, elle tremble.
+   */
+  function peindreUneTentaculeDuKraken(p: Peintre, pts: [number, number][], E: number, vibre: boolean, cote: number): void {
+    const n = pts.length - 1
     const ru = rampesDuJoueur()
     const chair = ru?.chair ?? [0, 0, ...tonsDeLaMatiere('chair')]
     const chitine = ru?.chitine ?? [0, 0, ...tonsDeLaMatiere('chitine')]
-    const epais = (i: number): number => ((1.15 - 0.75 * (i / n)) * E) + (plantee ? 0.2 * Math.sin(t * 30 - i) : 0)
+    const epais = (i: number): number => ((1.15 - 0.75 * (i / n)) * E) + (vibre ? 0.2 * Math.sin(t * 30 - i) : 0)
     for (let i = 0; i <= n; i++) p.circle(pts[i][0], pts[i][1], epais(i) + 0.8, CHAIR[0])
     for (let i = 0; i <= n; i++) p.circle(pts[i][0], pts[i][1], epais(i), Math.floor((i / n) * 7) % 2 === 0 ? chair[3] : chitine[3])
     for (let i = 0; i <= n; i++) p.circle(pts[i][0] - 0.5, pts[i][1] - 0.5, Math.max(0.5, epais(i) * 0.45), Math.floor((i / n) * 7) % 2 === 0 ? chair[4] : chitine[4])
@@ -13571,10 +13570,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     p.poly(contourDuCrochet(0.5).map(([av, co]) => crochet(av, co)), OS[2])
     const pointe = crochet(POINTE_DU_CROCHET, 0)
     p.px(Math.round(pointe[0]), Math.round(pointe[1]), OS[3])
-    if (plantee) p.glow(tn.tx, tn.ty, 5, BILE[1], 0.35)
-    // (MÉDUSE — Keko, 27/11 : « des tentacules qui électrifient, un peu comme les crochets d'une méduse » : des étincelles
-    // courent le long d'elle, et, plantée, un petit éclair crépite de son dard à sa proie)
-    if (CONF.armes[tn.arme]?.electrocution !== undefined) dessinerDesFilamentsElectriques(p, pts, plantee ? [tn.tx, tn.ty] : null, tn.ancre)
   }
   /** Des étincelles qui courent sur un bras de chair électrique (la Méduse), et l'éclair de son bout à `vers`. */
   function dessinerDesFilamentsElectriques(p: Peintre, pts: [number, number][], vers: [number, number] | null, graine: number): void {
@@ -13626,47 +13621,86 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
     return pts
   }
+  /** La racine (son rang dans `RACINES_DU_KRAKEN`) de la tentacule qui fouette : celle du milieu de son flanc. */
+  const racineDuFouet = (f: (typeof m.fouets)[number]): number => (f.cote < 0 ? 2 : 3)
+  /** L'écart d'angle de `a` à `b`, ramené dans ]−π, π]. */
+  const angleEntre = (a: number, b: number): number => Math.atan2(Math.sin(b - a), Math.cos(b - a))
   /**
-   * LE FOUET (Keko, 27/11 : « une attaque supplémentaire, qui fait un fouet et décrit un arc de cercle » — voir `Arme.fouet`) :
-   * une longue tentacule sort de la proue et balaie son arc, son bout en retard sur sa racine comme un fouet qui claque, une
-   * traînée de chair pâle derrière lui ; son balayage fini, elle se rétracte.
+   * LE FOUET (Keko, 27/11 : « j'aime bien l'idée du balayage, mais il était mal exécuté ; prendre le même tentacule et le
+   * déplacer comme un fouet, et laisser une traînée de slash » ; « que le fouet et le slash remplacent le coup normal » —
+   * voir `Arme.fouet`) : la tentacule du milieu du flanc tourné vers l'insecte (`racineDuFouet`) quitte le corps, se déploie
+   * jusqu'au bord de son arc, le balaie — son milieu en retard sur son bout quand elle file, comme un fouet — puis revient à
+   * sa place. Son dard laisse UN SLASH : un croissant de lumière, blanc au fil, pâle puis rose sur l'épaisseur (bleu
+   * électrique avec la Méduse), effilé aux deux bouts, qui se referme et s'efface derrière lui.
    */
   function dessinerLesFouets(p: Peintre): void {
+    const E = echelleVue()
+    const ca = Math.cos(v.cap)
+    const sa = Math.sin(v.cap)
+    const monde = ([x, y]: [number, number]): [number, number] => [v.x + (x * ca - y * sa) * E, v.y + (x * sa + y * ca) * E]
+    const lisse = (q: number): number => q * q * (3 - 2 * q)
     for (const f of m.fouets) {
       const a = CONF.armes[f.arme]
       const fo = a?.fouet
       if (a === undefined || fo === undefined) continue
-      const brut = (m.t - f.depuis) / fo.duree
-      const u = Math.min(1, brut)
-      // (il jaillit en un quart de son balayage, et se rétracte après)
-      const long = a.portee * (brut < 0.25 ? 1 - Math.pow(1 - brut / 0.25, 2) : brut <= 1 ? 1 : Math.max(0, 1 - (brut - 1) / (RETRAIT_DU_FOUET - 1)))
-      const e = u * u * (3 - 2 * u)
-      const theta = f.cap + f.sens * fo.ouverture * (2 * e - 1)
-      // (LA TRAÎNÉE : l'arc balayé, pâle, qui s'efface derrière lui)
-      const passe = 2 * fo.ouverture * e
-      for (let k = 0; k <= 14; k++) {
-        const w = k / 14
-        const an = theta - f.sens * passe * w
-        const alpha = (1 - w) * 0.55 * (brut <= 1 ? 1 : Math.max(0, 1 - (brut - 1) / 0.3))
-        if (alpha <= 0.02) continue
-        for (const r of [0.75, 0.9]) p.dot(v.x + Math.cos(an) * a.portee * r, v.y + Math.sin(an) * a.portee * r, CHAIR[4], alpha * (r === 0.9 ? 1 : 0.6))
+      const corde = cordesDuKraken(flamme, t, devieDeLaFlamme)[racineDuFouet(f)]
+      if (corde === undefined) continue
+      const [ax, ay] = monde(corde[0])
+      const repos = monde(corde[corde.length - 1])
+      const R = a.portee
+      const angle = (u: number): number => f.cap + f.sens * fo.ouverture * (2 * balayageDuFouet(Math.max(0, Math.min(1, u))) - 1)
+      const auBord = (an: number): [number, number] => [v.x + Math.cos(an) * R, v.y + Math.sin(an) * R]
+      const entre = (p0: [number, number], p1: [number, number], q: number): [number, number] => [p0[0] + (p1[0] - p0[0]) * q, p0[1] + (p1[1] - p0[1]) * q]
+      const age = m.t - f.depuis
+      const s_ = (age - DEPLOIEMENT_DU_FOUET) / fo.duree
+      // (son bout : il se déploie jusqu'au bord de départ, balaie l'arc, revient à sa place)
+      const bout = s_ < 0 ? entre(repos, auBord(angle(0)), lisse(Math.max(0, age / DEPLOIEMENT_DU_FOUET))) : s_ <= 1 ? auBord(angle(s_)) : entre(auBord(angle(1)), repos, lisse(Math.min(1, ((s_ - 1) * fo.duree) / RETRAIT_DU_FOUET)))
+      // (LE SLASH, sous elle : de la queue — où était le dard un peu plus tôt — à la tête — où il est —, sur l'arc qu'il trace)
+      const fondu = s_ <= 1 ? 0 : Math.min(1, ((s_ - 1) * fo.duree) / 0.14)
+      if (s_ > 0 && fondu < 1) {
+        const uTete = Math.min(1, s_)
+        const uQueue0 = Math.max(0, uTete - 0.6)
+        const uQueue = uQueue0 + (uTete - uQueue0) * fondu
+        const queue = angle(uQueue)
+        const ecart = angleEntre(queue, angle(uTete))
+        const nb = Math.max(4, Math.ceil((Math.abs(ecart) * R) / 1.2))
+        const W = 4.5 * (1 - 0.5 * fondu)
+        const elec = a.electrocution !== undefined
+        const couches: [number, number, number, number][] = [
+          [1, 0.35, elec ? COULEURS_VOLT[4] : CHAIR[4], 0.55],
+          [0.55, 0.22, elec ? COULEURS_VOLT[6] : CHAIR[5], 0.85],
+          [0.2, 0.12, N.WHITE, 1],
+        ]
+        for (const [dedans, dehors, c, al] of couches) {
+          const ext: [number, number][] = []
+          const int: [number, number][] = []
+          for (let j = 0; j <= nb; j++) {
+            const q = j / nb
+            const an = queue + ecart * q
+            const w = W * Math.pow(Math.sin(Math.PI * q), 0.6)
+            ext.push([v.x + Math.cos(an) * (R + w * dehors), v.y + Math.sin(an) * (R + w * dehors)])
+            int.push([v.x + Math.cos(an) * (R - w * dedans), v.y + Math.sin(an) * (R - w * dedans)])
+          }
+          p.poly([...ext, ...int.reverse()], c, al * (1 - fondu))
+        }
       }
-      if (long < 2) continue
-      // (LE BRAS : sa racine à la proue, chaque point en retard d'autant plus qu'il est loin d'elle)
-      const n = Math.max(6, Math.ceil(long / 1.4))
-      const retard = brut <= 1 ? 0.55 * Math.sin(Math.PI * u) : 0
+      // (LE BRAS : de sa racine à son bout ; quand il file, son milieu traîne derrière, du côté d'où il vient)
+      const L = Math.hypot(bout[0] - ax, bout[1] - ay) || 1
+      const th = angle(Math.max(0, Math.min(1, s_)))
+      const vite = s_ > 0 && s_ <= 1 ? Math.sin(Math.PI * s_) : 0
+      const cx = (ax + bout[0]) / 2 + Math.sin(th) * f.sens * L * 0.4 * vite
+      const cy = (ay + bout[1]) / 2 - Math.cos(th) * f.sens * L * 0.4 * vite
+      const nx = -(bout[1] - ay) / L
+      const ny = (bout[0] - ax) / L
+      const n = Math.max(8, Math.ceil(L / 1.4))
       const pts: [number, number][] = []
-      const x0 = v.x + Math.cos(v.cap) * 4
-      const y0 = v.y + Math.sin(v.cap) * 4
       for (let i = 0; i <= n; i++) {
-        const s = i / n
-        const an = theta - f.sens * retard * Math.pow(s, 1.6)
-        pts.push([x0 + (Math.cos(an) * long - (x0 - v.x)) * s, y0 + (Math.sin(an) * long - (y0 - v.y)) * s])
+        const q = i / n
+        const r = 1 - q
+        const onde = Math.sin(Math.PI * q) * Math.sin(t * 7 + f.depuis * 3 - q * 6) * 0.8
+        pts.push([r * r * ax + 2 * r * q * cx + q * q * bout[0] + nx * onde, r * r * ay + 2 * r * q * cy + q * q * bout[1] + ny * onde])
       }
-      dessinerUnBrasDeChair(p, pts, 1.6, 0.5, 9)
-      const [bx, by] = pts[n]
-      p.px(Math.round(bx), Math.round(by), OS[3])
-      if (brut <= 1) p.glow(bx, by, 5, CHAIR[5], 0.3)
+      peindreUneTentaculeDuKraken(p, pts, E, false, f.cote)
       if (a.electrocution !== undefined) dessinerDesFilamentsElectriques(p, pts, null, f.arme)
     }
   }
@@ -14808,7 +14842,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** L'instant du dernier claquement de tentacule (trois à la fois : un seul son). */
   let fouetSonneA = -10
   let piqureDeBoutureA = -10
-  let morsureDeMarionnetteA = -10
   /** L'instant du dernier craquement de givre (voir l'événement `gele`). */
   let geleSonneA = -10
   let etourdiSonneA = -10
@@ -15287,15 +15320,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           p.ring(sx, sy, r, 1, c, k)
           p.dot(sx, sy, N.hex('#ffb0a8'), k)
           p.glow(sx, sy, r + 3, c, 0.25 * k)
-        }
-        // (C'EST UNE MARIONNETTE — Keko, 27/11, voir `Arme.marionnette` : la tentacule plantée en lui le tient ; il bat d'une
-        // lueur de bile, cerné de vert, et pâlit dans sa dernière demi-seconde)
-        if ((e.marionnetteA ?? -1) > m.t) {
-          const r = rayonDe(CONF, e)
-          const k = Math.min(1, ((e.marionnetteA ?? 0) - m.t) / 0.5)
-          const bat = 0.5 + 0.5 * Math.sin(t * 9 + e.id)
-          p.glow(sx, sy, r + 5, BILE[1], (0.25 + 0.2 * bat) * k)
-          p.ring(sx, sy, r + 1, 1, BILE[1], (0.45 + 0.35 * bat) * k)
         }
         // (IL EST ÉTOURDI — « Étourdissement », Keko, 24/11, voir `Arme.etourdissement` : trois étoiles jaunes qui tournent
         // au-dessus de lui)
@@ -18630,14 +18654,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           // c'est le bourdonnement continu de la nuée qui enfle, voir `regler`)
           toucheEnnemiA.set(ev.id, t)
           break
-        case 'empale':
-          // (L'EMPALEMENT : la tentacule traverse la cible — voir `dessinerUneTentaculeProjetee` —, des éclats d'os et de bile
-          // jaillissent de l'autre côté)
-          for (let i = 0; i < 5; i++) {
-            const a = Math.atan2(ev.y1 - ev.y0, ev.x1 - ev.x0) + R.range(-0.6, 0.6)
-            etincelles.ajouter('etincelle', ev.x0, ev.y0, Math.cos(a) * R.range(30, 70), Math.sin(a) * R.range(30, 70), R.range(0.15, 0.3), i % 2 === 0 ? OS[2] : BILE[1], 1, 1.5)
-          }
-          break
         case 'fouet':
           // (LE FOUET part : le claquement mouillé de la tentacule)
           if (t - fouetSonneA > 0.12) {
@@ -18662,33 +18678,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           for (let i = 0; i < 3; i++) {
             const a = R.range(0, Math.PI * 2)
             etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(15, 35), Math.sin(a) * R.range(15, 35), R.range(0.1, 0.2), BILE[1], 1, 1)
-          }
-          break
-        case 'marionnette':
-          // (LA TENTACULE PREND SA MARIONNETTE : le « blop » de chair, une giclée de bile)
-          jouer('ponte', { dx: ev.x - v.x, dy: ev.y - v.y })
-          for (let i = 0; i < 8; i++) {
-            const a = R.range(0, Math.PI * 2)
-            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(15, 45), Math.sin(a) * R.range(15, 45), R.range(0.15, 0.3), i % 2 === 0 ? BILE[2] : BILE[1], 1, 1.5)
-          }
-          break
-        case 'morsureMarionnette':
-          // (elle mord : la morsure des mini-vers, plus rare)
-          if (t - morsureDeMarionnetteA > 0.2) {
-            morsureDeMarionnetteA = t
-            jouer('morsureVer', { dx: ev.x - v.x, dy: ev.y - v.y })
-          }
-          for (let i = 0; i < 3; i++) {
-            const a = R.range(0, Math.PI * 2)
-            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(15, 35), Math.sin(a) * R.range(15, 35), R.range(0.1, 0.2), CHAIR[4], 1, 1)
-          }
-          break
-        case 'marionnetteFinie':
-          // (la tentacule s'arrache : le « tchk » de l'aiguille, des lambeaux de chair et de bile)
-          jouer('piqure', { dx: ev.x - v.x, dy: ev.y - v.y })
-          for (let i = 0; i < 8; i++) {
-            const a = R.range(0, Math.PI * 2)
-            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(10, 30), Math.sin(a) * R.range(10, 30), R.range(0.2, 0.35), i % 2 === 0 ? CHAIR[3] : BILE[1], 1, 1)
           }
           break
         case 'boutureFinie':

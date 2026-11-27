@@ -193,8 +193,7 @@ export const aUneZone = (a: Arme): boolean => valeurs(a, CLES_DE_ZONE).some((v) 
 // créature, une tourelle, ou la bobine tesla, qui est une forme de tourelle […] ça ne concerne pas les traînées, les zones
 // enflammées, les zones gelées » : la flaque de napalm en sort, la balise laser y entre)
 // (… ET LA BOUTURE DE LA TENTACULE — Keko, 27/11 : « la durée du tentacule est affectée par les cartes qui jouent sur la durée »)
-// (… ET LA MARIONNETTE, le temps que la tentacule la tient)
-const POSEES = ['pose', 'balise', 'mine', 'ponte', 'sphere', 'lien', 'bouture', 'marionnette'] as const
+const POSEES = ['pose', 'balise', 'mine', 'ponte', 'sphere', 'lien', 'bouture'] as const
 const CLES_DU_FEU: ReadonlySet<string> = new Set(['dpsBrulure'])
 const CLES_DU_GIVRE: ReadonlySet<string> = new Set(['ralenti'])
 /** Ce que l'arme pose, et sa durée. */
@@ -273,10 +272,7 @@ export function armeAmelioree(a: Arme, stat: StatDArme, k: number): Arme {
       // (… ET DES DRONES CHASSENT PLUS LOIN — la Chasse de l'escorte, 26/11 : sa proie se choisit à `laisse` du vaisseau,
       // qui restait à 160 ; en chasse ils tournent à 34 de leur cible, la portée de leurs balles ne leur servait à rien)
       const z4 = z3.orbite?.laisse === undefined ? z3 : { ...z3, orbite: { ...z3.orbite, laisse: z3.orbite.laisse * (1 + k) } }
-      // (… ET L'AIGUILLE DE L'EMPALEMENT VA PLUS LOIN derrière sa cible — 27/11 ; sa largeur, elle, grandit avec la zone)
-      const ep = z4.tentacule?.empale
-      const z = ep === undefined ? z4 : { ...z4, tentacule: { ...z4.tentacule!, empale: { ...ep, allonge: ep.allonge * (1 + k) } } }
-      return a.portee > 0 ? { ...z, portee: a.portee * (1 + k), vie: a.vie * (1 + k) } : z
+      return a.portee > 0 ? { ...z4, portee: a.portee * (1 + k), vie: a.vie * (1 + k) } : z4
     }
     case 'pose': {
       const r: Record<string, unknown> = { ...a }
@@ -682,17 +678,18 @@ export const MUTATIONS: Mutation[] = [
   // (« MÉDUSE », SON ÉLÉMENT — Keko : « l'élément électrique, un petit peu comme les crochets d'une méduse » ; le nom, de moi,
   // « Électrique » est au railgun)
   variation('tentacule-meduse', 'tentacule', 'Méduse', 'Les piqûres appliquent électrocution.', changerA('tentacule', (a) => ({ ...a, electrocution: { ...ELECTROCUTION_DU_VORTEX } }))),
-  // (« TENAILLE » RETIRÉE — Keko, 27/11 : « enlève aussi l'attaque avec les doubles tentacules » : la règle reste,
-  // `Arme.tentacule.paire`)
-  // (« FOUET » RETIRÉ — Keko, 27/11 : « enlève le balayage maintenant » : la règle reste, `Arme.fouet`)
-  // (« EMPALEMENT » RETIRÉ — Keko, 27/11 : « c'est hyper moche en fait ; ça rend pas bien ; tu peux l'enlever pour que je
-  // teste sans » : la règle reste, `Arme.tentacule.empale`, et son dessin, la tentacule droite qui traverse)
+  // (LA TENAILLE, L'EMPALEMENT ET LA MARIONNETTE, essayés puis SUPPRIMÉS — Keko, 27/11 : « toutes les autres, je les trouve
+  // pas terribles, donc on supprime tout ; au final, on a notre élément et notre effet critique » — voir docs/vaisseau.md)
+  // (« FOUET », REFAIT — Keko, 27/11 : « j'aime quand même bien l'idée du balayage, mais il était mal exécuté ; prendre le
+  // même tentacule et le déplacer comme un fouet, et laisser une traînée de slash » ; puis « que le fouet et le slash
+  // remplacent le coup normal ; on transforme le transpercement en un balayage » : LA VARIATION CHANGE LE TIR — plus de
+  // piqûre ; à la cadence doublée, une des tentacules du Kraken balaie un arc de 115° à `portee`, dégâts entiers sur tout
+  // ce qu'il passe — chiffres de moi ; voir `Arme.fouet`)
+  variation('tentacule-fouet', 'tentacule', 'Fouet', 'Les tentacules fouettent en arc de cercle au lieu de piquer.', changerA('tentacule', (a) => ({ ...a, cadence: a.cadence * 2, tentacule: undefined, fouet: { ouverture: 1, duree: 0.25 } }))),
   // (« BOUTURE », SA VARIATION SUR COUP CRITIQUE — Keko : « un mini tentacule pousse sur l'ennemi touché, qui se met à attaquer
   // les ennemis proches » : 4 s, une piqûre toutes les 0,5 s à 30, 40 % des dégâts — chiffres et nom de moi ; voir
   // `Arme.bouture`)
   variation('tentacule-bouture', 'tentacule', 'Bouture', 'Un critique fait pousser sur l’ennemi une tentacule qui attaque.', changerA('tentacule', (a) => ({ ...a, bouture: { duree: 4, periode: 0.5, portee: 30, part: 0.4 } }))),
-  // (« MARIONNETTE » RETIRÉE — Keko, 27/11 : « enlève le marionnettiste ; laisse-moi juste le Kraken de base » : la règle
-  // reste, `Arme.marionnette`)
   // LES CARTES D'ÉLÉMENT (Keko, 24/11 : « des cartes spéciales de chaque élément » ; « des cartes multicolores spéciales qu'on
   // proposera dans le pool des cartes spéciales, si le joueur a au moins une attaque avec l'élément en question » — voir
   // `ELEMENTAIRES` pour leurs chiffres ; leurs noms et leurs textes sont de moi)

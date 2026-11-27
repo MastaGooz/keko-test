@@ -1147,23 +1147,15 @@ export type Arme = {
      * tentacule choisit seule, depuis son ancre, et repart `cadence` après son retour.
      */
     alterne?: boolean
-    /**
-     * LA TENAILLE (Keko, 27/11 : « deux tentacules frappent ensemble la même cible ») : tour à tour, DEUX partent à la fois
-     * sur la même cible — la plus proche d'elle, et la plus proche de l'autre flanc —, en courbes opposées.
-     */
-    paire?: boolean
-    /**
-     * L'EMPALEMENT (Keko, 27/11 : « ça transperce la cible principale et ça touche toutes les cibles derrière sur la
-     * distance de l'empalement ») : la piqûre frappe aussi, de ses dégâts entiers, tout ce qui est derrière sa cible, dans
-     * l'axe de l'aiguille, jusqu'à `allonge` au-delà de son bord, à `largeur` de l'axe. La carte « Zone et portée » l'allonge.
-     */
-    empale?: { allonge: number; largeur: number }
   }
   /**
    * LE FOUET (Keko, 27/11 : « une attaque supplémentaire, qui fait un fouet et décrit un arc de cercle ; on ne transforme
    * pas la pointe du tentacule qui pique ») : à sa cadence, un insecte à `portee`, une tentacule part du vaisseau vers lui
    * et balaie en `duree` secondes un arc de `ouverture` de chaque côté de lui ; tout ce que l'arc passe, à `portee`, est
    * frappé une fois. L'état est `Monde.fouets`.
+   * (… REFAIT — Keko, 27/11 : « prendre le même tentacule et le déplacer comme un fouet, et laisser une traînée de slash » :
+   * c'est l'une des six tentacules du Kraken, celle du milieu du flanc tourné vers l'insecte (`cote`) ; elle se déploie en
+   * `DEPLOIEMENT_DU_FOUET`, balaie en accélérant (`balayageDuFouet`), se retire en `RETRAIT_DU_FOUET`)
    */
   fouet?: { ouverture: number; duree: number }
   /**
@@ -1176,18 +1168,6 @@ export type Arme = {
    * siens) : `part` des dégâts de l'arme, avec son élément. Son hôte mort, elle meurt. L'état est `Monde.boutures`.
    */
   bouture?: { duree: number; periode: number; portee: number; part: number }
-  /**
-   * LA MARIONNETTE (Keko, 27/11 : « on laisse le tentacule planté dans la cible, ce qui garde la cible sous notre contrôle,
-   * à une certaine distance du vaisseau ; il ne peut pas s'éloigner trop loin, vu qu'il est planté dans la tentacule, et il
-   * attaque les ennemis qui sont dans la zone, comme si c'était un des nôtres ; ça ne fonctionne pas sur les mini-boss et
-   * les boss ») : au plus une à la fois, et pas plus d'une toutes les `tous` secondes — UN MINUTEUR À ELLE, pas la cadence —,
-   * la piqûre qui se plante dans un insecte qui n'est pas un grand le PREND : la tentacule y reste plantée `duree` secondes
-   * (la carte « Durée » la prolonge) ; il ne mord plus le vaisseau, aucune arme ne le choisit plus, il chasse l'insecte le
-   * plus proche à `portee` du vaisseau, sans jamais s'en éloigner au-delà, et le mord au contact toutes les `periode`
-   * secondes : `part` des dégâts de l'arme, fois sa propre morsure (un cuirassier mord plus fort qu'un moucheron), avec son
-   * élément. À la fin, la tentacule s'arrache et le tue. L'état est `Monde.marionnettes`, `Ennemi.marionnetteA`.
-   */
-  marionnette?: { tous: number; duree: number; periode: number; part: number }
   /**
    * UN ESSAIM D'INSECTES EN NUAGE (la deuxième arme du Kraken, Keko, 16/11 : « un essaim d'insectes, tout petits mais en
    * nuage, qui flotte autour du vaisseau ») : un nuage de `rayon` qui SUIT le vaisseau sur un ressort (`raideur`,
@@ -1593,8 +1573,6 @@ export type Ennemi = {
   poison?: { jusque: number; dps: number }
   /** IL EST TENU PAR UNE VRILLE (voir `Arme.vrille`) jusqu'à cet instant : immobilisé sur place. */
   tenuA?: number
-  /** IL EST UNE MARIONNETTE (voir `Arme.marionnette`) jusqu'à cet instant : il se bat pour le vaisseau. */
-  marionnetteA?: number
   /** SA SORTE, s'il n'est pas un petit : le cornu, le cuirassier (voir `invasion.cornu`, `invasion.cuirassier`). */
   sorte?: SorteDInsecte
   /** UN GRAND : un mini-boss, un boss (aucun encore) — une vrille le saisit sans l'immobiliser. */
@@ -1748,13 +1726,9 @@ export type Monde = {
   /** LES TENTACULES (voir `Arme.tentacule`) : une par ancre, au repos ou non. */
   tentacules: Tentacule[]
   /** LES COUPS DE FOUET (voir `Arme.fouet`) : son arme, le milieu de l'arc, le sens du balayage, quand il est parti, ce qu'il a déjà frappé. */
-  fouets: { arme: number; cap: number; sens: number; depuis: number; touches: number[]; /** Son balayage est fini : il se retire. */ fini: boolean }[]
+  fouets: { arme: number; cap: number; sens: number; /** Le flanc du vaisseau d'où il part (−1 : celui des y négatifs). */ cote: number; depuis: number; touches: number[]; /** Son balayage est fini : il se retire. */ fini: boolean }[]
   /** LES BOUTURES (voir `Arme.bouture`) : leur hôte, leur place sur lui, jusqu'à quand, leur prochain coup, le dernier (quand, où). */
   boutures: Bouture[]
-  /** LES MARIONNETTES (voir `Arme.marionnette`) : leur arme, la tentacule plantée en elle (son ancre), leur insecte, sa naissance, sa fin, sa prochaine morsure, la dernière (quand, où). */
-  marionnettes: { arme: number; ancre: number; hote: number; nee: number; jusque: number; mordA: number; mord: number; tx: number; ty: number }[]
-  /** Par arme, l'instant où une marionnette peut être prise à nouveau. */
-  marionnettesA: number[]
   /** LES NUAGES D'INSECTES (voir `Arme.nuee`) : un par arme, où (sur le vaisseau), la dernière morsure signalée, ses bras — leur insecte, leur allongement (0 à 1), le dernier point où il était. */
   nuees: { arme: number; x: number; y: number; mordA: number; bras: { cible: number; u: number; tx: number; ty: number }[]; /** Ce qu'elle a mangé : la part de dégâts qu'elle a gagnée (0 à `festin.max`). */ croissance: number }[]
   /** LES REJETONS (voir `Arme.rejeton`). */
@@ -1928,18 +1902,12 @@ export type Evenement =
   /** Une tentacule s'étend vers un insecte, le pique (voir `Arme.tentacule`). */
   | { type: 'tentacule'; x: number; y: number }
   | { type: 'piqure'; x: number; y: number }
-  /** L'aiguille d'une piqûre transperce sa cible (voir `Arme.tentacule.empale`) : de (x0, y0) à (x1, y1). */
-  | { type: 'empale'; x0: number; y0: number; x1: number; y1: number }
   /** Un coup de fouet part (voir `Arme.fouet`). */
   | { type: 'fouet'; x: number; y: number }
   /** Une bouture pousse sur son hôte, pique un voisin, se flétrit (voir `Arme.bouture`). */
   | { type: 'bouture'; x: number; y: number }
   | { type: 'coupDeBouture'; x: number; y: number }
   | { type: 'boutureFinie'; x: number; y: number }
-  /** Une tentacule prend une marionnette, la marionnette mord, la tentacule s'arrache (voir `Arme.marionnette`). */
-  | { type: 'marionnette'; id: number; x: number; y: number }
-  | { type: 'morsureMarionnette'; x: number; y: number }
-  | { type: 'marionnetteFinie'; x: number; y: number }
   /** Le nuage d'insectes mord un insecte (voir `Arme.nuee`) : signalé toutes les `periode` secondes. */
   | { type: 'morsure'; id: number; x: number; y: number }
   /** Un rejeton naît, fouette sa proie (où elle est), s'éteint (voir `Arme.rejeton`). */
@@ -2034,7 +2002,7 @@ export function nouveauVaisseau(): Vaisseau {
 }
 
 export function nouveauMonde(c: ConfigVaisseau = VAISSEAU, graine = 1): Monde {
-  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, coqueMax: c.coque, tableau: tableauVide(), bouclier: c.bouclier.points, plaques: Array.from({ length: c.plaques }, () => true), intouchableJusque: -1, corruption: 0, dephaseJusque: -100, plaqueCasseeA: 0, renaitJusque: -100, rochesPrises: [], toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, prochaineDeriveA: c.derive.premier, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, vies: c.invasion.vies, miniBoss: 0, boss: 0, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, harpons: [], rafales: [], rafaleDesAiles: 0, salveDesAiles: -1e9, emballements: {}, tracantes: {}, faisceaux: [], sillons: [], ondes: [], balisesLaser: [], scies: [], balises: [], givres: [], tornades: [], novas: [], echardes: [], spheres: [], puits: [], meteores: [], tentacules: [], fouets: [], boutures: [], marionnettes: [], marionnettesA: [], nuees: [], rejetons: [], flaquesAcides: [], mines: [], fleaux: [], parasites: [], vrilles: [], liens: [], oeufs: [], brochettes: [], miniVers: [], hypercubes: [], des: [], coupes: [], rayonVu: null }
+  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, coqueMax: c.coque, tableau: tableauVide(), bouclier: c.bouclier.points, plaques: Array.from({ length: c.plaques }, () => true), intouchableJusque: -1, corruption: 0, dephaseJusque: -100, plaqueCasseeA: 0, renaitJusque: -100, rochesPrises: [], toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, prochaineDeriveA: c.derive.premier, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, vies: c.invasion.vies, miniBoss: 0, boss: 0, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, harpons: [], rafales: [], rafaleDesAiles: 0, salveDesAiles: -1e9, emballements: {}, tracantes: {}, faisceaux: [], sillons: [], ondes: [], balisesLaser: [], scies: [], balises: [], givres: [], tornades: [], novas: [], echardes: [], spheres: [], puits: [], meteores: [], tentacules: [], fouets: [], boutures: [], nuees: [], rejetons: [], flaquesAcides: [], mines: [], fleaux: [], parasites: [], vrilles: [], liens: [], oeufs: [], brochettes: [], miniVers: [], hypercubes: [], des: [], coupes: [], rayonVu: null }
 }
 
 /** Un hachage entier déterministe (celui de pixelfx), et un réel dans [0, 1) qui en sort. */
@@ -3337,8 +3305,6 @@ function conduireLEnnemi(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number, ev:
     e.corps = { ...e.corps, vx: 0, vy: 0 }
     return []
   }
-  // (UNE MARIONNETTE ne mord plus le vaisseau : c'est la tentacule qui la mène — voir `menerLesMarionnettes`)
-  if ((e.marionnetteA ?? -1) > m.t) return []
   if (c.invasion.active) return conduireLInsecte(c, m, e, dt, ev)
   const v = m.vaisseau
   const b = e.corps
@@ -4488,14 +4454,6 @@ function menerLesTentacules(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void 
     const an = ancreDansLeMonde(v, te.ancres[tn.ancre] ?? [0, 0])
     const h = tire(m.graine, m.prochainId++, 31)
     partir(tn, (h < 0.5 ? -1 : 1) * te.virage * (0.6 + 0.8 * Math.abs(h - 0.5)))
-    // (LA TENAILLE : une seconde, de l'autre flanc s'il en reste une au repos — voir `Arme.tentacule.paire`)
-    if (te.paire === true) {
-      const cote = (x: Tentacule): number => Math.sign(te.ancres[x.ancre]?.[1] ?? 0)
-      const autres = libres.filter((x) => x !== tn)
-      const enFace = autres.filter((x) => cote(x) !== cote(tn))
-      const pool = enFace.length > 0 ? enFace : autres
-      if (pool.length > 0) partir(pool.reduce((b, x) => (distance(x) < distance(b) ? x : b)), -tn.virage)
-    }
     m.armesA[i] = m.t + a.cadence
     ev.push({ type: 'tentacule', x: an.x, y: an.y })
   })
@@ -4551,41 +4509,11 @@ function menerLesTentacules(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void 
         tn.fait = 'plantee'
         tn.depuis = m.t
         ev.push({ type: 'piqure', x: cible.corps.x, y: cible.corps.y })
-        // (L'EMPALEMENT : ce qui est derrière sa cible, dans l'axe de l'aiguille — de sa racine à sa cible —, voir
-        // `Arme.tentacule.empale` ; compté avant la piqûre, qui peut abattre la cible)
-        const derriere: Ennemi[] = []
-        const ep = te.empale
-        if (ep !== undefined) {
-          const al = Math.hypot(cible.corps.x - an.x, cible.corps.y - an.y) || 1
-          const ux = (cible.corps.x - an.x) / al
-          const uy = (cible.corps.y - an.y) / al
-          const rc = rayonDe(c, cible)
-          for (const e of m.ennemis) {
-            if (e === cible) continue
-            const sx = e.corps.x - cible.corps.x
-            const sy = e.corps.y - cible.corps.y
-            const re = rayonDe(c, e)
-            const s = sx * ux + sy * uy
-            if (s > 0 && s <= rc + ep.allonge + re && Math.abs(sy * ux - sx * uy) <= ep.largeur + re) derriere.push(e)
-          }
-          ev.push({ type: 'empale', x0: cible.corps.x, y0: cible.corps.y, x1: cible.corps.x + ux * (rc + ep.allonge), y1: cible.corps.y + uy * (rc + ep.allonge) })
-        }
         coupDeTentacule(c, m, a, tn.arme, cible, an.x, an.y, ev)
-        for (const e of derriere) if (e.pv > 0 && m.ennemis.includes(e)) coupDeTentacule(c, m, a, tn.arme, e, an.x, an.y, ev)
-        // (LA MARIONNETTE : la piqûre prend l'insecte qui a survécu, si son minuteur le permet — voir `Arme.marionnette`)
-        const ma = a.marionnette
-        if (ma !== undefined && cible.pv > 0 && m.ennemis.includes(cible) && cible.grand !== true && cible.asteroide === undefined && m.t >= (m.marionnettesA[tn.arme] ?? 0) && !m.marionnettes.some((p) => p.arme === tn.arme)) {
-          m.marionnettesA[tn.arme] = m.t + ma.tous
-          cible.marionnetteA = m.t + ma.duree
-          m.marionnettes.push({ arme: tn.arme, ancre: tn.ancre, hote: cible.id, nee: m.t, jusque: m.t + ma.duree, mordA: m.t + Math.min(0.3, ma.periode), mord: -1e9, tx: 0, ty: 0 })
-          ev.push({ type: 'marionnette', id: cible.id, x: cible.corps.x, y: cible.corps.y })
-        }
       }
     } else if (tn.fait === 'plantee') {
       tn.u = 1
-      // (plantée dans sa marionnette, elle y reste)
-      const tient = m.marionnettes.some((p) => p.arme === tn.arme && p.ancre === tn.ancre && p.hote === tn.cible)
-      if ((age >= te.tenue && !tient) || cible === undefined) {
+      if (age >= te.tenue || cible === undefined) {
         tn.fait = 'retour'
         tn.depuis = m.t
       }
@@ -4601,7 +4529,7 @@ function menerLesTentacules(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void 
 }
 
 /**
- * UN COUP DE LA TENTACULE — la piqûre, l'empalement, le fouet, la bouture : son critique, son élément (Keko, 27/11 : la
+ * UN COUP DE LA TENTACULE — la piqûre, le fouet, la bouture : son critique, son élément (Keko, 27/11 : la
  * Méduse électrocute, et l'élément vaut pour toutes les variations), `part` de ses dégâts ; un critique fait pousser une
  * bouture au bord de `e` qui fait face à (ox, oy) — sauf le coup d'une bouture (voir `Arme.bouture`).
  */
@@ -4662,65 +4590,6 @@ function menerLesBoutures(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
     coupDeTentacule(c, m, a, b.arme, proie, b.x, b.y, ev, bo.part, true)
   }
 }
-/**
- * LES MARIONNETTES (voir `Arme.marionnette`) : chacune chasse l'insecte le plus proche d'elle à portée de la tentacule, sans
- * jamais s'éloigner du vaisseau au-delà, et le mord au contact ; à sa fin, la tentacule s'arrache et la tue.
- */
-function menerLesMarionnettes(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]): void {
-  const v = m.vaisseau
-  for (let k = m.marionnettes.length - 1; k >= 0; k--) {
-    const p = m.marionnettes[k]
-    const a = c.armes[p.arme]
-    const ma = a?.marionnette
-    const hote = m.ennemis.find((e) => e.id === p.hote)
-    if (a === undefined || ma === undefined || hote === undefined || hote.pv <= 0 || m.phase !== 'vol') {
-      if (hote !== undefined) delete hote.marionnetteA
-      m.marionnettes.splice(k, 1)
-      continue
-    }
-    if (m.t >= p.jusque) {
-      m.marionnettes.splice(k, 1)
-      delete hote.marionnetteA
-      ev.push({ type: 'marionnetteFinie', x: hote.corps.x, y: hote.corps.y })
-      abattreLEnnemi(c, m, hote, ev)
-      continue
-    }
-    hote.marionnetteA = p.jusque
-    // (sa proie : l'insecte le plus proche d'elle, dans la zone de la tentacule)
-    const rh = rayonDe(c, hote)
-    let proie: Ennemi | undefined
-    let dp = Infinity
-    for (const e of m.ennemis) {
-      if (e === hote || e.asteroide !== undefined || !choisissable(m, e)) continue
-      if (Math.hypot(e.corps.x - v.x, e.corps.y - v.y) > a.portee + rayonDe(c, e)) continue
-      const d = Math.hypot(e.corps.x - hote.corps.x, e.corps.y - hote.corps.y) - rayonDe(c, e) - rh
-      if (d < dp) (dp = d), (proie = e)
-    }
-    // (elle fond sur elle à sa vitesse d'insecte ; sans proie, elle ralentit)
-    const vit = c.ennemi.vitesseMax * gabaritDInsecte(c, hote).vitesse
-    const b = hote.corps
-    let vx = b.vx * Math.max(0, 1 - 4 * dt)
-    let vy = b.vy * Math.max(0, 1 - 4 * dt)
-    if (proie !== undefined) {
-      const d = Math.hypot(proie.corps.x - b.x, proie.corps.y - b.y) || 1
-      vx = ((proie.corps.x - b.x) / d) * vit
-      vy = ((proie.corps.y - b.y) / d) * vit
-    }
-    let x = b.x + vx * dt
-    let y = b.y + vy * dt
-    // (LA LAISSE : plantée dans la tentacule, elle ne s'éloigne pas du vaisseau au-delà de sa portée)
-    const dv = Math.hypot(x - v.x, y - v.y)
-    if (dv > a.portee) (x = v.x + ((x - v.x) / dv) * a.portee), (y = v.y + ((y - v.y) / dv) * a.portee)
-    hote.corps = { ...b, x, y, vx, vy, cap: proie !== undefined ? Math.atan2(vy, vx) : b.cap }
-    if (proie === undefined || dp > 2 || m.t < p.mordA) continue
-    p.mordA = m.t + ma.periode
-    p.mord = m.t
-    p.tx = proie.corps.x
-    p.ty = proie.corps.y
-    ev.push({ type: 'morsureMarionnette', x: proie.corps.x, y: proie.corps.y })
-    coupDeTentacule(c, m, a, p.arme, proie, hote.corps.x, hote.corps.y, ev, ma.part * gabaritDInsecte(c, hote).morsure, true)
-  }
-}
 /** L'angle `x` ramené dans ]−π, π]. */
 const angleRamene = (x: number): number => Math.atan2(Math.sin(x), Math.cos(x))
 /** LES COUPS DE FOUET (voir `Arme.fouet`) : à la cadence, un arc vers l'insecte proche ; puis il balaie, frappant une fois ce qu'il passe. */
@@ -4741,7 +4610,11 @@ function menerLesFouets(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
     }
     if (cible === undefined) return
     m.armesA[i] = m.t + a.cadence
-    m.fouets.push({ arme: i, cap: Math.atan2(cible.corps.y - v.y, cible.corps.x - v.x), sens: tire(m.graine, m.prochainId++, 33) < 0.5 ? -1 : 1, depuis: m.t, touches: [], fini: false })
+    const cap = Math.atan2(cible.corps.y - v.y, cible.corps.x - v.x)
+    // (le flanc tourné vers l'insecte ; droit devant ou derrière, au hasard)
+    const travers = Math.sin(cap - v.cap)
+    const sens = tire(m.graine, m.prochainId++, 33) < 0.5 ? -1 : 1
+    m.fouets.push({ arme: i, cap, sens, cote: Math.abs(travers) > 0.2 ? Math.sign(travers) : sens, depuis: m.t, touches: [], fini: false })
     ev.push({ type: 'fouet', x: v.x, y: v.y })
   })
   for (let k = m.fouets.length - 1; k >= 0; k--) {
@@ -4752,15 +4625,14 @@ function menerLesFouets(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
       m.fouets.splice(k, 1)
       continue
     }
-    const brut = (m.t - f.depuis) / fo.duree
-    // (son balayage fini, il frappe encore ce qu'il a passé au dernier pas, puis ne frappe plus : il se retire —
-    // `RETRAIT_DU_FOUET` —, le temps que la page le rentre)
-    if (brut >= RETRAIT_DU_FOUET) m.fouets.splice(k, 1)
-    if (f.fini) continue
+    // (il se déploie, puis balaie ; son balayage fini, il frappe encore ce qu'il a passé au dernier pas, puis ne frappe plus :
+    // il se retire, le temps que la page le rentre)
+    const brut = (m.t - f.depuis - DEPLOIEMENT_DU_FOUET) / fo.duree
+    if (m.t - f.depuis >= DEPLOIEMENT_DU_FOUET + fo.duree + RETRAIT_DU_FOUET) m.fouets.splice(k, 1)
+    if (f.fini || brut < 0) continue
     if (brut >= 1) f.fini = true
-    const u = Math.min(1, brut)
     // (ce qu'il a balayé, depuis le bord de départ : 0 à 2 × `ouverture`)
-    const balaye = 2 * fo.ouverture * u
+    const balaye = 2 * fo.ouverture * balayageDuFouet(Math.min(1, brut))
     for (const e of [...m.ennemis]) {
       if (e.pv <= 0 || f.touches.includes(e.id)) continue
       const dx = e.corps.x - v.x
@@ -4776,8 +4648,11 @@ function menerLesFouets(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
     }
   }
 }
-/** Le fouet reste à l'écran jusqu'à cette part de sa durée : il se rétracte (voir `menerLesFouets`). */
-export const RETRAIT_DU_FOUET = 1.6
+/** LE FOUET (voir `Arme.fouet`) : le temps où il se déploie avant de balayer, et celui où il se retire après, en secondes. */
+export const DEPLOIEMENT_DU_FOUET = 0.12
+export const RETRAIT_DU_FOUET = 0.22
+/** La part de son arc qu'un fouet a balayée, à la part `u` de son balayage : il part lentement, file au milieu, freine au bout (de 0 à 1). */
+export const balayageDuFouet = (u: number): number => u * u * (3 - 2 * u)
 
 /** Un insecte EMPOISONNÉ (voir `Ennemi.poison`) : jusqu'à `duree` d'ici — le plus long et le plus fort l'emportent. */
 function empoisonner(m: Monde, e: Ennemi, po: { duree: number; dps: number }): void {
@@ -6925,11 +6800,8 @@ function menerLesTourelles(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenemen
   }
 }
 
-/**
- * UNE CIBLE QU'UNE ARME PEUT CHOISIR : tout, sauf une roche masquée (voir `rochesMasquees`) — qu'elle blesse pourtant si elle
- * passe dessus — et une marionnette (voir `Arme.marionnette`), qui se bat pour le vaisseau.
- */
-const choisissable = (m: Monde, e: Ennemi): boolean => (m.masquees === undefined || !m.masquees.has(e.id)) && !((e.marionnetteA ?? -1) > m.t)
+/** UNE CIBLE QU'UNE ARME PEUT CHOISIR : tout, sauf une roche masquée (voir `rochesMasquees`) — qu'elle blesse pourtant si elle passe dessus. */
+const choisissable = (m: Monde, e: Ennemi): boolean => m.masquees === undefined || !m.masquees.has(e.id)
 
 /** LE RANG D'UNE PROIE pour les chasseurs (voir `orbite.chasse`) : boss, mini-boss, cuirassier, cornu, moucheron, roche. */
 export function rangDeChasse(e: Ennemi): number {
@@ -7280,7 +7152,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   // sur place, sans bouger, durant tout le temps de la résurrection » : rien ne les menait plus ; obus, bombes, traits,
   // flaques, givres, balises et tourelles partent avec lui)
   if (m.phase !== 'vol') (m.obus = []), (m.bombes = []), (m.tirs = []), (m.flaques = []), (m.givres = []), (m.balises = []), (m.tourelles = [])
-  if (m.phase !== 'vol') (m.drones = []), (m.balayage = null), (m.canal = null), (m.scies = []), (m.tornades = []), (m.novas = []), (m.echardes = []), (m.spheres = []), (m.puits = []), (m.meteores = []), (m.tentacules = []), (m.fouets = []), (m.boutures = []), (m.marionnettes = []), (m.nuees = []), (m.rejetons = []), (m.flaquesAcides = []), (m.mines = []), (m.fleaux = []), (m.parasites = []), (m.vrilles = []), (m.liens = []), (m.oeufs = []), (m.brochettes = []), (m.miniVers = []), (m.hypercubes = []), (m.des = []), (m.coupes = [])
+  if (m.phase !== 'vol') (m.drones = []), (m.balayage = null), (m.canal = null), (m.scies = []), (m.tornades = []), (m.novas = []), (m.echardes = []), (m.spheres = []), (m.puits = []), (m.meteores = []), (m.tentacules = []), (m.fouets = []), (m.boutures = []), (m.nuees = []), (m.rejetons = []), (m.flaquesAcides = []), (m.mines = []), (m.fleaux = []), (m.parasites = []), (m.vrilles = []), (m.liens = []), (m.oeufs = []), (m.brochettes = []), (m.miniVers = []), (m.hypercubes = []), (m.des = []), (m.coupes = [])
   // (le portail tombé, la partie est finie : plus rien n'avance)
   if (m.invasion.finie) return { chocs: [], evenements: ev }
   if (m.verrou !== null && ennemiVerrouille(m) === null) m.verrou = null
@@ -7428,7 +7300,6 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   menerLesTentacules(c, m, ev)
   menerLesFouets(c, m, ev)
   menerLesBoutures(c, m, ev)
-  menerLesMarionnettes(c, m, dt, ev)
   menerLesNuees(c, m, dt, ev)
   menerLesRejetons(c, m, dt, ev)
   cracherLAcide(c, m, dt, ev)
@@ -8139,7 +8010,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
  * La règle d'un vaisseau ne change pas : le pilote dont c'est le tour est DANS le monde — ses champs sont ceux de
  * `Monde` —, les autres attendent dans `equipage.pilotes` ; `prendreLaMain` les échange.
  */
-export const CHAMPS_DU_PILOTE = ['phase', 'vaisseau', 'coque', 'coqueMax', 'tableau', 'bouclier', 'plaques', 'intouchableJusque', 'corruption', 'dephaseJusque', 'plaqueCasseeA', 'renaitJusque', 'toucheA', 'forage', 'forages', 'tirs', 'obus', 'armesA', 'extraction', 'sorti', 'boostA', 'bombes', 'charges', 'verrou', 'crache', 'drones', 'tourelles', 'flaques', 'balayage', 'rayonVu', 'canal', 'harpons', 'rafales', 'rafaleDesAiles', 'salveDesAiles', 'emballements', 'tracantes', 'faisceaux', 'sillons', 'balisesLaser', 'scies', 'balises', 'givres', 'tornades', 'novas', 'echardes', 'spheres', 'puits', 'meteores', 'tentacules', 'fouets', 'boutures', 'marionnettes', 'marionnettesA', 'nuees', 'rejetons', 'flaquesAcides', 'mines', 'fleaux', 'parasites', 'brochettes', 'hypercubes', 'coupes', 'des', 'oeufs', 'miniVers', 'liens', 'vrilles'] as const
+export const CHAMPS_DU_PILOTE = ['phase', 'vaisseau', 'coque', 'coqueMax', 'tableau', 'bouclier', 'plaques', 'intouchableJusque', 'corruption', 'dephaseJusque', 'plaqueCasseeA', 'renaitJusque', 'toucheA', 'forage', 'forages', 'tirs', 'obus', 'armesA', 'extraction', 'sorti', 'boostA', 'bombes', 'charges', 'verrou', 'crache', 'drones', 'tourelles', 'flaques', 'balayage', 'rayonVu', 'canal', 'harpons', 'rafales', 'rafaleDesAiles', 'salveDesAiles', 'emballements', 'tracantes', 'faisceaux', 'sillons', 'balisesLaser', 'scies', 'balises', 'givres', 'tornades', 'novas', 'echardes', 'spheres', 'puits', 'meteores', 'tentacules', 'fouets', 'boutures', 'nuees', 'rejetons', 'flaquesAcides', 'mines', 'fleaux', 'parasites', 'brochettes', 'hypercubes', 'coupes', 'des', 'oeufs', 'miniVers', 'liens', 'vrilles'] as const
 /** Un pilote qui attend son tour : ses champs du monde, l'instant de son retour s'il est abattu, les morsures qu'il doit encaisser. */
 export type Pilote = Pick<Monde, (typeof CHAMPS_DU_PILOTE)[number]> & { retourA: number; morsures: { x: number; y: number; degats: number }[] }
 /** Les pilotes (celui dont c'est le tour, `actif`, a sa place gardée mais périmée : il est dans le monde). */
