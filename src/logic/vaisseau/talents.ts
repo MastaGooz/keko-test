@@ -681,11 +681,11 @@ export const MUTATIONS: Mutation[] = [
   // (LA TENAILLE, L'EMPALEMENT ET LA MARIONNETTE, essayés puis SUPPRIMÉS — Keko, 27/11 : « toutes les autres, je les trouve
   // pas terribles, donc on supprime tout ; au final, on a notre élément et notre effet critique » — voir docs/vaisseau.md)
   // (« FOUET », REFAIT — Keko, 27/11 : « j'aime quand même bien l'idée du balayage, mais il était mal exécuté ; prendre le
-  // même tentacule et le déplacer comme un fouet, et laisser une traînée de slash » ; puis « que le fouet et le slash
-  // remplacent le coup normal ; on transforme le transpercement en un balayage » : LA VARIATION CHANGE LE TIR — plus de
-  // piqûre ; à la cadence doublée, une des tentacules du Kraken balaie un arc de 115° à `portee`, dégâts entiers sur tout
-  // ce qu'il passe — chiffres de moi ; voir `Arme.fouet`)
-  variation('tentacule-fouet', 'tentacule', 'Fouet', 'Les tentacules fouettent en arc de cercle au lieu de piquer.', changerA('tentacule', (a) => ({ ...a, cadence: a.cadence * 2, tentacule: undefined, fouet: { ouverture: 1, duree: 0.25 } }))),
+  // même tentacule et le déplacer comme un fouet, et laisser une traînée de slash » ; il a d'abord remplacé la piqûre, puis
+  // « on peut garder la piqûre en permanence et rajouter le balayage quand on prend la carte, en plus de la piqûre, avec un
+  // intervalle un petit peu plus long » : UNE ATTAQUE EN PLUS, toutes les 1,2 s — la piqûre reste —, une des tentacules du
+  // Kraken balaie un arc de 115° à la distance de l'insecte visé, dégâts entiers — chiffres de moi ; voir `Arme.fouet`)
+  variation('tentacule-fouet', 'tentacule', 'Fouet', 'Régulièrement, une tentacule fouette en arc de cercle.', ajouterA('tentacule', (a) => [ajoutee(a, 9, { cadence: 1.2, tentacule: undefined, fouet: { ouverture: 1, duree: 0.25 } })])),
   // (« BOUTURE », SA VARIATION SUR COUP CRITIQUE — Keko : « un mini tentacule pousse sur l'ennemi touché, qui se met à attaquer
   // les ennemis proches » : 4 s, une piqûre toutes les 0,5 s à 30, 40 % des dégâts — chiffres et nom de moi ; voir
   // `Arme.bouture`)

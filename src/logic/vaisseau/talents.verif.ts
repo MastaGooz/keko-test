@@ -190,7 +190,7 @@ verifier('le délai passé, ce qui restait à choisir part en réserve', reserve
 }
 {
   // LA TENTACULE DU KRAKEN (Keko, 27/11) : ses variations — la Méduse, le Fouet refait, la Bouture — changent toutes sa config ;
-  // le Fouet CHANGE le tir : plus de piqûre, un balayage ;
+  // le Fouet AJOUTE une attaque, sans tentacule à lui — la piqûre reste ;
   // la Bouture a une durée que la carte « Durée » allonge ;
   // la Méduse ouvre les cartes d'électrocution
   const tentacule: Arme = { id: 'tentacule', cadence: 0.42, degats: 50, portee: 55, vitesse: 0, vie: 0, dispersion: 0, guide: false, place: 0, tentacule: { ancres: [[-0.2, -4.8], [-0.2, 4.8]], aller: 0.2, tenue: 0.08, retour: 0.24, virage: 0.35, alterne: true } }
@@ -201,11 +201,11 @@ verifier('le délai passé, ce qui restait à choisir part en réserve', reserve
   const bouture = mu('tentacule-bouture').appliquer(depart).armes[0]
   const meduse = mu('tentacule-meduse').appliquer(depart).armes[0]
   const avecFouet = mu('tentacule-fouet').appliquer(depart)
-  const fouet = avecFouet.armes[0]
+  const fouet = avecFouet.armes[1]
   verifier(`la Tentacule a ${variations.length} variations (${variations.map((v) => v.nom).join(', ')}), aucune sans effet (${sansEffet.join(', ') || 'aucune'})`, variations.length === 3 && sansEffet.length === 0)
   verifier(`Bouture : la carte « Durée » +50 % la fait vivre ${armeAmelioree(bouture, 'pose', 0.5).bouture?.duree} s au lieu de 4 ; sans elle, pas de carte « Durée »`, statsDeLArme(bouture).includes('pose') && !statsDeLArme(tentacule).includes('pose') && armeAmelioree(bouture, 'pose', 0.5).bouture?.duree === 6)
   verifier('Méduse : la tentacule électrocute, la carte « Électrocution » paraît', statsDeLArme(meduse).includes('electrocution') && !statsDeLArme(tentacule).includes('electrocution'))
-  verifier(`Fouet : la tentacule ne pique plus, elle fouette (${fouet?.degats}, toutes les ${fouet?.cadence} s, deux fois moins souvent)`, avecFouet.armes.length === 1 && fouet.tentacule === undefined && fouet.fouet !== undefined && fouet.degats === 50 && fouet.cadence === 0.84)
+  verifier(`Fouet : la piqûre reste, le fouet s'y ajoute — une seconde arme sans tentacule (${fouet?.degats} toutes les ${fouet?.cadence} s)`, avecFouet.armes.length === 2 && avecFouet.armes[0].tentacule !== undefined && fouet.tentacule === undefined && fouet.fouet !== undefined && fouet.degats === 50 && fouet.cadence === 1.2)
 }
 {
   // LES ÉTATS NE SE PRENNENT QUE POUR TOUTES LES ARMES (Keko, 23/11 : « une augmentation d'un état concerne toujours toutes
