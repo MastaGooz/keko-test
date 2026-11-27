@@ -13700,7 +13700,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const hote = m.ennemis.find((e) => e.id === b.hote)
       const rx = (hote?.corps.x ?? b.x - b.dx) + b.dx
       const ry = (hote?.corps.y ?? b.y - b.dy) + b.dy
-      const taille = Math.min(1, (m.t - b.nee) / 0.25) * Math.min(1, Math.max(0, (b.jusque - m.t) / 0.3))
+      // (… ET SON AMPLEUR : elle grandit à chaque critique qui la relance — voir `Arme.bouture.croissance`)
+      const taille = Math.min(1, (m.t - b.nee) / 0.25) * Math.min(1, Math.max(0, (b.jusque - m.t) / 0.3)) * b.ampleur
       if (taille <= 0.02) continue
       // (au repos, elle se dresse vers l'extérieur de l'insecte et ondule)
       const d = Math.hypot(b.dx, b.dy) || 1
@@ -13740,11 +13741,67 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       }
     }
   }
+  /**
+   * LE TUBE DE LA MARIONNETTE (Keko, 27/11 : « un nouveau type de tentacule qui ressemblera plutôt à un tube, un tube
+   * intestinal, qui part de la tête du Kraken et se plante sur l'ennemi » — voir `Arme.marionnette`) : de la gueule à
+   * l'insecte, un boyau de chair épais et mou qui pend un peu et ondule, cerné de sombre, ses plis en anneaux plus foncés ;
+   * des renflements de bile le parcourent de la gueule vers l'insecte, comme s'il le nourrissait ; une ventouse le tient
+   * sur lui. Lancé, il file de la gueule à l'insecte.
+   */
+  function dessinerLesTubes(p: Peintre): void {
+    const E = echelleVue()
+    const ca = Math.cos(v.cap)
+    const sa = Math.sin(v.cap)
+    const [gx, gy] = ANCRES_DU_KRAKEN[0] ?? [7.2, 0]
+    const ax = v.x + ((gx + 0.6) * ca - gy * sa) * E
+    const ay = v.y + ((gx + 0.6) * sa + gy * ca) * E
+    for (const mo of m.marionnettes) {
+      const h = m.ennemis.find((e) => e.id === mo.hote)
+      const ma = CONF.armes[mo.arme]?.marionnette
+      if (h === undefined || ma === undefined) continue
+      const u = mo.plantee ? 1 : Math.min(1, (m.t - mo.lance) / ma.aller)
+      const e = 1 - Math.pow(1 - u, 3)
+      const fx = ax + (h.corps.x - ax) * e
+      const fy = ay + (h.corps.y - ay) * e
+      const L = Math.hypot(fx - ax, fy - ay) || 1
+      const nx = -(fy - ay) / L
+      const ny = (fx - ax) / L
+      // (il pend un peu, d'un côté puis de l'autre)
+      const pend = Math.sin(t * 1.7 + mo.hote) * L * 0.12
+      const cx = (ax + fx) / 2 + nx * pend
+      const cy = (ay + fy) / 2 + ny * pend
+      const n = Math.max(8, Math.ceil(L / 1.2))
+      const pts: [number, number][] = []
+      for (let i = 0; i <= n; i++) {
+        const q = i / n
+        const r = 1 - q
+        const onde = Math.sin(Math.PI * q) * Math.sin(t * 5 + mo.hote - q * 7) * 0.7
+        pts.push([r * r * ax + 2 * r * q * cx + q * q * fx + nx * onde, r * r * ay + 2 * r * q * cy + q * q * fy + ny * onde])
+      }
+      // (son épaisseur : un boyau, avec des renflements qui courent de la gueule vers l'insecte)
+      const renfle = (q: number): number => (mo.plantee ? Math.pow(Math.max(0, Math.sin(Math.PI * 2 * (q * 3 - t * 1.6))), 4) : 0)
+      const epais = (i: number): number => (1.55 + 1 * renfle(i / n)) * E
+      for (let i = 0; i <= n; i++) p.circle(pts[i][0], pts[i][1], epais(i) + 0.8, CHAIR[0])
+      for (let i = 0; i <= n; i++) {
+        const pli = Math.floor((i / n) * L * 0.45 + 0.5) % 2 === 0
+        p.circle(pts[i][0], pts[i][1], epais(i), renfle(i / n) > 0.45 ? BILE[1] : pli ? CHAIR[3] : CHAIR[1])
+      }
+      for (let i = 0; i <= n; i++) p.circle(pts[i][0] - 0.5, pts[i][1] - 0.5, Math.max(0.5, epais(i) * 0.4), renfle(i / n) > 0.45 ? BILE[2] : CHAIR[4])
+      // (la ventouse, sur l'insecte)
+      if (mo.plantee) {
+        p.ring(fx, fy, 2.2 * E, 1, CHAIR[0])
+        p.ring(fx, fy, 1.6 * E, 1, CHAIR[4])
+        p.glow(fx, fy, 6, BILE[1], 0.3 + 0.15 * Math.sin(t * 8))
+      }
+      if (CONF.armes[mo.arme]?.electrocution !== undefined) dessinerDesFilamentsElectriques(p, pts, null, mo.hote)
+    }
+  }
   function dessinerLesTentacules(p: Peintre): void {
     entailles = entailles.filter((en) => t - en.t0 < VIE_D_UNE_ENTAILLE)
-    if ((m.tentacules.length === 0 && m.fouets.length === 0 && m.boutures.length === 0 && entailles.length === 0) || m.phase !== 'vol') return
+    if ((m.tentacules.length === 0 && m.fouets.length === 0 && m.boutures.length === 0 && m.marionnettes.length === 0 && entailles.length === 0) || m.phase !== 'vol') return
     p.place(W / 2 - camera.x, centreY() - camera.y)
     dessinerLesBoutures(p)
+    dessinerLesTubes(p)
     dessinerLesFouets(p)
     for (const tn of m.tentacules) {
       const te = CONF.armes[tn.arme]?.tentacule
@@ -14849,6 +14906,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** L'instant du dernier claquement de tentacule (trois à la fois : un seul son). */
   let fouetSonneA = -10
   let piqureDeBoutureA = -10
+  let morsureDeMarionnetteA = -10
   let piqureDeLacerationA = -10
   /** L'instant du dernier craquement de givre (voir l'événement `gele`). */
   let geleSonneA = -10
@@ -15328,6 +15386,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           p.ring(sx, sy, r, 1, c, k)
           p.dot(sx, sy, N.hex('#ffb0a8'), k)
           p.glow(sx, sy, r + 3, c, 0.25 * k)
+        }
+        // (C'EST UNE MARIONNETTE — Keko, 27/11, voir `Arme.marionnette` : le tube planté en lui le tient ; il bat d'une lueur
+        // de bile, cerné de vert, et pâlit dans sa dernière demi-seconde)
+        if ((e.marionnetteA ?? -1) > m.t) {
+          const r = rayonDe(CONF, e)
+          const k = Math.min(1, ((e.marionnetteA ?? 0) - m.t) / 0.5)
+          const bat = 0.5 + 0.5 * Math.sin(t * 9 + e.id)
+          p.glow(sx, sy, r + 5, BILE[1], (0.25 + 0.2 * bat) * k)
+          p.ring(sx, sy, r + 1, 1, BILE[1], (0.45 + 0.35 * bat) * k)
         }
         // (IL EST ÉTOURDI — « Étourdissement », Keko, 24/11, voir `Arme.etourdissement` : trois étoiles jaunes qui tournent
         // au-dessus de lui)
@@ -18704,6 +18771,44 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           }
           break
         }
+        case 'tubeLance':
+          // (LE TUBE PART de la gueule : un bruit de succion)
+          jouer('aspire')
+          break
+        case 'marionnette':
+          // (LE TUBE SE PLANTE : le « blop » de chair, une giclée de bile)
+          jouer('ponte', { dx: ev.x - v.x, dy: ev.y - v.y })
+          for (let i = 0; i < 8; i++) {
+            const a = R.range(0, Math.PI * 2)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(15, 45), Math.sin(a) * R.range(15, 45), R.range(0.15, 0.3), i % 2 === 0 ? BILE[2] : BILE[1], 1, 1.5)
+          }
+          break
+        case 'morsureMarionnette':
+          // (la marionnette mord : la morsure des mini-vers, plus rare)
+          if (t - morsureDeMarionnetteA > 0.2) {
+            morsureDeMarionnetteA = t
+            jouer('morsureVer', { dx: ev.x - v.x, dy: ev.y - v.y })
+          }
+          for (let i = 0; i < 3; i++) {
+            const a = R.range(0, Math.PI * 2)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(15, 35), Math.sin(a) * R.range(15, 35), R.range(0.1, 0.2), CHAIR[4], 1, 1)
+          }
+          break
+        case 'morsureDuLeurre':
+          // (un leurré mord la marionnette : des lambeaux)
+          for (let i = 0; i < 2; i++) {
+            const a = R.range(0, Math.PI * 2)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(10, 30), Math.sin(a) * R.range(10, 30), R.range(0.1, 0.2), CHAIR[3], 1, 1)
+          }
+          break
+        case 'marionnetteFinie':
+          // (le tube s'arrache : le « tchk » de l'aiguille, des lambeaux de chair et de bile)
+          jouer('piqure', { dx: ev.x - v.x, dy: ev.y - v.y })
+          for (let i = 0; i < 8; i++) {
+            const a = R.range(0, Math.PI * 2)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(10, 30), Math.sin(a) * R.range(10, 30), R.range(0.2, 0.35), i % 2 === 0 ? CHAIR[3] : BILE[1], 1, 1)
+          }
+          break
         case 'boutureFinie':
           // (elle se flétrit : quelques lambeaux de chair qui retombent)
           for (let i = 0; i < 4; i++) {

@@ -1687,13 +1687,66 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
     const loin = 1000 - (w.ennemis.find((e) => e.id === 3)?.pv ?? 1000)
     verifier(`Lacération : la cible morte au deuxième coup, les quatre autres se reportent sur l'insecte à portée (${voisin} = 4 × 2), pas sur le lointain (${loin})`, !w.ennemis.some((e) => e.id === 1) && voisin === 8 && loin === 0)
   }
+  // (MARIONNETTE : le tube part de la gueule, se plante ; l'insecte chasse et mord son voisin sans quitter la portée du
+  // vaisseau, aucune arme ne le vise plus ; à la fin, il meurt ; jamais un grand ; ET C'EST UN LEURRE)
+  {
+    const marionnette = { ...corps, marionnette: { tous: 6, aller: 0.15, duree: 4, periode: 0.5, part: 0.5, leurre: 60 } }
+    const jouerLibre = (conf: ConfigVaisseau, w: ReturnType<typeof nouveauMonde>, duree: number, fixes: Map<number, [number, number]>) => {
+      const ev: Evenement[] = []
+      let loin = 0
+      for (let i = 0; i < 60 * duree; i++) {
+        w.ennemis.forEach((e) => {
+          const f = fixes.get(e.id)
+          if (f !== undefined) e.corps = { ...e.corps, x: f[0], y: f[1], vx: 0, vy: 0 }
+        })
+        w.vaisseau = { ...w.vaisseau, x: 0, y: 0, vx: 0, vy: 0, cap: 0 }
+        ev.push(...avancerLeMonde(conf, w, 1 / 60, { x: 0, y: 0 }).evenements)
+        const p = w.ennemis.find((e) => e.id === 1)
+        if (p !== undefined && (p.marionnetteA ?? -1) > w.t) loin = Math.max(loin, Math.hypot(p.corps.x, p.corps.y))
+      }
+      return { ev, loin }
+    }
+    const conf = { ...sansCritique, armes: [marionnette] }
+    const w = nouveauMonde(conf, 3)
+    w.ennemis.push(insecte(1, 30, -20), insecte(2, 0, 900))
+    w.verrou = null
+    const fixes = new Map<number, [number, number]>([[2, [0, 900]]])
+    const prise = jouerLibre(conf, w, 0.3, fixes)
+    const p = w.marionnettes[0]
+    fixes.set(2, [50, 20])
+    const tenue = jouerLibre(conf, w, 2, fixes)
+    const pris = w.ennemis.find((e) => e.id === 1)
+    const voisin = 1000 - (w.ennemis.find((e) => e.id === 2)?.pv ?? 1000)
+    const morsures = tenue.ev.filter((e) => e.type === 'morsureMarionnette').length
+    verifier(`Marionnette : le tube part de la gueule et se plante en 0,15 s (${p?.plantee}, sur ${p?.hote}) ; aucune arme ne vise plus l'insecte (il a ${pris?.pv} points sur 1000)`, prise.ev.some((e) => e.type === 'tubeLance') && prise.ev.some((e) => e.type === 'marionnette') && p?.plantee === true && p.hote === 1 && pris?.pv === 1000)
+    verifier(`Marionnette : il mord son voisin (${morsures} morsures, ${voisin} de dégâts avec les piqûres) sans s'éloigner du vaisseau au-delà de 55 (${tenue.loin.toFixed(1)})`, morsures >= 2 && voisin >= 3 * morsures && tenue.loin <= 55.01)
+    const fin = jouerLibre(conf, w, 2, fixes)
+    verifier(`Marionnette : au bout de 4 s, le tube s'arrache et l'insecte meurt ; le suivant attend son minuteur (${w.marionnettesA[0]?.toFixed(2)} s, 6 après le départ)`, fin.ev.some((e) => e.type === 'marionnetteFinie') && !w.ennemis.some((e) => e.id === 1) && Math.abs((w.marionnettesA[0] ?? 0) - 6) < 0.05)
+    const g = nouveauMonde(conf, 3)
+    g.ennemis.push({ ...insecte(1, 30, -20), grand: true })
+    g.verrou = null
+    const grand = jouerLibre(conf, g, 1, new Map([[1, [30, -20]]]))
+    verifier('Marionnette : un grand (mini-boss, boss) ne se laisse pas prendre', g.marionnettes.length === 0 && grand.ev.every((e) => e.type !== 'tubeLance'))
+    // (LE LEURRE : dans l'invasion, un insecte à 60 de la marionnette la chasse et la mord, pas le vaisseau)
+    const I = sansCritique.invasion
+    const confI = { ...sansCritique, invasion: { ...I, active: true, sansPortail: true, premiere: 1e9, continu: { ...I.continu, actif: false } }, armes: [{ ...marionnette, degats: 0 }] }
+    const l = nouveauMonde(confI, 3)
+    l.ennemis.push(insecte(1, 30, -20), insecte(2, 55, -45))
+    l.verrou = null
+    const coque0 = l.coque
+    const leurre = jouerLibre(confI, l, 2.5, new Map())
+    const mordu = leurre.ev.filter((e) => e.type === 'morsureDuLeurre').length
+    const lp = l.ennemis.find((e) => e.id === 1)
+    verifier(`Marionnette : c'est un leurre — l'insecte voisin la chasse et la mord (${mordu} morsures, ${1000 - (lp?.pv ?? 0)} points), pas le vaisseau (coque ${l.coque} sur ${coque0})`, mordu >= 1 && lp !== undefined && lp.pv < 1000 && l.coque === coque0)
+  }
   // (BOUTURE : un critique fait pousser une petite tentacule sur l'insecte, au bord qui fait face au coup ; elle pique ses
   // voisins, pas lui ; un nouveau critique la fait repartir, sans en ajouter une seconde ; son hôte mort, elle meurt)
   {
-    const bouture = { ...corps, critique: 50, bouture: { duree: 4, periode: 0.5, portee: 30, part: 0.4 } }
+    const bouture = { ...corps, critique: 50, bouture: { duree: 4, periode: 0.5, portee: 30, part: 0.4, croissance: { pas: 0.25, max: 2 } } }
     const bo = jouerAvec(bouture, [[30, 0], [30, 25]], 2, 1)
     const b = bo.w.boutures[0]
     verifier(`Bouture : une seule sur l'hôte malgré ${bo.ev.filter((e) => e.type === 'piqure').length} critiques (${bo.boutures}), au bord qui fait face au vaisseau (dx ${b?.dx.toFixed(1)}), qui repart à chaque critique (fin à ${b?.jusque.toFixed(2)} s, à ${bo.w.t.toFixed(2)} s) ; le voisin piqué par elle seule (${bo.pv[1]}), sans bouture à lui`, bo.boutures === 1 && b !== undefined && b.hote === 1 && b.dx < 0 && b.jusque > bo.w.t + 3 && bo.pv[1] > 0 && bo.w.boutures.every((x) => x.hote === 1))
+    verifier(`Bouture : chaque critique qui la relance la fait grandir, jusqu'au double (ampleur ${b?.ampleur} après ${bo.ev.filter((e) => e.type === 'piqure').length} piqûres)`, b !== undefined && b.ampleur > 1 && b.ampleur <= 2)
     bo.w.ennemis = bo.w.ennemis.filter((e) => e.id !== 1)
     const fin = avancerLeMonde(bo.conf, bo.w, 1 / 60, { x: 0, y: 0 }).evenements
     verifier('Bouture : son hôte disparu, elle se flétrit', bo.w.boutures.length === 0 && fin.some((e) => e.type === 'boutureFinie'))
