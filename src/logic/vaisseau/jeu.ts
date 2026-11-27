@@ -1157,7 +1157,10 @@ export type Arme = {
      * l'insecte le plus proche à portée ; plus personne, la rafale s'arrête. La rafale finie, la suivante part `cadence`
      * plus tard. L'état est `Monde.lacerations`.
      */
-    lacere?: { coups: number; intervalle: number; part: number }
+    // (… PLUS VITE — Keko, 27/11 : « accélérer la vitesse à laquelle une tentacule attaque puis se rétracte durant la
+    // lacération, pour donner vraiment une illusion de vitesse » : chaque coup reste planté `tenue` secondes et se retire
+    // en `retour`, au lieu de ceux de la piqûre)
+    lacere?: { coups: number; intervalle: number; part: number; tenue: number; retour: number }
   }
   /**
    * LE FOUET (Keko, 27/11 : « une attaque supplémentaire, qui fait un fouet et décrit un arc de cercle ; on ne transforme
@@ -4596,12 +4599,12 @@ function menerLesTentacules(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void 
       }
     } else if (tn.fait === 'plantee') {
       tn.u = 1
-      if (age >= te.tenue || cible === undefined) {
+      if (age >= (te.lacere?.tenue ?? te.tenue) || cible === undefined) {
         tn.fait = 'retour'
         tn.depuis = m.t
       }
     } else {
-      tn.u = Math.max(0, 1 - age / te.retour)
+      tn.u = Math.max(0, 1 - age / (te.lacere?.retour ?? te.retour))
       if (tn.u <= 0) {
         tn.fait = 'repos'
         tn.depuis = m.t
@@ -4756,14 +4759,16 @@ function menerLesMarionnettes(c: ConfigVaisseau, m: Monde, dt: number, ev: Evene
     const ma = a.marionnette
     if (ma === undefined || m.phase !== 'vol' || m.t < (m.marionnettesA[i] ?? 0) || m.marionnettes.some((p) => p.arme === i)) return
     const prenable = (e: Ennemi): boolean => e.grand !== true && e.asteroide === undefined && e.pv > 0 && choisissable(m, e) && Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= a.portee + rayonDe(c, e)
+    // (… LE PLUS RÉSISTANT — Keko, 27/11 : « le son du contrôle mental se lance, mais rien ne se passe visuellement » : il
+    // allait sur le plus proche, que les piqûres abattaient souvent pendant que le tube volait ; il va sur celui qui a le
+    // plus de vie)
     const ve = ennemiVerrouille(m)
     let cible: Ennemi | undefined = ve !== null && prenable(ve) ? ve : undefined
     if (cible === undefined) {
-      let dc = Infinity
+      let pv = -Infinity
       for (const e of m.ennemis) {
         if (!prenable(e)) continue
-        const d = Math.hypot(e.corps.x - v.x, e.corps.y - v.y)
-        if (d < dc) (dc = d), (cible = e)
+        if (e.pv > pv) (pv = e.pv), (cible = e)
       }
     }
     if (cible === undefined) return

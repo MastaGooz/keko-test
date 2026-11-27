@@ -691,7 +691,7 @@ export const MUTATIONS: Mutation[] = [
   // visuel de Dagger Flurry ; le délai entre les attaques devient le délai entre les lacérations ; chaque attaque inflige
   // 6 coups ; si la cible meurt, les autres coups se reportent sur un autre ennemi à portée » : six coups, un toutes les
   // 0,055 s — le rythme du Dagger Flurry —, 40 % des dégâts chacun — chiffres de moi ; voir `Arme.tentacule.lacere`)
-  variation('tentacule-laceration', 'tentacule', 'Lacération', 'Chaque attaque devient une rafale de six coups de tentacule.', changerA('tentacule', (a) => (a.tentacule === undefined ? a : { ...a, tentacule: { ...a.tentacule, lacere: { coups: 6, intervalle: 0.055, part: 0.4 } } }))),
+  variation('tentacule-laceration', 'tentacule', 'Lacération', 'Chaque attaque devient une rafale de six coups de tentacule.', changerA('tentacule', (a) => (a.tentacule === undefined ? a : { ...a, tentacule: { ...a.tentacule, lacere: { coups: 6, intervalle: 0.055, part: 0.4, tenue: 0.02, retour: 0.09 } } }))),
   // (« MARIONNETTE », REMISE AVEC SON TUBE — Keko, 27/11 : « un nouveau type de tentacule, un tube intestinal, qui part de
   // la tête du Kraken et se plante sur l'ennemi ; il attaque les autres ennemis, et sert de leurre » : un tube toutes les 6 s,
   // planté en 0,15 s, 4 s de contrôle, une morsure toutes les 0,5 s à 50 % fois la sienne, leurre à 60 — chiffres de moi ;

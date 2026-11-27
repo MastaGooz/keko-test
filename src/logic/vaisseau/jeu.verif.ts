@@ -1665,7 +1665,7 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   // (LACÉRATION : une rafale de six coups, un par racine, au lieu d'une tentacule ; la cible morte, les coups suivants vont
   // sur l'insecte le plus proche à portée ; la suivante, `cadence` après la fin de la rafale)
   {
-    const lacere = { ...corps, tentacule: { ...corps.tentacule, lacere: { coups: 6, intervalle: 0.055, part: 0.4 } } }
+    const lacere = { ...corps, tentacule: { ...corps.tentacule, lacere: { coups: 6, intervalle: 0.055, part: 0.4, tenue: 0.02, retour: 0.09 } } }
     const un = jouerAvec(lacere, [[30, -20]], 0.4)
     const coups = un.ev.filter((e) => e.type === 'laceration')
     verifier(`Lacération : une rafale de six coups (${coups.length}) en ${(0.055 * 5).toFixed(3)} s, chacun d'une autre racine (${coups.map((e) => (e.type === 'laceration' ? e.ancre : -1)).join(', ')}), à 40 % — ${un.pv[0]} de dégâts ; pas de piqûre`, coups.length === 6 && new Set(coups.map((e) => (e.type === 'laceration' ? e.ancre : -1))).size === 6 && un.pv[0] === 12 && un.ev.every((e) => e.type !== 'piqure'))

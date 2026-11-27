@@ -4069,7 +4069,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       if (arme.silo !== undefined) return
       if (reste <= 0 || reste > avance || t - (armeAnnonceeA.get(arme.id) ?? -10) < 0.4) return
       // (la nova et le blizzard du Frimas partent même sans personne — Keko, 19/11 : leur coup s'annonce toujours)
-      if (arme.nova === undefined && arme.tornade === undefined && !m.ennemis.some((e) => Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= arme.portee)) return
+      // (… ET SEULEMENT SI LE TIR EST SÛR — Keko, 27/11 : « parfois, avec les missiles, on entend le tir de lancement mais rien
+      // ne se passe » : on annonçait dès qu'un insecte OU UNE ROCHE était à portée — la roche n'est visée que sans insecte à
+      // portée, et un insecte au bord en ressortait avant le tir. Désormais : un insecte bien à portée (à 85 % d'elle), ou, sans
+      // aucun insecte à portée, une roche bien à portée)
+      const dansLaPortee = (e: Ennemi): boolean => Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= arme.portee * 0.85
+      const aPorteeLarge = (e: Ennemi): boolean => Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= arme.portee + rayonDe(CONF, e)
+      const insectes = m.ennemis.filter((e) => e.asteroide === undefined && (e.marionnetteA ?? -1) <= m.t)
+      const sur = insectes.some(dansLaPortee) || (!insectes.some(aPorteeLarge) && m.ennemis.some((e) => e.asteroide !== undefined && dansLaPortee(e)))
+      if (arme.nova === undefined && arme.tornade === undefined && !sur) return
       armeAnnonceeA.set(arme.id, t)
       jouer(arme.id as Son)
     })
@@ -13523,7 +13531,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (corde === undefined) return
     const [ax, ay] = monde(corde[0])
     const [bx, by] = monde(corde[corde.length - 1])
-    const e = 1 - Math.pow(1 - tn.u, 2)
+    // (… UN COUP DE LACÉRATION JAILLIT en 0,035 s — la règle le plante d'un coup : à l'image, il file — Keko, 27/11)
+    const jaillit = CONF.armes[tn.arme]?.tentacule?.lacere !== undefined && tn.fait === 'plantee' ? Math.min(1, (m.t - tn.depuis) / 0.035) : tn.u
+    const e = 1 - Math.pow(1 - jaillit, 2)
     // (… le bout d'une lacération tombe un peu à côté des autres, perpendiculairement à l'axe)
     const ecartDuBout = CONF.armes[tn.arme]?.tentacule?.lacere !== undefined ? (ECARTS_DE_LA_LACERATION[tn.ancre] ?? 0) : 0
     const dAx = tn.tx - v.x
@@ -18804,11 +18814,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           break
         }
         case 'tubeLance':
-          // (LE TUBE PART de la gueule : un bruit de succion)
-          jouer('aspire')
+          // (LE TUBE PART de la gueule : en silence — il sonne quand il se plante, sinon on l'entendait partir sur un insecte
+          // abattu avant d'être pris, Keko, 27/11 : « le son se lance mais rien ne se passe »)
           break
         case 'marionnette':
-          // (LE TUBE SE PLANTE : le « blop » de chair, une giclée de bile)
+          // (LE TUBE SE PLANTE : la succion, le « blop » de chair, une giclée de bile)
+          jouer('aspire')
           jouer('ponte', { dx: ev.x - v.x, dy: ev.y - v.y })
           for (let i = 0; i < 8; i++) {
             const a = R.range(0, Math.PI * 2)
