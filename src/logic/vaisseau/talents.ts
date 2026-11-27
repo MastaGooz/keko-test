@@ -693,7 +693,7 @@ export const MUTATIONS: Mutation[] = [
   // (« ENVERGURE » — Keko, 27/11 : « quand le Kraken est immobile, sa portée augmente progressivement jusqu'à un maximum ;
   // le balayage bénéficie de cette portée » : jusqu'au double en 3 s sans pousser — pas « immobile » : dès que la propulsion s'arrête —, repliée en 0,4 s quand il pousse — chiffres
   // de moi ; voir `Arme.deploiement`)
-  variation('tentacule-envergure', 'tentacule', 'Envergure', 'Sans propulsion, les tentacules s’étendent et frappent plus loin.', changerA('tentacule', (a) => ({ ...a, deploiement: { max: 2, montee: 3, descente: 0.4, seuil: 0.05 } }))),
+  variation('tentacule-envergure', 'tentacule', 'Envergure', 'Sans propulsion, la portée double, puis les coups repoussent.', changerA('tentacule', (a) => ({ ...a, deploiement: { max: 2, montee: 3, descente: 0.4, seuil: 0.05, recul: { distance: 12, tous: 0.8 } } }))),
   // (« BOUTURE », SA VARIATION SUR COUP CRITIQUE — Keko : « un mini tentacule pousse sur l'ennemi touché, qui se met à attaquer
   // les ennemis proches » : 4 s, une piqûre toutes les 0,5 s à 30, 40 % des dégâts — chiffres et nom de moi ; voir
   // `Arme.bouture` ; elle grandit de 25 % à chaque critique qui la relance, jusqu'au double — Keko, 27/11, chiffres de moi)

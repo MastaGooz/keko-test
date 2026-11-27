@@ -9661,4 +9661,7 @@ Keko : « lorsque le Kraken est immobile, ses tentacules s'étendent de plus en 
   - En dessous, un corps qui bat, un sinus à 58 Hz à peine audible.
   - Le tout est diffus : deux échos courts croisés (47 et 83 ms), étouffés, à gauche et à droite.
   - Il enfle en 0,25 s et retombe en 0,5 s, au lieu de s'allumer comme un moteur.
-  - Non écouté : le navigateur de capture n'a pas de son. Le volume (0,5 fois la poussée, sur un bruit rose bien plus faible que le blanc) est à régler à l'oreille.
+  - Non écouté : le navigateur de capture n'a pas de son. Le volume (0,5 fois la poussée, sur un bruit rose bien plus faible que le blanc) est à régler à l'oreille.- **L'Envergure, multiplicative, et elle repousse** (Keko, 27/11 : « l'augmentation de portée, c'est cool, mais on peut obtenir la même chose avec la carte de portée ; cette carte pourrait augmenter la portée qui est déjà augmentée, un bonus multiplicatif ; et un effet de repoussement des ennemis quand ils sont frappés, quand on est en portée maximum ») :
+  - Elle ÉTAIT déjà multiplicative, et un test le fixe maintenant : les cartes « Zone et portée » s'additionnent entre elles, puis l'Envergure multiplie le tout par 2. Avec +50 % de portée : 55 × 1,5 × 2 = 165. Aucune carte ne grandit son facteur.
+  - Déployée à fond, chaque coup de la piqûre, de la Lacération ou du Fouet REPOUSSE l'insecte de 12, à l'opposé du vaisseau (`deploiement.recul`, événement `repousse`, un souffle clair). Pas la Bouture, pas un grand, pas une roche. Le même insecte n'est repoussé qu'une fois toutes les 0,8 s : un minuteur à lui, pas la cadence. Chiffres de moi.
+  - Texte : « Sans propulsion, la portée double, puis les coups repoussent. » (cinq lignes, vérifié en capture).

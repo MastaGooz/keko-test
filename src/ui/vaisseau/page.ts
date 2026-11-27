@@ -18726,6 +18726,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           }
           break
         }
+        case 'repousse':
+          // (L'ENVERGURE REPOUSSE : un souffle clair part dans le sens du recul)
+          for (let i = 0; i < 5; i++) {
+            const a = Math.atan2(ev.uy, ev.ux) + R.range(-0.5, 0.5)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(50, 120), Math.sin(a) * R.range(50, 120), R.range(0.12, 0.25), i % 2 === 0 ? N.WHITE : CHAIR[5], 1, 1.5)
+          }
+          break
         case 'boutureFinie':
           // (elle se flétrit : quelques lambeaux de chair qui retombent)
           for (let i = 0; i < 4; i++) {

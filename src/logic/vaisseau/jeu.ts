@@ -1182,7 +1182,13 @@ export type Arme = {
    * monte de 0 à 1 en `montee` secondes ; au-dessus, il retombe en `descente` secondes ; la portée de la tentacule et du fouet est multipliée par 1 + (`max` − 1) ×
    * le déploiement — voir `porteeTentaculaire`, `Monde.deploiement`.
    */
-  deploiement?: { max: number; montee: number; descente: number; seuil: number }
+  // (… MULTIPLICATIVE, ET ELLE REPOUSSE — Keko, 27/11 : « on peut obtenir la même chose avec la carte de portée ; cette carte
+  // pourrait augmenter la portée déjà augmentée, un bonus multiplicatif ; et un effet de repoussement des ennemis quand ils
+  // sont frappés, quand on est en portée maximum » : `max` multiplie la portée APRÈS les cartes « Zone et portée » — aucune
+  // carte ne le grandit — ; et, déployé à fond, chaque coup de la piqûre, de la lacération ou du fouet REPOUSSE l'insecte de
+  // `recul.distance`, à l'opposé du vaisseau — pas un grand ni une roche, et le même insecte une fois toutes les
+  // `recul.tous` secondes au plus : un minuteur à lui, pas la cadence)
+  deploiement?: { max: number; montee: number; descente: number; seuil: number; recul: { distance: number; tous: number } }
   /**
    * LA BOUTURE (Keko, 27/11 : « sur un coup critique, un mini tentacule pousse sur l'ennemi touché, qui se met à attaquer
    * les ennemis proches pendant un certain temps ; la durée est affectée par les cartes de durée ; si un coup critique est
@@ -1609,6 +1615,8 @@ export type Ennemi = {
   poison?: { jusque: number; dps: number }
   /** IL EST TENU PAR UNE VRILLE (voir `Arme.vrille`) jusqu'à cet instant : immobilisé sur place. */
   tenuA?: number
+  /** L'instant où un coup de l'Envergure peut le repousser à nouveau (voir `Arme.deploiement.recul`). */
+  repousseA?: number
   /** SA SORTE, s'il n'est pas un petit : le cornu, le cuirassier (voir `invasion.cornu`, `invasion.cuirassier`). */
   sorte?: SorteDInsecte
   /** UN GRAND : un mini-boss, un boss (aucun encore) — une vrille le saisit sans l'immobiliser. */
@@ -1946,6 +1954,8 @@ export type Evenement =
   | { type: 'bouture'; x: number; y: number }
   | { type: 'coupDeBouture'; x: number; y: number }
   | { type: 'boutureFinie'; x: number; y: number }
+  /** Un coup de l'Envergure repousse un insecte (voir `Arme.deploiement.recul`) : où il était, et vers où (un vecteur unité). */
+  | { type: 'repousse'; x: number; y: number; ux: number; uy: number }
   /** Un coup de la lacération (voir `Arme.tentacule.lacere`) : où, depuis quelle racine (son rang), le combientième. */
   | { type: 'laceration'; x: number; y: number; ancre: number; n: number }
   /** Le nuage d'insectes mord un insecte (voir `Arme.nuee`) : signalé toutes les `periode` secondes. */
@@ -4631,6 +4641,16 @@ function coupDeTentacule(c: ConfigVaisseau, m: Monde, a: Arme, i: number, e: Enn
   e.pv -= Math.max(1, Math.round(a.degats * part)) * (critique ? facteurSur(c, m, a, e) : 1)
   ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })
   if (critique && !deBouture && a.bouture !== undefined && e.pv > 0) bouturer(c, m, a.bouture, i, e, ox, oy, ev)
+  // (L'ENVERGURE, déployée à fond, REPOUSSE — voir `Arme.deploiement.recul`)
+  const re = c.armes.find((x) => x.deploiement !== undefined)?.deploiement?.recul
+  if (re !== undefined && !deBouture && m.deploiement >= 1 && e.pv > 0 && e.grand !== true && e.asteroide === undefined && m.t >= (e.repousseA ?? 0)) {
+    const d = Math.hypot(e.corps.x - m.vaisseau.x, e.corps.y - m.vaisseau.y) || 1
+    const ux = (e.corps.x - m.vaisseau.x) / d
+    const uy = (e.corps.y - m.vaisseau.y) / d
+    ev.push({ type: 'repousse', x: e.corps.x, y: e.corps.y, ux, uy })
+    e.repousseA = m.t + re.tous
+    e.corps = { ...e.corps, x: e.corps.x + ux * re.distance, y: e.corps.y + uy * re.distance, vx: 0, vy: 0 }
+  }
   if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
 }
 /** Une bouture pousse sur `e`, au bord qui fait face à (ox, oy) — ou, s'il en porte déjà une, la sienne repart pour toute sa durée. */

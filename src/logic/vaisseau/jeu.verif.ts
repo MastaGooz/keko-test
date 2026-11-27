@@ -1,7 +1,8 @@
 /**
  * Vérifications du vaisseau, sans navigateur : le temps est injecté.
  */
-import { ELEMENTAIRES, probaDeCritique, TRAJECTOIRE_DU_MISSILE, type Arme, placeDuDrone, recompenseDeFin, tableauVide, chanceDePlaque, ajouterUnPilote, avancerLEquipage, etatDuPilote, partDe, gabaritDInsecte, rayonDe, rocheDeLaTempete, vieMultipliee, cadenceDeLaVague, asteroideDeLaCase, coupeDUnCube, asteroidesAutour, avancer, avancerLeMonde, encaisser, purger, impactDuRayon, lancerLaBombe, larguer, porteeDeLaBombe, MINERAIS, nouveauMonde, nouveauVaisseau, solidite, voler, totalDe, stationDeLaCase, stationLaPlusProche, VAISSEAU, verrouiller, ennemiLePlusProche, type ConfigVaisseau, type Ennemi, type Evenement, type Vaisseau, xpDuNiveau, gemmesDuButin, tire, type Pepite, type SorteDInsecte } from './jeu.ts'
+import { armeAmelioree } from './talents.ts'
+import { ELEMENTAIRES, porteeTentaculaire, probaDeCritique, TRAJECTOIRE_DU_MISSILE, type Arme, placeDuDrone, recompenseDeFin, tableauVide, chanceDePlaque, ajouterUnPilote, avancerLEquipage, etatDuPilote, partDe, gabaritDInsecte, rayonDe, rocheDeLaTempete, vieMultipliee, cadenceDeLaVague, asteroideDeLaCase, coupeDUnCube, asteroidesAutour, avancer, avancerLeMonde, encaisser, purger, impactDuRayon, lancerLaBombe, larguer, porteeDeLaBombe, MINERAIS, nouveauMonde, nouveauVaisseau, solidite, voler, totalDe, stationDeLaCase, stationLaPlusProche, VAISSEAU, verrouiller, ennemiLePlusProche, type ConfigVaisseau, type Ennemi, type Evenement, type Vaisseau, xpDuNiveau, gemmesDuButin, tire, type Pepite, type SorteDInsecte } from './jeu.ts'
 import { acheter, configDuHangar, hangarNeuf, monter, pieceDe } from './hangar.ts'
 import { depuisTexte, retirerLesPilotes, retirerUnPilote, versTexte, vuDu, vuDuSecond } from './reseau.ts'
 
@@ -1686,7 +1687,7 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   // (ENVERGURE : sans pousser, la portée monte jusqu'au double en 3 s — un insecte à 90 est piqué ; en poussant, jamais ;
   // et il se déploie même s'il dérive encore)
   {
-    const envergure = { ...corps, deploiement: { max: 2, montee: 3, descente: 0.4, seuil: 0.05 } }
+    const envergure = { ...corps, deploiement: { max: 2, montee: 3, descente: 0.4, seuil: 0.05, recul: { distance: 12, tous: 0.8 } } }
     const immobile = jouerAvec(envergure, [[90, 0]], 4)
     const conf = { ...sansCritique, armes: [envergure] }
     const w = nouveauMonde(conf, 3)
@@ -1706,6 +1707,29 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
     }
     const nImmobile = immobile.ev.filter((e) => e.type === 'piqure').length
     verifier(`Envergure : sans pousser, la portée monte jusqu'au double (déploiement ${immobile.w.deploiement.toFixed(2)}) — un insecte à 90 est piqué (${nImmobile} fois) ; en poussant, jamais (${ev.filter((e) => e.type === 'piqure').length}, déploiement ${w.deploiement.toFixed(2)}) ; en dérive à 30, le manche lâché, il se déploie (${dv.deploiement.toFixed(2)} en 2 s)`, immobile.w.deploiement === 1 && nImmobile > 0 && ev.every((e) => e.type !== 'piqure') && w.deploiement === 0 && dv.deploiement > 0.6)
+    // (… MULTIPLICATIVE : après la carte « Zone et portée » +50 %, la portée déployée est 55 × 1,5 × 2)
+    const grande = armeAmelioree(envergure, 'portee', 0.5)
+    const confG = { ...sansCritique, armes: [grande] }
+    const wg = nouveauMonde(confG, 3)
+    wg.deploiement = 1
+    verifier(`Envergure : elle multiplie la portée déjà grandie — « Zone et portée » +50 % puis l'Envergure : ${porteeTentaculaire(confG, wg, grande)} (55 × 1,5 × 2), et la carte ne touche pas son facteur (${grande.deploiement?.max})`, porteeTentaculaire(confG, wg, grande) === 165 && grande.deploiement?.max === 2)
+    // (… ELLE REPOUSSE, déployée à fond : un insecte libre recule de 12, une fois toutes les 0,8 s au plus ; pas un grand)
+    const repousser = (grand: boolean, duree: number) => {
+      const wr = nouveauMonde(conf, 3)
+      wr.ennemis.push({ ...insecte(1, 60, 0), ...(grand ? { grand: true } : {}) })
+      wr.verrou = null
+      wr.deploiement = 1
+      const evr: Evenement[] = []
+      for (let k = 0; k < 60 * duree; k++) {
+        wr.ennemis.forEach((e) => (e.corps = { ...e.corps, vx: 0, vy: 0 }))
+        wr.vaisseau = { ...wr.vaisseau, x: 0, y: 0, vx: 0, vy: 0, cap: 0 }
+        evr.push(...avancerLeMonde(conf, wr, 1 / 60, { x: 0, y: 0 }).evenements)
+      }
+      return { x: wr.ennemis[0]?.corps.x ?? 0, n: evr.filter((e) => e.type === 'repousse').length, coups: evr.filter((e) => e.type === 'piqure').length }
+    }
+    const petit = repousser(false, 1.5)
+    const gros = repousser(true, 1.5)
+    verifier(`Envergure : déployée à fond, la piqûre repousse l'insecte de 12 — de 60 à ${petit.x.toFixed(1)} en 1,5 s, ${petit.n} fois pour ${petit.coups} coups (une fois toutes les 0,8 s au plus) ; un grand n'est pas repoussé (${gros.x.toFixed(1)}, ${gros.n} fois)`, petit.n === 2 && petit.coups > petit.n && petit.x > 83 && petit.x < 86 && gros.x < 63 && gros.n === 0)
   }
   // (BOUTURE : un critique fait pousser une petite tentacule sur l'insecte, au bord qui fait face au coup ; elle pique ses
   // voisins, pas lui ; un nouveau critique la fait repartir, sans en ajouter une seconde ; son hôte mort, elle meurt)
