@@ -1284,7 +1284,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * disponible. » à la place de ce qu'elles font ; elles ne s'équipent pas. `&tous` les ouvre, comme les vaisseaux, et
    * `&arme=ID` décolle encore avec celle-là, pour l'essayer d'un lien. Les cartes du vol n'en savent rien.
    */
-  const armeVerrouillee = (id: string): boolean => parametres.has('vortex') &&!parametres.has('tous') && parametres.get('arme') !== id && !Object.values(ARMES_PAR_VAISSEAU).some((l) => l[0] === id)
+  // (LES TROIS ARMES DU KRAKEN OUVERTES LE TEMPS DE LEURS CARTES SPÉCIALES — Keko, 27/11 : « débloque-moi les 3 armes du Kraken
+  // temporairement » ; à retirer de `ARMES_OUVERTES_A_L_ESSAI` une fois ses cartes faites)
+  const ARMES_OUVERTES_A_L_ESSAI = ['arme-nuee', 'arme-rejetons']
+  const armeVerrouillee = (id: string): boolean => parametres.has('vortex') && !parametres.has('tous') && parametres.get('arme') !== id && !ARMES_OUVERTES_A_L_ESSAI.includes(id) && !Object.values(ARMES_PAR_VAISSEAU).some((l) => l[0] === id)
   const choisirLArme = (id: string): void => {
     armesChoisies[flotte.actif] = id
     sauverArme(flotte.actif, id)

@@ -9541,3 +9541,6 @@ Keko : « tu as laissé l'encadré de fond assez grand, avec le message au milie
 ### Verrouillé, le symbole de la race garde ses couleurs (27/11)
 
 Keko : « ne mets pas le symbole de faction grisé quand c'est verrouillé ». Sur la fiche d'un vaisseau verrouillé, le médaillon de la race se dessine comme pour un vaisseau qu'on a (`aSoi || cache` dans `dessinerLaFicheEnBandeau`) ; le nom reste « ??? », le nom de la race garde son gris.
+### Les trois armes du Kraken ouvertes, le temps de leurs cartes (27/11)
+
+Keko : « débloque-moi les 3 armes du Kraken temporairement, car on va faire le même travail qu'on a fait pour le chasseur et l'empire » — six cartes spéciales pour chacune, puis les six armes communes des Xénoïdes avec leurs six cartes. La Nuée et les Rejetons échappent au verrou (`ARMES_OUVERTES_A_L_ESSAI` dans `page.ts`) ; à retirer une fois leurs cartes faites.
