@@ -9682,3 +9682,12 @@ Keko : « parfois le Kraken change d'orientation très vite (oscille), et les te
 ### Les tentacules au repos qui fouettaient pendant le déploiement (27/11)
 
 Keko : « ça ne vient pas de l'orientation ; les tentacules latérales qui n'attaquent pas ont un comportement bizarre parfois, comme des allers-retours bizarres ». C'était l'Envergure : la houle des bras au repos (`cordesDuKraken`) ralentissait avec `allonge`, mais sa fréquence multiplie LE TEMPS ÉCOULÉ depuis le début de la partie. Au moindre pas du déploiement, sa phase bondissait donc de plusieurs tours (à 100 s de jeu, 1 % de déploiement déplaçait la phase de 0,9 radian), et les bras fouettaient dans tous les sens tant que le déploiement montait ou retombait, c'est-à-dire à chaque fois qu'on lâchait ou reprenait la propulsion. La houle garde maintenant son rythme, et seule son ampleur grandit avec le déploiement. La tenue du nez (section précédente) reste : elle corrige un vrai balancement, mais ce n'était pas celui-là.- **Plus de carte « Durée » pour la Tentacule** (Keko, 27/11 : « on devrait annuler la carte durée sur la tentacule, car elle ne sert que lors du critique, c'est pas hyper clair pour le joueur ») : la bouture sort de `POSEES`. Elle vit ses 4 s, et un critique la relance et la fait grandir comme avant.
+### La portée et la zone, deux cartes de nouveau (27/11)
+
+Keko : « on peut séparer zone et portée à nouveau finalement ? » (fusionnées le 22/11 à sa demande, « Zone et portée » partout le 25/11). `StatDArme` retrouve `zone`.
+
+- **« Portée »** (`+X % de portée`) : proposée à une arme qui a une portée. Elle allonge la portée et la vie des projectiles, et tout ce qui VA CHERCHER plus loin : la distance du Ricochet, le saut de la Conduction de la bobine, la laisse des drones en Chasse.
+- **« Zone »** (`+X % de zone`) : proposée à une arme qui a une zone (`aUneZone`). Elle grandit rayons, largeurs et éclats (`CLES_DE_ZONE`) et la course des éclats de la Fragmentation.
+- Une arme qui n'a qu'une zone (le givre du Frimas) n'a que « Zone » ; une arme sans zone (le canon, la Tentacule) n'a que « Portée » ; le napalm, les missiles ont les deux. « Toutes les armes » existe pour chacune, à la moitié.
+- À l'image, `zoneDuVol` (les dessins agrandis) suit la carte « Zone » ; `&zone=N` pose N % de zone.
+- Conséquence sur l'équilibre, non mesurée : une arme à zone doit maintenant prendre deux cartes pour ce qu'une seule donnait.
