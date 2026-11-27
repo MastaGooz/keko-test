@@ -1167,7 +1167,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (parametres.has('zone') && CONF.armes[0] !== undefined) {
       const a = CONF.armes[0]
       confSansTalents = CONF
-      bonusDuVol = [{ id: `arme-${a.id}:zone`, cible: { sorte: 'arme', arme: a.id }, stat: 'zone', somme: (Number(parametres.get('zone')) || 100) / 100 }]
+      bonusDuVol = [{ id: `arme-${a.id}:portee`, cible: { sorte: 'arme', arme: a.id }, stat: 'portee', somme: (Number(parametres.get('zone')) || 100) / 100 }]
       CONF = avecLesBonus(CONF, bonusDuVol)
     }
     // (`&spe=id,id` : décoller avec ces cartes spéciales déjà prises — une nouvelle arme, `arme-railgun`, une variation,
@@ -1562,7 +1562,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    */
   // (LA PORTÉE FAIT LA ZONE depuis le 22/11 — voir `StatDArme` : les cartes « Portée » d'une arme qui a une zone, et celles
   // de toutes les armes)
-  const zoneDuVol = (): number => 1 + bonusDuVol.reduce((somme, b) => (b.stat === 'zone' && (b.cible.sorte === 'armes' || (b.cible.sorte === 'arme' && CONF.armes.some((x) => x.id === (b.cible as { arme: string }).arme && aUneZone(x)))) ? somme + b.somme : somme), 0)
+  const zoneDuVol = (): number => 1 + bonusDuVol.reduce((somme, b) => (b.stat === 'portee' && (b.cible.sorte === 'armes' || (b.cible.sorte === 'arme' && CONF.armes.some((x) => x.id === (b.cible as { arme: string }).arme && aUneZone(x)))) ? somme + b.somme : somme), 0)
   /**
    * L'ÉQUIPAGE, SUR UN MÊME ÉCRAN (`&coop` — Keko, 22/11 : « Tente l'étape 1 », deux vaisseaux dans le même monde avant le
    * réseau) : un second vaisseau, du même modèle et de la même arme que le premier, dans l'apparence suivante ; LA MOITIÉ
@@ -2055,11 +2055,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     degats: { nom: 'Dégâts', effet: 'de dégâts' },
     critique: { nom: 'Critique', effet: 'de chance de critique' },
     critiques: { nom: 'Impact', effet: 'de dégâts critiques' },
-    cadence: { nom: 'Cadence', effet: 'de cadence' },
-    // (DEUX CARTES DE NOUVEAU — Keko, 27/11 : « on peut séparer zone et portée à nouveau finalement ? »)
-    portee: { nom: 'Portée', effet: 'de portée' },
-    zone: { nom: 'Zone', effet: 'de zone' },
-    pose: { nom: 'Durée', effet: 'de durée' },
+    // (« CADENCE ET DURÉE », une seule carte — Keko, 27/11 : « on fusionne zone et portée, mais aussi cadence et durée »)
+    cadence: { nom: 'Cadence et durée', effet: 'de cadence et de durée' },
+    portee: { nom: 'Zone et portée', effet: 'de portée et de zone' },
     // (LES ÉTATS DISENT CE QU'ILS FONT — Keko, 24/11 : « +X % de dégâts infligés aux ennemis affectés par corrosion », « +X %
     // de ralentissement aux ennemis affectés par givre », « +X % de dégâts de l'effet de brûlure » ; le feu s'appelle Brûlure ;
     // les deux premiers prenaient cinq lignes, Keko a choisi de les raccourcir : « sous corrosion », « sous givre »)
@@ -2261,7 +2259,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // (le blindage des Xénoïdes, ce sont leurs points de vie — Keko, 21/11)
     // (« ZONE ET PORTÉE », TOUJOURS — Keko, 25/11 : « la carte portée devrait toujours s'appeler zone et portée, quelle que
     // soit l'arme ; il n'y a qu'une seule carte » : elle s'appelait « Portée », « Zone et portée » ou disait « de zone »
-    // selon l'arme visée — voir `STATS_DES_CARTES` ; PUIS DEUX CARTES DE NOUVEAU, « Portée » et « Zone », 27/11)
+    // selon l'arme visée — voir `STATS_DES_CARTES`)
     const st = ta.stat === 'blindage' && ta.cible.sorte === 'faction' && ta.cible.race === 'essaim' ? { nom: 'Points de vie', effet: 'de points de vie' } : st0
     let ly = y + 44
     titreEnRelief(st.nom, ly)

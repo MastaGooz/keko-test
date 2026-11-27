@@ -55,7 +55,7 @@ export function rareteTiree(u: number): Rarete {
 // (LA PORTÉE FAIT AUSSI LA ZONE — Keko, 22/11 : « on peut pas fusionner la portée et la zone, en considérant que la portée
 // d'une zone est son rayon ? » puis « va pour Portée qui fait les deux » : une seule carte, qui allonge le tir ET agrandit
 // tout ce qui est une zone — voir rmeAmelioree ; plus de carte « Zone »)
-export type StatDArme = 'degats' | 'critique' | 'critiques' | 'cadence' | 'portee' | 'zone' | 'pose' | 'feu' | 'corrosion' | 'givre' | 'electrocution'
+export type StatDArme = 'degats' | 'critique' | 'critiques' | 'cadence' | 'portee' | 'feu' | 'corrosion' | 'givre' | 'electrocution'
 /**
  * LES CARTES DE FACTION (Keko, 21/11) : pour toutes, le blindage (les points de vie des Xénoïdes), la vitesse, la
  * maniabilité, l'aimant (la distance) et l'expérience (+X % par pépite) ; l'Empire, la RÉCUPÉRATION (22/11 : la chance
@@ -90,7 +90,7 @@ export const POINTS_DE_CHANCE: Record<Rarete, number> = { commune: 0.02, peuComm
  * globale deux fois moins forte qui concerne toutes les armes, comme pour le reste ») ; une
  * carte n'est proposée que si une arme portée au moins a cette stat, et son bonus est LA MOITIÉ de celui de la rareté.
  */
-export const STATS_GLOBALES: StatDArme[] = ['degats', 'critique', 'critiques', 'cadence', 'portee', 'zone', 'pose', 'feu', 'corrosion', 'givre', 'electrocution']
+export const STATS_GLOBALES: StatDArme[] = ['degats', 'critique', 'critiques', 'cadence', 'portee', 'feu', 'corrosion', 'givre', 'electrocution']
 export const PART_GLOBALE = 0.5
 /**
  * LES ÉTATS — LE FEU, LA CORROSION, LE GIVRE — NE SE PRENNENT QUE POUR TOUTES LES ARMES (Keko, 23/11 : « supprimer les
@@ -193,9 +193,11 @@ export const aUneZone = (a: Arme): boolean => valeurs(a, CLES_DE_ZONE).some((v) 
 // créature, une tourelle, ou la bobine tesla, qui est une forme de tourelle […] ça ne concerne pas les traînées, les zones
 // enflammées, les zones gelées » : la flaque de napalm en sort, la balise laser y entre)
 // (… ET LA BOUTURE DE LA TENTACULE — Keko, 27/11 : « la durée du tentacule est affectée par les cartes qui jouent sur la durée »)
-// (… PUIS PLUS LA BOUTURE — Keko, 27/11 : « on devrait annuler la carte durée sur la tentacule, car elle ne sert que lors du
-// critique, c'est pas hyper clair pour le joueur » : la tentacule n'a plus de carte « Durée », la bouture vit ses 4 s)
-const POSEES = ['pose', 'balise', 'mine', 'ponte', 'sphere', 'lien'] as const
+// (… « CADENCE ET DURÉE », UNE SEULE CARTE — Keko, 27/11 : la carte « Durée » de la tentacule « ne sert que lors du critique,
+// c'est pas hyper clair pour le joueur » ; puis, portée et zone séparées un instant : « ou alors on fusionne zone et portée,
+// mais aussi cadence et durée ? » — « ok fusionne » : plus de carte « Durée » ; la carte de cadence fait aussi durer ce qui
+// a une vie à soi, la bouture comprise. Toutes les armes ont les mêmes cinq cartes.)
+const POSEES = ['pose', 'balise', 'mine', 'ponte', 'sphere', 'lien', 'bouture'] as const
 const CLES_DU_FEU: ReadonlySet<string> = new Set(['dpsBrulure'])
 const CLES_DU_GIVRE: ReadonlySet<string> = new Set(['ralenti'])
 /** Ce que l'arme pose, et sa durée. */
@@ -236,12 +238,10 @@ export const corrodeDe = (a: Arme): number[] => [a.crachat?.acide.bonus, a.mine?
 /** LE POOL D'UNE ARME : le commun (dégâts, critique), puis ce qu'elle porte. */
 export function statsDeLArme(a: Arme): StatDArme[] {
   const s: StatDArme[] = ['degats', 'critique', 'critiques']
-  if (a.cadence > 0 && Number.isFinite(a.cadence)) s.push('cadence')
-  // (LA PORTÉE ET LA ZONE, DEUX CARTES DE NOUVEAU — Keko, 27/11 : « on peut séparer zone et portée à nouveau finalement ? » ;
-  // fusionnées le 22/11, « Zone et portée » le 25/11 : la portée à qui tire au loin, la zone à qui a une zone)
-  if (a.portee > 0) s.push('portee')
-  if (aUneZone(a)) s.push('zone')
-  if (poseesDe(a).length > 0) s.push('pose')
+  // (la cadence, ou une durée : c'est la même carte — voir `POSEES`)
+  if ((a.cadence > 0 && Number.isFinite(a.cadence)) || poseesDe(a).length > 0) s.push('cadence')
+  // (la portée, ou une zone : son rayon est sa portée)
+  if (a.portee > 0 || aUneZone(a)) s.push('portee')
   if (valeurs(a, CLES_DU_FEU).some((v) => v > 0)) s.push('feu')
   if (corrodeDe(a).length > 0) s.push('corrosion')
   if (valeurs(a, CLES_DU_GIVRE).some((v) => v > 0 && v < 1)) s.push('givre')
@@ -258,28 +258,29 @@ export function armeAmelioree(a: Arme, stat: StatDArme, k: number): Arme {
   switch (stat) {
     case 'degats':
       return changer(a, CHAMPS_DE_DEGATS, (v) => Math.max(v + 1, Math.round(v * (1 + k))))
-    case 'cadence':
-      return changer(a, CLES_DE_CADENCE, (v) => v / (1 + k))
+    case 'cadence': {
+      // (plus souvent, ET PLUS LONGTEMPS : ce que l'arme pose dure d'autant plus — « Cadence et durée »)
+      const r: Record<string, unknown> = { ...changer(a, CLES_DE_CADENCE, (v) => v / (1 + k)) }
+      for (const { cle } of poseesDe(a)) r[cle] = { ...(r as Record<string, object>)[cle], duree: (a as unknown as Record<string, { duree: number }>)[cle].duree * (1 + k) }
+      return r as Arme
+    }
     case 'portee': {
-      // (le tir va plus loin : sa portée, la vie de ses projectiles — et tout ce qui VA CHERCHER plus loin : le Ricochet,
-      // Keko, 26/11, « le ricochet doit aussi prendre en compte la portée pour la distance de ricochet », l'éclair de la
-      // Conduction, la laisse des drones en Chasse. La zone est à sa carte — voir `zone`)
-      const z1 = a.ricochet === undefined ? a : { ...a, ricochet: { ...a.ricochet, portee: a.ricochet.portee * (1 + k) } }
+      // (le tir va plus loin — sa portée, la vie de ses projectiles —, et tout ce qui est une zone grandit d'autant)
+      // (… ET LE RICOCHET VA CHERCHER PLUS LOIN — Keko, 26/11 : « le ricochet doit aussi prendre en compte la zone et
+      // portée pour la distance de ricochet » ; il restait à 80)
+      const z0 = changer(a, CLES_DE_ZONE, (v) => v * (1 + k))
+      const z1 = z0.ricochet === undefined ? z0 : { ...z0, ricochet: { ...z0.ricochet, portee: z0.ricochet.portee * (1 + k) } }
+      // (… ET L'ÉCLAIR DE LA CONDUCTION SAUTE PLUS LOIN — Keko, 26/11 ; il restait à 45. Le saut de l'arc d'électrocution, lui,
+      // est celui du vortex, le même pour toutes les armes)
       const rb = z1.sphere?.foudre?.rebonds
       const z2 = rb === undefined ? z1 : { ...z1, sphere: { ...z1.sphere!, foudre: { ...z1.sphere!.foudre!, rebonds: { ...rb, saut: rb.saut * (1 + k) } } } }
-      const z4 = z2.orbite?.laisse === undefined ? z2 : { ...z2, orbite: { ...z2.orbite, laisse: z2.orbite.laisse * (1 + k) } }
+      // (… ET LES ÉCLATS D'UNE EXPLOSION VONT PLUS LOIN — la Fragmentation des grenades, Keko, 26/11 : l'explosion grandissait,
+      // ses éclats restaient à 40, 160 × 0,25 ; leur vie s'allonge, leur vitesse ne change pas)
+      const z3 = z2.fragments === undefined ? z2 : { ...z2, fragments: { ...z2.fragments, vie: z2.fragments.vie * (1 + k) } }
+      // (… ET DES DRONES CHASSENT PLUS LOIN — la Chasse de l'escorte, 26/11 : sa proie se choisit à `laisse` du vaisseau,
+      // qui restait à 160 ; en chasse ils tournent à 34 de leur cible, la portée de leurs balles ne leur servait à rien)
+      const z4 = z3.orbite?.laisse === undefined ? z3 : { ...z3, orbite: { ...z3.orbite, laisse: z3.orbite.laisse * (1 + k) } }
       return a.portee > 0 ? { ...z4, portee: a.portee * (1 + k), vie: a.vie * (1 + k) } : z4
-    }
-    case 'zone': {
-      // (tout ce qui est une zone grandit : rayons, largeurs, éclats — et les éclats de la Fragmentation vont plus loin,
-      // leur vie s'allonge, leur vitesse ne change pas)
-      const z0 = changer(a, CLES_DE_ZONE, (v) => v * (1 + k))
-      return z0.fragments === undefined ? z0 : { ...z0, fragments: { ...z0.fragments, vie: z0.fragments.vie * (1 + k) } }
-    }
-    case 'pose': {
-      const r: Record<string, unknown> = { ...a }
-      for (const { cle } of poseesDe(a)) r[cle] = { ...(a as unknown as Record<string, object>)[cle], duree: (a as unknown as Record<string, { duree: number }>)[cle].duree * (1 + k) }
-      return r as Arme
     }
     case 'feu':
       return changer(a, CLES_DU_FEU, (v) => Math.max(v + 1, Math.round(v * (1 + k))))

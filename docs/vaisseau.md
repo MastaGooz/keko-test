@@ -9691,3 +9691,11 @@ Keko : « on peut séparer zone et portée à nouveau finalement ? » (fusionné
 - Une arme qui n'a qu'une zone (le givre du Frimas) n'a que « Zone » ; une arme sans zone (le canon, la Tentacule) n'a que « Portée » ; le napalm, les missiles ont les deux. « Toutes les armes » existe pour chacune, à la moitié.
 - À l'image, `zoneDuVol` (les dessins agrandis) suit la carte « Zone » ; `&zone=N` pose N % de zone.
 - Conséquence sur l'équilibre, non mesurée : une arme à zone doit maintenant prendre deux cartes pour ce qu'une seule donnait.
+### « Zone et portée » de retour, et « Cadence et durée » (27/11)
+
+Keko, la portée et la zone à peine séparées : « ou alors on fusionne zone et portée, mais aussi cadence et durée ? », puis « ok fusionne ». La séparation de la section précédente est défaite (`zone` quitte `StatDArme`, la carte « Zone et portée » redevient celle du 25/11).
+
+- **« Cadence et durée »** (`+X % de cadence et de durée`) : la carte « Durée » disparaît (`pose` quitte `StatDArme` et `STATS_GLOBALES`). La carte de cadence fait tirer plus souvent ET fait durer d'autant ce qui a une vie à soi (`POSEES` : tourelles, balises, mines, œufs, la boule de la bobine, la balise laser, et de nouveau la Bouture de la tentacule).
+- Toutes les armes ont donc les mêmes cinq cartes : Dégâts, Critique, Impact, Cadence et durée, Zone et portée (plus les cartes d'état).
+- Risque accepté, non mesuré : une arme qui pose en profite deux fois (+25 % : posée 25 % plus souvent et 25 % plus longtemps, environ +56 % de présence). La balise laser, dont les balises se chevauchent déjà avec la cadence, est la plus exposée.
+- À l'image : le titre « Cadence et durée » tient sur la carte, d'un bord à l'autre (vérifié en capture) ; son texte tient en trois ou quatre lignes.

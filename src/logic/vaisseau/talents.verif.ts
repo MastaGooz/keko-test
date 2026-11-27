@@ -27,21 +27,19 @@ verifier(`le tirage suit les chances : ${RARETES.map((r) => `${r.nom} ${Math.rou
 const crachat = { ...canon, id: 'crachat', crachat: { cone: 0.4, duree: 3, acide: { duree: 3, dps: 0, bonus: 0.35 } } } as Arme
 const givre = { ...canon, id: 'givre', cadence: 0.1, portee: 0, givre: { ecart: 5, rayon: 8, duree: 4, dps: 12, ralenti: 0.5 } } as Arme
 const tourelle = { ...canon, id: 'tourelle', pose: { tous: 3, ecart: 10, max: 3, duree: 8, pivot: 1 } } as unknown as Arme
-verifier(`le canon : ${statsDeLArme(canon).join(', ')} ; le napalm : ${statsDeLArme(napalm).join(', ')} ; le crachat : ${statsDeLArme(crachat).join(', ')} ; le givre : ${statsDeLArme(givre).join(', ')} ; les tourelles : ${statsDeLArme(tourelle).join(', ')} ; les drones (leur orbite n'est pas une zone) : ${statsDeLArme(drones).join(', ')}`, statsDeLArme(canon).join() === 'degats,critique,critiques,cadence,portee' && statsDeLArme(napalm).join() === 'degats,critique,critiques,cadence,portee,zone,feu' && statsDeLArme(crachat).includes('corrosion') && statsDeLArme(givre).includes('givre') && statsDeLArme(givre).includes('zone') && !statsDeLArme(givre).includes('portee') && !statsDeLArme(canon).includes('zone') && statsDeLArme(tourelle).includes('pose') && !aUneZone(drones))
-const n2 = armeAmelioree(armeAmelioree(napalm, 'portee', 0.12), 'zone', 0.12)
-const n2p = armeAmelioree(napalm, 'portee', 0.12)
+verifier(`le canon : ${statsDeLArme(canon).join(', ')} ; le napalm : ${statsDeLArme(napalm).join(', ')} ; le crachat : ${statsDeLArme(crachat).join(', ')} ; le givre : ${statsDeLArme(givre).join(', ')} ; les tourelles : ${statsDeLArme(tourelle).join(', ')} ; les drones (leur orbite n'est pas une zone) : ${statsDeLArme(drones).join(', ')}`, statsDeLArme(canon).join() === 'degats,critique,critiques,cadence,portee' && statsDeLArme(napalm).join() === 'degats,critique,critiques,cadence,portee,feu' && statsDeLArme(crachat).includes('corrosion') && statsDeLArme(givre).includes('givre') && statsDeLArme(givre).includes('portee') && !(statsDeLArme(tourelle) as string[]).includes('pose') && statsDeLArme(tourelle).includes('cadence') && !aUneZone(drones))
+const n2 = armeAmelioree(napalm, 'portee', 0.12)
 const f2 = armeAmelioree(napalm, 'feu', 0.2)
 const g2 = armeAmelioree(givre, 'givre', 0.2)
-verifier(`zone +12 % → rayon ${n2.napalm!.rayon.toFixed(2)} (14), portée +12 % → ${n2.portee.toFixed(1)} (${napalm.portee}) ; la portée seule ne touche pas le rayon (${n2p.napalm!.rayon}) ; la traînée de givre, agrandie par la zone (${armeAmelioree(givre, 'zone', 0.12).givre!.rayon.toFixed(2)}) ; feu +20 % → la brûlure ${f2.napalm!.dpsBrulure} (10), le reste non (${f2.napalm!.dps}, ${f2.degats}) ; givre +20 % → ralenti ${g2.givre!.ralenti.toFixed(2)} (0,5 : on ôte 60 % de la vitesse au lieu de 50) ; corrosion +20 % → vulnérabilité ${armeAmelioree(crachat, 'corrosion', 0.2).crachat!.acide.bonus.toFixed(2)} (0,35) ; durée des posées +25 % → tourelles ${(armeAmelioree(tourelle, 'pose', 0.25) as unknown as { pose: { duree: number } }).pose.duree} (8)`, Math.abs(n2.napalm!.rayon - 15.68) < 1e-9 && Math.abs(n2.portee - napalm.portee * 1.12) < 1e-9 && n2p.napalm!.rayon === napalm.napalm!.rayon && Math.abs(armeAmelioree(givre, 'zone', 0.12).givre!.rayon - 8.96) < 1e-9 && armeAmelioree(givre, 'portee', 0.12).portee === 0 && f2.napalm!.dpsBrulure === 12 && f2.napalm!.dps === 20 && f2.degats === 60 && Math.abs(g2.givre!.ralenti - 0.4) < 1e-9 && Math.abs(armeAmelioree(crachat, 'corrosion', 0.2).crachat!.acide.bonus - 0.42) < 1e-9 && (armeAmelioree(tourelle, 'pose', 0.25) as unknown as { pose: { duree: number } }).pose.duree === 10)
+verifier(`portée +12 % → rayon ${n2.napalm!.rayon.toFixed(2)} (14), portée ${n2.portee.toFixed(1)} (${napalm.portee}) ; la traînée de givre, sans portée, agrandie quand même (${armeAmelioree(givre, 'portee', 0.12).givre!.rayon.toFixed(2)}) ; feu +20 % → la brûlure ${f2.napalm!.dpsBrulure} (10), le reste non (${f2.napalm!.dps}, ${f2.degats}) ; givre +20 % → ralenti ${g2.givre!.ralenti.toFixed(2)} (0,5 : on ôte 60 % de la vitesse au lieu de 50) ; corrosion +20 % → vulnérabilité ${armeAmelioree(crachat, 'corrosion', 0.2).crachat!.acide.bonus.toFixed(2)} (0,35) ; cadence et durée +25 % → les tourelles durent ${(armeAmelioree(tourelle, 'cadence', 0.25) as unknown as { pose: { duree: number } }).pose.duree} (8)`, Math.abs(n2.napalm!.rayon - 15.68) < 1e-9 && Math.abs(n2.portee - napalm.portee * 1.12) < 1e-9 && Math.abs(armeAmelioree(givre, 'portee', 0.12).givre!.rayon - 8.96) < 1e-9 && armeAmelioree(givre, 'portee', 0.12).portee === 0 && f2.napalm!.dpsBrulure === 12 && f2.napalm!.dps === 20 && f2.degats === 60 && Math.abs(g2.givre!.ralenti - 0.4) < 1e-9 && Math.abs(armeAmelioree(crachat, 'corrosion', 0.2).crachat!.acide.bonus - 0.42) < 1e-9 && (armeAmelioree(tourelle, 'cadence', 0.25) as unknown as { pose: { duree: number } }).pose.duree === 10)
 // TOUTES LES ARMES : la moitié du bonus, sur chaque arme qui a la stat — même prise après la carte ; proposée seulement si
 // une arme portée a la stat
 {
   const g = carte({ sorte: 'armes' }, 'degats', 'legendaire')
-  const porteeG = carte({ sorte: 'armes' }, 'portee', 'rare')
-  const zoneG = carte({ sorte: 'armes' }, 'zone', 'rare')
+  const zoneG = carte({ sorte: 'armes' }, 'portee', 'rare')
   const ca = { ...base, armes: [canon, napalm] }
-  const avec = avecLesBonus(ca, ajouterLeBonus(ajouterLeBonus(ajouterLeBonus([], g), porteeG), zoneG))
-  verifier(`toutes les armes : la moitié (+${(g.bonus * 100).toFixed(1)} % de dégâts, la légendaire en donne 25) ; le canon ${avec.armes[0].degats} (${canon.degats}), le napalm ${avec.armes[1].degats} (${napalm.degats}) ; la portée et la zone de toutes les armes : le canon tire à ${avec.armes[0].portee.toFixed(1)} (${canon.portee}), le rayon du napalm ${avec.armes[1].napalm!.rayon.toFixed(2)} (${napalm.napalm!.rayon})`, Math.abs(g.bonus - 0.125) < 1e-9 && avec.armes[0].degats > canon.degats && avec.armes[1].degats > napalm.degats && Math.abs(avec.armes[0].portee - canon.portee * 1.06) < 1e-9 && Math.abs(avec.armes[1].napalm!.rayon - napalm.napalm!.rayon * 1.06) < 1e-9)
+  const avec = avecLesBonus(ca, ajouterLeBonus(ajouterLeBonus([], g), zoneG))
+  verifier(`toutes les armes : la moitié (+${(g.bonus * 100).toFixed(1)} % de dégâts, la légendaire en donne 25) ; le canon ${avec.armes[0].degats} (${canon.degats}), le napalm ${avec.armes[1].degats} (${napalm.degats}) ; la portée de toutes les armes : le canon tire à ${avec.armes[0].portee.toFixed(1)} (${canon.portee}), le rayon du napalm ${avec.armes[1].napalm!.rayon.toFixed(2)} (${napalm.napalm!.rayon})`, Math.abs(g.bonus - 0.125) < 1e-9 && avec.armes[0].degats > canon.degats && avec.armes[1].degats > napalm.degats && Math.abs(avec.armes[0].portee - canon.portee * 1.06) < 1e-9 && Math.abs(avec.armes[1].napalm!.rayon - napalm.napalm!.rayon * 1.06) < 1e-9)
   // (une arme ajoutée après la carte la reçoit aussi)
   const apres = avecLesBonus({ ...base, armes: [canon] }, ajouterLeBonus([], g))
   const plusTard = avecLesBonus({ ...base, armes: [canon, napalm] }, ajouterLeBonus([], g))
@@ -54,7 +52,7 @@ verifier(`zone +12 % → rayon ${n2.napalm!.rayon.toFixed(2)} (14), portée +12 
   }
   const seul = statsGlobalesVues([canon])
   const avecZone = statsGlobalesVues([canon, napalm])
-  verifier(`toutes les armes, proposées selon ce qu'on porte : le canon seul ${[...seul].join(', ')} ; avec le napalm ${[...avecZone].join(', ')}`, seul.has('degats') && seul.has('portee') && !seul.has('zone') && !seul.has('feu') && seul.has('critique') && avecZone.has('portee') && avecZone.has('zone') && avecZone.has('feu'))
+  verifier(`toutes les armes, proposées selon ce qu'on porte : le canon seul ${[...seul].join(', ')} ; avec le napalm ${[...avecZone].join(', ')}`, seul.has('degats') && seul.has('portee') && !seul.has('feu') && seul.has('critique') && avecZone.has('portee') && avecZone.has('feu'))
 }
 {
   // (LE CRITIQUE EST À L'ARME — Keko, 22/11 : celui du canon ne touche que le canon ; « toutes les armes », la moitié, au vaisseau)
@@ -97,8 +95,8 @@ verifier('le délai passé, ce qui restait à choisir part en réserve', reserve
 {
   // (LA ZONE GRANDIT TOUT CE QUI EST UNE ZONE — 22/11 : le rayon de la Singularité, et celui de son effondrement)
   const puits = { id: 'puits', cadence: 5, degats: 11.5, portee: 130, vitesse: 0, vie: 0, dispersion: 0, guide: false, puits: { vitesse: 150, rayon: 45, force: 70, duree: 2, eclat: 28 } } as Arme
-  const z = armeAmelioree(armeAmelioree(puits, 'portee', 0.25), 'zone', 0.25)
-  verifier(`« Portée » et « Zone » de +25 % : la Singularité, lancée à ${z.portee} (130), attire à ${z.puits!.rayon} (45), s'effondre à ${z.puits!.eclat} (28) ; sa force ne bouge pas (${z.puits!.force})`, z.puits!.rayon === 56.25 && z.portee === 162.5 && z.puits!.eclat === 35 && z.puits!.force === 70)
+  const z = armeAmelioree(puits, 'portee', 0.25)
+  verifier(`une carte « Portée » de +25 % : la Singularité, lancée à ${z.portee} (130), attire à ${z.puits!.rayon} (45), s'effondre à ${z.puits!.eclat} (28) ; sa force ne bouge pas (${z.puits!.force})`, z.puits!.rayon === 56.25 && z.portee === 162.5 && z.puits!.eclat === 35 && z.puits!.force === 70)
 }
 {
   // (« ZONE ET PORTÉE » GRANDIT L'IMPULSION, LA DÉTONATION ET LE RICOCHET DU LASER, prise avant ou après la variation —
@@ -106,36 +104,34 @@ verifier('le délai passé, ce qui restait à choisir part en réserve', reserve
   const laser = { id: 'laser', cadence: 1.1, degats: 9, portee: 120, vitesse: 420, vie: 0.7, dispersion: 0, guide: false, infaillible: true } as Arme
   const cfg: ConfigVaisseau = { ...C, armes: [{ ...laser, place: 0 }] }
   const zp = carte({ sorte: 'arme', arme: 'laser' }, 'portee', 'legendaire')
-  const zz = carte({ sorte: 'arme', arme: 'laser' }, 'zone', 'legendaire')
   const spe = (id: string) => carteSpeciale(MUTATIONS.find((x) => x.id === id)!)
   const vu = (ids: string[], avant: boolean): Arme => {
-    let b: Bonus = avant ? ajouterLeBonus(ajouterLeBonus([], zp), zz) : []
+    let b: Bonus = avant ? ajouterLeBonus([], zp) : []
     for (const id of ids) b = ajouterLeBonus(b, spe(id))
-    return avecLesBonus(cfg, avant ? b : ajouterLeBonus(ajouterLeBonus(b, zp), zz)).armes[0]
+    return avecLesBonus(cfg, avant ? b : ajouterLeBonus(b, zp)).armes[0]
   }
   const ids = ['laser-impulsion', 'laser-detonation', 'laser-ricochet']
   const av = vu(ids, true)
   const ap = vu(ids, false)
   const tg = carte({ sorte: 'armes' }, 'portee', 'legendaire')
-  const tgz = carte({ sorte: 'armes' }, 'zone', 'legendaire')
-  const gl = avecLesBonus(cfg, ajouterLeBonus(ajouterLeBonus(ids.reduce<Bonus>((b, id) => ajouterLeBonus(b, spe(id)), []), tg), tgz)).armes[0]
+  const gl = avecLesBonus(cfg, ajouterLeBonus(ids.reduce<Bonus>((b, id) => ajouterLeBonus(b, spe(id)), []), tg)).armes[0]
   // (LA DURÉE FAIT DURER LA BOULE DE LA BOBINE — Keko, 26/11)
   const tesla = armeDeFaction('tesla')!.armes()[0]
-  const td = armeAmelioree(tesla, 'pose', 0.25)
-  verifier(`la bobine tesla a la carte Durée (${statsDeLArme(tesla).join(', ')}) : +25 %, sa boule dure ${td.sphere?.duree} s (3)`, statsDeLArme(tesla).includes('pose') && td.sphere?.duree === 3.75)
+  const td = armeAmelioree(tesla, 'cadence', 0.25)
+  verifier(`la bobine tesla (${statsDeLArme(tesla).join(', ')}) : « Cadence et durée » +25 %, sa boule dure ${td.sphere?.duree} s (3)`, statsDeLArme(tesla).includes('cadence') && td.sphere?.duree === 3.75)
   // (« ZONE ET PORTÉE » SUR LES VARIATIONS DE LA BOBINE — Keko, 26/11 : le saut de la Conduction, l'anneau du Magnétisme,
   // l'explosion du Court-circuit, qui vaut `taille` fois la boule)
   const cfgT: ConfigVaisseau = { ...C, armes: [{ ...tesla, place: 0 }] }
-  const bT = ['tesla-conduction', 'tesla-magnetisme', 'tesla-court-circuit'].reduce<Bonus>((b, id) => ajouterLeBonus(b, spe(id)), ajouterLeBonus(ajouterLeBonus([], carte({ sorte: 'arme', arme: 'tesla' }, 'portee', 'legendaire')), carte({ sorte: 'arme', arme: 'tesla' }, 'zone', 'legendaire')))
+  const bT = ['tesla-conduction', 'tesla-magnetisme', 'tesla-court-circuit'].reduce<Bonus>((b, id) => ajouterLeBonus(b, spe(id)), ajouterLeBonus([], carte({ sorte: 'arme', arme: 'tesla' }, 'portee', 'legendaire')))
   const tz = avecLesBonus(cfgT, bT).armes[0].sphere!
-  verifier(`« Portée » et « Zone » légendaires sur la bobine : la boule ${tz.rayon} (42), le saut de la Conduction ${tz.foudre?.rebonds?.saut} (45), l'anneau du Magnétisme ${tz.magnetisme?.rayon} (60), l'explosion du Court-circuit ${tz.rayon * tz.court!.taille} (63)`, tz.rayon === 52.5 && tz.foudre?.rebonds?.saut === 56.25 && tz.magnetisme?.rayon === 75 && tz.rayon * tz.court!.taille === 78.75)
+  verifier(`« Zone et portée » légendaire sur la bobine : la boule ${tz.rayon} (42), le saut de la Conduction ${tz.foudre?.rebonds?.saut} (45), l'anneau du Magnétisme ${tz.magnetisme?.rayon} (60), l'explosion du Court-circuit ${tz.rayon * tz.court!.taille} (63)`, tz.rayon === 52.5 && tz.foudre?.rebonds?.saut === 56.25 && tz.magnetisme?.rayon === 75 && tz.rayon * tz.court!.taille === 78.75)
   // (LES ÉCLATS DE LA FRAGMENTATION VONT PLUS LOIN — Keko, 26/11)
   const gr = armeDeFaction('grenades')!.armes()[0]
-  const gf = avecLesBonus({ ...C, armes: [{ ...gr, place: 0 }] }, ajouterLeBonus(ajouterLeBonus([], carte({ sorte: 'arme', arme: 'grenades' }, 'zone', 'legendaire')), spe('grenades-fragmentation'))).armes[0]
-  verifier(`« Zone » légendaire sur les grenades : l'explosion ${gf.zone?.rayon} (28), les éclats de la Fragmentation vont à ${gf.fragments!.vitesse * gf.fragments!.vie} (40)`, gf.zone?.rayon === 35 && gf.fragments!.vitesse * gf.fragments!.vie === 50)
+  const gf = avecLesBonus({ ...C, armes: [{ ...gr, place: 0 }] }, ajouterLeBonus(ajouterLeBonus([], carte({ sorte: 'arme', arme: 'grenades' }, 'portee', 'legendaire')), spe('grenades-fragmentation'))).armes[0]
+  verifier(`« Zone et portée » légendaire sur les grenades : l'explosion ${gf.zone?.rayon} (28), les éclats de la Fragmentation vont à ${gf.fragments!.vitesse * gf.fragments!.vie} (40)`, gf.zone?.rayon === 35 && gf.fragments!.vitesse * gf.fragments!.vie === 50)
   // (LA DURÉE, CE QUI A UNE VIE À SOI — Keko, 26/11 : la balise laser oui, la flaque de napalm non)
   const li = armeDeFaction('lien')!.armes()[0]
-  verifier(`la balise laser a la carte Durée (${statsDeLArme(li).join(', ')}) : +25 %, elle dure ${armeAmelioree(li, 'pose', 0.25).lien?.duree} s (4) ; la flaque de napalm ne l'a plus`, statsDeLArme(li).includes('pose') && armeAmelioree(li, 'pose', 0.25).lien?.duree === 5)
+  verifier(`la balise laser, « Cadence et durée » (${statsDeLArme(li).join(', ')}) : +25 %, elle dure ${armeAmelioree(li, 'cadence', 0.25).lien?.duree} s (4) ; la flaque de napalm ne l'a plus`, statsDeLArme(li).includes('cadence') && armeAmelioree(li, 'cadence', 0.25).lien?.duree === 5)
   // (LE DÉLUGE ET LA BORDÉE DES MISSILES — Keko, 26/11 : une pluie de quatre mini-missiles à intervalles réguliers, qui garde
   // l'élément du missile ; les deux ailes ensemble)
   const mm = { id: 'minimissile', cadence: 3.2, degats: 80, portee: 120, vitesse: 110, vie: 1.8, dispersion: 0.25, guide: true, zone: { rayon: 18 } } as Arme
@@ -147,7 +143,7 @@ verifier('le délai passé, ce qui restait à choisir part en réserve', reserve
   const es = armeDeFaction('escorte')!.armes()[0]
   const ec = avecLesBonus({ ...C, armes: [{ ...es, place: 0 }] }, ajouterLeBonus(ajouterLeBonus([], carte({ sorte: 'arme', arme: 'escorte' }, 'portee', 'legendaire')), spe('escorte-chasse'))).armes[0]
   verifier(`« Zone et portée » légendaire sur l'escorte en Chasse : sa proie se choisit à ${ec.orbite?.laisse} du vaisseau (160)`, ec.orbite?.laisse === 200 && ec.orbite.chasse === true)
-  verifier(`« Portée » et « Zone » légendaires (+25 %), prises AVANT les variations : l'onde de l'Impulsion ${av.zone?.rayon} (16), la Détonation ${av.detonation?.rayon} (24), le Ricochet ${av.ricochet?.portee} (80) ; prise après : ${ap.zone?.rayon}, ${ap.detonation?.rayon}, ${ap.ricochet?.portee} ; « toutes les armes » (+12,5 %) : ${gl.zone?.rayon}, ${gl.detonation?.rayon}, ${gl.ricochet?.portee}`, [av, ap].every((a) => a.zone?.rayon === 20 && a.detonation?.rayon === 30 && a.ricochet?.portee === 100 && a.portee === 150) && gl.zone?.rayon === 18 && gl.detonation?.rayon === 27 && gl.ricochet?.portee === 90)
+  verifier(`« Zone et portée » légendaire (+25 %), prise AVANT les variations : l'onde de l'Impulsion ${av.zone?.rayon} (16), la Détonation ${av.detonation?.rayon} (24), le Ricochet ${av.ricochet?.portee} (80) ; prise après : ${ap.zone?.rayon}, ${ap.detonation?.rayon}, ${ap.ricochet?.portee} ; « toutes les armes » (+12,5 %) : ${gl.zone?.rayon}, ${gl.detonation?.rayon}, ${gl.ricochet?.portee}`, [av, ap].every((a) => a.zone?.rayon === 20 && a.detonation?.rayon === 30 && a.ricochet?.portee === 100 && a.portee === 150) && gl.zone?.rayon === 18 && gl.detonation?.rayon === 27 && gl.ricochet?.portee === 90)
 }
 {
   // LES CARTES SPÉCIALES (Keko, 22/11 : aux niveaux 10, 20, 30, une nouvelle arme et une variation de l'arme principale au
@@ -206,7 +202,7 @@ verifier('le délai passé, ce qui restait à choisir part en réserve', reserve
   const avecFouet = mu('tentacule-fouet').appliquer(depart)
   const fouet = avecFouet.armes[1]
   verifier(`la Tentacule a ${variations.length} variations (${variations.map((v) => v.nom).join(', ')}), aucune sans effet (${sansEffet.join(', ') || 'aucune'})`, variations.length === 6 && sansEffet.length === 0)
-  verifier(`Bouture : pas de carte « Durée » pour la tentacule, même avec elle (${statsDeLArme(bouture).join(', ')})`, !statsDeLArme(bouture).includes('pose') && !statsDeLArme(tentacule).includes('pose'))
+  verifier(`Bouture : « Cadence et durée » +50 % la fait vivre ${armeAmelioree(bouture, 'cadence', 0.5).bouture?.duree} s au lieu de 4`, armeAmelioree(bouture, 'cadence', 0.5).bouture?.duree === 6)
   verifier('Méduse : la tentacule électrocute, la carte « Électrocution » paraît', statsDeLArme(meduse).includes('electrocution') && !statsDeLArme(tentacule).includes('electrocution'))
   verifier(`Fouet : la piqûre reste, le fouet s'y ajoute — une seconde arme sans tentacule (${fouet?.degats} toutes les ${fouet?.cadence} s)`, avecFouet.armes.length === 2 && avecFouet.armes[0].tentacule !== undefined && fouet.tentacule === undefined && fouet.fouet !== undefined && fouet.degats === 50 && fouet.cadence === 1.2)
 }
