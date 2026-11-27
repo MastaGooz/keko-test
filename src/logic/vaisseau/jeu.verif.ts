@@ -1683,9 +1683,10 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
     const loin = 1000 - (w.ennemis.find((e) => e.id === 3)?.pv ?? 1000)
     verifier(`Lacération : la cible morte au deuxième coup, le troisième se reporte sur l'insecte à portée (${voisin}), pas sur le lointain (${loin})`, !w.ennemis.some((e) => e.id === 1) && voisin === 3 && loin === 0)
   }
-  // (ENVERGURE : immobile, la portée monte jusqu'au double en 3 s — un insecte à 90 est piqué ; en mouvement, jamais)
+  // (ENVERGURE : sans pousser, la portée monte jusqu'au double en 3 s — un insecte à 90 est piqué ; en poussant, jamais ;
+  // et il se déploie même s'il dérive encore)
   {
-    const envergure = { ...corps, deploiement: { max: 2, montee: 3, descente: 0.4, seuil: 12 } }
+    const envergure = { ...corps, deploiement: { max: 2, montee: 3, descente: 0.4, seuil: 0.05 } }
     const immobile = jouerAvec(envergure, [[90, 0]], 4)
     const conf = { ...sansCritique, armes: [envergure] }
     const w = nouveauMonde(conf, 3)
@@ -1695,10 +1696,16 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
     for (let i = 0; i < 240; i++) {
       w.ennemis[0].corps = { ...w.ennemis[0].corps, x: 90, y: 0, vx: 0, vy: 0 }
       w.vaisseau = { ...w.vaisseau, x: 0, y: 0, vx: 30, vy: 0, cap: 0 }
-      ev.push(...avancerLeMonde(conf, w, 1 / 60, { x: 0, y: 0 }).evenements)
+      ev.push(...avancerLeMonde(conf, w, 1 / 60, { x: 1, y: 0 }).evenements)
+    }
+    // (… en dérive, le manche lâché : il se déploie)
+    const dv = nouveauMonde(conf, 3)
+    for (let i = 0; i < 120; i++) {
+      dv.vaisseau = { ...dv.vaisseau, x: 0, y: 0, vx: 30, vy: 0, cap: 0 }
+      avancerLeMonde(conf, dv, 1 / 60, { x: 0, y: 0 })
     }
     const nImmobile = immobile.ev.filter((e) => e.type === 'piqure').length
-    verifier(`Envergure : immobile, la portée monte jusqu'au double (déploiement ${immobile.w.deploiement.toFixed(2)}) — un insecte à 90 est piqué (${nImmobile} fois) ; en mouvement, jamais (${ev.filter((e) => e.type === 'piqure').length}, déploiement ${w.deploiement.toFixed(2)})`, immobile.w.deploiement === 1 && nImmobile > 0 && ev.every((e) => e.type !== 'piqure') && w.deploiement === 0)
+    verifier(`Envergure : sans pousser, la portée monte jusqu'au double (déploiement ${immobile.w.deploiement.toFixed(2)}) — un insecte à 90 est piqué (${nImmobile} fois) ; en poussant, jamais (${ev.filter((e) => e.type === 'piqure').length}, déploiement ${w.deploiement.toFixed(2)}) ; en dérive à 30, le manche lâché, il se déploie (${dv.deploiement.toFixed(2)} en 2 s)`, immobile.w.deploiement === 1 && nImmobile > 0 && ev.every((e) => e.type !== 'piqure') && w.deploiement === 0 && dv.deploiement > 0.6)
   }
   // (BOUTURE : un critique fait pousser une petite tentacule sur l'insecte, au bord qui fait face au coup ; elle pique ses
   // voisins, pas lui ; un nouveau critique la fait repartir, sans en ajouter une seconde ; son hôte mort, elle meurt)

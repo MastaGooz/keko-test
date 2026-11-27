@@ -233,7 +233,7 @@ type Voix = { gain: GainNode; filtre?: BiquadFilterNode; notes?: OscillatorNode[
  * toujours ; la BÊTE, un gargouillis de gaz ; le NÉANT, un bourdon grave qui bat. Une voix par genre, née au besoin ;
  * celles des autres genres se taisent.
  */
-export type GenreDePropulsion = 'souffle' | 'bete' | 'neant' | 'ethere'
+export type GenreDePropulsion = 'souffle' | 'bete' | 'nage' | 'neant' | 'ethere'
 const propulsions = new Map<GenreDePropulsion, Voix>()
 let propulsion: Voix | null = null
 let forage: Voix | null = null
@@ -482,6 +482,93 @@ function voixDeBete(ctx: AudioContext): Voix {
 }
 
 /**
+ * LA NAGE DU KRAKEN (Keko, 27/11 : « le bruit de la propulsion est bizarre ; quelque chose de plus biologique, de plus
+ * organique et de plus diffus ; je trouve que ça fait trop artificiel » — il avait le jet de gaz des bêtes, écrit pour les
+ * pustules de la Vouivre) : DE L'EAU QUE DES BRAS BRASSENT, entendue de dedans — du bruit ROSE (plus de sifflement), dans un
+ * passe-bas doux vers 320 Hz, sans résonance ; son volume enfle et retombe au rythme d'une brasse lente (0,8 Hz) qu'une
+ * seconde onde (0,31 Hz) décale, jamais deux fois pareil ; en dessous, UN CORPS QUI BAT — un sinus à 58 Hz, à peine, que la
+ * même brasse fait respirer ; et le tout DIFFUS : deux échos courts (47 et 83 ms) qui se renvoient, étouffés, à gauche et à
+ * droite. Rien d'aigu, rien de net. `regler` ouvre un peu le passe-bas avec la poussée.
+ */
+function voixDeLaNage(ctx: AudioContext): Voix {
+  // (du bruit rose : six passe-bas du premier ordre sommés — la recette de Paul Kellet)
+  const b = ctx.createBuffer(1, ctx.sampleRate * 4, ctx.sampleRate)
+  const d = b.getChannelData(0)
+  let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0
+  for (let i = 0; i < d.length; i++) {
+    const w = Math.random() * 2 - 1
+    b0 = 0.99886 * b0 + w * 0.0555179
+    b1 = 0.99332 * b1 + w * 0.0750759
+    b2 = 0.969 * b2 + w * 0.153852
+    b3 = 0.8665 * b3 + w * 0.3104856
+    b4 = 0.55 * b4 + w * 0.5329522
+    b5 = -0.7616 * b5 - w * 0.016898
+    d[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + w * 0.5362) * 0.11
+    b6 = w * 0.115926
+  }
+  const bruit = ctx.createBufferSource()
+  bruit.buffer = b
+  bruit.loop = true
+  const filtre = ctx.createBiquadFilter()
+  filtre.type = 'lowpass'
+  filtre.frequency.value = 320
+  filtre.Q.value = 0.3
+  // (la brasse : le volume enfle et retombe, lentement, irrégulier)
+  const brasse = ctx.createGain()
+  brasse.gain.value = 0.6
+  const coeur = ctx.createGain()
+  coeur.gain.value = 0.1
+  for (const [f, a] of [[0.8, 0.3], [0.31, 0.16]]) {
+    const o = ctx.createOscillator()
+    o.frequency.value = f
+    const g = ctx.createGain()
+    g.gain.value = a
+    o.connect(g).connect(brasse.gain)
+    const gc = ctx.createGain()
+    gc.gain.value = a * 0.2
+    o.connect(gc).connect(coeur.gain)
+    o.start()
+  }
+  // (le corps qui bat, très bas)
+  const corps = ctx.createOscillator()
+  corps.type = 'sine'
+  corps.frequency.value = 58
+  // (diffus : deux échos courts croisés, étouffés, de part et d'autre)
+  const sec = ctx.createGain()
+  const gain = ctx.createGain()
+  gain.gain.value = 0
+  bruit.connect(filtre).connect(brasse).connect(sec)
+  corps.connect(coeur).connect(sec)
+  sec.connect(gain)
+  const retours: DelayNode[] = []
+  for (const [temps, cote] of [[0.047, -0.7], [0.083, 0.7]]) {
+    const retard = ctx.createDelay(0.2)
+    retard.delayTime.value = temps
+    const sourd = ctx.createBiquadFilter()
+    sourd.type = 'lowpass'
+    sourd.frequency.value = 500
+    const part = ctx.createGain()
+    part.gain.value = 0.55
+    const pan = ctx.createStereoPanner()
+    pan.pan.value = cote
+    sec.connect(retard)
+    retard.connect(sourd).connect(part).connect(pan).connect(gain)
+    retours.push(retard)
+    // (chacun renvoie un peu dans l'autre)
+    const renvoi = ctx.createGain()
+    renvoi.gain.value = 0.35
+    sourd.connect(renvoi)
+    ;(retard as DelayNode & { renvoi?: GainNode }).renvoi = renvoi
+  }
+  ;(retours[0] as DelayNode & { renvoi?: GainNode }).renvoi!.connect(retours[1])
+  ;(retours[1] as DelayNode & { renvoi?: GainNode }).renvoi!.connect(retours[0])
+  gain.connect(ctx.destination)
+  bruit.start()
+  corps.start()
+  return { gain, filtre }
+}
+
+/**
  * LE NÉANT : deux dents de scie à 41 et 41,7 Hz (elles battent), une troisième à l'octave, dans un passe-bas qui respire
  * lentement (0,23 Hz : le son « tourne », dimensionnel) ; un trémolo de 6 Hz le fait vibrer. Très grave : ses harmoniques
  * le portent jusqu'à un petit haut-parleur.
@@ -686,7 +773,7 @@ export function regler(poussee: number, creuse: boolean, compte: number, monte: 
     if (ctx.state !== 'running') return
     // (le genre du vaisseau : sa voix, née au besoin ; les autres se taisent — `&sons=arcade` garde le souffle)
     const g = ARCADE ? 'souffle' : genre
-    if (!propulsions.has(g) && poussee > 0.02) propulsions.set(g, g === 'bete' ? voixDeBete(ctx) : g === 'neant' ? voixDuNeant(ctx) : g === 'ethere' ? voixDesEtheres(ctx) : voixDePropulsion(ctx))
+    if (!propulsions.has(g) && poussee > 0.02) propulsions.set(g, g === 'bete' ? voixDeBete(ctx) : g === 'nage' ? voixDeLaNage(ctx) : g === 'neant' ? voixDuNeant(ctx) : g === 'ethere' ? voixDesEtheres(ctx) : voixDePropulsion(ctx))
     for (const [autre, vx] of propulsions) if (autre !== g) vx.gain.gain.setTargetAtTime(0, ctx.currentTime, 0.05)
     propulsion = propulsions.get(g) ?? null
     if (forage === null && creuse) forage = voixDeForage(ctx)
@@ -727,6 +814,11 @@ export function regler(poussee: number, creuse: boolean, compte: number, monte: 
         // (le jet de gaz, discret : il souffle plus fort et plus clair avec la poussée — plus de bulles en vol, Keko, 20/11)
         propulsion.gain.gain.setTargetAtTime(ZZFX.volume * 0.09 * poussee, t, 0.06)
         propulsion.filtre!.frequency.setTargetAtTime(1300 + 900 * poussee, t, 0.12)
+      } else if (g === 'nage') {
+        // (la nage : elle enfle doucement et retombe lentement — une eau qu'on brasse, pas un moteur qu'on allume ; son
+        // passe-bas s'ouvre à peine)
+        propulsion.gain.gain.setTargetAtTime(ZZFX.volume * 0.5 * poussee, t, poussee > 0.05 ? 0.25 : 0.5)
+        propulsion.filtre!.frequency.setTargetAtTime(260 + 240 * poussee, t, 0.3)
       } else if (g === 'neant') {
         // (le bourdon, grave : 0,22 d'abord — Keko, 16/11 : « réduis le volume du son que fait la propulsion du Néant en vol »)
         propulsion.gain.gain.setTargetAtTime(ZZFX.volume * 0.1 * poussee, t, 0.08)

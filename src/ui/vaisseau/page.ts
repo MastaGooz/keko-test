@@ -14399,7 +14399,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * LE SON DE LA POUSSÉE, selon le vaisseau (Keko, 16/11) : les bêtes (le Kraken, la Vouivre) gargouillent, le Néant
    * bourdonne, les autres soufflent — en vol (`regler`) comme au décollage du hangar (`sonDuDecollage`).
    */
-  const genreDePropulsion = (): GenreDePropulsion => {
+  const genreDePropulsion = (): Exclude<GenreDePropulsion, 'nage'> => {
     const c = monteeA(hangar, 'coque').cran
     // (… ET LES VECTRANS — la Sentinelle, le Frimas, le Pulsar — UN BOURDON CRISTALLIN : Keko, 19/11, « une technologie
     // différente »)
@@ -19731,7 +19731,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // de l'extraction monte avec l'arc d'or (et se tait quand le compte est au bout : le son de l'extraction la relève)
       if (m.extraction !== compteVu) compteMonte = m.extraction > compteVu
       compteVu = m.extraction
-      regler(m.phase === 'vol' ? Math.max(flamme, 0.6 * v.poussee) : 0, m.phase === 'vol' && (m.forage !== null || m.canal !== null), m.phase === 'vol' ? m.extraction / CONF.extraction.duree : 0, compteMonte, m.phase === 'vol' && m.crache, genreDePropulsion(), bourdonDeLaNuee(), m.phase === 'vol' ? laserQuiBrule() : null, m.phase === 'vol' ? rayonConcentre() : null)
+      regler(m.phase === 'vol' ? Math.max(flamme, 0.6 * v.poussee) : 0, m.phase === 'vol' && (m.forage !== null || m.canal !== null), m.phase === 'vol' ? m.extraction / CONF.extraction.duree : 0, compteMonte, m.phase === 'vol' && m.crache, monteeA(hangar, 'coque').cran === 10 ? 'nage' : genreDePropulsion(), bourdonDeLaNuee(), m.phase === 'vol' ? laserQuiBrule() : null, m.phase === 'vol' ? rayonConcentre() : null)
       if (m.phase === 'vol') annoncerLesSons()
       for (const e of m.ennemis) {
         const f = flammesEnnemies.get(e.id) ?? 0

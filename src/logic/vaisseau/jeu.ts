@@ -1177,8 +1177,9 @@ export type Arme = {
    * L'ENVERGURE (Keko, 27/11 : « lorsque le Kraken est immobile, ses tentacules s'étendent de plus en plus loin ; elles ont
    * déjà un mode flottant où elles s'écartent ; on les fait se déployer en ondulant beaucoup plus loin et attaquer avec une
    * portée beaucoup plus grande ; le balayage bénéficie de cette portée ; quand le Kraken est immobile, sa portée augmente
-   * progressivement jusqu'à un maximum ») : sous `seuil` de vitesse, le DÉPLOIEMENT monte de 0 à 1 en `montee` secondes ;
-   * au-dessus, il retombe en `descente` secondes ; la portée de la tentacule et du fouet est multipliée par 1 + (`max` − 1) ×
+   * progressivement jusqu'à un maximum » ; puis « il faudrait que le déploiement commence dès qu'on arrête d'utiliser la
+   * propulsion, pas quand on est immobile ») : sous `seuil` de POUSSÉE (le manche lâché — il dérive encore), le DÉPLOIEMENT
+   * monte de 0 à 1 en `montee` secondes ; au-dessus, il retombe en `descente` secondes ; la portée de la tentacule et du fouet est multipliée par 1 + (`max` − 1) ×
    * le déploiement — voir `porteeTentaculaire`, `Monde.deploiement`.
    */
   deploiement?: { max: number; montee: number; descente: number; seuil: number }
@@ -4449,15 +4450,15 @@ export function porteeTentaculaire(c: ConfigVaisseau, m: Monde, a: Arme): number
   const d = c.armes.find((x) => x.deploiement !== undefined)?.deploiement
   return d === undefined ? a.portee : a.portee * (1 + (d.max - 1) * m.deploiement)
 }
-/** LE DÉPLOIEMENT (voir `Arme.deploiement`) : il monte quand le vaisseau ne bouge plus, retombe quand il bouge. */
+/** LE DÉPLOIEMENT (voir `Arme.deploiement`) : il monte dès que le vaisseau ne pousse plus, retombe quand il pousse. */
 function deployerLesTentacules(c: ConfigVaisseau, m: Monde, dt: number): void {
   const d = c.armes.find((x) => x.deploiement !== undefined)?.deploiement
   if (d === undefined || m.phase !== 'vol') {
     m.deploiement = 0
     return
   }
-  const immobile = Math.hypot(m.vaisseau.vx, m.vaisseau.vy) < d.seuil
-  m.deploiement = immobile ? Math.min(1, m.deploiement + dt / d.montee) : Math.max(0, m.deploiement - dt / d.descente)
+  const lache = m.vaisseau.poussee < d.seuil
+  m.deploiement = lache ? Math.min(1, m.deploiement + dt / d.montee) : Math.max(0, m.deploiement - dt / d.descente)
 }
 function menerLesTentacules(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
   const v = m.vaisseau

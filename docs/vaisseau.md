@@ -9655,4 +9655,10 @@ Keko : « lorsque le Kraken est immobile, ses tentacules s'étendent de plus en 
 - `Arme.deploiement` : `{ max: 2, montee: 3, descente: 0.4, seuil: 12 }`, chiffres de moi. Sous 12 de vitesse, LE DÉPLOIEMENT (`Monde.deploiement`, `deployerLesTentacules`) monte de 0 à 1 en 3 s. Au-dessus, il retombe en 0,4 s.
 - La portée de la tentacule et du Fouet est multipliée par 1 + le déploiement (`porteeTentaculaire`), jusqu'au double, 110 au lieu de 55. Le choix de la cible, la Lacération et l'arc du Fouet s'en servent.
 - À l'image, les six tentacules au repos s'allongent avec le déploiement, jusqu'à 2,4 fois, et leur houle devient plus lente et plus ample (`cordesDuKraken(…, allonge)`, `Allure.kraken.allonge`). Les tentacules projetées partent de leur bout.
-- Texte : « Immobile, les tentacules s'étendent et frappent de plus en plus loin. » (vérifié en capture, cinq lignes).
+- Texte : « Immobile, les tentacules s'étendent et frappent de plus en plus loin. » (vérifié en capture, cinq lignes).- **L'Envergure part dès que la propulsion s'arrête** (Keko, 27/11 : « il faudrait que le déploiement commence dès qu'on arrête d'utiliser la propulsion, pas quand on est immobile ») : `deploiement.seuil` devient un seuil de POUSSÉE (0,05, le manche lâché), plus de vitesse. Le Kraken se déploie donc en dérivant. Texte : « Sans propulsion, les tentacules s'étendent et frappent plus loin. » (cinq lignes, vérifié en capture).
+- **La nage du Kraken** (Keko, 27/11 : « le bruit de la propulsion est bizarre ; quelque chose de plus biologique, de plus organique et de plus diffus ; ça fait trop artificiel ») : il avait le jet de gaz des bêtes, écrit pour les pustules de la Vouivre. Il a sa voix à lui, `voixDeLaNage` (genre `nage`, la Vouivre et le Dévoreur gardent `bete`).
+  - C'est de l'eau que des bras brassent : du bruit rose dans un passe-bas doux vers 320 Hz, sans résonance, dont le volume suit une brasse lente et irrégulière (0,8 et 0,31 Hz).
+  - En dessous, un corps qui bat, un sinus à 58 Hz à peine audible.
+  - Le tout est diffus : deux échos courts croisés (47 et 83 ms), étouffés, à gauche et à droite.
+  - Il enfle en 0,25 s et retombe en 0,5 s, au lieu de s'allumer comme un moteur.
+  - Non écouté : le navigateur de capture n'a pas de son. Le volume (0,5 fois la poussée, sur un bruit rose bien plus faible que le blanc) est à régler à l'oreille.
