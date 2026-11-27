@@ -1261,6 +1261,9 @@ export type Arme = {
    */
   // (… ET IL SUIT LES ENNEMIS — Keko, 27/11 : « il faudrait que le nuage qui apparaît suive les ennemis et ne reste pas sur
   // place ; sinon, je trouve ça un peu trop faible » : il vole à `vitesse` vers l'insecte le plus proche de lui)
+  // (… AUTANT DE LARVES QUE L'INSECTE ÉTAIT GROS — Keko, 27/11 : « beaucoup trop d'insectes par nuée ; 3 ou 4 par insecte tué
+  // suffisent ; on peut déterminer le nombre par rapport à la taille de la cible tuée : un petit moucheron donnerait un seul
+  // insecte, les plus gros jusqu'à 10 » : voir `larvesDe` ; `part` est la part du budget POUR QUATRE LARVES, chacune mord)
   eclosion?: { delai: number; duree: number; rayon: number; part: number; vitesse: number }
   /**
    * L'ESSAIMAGE (la Nuée — Keko, 27/11 : « la durée augmente le temps du deuxième essaim ») : quand la nuée atteint sa taille
@@ -1801,7 +1804,7 @@ export type Monde = {
   /** LES BOUTURES (voir `Arme.bouture`) : leur hôte, leur place sur lui, jusqu'à quand, leur prochain coup, le dernier (quand, où). */
   boutures: Bouture[]
   /** LES ÉCLOSIONS (voir `Arme.eclosion`) : leur arme, où, de quand à quand, la dernière morsure signalée. */
-  eclosions: { arme: number; x: number; y: number; nee: number; jusque: number; mordA: number }[]
+  eclosions: { arme: number; x: number; y: number; nee: number; jusque: number; mordA: number; /** Combien de larves (voir `larvesDe`). */ larves: number }[]
   /** LES NUÉES FILLES (voir `Arme.essaimage`) : leur arme, où, de quand à quand, la dernière morsure signalée. */
   nueesFilles: { arme: number; x: number; y: number; nee: number; jusque: number; mordA: number }[]
   /** LE DÉPLOIEMENT DES TENTACULES (voir `Arme.deploiement`), de 0 (repliées) à 1 (à leur envergure). */
@@ -2376,7 +2379,7 @@ function abattreLEnnemi(c: ConfigVaisseau, m: Monde, e: Ennemi, ev: Evenement[],
   if (e.oeuf !== undefined && e.oeuf.jusque > m.t && e.asteroide === undefined) {
     const ec = c.armes[e.oeuf.arme]?.eclosion
     if (ec !== undefined) {
-      m.eclosions.push({ arme: e.oeuf.arme, x: e.corps.x, y: e.corps.y, nee: m.t, jusque: m.t + ec.duree, mordA: m.t })
+      m.eclosions.push({ arme: e.oeuf.arme, x: e.corps.x, y: e.corps.y, nee: m.t, jusque: m.t + ec.duree, mordA: m.t, larves: larvesDe(e) })
       ev.push({ type: 'eclosionDeNuee', x: e.corps.x, y: e.corps.y })
     }
   }
@@ -5946,6 +5949,8 @@ function coupDeNuee(c: ConfigVaisseau, m: Monde, a: Arme, i: number, e: Ennemi, 
   ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique: true })
   if (pond && a.eclosion !== undefined) e.oeuf = { jusque: m.t + a.eclosion.delai, arme: i }
 }
+/** COMBIEN DE LARVES sortent d'un insecte pondu (voir `Arme.eclosion`) : un moucheron 1, un insecte 3, un cornu 5, un cuirassier 8, un grand 10. */
+export const larvesDe = (e: Ennemi): number => (e.grand === true ? 10 : e.sorte === 'moucheron' ? 1 : e.sorte === 'cornu' ? 5 : e.sorte === 'cuirassier' ? 8 : 3)
 /** LES ÉCLOSIONS ET LES NUÉES FILLES (voir `Arme.eclosion`, `Arme.essaimage`) : de petits nuages qui mordent ce qu'ils couvrent, et s'éteignent. */
 function menerLesPetitsNuages(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]): void {
   const v = m.vaisseau
@@ -5984,7 +5989,7 @@ function menerLesPetitsNuages(c: ConfigVaisseau, m: Monde, dt: number, ev: Evene
       n.x += ((proie.corps.x - n.x) / dp) * pas
       n.y += ((proie.corps.y - n.y) / dp) * pas
     }
-    mordre(a, n.arme, n, a.eclosion.rayon, a.nuee.budget * a.eclosion.part, false)
+    mordre(a, n.arme, n, a.eclosion.rayon, (a.nuee.budget * a.eclosion.part * n.larves) / 4, false)
   }
   for (let k = m.nueesFilles.length - 1; k >= 0; k--) {
     const n = m.nueesFilles[k]

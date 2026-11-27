@@ -2,7 +2,7 @@
  * Vérifications du vaisseau, sans navigateur : le temps est injecté.
  */
 import { armeAmelioree } from './talents.ts'
-import { ELEMENTAIRES, porteeTentaculaire, probaDeCritique, TRAJECTOIRE_DU_MISSILE, type Arme, placeDuDrone, recompenseDeFin, tableauVide, chanceDePlaque, ajouterUnPilote, avancerLEquipage, etatDuPilote, partDe, gabaritDInsecte, rayonDe, rocheDeLaTempete, vieMultipliee, cadenceDeLaVague, asteroideDeLaCase, coupeDUnCube, asteroidesAutour, avancer, avancerLeMonde, encaisser, purger, impactDuRayon, lancerLaBombe, larguer, porteeDeLaBombe, MINERAIS, nouveauMonde, nouveauVaisseau, solidite, voler, totalDe, stationDeLaCase, stationLaPlusProche, VAISSEAU, verrouiller, ennemiLePlusProche, type ConfigVaisseau, type Ennemi, type Evenement, type Vaisseau, xpDuNiveau, gemmesDuButin, tire, type Pepite, type SorteDInsecte } from './jeu.ts'
+import { ELEMENTAIRES, larvesDe, porteeTentaculaire, probaDeCritique, TRAJECTOIRE_DU_MISSILE, type Arme, placeDuDrone, recompenseDeFin, tableauVide, chanceDePlaque, ajouterUnPilote, avancerLEquipage, etatDuPilote, partDe, gabaritDInsecte, rayonDe, rocheDeLaTempete, vieMultipliee, cadenceDeLaVague, asteroideDeLaCase, coupeDUnCube, asteroidesAutour, avancer, avancerLeMonde, encaisser, purger, impactDuRayon, lancerLaBombe, larguer, porteeDeLaBombe, MINERAIS, nouveauMonde, nouveauVaisseau, solidite, voler, totalDe, stationDeLaCase, stationLaPlusProche, VAISSEAU, verrouiller, ennemiLePlusProche, type ConfigVaisseau, type Ennemi, type Evenement, type Vaisseau, xpDuNiveau, gemmesDuButin, tire, type Pepite, type SorteDInsecte } from './jeu.ts'
 import { acheter, configDuHangar, hangarNeuf, monter, pieceDe } from './hangar.ts'
 import { depuisTexte, retirerLesPilotes, retirerUnPilote, versTexte, vuDu, vuDuSecond } from './reseau.ts'
 
@@ -1835,6 +1835,7 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
     const ec = jouerN(ecl, [[50, 0, 15], [120, 0, 1000]], 6, 100)
     const voisin = 1000 - (ec.w.ennemis.find((e) => e.id === 2)?.pv ?? 1000)
     verifier(`Éclosion : l'insecte pondu meurt et éclate (${ec.ev.filter((e) => e.type === 'eclosionDeNuee').length} nuage) ; il vole jusqu'à l'insecte à 120, loin de la nuée et de l'éclosion, et le mord (${voisin.toFixed(1)}) et n'est pas pondu`, ec.ev.filter((e) => e.type === 'eclosionDeNuee').length === 1 && voisin > 5 && ec.w.ennemis.find((e) => e.id === 2)?.oeuf === undefined && ec.w.eclosions.length === 0)
+    verifier(`Éclosion : autant de larves que l'insecte était gros — moucheron ${larvesDe({ ...insecte(1, 0, 0), sorte: 'moucheron' })}, insecte ${larvesDe(insecte(1, 0, 0))}, cornu ${larvesDe({ ...insecte(1, 0, 0), sorte: 'cornu' })}, cuirassier ${larvesDe({ ...insecte(1, 0, 0), sorte: 'cuirassier' })}, grand ${larvesDe({ ...insecte(1, 0, 0), grand: true })}`, larvesDe({ ...insecte(1, 0, 0), sorte: 'moucheron' }) === 1 && larvesDe(insecte(1, 0, 0)) === 3 && larvesDe({ ...insecte(1, 0, 0), grand: true }) === 10)
     // (ESSAIMAGE : à sa taille maximale, elle se dédouble — mi-taille, une nuée fille, une seule, qui s'éteint au bout de sa durée)
     const ess = { ...nuee, nuee: { ...nuee.nuee, festin: { pas: 0.2, max: 1, fonte: 10 } }, essaimage: { duree: 2, vitesse: 60, rayon: 18, part: 1, laisse: 150, morsures: 3 } } as Arme
     const es = jouerN(ess, [[40, 0, 1e6]], 2.3)

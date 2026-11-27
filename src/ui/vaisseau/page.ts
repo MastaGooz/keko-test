@@ -14081,9 +14081,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const ec = CONF.armes[n.arme]?.eclosion
       if (ec === undefined) continue
       const u = (m.t - n.nee) / Math.max(0.01, n.jusque - n.nee)
-      // (DES LARVES, plus grosses que les moucherons de la nuée — Keko, 27/11 : « des insectes un petit peu plus gros que la nuée
-      // pour la distinguer, lui donner une identité »)
-      dessinerUnPetitNuage(p, n.x, n.y, ec.rayon * Math.min(1, u * 6) * (0.85 + 0.15 * u), Math.round(16 * (1 - 0.5 * u * u)), CONF.armes[n.arme]?.incendiaire !== undefined, Math.round(n.nee * 97), true)
+      // (DES LARVES, un peu plus grosses que les moucherons de la nuée — Keko, 27/11 : « lui donner une identité » ; puis
+      // « beaucoup trop d'insectes, et trop gros » : autant que l'insecte tué était gros, de 1 à 10, serrées)
+      dessinerUnPetitNuage(p, n.x, n.y, (4 + 2.2 * Math.sqrt(n.larves)) * Math.min(1, u * 6), n.larves, CONF.armes[n.arme]?.incendiaire !== undefined, Math.round(n.nee * 97), true)
     }
     for (const n of m.nueesFilles) {
       const es = CONF.armes[n.arme]?.essaimage
@@ -14099,7 +14099,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /** Un petit nuage de moucherons, de rayon `R`, de `combien` moucherons — ceux de la nuée, qui tournent, tremblent et battent de l'aile ; `feu` : des lucioles. */
   function dessinerUnPetitNuage(p: Peintre, cx: number, cy: number, R: number, combien: number, feu: boolean, graine: number, larves = false): void {
     if (R < 1 || combien <= 0) return
-    p.disc(cx, cy, R, feu ? BRAISE_DES_LUCIOLES[0] : BILE[0], (d) => 0.2 * (1 - d * d))
+    if (!larves) p.disc(cx, cy, R, feu ? BRAISE_DES_LUCIOLES[0] : BILE[0], (d) => 0.2 * (1 - d * d))
     const tic = Math.floor(t * 24)
     for (let j = 0; j < combien; j++) {
       const g = j + graine
@@ -14108,15 +14108,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const ix = Math.round(cx + Math.cos(a) * r + (alea(g, tic, 49) - 0.5) * 1.2)
       const iy = Math.round(cy + Math.sin(a) * r * 0.85 + (alea(g, tic, 50) - 0.5) * 1.2)
       if (larves) {
-        // (une larve : un corps pâle et dodu de trois pixels, cerné, une tête sombre du côté où elle va, deux ailes qui battent)
+        // (UN PETIT INSECTE AILÉ — Keko, 27/11 : « on dirait des champignons » : une tête sombre, un abdomen pâle derrière
+        // elle, et DEUX AILES, une de chaque côté, qui s'ouvrent et se referment)
         const sens = j % 2 === 0 ? 1 : -1
-        const corps = feu ? BRAISE_DES_LUCIOLES[3] : CHAIR[5]
-        p.rect(ix - 2, iy - 1, 5, 3, CHAIR[0])
-        p.rect(ix - 1, iy, 3, 1, corps)
-        p.px(ix + sens * 2, iy, CHITINE_SOMBRE)
-        p.px(ix, iy - 1, feu ? BRAISE_DES_LUCIOLES[4] : BILE[2])
-        const aile = alea(g, tic, 51) < 0.5 ? -2 : 2
-        p.px(ix, iy + aile, feu ? BRAISE_DES_LUCIOLES[2] : N.WHITE)
+        p.px(ix, iy, CHITINE_SOMBRE)
+        p.px(ix - sens, iy, feu ? BRAISE_DES_LUCIOLES[3] : CHAIR[5])
+        const ouvertes = alea(g, tic, 51) < 0.5
+        const ax = ouvertes ? ix : ix - sens
+        const aile = feu ? BRAISE_DES_LUCIOLES[4] : N.WHITE
+        p.px(ax, iy - 1, aile)
+        p.px(ax, iy + 1, aile)
         if (feu) p.glow(ix, iy, 3, BRAISE_DES_LUCIOLES[1], 0.3)
         continue
       }
