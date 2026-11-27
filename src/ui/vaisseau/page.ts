@@ -13647,7 +13647,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       if (corde === undefined) continue
       const [ax, ay] = monde(corde[0])
       const repos = monde(corde[corde.length - 1])
-      const R = a.portee
+      // (à la distance de l'insecte visé : seul le slash frappe — voir `Arme.fouet`)
+      const R = f.rayon
       const angle = (u: number): number => f.cap + f.sens * fo.ouverture * (2 * balayageDuFouet(Math.max(0, Math.min(1, u))) - 1)
       const auBord = (an: number): [number, number] => [v.x + Math.cos(an) * R, v.y + Math.sin(an) * R]
       const entre = (p0: [number, number], p1: [number, number], q: number): [number, number] => [p0[0] + (p1[0] - p0[0]) * q, p0[1] + (p1[1] - p0[1]) * q]

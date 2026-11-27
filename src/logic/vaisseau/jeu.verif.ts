@@ -1658,6 +1658,9 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
     const tot = jouerAvec(fouet, [[30, 0]], 0.1)
     const flanc = jouerAvec(fouet, [[0, 40]], 0.2)
     verifier(`Fouet : rien avant d'être déployé (${tot.pv[0]} en 0,1 s) ; un insecte du côté des y positifs, il part de ce flanc (${flanc.w.fouets[0]?.cote})`, tot.pv[0] === 0 && flanc.w.fouets[0]?.cote === 1)
+    // (… SEUL LE SLASH FRAPPE, à la distance de l'insecte visé — Keko, 27/11 : « là, le bras du tentacule touche également »)
+    const bras = jouerAvec(fouet, [[45, 0], [20, 4], [47, 12]], 0.6, 1)
+    verifier(`Fouet : le slash est tracé à la distance de l'insecte visé (${bras.w.fouets[0]?.rayon.toFixed(1) ?? 'fini'}) ; il frappe le visé et son voisin dans sa bande (${bras.pv[0]}, ${bras.pv[2]}), pas celui que le bras survole, plus près (${bras.pv[1]})`, bras.pv[0] === 6 && bras.pv[2] === 6 && bras.pv[1] === 0)
   }
   // (BOUTURE : un critique fait pousser une petite tentacule sur l'insecte, au bord qui fait face au coup ; elle pique ses
   // voisins, pas lui ; un nouveau critique la fait repartir, sans en ajouter une seconde ; son hôte mort, elle meurt)

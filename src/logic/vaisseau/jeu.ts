@@ -1156,6 +1156,10 @@ export type Arme = {
    * (… REFAIT — Keko, 27/11 : « prendre le même tentacule et le déplacer comme un fouet, et laisser une traînée de slash » :
    * c'est l'une des six tentacules du Kraken, celle du milieu du flanc tourné vers l'insecte (`cote`) ; elle se déploie en
    * `DEPLOIEMENT_DU_FOUET`, balaie en accélérant (`balayageDuFouet`), se retire en `RETRAIT_DU_FOUET`)
+   * (… ET SEUL LE SLASH FRAPPE — Keko, 27/11 : « il faut uniquement que le slash touche les ennemis, et que la distance du
+   * slash par rapport au vaisseau s'adapte en fonction de la proximité de la cible principale ; là, le bras du tentacule
+   * touche également » : l'arc est tracé à la distance de l'insecte visé (`rayon`, de `RAYON_MIN_DU_FOUET` à `portee`), et
+   * ne frappe que ce qui est dans sa bande, à `BANDE_DU_FOUET` de lui ; ce que le bras survole, plus près, n'est pas touché)
    */
   fouet?: { ouverture: number; duree: number }
   /**
@@ -1726,7 +1730,7 @@ export type Monde = {
   /** LES TENTACULES (voir `Arme.tentacule`) : une par ancre, au repos ou non. */
   tentacules: Tentacule[]
   /** LES COUPS DE FOUET (voir `Arme.fouet`) : son arme, le milieu de l'arc, le sens du balayage, quand il est parti, ce qu'il a déjà frappé. */
-  fouets: { arme: number; cap: number; sens: number; /** Le flanc du vaisseau d'où il part (−1 : celui des y négatifs). */ cote: number; depuis: number; touches: number[]; /** Son balayage est fini : il se retire. */ fini: boolean }[]
+  fouets: { arme: number; cap: number; sens: number; /** Le flanc du vaisseau d'où il part (−1 : celui des y négatifs). */ cote: number; /** La distance au vaisseau où son slash est tracé : celle de l'insecte visé. */ rayon: number; depuis: number; touches: number[]; /** Son balayage est fini : il se retire. */ fini: boolean }[]
   /** LES BOUTURES (voir `Arme.bouture`) : leur hôte, leur place sur lui, jusqu'à quand, leur prochain coup, le dernier (quand, où). */
   boutures: Bouture[]
   /** LES NUAGES D'INSECTES (voir `Arme.nuee`) : un par arme, où (sur le vaisseau), la dernière morsure signalée, ses bras — leur insecte, leur allongement (0 à 1), le dernier point où il était. */
@@ -4614,7 +4618,8 @@ function menerLesFouets(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
     // (le flanc tourné vers l'insecte ; droit devant ou derrière, au hasard)
     const travers = Math.sin(cap - v.cap)
     const sens = tire(m.graine, m.prochainId++, 33) < 0.5 ? -1 : 1
-    m.fouets.push({ arme: i, cap, sens, cote: Math.abs(travers) > 0.2 ? Math.sign(travers) : sens, depuis: m.t, touches: [], fini: false })
+    const rayon = Math.max(RAYON_MIN_DU_FOUET, Math.min(a.portee, Math.hypot(cible.corps.x - v.x, cible.corps.y - v.y)))
+    m.fouets.push({ arme: i, cap, sens, cote: Math.abs(travers) > 0.2 ? Math.sign(travers) : sens, rayon, depuis: m.t, touches: [], fini: false })
     ev.push({ type: 'fouet', x: v.x, y: v.y })
   })
   for (let k = m.fouets.length - 1; k >= 0; k--) {
@@ -4639,7 +4644,8 @@ function menerLesFouets(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
       const dy = e.corps.y - v.y
       const d = Math.hypot(dx, dy)
       const r = rayonDe(c, e)
-      if (d > a.portee + r) continue
+      // (dans la bande du slash seulement)
+      if (Math.abs(d - f.rayon) > BANDE_DU_FOUET + r) continue
       const depuisLeBord = angleRamene(Math.atan2(dy, dx) - f.cap) * f.sens + fo.ouverture
       const marge = d > r ? Math.asin(r / d) : Math.PI
       if (depuisLeBord < -marge || depuisLeBord > balaye + marge) continue
@@ -4650,6 +4656,9 @@ function menerLesFouets(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
 }
 /** LE FOUET (voir `Arme.fouet`) : le temps où il se déploie avant de balayer, et celui où il se retire après, en secondes. */
 export const DEPLOIEMENT_DU_FOUET = 0.12
+/** LE SLASH DU FOUET : jusqu'où de son arc il frappe, de part et d'autre, et la distance au vaisseau où il est tracé au plus près. */
+export const BANDE_DU_FOUET = 6
+export const RAYON_MIN_DU_FOUET = 14
 export const RETRAIT_DU_FOUET = 0.22
 /** La part de son arc qu'un fouet a balayée, à la part `u` de son balayage : il part lentement, file au milieu, freine au bout (de 0 à 1). */
 export const balayageDuFouet = (u: number): number => u * u * (3 - 2 * u)
