@@ -1810,6 +1810,38 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   const un = planer([[40, 0], [0, 90]], 0, 2)
   // (UNE SEULE PORTÉE — Keko, 20/11 : à portée, il est mordu tout de suite ; le jet ne fait que s'étendre à l'image)
   verifier(`un insecte à 40 (à portée) : il est mordu tout de suite (${un.pv[0].toFixed(1)} en 2 s, 14 par seconde), un jet s’étend vers lui (à mi-course au bout de 0,15 s) ; le lointain, rien`, un.bras05 > 0.4 && un.bras05 < 0.7 && Math.abs(un.pv[0] - 28) < 0.5 && un.pv[1] === 0 && un.ev.some((e) => e.type === 'morsure'))
+  // LES CARTES SPÉCIALES DE LA NUÉE (Keko, 27/11)
+  {
+    const jouerN = (arme: Arme, places: [number, number, number][], duree: number, critique = 0) => {
+      const conf = { ...cfg, armes: [arme], passifs: { ...cfg.passifs, critique } }
+      const w = nouveauMonde(conf, 3)
+      places.forEach(([x, y, pv], k) => w.ennemis.push({ ...insecte(k + 1, x, y), pv }))
+      const ev: Evenement[] = []
+      let filles = 0
+      for (let i = 0; i < 60 * duree; i++) {
+        w.ennemis.forEach((e) => (e.corps = { ...e.corps, x: places[e.id - 1][0], y: places[e.id - 1][1], vx: 0, vy: 0 }))
+        w.vaisseau = { ...w.vaisseau, x: 0, y: 0, vx: 0, vy: 0 }
+        ev.push(...avancerLeMonde(conf, w, 1 / 60, { x: 0, y: 0 }).evenements)
+        filles = Math.max(filles, w.nueesFilles.length)
+      }
+      return { w, ev, filles }
+    }
+    // (LUCIOLES : les morsures enflamment)
+    const lu = jouerN({ ...nuee, incendiaire: { duree: 3, dps: 2 } } as Arme, [[40, 0, 1000]], 1)
+    verifier(`Lucioles : l'insecte mordu brûle (jusqu'à ${lu.w.ennemis[0].bruleA?.toFixed(1)} s)`, (lu.w.ennemis[0].bruleA ?? -1) > lu.w.t)
+    // (ÉCLOSION : un critique pond ; l'insecte pondu qui meurt éclate en un nuage, qui mord son voisin hors de portée de la
+    // nuée, et ne pond pas)
+    const ecl = { ...nuee, eclosion: { delai: 3, duree: 2, rayon: 20, part: 0.5 } } as Arme
+    const ec = jouerN(ecl, [[50, 0, 15], [72, 0, 1000]], 3, 100)
+    const voisin = 1000 - (ec.w.ennemis.find((e) => e.id === 2)?.pv ?? 1000)
+    verifier(`Éclosion : l'insecte pondu meurt et éclate (${ec.ev.filter((e) => e.type === 'eclosionDeNuee').length} nuage) ; son voisin à 72, hors de portée de la nuée, est mordu par lui (${voisin.toFixed(1)}) et n'est pas pondu`, ec.ev.filter((e) => e.type === 'eclosionDeNuee').length === 1 && voisin > 5 && ec.w.ennemis.find((e) => e.id === 2)?.oeuf === undefined && ec.w.eclosions.length === 0)
+    // (ESSAIMAGE : à sa taille maximale, elle se dédouble — mi-taille, une nuée fille, une seule, qui s'éteint au bout de sa durée)
+    const ess = { ...nuee, nuee: { ...nuee.nuee, festin: { pas: 0.2, max: 1, fonte: 10 } }, essaimage: { duree: 2, vitesse: 60, rayon: 18, part: 1, laisse: 150 } } as Arme
+    const es = jouerN(ess, [[40, 0, 1e6]], 2.3)
+    verifier(`Essaimage : pleine, la nuée se dédouble (${es.ev.filter((e) => e.type === 'essaimage').length} fois en 2,3 s, jamais plus d'une fille : ${es.filles}) et retombe vers la mi-taille (${es.w.nuees[0].croissance.toFixed(2)})`, es.ev.filter((e) => e.type === 'essaimage').length === 1 && es.filles === 1 && es.w.nuees[0].croissance < 0.95)
+    const fin = jouerN(ess, [[40, 0, 1e6]], 4.5)
+    verifier(`Essaimage : la fille s'éteint au bout de ses 2 s (${fin.ev.filter((e) => e.type === 'nueeFilleFinie').length} éteintes en 4,5 s)`, fin.ev.some((e) => e.type === 'nueeFilleFinie'))
+  }
   const cinq = planer([[30, 0], [-30, 0], [0, 35], [0, -40], [45, 30]], 0, 1)
   // (SANS LIMITE — Keko, 20/11 : « la nuée attaque autant d'ennemis à portée, en divisant ses dégâts entre ceux-ci »)
   verifier(`cinq insectes à portée : elle s’étend vers les cinq, et ils se partagent ses 14 points par seconde (${cinq.pv.map((x) => x.toFixed(1)).join(' / ')} en 1 s)`, cinq.w.nuees[0].bras.length === 5 && cinq.pv.every((x) => x > 0) && Math.abs(cinq.pv.reduce((s, x) => s + x, 0) - 14) < 0.5)

@@ -1254,6 +1254,21 @@ export type Arme = {
   // de moi.*)
   nuee?: { rayon: number; budget: number; deploiement: number; periode: number; festin?: { pas: number; max: number; /** En combien de secondes sans rien à mordre elle perd tout (voir plus haut). */ fonte: number; /** Sa croissance au départ (0 ; `&festin=P` l'essaie). */ depart?: number } }
   /**
+   * L'ÉCLOSION (la Nuée, SA VARIATION SUR COUP CRITIQUE — Keko, 27/11) : une morsure critique de la nuée POND dans l'insecte ;
+   * s'il meurt dans les `delai` secondes, il éclate en un petit nuage, de `rayon`, qui mord `duree` secondes ce qui l'entoure
+   * — `part` du budget de la nuée, partagé, avec son élément — et NE POND PAS : l'effet ne s'entretient pas seul. L'état est
+   * `Ennemi.oeuf`, `Monde.eclosions`.
+   */
+  eclosion?: { delai: number; duree: number; rayon: number; part: number }
+  /**
+   * L'ESSAIMAGE (la Nuée — Keko, 27/11 : « la durée augmente le temps du deuxième essaim ») : quand la nuée atteint sa taille
+   * maximale (`festin.max`), elle SE DÉDOUBLE — elle retombe à mi-taille, et un second nuage, de `rayon`, part chasser seul
+   * `duree` secondes (la carte « Cadence et durée » l'allonge) : il vole à `vitesse` vers l'insecte le plus proche de lui, à
+   * `laisse` du vaisseau au plus, et mord ce qu'il couvre — `part` du budget de la nuée, partagé, avec son élément et ses
+   * critiques. Un seul à la fois. L'état est `Monde.nueesFilles`.
+   */
+  essaimage?: { duree: number; vitesse: number; rayon: number; part: number; laisse: number }
+  /**
    * DES REJETONS (la troisième arme du Kraken, Keko, 16/11 : « on spawn un mini vaisseau qui est autonome et attaque les
    * ennemis, un genre de truc avec des tentacules qui flottent derrière lui et s'en sert pour attaquer ») : à sa cadence,
    * un insecte à `portee` du vaisseau, il POND un rejeton derrière lui — `max` à la fois, chacun vit `duree` secondes.
@@ -1619,6 +1634,8 @@ export type Ennemi = {
   poison?: { jusque: number; dps: number }
   /** IL EST TENU PAR UNE VRILLE (voir `Arme.vrille`) jusqu'à cet instant : immobilisé sur place. */
   tenuA?: number
+  /** UNE MORSURE CRITIQUE DE LA NUÉE A PONDU EN LUI (voir `Arme.eclosion`) : jusqu'à quand, et de quelle arme. */
+  oeuf?: { jusque: number; arme: number }
   /** L'instant où un coup de l'Envergure peut le repousser à nouveau (voir `Arme.deploiement.recul`). */
   repousseA?: number
   /** SA SORTE, s'il n'est pas un petit : le cornu, le cuirassier (voir `invasion.cornu`, `invasion.cuirassier`). */
@@ -1777,6 +1794,10 @@ export type Monde = {
   fouets: { arme: number; cap: number; sens: number; /** Le flanc du vaisseau d'où il part (−1 : celui des y négatifs). */ cote: number; /** La distance au vaisseau où son slash est tracé : celle de l'insecte visé. */ rayon: number; depuis: number; touches: number[]; /** Son balayage est fini : il se retire. */ fini: boolean }[]
   /** LES BOUTURES (voir `Arme.bouture`) : leur hôte, leur place sur lui, jusqu'à quand, leur prochain coup, le dernier (quand, où). */
   boutures: Bouture[]
+  /** LES ÉCLOSIONS (voir `Arme.eclosion`) : leur arme, où, de quand à quand, la dernière morsure signalée. */
+  eclosions: { arme: number; x: number; y: number; nee: number; jusque: number; mordA: number }[]
+  /** LES NUÉES FILLES (voir `Arme.essaimage`) : leur arme, où, de quand à quand, la dernière morsure signalée. */
+  nueesFilles: { arme: number; x: number; y: number; nee: number; jusque: number; mordA: number }[]
   /** LE DÉPLOIEMENT DES TENTACULES (voir `Arme.deploiement`), de 0 (repliées) à 1 (à leur envergure). */
   deploiement: number
   /** LES NUAGES D'INSECTES (voir `Arme.nuee`) : un par arme, où (sur le vaisseau), la dernière morsure signalée, ses bras — leur insecte, leur allongement (0 à 1), le dernier point où il était. */
@@ -1958,6 +1979,10 @@ export type Evenement =
   | { type: 'bouture'; x: number; y: number }
   | { type: 'coupDeBouture'; x: number; y: number }
   | { type: 'boutureFinie'; x: number; y: number }
+  /** Un insecte pondu éclate en un petit nuage ; la nuée se dédouble ; la nuée fille s'éteint (voir `Arme.eclosion`, `Arme.essaimage`). */
+  | { type: 'eclosionDeNuee'; x: number; y: number }
+  | { type: 'essaimage'; x: number; y: number }
+  | { type: 'nueeFilleFinie'; x: number; y: number }
   /** La langue-harpon part de la gueule (voir `Arme.harpon.langue`). */
   | { type: 'langue'; x: number; y: number }
   /** Un coup de l'Envergure repousse un insecte (voir `Arme.deploiement.recul`) : où il était, et vers où (un vecteur unité). */
@@ -2058,7 +2083,7 @@ export function nouveauVaisseau(): Vaisseau {
 }
 
 export function nouveauMonde(c: ConfigVaisseau = VAISSEAU, graine = 1): Monde {
-  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, coqueMax: c.coque, tableau: tableauVide(), bouclier: c.bouclier.points, plaques: Array.from({ length: c.plaques }, () => true), intouchableJusque: -1, corruption: 0, dephaseJusque: -100, plaqueCasseeA: 0, renaitJusque: -100, rochesPrises: [], toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, prochaineDeriveA: c.derive.premier, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, vies: c.invasion.vies, miniBoss: 0, boss: 0, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, harpons: [], rafales: [], rafaleDesAiles: 0, salveDesAiles: -1e9, emballements: {}, tracantes: {}, faisceaux: [], sillons: [], ondes: [], balisesLaser: [], scies: [], balises: [], givres: [], tornades: [], novas: [], echardes: [], spheres: [], puits: [], meteores: [], tentacules: [], fouets: [], boutures: [], deploiement: 0, nuees: [], rejetons: [], flaquesAcides: [], mines: [], fleaux: [], parasites: [], vrilles: [], liens: [], oeufs: [], brochettes: [], miniVers: [], hypercubes: [], des: [], coupes: [], rayonVu: null }
+  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, coqueMax: c.coque, tableau: tableauVide(), bouclier: c.bouclier.points, plaques: Array.from({ length: c.plaques }, () => true), intouchableJusque: -1, corruption: 0, dephaseJusque: -100, plaqueCasseeA: 0, renaitJusque: -100, rochesPrises: [], toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, prochaineDeriveA: c.derive.premier, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, vies: c.invasion.vies, miniBoss: 0, boss: 0, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, harpons: [], rafales: [], rafaleDesAiles: 0, salveDesAiles: -1e9, emballements: {}, tracantes: {}, faisceaux: [], sillons: [], ondes: [], balisesLaser: [], scies: [], balises: [], givres: [], tornades: [], novas: [], echardes: [], spheres: [], puits: [], meteores: [], tentacules: [], fouets: [], boutures: [], eclosions: [], nueesFilles: [], deploiement: 0, nuees: [], rejetons: [], flaquesAcides: [], mines: [], fleaux: [], parasites: [], vrilles: [], liens: [], oeufs: [], brochettes: [], miniVers: [], hypercubes: [], des: [], coupes: [], rayonVu: null }
 }
 
 /** Un hachage entier déterministe (celui de pixelfx), et un réel dans [0, 1) qui en sort. */
@@ -2341,6 +2366,14 @@ function abattreLEnnemi(c: ConfigVaisseau, m: Monde, e: Ennemi, ev: Evenement[],
   if (!m.ennemis.includes(e)) return
   m.ennemis = m.ennemis.filter((x) => x !== e)
   m.prochainEnnemiA = m.t + c.ennemi.revient
+  // (PONDU PAR LA NUÉE, il éclate en un petit nuage — voir `Arme.eclosion`)
+  if (e.oeuf !== undefined && e.oeuf.jusque > m.t && e.asteroide === undefined) {
+    const ec = c.armes[e.oeuf.arme]?.eclosion
+    if (ec !== undefined) {
+      m.eclosions.push({ arme: e.oeuf.arme, x: e.corps.x, y: e.corps.y, nee: m.t, jusque: m.t + ec.duree, mordA: m.t })
+      ev.push({ type: 'eclosionDeNuee', x: e.corps.x, y: e.corps.y })
+    }
+  }
   const ro = e.asteroide
   if (c.invasion.active && ro === undefined && !sansButin) m.invasion.abattus += 1
   // (« DISSOLUTION » : mort rongé, il laisse une flaque d'acide à sa taille — voir `ELEMENTAIRES` ; elle n'est à aucune arme)
@@ -5874,11 +5907,86 @@ function menerLesNuees(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[])
     if (fe !== undefined && signale && mordus.length > 0) n.croissance = Math.min(fe.max, n.croissance + fe.pas * mordus.length)
     if (fe !== undefined && mordus.length === 0) n.croissance = Math.max(0, n.croissance - (fe.max * dt) / fe.fonte)
     for (const e of mordus) {
-      e.pv -= ((nu.budget * (1 + n.croissance)) / mordus.length) * dt
-      if (signale) ev.push({ type: 'morsure', id: e.id, x: e.corps.x, y: e.corps.y })
+      const part = (nu.budget * (1 + n.croissance)) / mordus.length
+      e.pv -= part * dt
+      if (signale) {
+        ev.push({ type: 'morsure', id: e.id, x: e.corps.x, y: e.corps.y })
+        coupDeNuee(c, m, a, i, e, part * nu.periode, ev, true)
+      }
       if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
     }
+    // (L'ESSAIMAGE : à sa taille maximale, elle se dédouble — voir `Arme.essaimage`)
+    const es = a.essaimage
+    if (es !== undefined && fe !== undefined && m.phase === 'vol' && n.croissance >= fe.max && !m.nueesFilles.some((x) => x.arme === i)) {
+      n.croissance = fe.max / 2
+      m.nueesFilles.push({ arme: i, x: v.x, y: v.y, nee: m.t, jusque: m.t + es.duree, mordA: m.t })
+      ev.push({ type: 'essaimage', x: v.x, y: v.y })
+    }
   })
+  menerLesPetitsNuages(c, m, dt, ev)
+}
+/**
+ * UNE MORSURE SIGNALÉE DE LA NUÉE (toutes les `periode` secondes) sur `e`, qui vient de perdre `tic` : son élément (les
+ * Lucioles enflamment), et SON CRITIQUE — la morsure vaut `tic` de plus fois son facteur ; avec l'Éclosion, et si `pond`, il
+ * pond (voir `Arme.eclosion`).
+ */
+function coupDeNuee(c: ConfigVaisseau, m: Monde, a: Arme, i: number, e: Ennemi, tic: number, ev: Evenement[], pond: boolean): void {
+  if (e.asteroide !== undefined) return
+  effetsDuCoup(c, m, a, e, ev)
+  if (!critiqueSur(c, m, a, e, () => tire(m.graine, m.prochainId++, 12))) return
+  e.pv -= tic * (facteurSur(c, m, a, e) - 1)
+  ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique: true })
+  if (pond && a.eclosion !== undefined) e.oeuf = { jusque: m.t + a.eclosion.delai, arme: i }
+}
+/** LES ÉCLOSIONS ET LES NUÉES FILLES (voir `Arme.eclosion`, `Arme.essaimage`) : de petits nuages qui mordent ce qu'ils couvrent, et s'éteignent. */
+function menerLesPetitsNuages(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]): void {
+  const v = m.vaisseau
+  const mordre = (a: Arme, i: number, n: { x: number; y: number; mordA: number }, rayon: number, budget: number, pond: boolean): void => {
+    const nu = a.nuee!
+    const signale = m.t - n.mordA >= nu.periode
+    if (signale) n.mordA = m.t
+    const mordus = m.ennemis.filter((e) => e.pv > 0 && Math.hypot(e.corps.x - n.x, e.corps.y - n.y) <= rayon + rayonDe(c, e))
+    for (const e of mordus) {
+      const part = budget / mordus.length
+      e.pv -= part * dt
+      if (signale) {
+        ev.push({ type: 'morsure', id: e.id, x: e.corps.x, y: e.corps.y })
+        coupDeNuee(c, m, a, i, e, part * nu.periode, ev, pond)
+      }
+      if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
+    }
+  }
+  for (let k = m.eclosions.length - 1; k >= 0; k--) {
+    const n = m.eclosions[k]
+    const a = c.armes[n.arme]
+    if (a?.nuee === undefined || a.eclosion === undefined || m.t >= n.jusque || m.phase !== 'vol') {
+      m.eclosions.splice(k, 1)
+      continue
+    }
+    mordre(a, n.arme, n, a.eclosion.rayon, a.nuee.budget * a.eclosion.part, false)
+  }
+  for (let k = m.nueesFilles.length - 1; k >= 0; k--) {
+    const n = m.nueesFilles[k]
+    const a = c.armes[n.arme]
+    const es = a?.essaimage
+    if (a?.nuee === undefined || es === undefined || m.t >= n.jusque || m.phase !== 'vol') {
+      ev.push({ type: 'nueeFilleFinie', x: n.x, y: n.y })
+      m.nueesFilles.splice(k, 1)
+      continue
+    }
+    // (sa proie : l'insecte le plus proche d'elle, pas plus loin du vaisseau que sa laisse ; sans proie, elle revient)
+    let but: { x: number; y: number } = { x: v.x, y: v.y }
+    let dp = Infinity
+    for (const e of m.ennemis) {
+      if (e.asteroide !== undefined || e.pv <= 0 || Math.hypot(e.corps.x - v.x, e.corps.y - v.y) > es.laisse) continue
+      const d = Math.hypot(e.corps.x - n.x, e.corps.y - n.y)
+      if (d < dp) (dp = d), (but = { x: e.corps.x, y: e.corps.y })
+    }
+    const d = Math.hypot(but.x - n.x, but.y - n.y)
+    const pas = Math.min(d, es.vitesse * dt)
+    if (d > 0.5) (n.x += ((but.x - n.x) / d) * pas), (n.y += ((but.y - n.y) / d) * pas)
+    mordre(a, n.arme, n, es.rayon, a.nuee.budget * es.part, true)
+  }
 }
 /**
  * UN MISSILE D'ESSAIM ZIGZAGUE (voir `Arme.essaim`) : vers sa cible — ou, morte, l'insecte le plus proche de lui —, par
@@ -7301,7 +7409,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
   // sur place, sans bouger, durant tout le temps de la résurrection » : rien ne les menait plus ; obus, bombes, traits,
   // flaques, givres, balises et tourelles partent avec lui)
   if (m.phase !== 'vol') (m.obus = []), (m.bombes = []), (m.tirs = []), (m.flaques = []), (m.givres = []), (m.balises = []), (m.tourelles = [])
-  if (m.phase !== 'vol') (m.drones = []), (m.balayage = null), (m.canal = null), (m.scies = []), (m.tornades = []), (m.novas = []), (m.echardes = []), (m.spheres = []), (m.puits = []), (m.meteores = []), (m.tentacules = []), (m.fouets = []), (m.boutures = []), (m.deploiement = 0), (m.nuees = []), (m.rejetons = []), (m.flaquesAcides = []), (m.mines = []), (m.fleaux = []), (m.parasites = []), (m.vrilles = []), (m.liens = []), (m.oeufs = []), (m.brochettes = []), (m.miniVers = []), (m.hypercubes = []), (m.des = []), (m.coupes = [])
+  if (m.phase !== 'vol') (m.drones = []), (m.balayage = null), (m.canal = null), (m.scies = []), (m.tornades = []), (m.novas = []), (m.echardes = []), (m.spheres = []), (m.puits = []), (m.meteores = []), (m.tentacules = []), (m.fouets = []), (m.boutures = []), (m.eclosions = []), (m.nueesFilles = []), (m.deploiement = 0), (m.nuees = []), (m.rejetons = []), (m.flaquesAcides = []), (m.mines = []), (m.fleaux = []), (m.parasites = []), (m.vrilles = []), (m.liens = []), (m.oeufs = []), (m.brochettes = []), (m.miniVers = []), (m.hypercubes = []), (m.des = []), (m.coupes = [])
   // (le portail tombé, la partie est finie : plus rien n'avance)
   if (m.invasion.finie) return { chocs: [], evenements: ev }
   if (m.verrou !== null && ennemiVerrouille(m) === null) m.verrou = null
@@ -8160,7 +8268,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
  * La règle d'un vaisseau ne change pas : le pilote dont c'est le tour est DANS le monde — ses champs sont ceux de
  * `Monde` —, les autres attendent dans `equipage.pilotes` ; `prendreLaMain` les échange.
  */
-export const CHAMPS_DU_PILOTE = ['phase', 'vaisseau', 'coque', 'coqueMax', 'tableau', 'bouclier', 'plaques', 'intouchableJusque', 'corruption', 'dephaseJusque', 'plaqueCasseeA', 'renaitJusque', 'toucheA', 'forage', 'forages', 'tirs', 'obus', 'armesA', 'extraction', 'sorti', 'boostA', 'bombes', 'charges', 'verrou', 'crache', 'drones', 'tourelles', 'flaques', 'balayage', 'rayonVu', 'canal', 'harpons', 'rafales', 'rafaleDesAiles', 'salveDesAiles', 'emballements', 'tracantes', 'faisceaux', 'sillons', 'balisesLaser', 'scies', 'balises', 'givres', 'tornades', 'novas', 'echardes', 'spheres', 'puits', 'meteores', 'tentacules', 'fouets', 'boutures', 'deploiement', 'nuees', 'rejetons', 'flaquesAcides', 'mines', 'fleaux', 'parasites', 'brochettes', 'hypercubes', 'coupes', 'des', 'oeufs', 'miniVers', 'liens', 'vrilles'] as const
+export const CHAMPS_DU_PILOTE = ['phase', 'vaisseau', 'coque', 'coqueMax', 'tableau', 'bouclier', 'plaques', 'intouchableJusque', 'corruption', 'dephaseJusque', 'plaqueCasseeA', 'renaitJusque', 'toucheA', 'forage', 'forages', 'tirs', 'obus', 'armesA', 'extraction', 'sorti', 'boostA', 'bombes', 'charges', 'verrou', 'crache', 'drones', 'tourelles', 'flaques', 'balayage', 'rayonVu', 'canal', 'harpons', 'rafales', 'rafaleDesAiles', 'salveDesAiles', 'emballements', 'tracantes', 'faisceaux', 'sillons', 'balisesLaser', 'scies', 'balises', 'givres', 'tornades', 'novas', 'echardes', 'spheres', 'puits', 'meteores', 'tentacules', 'fouets', 'boutures', 'eclosions', 'nueesFilles', 'deploiement', 'nuees', 'rejetons', 'flaquesAcides', 'mines', 'fleaux', 'parasites', 'brochettes', 'hypercubes', 'coupes', 'des', 'oeufs', 'miniVers', 'liens', 'vrilles'] as const
 /** Un pilote qui attend son tour : ses champs du monde, l'instant de son retour s'il est abattu, les morsures qu'il doit encaisser. */
 export type Pilote = Pick<Monde, (typeof CHAMPS_DU_PILOTE)[number]> & { retourA: number; morsures: { x: number; y: number; degats: number }[] }
 /** Les pilotes (celui dont c'est le tour, `actif`, a sa place gardée mais périmée : il est dans le monde). */

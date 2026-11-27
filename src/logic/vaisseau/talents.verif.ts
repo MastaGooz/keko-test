@@ -203,6 +203,15 @@ verifier('le délai passé, ce qui restait à choisir part en réserve', reserve
   const fouet = avecFouet.armes[1]
   verifier(`la Tentacule a ${variations.length} variations (${variations.map((v) => v.nom).join(', ')}), aucune sans effet (${sansEffet.join(', ') || 'aucune'})`, variations.length === 6 && sansEffet.length === 0)
   verifier(`Bouture : « Cadence et durée » +50 % la fait vivre ${armeAmelioree(bouture, 'cadence', 0.5).bouture?.duree} s au lieu de 4`, armeAmelioree(bouture, 'cadence', 0.5).bouture?.duree === 6)
+  {
+    // (LA NUÉE : ses trois cartes ; « Cadence et durée » allonge la nuée fille ; les Lucioles ouvrent la carte « Brûlure »)
+    const nuee: Arme = { id: 'nuee', cadence: 1, degats: 0, portee: 55, vitesse: 0, vie: 0, dispersion: 0, guide: false, place: 0, nuee: { rayon: 14, budget: 110, deploiement: 0.3, periode: 0.4, festin: { pas: 0.01, max: 1, fonte: 10 } } }
+    const dn: ConfigVaisseau = { ...C, armes: [nuee] }
+    const vn = MUTATIONS.filter((x) => x.sorte === 'variation' && x.arme === 'nuee')
+    const fille = mu('nuee-essaimage').appliquer(dn).armes[0]
+    const lucioles = mu('nuee-lucioles').appliquer(dn).armes[0]
+    verifier(`la Nuée a ${vn.length} variations (${vn.map((v) => v.nom).join(', ')}) ; « Cadence et durée » +50 % fait vivre la nuée fille ${armeAmelioree(fille, 'cadence', 0.5).essaimage?.duree} s au lieu de 6 ; les Lucioles ouvrent la carte « Brûlure »`, vn.length === 3 && vn.every((v) => JSON.stringify(v.appliquer(dn)) !== JSON.stringify(dn)) && armeAmelioree(fille, 'cadence', 0.5).essaimage?.duree === 9 && statsDeLArme(lucioles).includes('feu') && !statsDeLArme(nuee).includes('feu'))
+  }
   verifier('Méduse : la tentacule électrocute, la carte « Électrocution » paraît', statsDeLArme(meduse).includes('electrocution') && !statsDeLArme(tentacule).includes('electrocution'))
   verifier(`Fouet : la piqûre reste, le fouet s'y ajoute — une seconde arme sans tentacule (${fouet?.degats} toutes les ${fouet?.cadence} s)`, avecFouet.armes.length === 2 && avecFouet.armes[0].tentacule !== undefined && fouet.tentacule === undefined && fouet.fouet !== undefined && fouet.degats === 50 && fouet.cadence === 1.2)
 }

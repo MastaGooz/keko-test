@@ -9699,3 +9699,12 @@ Keko, la portée et la zone à peine séparées : « ou alors on fusionne zone e
 - Toutes les armes ont donc les mêmes cinq cartes : Dégâts, Critique, Impact, Cadence et durée, Zone et portée (plus les cartes d'état).
 - Risque accepté, non mesuré : une arme qui pose en profite deux fois (+25 % : posée 25 % plus souvent et 25 % plus longtemps, environ +56 % de présence). La balise laser, dont les balises se chevauchent déjà avec la cadence, est la plus exposée.
 - À l'image : le titre « Cadence et durée » tient sur la carte, d'un bord à l'autre (vérifié en capture) ; son texte tient en trois ou quatre lignes.
+### Les trois premières cartes de la Nuée (27/11)
+
+Keko : « on passe à la nuée ? », puis, sur six propositions, « ok pour luciole, éclosion, essaimage (la durée augmente le temps du deuxième essaim) pour l'instant ». Curée, Carapace vivante et Piqué ne sont pas retenues pour l'instant. La Nuée n'avait aucune carte spéciale.
+
+- **Les morsures de la nuée tirent maintenant un critique** (`coupDeNuee`, à chaque morsure signalée, toutes les 0,4 s) : la carte « Critique » lui était proposée sans rien lui faire. Un critique vaut la morsure de plus, fois son facteur.
+- **Lucioles**, son élément : la brûlure (`incendiaire`). « Les morsures appliquent brûlure. » Les moucherons luisent d'un feu doré (`BRAISE_DES_LUCIOLES`). Au passage, un tir qui enflamme ouvre enfin la carte « Brûlure » (`statsDeLArme`) : ce n'était le cas ni pour la Thermite ni pour les Incendiaires.
+- **Éclosion**, sur coup critique : `eclosion: { delai: 3, duree: 2, rayon: 20, part: 0.5 }`. Un critique pond dans l'insecte (`Ennemi.oeuf`, trois petits œufs sur lui). S'il meurt dans les 3 s, il éclate en un nuage de 20 qui mord 2 s ce qui l'entoure, à la moitié du budget, avec l'élément. Ce nuage ne pond pas. « Un critique pond dans l'ennemi : s'il meurt, il éclate en un nuage qui mord. »
+- **Essaimage** : `essaimage: { duree: 6, vitesse: 60, rayon: 18, part: 1, laisse: 150 }`. À sa taille maximale, la nuée retombe à mi-taille et une nuée fille part chasser seule 6 s (« Cadence et durée » l'allonge, `POSEES`). Elle vole vers l'insecte le plus proche d'elle, à 150 du vaisseau au plus, et mord ce qu'elle couvre au budget de base, avec l'élément et les critiques. Une seule à la fois. « À sa taille maximale, la nuée se dédouble et chasse seule. »
+- Chiffres de moi. Textes vérifiés en capture (cinq lignes au plus ; un premier texte de l'Essaimage débordait).

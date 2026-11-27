@@ -197,7 +197,8 @@ export const aUneZone = (a: Arme): boolean => valeurs(a, CLES_DE_ZONE).some((v) 
 // c'est pas hyper clair pour le joueur » ; puis, portée et zone séparées un instant : « ou alors on fusionne zone et portée,
 // mais aussi cadence et durée ? » — « ok fusionne » : plus de carte « Durée » ; la carte de cadence fait aussi durer ce qui
 // a une vie à soi, la bouture comprise. Toutes les armes ont les mêmes cinq cartes.)
-const POSEES = ['pose', 'balise', 'mine', 'ponte', 'sphere', 'lien', 'bouture'] as const
+// (… ET LA NUÉE FILLE de l'Essaimage — Keko, 27/11 : « la durée augmente le temps du deuxième essaim »)
+const POSEES = ['pose', 'balise', 'mine', 'ponte', 'sphere', 'lien', 'bouture', 'essaimage'] as const
 const CLES_DU_FEU: ReadonlySet<string> = new Set(['dpsBrulure'])
 const CLES_DU_GIVRE: ReadonlySet<string> = new Set(['ralenti'])
 /** Ce que l'arme pose, et sa durée. */
@@ -242,7 +243,8 @@ export function statsDeLArme(a: Arme): StatDArme[] {
   if ((a.cadence > 0 && Number.isFinite(a.cadence)) || poseesDe(a).length > 0) s.push('cadence')
   // (la portée, ou une zone : son rayon est sa portée)
   if (a.portee > 0 || aUneZone(a)) s.push('portee')
-  if (valeurs(a, CLES_DU_FEU).some((v) => v > 0)) s.push('feu')
+  // (… ou un tir qui enflamme : les Lucioles de la Nuée, la Thermite, les Incendiaires — la carte « Brûlure » ne leur était pas proposée)
+  if (valeurs(a, CLES_DU_FEU).some((v) => v > 0) || a.incendiaire !== undefined) s.push('feu')
   if (corrodeDe(a).length > 0) s.push('corrosion')
   if (valeurs(a, CLES_DU_GIVRE).some((v) => v > 0 && v < 1)) s.push('givre')
   if (a.electrocution !== undefined) s.push('electrocution')
@@ -707,6 +709,15 @@ export const MUTATIONS: Mutation[] = [
   // les ennemis proches » : 4 s, une piqûre toutes les 0,5 s à 30, 40 % des dégâts — chiffres et nom de moi ; voir
   // `Arme.bouture` ; elle grandit de 25 % à chaque critique qui la relance, jusqu'au double — Keko, 27/11, chiffres de moi)
   variation('tentacule-bouture', 'tentacule', 'Bouture', 'Un critique fait pousser sur l’ennemi une tentacule qui attaque.', changerA('tentacule', (a) => ({ ...a, bouture: { duree: 4, periode: 0.5, portee: 30, part: 0.4, croissance: { pas: 0.25, max: 2 } } }))),
+  // LA NUÉE DU KRAKEN (Keko, 27/11 : « ok pour luciole, éclosion, essaimage (la durée augmente le temps du deuxième essaim)
+  // pour l'instant » ; Curée, Carapace vivante et Piqué proposées, pas retenues pour l'instant)
+  // (« LUCIOLES », SON ÉLÉMENT, la brûlure — pas un toxique de plus chez les Xénoïdes ; au vortex la brûlure est la même
+  // pour toutes les sources)
+  variation('nuee-lucioles', 'nuee', 'Lucioles', 'Les morsures appliquent brûlure.', changerA('nuee', (a) => ({ ...a, incendiaire: { duree: 3, dps: 2 } }))),
+  // (« ÉCLOSION », SA VARIATION SUR COUP CRITIQUE : pondu 3 s ; mort, un nuage de 20, 2 s, la moitié du budget — chiffres de moi)
+  variation('nuee-eclosion', 'nuee', 'Éclosion', 'Un critique pond dans l’ennemi : s’il meurt, il éclate en un nuage qui mord.', changerA('nuee', (a) => ({ ...a, eclosion: { delai: 3, duree: 2, rayon: 20, part: 0.5 } }))),
+  // (« ESSAIMAGE » : 6 s, 60 de vitesse, un nuage de 18, le budget de base, à 150 du vaisseau au plus — chiffres de moi)
+  variation('nuee-essaimage', 'nuee', 'Essaimage', 'À sa taille maximale, la nuée se dédouble et chasse seule.', changerA('nuee', (a) => ({ ...a, essaimage: { duree: 6, vitesse: 60, rayon: 18, part: 1, laisse: 150 } }))),
   // LES CARTES D'ÉLÉMENT (Keko, 24/11 : « des cartes spéciales de chaque élément » ; « des cartes multicolores spéciales qu'on
   // proposera dans le pool des cartes spéciales, si le joueur a au moins une attaque avec l'élément en question » — voir
   // `ELEMENTAIRES` pour leurs chiffres ; leurs noms et leurs textes sont de moi)

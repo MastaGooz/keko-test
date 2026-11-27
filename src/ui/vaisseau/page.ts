@@ -14016,11 +14016,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const R = Math.max(nu.rayon * 0.5, Rn * (1 - 0.55 * sorti))
       // (plus de moucherons, des bras plus larges, sur une nuée agrandie — voir `zoneDuVol`)
       const sz = zoneDuVol()
-      p.disc(n.x, n.y, R, BILE[0], (d) => 0.16 * (1 - d * d))
+      // (LES LUCIOLES — Keko, 27/11, voir `MUTATIONS` : la nuée enflamme, ses moucherons luisent d'un feu doré)
+      const feu = CONF.armes[n.arme]?.incendiaire !== undefined
+      const voile = feu ? BRAISE_DES_LUCIOLES[0] : BILE[0]
+      p.disc(n.x, n.y, R, voile, (d) => 0.16 * (1 - d * d))
       // (le voile le long des bras)
       for (const b of bras) for (let q = 1; q <= 4; q++) {
         const s = (q / 4) * b.u
-        p.disc(n.x + (b.tx - n.x) * s, n.y + (b.ty - n.y) * s, 3.5 * sz, BILE[0], (d) => 0.14 * (1 - d * d))
+        p.disc(n.x + (b.tx - n.x) * s, n.y + (b.ty - n.y) * s, 3.5 * sz, voile, (d) => 0.14 * (1 - d * d))
       }
       const tic = Math.floor(t * 24)
       // (… CLAIRSEMÉE AU REPOS, DENSE DANS SES BRAS — Keko, 19/11 : « diminue beaucoup le nombre d'insectes lorsqu'il n'y a
@@ -14068,10 +14071,45 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         // (le corps, sombre ; l'aile, claire, d'un côté puis de l'autre — elle bat)
         p.px(ix, iy, CHITINE_SOMBRE)
         const bat = alea(j, tic, 51) < 0.5 ? 1 : -1
-        p.px(ix + bat, iy - 1, alea(j, tic, 52) < 0.25 ? N.WHITE : j % 4 === 0 ? CHAIR[4] : BILE[2])
+        p.px(ix + bat, iy - 1, feu ? luciole(j, tic) : alea(j, tic, 52) < 0.25 ? N.WHITE : j % 4 === 0 ? CHAIR[4] : BILE[2])
+        if (feu && j % 6 === 0) p.glow(ix, iy, 3, BRAISE_DES_LUCIOLES[1], 0.3)
       }
     }
+    // (LES PETITS NUAGES — voir `Arme.eclosion`, `Arme.essaimage` : l'éclosion, qui gonfle d'un coup et se disperse ; la nuée
+    // fille, qui chasse seule et s'éclaircit dans sa dernière seconde)
+    for (const n of m.eclosions) {
+      const ec = CONF.armes[n.arme]?.eclosion
+      if (ec === undefined) continue
+      const u = (m.t - n.nee) / Math.max(0.01, n.jusque - n.nee)
+      dessinerUnPetitNuage(p, n.x, n.y, ec.rayon * Math.min(1, u * 6) * (0.85 + 0.15 * u), Math.round(34 * (1 - 0.6 * u * u)), CONF.armes[n.arme]?.incendiaire !== undefined, Math.round(n.nee * 97))
+    }
+    for (const n of m.nueesFilles) {
+      const es = CONF.armes[n.arme]?.essaimage
+      if (es === undefined) continue
+      const reste = n.jusque - m.t
+      dessinerUnPetitNuage(p, n.x, n.y, es.rayon * Math.min(1, (m.t - n.nee) * 4), Math.round(46 * Math.min(1, reste)), CONF.armes[n.arme]?.incendiaire !== undefined, Math.round(n.nee * 53))
+    }
     p.place(0, 0)
+  }
+  /** Les couleurs des Lucioles (voir `MUTATIONS`) : le voile de braise, la lueur, puis les ailes — orange, or, blanc. */
+  const BRAISE_DES_LUCIOLES = ['#5a1a06', '#ff8a2a', '#ff5a1a', '#ffd23a', '#fff2b0'].map((c) => N.hex(c))
+  const luciole = (j: number, tic: number): number => (alea(j, tic, 52) < 0.3 ? BRAISE_DES_LUCIOLES[4] : j % 3 === 0 ? BRAISE_DES_LUCIOLES[2] : BRAISE_DES_LUCIOLES[3])
+  /** Un petit nuage de moucherons, de rayon `R`, de `combien` moucherons — ceux de la nuée, qui tournent, tremblent et battent de l'aile ; `feu` : des lucioles. */
+  function dessinerUnPetitNuage(p: Peintre, cx: number, cy: number, R: number, combien: number, feu: boolean, graine: number): void {
+    if (R < 1 || combien <= 0) return
+    p.disc(cx, cy, R, feu ? BRAISE_DES_LUCIOLES[0] : BILE[0], (d) => 0.2 * (1 - d * d))
+    const tic = Math.floor(t * 24)
+    for (let j = 0; j < combien; j++) {
+      const g = j + graine
+      const a = alea(g, 1, 44) * Math.PI * 2 + t * (2 + 3 * alea(g, 1, 45)) * (j % 2 === 0 ? 1 : -1)
+      const r = R * (0.2 + 0.8 * Math.sqrt(alea(g, 1, 46))) * (0.85 + 0.15 * Math.sin(t * (3 + alea(g, 1, 47) * 4) + j))
+      const ix = Math.round(cx + Math.cos(a) * r + (alea(g, tic, 49) - 0.5) * 1.2)
+      const iy = Math.round(cy + Math.sin(a) * r * 0.85 + (alea(g, tic, 50) - 0.5) * 1.2)
+      p.px(ix, iy, CHITINE_SOMBRE)
+      const bat = alea(g, tic, 51) < 0.5 ? 1 : -1
+      p.px(ix + bat, iy - 1, feu ? luciole(g, tic) : alea(g, tic, 52) < 0.25 ? N.WHITE : j % 4 === 0 ? CHAIR[4] : BILE[2])
+      if (feu && j % 6 === 0) p.glow(ix, iy, 3, BRAISE_DES_LUCIOLES[1], 0.3)
+    }
   }
   /**
    * LES REJETONS DU KRAKEN (voir `Arme.rejeton`) : une petite bête — UNE CLOCHE de chair, plus longue que large, ombrée
@@ -15405,6 +15443,19 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           p.ring(sx, sy, r, 1, c, k)
           p.dot(sx, sy, N.hex('#ffb0a8'), k)
           p.glow(sx, sy, r + 3, c, 0.25 * k)
+        }
+        // (IL EST PONDU — l'Éclosion de la Nuée, voir `Arme.eclosion` : trois petits œufs pâles sur lui, qui battent ; ils
+        // pâlissent dans leur dernière demi-seconde)
+        if (e.oeuf !== undefined && e.oeuf.jusque > m.t) {
+          const k = Math.min(1, (e.oeuf.jusque - m.t) / 0.5)
+          const r = rayonDe(CONF, e) * 0.55
+          for (let q = 0; q < 3; q++) {
+            const a = e.id * 1.7 + (q * Math.PI * 2) / 3
+            const ox = sx + Math.cos(a) * r
+            const oy = sy + Math.sin(a) * r
+            p.circle(ox, oy, 1.6, CHAIR[0], k)
+            p.circle(ox, oy, 1, Math.sin(t * 8 + q) > 0 ? BILE[2] : CHAIR[5], k)
+          }
         }
         // (IL EST ÉTOURDI — « Étourdissement », Keko, 24/11, voir `Arme.etourdissement` : trois étoiles jaunes qui tournent
         // au-dessus de lui)
@@ -18787,6 +18838,24 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
             const a = Math.atan2(ev.uy, ev.ux) + R.range(-0.5, 0.5)
             etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(50, 120), Math.sin(a) * R.range(50, 120), R.range(0.12, 0.25), i % 2 === 0 ? N.WHITE : CHAIR[5], 1, 1.5)
           }
+          break
+        case 'eclosionDeNuee':
+          // (UN INSECTE PONDU ÉCLATE : le « blop » de chair, une giclée, et son petit nuage — voir `dessinerLesNuees`)
+          jouer('ponte', { dx: ev.x - v.x, dy: ev.y - v.y })
+          for (let i = 0; i < 8; i++) {
+            const a = R.range(0, Math.PI * 2)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(20, 60), Math.sin(a) * R.range(20, 60), R.range(0.15, 0.3), i % 2 === 0 ? BILE[2] : CHAIR[4], 1, 1.5)
+          }
+          break
+        case 'essaimage':
+          // (LA NUÉE SE DÉDOUBLE : un souffle de moucherons qui part)
+          jouer('ponte')
+          for (let i = 0; i < 10; i++) {
+            const a = R.range(0, Math.PI * 2)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(30, 70), Math.sin(a) * R.range(30, 70), R.range(0.15, 0.3), BILE[2], 1, 1)
+          }
+          break
+        case 'nueeFilleFinie':
           break
         case 'boutureFinie':
           // (elle se flétrit : quelques lambeaux de chair qui retombent)
