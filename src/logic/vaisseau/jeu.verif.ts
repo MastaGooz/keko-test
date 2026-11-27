@@ -1836,9 +1836,9 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
     const voisin = 1000 - (ec.w.ennemis.find((e) => e.id === 2)?.pv ?? 1000)
     verifier(`Éclosion : l'insecte pondu meurt et éclate (${ec.ev.filter((e) => e.type === 'eclosionDeNuee').length} nuage) ; son voisin à 72, hors de portée de la nuée, est mordu par lui (${voisin.toFixed(1)}) et n'est pas pondu`, ec.ev.filter((e) => e.type === 'eclosionDeNuee').length === 1 && voisin > 5 && ec.w.ennemis.find((e) => e.id === 2)?.oeuf === undefined && ec.w.eclosions.length === 0)
     // (ESSAIMAGE : à sa taille maximale, elle se dédouble — mi-taille, une nuée fille, une seule, qui s'éteint au bout de sa durée)
-    const ess = { ...nuee, nuee: { ...nuee.nuee, festin: { pas: 0.2, max: 1, fonte: 10 } }, essaimage: { duree: 2, vitesse: 60, rayon: 18, part: 1, laisse: 150 } } as Arme
+    const ess = { ...nuee, nuee: { ...nuee.nuee, festin: { pas: 0.2, max: 1, fonte: 10 } }, essaimage: { duree: 2, vitesse: 60, rayon: 18, part: 1, laisse: 150, morsures: 3 } } as Arme
     const es = jouerN(ess, [[40, 0, 1e6]], 2.3)
-    verifier(`Essaimage : pleine, la nuée se dédouble (${es.ev.filter((e) => e.type === 'essaimage').length} fois en 2,3 s, jamais plus d'une fille : ${es.filles}) et retombe vers la mi-taille (${es.w.nuees[0].croissance.toFixed(2)})`, es.ev.filter((e) => e.type === 'essaimage').length === 1 && es.filles === 1 && es.w.nuees[0].croissance < 0.95)
+    verifier(`Essaimage : toutes les 3 morsures, la nuée se dédouble (${es.ev.filter((e) => e.type === 'essaimage').length} fois en 2,3 s, jamais plus d'une fille : ${es.filles}) et perd la moitié de ce qu'elle avait (elle en est à ${es.w.nuees[0].croissance.toFixed(2)})`, es.ev.filter((e) => e.type === 'essaimage').length === 1 && es.filles === 1 && es.w.nuees[0].croissance < 0.95 && (es.w.nuees[0].repue ?? 0) > 0)
     const fin = jouerN(ess, [[40, 0, 1e6]], 4.5)
     verifier(`Essaimage : la fille s'éteint au bout de ses 2 s (${fin.ev.filter((e) => e.type === 'nueeFilleFinie').length} éteintes en 4,5 s)`, fin.ev.some((e) => e.type === 'nueeFilleFinie'))
   }

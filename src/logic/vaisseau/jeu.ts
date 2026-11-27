@@ -1267,7 +1267,11 @@ export type Arme = {
    * `laisse` du vaisseau au plus, et mord ce qu'il couvre — `part` du budget de la nuée, partagé, avec son élément et ses
    * critiques. Un seul à la fois. L'état est `Monde.nueesFilles`.
    */
-  essaimage?: { duree: number; vitesse: number; rayon: number; part: number; laisse: number }
+  // (… AUX MORSURES, PAS À LA TAILLE — Keko, 27/11 : « j'ai l'impression que l'essaimage ne se déclenche jamais » : mesuré, en
+  // une minute de partie la nuée reste petite — un petit insecte meurt en trois morsures, et elle fond avant le suivant ; même
+  // à 40 % de sa taille, elle n'y arrivait pas. Elle COMPTE SES MORSURES, sans fonte (`Monde.nuees[].repue`) : toutes les
+  // `morsures`, elle se dédouble, et perd la moitié de sa taille)
+  essaimage?: { duree: number; vitesse: number; rayon: number; part: number; laisse: number; morsures: number }
   /**
    * DES REJETONS (la troisième arme du Kraken, Keko, 16/11 : « on spawn un mini vaisseau qui est autonome et attaque les
    * ennemis, un genre de truc avec des tentacules qui flottent derrière lui et s'en sert pour attaquer ») : à sa cadence,
@@ -1801,7 +1805,7 @@ export type Monde = {
   /** LE DÉPLOIEMENT DES TENTACULES (voir `Arme.deploiement`), de 0 (repliées) à 1 (à leur envergure). */
   deploiement: number
   /** LES NUAGES D'INSECTES (voir `Arme.nuee`) : un par arme, où (sur le vaisseau), la dernière morsure signalée, ses bras — leur insecte, leur allongement (0 à 1), le dernier point où il était. */
-  nuees: { arme: number; x: number; y: number; mordA: number; bras: { cible: number; u: number; tx: number; ty: number }[]; /** Ce qu'elle a mangé : la part de dégâts qu'elle a gagnée (0 à `festin.max`). */ croissance: number }[]
+  nuees: { arme: number; x: number; y: number; mordA: number; bras: { cible: number; u: number; tx: number; ty: number }[]; /** Ce qu'elle a mangé : la part de dégâts qu'elle a gagnée (0 à `festin.max`). */ croissance: number; /** Les morsures comptées depuis le dernier essaimage (voir `Arme.essaimage`). */ repue?: number }[]
   /** LES REJETONS (voir `Arme.rejeton`). */
   rejetons: Rejeton[]
   /** LES FLAQUES D'ACIDE (voir `Arme.crachat`) : un cône au sol — sa pointe, son cap, quand il est né, son arme. */
@@ -5917,8 +5921,10 @@ function menerLesNuees(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[])
     }
     // (L'ESSAIMAGE : à sa taille maximale, elle se dédouble — voir `Arme.essaimage`)
     const es = a.essaimage
-    if (es !== undefined && fe !== undefined && m.phase === 'vol' && n.croissance >= fe.max && !m.nueesFilles.some((x) => x.arme === i)) {
-      n.croissance = fe.max / 2
+    if (es !== undefined && signale) n.repue = (n.repue ?? 0) + mordus.length
+    if (es !== undefined && m.phase === 'vol' && (n.repue ?? 0) >= es.morsures && !m.nueesFilles.some((x) => x.arme === i)) {
+      n.repue = 0
+      n.croissance = n.croissance / 2
       m.nueesFilles.push({ arme: i, x: v.x, y: v.y, nee: m.t, jusque: m.t + es.duree, mordA: m.t })
       ev.push({ type: 'essaimage', x: v.x, y: v.y })
     }
