@@ -13725,7 +13725,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * de percée s'en détache devant. La rampe de la chair, celle de l'éclair avec la Méduse.
    */
   let percees: { x: number; y: number; ux: number; uy: number; t0: number; elec: boolean }[] = []
-  const DUREE_DE_LA_PERCEE = 0.32
+  const DUREE_DE_LA_PERCEE = 0.45
   function dessinerLesPercees(p: Peintre): void {
     const borne = (x: number): number => Math.max(0, Math.min(1, x))
     const lisse = (a: number, b: number, x: number): number => {
@@ -13734,54 +13734,72 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
     const expo = (x: number): number => (x >= 1 ? 1 : 1 - Math.pow(2, -10 * x))
     const rebond = (x: number): number => 1 + 2.70158 * Math.pow(x - 1, 3) + 1.70158 * Math.pow(x - 1, 2)
-    const SORT = 0.05
-    const TIENT = 0.04
-    const RENTRE = 0.14
+    const SORT = 0.06
+    const TIENT = 0.07
+    const RENTRE = 0.18
     for (const pe of percees) {
       const q = t - pe.t0
       const C = pe.elec ? COULEURS_VOLT.slice(1) : [...CHAIR, N.WHITE]
       const nx = -pe.uy
       const ny = pe.ux
-      const L = 22
-      // (la gerbe : chaque trait file de loin derrière jusqu'au point, tient, puis est avalé par lui ; le milieu le plus chaud)
+      const L = 34
+      // (… APPUYÉE — Keko, 27/11 : « on la voit pas assez » : la gerbe TRAVERSE la cible et ressort devant elle — derrière,
+      // la tentacule la cachait —, en éventail qui s'ouvre, des traits plus longs et plus épais, le milieu le plus chaud ; elle
+      // tient, puis sa queue rattrape sa tête)
       const rentre = lisse(SORT + TIENT, SORT + TIENT + RENTRE, q)
       if (rentre < 1)
-        for (const [off, chaud, long] of [[-4, false, 0.75], [-2, false, 0.92], [0, true, 1], [2, false, 0.88], [4, false, 0.7]] as [number, boolean, number][]) {
-          const d0 = L * long
-          const tete = -d0 + d0 * expo(borne(q / SORT))
-          const queue = -d0 + d0 * rentre
+        for (const [off, chaud, long] of [[-7, false, 0.7], [-3.5, false, 0.9], [0, true, 1], [3.5, false, 0.85], [7, false, 0.65]] as [number, boolean, number][]) {
+          const d1 = L * long
+          const d0 = -8
+          const tete = d0 + (d1 - d0) * expo(borne(q / SORT))
+          const queue = d0 + (d1 - d0) * rentre
           for (let d = queue; d <= tete; d += 0.5) {
             const w = (d - queue) / Math.max(1, tete - queue)
-            const o = (off * -d) / d0
-            const c = w > 0.88 ? N.WHITE : chaud ? (w > 0.35 ? C[6] : C[5]) : w > 0.55 ? C[5] : w > 0.25 ? C[4] : C[3]
-            p.dot(pe.x + pe.ux * d + nx * o, pe.y + pe.uy * d + ny * o, c, w < 0.12 ? w / 0.12 : 1)
+            const o = (off * Math.max(0, d)) / L
+            const c = w > 0.85 ? N.WHITE : chaud ? (w > 0.35 ? C[6] : C[5]) : w > 0.5 ? C[5] : w > 0.2 ? C[4] : C[3]
+            const a = w < 0.12 ? w / 0.12 : 1
+            const x = pe.x + pe.ux * d + nx * o
+            const y = pe.y + pe.uy * d + ny * o
+            p.dot(x, y, c, a)
+            p.dot(x + nx * 0.7, y + ny * 0.7, c, a)
+            if (chaud) p.dot(x - nx * 0.7, y - ny * 0.7, w > 0.5 ? C[6] : C[5], a)
           }
         }
+      if (q < SORT + TIENT + RENTRE) p.glowLine(pe.x - pe.ux * 4, pe.y - pe.uy * 4, pe.x + pe.ux * L * expo(borne(q / SORT)), pe.y + pe.uy * L * expo(borne(q / SORT)), 7, C[4], 0.3 * (1 - rentre))
       const s_ = q - SORT
       // (la longue étoile : la branche avant longue, l'arrière moins, les côtés courts)
-      if (s_ >= 0 && s_ < 0.25) {
-        const g = rebond(borne(s_ / 0.04)) * (1 - lisse(0.06, 0.25, s_))
-        const Ls = 14 * g
+      if (s_ >= 0 && s_ < 0.32) {
+        const g = rebond(borne(s_ / 0.04)) * (1 - lisse(0.08, 0.32, s_))
+        const Ls = 22 * g
         if (Ls >= 1) {
           for (const [dx, dy, len] of [[pe.ux, pe.uy, Ls], [-pe.ux, -pe.uy, Ls * 0.7], [nx, ny, Ls * 0.42], [-nx, -ny, Ls * 0.42]] as [number, number, number][])
             for (let d = 1; d <= len; d += 0.5) {
               const u = d / len
-              p.dot(pe.x + dx * d, pe.y + dy * d, u < 0.3 ? N.WHITE : u < 0.65 ? C[5] : C[4], u < 0.7 ? 1 : 1 - (u - 0.7) / 0.35)
+              const c = u < 0.3 ? N.WHITE : u < 0.65 ? C[5] : C[4]
+              const a = u < 0.7 ? 1 : 1 - (u - 0.7) / 0.35
+              p.dot(pe.x + dx * d, pe.y + dy * d, c, a)
+              // (épaisses au cœur)
+              if (u < 0.35) (p.dot(pe.x + dx * d - dy, pe.y + dy * d + dx, C[5], a), p.dot(pe.x + dx * d + dy, pe.y + dy * d - dx, C[5], a))
             }
-          p.px(Math.round(pe.x), Math.round(pe.y), N.WHITE)
-          p.glow(pe.x, pe.y, 6 + Ls * 1.3, C[4], 0.35 * (1 - s_ / 0.25))
-          p.glow(pe.x, pe.y, 3 + Ls * 0.4, N.WHITE, 0.3 * (1 - s_ / 0.25))
+          p.circle(pe.x, pe.y, 1.6 * g, N.WHITE)
+          p.glow(pe.x, pe.y, 8 + Ls * 1.3, C[4], 0.55 * (1 - s_ / 0.32))
+          p.glow(pe.x, pe.y, 4 + Ls * 0.4, N.WHITE, 0.45 * (1 - s_ / 0.32))
         }
       }
       // (l'anneau de percée : une ellipse aplatie dans l'axe, qui part devant et s'ouvre)
-      if (s_ >= 0 && s_ < 0.16) {
-        const k = s_ / 0.16
+      if (s_ >= 0 && s_ < 0.22) {
+        const k = s_ / 0.22
         const e = 1 - Math.pow(1 - k, 3)
-        const ra = 1.5 + 3 * e
-        const rb = 3 + 7 * e
-        const cx = pe.x + pe.ux * (3 + 7 * k)
-        const cy = pe.y + pe.uy * (3 + 7 * k)
-        for (let a = 0; a < Math.PI * 2; a += 0.06) p.dot(cx + pe.ux * Math.cos(a) * ra + nx * Math.sin(a) * rb, cy + pe.uy * Math.cos(a) * ra + ny * Math.sin(a) * rb, k < 0.3 ? N.WHITE : C[5], 1.15 - k)
+        const ra = 2 + 5 * e
+        const rb = 4 + 12 * e
+        const cx = pe.x + pe.ux * (4 + 12 * k)
+        const cy = pe.y + pe.uy * (4 + 12 * k)
+        for (let a = 0; a < Math.PI * 2; a += 0.04) {
+          const x = cx + pe.ux * Math.cos(a) * ra + nx * Math.sin(a) * rb
+          const y = cy + pe.uy * Math.cos(a) * ra + ny * Math.sin(a) * rb
+          p.dot(x, y, k < 0.3 ? N.WHITE : C[5], 1.15 - k)
+          if (k < 0.5) p.dot(x - pe.ux * 0.8, y - pe.uy * 0.8, C[5], 1 - k)
+        }
       }
     }
   }
@@ -18743,7 +18761,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           // (l'aiguille se plante : son « tchk » charnu, une giclée de bile, et sa percée — voir `dessinerLesPercees`)
           jouer('piqure', { dx: ev.x - v.x, dy: ev.y - v.y })
           const dp = Math.hypot(ev.x - v.x, ev.y - v.y) || 1
-          percees.push({ x: ev.x, y: ev.y, ux: (ev.x - v.x) / dp, uy: (ev.y - v.y) / dp, t0: t, elec: CONF.armes.some((a) => a.tentacule !== undefined && a.electrocution !== undefined) })
+          const elec = CONF.armes.some((a) => a.tentacule !== undefined && a.electrocution !== undefined)
+          percees.push({ x: ev.x, y: ev.y, ux: (ev.x - v.x) / dp, uy: (ev.y - v.y) / dp, t0: t, elec })
+          // (une gerbe d'étincelles claires part devant, dans l'axe de la piqûre)
+          for (let i = 0; i < 7; i++) {
+            const a = Math.atan2(ev.y - v.y, ev.x - v.x) + R.range(-0.45, 0.45)
+            const sp = R.range(80, 170)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * sp, Math.sin(a) * sp, R.range(0.12, 0.28), i % 2 === 0 ? N.WHITE : elec ? COULEURS_VOLT[6] : CHAIR[5], 1, 1.5)
+          }
           for (let i = 0; i < 6; i++) {
             const a = R.range(0, Math.PI * 2)
             etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(20, 55), Math.sin(a) * R.range(20, 55), R.range(0.15, 0.3), R.next() < 0.5 ? BILE[1] : BILE[2], 1, 1.5)
