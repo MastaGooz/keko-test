@@ -9860,3 +9860,8 @@ texture qu'on met sous les ennemis et sous le joueur, quelque chose d'esthétiqu
   centre vers le bord, son front souligné — quand le front touche le cercle, ça explose ; dedans, de fines ondes courent
   vers le bord ; dans le dernier quart, le cercle et le front battent en clair. **À retenir pour les prochains
   télégraphes : une forme simple, lisible, et la qualité dans l'animation.**
+- **L'explosion blesse aussi les ennemis** (Keko, 28/11 : « il faudrait que les explosions fassent également des dégâts
+  aux ennemis, je pense ») : tout insecte de la zone, pas une roche, perd la vie d'un petit insecte
+  (`explosion.auxInsectes`, `soufflerLesInsectes`) — un petit ou un moucheron en meurt, un cornu en perd le quart, un
+  cuirassier un quinzième. Abattu ainsi, il lâche son butin ; une autre larve y laisse son cadavre, qui explose à son
+  tour : des chaînes, d'un délai à l'autre. Chiffre de moi.

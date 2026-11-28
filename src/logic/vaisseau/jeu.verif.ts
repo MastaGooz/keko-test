@@ -5940,6 +5940,21 @@ for (const vortex of [true, false]) {
     }
     verifier(`… abattue à 200 du vaisseau : un cadavre (${cadavres}) s'amorce à sa mort et explose ${((explose - amorcee) / 60).toFixed(2)} s plus tard, sans toucher (${touche}) ; il n'en reste rien (${w.larvesMortes.length})`, cadavres === 1 && amorcee >= 0 && Math.abs((explose - amorcee) / 60 - ex.delai) < 0.06 && !touche && w.larvesMortes.length === 0)
   }
+  {
+    // (L'EXPLOSION BLESSE LES ENNEMIS : un insecte et une autre larve dans la zone du cadavre, un insecte au loin — le
+    // premier meurt, la larve aussi et laisse son cadavre, qui explose à son tour ; celui du loin n'a rien)
+    const w = nouveauMonde(cfg, 5)
+    w.invasion.prochainA = 1e9
+    const bete = (id: number, x: number, pv: number, sorte?: 'larve'): Ennemi => ({ id, corps: { ...nouveauVaisseau(), x, y: 0 }, pv, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, ...(sorte === undefined ? {} : { sorte }) })
+    w.ennemis.push(bete(910, 300, 0, 'larve'), bete(911, 310, cfg.ennemi.pv), bete(912, 290, cfg.ennemi.pv * cfg.invasion.larve.vie, 'larve'), bete(913, 700, cfg.ennemi.pv))
+    let explosions = 0
+    for (let i = 0; i < 60 * 2.2; i++) {
+      w.vaisseau = { ...w.vaisseau, x: 0, y: 0, vx: 0, vy: 0 }
+      w.ennemis.forEach((e) => (e.corps = { ...e.corps, x: e.id === 911 ? 310 : e.id === 912 ? 290 : e.id === 913 ? 700 : e.corps.x, y: 0, vx: 0, vy: 0 }))
+      for (const ev of avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements) if (ev.type === 'larveExplose') explosions += 1
+    }
+    verifier(`… l'explosion blesse les ennemis : l'insecte dans la zone est mort (${!w.ennemis.some((e) => e.id === 911)}), l'autre larve aussi, et son cadavre a explosé à son tour (${explosions} explosions) ; l'insecte au loin est intact (${w.ennemis.find((e) => e.id === 913)?.pv === cfg.ennemi.pv})`, !w.ennemis.some((e) => e.id === 911) && !w.ennemis.some((e) => e.id === 912) && explosions === 2 && w.ennemis.find((e) => e.id === 913)?.pv === cfg.ennemi.pv)
+  }
   const figee = jouer(false, false, true)
   verifier(`… figée une seconde pendant son délai, elle explose une seconde plus tard (${((figee.exploseA - figee.amorceeA) / 60).toFixed(2)} s)`, Math.abs((figee.exploseA - figee.amorceeA) / 60 - (ex.delai + 1)) < 0.08)
 }

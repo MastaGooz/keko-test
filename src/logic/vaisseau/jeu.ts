@@ -353,7 +353,11 @@ export const VAISSEAU = {
     // qu'il est tué, il lance automatiquement son attaque explosive. En tout cas, son cadavre lance l'attaque » : abattue —
     // d'abord, cela annulait l'explosion —, elle lâche son butin et laisse UN CADAVRE (`Monde.larvesMortes`) qui s'amorce à
     // l'instant, ou garde le compte déjà lancé, et explose de même. Morte dans la tempête, elle ne laisse rien.)
-    larve: { vie: 0.6, taille: 0.9, vitesse: 46 / 40, morsure: 4, butin: 2, debut: 30, montee: 240, part: 0.08, explosion: { declenche: 22, rayon: 36, delai: 0.9 } },
+    // (… ET L'EXPLOSION BLESSE AUSSI LES ENNEMIS — Keko, 28/11 : « il faudrait que les explosions fassent également des
+    // dégâts aux ennemis » : tout insecte dans la zone — pas une roche — perd `auxInsectes` fois la vie d'un petit insecte ;
+    // abattu ainsi, il lâche son butin, et une autre larve y laisse son cadavre, qui explosera à son tour : une chaîne,
+    // d'un délai à l'autre. *Chiffre de moi.*)
+    larve: { vie: 0.6, taille: 0.9, vitesse: 46 / 40, morsure: 4, butin: 2, debut: 30, montee: 240, part: 0.08, explosion: { declenche: 22, rayon: 36, delai: 0.9, auxInsectes: 1 } },
     /**
      * LES TROIS PÉPITES (Keko, 21/11 : « différentes pépites, une petite, une moyenne et une grosse, afin que les ennemis
      * lootent des ensembles un peu plus variés » — « 1 / 3 / 10 », « chaque ennemi a son butin propre ») : leurs valeurs
@@ -3316,6 +3320,8 @@ function aPorteeDUnePose(c: ConfigVaisseau, m: Monde, e: Ennemi): boolean {
 /** Ce que fait UN INSECTE pendant `dt` : il marche vers le portail et le traverse ; ou il chasse le joueur qui l'a approché, le mord, et le lâche s'il est entraîné trop loin. */
 function conduireLInsecte(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number, ev: Evenement[]): Choc[] {
   const I = c.invasion
+  // (abattu plus tôt dans ce même pas — soufflé par l'explosion d'une larve —, il ne fait plus rien)
+  if (!m.ennemis.includes(e)) return []
   const b = e.corps
   // (À PLUSIEURS, IL CHASSE LE VAISSEAU EN VOL LE PLUS PROCHE DE LUI — voir `avancerLEquipage` ; Keko, 21/11 : « à plusieurs
   // joueurs, ils iraient vers les autres » ; seul, le vaisseau du joueur, s'il vole)
@@ -3397,6 +3403,7 @@ function conduireLInsecte(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number, ev
           if (m.equipage === undefined || cible!.k === m.equipage.actif) encaisser(c, m, v.x, v.y, degats, ev)
           else m.equipage.pilotes[cible!.k].morsures.push({ x: v.x, y: v.y, degats })
         }
+        soufflerLesInsectes(c, m, b.x, b.y, ev, e)
         abattreLEnnemi(c, m, e, ev, true)
       }
       return []
@@ -3522,6 +3529,17 @@ function conduireLInsecte(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number, ev
   return []
 }
 
+/** L'EXPLOSION D'UNE LARVE BLESSE LES INSECTES DE SA ZONE (voir `invasion.larve`) — pas elle-même (`sauf`), pas une roche. */
+function soufflerLesInsectes(c: ConfigVaisseau, m: Monde, x: number, y: number, ev: Evenement[], sauf?: Ennemi): void {
+  const ex = c.invasion.larve.explosion
+  const degats = c.ennemi.pv * ex.auxInsectes
+  for (const o of [...m.ennemis]) {
+    if (o === sauf || o.asteroide !== undefined || Math.hypot(o.corps.x - x, o.corps.y - y) > ex.rayon + rayonDe(c, o)) continue
+    o.pv -= degats
+    ev.push({ type: 'ennemiTouche', id: o.id, x: o.corps.x, y: o.corps.y, critique: false })
+    if (o.pv <= 0) abattreLEnnemi(c, m, o, ev)
+  }
+}
 /** LES CADAVRES DES LARVES EXPLOSIVES (voir `invasion.larve`) : leur délai passé, ils explosent comme elle — le vaisseau dans la zone encaisse. */
 function menerLesLarvesMortes(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
   const I = c.invasion
@@ -3533,6 +3551,7 @@ function menerLesLarvesMortes(c: ConfigVaisseau, m: Monde, ev: Evenement[]): voi
     const cible = cibleDeLInsecte(m, l)
     const touche = cible !== null && Math.hypot(cible.v.x - l.x, cible.v.y - l.y) <= ex.rayon
     ev.push({ type: 'larveExplose', x: l.x, y: l.y, rayon: ex.rayon, touche })
+    soufflerLesInsectes(c, m, l.x, l.y, ev)
     if (!touche) continue
     const degats = I.morsure * I.larve.morsure
     if (m.equipage === undefined || cible!.k === m.equipage.actif) encaisser(c, m, cible!.v.x, cible!.v.y, degats, ev)
