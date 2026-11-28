@@ -10009,3 +10009,24 @@ quasiment jamais, et quand elle se lance, on est beaucoup trop en danger. »
     roche qu'il touche éclate, avec son butin.
   Vérifié : un vaisseau qui file en travers à 45 est percuté ; celui qui fait un pas de côté une fois le couloir figé ne
   l'est pas par cette course.
+
+### Tous les ennemis deviennent des raies du vide (28/11)
+
+Keko : « Rework tous les petits ennemis, les 3 ennemis qui avancent et les 2 ennemis qui tirent, pour qu'ils rentrent dans
+la direction artistique du mini-boss. J'aimais pas trop les ennemis insectoïdes, car on a déjà les Xénoïdes pour les
+insectes. Le mini-boss semble appartenir à aucune des races qu'on a déjà dans le jeu : matche les autres ennemis avec cette
+espèce-là. »
+
+- **Une seule peinture** (`peindreUneRaie`, `FormeDeRaie`, `RAIES`), celle du colosse généralisée : un manteau (en
+  croissant, ou rond), sa chair indigo éclairée pixel par pixel, son cerne, un liseré clair sur le bord tourné vers la
+  lumière, une échine d'os, un cœur de bile qui bat, des yeux rouges, des filaments qui ondulent. Le colosse s'en sert
+  (`RAIES.colosse`), son cœur rougit et son manteau se resserre comme avant.
+- **Chaque sorte sa silhouette** : le petit, une raie simple à deux yeux ; le moucheron, une fléchette étroite à un œil ;
+  le cornu, plus large, deux cornes d'os ; le cuirassier, trapu, cuirassé de plaques d'os, trois yeux, quatre filaments ;
+  la larve explosive, une méduse ronde dont tout le ventre est la poche de bile ; le cracheur, une bouche rouge au bout
+  du nez ; le cracheur lourd, large et cuirassé, trois bouches rouges en éventail.
+- **Lisibles petites** (mesuré en capture : l'indigo sombre se perdait dans le noir) : plus de chevrons ni de grain sous une
+  certaine taille, des plaques espacées, une chair plus claire, le liseré. Elles restent peintes une fois par pose
+  (l'image gardée), le cracheur lourd et le colosse à chaque image.
+- Les formes d'insectes de `rendu-vaisseau.ts` ne servent plus au vortex. Le code dit encore « insecte ».
+- `&bestiaire` : un ennemi de chaque sorte, immobiles en ligne au-dessus du vaisseau (avec `&paix`).
