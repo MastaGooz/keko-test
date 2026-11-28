@@ -9741,3 +9741,4 @@ Keko, devant cinq pistes (Reine, Tiques, Dard, Ruche, Frelon ; Gavage, Curée, C
   la vie ; la proie reste mordue par le nuage aussi.
 - Son dessin, à la main, dans `dessinerLesNuees` : abdomen pâle rayé, thorax et tête sombres, deux ailes qui battent ; aux
   couleurs des Lucioles avec elles. Chiffres de moi.
+- **Redessinée** (Keko, 28/11 : « pas du tout dans la DA du jeu ; un peu plus de texture, un côté plus xénoïde ») : une bête des ruches de la matière du Kraken, à ses couleurs d'apparence — abdomen en anneaux de chair et de chitine cernés de sombre, pustules de bile qui luisent, dard et mandibules d'os, six pattes, quatre ailes en membranes de chair ; ~19 pixels de long au lieu de 8.

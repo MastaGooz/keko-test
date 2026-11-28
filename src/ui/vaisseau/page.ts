@@ -14074,36 +14074,83 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         p.px(ix + bat, iy - 1, feu ? luciole(j, tic) : alea(j, tic, 52) < 0.25 ? N.WHITE : j % 4 === 0 ? CHAIR[4] : BILE[2])
         if (feu && j % 6 === 0) p.glow(ix, iy, 3, BRAISE_DES_LUCIOLES[1], 0.3)
       }
-      // (LA REINE — Keko, 28/11, voir `Arme.reine` : un gros insecte, tourné vers son cap — un abdomen pâle et rayé, un
-      // thorax et une tête sombres, deux paires d'ailes qui battent ; posée sur sa proie, elle tressaille)
+      // (LA REINE — Keko, 28/11, voir `Arme.reine` ; son premier dessin, trois ronds et deux ailes blanches : « pas du tout dans
+      // la DA du jeu ; il faudrait un peu plus de texture et lui donner un côté plus xénoïde » : UNE BÊTE DES RUCHES, de la
+      // matière du Kraken et à ses couleurs — un abdomen en anneaux de chair et de chitine, cerné de sombre, qui respire, des
+      // pustules de bile qui luisent, un dard d'os ; un thorax en plaque de chitine, six pattes à griffes ; une tête aux yeux
+      // de bile et deux mandibules d'os en faux, qui hachent quand elle mord ; quatre ailes en membranes de chair nervurées)
       const re = n.reine
       if (re !== undefined && CONF.armes[n.arme]?.reine !== undefined) {
+        const ru = rampesDuJoueur()
+        const ch = ru?.chair ?? CHAIR
+        const ct = ru?.chitine?.[3] ?? CHITINE_DU_REJETON
+        const ctClaire = ru?.chitine?.[4] ?? CHITINE_CLAIRE
+        const lueur = feu ? [BRAISE_DES_LUCIOLES[2], BRAISE_DES_LUCIOLES[3], BRAISE_DES_LUCIOLES[4]] : ru?.bile !== undefined ? [ru.bile[1], ru.bile[3], ru.bile[4]] : BILE
         const ca = Math.cos(re.cap)
         const sa = Math.sin(re.cap)
-        const ox = re.x + (re.pose ? (alea(7, tic, 71) - 0.5) * 1.4 : 0)
-        const oy = re.y + (re.pose ? (alea(7, tic, 72) - 0.5) * 1.4 : 0)
+        const ox = re.x + (re.pose ? (alea(7, tic, 71) - 0.5) * 1.2 : 0)
+        const oy = re.y + (re.pose ? (alea(7, tic, 72) - 0.5) * 1.2 : 0)
         const en = (le: number, co: number): [number, number] => [ox + ca * le - sa * co, oy + sa * le + ca * co]
+        const trait = (l0: number, c0: number, l1: number, c1: number, couleur: number, alpha = 1): void => {
+          const [x0, y0] = en(l0, c0)
+          const [x1, y1] = en(l1, c1)
+          p.line(x0, y0, x1, y1, couleur, alpha)
+        }
+        // (les ailes, dessous : deux par flanc, des membranes de chair translucides, une nervure d'os ; elles battent)
         const bat = tic % 2 === 0
-        for (const co of [-1, 1]) {
-          const [wx, wy] = en(bat ? -1.5 : -0.5, co * (bat ? 4 : 3))
-          p.circle(wx, wy, bat ? 2 : 1.5, feu ? BRAISE_DES_LUCIOLES[4] : N.WHITE, 0.75)
+        for (const co of [-1, 1]) for (let k = 0; k < 2; k++) {
+          const ouv = (bat ? 1.25 : 0.7) - k * 0.4
+          const long = 8 - k * 2.5
+          const dl = -Math.cos(ouv)
+          const dc = co * Math.sin(ouv)
+          for (let q = 1; q <= 4; q++) {
+            const [wx, wy] = en(-0.5 + dl * long * (q / 4), co * 1.2 + dc * long * (q / 4))
+            p.circle(wx, wy, 1.9 - 0.45 * Math.abs(q - 2.5), q % 2 === 0 ? ch[5] : ch[4], 0.42)
+          }
+          trait(-0.5, co * 1.2, -0.5 + dl * long, co * 1.2 + dc * long, OS[1], 0.6)
         }
-        const [ax, ay] = en(-3.5, 0)
-        p.circle(ax, ay, 2.6, CHITINE_SOMBRE)
-        p.circle(ax, ay, 1.9, feu ? BRAISE_DES_LUCIOLES[3] : CHAIR[5])
-        const [rx, ry] = en(-3.5, 0)
-        p.px(Math.round(rx), Math.round(ry), feu ? BRAISE_DES_LUCIOLES[2] : BILE[2])
-        const [qx, qy] = en(-5.5, 0)
-        p.px(Math.round(qx), Math.round(qy), CHITINE_SOMBRE)
-        const [hx, hy] = en(0, 0)
-        p.circle(hx, hy, 1.8, CHITINE_SOMBRE)
-        const [tx, ty] = en(2.4, 0)
-        p.circle(tx, ty, 1.3, CHITINE_SOMBRE)
-        for (const co of [-1, 1]) {
-          const [yx, yy] = en(2.8, co)
-          p.px(Math.round(yx), Math.round(yy), feu ? BRAISE_DES_LUCIOLES[1] : BILE[2])
+        // (les pattes : trois par flanc, coudées, une griffe d'os au bout ; elles s'agitent)
+        for (const co of [-1, 1]) for (let k = 0; k < 3; k++) {
+          const l0 = 1 - k * 1.3
+          const bouge = Math.sin(t * (re.pose ? 22 : 9) + k * 2 + co) * 0.5
+          const l1 = l0 + 0.9 - k * 0.9 + bouge
+          trait(l0, co * 1.5, l1, co * 3.4, CHITINE_SOMBRE)
+          trait(l1, co * 3.4, l1 + 0.8 - k * 0.5, co * 4.6, ct)
+          const [gx, gy] = en(l1 + 0.8 - k * 0.5, co * 4.6)
+          p.px(Math.round(gx), Math.round(gy), OS[2])
         }
-        if (feu) p.glow(ox, oy, 6, BRAISE_DES_LUCIOLES[1], 0.3)
+        // (le dard d'os, au bout de l'abdomen)
+        trait(-9.2, 0, -11.6, 0, OS[0])
+        trait(-9.2, 0, -11, 0, OS[2])
+        // (l'abdomen : quatre anneaux qui s'amenuisent et respirent — le cerne, la matière en bandes, la lumière)
+        const ANNEAUX: [number, number][] = [[-2.4, 2.5], [-4.6, 2.9], [-6.8, 2.4], [-8.6, 1.5]]
+        const souffle = (q: number): number => 1 + 0.07 * Math.sin(t * 5 - q * 0.9)
+        ANNEAUX.forEach(([le, ra], q) => p.circle(...en(le, 0), ra * souffle(q) + 0.8, CHAIR[0]))
+        ANNEAUX.forEach(([le, ra], q) => p.circle(...en(le, 0), ra * souffle(q), q % 2 === 0 ? ch[3] : ct))
+        ANNEAUX.forEach(([le, ra], q) => p.circle(en(le, 0)[0] - 0.6, en(le, 0)[1] - 0.6, Math.max(0.5, ra * 0.45), q % 2 === 0 ? ch[4] : ctClaire))
+        // (ses pustules de bile, qui luisent)
+        for (const [le, co, ph] of [[-4.2, 1.2, 0], [-5.6, -1.1, 2], [-7.2, 0.6, 4]] as [number, number, number][]) {
+          const [bx, by] = en(le, co)
+          p.circle(bx, by, 1, lueur[1])
+          p.px(Math.round(bx), Math.round(by), lueur[2])
+          p.glow(bx, by, 3.5, lueur[1], 0.22 + 0.14 * Math.sin(t * 6 + ph))
+        }
+        // (le thorax, une plaque de chitine)
+        p.circle(...en(0, 0), 3, CHAIR[0])
+        p.circle(...en(0, 0), 2.3, ct)
+        p.circle(en(0, 0)[0] - 0.6, en(0, 0)[1] - 0.6, 1.1, ctClaire)
+        // (la tête, ses yeux de bile, ses mandibules d'os en faux — elles hachent quand elle mord)
+        p.circle(...en(2.9, 0), 2.3, CHAIR[0])
+        p.circle(...en(2.9, 0), 1.6, ct)
+        const ouvert = re.pose ? Math.abs(Math.sin(t * 16)) : 0.65 + 0.2 * Math.sin(t * 3)
+        for (const co of [-1, 1]) {
+          trait(4, co * 1.1, 5.4, co * (1.2 + ouvert * 1.5), OS[0])
+          trait(5.4, co * (1.2 + ouvert * 1.5), 7, co * (0.3 + ouvert * 1.1), OS[2])
+          const [mx, my] = en(7, co * (0.3 + ouvert * 1.1))
+          p.px(Math.round(mx), Math.round(my), OS[3])
+          const [yx, yy] = en(3.4, co * 1.1)
+          p.px(Math.round(yx), Math.round(yy), lueur[2])
+        }
       }
     }
     // (LES PETITS NUAGES — voir `Arme.eclosion`, `Arme.essaimage` : l'éclosion, qui gonfle d'un coup et se disperse ; la nuée
