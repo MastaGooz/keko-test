@@ -9865,3 +9865,7 @@ texture qu'on met sous les ennemis et sous le joueur, quelque chose d'esthétiqu
   (`explosion.auxInsectes`, `soufflerLesInsectes`) — un petit ou un moucheron en meurt, un cornu en perd le quart, un
   cuirassier un quinzième. Abattu ainsi, il lâche son butin ; une autre larve y laisse son cadavre, qui explose à son
   tour : des chaînes, d'un délai à l'autre. Chiffre de moi.
+- **Plus grosse, plus rare, trois au plus** (Keko, 28/11 : « augmente un peu la taille des insectes explosifs, ils sont
+  trop petits ; diminue leur nombre et empêche-les d'être trop nombreux à la fois, pour éviter les réactions en chaîne
+  infinies : maximum 2 ou 3 à la fois ») : taille 0,9 → 1,35 (le cornu est à 1,5), 8 % → 5 % du flot, et `larve.max` = 3
+  larves à la fois, cadavres amorcés compris — au-delà, un petit insecte naît à sa place. `&larves=1` reste borné à trois.

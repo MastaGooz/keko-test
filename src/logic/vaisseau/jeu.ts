@@ -357,7 +357,11 @@ export const VAISSEAU = {
     // dégâts aux ennemis » : tout insecte dans la zone — pas une roche — perd `auxInsectes` fois la vie d'un petit insecte ;
     // abattu ainsi, il lâche son butin, et une autre larve y laisse son cadavre, qui explosera à son tour : une chaîne,
     // d'un délai à l'autre. *Chiffre de moi.*)
-    larve: { vie: 0.6, taille: 0.9, vitesse: 46 / 40, morsure: 4, butin: 2, debut: 30, montee: 240, part: 0.08, explosion: { declenche: 22, rayon: 36, delai: 0.9, auxInsectes: 1 } },
+    // (… PLUS GROSSE, PLUS RARE, TROIS AU PLUS — Keko, 28/11 : « augmente un peu la taille des insectes explosifs, ils sont
+    // trop petits ; diminue leur nombre et empêche-les d'être trop nombreux à la fois, pour éviter les réactions en chaîne
+    // infinies : maximum 2 ou 3 à la fois » : 0,9 → 1,35 de taille, 8 % → 5 % du flot, et `max` larves à la fois, cadavres
+    // amorcés compris — au-delà, c'est un petit insecte qui naît à sa place)
+    larve: { vie: 0.6, taille: 1.35, vitesse: 46 / 40, morsure: 4, butin: 2, debut: 30, montee: 240, part: 0.05, max: 3, explosion: { declenche: 22, rayon: 36, delai: 0.9, auxInsectes: 1 } },
     /**
      * LES TROIS PÉPITES (Keko, 21/11 : « différentes pépites, une petite, une moyenne et une grosse, afin que les ennemis
      * lootent des ensembles un peu plus variés » — « 1 / 3 / 10 », « chaque ennemi a son butin propre ») : leurs valeurs
@@ -3068,6 +3072,8 @@ function faireNaitreUnInsecte(c: ConfigVaisseau, m: Monde, ev: Evenement[]): voi
     }
     u -= pa
   }
+  // (LES LARVES EXPLOSIVES, TROIS AU PLUS À LA FOIS, cadavres compris — voir `invasion.larve.max`)
+  if (sorte === 'larve' && m.ennemis.filter((x) => x.sorte === 'larve').length + m.larvesMortes.length >= c.invasion.larve.max) sorte = undefined
   const e: Ennemi = { id: m.prochainId++, corps: { ...nouveauVaisseau(), x, y, cap: Math.atan2(o.y - y, o.x - x) }, pv: c.ennemi.pv * (sorte === undefined ? 1 : c.invasion[sorte].vie), fait: c.invasion.sansPortail ? 'aggro' : 'marche', roche: null, forage: null, tirA: 0, butin: 0, cargaison: cargaisonVide(), ...(sorte === undefined ? {} : { sorte }) }
   m.ennemis.push(e)
   ev.push({ type: 'ennemiApparait', id: e.id, x, y })

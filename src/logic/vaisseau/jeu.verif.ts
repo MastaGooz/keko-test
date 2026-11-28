@@ -5955,6 +5955,20 @@ for (const vortex of [true, false]) {
     }
     verifier(`… l'explosion blesse les ennemis : l'insecte dans la zone est mort (${!w.ennemis.some((e) => e.id === 911)}), l'autre larve aussi, et son cadavre a explosé à son tour (${explosions} explosions) ; l'insecte au loin est intact (${w.ennemis.find((e) => e.id === 913)?.pv === cfg.ennemi.pv})`, !w.ennemis.some((e) => e.id === 911) && !w.ennemis.some((e) => e.id === 912) && explosions === 2 && w.ennemis.find((e) => e.id === 913)?.pv === cfg.ennemi.pv)
   }
+  {
+    // (TROIS AU PLUS À LA FOIS : un flot fait tout de larves, pendant vingt secondes — jamais plus de trois, cadavres compris)
+    const cl = { ...cfg, invasion: { ...cfg.invasion, premiere: 0, continu: { ...cfg.invasion.continu, actif: true, debut: 4, max: 4 }, larve: { ...cfg.invasion.larve, debut: 0, montee: 1e-6, part: 1 }, moucheron: { ...cfg.invasion.moucheron, part: 0 } } }
+    const w = nouveauMonde(cl, 5)
+    let plus = 0
+    let autres = 0
+    for (let i = 0; i < 60 * 20; i++) {
+      w.vaisseau = { ...w.vaisseau, x: 0, y: 0, vx: 0, vy: 0 }
+      avancerLeMonde(cl, w, 1 / 60, { x: 0, y: 0 })
+      plus = Math.max(plus, w.ennemis.filter((e) => e.sorte === 'larve').length + w.larvesMortes.length)
+      autres = Math.max(autres, w.ennemis.filter((e) => e.sorte === undefined).length)
+    }
+    verifier(`… trois larves au plus à la fois (${plus}, cadavres compris) ; au-delà, des petits naissent à leur place (${autres})`, plus === 3 && autres > 0)
+  }
   const figee = jouer(false, false, true)
   verifier(`… figée une seconde pendant son délai, elle explose une seconde plus tard (${((figee.exploseA - figee.amorceeA) / 60).toFixed(2)} s)`, Math.abs((figee.exploseA - figee.amorceeA) / 60 - (ex.delai + 1)) < 0.08)
 }
