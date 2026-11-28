@@ -9945,3 +9945,4 @@ remplir un petit peu plus que juste refroidir, mais je te laisse gérer ça. »
   ça prend trop de place, c'est trop grossier ») : le nom en petite lettre pâle (plus de relief), la vie sur deux pixels,
   le stagger sur un seul, collé dessous ; sur une seule ligne — le nom à gauche, les barres (80) à sa droite —, juste sous l'interface du haut : au-dessus
   d'elle il n'y a pas de place, l'expérience est au bord du tampon (mesuré en capture) ; couché, sous l'expérience.
+- Puis (Keko : « en paysage, tu peux la remonter un petit peu ; dans les deux cas, écrire le nom un petit peu plus petit ») : le nom dans la mini du dépôt (cinq pixels), et couché, tout en haut de l'écran (y 4) quand l'expérience est rangée dans le bandeau de côté — sinon sous elle (y 13).

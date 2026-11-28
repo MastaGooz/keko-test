@@ -1685,13 +1685,16 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // haut — sous elle seulement si la place manque, et sous l'expérience couché)
     // (… SUR UNE SEULE LIGNE, JUSTE SOUS L'INTERFACE DU HAUT — mesuré en capture : au-dessus d'elle, il n'y a pas de place,
     // l'expérience est au bord du tampon ; le nom à gauche, les barres à sa droite, l'ensemble centré)
+    // (… LE NOM PLUS PETIT — Keko, 28/11 : « écrire le nom un petit peu plus petit » : la mini du dépôt, cinq pixels de haut)
     const nom = 'COLOSSE'
-    const wn = largeurDe(nom)
+    const wn = textWidth(nom, 'mini')
     const bw = Math.min(80, W - 70 - wn)
     const x0 = Math.round((W - (wn + 4 + bw)) / 2)
     const x = x0 + wn + 4
-    const y0 = paysage ? 15 : hautDuHud() - RANG_DE_L_EXPERIENCE + 24
-    ecrire(p, nom, x0, y0, N.hex('#b89cd8'))
+    // (couché, collée sous l'expérience — Keko, 28/11 : « en paysage, tu peux la remonter un petit peu »)
+    // (l'expérience rangée dans le bandeau de côté, rien n'est au-dessus : tout en haut — mesuré en capture)
+    const y0 = paysage ? (interfaceEnBande() ? 4 : 13) : hautDuHud() - RANG_DE_L_EXPERIENCE + 24
+    p.text(nom, x0, y0, N.hex('#b89cd8'), { font: 'mini' })
     const encre = MATIERES.encre.contour
     // (la vie : deux pixels, cernés d'encre, à hauteur du nom)
     const y = y0 + 1
