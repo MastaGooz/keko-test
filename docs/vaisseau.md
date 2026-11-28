@@ -9946,3 +9946,10 @@ remplir un petit peu plus que juste refroidir, mais je te laisse gérer ça. »
   le stagger sur un seul, collé dessous ; sur une seule ligne — le nom à gauche, les barres (80) à sa droite —, juste sous l'interface du haut : au-dessus
   d'elle il n'y a pas de place, l'expérience est au bord du tampon (mesuré en capture) ; couché, sous l'expérience.
 - Puis (Keko : « en paysage, tu peux la remonter un petit peu ; dans les deux cas, écrire le nom un petit peu plus petit ») : le nom dans la mini du dépôt (cinq pixels), et couché, tout en haut de l'écran (y 4) quand l'expérience est rangée dans le bandeau de côté — sinon sous elle (y 13).
+- **Sa carapace peinte au pixel** (Keko, 28/11 : « la texture du mini-boss est très flat et peu travaillée comparée aux
+  autres objets du jeu ; on peut lui donner une nette amélioration graphiquement ») : les polygones ne gardent que les
+  pattes et les mandibules (dessous), les épines et les yeux (dessus) ; la carapace — deux élytres, le pronotum, la tête,
+  `CARAPACE_DU_COLOSSE` — est peinte pixel par pixel (`peindreLeColosse`, un `p.shade`) : la normale d'un ellipsoïde
+  éclairée par la lumière du vol, sur une rampe de chitine de sept tons, tramée ; des stries le long des élytres, des
+  bourrelets d'os en travers qui prennent la lumière, des piqûres tirées d'un bruit, une suture sombre, un reflet irisé
+  violet-sarcelle en haut des bombés, un cerne d'encre ; les élytres respirent à peine.
