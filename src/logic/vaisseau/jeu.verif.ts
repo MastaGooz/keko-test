@@ -6066,7 +6066,7 @@ for (const vortex of [true, false]) {
 }
 
 // LES ATTAQUES DU COLOSSE (Keko, 28/11 — voir `invasion.colosse.attaques`) : loin, il charge dans son couloir et percute le
-// vaisseau qui y reste, pas celui qui en sort ; puis il crache ses couronnes ; puis, tout près, l'onde
+// vaisseau qui y reste, pas celui qui en sort ; puis il crache ses couronnes ; plus d'onde
 {
   // (une coque sans fond : ses morsures tueraient le vaisseau immobile avant la fin)
   const cfg: ConfigVaisseau = { ...VAISSEAU, coque: 1e6, armes: [], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9 }, derive: { ...VAISSEAU.derive, active: false }, arene: { ...VAISSEAU.arene, active: false } }
@@ -6100,10 +6100,6 @@ for (const vortex of [true, false]) {
   verifier(`le colosse loin : ses attaques ${loin.sortes.join(', ')} ; sa charge part de ${loin.x0.toFixed(0)} et le porte jusqu'à ${loin.xMin.toFixed(0)}, il percute le vaisseau (${loin.perduAvantSalve} perdu) ; sa salve : ${loin.crachats} crachats en vol (${A.salve.n * A.salve.vagues})`, loin.sortes[0] === 'charge' && loin.sortes[1] === 'salve' && loin.perduAvantSalve > 0 && loin.crachats >= A.salve.n * A.salve.vagues - 1)
   const esquive = jouer(140, 4, true)
   verifier(`… le vaisseau qui sort du couloir pendant le télégraphe n'est pas percuté (${esquive.perdu} perdu)`, esquive.ev.some((e) => e.type === 'colosseCharge') && esquive.perdu === 0)
-  // (son tour est à l'onde : deux attaques déjà lancées)
-  const pres = jouer(40, 4, false, 2)
-  const onde = pres.ev.find((e) => e.type === 'colosseOnde')
-  verifier(`le colosse tout près, à son tour d'onde : ${pres.sortes.join(', ')}, qui touche le vaisseau (${onde?.type === 'colosseOnde' && onde.touche})`, pres.sortes[0] === 'onde' && onde?.type === 'colosseOnde' && onde.touche && pres.perdu > 0)
 }
 
 // (TOUJOURS EN DERNIER : des blocs ajoutés après cette ligne échouaient sans faire échouer `npm run verif` — 17/11)

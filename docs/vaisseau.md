@@ -9981,3 +9981,18 @@ Un set de 2 ou 3 moves qui correspondent à un mini-boss, car là, il ne fait ri
 - Vérifié : loin, la charge puis la salve ; la charge percute le vaisseau resté dans le couloir, pas celui qui en sort
   pendant le télégraphe ; 24 crachats ; l'onde touche le vaisseau tout près. Vu en capture : le couloir, la couronne de
   crachats, la nouvelle silhouette. Chiffres de moi.
+
+### Le colosse, troisième forme : une raie du vide ; l'onde retirée (28/11)
+
+Keko : « On peut donner une forme un peu plus originale et alien au mini-boss. Là, ça fait très insecte, tel qu'on en
+verrait sur Terre. De plus, l'attaque d'onde, on va l'enlever : personne n'est jamais aussi près de ce boss, elle se lance
+quasiment jamais, et quand elle se lance, on est beaucoup trop en danger. »
+
+- **L'onde est retirée**, règle, télégraphe et effets : il alterne la charge et la salve.
+- **La forme** (`peindreLeColosse`, `demiManteau`, tout au pixel — plus de formes polygonales ni de `formesDuColosse`) :
+  une raie du vide. Un manteau plat en croissant — nez en pointe, ailerons rabattus en arrière, échancrure à la queue —,
+  d'une chair indigo bombée au milieu (la normale par la pente du bombé, la lumière du vol, une rampe de huit tons
+  tramée, un grain) ; une échine d'os du nez à la queue ; des chevrons de bile en V qui courent vers l'arrière et
+  s'allument au passage d'un pouls ; un cœur de bile qui bat sous une fenêtre de chair ; trois yeux rouges en triangle sur
+  le nez ; quatre filaments qui ondulent derrière. Pour charger, il resserre son manteau, ses filaments se tendent, son
+  cœur s'embrase.

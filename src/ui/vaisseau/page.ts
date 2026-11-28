@@ -23,7 +23,7 @@ import { textWidth } from 'pixelfx'
 import { pixelsDeLIcone } from './icones-armes.ts'
 import { HAUT_ACCENTS } from './police.ts'
 import { RACINES_DU_KRAKEN, POINTE_DU_CROCHET, contourDuCrochet, cordesDuKraken } from './rendu-vaisseau.ts'
-import { formesDeLInsecte, formesDuCornu, formesDuCuirassier, formesDuMoucheron, formesDeLaLarve, formesDuCracheur, formesDuColosse, CARAPACE_DU_COLOSSE, boucheMontee, gabaritDe, tailleDe, placeDOutil, queueDe, tuyeresOmni, formesDuSocleDeTourelle, formesDeLaTeteDeTourelle, formesDeLaCapsule, formesDuCristalPose, formesDeLaScie, formesDeLaBalise, formesDuBecDeBalise, canonDeLaForeuse, formesDeLAimant, formesDuChassis, formesDeLaForeuse, formesDeLArme, formesDuPropulseur, formesDuRadar, formesDuVaisseau, formesDuVer, CRISTAL_DU_PRISME, sommetsDUnHypercube, ARETES_DE_L_HYPERCUBE, rampeDeLaMatiere, LIVREES, COULEURS_DE_JOUEUR, ovale, peindreDansUneCase, peindreFormes, rampesDeLaLivree, tonsDeLaLivree, tonsDeLaMatiere, ANCRES_DU_KRAKEN, type Habit } from './rendu-vaisseau.ts'
+import { formesDeLInsecte, formesDuCornu, formesDuCuirassier, formesDuMoucheron, formesDeLaLarve, formesDuCracheur, boucheMontee, gabaritDe, tailleDe, placeDOutil, queueDe, tuyeresOmni, formesDuSocleDeTourelle, formesDeLaTeteDeTourelle, formesDeLaCapsule, formesDuCristalPose, formesDeLaScie, formesDeLaBalise, formesDuBecDeBalise, canonDeLaForeuse, formesDeLAimant, formesDuChassis, formesDeLaForeuse, formesDeLArme, formesDuPropulseur, formesDuRadar, formesDuVaisseau, formesDuVer, CRISTAL_DU_PRISME, sommetsDUnHypercube, ARETES_DE_L_HYPERCUBE, rampeDeLaMatiere, LIVREES, COULEURS_DE_JOUEUR, ovale, peindreDansUneCase, peindreFormes, rampesDeLaLivree, tonsDeLaLivree, tonsDeLaMatiere, ANCRES_DU_KRAKEN, type Habit } from './rendu-vaisseau.ts'
 import { peauDe, peauxDe, rampesDeLaPeau, tonsDeLaPeau, type Peau } from './peaux.ts'
 import { boiteDe } from './rendu-vaisseau.ts'
 import { dessinerLAireDuHangar, dessinerLeSolDuHangar, dessinerLesLampesDuHangar } from './hangars.ts'
@@ -10434,97 +10434,112 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     peindreFormes(p, formes, x, y, sorte === undefined ? 1 : CONF.invasion[sorte].taille, { cap, lumiere: LUMIERE_DU_VOL, reflet: REFLET_DU_VOL, blanc: blanchi ? 1 : 0, matieres: aggro && sorte !== 'larve' ? { bile: 'laser' } : undefined })
   }
   /**
-   * LE COLOSSE PEINT AU PIXEL (Keko, 28/11 : « la texture du mini-boss est très flat et peu travaillée comparée aux autres
-   * objets du jeu ; on peut lui donner une nette amélioration graphiquement » — voir `formesDuColosse`) : ses pattes et ses
-   * mandibules en formes, puis SA CARAPACE pixel par pixel — deux élytres bombés, le pronotum, la tête : chaque pixel a sa
-   * normale d'ellipsoïde, éclairée par la lumière du vol, sur une rampe de chitine tramée ; des STRIES le long des élytres,
-   * des PIQÛRES tirées d'un bruit, une SUTURE sombre entre eux, des BOURRELETS D'OS en travers qui prennent la lumière, un
-   * REFLET IRISÉ — violet, sarcelle — sur le haut des bombés, comme un scarabée, et un cerne d'encre ; puis ses épines et ses
-   * yeux, qui battent.
+   * LE COLOSSE, PEINT AU PIXEL (Keko, 28/11) — d'abord un scarabée à pattes, puis une guêpe ; puis : « une forme un peu
+   * plus originale et alien ; là, ça fait très insecte, tel qu'on en verrait sur Terre » : UNE RAIE DU VIDE. Un MANTEAU
+   * plat, large, en croissant — un nez en pointe, deux ailerons rabattus en arrière, une échancrure à la queue —, d'une
+   * chair indigo bombée vers son milieu, éclairée pixel par pixel par la lumière du vol ; une ÉCHINE d'os qui court du nez
+   * à la queue ; des CHEVRONS DE BILE qui s'allument et courent vers l'arrière, comme un pouls ; au milieu, sous une
+   * fenêtre de chair translucide, SON CŒUR, une poche de bile qui bat ; trois yeux rouges en triangle sur le nez ; et
+   * derrière, QUATRE FILAMENTS qui ondulent. Pour charger, il resserre son manteau et ses filaments se tendent.
+   * `forme` (0 à 1) : son resserrement.
    */
-  const CHITINE_DU_COLOSSE = ['#0c0610', '#1a0e18', '#2a1622', '#3e2230', '#56323c', '#744a4c', '#9a6a5e', '#c8957c'].map((c) => N.hex(c))
-  const IRISE_DU_COLOSSE = [N.hex('#4a3a7a'), N.hex('#3a6a7a'), N.hex('#8a7ac8')]
+  const MANTEAU_DU_COLOSSE = ['#06050c', '#110e20', '#1b1735', '#272250', '#38316c', '#4e4790', '#6f6ab4', '#9c9ad8'].map((c) => N.hex(c))
   const OS_DU_COLOSSE = ['#3a2e20', '#76664a', '#a8987a', '#d6ccb0'].map((c) => N.hex(c))
   const TRAME_DU_COLOSSE = [0, 0.5, 0.125, 0.625, 0.75, 0.25, 0.875, 0.375, 0.1875, 0.6875, 0.0625, 0.5625, 0.9375, 0.4375, 0.8125, 0.3125]
-  // (… EN VAISSEAU-GUÊPE — Keko, 28/11, voir `formesDuColosse` : la carapace est la tête, le thorax et quatre anneaux
-  // d'abdomen ; chaque anneau a son bourrelet d'os à l'avant, le thorax une arête d'os sur le dos et deux plaques ; ses
-  // ailes se plaquent en arrière quand il charge, ses réacteurs de bile s'allument)
-  function peindreLeColosse(p: Peintre, x: number, y: number, cap: number, marche: number, ouvre: number, blanchi: boolean): void {
+  /** La demi-largeur du manteau du colosse en `u` (de la queue, −5, au nez, 6), dans ses unités ; 0 hors de lui. */
+  function demiManteau(u: number, serre: number): number {
+    const l = 8.6 * (1 - 0.3 * serre)
+    if (u > 6 || u < -5) return 0
+    // (du nez à l'épaule, il s'élargit ; de l'épaule aux pointes des ailerons, rabattus en arrière, il s'amincit)
+    if (u >= -0.8) return l * Math.pow((6 - u) / 6.8, 0.75)
+    return l * (1 - Math.pow((-0.8 - u) / 4.2, 1.6))
+  }
+  function peindreLeColosse(p: Peintre, x: number, y: number, cap: number, _marche: number, _ouvre: number, blanchi: boolean): void {
     const S = CONF.invasion.colosse.taille
-    const opt = { cap, lumiere: LUMIERE_DU_VOL, reflet: REFLET_DU_VOL, blanc: blanchi ? 1 : 0 }
-    // (ses ailes se plaquent pendant qu'il prépare sa charge, et le restent en chargeant)
     const at = m.ennemis.find((e) => e.sorte === 'colosse')?.attaque
-    const replie = at?.sorte !== 'charge' ? 0 : at.phase === 'prepare' ? Math.min(1, (m.t - at.depuis) / 0.5) : at.phase === 'agit' ? 1 : Math.max(0, 1 - (m.t - at.depuis) / 0.4)
-    peindreFormes(p, formesDuColosse(marche, ouvre, 'dessous', replie), x, y, S, opt)
+    const serre = at?.sorte !== 'charge' ? 0 : at.phase === 'prepare' ? Math.min(1, (m.t - at.depuis) / 0.5) : at.phase === 'agit' ? 1 : Math.max(0, 1 - (m.t - at.depuis) / 0.4)
     const ca = Math.cos(cap)
     const sa = Math.sin(cap)
+    const ecran = (u: number, v: number): [number, number] => [x + (u * ca - v * sa) * S, y + (u * sa + v * ca) * S]
+    // LES FILAMENTS, dessous : quatre rubans qui ondulent derrière lui — tendus quand il charge
+    if (!blanchi)
+      for (const [k, v0] of [[0, -2.2], [1, 2.2], [2, -4.6], [3, 4.6]] as const) {
+        const long = (k < 2 ? 9 : 6.5) * (1 + 0.25 * serre)
+        let [ax, ay] = ecran(-3.8, v0 * (1 - 0.3 * serre))
+        for (let q = 1; q <= 12; q++) {
+          const f = q / 12
+          const houle = Math.sin(t * 4 + k * 1.7 - f * 5) * (0.5 + 1.6 * f) * (1 - 0.8 * serre)
+          const [bx, by] = ecran(-3.8 - f * long, v0 * (1 - 0.3 * serre) * (1 + 0.15 * f) + houle)
+          p.line(ax, ay, bx, by, f < 0.5 ? MANTEAU_DU_COLOSSE[4] : MANTEAU_DU_COLOSSE[3])
+          if (q % 4 === 0) p.px(Math.round(bx), Math.round(by), BILE[2])
+          ;(ax = bx), (ay = by)
+        }
+      }
     const L = LUMIERE_DU_VOL
     const ln = Math.hypot(L.x, L.y, L.z)
-    const R = 9 * S
-    const souffle = 1 + 0.02 * Math.sin(t * 3)
+    // (le bombé du manteau : épais au milieu, mince aux bords)
+    const haut = (u: number, v: number): number => {
+      const w = demiManteau(u, serre)
+      if (w <= 0) return -1
+      const q = Math.abs(v) / w
+      if (q > 1) return -1
+      // (l'échancrure de la queue)
+      if (u < -2.4 && Math.abs(v) < (-2.4 - u) * 0.9) return -1
+      return Math.sqrt(1 - q * q) * (0.55 + 0.45 * Math.max(0, 1 - Math.abs(u - 0.5) / 6))
+    }
+    const R = 11 * S
+    const pouls = 0.5 + 0.5 * Math.sin(t * 5)
     p.shade(x - R, y - R, x + R, y + R, (px, py) => {
-      // (dans ses unités : tourné de −cap)
       const dx = (px - x) / S
       const dy = (py - y) / S
       const u = dx * ca + dy * sa
       const v = -dx * sa + dy * ca
-      // (la pièce : la dernière qui le couvre, de l'arrière vers l'avant)
-      let ex = 0
-      let ey = 0
-      let piece = ''
-      let rx = 1
-      let ry = 1
-      for (const c of CARAPACE_DU_COLOSSE) {
-        const k = c.nom === 'anneau' ? souffle : 1
-        const qx = (u - c.x) / c.rx
-        const qy = (v - c.y) / (c.ry * k)
-        if (qx * qx + qy * qy <= 1) (ex = qx), (ey = qy), (piece = c.nom), (rx = c.rx), (ry = c.ry)
-      }
-      if (piece === '') return 0
+      const h = haut(u, v)
+      if (h < 0) return 0
       if (blanchi) return N.WHITE
-      const d2 = ex * ex + ey * ey
-      const bord = 1 - d2
-      // (le cerne : le dernier pixel du bord)
-      if (bord < 2.2 / (Math.min(rx, ry) * S)) return CHITINE_DU_COLOSSE[0]
-      const h = Math.sqrt(Math.max(0, bord))
-      let nu = ex * 0.9
-      let nv = ey * 0.9
-      // (LE BOURRELET D'OS à l'avant de chaque anneau ; l'ARÊTE D'OS sur le dos du thorax et ses deux plaques ; les stries)
-      let os = 0
-      if (piece === 'anneau') {
-        if (ex > 0.62 && ex < 0.86) os = 1
-        nv += 0.15 * Math.sin(ey * Math.PI * 3)
-      } else if (piece === 'thorax') {
-        if (Math.abs(ey) * ry * S < 0.9 && ex > -0.85) os = 1
-        else if (Math.abs(Math.abs(ey) - 0.55) < 0.05) nu -= 0.4
+      // (le cerne : un pixel au bord)
+      const e = 1 / S
+      if (haut(u + e, v) < 0 || haut(u - e, v) < 0 || haut(u, v + e) < 0 || haut(u, v - e) < 0) return MANTEAU_DU_COLOSSE[0]
+      const trame = TRAME_DU_COLOSSE[(Math.floor(px) & 3) * 4 + (Math.floor(py) & 3)] - 0.5
+      // SON CŒUR, sous une fenêtre de chair : une poche de bile qui bat
+      const dc = Math.hypot(u - 0.6, v / 1.15)
+      if (dc < 1.7) {
+        if (dc > 1.45) return MANTEAU_DU_COLOSSE[1]
+        const k = dc / 1.45
+        return BILE[k < 0.35 * (0.7 + 0.3 * pouls) ? 2 : k < 0.75 ? 1 : 0]
       }
+      // L'ÉCHINE D'OS, du nez à la queue, et ses vertèbres
+      if (Math.abs(v) * S < 1.3 && u > -2.6 && u < 5.4) return OS_DU_COLOSSE[Math.abs(v) * S < 0.5 ? 3 : (Math.floor(u * 1.4) & 1) === 0 ? 2 : 1]
+      // (la normale, par la pente du bombé)
+      const nu = (haut(u - 0.25, v) - haut(u + 0.25, v)) * 1.6
+      const nv = (haut(u, v - 0.25) - haut(u, v + 0.25)) * 1.6
       const sx = nu * ca - nv * sa
       const sy = nu * sa + nv * ca
-      const nl = Math.hypot(sx, sy, h) || 1
-      const lum = (sx * L.x + sy * L.y + h * L.z) / (nl * ln)
-      // (les piqûres de la chitine, en creux, leur lèvre éclairée)
-      const bruit = N.fbm(u * 2.4 + (piece === 'tete' ? 30 : 0), v * 2.4, 41, 2)
-      const creux = bruit < 0.38 ? -0.28 : bruit < 0.42 ? 0.12 : 0
-      const trame = TRAME_DU_COLOSSE[(Math.floor(px) & 3) * 4 + (Math.floor(py) & 3)] - 0.5
-      const base = Math.max(0, Math.min(1, ((lum - 0.15) / 0.8) * (0.55 + 0.45 * h) + creux))
-      // (le liseré : le bord tourné vers la lumière s'allume d'un pixel, sous le cerne)
-      if (bord < 4.6 / (Math.min(rx, ry) * S) && lum > 0.5) return CHITINE_DU_COLOSSE[7]
-      if (os === 1) return OS_DU_COLOSSE[Math.max(0, Math.min(3, Math.round(base * 3.4 + trame * 0.6)))]
-      // (le reflet irisé, en haut des bombés, face à la lumière : violet, sarcelle, puis un éclat pâle)
-      if (base > 0.74 && piece !== 'tete') return IRISE_DU_COLOSSE[base > 0.88 ? 2 : (Math.floor(u * 2.5 + v * 1.5) & 1)]
-      const k = Math.round(1 + base * 6.4 * (piece === 'tete' ? 0.85 : 1) + trame * 0.9)
-      return CHITINE_DU_COLOSSE[Math.max(1, Math.min(7, k))]
+      const nl = Math.hypot(sx, sy, 1) || 1
+      const lum = (sx * L.x + sy * L.y + L.z) / (nl * ln)
+      // LES CHEVRONS DE BILE : des traits en V qui courent du nez vers la queue, et s'allument à leur passage
+      const ch = (u + Math.abs(v) * 0.75 + t * 2.2) % 2.2
+      if (Math.abs(v) > 1.6 && Math.abs(v) < demiManteau(u, serre) * 0.82 && ch < 0.32 * (1 / S + 0.12) / 0.2) {
+        const vif = Math.sin((u + Math.abs(v) * 0.75) * 0.9 - t * 3) > 0.4
+        return vif ? BILE[2] : BILE[0]
+      }
+      // (le grain de la chair)
+      const bruit = N.fbm(u * 1.8, v * 1.8, 57, 2)
+      const creux = bruit < 0.36 ? -0.18 : 0
+      const base = Math.max(0, Math.min(1, ((lum - 0.2) / 0.8) * (0.45 + 0.55 * h) + creux))
+      const k = Math.round(1 + base * 6.4 + trame * 0.9)
+      return MANTEAU_DU_COLOSSE[Math.max(1, Math.min(7, k))]
     })
-    peindreFormes(p, formesDuColosse(marche, ouvre, 'dessus'), x, y, S, opt)
     if (blanchi) return
-    // (ses réacteurs de bile luisent — fort quand il charge ; ses yeux battent)
-    const feu = replie > 0.5 ? 1 : 0.35 + 0.15 * Math.sin(t * 6)
-    for (const sg of [-1, 1]) {
-      const rx = x + (ca * -0.3 - sa * sg * 3.1) * S
-      const ry = y + (sa * -0.3 + ca * sg * 3.1) * S
-      p.glow(rx, ry, (2.5 + 2.5 * feu) * S, BILE[1], feu * 0.55)
+    // SES TROIS YEUX, en triangle sur le nez ; la lueur de son cœur
+    for (const [u, v] of [[4.3, 0], [3.3, -1.1], [3.3, 1.1]] as const) {
+      const [ex, ey] = ecran(u, v)
+      p.circle(ex, ey, 0.55 * S, N.hex('#2a0610'))
+      p.circle(ex, ey, 0.38 * S, N.hex('#ff3a4a'))
+      p.px(Math.round(ex - 0.3), Math.round(ey - 0.3), N.hex('#ffd0c0'))
     }
-    p.glow(x + ca * 5 * S, y + sa * 5 * S, 3 * S, N.hex('#ff3a4a'), 0.22 + 0.1 * Math.sin(t * 5))
+    const [cx, cy] = ecran(0.6, 0)
+    p.glow(cx, cy, (2 + pouls) * S, BILE[1], 0.3 + 0.25 * pouls + 0.3 * serre)
   }
   const POSES_DU_CAP = 48
   const POSES_DE_LA_MARCHE = 8
@@ -14606,7 +14621,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   /**
    * LES TÉLÉGRAPHES DU COLOSSE (Keko, 28/11 — voir `invasion.colosse.attaques`), rouges et sobres comme celui de la larve :
    * LA CHARGE, son couloir — deux bords fins, large comme lui, de sa longueur — qui se remplit de lui vers son bout, des
-   * chevrons qui y courent dans son sens ; L'ONDE, le cercle de la larve à son rayon ; LA SALVE, une couronne de traits
+   * chevrons qui y courent dans son sens ; LA SALVE, une couronne de traits
    * courts dans les directions des crachats, qui s'allongent. Dans le dernier quart, tout bat en clair.
    */
   function dessinerLesTelegraphesDuColosse(p: Peintre): void {
@@ -14619,8 +14634,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const ouvre = 1 - (1 - Math.min(1, (m.t - at.depuis) / 0.12)) ** 3
       const alerte = u > 0.75 && Math.sin((u - 0.75) * (50 + 90 * (u - 0.75))) > 0
       const vif = alerte ? TOILE[6] : TOILE[4]
-      if (at.sorte === 'onde') dessinerUnCercleDeDanger(p, e.corps.x, e.corps.y, A.onde.rayon, u, ouvre, alerte)
-      else if (at.sorte === 'charge') {
+      if (at.sorte === 'charge') {
         const L = A.charge.longueur * ouvre
         const demi = rayonDe(CONF, e)
         const nx = -at.dy
@@ -14655,17 +14669,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       }
       p.place(0, 0)
     }
-  }
-  /** UN CERCLE DE DANGER (le télégraphe de la larve — voir `dessinerLesAmorces`) : le cercle, et le disque qui le remplit jusqu'à `u`. */
-  function dessinerUnCercleDeDanger(p: Peintre, x: number, y: number, R: number, u: number, ouvre: number, alerte: boolean): void {
-    const trait = 1.5 / R
-    p.disc(x, y, R * ouvre, (d) => (d > u - trait ? (alerte ? TOILE[6] : TOILE[4]) : TOILE[3]), (d) => {
-      if (d > u) return 0
-      if (d > u - trait) return 0.8
-      const onde = Math.max(0, Math.sin(d * R * 0.9 - m.t * 9)) ** 6
-      return 0.15 + 0.07 * u + 0.16 * onde
-    })
-    p.ring(x, y, R * ouvre, 1, alerte ? TOILE[6] : TOILE[4], 0.55 + 0.45 * u)
   }
   /** LE CRACHEUR QUI VISE (voir `invasion.cracheur`) : sa gueule rougit et luit de plus en plus, un éclat blanc juste avant le crachat. */
   function dessinerLesVisees(p: Peintre): void {
@@ -19369,13 +19372,6 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         case 'colosseSalve':
           jouer('crachat', { dx: ev.x - v.x, dy: ev.y - v.y })
           flashs.push({ x: ev.x, y: ev.y, t0: t, r: 10 })
-          break
-        case 'colosseOnde':
-          // (L'ONDE : un éclair, l'onde de sa zone, une secousse plus forte s'il a touché)
-          jouer('nova', { dx: ev.x - v.x, dy: ev.y - v.y })
-          flashs.push({ x: ev.x, y: ev.y, t0: t, r: ev.rayon * 0.4 })
-          ondesDeZone.push({ x: ev.x, y: ev.y, t0: t, r: ev.rayon, s: Math.max(0.6, ev.rayon / RAYON_DU_MISSILE) })
-          secouer(ev.touche ? 3 : 2)
           break
         case 'stagger':
           // (LE GRAND EST ÉTOURDI — voir `ebranler` : un éclair, une onde, une secousse, le son de l'étourdissement)
