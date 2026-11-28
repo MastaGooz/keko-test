@@ -9711,3 +9711,16 @@ Keko : « on passe à la nuée ? », puis, sur six propositions, « ok pour luci
   - `larvesDe` : un moucheron 1, un insecte 3, un cornu 5, un cuirassier 8, un grand 10 (`Monde.eclosions[].larves`).
   - Leurs dégâts suivent leur nombre : `eclosion.part` (la moitié du budget de la nuée) vaut pour quatre larves. Un moucheron pondu rend donc un huitième du budget, un grand un budget et quart. De moi.
   - Le dessin : chaque larve est un petit insecte ailé de trois ou quatre pixels (une tête sombre, un abdomen pâle derrière, deux ailes blanches de part et d'autre qui s'ouvrent et se referment), sans voile autour du groupe, serrées (rayon 4 + 2,2 × √larves). Non vu en capture : aucun insecte pondu n'est mort pendant la prise.
+
+### La Couvée de la Nuée (28/11)
+
+Keko : « Tu vois les petits insectes qui sont créés quand la carte spéciale critique tue un ennemi. Je propose une nouvelle
+carte qui génère périodiquement ces mêmes petits insectes qui foncent sur les ennemis proches. »
+
+- `Arme.couvee { tous, larves, duree, rayon, part, vitesse, vue }` : toutes les 3 s — son minuteur à elle,
+  `Monde.nuees[].couveeA` —, s'il y a un insecte à 150 du vaisseau, quatre larves naissent sur lui et chassent 3 s, à 80,
+  l'insecte le plus proche d'elles. Ce sont les larves de l'Éclosion : elles vivent dans `Monde.eclosions` (`couvee: true`),
+  même dessin, même morsure — la moitié du budget de la nuée pour quatre, avec son élément et ses critiques.
+- Les bornes : elles ne pondent pas (pas de boucle avec l'Éclosion) ; la carte « Cadence / durée » presse le minuteur
+  (`tous`) sans allonger leur vie — sinon elle compterait deux fois ; rien ne naît sans insecte en vue.
+- Nom et chiffres de moi, à rejuger. Sans son à la naissance : elle revient toutes les trois secondes.

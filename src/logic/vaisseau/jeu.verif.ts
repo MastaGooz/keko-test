@@ -1836,6 +1836,12 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
     const voisin = 1000 - (ec.w.ennemis.find((e) => e.id === 2)?.pv ?? 1000)
     verifier(`Éclosion : l'insecte pondu meurt et éclate (${ec.ev.filter((e) => e.type === 'eclosionDeNuee').length} nuage) ; il vole jusqu'à l'insecte à 120, loin de la nuée et de l'éclosion, et le mord (${voisin.toFixed(1)}) et n'est pas pondu`, ec.ev.filter((e) => e.type === 'eclosionDeNuee').length === 1 && voisin > 5 && ec.w.ennemis.find((e) => e.id === 2)?.oeuf === undefined && ec.w.eclosions.length === 0)
     verifier(`Éclosion : autant de larves que l'insecte était gros — moucheron ${larvesDe({ ...insecte(1, 0, 0), sorte: 'moucheron' })}, insecte ${larvesDe(insecte(1, 0, 0))}, cornu ${larvesDe({ ...insecte(1, 0, 0), sorte: 'cornu' })}, cuirassier ${larvesDe({ ...insecte(1, 0, 0), sorte: 'cuirassier' })}, grand ${larvesDe({ ...insecte(1, 0, 0), grand: true })}`, larvesDe({ ...insecte(1, 0, 0), sorte: 'moucheron' }) === 1 && larvesDe(insecte(1, 0, 0)) === 3 && larvesDe({ ...insecte(1, 0, 0), grand: true }) === 10)
+    // (COUVÉE : à son minuteur, des larves naissent sur le vaisseau, volent jusqu'à l'insecte hors de portée de la nuée et le
+    // mordent, sans pondre ; sans insecte en vue, rien ne naît)
+    const cou = { ...nuee, couvee: { tous: 1, larves: 4, duree: 3, rayon: 20, part: 0.5, vitesse: 80, vue: 150 } } as Arme
+    const cv = jouerN(cou, [[120, 0, 1000]], 3.5, 100)
+    const vide = jouerN(cou, [[400, 0, 1000]], 3.5)
+    verifier(`Couvée : ${cv.ev.filter((e) => e.type === 'couvee').length} couvées en 3,5 s ; elles mordent l'insecte à 120 (${(1000 - cv.w.ennemis[0].pv).toFixed(1)}), qui n'est pas pondu ; l'insecte à 400, aucune (${vide.ev.filter((e) => e.type === 'couvee').length})`, cv.ev.filter((e) => e.type === 'couvee').length === 3 && cv.w.ennemis[0].pv < 995 && cv.w.ennemis[0].oeuf === undefined && vide.ev.every((e) => e.type !== 'couvee'))
     // (ESSAIMAGE : à sa taille maximale, elle se dédouble — mi-taille, une nuée fille, une seule, qui s'éteint au bout de sa durée)
     const ess = { ...nuee, nuee: { ...nuee.nuee, festin: { pas: 0.2, max: 1, fonte: 10 } }, essaimage: { duree: 2, vitesse: 60, rayon: 18, part: 1, laisse: 150, morsures: 3 } } as Arme
     const es = jouerN(ess, [[40, 0, 1e6]], 2.3)

@@ -1266,6 +1266,14 @@ export type Arme = {
   // insecte, les plus gros jusqu'à 10 » : voir `larvesDe` ; `part` est la part du budget POUR QUATRE LARVES, chacune mord)
   eclosion?: { delai: number; duree: number; rayon: number; part: number; vitesse: number }
   /**
+   * LA COUVÉE (la Nuée — Keko, 28/11 : « une nouvelle carte qui génère périodiquement ces mêmes petits insectes qui foncent
+   * sur les ennemis proches ») : toutes les `tous` secondes — SON minuteur, que la carte « Cadence / durée » presse —, s'il y
+   * a un insecte à `vue` du vaisseau, `larves` larves de l'Éclosion naissent sur lui et chassent `duree` secondes, à `vitesse`,
+   * l'insecte le plus proche d'elles ; elles mordent ce qu'elles couvrent (`rayon`) — `part` du budget de la nuée POUR QUATRE
+   * LARVES, avec son élément et ses critiques — et NE PONDENT PAS. Elles vivent dans `Monde.eclosions` (`couvee`).
+   */
+  couvee?: { tous: number; larves: number; duree: number; rayon: number; part: number; vitesse: number; vue: number }
+  /**
    * L'ESSAIMAGE (la Nuée — Keko, 27/11 : « la durée augmente le temps du deuxième essaim ») : quand la nuée atteint sa taille
    * maximale (`festin.max`), elle SE DÉDOUBLE — elle retombe à mi-taille, et un second nuage, de `rayon`, part chasser seul
    * `duree` secondes (la carte « Cadence et durée » l'allonge) : il vole à `vitesse` vers l'insecte le plus proche de lui, à
@@ -1804,13 +1812,13 @@ export type Monde = {
   /** LES BOUTURES (voir `Arme.bouture`) : leur hôte, leur place sur lui, jusqu'à quand, leur prochain coup, le dernier (quand, où). */
   boutures: Bouture[]
   /** LES ÉCLOSIONS (voir `Arme.eclosion`) : leur arme, où, de quand à quand, la dernière morsure signalée. */
-  eclosions: { arme: number; x: number; y: number; nee: number; jusque: number; mordA: number; /** Combien de larves (voir `larvesDe`). */ larves: number }[]
+  eclosions: { arme: number; x: number; y: number; nee: number; jusque: number; mordA: number; /** Combien de larves (voir `larvesDe`). */ larves: number; /** Nées de la Couvée, pas d'un insecte pondu (voir `Arme.couvee`). */ couvee?: boolean }[]
   /** LES NUÉES FILLES (voir `Arme.essaimage`) : leur arme, où, de quand à quand, la dernière morsure signalée. */
   nueesFilles: { arme: number; x: number; y: number; nee: number; jusque: number; mordA: number }[]
   /** LE DÉPLOIEMENT DES TENTACULES (voir `Arme.deploiement`), de 0 (repliées) à 1 (à leur envergure). */
   deploiement: number
   /** LES NUAGES D'INSECTES (voir `Arme.nuee`) : un par arme, où (sur le vaisseau), la dernière morsure signalée, ses bras — leur insecte, leur allongement (0 à 1), le dernier point où il était. */
-  nuees: { arme: number; x: number; y: number; mordA: number; bras: { cible: number; u: number; tx: number; ty: number }[]; /** Ce qu'elle a mangé : la part de dégâts qu'elle a gagnée (0 à `festin.max`). */ croissance: number; /** Les morsures comptées depuis le dernier essaimage (voir `Arme.essaimage`). */ repue?: number }[]
+  nuees: { arme: number; x: number; y: number; mordA: number; bras: { cible: number; u: number; tx: number; ty: number }[]; /** Ce qu'elle a mangé : la part de dégâts qu'elle a gagnée (0 à `festin.max`). */ croissance: number; /** Les morsures comptées depuis le dernier essaimage (voir `Arme.essaimage`). */ repue?: number; /** Quand la dernière couvée est née (voir `Arme.couvee`). */ couveeA?: number }[]
   /** LES REJETONS (voir `Arme.rejeton`). */
   rejetons: Rejeton[]
   /** LES FLAQUES D'ACIDE (voir `Arme.crachat`) : un cône au sol — sa pointe, son cap, quand il est né, son arme. */
@@ -1991,6 +1999,8 @@ export type Evenement =
   /** Un insecte pondu éclate en un petit nuage ; la nuée se dédouble ; la nuée fille s'éteint (voir `Arme.eclosion`, `Arme.essaimage`). */
   | { type: 'eclosionDeNuee'; x: number; y: number }
   | { type: 'essaimage'; x: number; y: number }
+  /** Une couvée de larves naît sur le vaisseau (voir `Arme.couvee`). */
+  | { type: 'couvee'; x: number; y: number }
   | { type: 'nueeFilleFinie'; x: number; y: number }
   /** La langue-harpon part de la gueule (voir `Arme.harpon.langue`). */
   | { type: 'langue'; x: number; y: number }
@@ -5933,6 +5943,16 @@ function menerLesNuees(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[])
       m.nueesFilles.push({ arme: i, x: v.x, y: v.y, nee: m.t, jusque: m.t + es.duree, mordA: m.t })
       ev.push({ type: 'essaimage', x: v.x, y: v.y })
     }
+    // (LA COUVÉE : à son minuteur, des larves naissent et partent chasser — voir `Arme.couvee`)
+    const co = a.couvee
+    if (co !== undefined) {
+      n.couveeA ??= m.t
+      if (m.t - n.couveeA >= co.tous && m.ennemis.some((e) => e.asteroide === undefined && e.pv > 0 && Math.hypot(e.corps.x - v.x, e.corps.y - v.y) <= co.vue)) {
+        n.couveeA = m.t
+        m.eclosions.push({ arme: i, x: v.x, y: v.y, nee: m.t, jusque: m.t + co.duree, mordA: m.t, larves: co.larves, couvee: true })
+        ev.push({ type: 'couvee', x: v.x, y: v.y })
+      }
+    }
   })
   menerLesPetitsNuages(c, m, dt, ev)
 }
@@ -5972,7 +5992,9 @@ function menerLesPetitsNuages(c: ConfigVaisseau, m: Monde, dt: number, ev: Evene
   for (let k = m.eclosions.length - 1; k >= 0; k--) {
     const n = m.eclosions[k]
     const a = c.armes[n.arme]
-    if (a?.nuee === undefined || a.eclosion === undefined || m.t >= n.jusque || m.phase !== 'vol') {
+    // (des larves d'un insecte pondu, ou de la Couvée : les mêmes, chacune ses chiffres)
+    const la = n.couvee === true ? a?.couvee : a?.eclosion
+    if (a?.nuee === undefined || la === undefined || m.t >= n.jusque || m.phase !== 'vol') {
       m.eclosions.splice(k, 1)
       continue
     }
@@ -5985,11 +6007,11 @@ function menerLesPetitsNuages(c: ConfigVaisseau, m: Monde, dt: number, ev: Evene
       if (d < dp) (dp = d), (proie = e)
     }
     if (proie !== undefined && dp > 0.5) {
-      const pas = Math.min(dp, a.eclosion.vitesse * dt)
+      const pas = Math.min(dp, la.vitesse * dt)
       n.x += ((proie.corps.x - n.x) / dp) * pas
       n.y += ((proie.corps.y - n.y) / dp) * pas
     }
-    mordre(a, n.arme, n, a.eclosion.rayon, (a.nuee.budget * a.eclosion.part * n.larves) / 4, false)
+    mordre(a, n.arme, n, la.rayon, (a.nuee.budget * la.part * n.larves) / 4, false)
   }
   for (let k = m.nueesFilles.length - 1; k >= 0; k--) {
     const n = m.nueesFilles[k]

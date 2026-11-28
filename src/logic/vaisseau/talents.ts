@@ -719,6 +719,10 @@ export const MUTATIONS: Mutation[] = [
   // (« ESSAIMAGE » : toutes les 20 morsures, 6 s, 60 de vitesse, un nuage de 18, le budget de base, à 150 du vaisseau au plus —
   // chiffres de moi)
   variation('nuee-essaimage', 'nuee', 'Essaimage', 'Bien nourrie, la nuée se dédouble : un second nuage chasse seul.', changerA('nuee', (a) => ({ ...a, essaimage: { duree: 6, vitesse: 60, rayon: 18, part: 1, laisse: 150, morsures: 20 } }))),
+  // (« COUVÉE » — Keko, 28/11 : « une carte qui génère périodiquement ces mêmes petits insectes qui foncent sur les ennemis
+  // proches » : toutes les 3 s, quatre larves, 3 s, à 80, la moitié du budget, s'il y a un insecte à 150 — nom et chiffres de
+  // moi ; « Cadence / durée » presse son minuteur, sans allonger leur vie ; voir `Arme.couvee`)
+  variation('nuee-couvee', 'nuee', 'Couvée', 'Régulièrement, des larves foncent sur les ennemis proches.', changerA('nuee', (a) => ({ ...a, couvee: { tous: 3, larves: 4, duree: 3, rayon: 20, part: 0.5, vitesse: 80, vue: 150 } }))),
   // LES CARTES D'ÉLÉMENT (Keko, 24/11 : « des cartes spéciales de chaque élément » ; « des cartes multicolores spéciales qu'on
   // proposera dans le pool des cartes spéciales, si le joueur a au moins une attaque avec l'élément en question » — voir
   // `ELEMENTAIRES` pour leurs chiffres ; leurs noms et leurs textes sont de moi)

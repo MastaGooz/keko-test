@@ -14078,8 +14078,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // (LES PETITS NUAGES — voir `Arme.eclosion`, `Arme.essaimage` : l'éclosion, qui gonfle d'un coup et se disperse ; la nuée
     // fille, qui chasse seule et s'éclaircit dans sa dernière seconde)
     for (const n of m.eclosions) {
-      const ec = CONF.armes[n.arme]?.eclosion
-      if (ec === undefined) continue
+      if ((n.couvee === true ? CONF.armes[n.arme]?.couvee : CONF.armes[n.arme]?.eclosion) === undefined) continue
       const u = (m.t - n.nee) / Math.max(0.01, n.jusque - n.nee)
       // (DES LARVES, un peu plus grosses que les moucherons de la nuée — Keko, 27/11 : « lui donner une identité » ; puis
       // « beaucoup trop d'insectes, et trop gros » : autant que l'insecte tué était gros, de 1 à 10, serrées)
@@ -18861,6 +18860,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           for (let i = 0; i < 8; i++) {
             const a = R.range(0, Math.PI * 2)
             etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(20, 60), Math.sin(a) * R.range(20, 60), R.range(0.15, 0.3), i % 2 === 0 ? BILE[2] : CHAIR[4], 1, 1.5)
+          }
+          break
+        case 'couvee':
+          // (UNE COUVÉE NAÎT — voir `Arme.couvee` : une petite giclée, sans son : elle revient toutes les trois secondes)
+          for (let i = 0; i < 5; i++) {
+            const a = R.range(0, Math.PI * 2)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(20, 50), Math.sin(a) * R.range(20, 50), R.range(0.12, 0.25), i % 2 === 0 ? BILE[2] : CHAIR[4], 1, 1)
           }
           break
         case 'essaimage':
