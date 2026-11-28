@@ -9940,3 +9940,8 @@ remplir un petit peu plus que juste refroidir, mais je te laisse gérer ça. »
 - **Le dessin** (`formesDuColosse`, peint à son cap exact comme le cracheur lourd) : un scarabée de siège, deux élytres de
   chitine cerclés de plaques d'os, des épines sur le dos, trois paires d'yeux rouges, de grandes mandibules d'os.
 - Chiffres de moi. `&colosse` : le premier à deux secondes.
+- **La barre, discrète** (Keko, 28/11 : « le nom est trop gros, la barre de vie trop épaisse, la barre de stagger devrait
+  être presque la plus fine possible ; l'interface du boss est trop bas, le plus haut possible ; beaucoup plus discret,
+  ça prend trop de place, c'est trop grossier ») : le nom en petite lettre pâle (plus de relief), la vie sur deux pixels,
+  le stagger sur un seul, collé dessous ; sur une seule ligne — le nom à gauche, les barres (80) à sa droite —, juste sous l'interface du haut : au-dessus
+  d'elle il n'y a pas de place, l'expérience est au bord du tampon (mesuré en capture) ; couché, sous l'expérience.

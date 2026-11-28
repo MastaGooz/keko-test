@@ -1678,39 +1678,45 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     if (e.pv < grandVu.pv) grandVu.depuis = Math.max(grandVu.depuis, t - 0.0001)
     if (e.pv < grandVu.pv) grandVu = { ...grandVu, pv: e.pv, depuis: t }
     if (t - grandVu.depuis > 0.4) grandVu.traine = Math.max(e.pv, grandVu.traine - pvMax * 0.6 * (1 / 60))
-    const entre = Math.min(1, (t - (grandVu.depuis === t ? t : grandVu.depuis)) + 1)
-    const bw = Math.min(120, W - 70)
-    const x = Math.round((W - bw) / 2)
-    // (SOUS L'INTERFACE DU HAUT — mesuré en capture : posée au bas de la bande, elle chevauchait l'expérience et le blindage)
-    const y0 = (paysage ? 16 : basDuHud() + 8) - Math.round((1 - entre) * 12)
+    // (DISCRÈTE, ET LE PLUS HAUT POSSIBLE — Keko, 28/11 : « le nom est trop gros, la barre de vie trop épaisse, la barre de
+    // stagger devrait être presque la plus fine possible ; l'interface du boss est trop bas, il faudrait la mettre le plus
+    // haut possible ; beaucoup plus discret, ça prend trop de place, c'est trop grossier » : le nom en petite lettre pâle,
+    // la vie sur deux pixels, le stagger sur un seul, collé dessous ; tout en haut de l'écran, au-dessus de l'interface du
+    // haut — sous elle seulement si la place manque, et sous l'expérience couché)
+    // (… SUR UNE SEULE LIGNE, JUSTE SOUS L'INTERFACE DU HAUT — mesuré en capture : au-dessus d'elle, il n'y a pas de place,
+    // l'expérience est au bord du tampon ; le nom à gauche, les barres à sa droite, l'ensemble centré)
+    const nom = 'COLOSSE'
+    const wn = largeurDe(nom)
+    const bw = Math.min(80, W - 70 - wn)
+    const x0 = Math.round((W - (wn + 4 + bw)) / 2)
+    const x = x0 + wn + 4
+    const y0 = paysage ? 15 : hautDuHud() - RANG_DE_L_EXPERIENCE + 24
+    ecrire(p, nom, x0, y0, N.hex('#b89cd8'))
     const encre = MATIERES.encre.contour
-    motEnRelief(p, 'COLOSSE', W / 2, y0, 'violet')
-    // (la vie)
-    const y = y0 + 10
-    p.rect(x - 1, y - 1, bw + 2, 7, encre)
-    p.rect(x, y, bw, 5, N.hex('#2a0c14'))
+    // (la vie : deux pixels, cernés d'encre, à hauteur du nom)
+    const y = y0 + 1
+    p.rect(x - 1, y - 1, bw + 2, 4, encre)
+    p.rect(x, y, bw, 2, N.hex('#2a0c14'))
     const traine = Math.round(bw * Math.max(0, Math.min(1, grandVu.traine / pvMax)))
     const plein = Math.round(bw * Math.max(0, Math.min(1, e.pv / pvMax)))
-    if (traine > plein) p.rect(x + plein, y, traine - plein, 5, N.WHITE)
+    if (traine > plein) p.rect(x + plein, y, traine - plein, 2, N.WHITE)
     if (plein > 0) {
-      p.rect(x, y, plein, 5, ROUGE[4])
       p.rect(x, y, plein, 1, ROUGE[5])
-      p.rect(x, y + 4, plein, 1, ROUGE[2])
+      p.rect(x, y + 1, plein, 1, ROUGE[4])
     }
-    // (la jauge de stagger, dessous : trois pixels, l'or ; étourdi, elle bat en blanc et se vide)
+    // (le stagger : un seul pixel, sur le cerne du dessous ; étourdi, il bat en blanc et se vide)
     const st = CONF.invasion.colosse.stagger
-    const ys = y + 7
-    p.rect(x - 1, ys - 1, bw + 2, 5, encre)
-    p.rect(x, ys, bw, 3, N.hex('#2a200c'))
+    const ys = y + 3
+    p.rect(x - 1, ys, bw + 2, 2, encre)
+    p.rect(x, ys, bw, 1, N.hex('#2a200c'))
     const etourdi = (e.stunA ?? -1) > m.t
     const part = etourdi ? (e.stunA! - m.t) / st.duree : Math.min(1, (e.stagger ?? 0) / st.max)
     const sp = Math.round(bw * part)
     const vif = m.t - (e.staggerA ?? -10) < 0.15
     if (sp > 0) {
       const bat = etourdi && Math.sin(t * 24) > 0
-      p.rect(x, ys, sp, 3, bat || vif ? N.WHITE : N.hex('#ffb840'))
-      if (!bat && !vif) p.rect(x, ys, sp, 1, N.hex('#ffe49a'))
-      p.glow(x + sp, ys + 1, 5, N.hex('#ffb840'), etourdi ? 0.7 : vif ? 0.6 : 0.25)
+      p.rect(x, ys, sp, 1, bat || vif ? N.WHITE : N.hex('#ffb840'))
+      if (etourdi || vif) p.glow(x + sp, ys, 4, N.hex('#ffb840'), 0.4)
     }
   }
   function dessinerLExperience(p: Peintre, x: number, y: number, large: number): void {
