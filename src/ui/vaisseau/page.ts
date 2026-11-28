@@ -18863,8 +18863,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           }
           break
         case 'couvee':
-          // (UNE COUVÉE NAÎT — voir `Arme.couvee` : une petite giclée, sans son : elle revient toutes les trois secondes)
-          for (let i = 0; i < 5; i++) {
+          // (UNE COUVÉE NAÎT — voir `Arme.couvee` : deux étincelles, sans son : une larve naît toutes les 0,75 s)
+          for (let i = 0; i < 2; i++) {
             const a = R.range(0, Math.PI * 2)
             etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(20, 50), Math.sin(a) * R.range(20, 50), R.range(0.12, 0.25), i % 2 === 0 ? BILE[2] : CHAIR[4], 1, 1)
           }
