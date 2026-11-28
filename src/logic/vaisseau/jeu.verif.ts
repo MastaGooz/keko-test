@@ -6022,5 +6022,48 @@ for (const vortex of [true, false]) {
   verifier(`le cracheur lourd crache ${caps.length} projectiles à la fois, en éventail autour du vaisseau (${ecarts.map((x) => x.toFixed(2)).join(' / ')} rad)`, caps.length === 3 && Math.abs(ecarts[1]) < 0.15 && Math.abs(ecarts[0] + 0.32) < 0.15 && Math.abs(ecarts[2] - 0.32) < 0.15)
 }
 
+// LE COLOSSE, LE PREMIER MINI-BOSS (Keko, 28/11 — voir `invasion.colosse`) : il naît à son heure, seul ; un grand ; le
+// givre ne le ralentit pas mais remplit sa jauge (une fois par quart de seconde au plus), le gel la remplit davantage ;
+// pleine, il est étourdi trois secondes et elle repart de zéro ; étourdi, rien ne la remplit
+{
+  const cfg: ConfigVaisseau = { ...VAISSEAU, armes: [], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9, colosse: { ...VAISSEAU.invasion.colosse, premier: 1, tous: 2 } }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9 }, derive: { ...VAISSEAU.derive, active: false }, arene: { ...VAISSEAU.arene, active: false } }
+  const st = cfg.invasion.colosse.stagger
+  const w = nouveauMonde(cfg, 5)
+  w.invasion.prochainA = 1e9
+  let nes = 0
+  for (let i = 0; i < 60 * 5; i++) {
+    w.vaisseau = { ...w.vaisseau, x: 0, y: 0, vx: 0, vy: 0 }
+    for (const ev of avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements) if (ev.type === 'ennemiApparait') nes += 1
+  }
+  const co = w.ennemis.find((e) => e.sorte === 'colosse')
+  verifier(`le colosse naît à son heure, un seul à la fois (${nes} né en 5 s, toutes les 2 s), et c'est un grand (${co?.grand})`, nes === 1 && co?.grand === true)
+  // (les contrôles, par la règle : un tir de givre, puis des gels nets — une arme de givre et la carte Gel profond)
+  const gw = nouveauMonde(cfg, 5)
+  gw.invasion.prochainA = 1e9
+  gw.prochainColosseA = 1e9
+  const cible: Ennemi = { id: 940, corps: { ...nouveauVaisseau(), x: 300, y: 0 }, pv: 1e9, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, sorte: 'colosse', grand: true, mordA: 1e9 }
+  gw.ennemis.push(cible)
+  const givre: Arme = { id: 'givre', cadence: 0.05, degats: 1, portee: 400, vitesse: 2000, vie: 1, dispersion: 0, guide: false, gel: { duree: 2, ralenti: 0.5 } } as Arme
+  const cg = { ...cfg, armes: [givre] }
+  const etapes: string[] = []
+  let etourdiA = -1
+  for (let i = 0; i < 60 * 12 && etourdiA < 0; i++) {
+    gw.vaisseau = { ...gw.vaisseau, x: 0, y: 0, vx: 0, vy: 0 }
+    cible.corps = { ...cible.corps, x: 300, y: 0, vx: 0, vy: 0 }
+    for (const ev of avancerLeMonde(cg, gw, 1 / 60, { x: 0, y: 0 }).evenements) if (ev.type === 'stagger') etourdiA = gw.t
+    if (i === 60) etapes.push(`à 1 s, jauge ${(cible.stagger ?? 0).toFixed(0)}, ralenti ${cible.ralenti ?? 1}`)
+  }
+  const rempliEn = etourdiA
+  // (étourdi : la jauge est à zéro, il est figé ; un tir de givre ne la remplit pas)
+  for (let i = 0; i < 30; i++) avancerLeMonde(cg, gw, 1 / 60, { x: 0, y: 0 })
+  verifier(`… le givre ne le ralentit pas et remplit sa jauge, quatre fois par seconde au plus (${etapes.join(' ; ')}) ; pleine à ${rempliEn.toFixed(1)} s, il est étourdi ${st.duree} s (${(cible.figeA ?? 0) > gw.t}) et elle repart de zéro sans se remplir pendant ce temps (${cible.stagger})`, (cible.ralenti ?? 1) === 1 && rempliEn > 0 && Math.abs(rempliEn - (st.max / st.givre) * st.givrePas) < 1 && (cible.figeA ?? 0) > gw.t && (cible.stagger ?? 0) === 0)
+  // (un gel net : il ne le fige pas, il remplit davantage qu'un coup de givre)
+  const fw = nouveauMonde(cfg, 5)
+  const f2: Ennemi = { ...cible, id: 941, stagger: 0, figeA: undefined, stunA: undefined, staggerA: undefined, staggerGivreA: undefined }
+  fw.ennemis.push(f2)
+  const gelNet: Arme = { ...givre, etourdissement: { duree: 1 } } as Arme
+  verifier(`… le gel net remplit plus que le givre (${st.gel} contre ${st.givre}), l'étourdissement ${st.etourdi}`, st.gel > st.givre && st.etourdi > st.givre && gelNet.etourdissement?.duree === 1)
+}
+
 // (TOUJOURS EN DERNIER : des blocs ajoutés après cette ligne échouaient sans faire échouer `npm run verif` — 17/11)
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)

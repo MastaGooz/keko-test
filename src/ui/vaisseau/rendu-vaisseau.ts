@@ -644,6 +644,39 @@ export function formesDuCracheur(marche: number, gonfle: number, lourd = false):
   for (const s of [-1, 1]) f.push({ pts: barre(2.6, s * (g * 0.8), 4.4 + g, s * (g * 0.9 + 0.6), 0.6), mat: 'os', relief: 'plat' })
   return f
 }
+/**
+ * LE COLOSSE, LE PREMIER MINI-BOSS (Keko, 28/11 — voir `invasion.colosse`) : un scarabée de siège, quatre fois un petit —
+ * une carapace de chitine sombre en deux élytres cerclés de plaques d'os, des épines le long du dos, une tête cuirassée
+ * à trois paires d'yeux rouges, de grandes mandibules d'os qui s'ouvrent (`ouvre`), six pattes lourdes. Dans les unités
+ * du petit ; la page le peint à sa taille.
+ */
+export function formesDuColosse(marche: number, ouvre: number): Forme[] {
+  const f: Forme[] = []
+  for (const s of [-1, 1])
+    for (let k = 0; k < 3; k++) {
+      const pas = Math.sin(marche + k * 2.1 + (s > 0 ? Math.PI : 0)) * 0.8
+      const x0 = -2.6 + k * 2.4
+      f.push({ pts: barre(x0, s * 2.6, x0 - 0.6 + pas, s * 5.2, 1.1), mat: 'lie', relief: 'plat' })
+      f.push({ pts: barre(x0 - 0.6 + pas, s * 5.2, x0 + 0.6 + pas * 1.4, s * 6.9, 0.8), mat: 'os', relief: 'plat' })
+    }
+  // LA CARAPACE : deux élytres, leur suture, des plaques d'os en travers, des épines sur le dos
+  for (const s of [-1, 1]) f.push({ pts: ovale(-1.8, s * 1.9, 5.2, 2.6, 16), mat: 'chitine', relief: 'dome', dome: { x: -1.8, y: s * 1.9, rx: 5.2, ry: 2.6 } })
+  f.push({ pts: barre(-6.6, 0, 2.6, 0, 0.5), mat: 'lie', relief: 'plat' })
+  for (const x of [-4.8, -2.2, 0.4]) {
+    const l = 4.2 * Math.sqrt(Math.max(0, 1 - ((x + 1.8) / 5.4) ** 2))
+    f.push({ pts: barre(x, -l, x + 0.4, l, 0.55), mat: 'os', relief: 'plat' })
+  }
+  for (const x of [-5.6, -3.4, -1.2]) f.push({ pts: [[x - 0.6, -0.4], [x + 0.9, 0], [x - 0.6, 0.4]], mat: 'os', relief: 'plat' })
+  // LA TÊTE CUIRASSÉE, ses yeux, ses mandibules
+  f.push({ pts: ovale(4.2, 0, 2.6, 3, 14), mat: 'chitine', relief: 'dome', dome: { x: 4.2, y: 0, rx: 2.6, ry: 3 } })
+  for (const s of [-1, 1]) for (let k = 0; k < 3; k++) f.push({ pts: ovale(4.6 + k * 0.7, s * (1.5 - k * 0.35), 0.45, 0.45, 8), mat: 'laser', relief: 'emis' })
+  const o = 0.35 + 0.5 * ouvre
+  for (const s of [-1, 1]) {
+    f.push({ pts: barre(5.8, s * 1.4, 8.2, s * (1.6 + o * 1.4), 1), mat: 'os', relief: 'plat' })
+    f.push({ pts: barre(8.2, s * (1.6 + o * 1.4), 9.6, s * (0.5 + o * 0.8), 0.7), mat: 'os', relief: 'plat' })
+  }
+  return f
+}
 /** Un trait épais en polygone, de (x0, y0) à (x1, y1). */
 export function barre(x0: number, y0: number, x1: number, y1: number, e: number): [number, number][] {
   const l = Math.hypot(x1 - x0, y1 - y0) || 1

@@ -9912,3 +9912,31 @@ Keko : « Fabrique-moi un nouveau type d'ennemi qui tire 3 projectiles en évent
   de l'image gardée). « Quand un projectile arrive en fin de course, il disparaît d'un seul coup : une petite animation de
   dissolution » — dans ses 0,35 dernières secondes, le crachat rapetisse, pâlit et s'effrite en grains rouges qui
   s'écartent (`dessinerLesTirs`).
+
+### Le colosse, le premier mini-boss, et le stagger (28/11)
+
+Keko : « On peut faire un premier essai de mini-boss. Un ennemi beaucoup plus gros que les autres, avec une barre de vie
+qui apparaît quelque part sur l'interface, et une barre de stagger sous la barre de vie. Une fois que la barre de stagger
+se remplit, le boss est stun, incapacité, pendant un certain temps. Toutes les attaques qui infligent une forme de
+contrôle, comme le ralentissement de la glace, le gel, l'étourdissement, remplissent cette barre. Appliquer le gel va
+remplir un petit peu plus que juste refroidir, mais je te laisse gérer ça. »
+
+- **Le colosse** (`invasion.colosse`, une `SorteDInsecte` hors du flot, `part` 0) : un GRAND (`Ennemi.grand` — ce qui
+  l'exempte déjà de l'Exécution, des vrilles, du recul, du nettoyage au retour) ; quatre fois la taille d'un petit, 60 fois
+  sa vie, lent (24), il mord fort (quatre morsures) ; 60 de butin, 50 points, compté parmi les mini-boss de la récompense.
+  Il naît à 2 min 30 de vol puis toutes les 3 min, un seul à la fois, dans le plafond des vivants du flot
+  (`menerLesColosses`, `Monde.prochainColosseA`). Il chasse et mord ; aucune attaque spéciale encore.
+- **Le stagger** (`ebranler`, `Ennemi.stagger`) : sur un grand, les contrôles ne contrôlent plus — le givre ne ralentit
+  pas (son état reste posé, pour les cartes qui le lisent), le gel net et l'étourdissement ne figent pas (`figer`) — ils
+  remplissent sa jauge sur 100 : un coup de givre 5 (une fois par quart de seconde au plus : une zone qui givre à chaque
+  image ne va pas plus vite qu'un tir), un gel net 30, un étourdissement 25. Pleine, il est étourdi 3 s (il ne bouge ni ne
+  mord ; l'étoile d'étourdissement existante, un éclair, une secousse) et elle repart de zéro ; étourdi, rien ne la remplit.
+  Sans contrôle depuis 2 s, elle fond de 4 par seconde. Mesuré : une arme de givre qui frappe sans cesse l'étourdit en
+  5,6 s.
+- **La barre** (`dessinerLaBarreDuGrand`) : en haut de la vue, au milieu, sous l'interface du haut (posée au bas de la
+  bande, elle chevauchait l'expérience — vu en capture) : « COLOSSE » en relief, la vie en cramoisi — la part perdue
+  reste blanche un instant puis fond —, et dessous, plus mince, la jauge de stagger en or, qui blanchit au contrôle ;
+  étourdi, elle bat en blanc et se vide le temps de l'étourdissement. Sa petite barre sous lui est retirée.
+- **Le dessin** (`formesDuColosse`, peint à son cap exact comme le cracheur lourd) : un scarabée de siège, deux élytres de
+  chitine cerclés de plaques d'os, des épines sur le dos, trois paires d'yeux rouges, de grandes mandibules d'os.
+- Chiffres de moi. `&colosse` : le premier à deux secondes.

@@ -379,6 +379,20 @@ export const VAISSEAU = {
      * de l'autre, celui du milieu sur le vaisseau. Plus gros, plus dur, plus lent, il vise plus longtemps et de plus loin.
      * *Chiffres de moi.*
      */
+    /**
+     * LE COLOSSE, LE PREMIER MINI-BOSS (Keko, 28/11 : « un premier essai de mini-boss : un ennemi beaucoup plus gros que les
+     * autres, avec une barre de vie quelque part sur l'interface, et une barre de stagger sous la barre de vie. Une fois
+     * qu'elle se remplit, le boss est stun, incapacité, pendant un certain temps. Toutes les attaques qui infligent une forme
+     * de contrôle — le ralentissement de la glace, le gel, l'étourdissement — remplissent cette barre ; appliquer le gel
+     * remplit un peu plus que juste refroidir ») : un GRAND (`Ennemi.grand`), hors du flot (`part` 0) — il naît à `premier`
+     * secondes de vol, puis toutes les `tous` secondes, un seul à la fois. LES CONTRÔLES NE LE CONTRÔLENT PAS (le givre ne
+     * le ralentit pas, le gel et l'étourdissement ne le figent pas) : ils remplissent SA JAUGE (`Ennemi.stagger`, voir
+     * `ebranler`) — `givre` par coup de givre (une fois par `givrePas` secondes au plus : une zone qui givre à chaque image
+     * ne la remplit pas plus vite qu'un tir), `gel` par gel net, `etourdi` par étourdissement ; pleine (`max`), il est
+     * ÉTOURDI `duree` secondes — il ne bouge ni ne mord — et elle repart de zéro ; pendant ce temps, rien ne la remplit.
+     * Sans contrôle depuis `repit` secondes, elle fond de `fonte` par seconde. *Chiffres de moi.*
+     */
+    colosse: { vie: 60, taille: 4, vitesse: 24 / 40, morsure: 4, butin: 60, debut: 0, montee: 1e-6, part: 0, premier: 150, tous: 180, stagger: { max: 100, givre: 5, givrePas: 0.25, gel: 30, etourdi: 25, duree: 3, fonte: 4, repit: 2 } },
     cracheurLourd: { vie: 6, taille: 2, vitesse: 28 / 40, morsure: 2, butin: 12, debut: 120, montee: 300, part: 0.03, tir: { portee: 115, garde: 75, cadence: 3.2, charge: 0.65, vitesse: 95, vie: 2.6, degats: 2, eventail: { n: 3, ecart: 0.32 } } },
     /**
      * LES TROIS PÉPITES (Keko, 21/11 : « différentes pépites, une petite, une moyenne et une grosse, afin que les ennemis
@@ -423,7 +437,7 @@ export const VAISSEAU = {
      * le cornu, le cuirassier ; une roche, `roche` points par unité de rayon (au moins `rocheMin`). Ne compte que LE COUP
      * FATAL, au pilote qui le porte (voir `Monde.tableau`). *De moi, à rejuger.*
      */
-    points: { insecte: 2, moucheron: 1, cornu: 5, cuirassier: 15, larve: 3, cracheur: 4, cracheurLourd: 10, roche: 0.25, rocheMin: 2 },
+    points: { insecte: 2, moucheron: 1, cornu: 5, cuirassier: 15, larve: 3, cracheur: 4, cracheurLourd: 10, colosse: 50, roche: 0.25, rocheMin: 2 },
     /**
      * LA RÉCOMPENSE DE FIN DE PARTIE, EN CRÉDITS (Keko, 22/11 : « une récompense qui dépend du niveau, commun, mais unique
      * pour chaque joueur, car elle prend en compte ses kills — chaque monstre un score en points — et les astéroïdes qu'il a
@@ -1749,6 +1763,11 @@ export type Ennemi = {
   devore?: boolean
   /** LA LARVE EXPLOSIVE S'EST AMORCÉE (voir `invasion.larve`) : depuis quand. */
   /** LE CRACHEUR VISE (voir `invasion.cracheur`) : il crachera à cet instant. */
+  /** LA JAUGE DE STAGGER D'UN GRAND (voir `invasion.colosse`, `ebranler`) : où elle en est, le dernier contrôle qui l'a remplie, le dernier coup de givre compté, la fin de l'étourdissement qu'elle a donné. */
+  stagger?: number
+  staggerA?: number
+  staggerGivreA?: number
+  stunA?: number
   viseA?: number
   amorceA?: number
   /** UNE MORSURE CRITIQUE DE LA NUÉE A PONDU EN LUI (voir `Arme.eclosion`) : jusqu'à quand, et de quelle arme. */
@@ -1921,6 +1940,8 @@ export type Monde = {
   nuees: { arme: number; x: number; y: number; mordA: number; bras: { cible: number; u: number; tx: number; ty: number }[]; /** Ce qu'elle a mangé : la part de dégâts qu'elle a gagnée (0 à `festin.max`). */ croissance: number; /** Les morsures comptées depuis le dernier essaimage (voir `Arme.essaimage`). */ repue?: number; /** Quand la dernière couvée est née (voir `Arme.couvee`). */ couveeA?: number; /** Sa reine (voir `Arme.reine`) : où, son cap, sa proie, posée dessus ou non, sa dernière morsure signalée. */ reine?: { x: number; y: number; cap: number; cible?: number; pose: boolean; mordA: number } }[]
   /** LES REJETONS (voir `Arme.rejeton`). */
   rejetons: Rejeton[]
+  /** Quand naîtra le prochain colosse (voir `invasion.colosse`). */
+  prochainColosseA?: number
   /** LES CADAVRES DES LARVES EXPLOSIVES (voir `invasion.larve`) : où, tournés comment, amorcés depuis quand. */
   larvesMortes: { id: number; x: number; y: number; cap: number; amorceA: number }[]
   /** LES FLAQUES D'ACIDE (voir `Arme.crachat`) : un cône au sol — sa pointe, son cap, quand il est né, son arme. */
@@ -2116,6 +2137,8 @@ export type Evenement =
   | { type: 'rejeton'; x: number; y: number }
   /** Le cracheur vise, puis crache (voir `invasion.cracheur`). */
   | { type: 'cracheurVise'; id: number; x: number; y: number }
+  /** La jauge d'un grand est pleine : il est étourdi (voir `ebranler`). */
+  | { type: 'stagger'; id: number; x: number; y: number }
   | { type: 'cracheurCrache'; id: number; x: number; y: number }
   /** Une larve explosive s'amorce, puis explose (voir `invasion.larve`) ; `touche` : le vaisseau était dans sa zone. */
   | { type: 'larveAmorcee'; id: number; x: number; y: number; rayon: number; delai: number }
@@ -2634,8 +2657,8 @@ function faireNaitreUnEnnemi(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void
 export const rayonDe = (c: ConfigVaisseau, e: Ennemi): number => e.asteroide?.rayon ?? c.ennemi.rayon * (e.sorte === undefined ? 1 : c.invasion[e.sorte].taille)
 /** Les sortes d'insectes autres que le petit : le moucheron (le menu fretin), le cornu (milieu de gamme), le cuirassier (blindé). */
 // (… et la larve explosive — Keko, 28/11, voir `invasion.larve`)
-export type SorteDInsecte = 'moucheron' | 'cornu' | 'cuirassier' | 'larve' | 'cracheur' | 'cracheurLourd'
-export const SORTES_D_INSECTES: SorteDInsecte[] = ['moucheron', 'cornu', 'cuirassier', 'larve', 'cracheur', 'cracheurLourd']
+export type SorteDInsecte = 'moucheron' | 'cornu' | 'cuirassier' | 'larve' | 'cracheur' | 'cracheurLourd' | 'colosse'
+export const SORTES_D_INSECTES: SorteDInsecte[] = ['moucheron', 'cornu', 'cuirassier', 'larve', 'cracheur', 'cracheurLourd', 'colosse']
 /** LE TIR D'UN CRACHEUR, simple ou lourd (voir `invasion.cracheur`, `invasion.cracheurLourd`) ; un autre insecte n'en a pas. */
 export const tirDuCracheur = (c: ConfigVaisseau, e: Ennemi) => (e.sorte === 'cracheur' ? c.invasion.cracheur.tir : e.sorte === 'cracheurLourd' ? c.invasion.cracheurLourd.tir : undefined)
 /** Un butin de `total` points en gemmes (voir `invasion.gemmes`) : les plus grosses d'abord. */
@@ -3072,7 +3095,7 @@ export function partDe(c: ConfigVaisseau, sorte: SorteDInsecte, t: number): numb
   return C.part * Math.max(0, Math.min(1, (t - C.debut) / C.montee))
 }
 
-function faireNaitreUnInsecte(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
+function faireNaitreUnInsecte(c: ConfigVaisseau, m: Monde, ev: Evenement[], force?: SorteDInsecte): void {
   // (dans UN DES CADRANS DE LA VAGUE, à tour de rôle ; pas sur ses bords : un dixième de marge de chaque côté — en flot
   // continu, tout autour)
   const cadrans = m.invasion.cadrans.length > 0 ? m.invasion.cadrans : [0]
@@ -3099,7 +3122,11 @@ function faireNaitreUnInsecte(c: ConfigVaisseau, m: Monde, ev: Evenement[]): voi
   }
   // (LES LARVES EXPLOSIVES, TROIS AU PLUS À LA FOIS, cadavres compris — voir `invasion.larve.max`)
   if (sorte === 'larve' && m.ennemis.filter((x) => x.sorte === 'larve').length + m.larvesMortes.length >= c.invasion.larve.max) sorte = undefined
+  // (une sorte imposée : le colosse, à son heure — voir `menerLesColosses`)
+  if (force !== undefined) sorte = force
   const e: Ennemi = { id: m.prochainId++, corps: { ...nouveauVaisseau(), x, y, cap: Math.atan2(o.y - y, o.x - x) }, pv: c.ennemi.pv * (sorte === undefined ? 1 : c.invasion[sorte].vie), fait: c.invasion.sansPortail ? 'aggro' : 'marche', roche: null, forage: null, tirA: 0, butin: 0, cargaison: cargaisonVide(), ...(sorte === undefined ? {} : { sorte }) }
+  // (LE COLOSSE est un grand — voir `invasion.colosse`)
+  if (sorte === 'colosse') e.grand = true
   m.ennemis.push(e)
   ev.push({ type: 'ennemiApparait', id: e.id, x, y })
 }
@@ -3595,6 +3622,35 @@ function conduireLInsecte(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number, ev
   return []
 }
 
+/** LES COLOSSES (voir `invasion.colosse`) : le prochain naît à son heure, un seul à la fois ; leur jauge fond sans contrôle. */
+function menerLesColosses(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]): void {
+  const co = c.invasion.colosse
+  if (!c.invasion.active || !c.invasion.sansPortail || m.phase !== 'vol') return
+  m.prochainColosseA ??= co.premier
+  // (il compte dans le plafond des vivants du flot : au plafond, il attend une place)
+  if (m.t >= m.prochainColosseA && m.ennemis.filter((e) => e.asteroide === undefined).length < c.invasion.continu.vivantsMax) {
+    m.prochainColosseA = m.t + co.tous
+    if (!m.ennemis.some((e) => e.sorte === 'colosse')) faireNaitreUnInsecte(c, m, ev, 'colosse')
+  }
+  for (const e of m.ennemis) if (e.grand === true && (e.stagger ?? 0) > 0 && m.t - (e.staggerA ?? -1e9) > co.stagger.repit) e.stagger = Math.max(0, (e.stagger ?? 0) - co.stagger.fonte * dt)
+}
+/**
+ * UN CONTRÔLE SUR UN GRAND (voir `invasion.colosse`) : il ne le contrôle pas, il remplit sa jauge de `quantite` ; pleine,
+ * le grand est étourdi `duree` secondes et elle repart de zéro. Étourdi, rien ne la remplit.
+ */
+function ebranler(c: ConfigVaisseau, m: Monde, e: Ennemi, quantite: number, ev: Evenement[]): void {
+  const st = c.invasion.colosse.stagger
+  if (e.grand !== true || (e.figeA ?? -1) > m.t) return
+  e.stagger = (e.stagger ?? 0) + quantite
+  e.staggerA = m.t
+  if (e.stagger < st.max) return
+  e.stagger = 0
+  e.figeA = m.t + st.duree
+  e.stunA = m.t + st.duree
+  e.fige = 'etourdi'
+  ev.push({ type: 'fige', id: e.id, x: e.corps.x, y: e.corps.y, sorte: 'etourdi' })
+  ev.push({ type: 'stagger', id: e.id, x: e.corps.x, y: e.corps.y })
+}
 /** L'EXPLOSION D'UNE LARVE BLESSE LES INSECTES DE SA ZONE (voir `invasion.larve`) — pas elle-même (`sauf`), pas une roche. */
 function soufflerLesInsectes(c: ConfigVaisseau, m: Monde, x: number, y: number, ev: Evenement[], sauf?: Ennemi): void {
   const ex = c.invasion.larve.explosion
@@ -4146,10 +4202,13 @@ function geler(c: ConfigVaisseau, m: Monde, e: Ennemi, duree: number, ralenti: n
   // (UNE ROCHE N'A PAS D'ÉTAT — Keko, 26/11 : « les astéroïdes sont immunisés aux effets de corrosion, feu, glace et foudre »)
   if (e.asteroide !== undefined) return
   const deja = (e.geleA ?? -1) > m.t
+  // (UN GRAND N'EST PAS RALENTI : le givre remplit sa jauge — une fois par `givrePas` au plus ; voir `invasion.colosse`)
+  const stg = c.invasion.colosse.stagger
+  if (e.grand === true && m.t - (e.staggerGivreA ?? -1e9) >= stg.givrePas) (e.staggerGivreA = m.t), ebranler(c, m, e, stg.givre, ev)
   // (« GEL PROFOND » : un COUP de givre — pas une zone qui gèle sans cesse — sur un insecte qui l'était déjà ; voir `ELEMENTAIRES`)
-  if (coup && deja && c.elementaires.gelure && e.asteroide === undefined && tire(m.graine, m.prochainId++, 99) < ELEMENTAIRES.gelure.chance * (1 + c.renforts.givre)) figer(m, e, ELEMENTAIRES.gelure.duree, 'glace', ev)
+  if (coup && deja && c.elementaires.gelure && e.asteroide === undefined && tire(m.graine, m.prochainId++, 99) < ELEMENTAIRES.gelure.chance * (1 + c.renforts.givre)) figer(c, m, e, ELEMENTAIRES.gelure.duree, 'glace', ev)
   if (!deja) ev.push({ type: 'gele', id: e.id, x: e.corps.x, y: e.corps.y })
-  e.ralenti = deja ? Math.min(e.ralenti ?? 1, ralenti) : ralenti
+  e.ralenti = e.grand === true ? 1 : deja ? Math.min(e.ralenti ?? 1, ralenti) : ralenti
   e.geleA = Math.max(e.geleA ?? -1, m.t + dureeDEtat(c, duree))
 }
 /** IL BRÛLE (une flamme, un rayon, une traînée, une flaque) : `brulure` secondes à `dps` (voir `dureeDEtat`), si la source brûle. */
@@ -5091,8 +5150,13 @@ function coupDObus(c: ConfigVaisseau, m: Monde, o: Obus, e: Ennemi): { degats: n
 }
 
 /** Un insecte FIGÉ (voir `Ennemi.figeA`) : pris dans la glace, `duree` secondes. */
-function figer(m: Monde, e: Ennemi, duree: number, sorte: 'glace' | 'etourdi', ev: Evenement[]): void {
+function figer(c: ConfigVaisseau, m: Monde, e: Ennemi, duree: number, sorte: 'glace' | 'etourdi', ev: Evenement[]): void {
   if (e.asteroide !== undefined) return
+  // (UN GRAND N'EST PAS FIGÉ : le gel et l'étourdissement remplissent sa jauge, le gel un peu plus — voir `invasion.colosse`)
+  if (e.grand === true) {
+    ebranler(c, m, e, sorte === 'glace' ? c.invasion.colosse.stagger.gel : c.invasion.colosse.stagger.etourdi, ev)
+    return
+  }
   e.figeA = Math.max(e.figeA ?? -1, m.t + duree)
   e.fige = sorte
   ev.push({ type: 'fige', id: e.id, x: e.corps.x, y: e.corps.y, sorte })
@@ -7694,6 +7758,7 @@ function avancerSansLeJoueur(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenem
     menerLesDerives(c, m)
     menerLesRochesPrises(c, m, dt)
     menerLesLarvesMortes(c, m, ev)
+    menerLesColosses(c, m, dt, ev)
     for (const e of [...m.ennemis]) conduireLEnnemi(c, m, e, dt, ev)
     m.ennemis = m.ennemis.filter((e) => !e.parti)
     ecarterLesInsectes(c, m)
@@ -7886,6 +7951,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
     menerLesDerives(c, m)
     menerLesRochesPrises(c, m, dt)
     menerLesLarvesMortes(c, m, ev)
+    menerLesColosses(c, m, dt, ev)
     for (const e of [...m.ennemis]) {
       chocs.push(...conduireLEnnemi(c, m, e, dt, ev))
       // (il brûle encore : le lance-flammes l'a touché — mais à sa sortie seulement : dans la flamme, c'est elle qui brûle)
@@ -8434,7 +8500,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
       souffler(c, m, o, o.x, o.y, null, ev)
       // (L'ÉTOURDISSEMENT : les critiques de l'explosion seule — pas ses éclats — voir `Arme.etourdissement`)
       const et = o.etourdissement
-      if (et !== undefined) for (const e of critiques) if (m.ennemis.includes(e)) figer(m, e, et.duree, 'etourdi', ev)
+      if (et !== undefined) for (const e of critiques) if (m.ennemis.includes(e)) figer(c, m, e, et.duree, 'etourdi', ev)
       if (o.fragments !== undefined) fragmenter(m, o.x, o.y, o.fragments, null, { ...(o.gel === undefined ? {} : { gel: o.gel }), ...(o.brule === undefined ? {} : { brule: o.brule }), ...(o.electrocution === undefined ? {} : { electrocution: o.electrocution }) })
       repliquer(c, m, o, critiques, ev)
       // (LE CHAPELET : la suivante attend un peu plus loin dans le sens de la grenade, plus petite — voir `Arme.chapelet` ;

@@ -23,7 +23,7 @@ import { textWidth } from 'pixelfx'
 import { pixelsDeLIcone } from './icones-armes.ts'
 import { HAUT_ACCENTS } from './police.ts'
 import { RACINES_DU_KRAKEN, POINTE_DU_CROCHET, contourDuCrochet, cordesDuKraken } from './rendu-vaisseau.ts'
-import { formesDeLInsecte, formesDuCornu, formesDuCuirassier, formesDuMoucheron, formesDeLaLarve, formesDuCracheur, boucheMontee, gabaritDe, tailleDe, placeDOutil, queueDe, tuyeresOmni, formesDuSocleDeTourelle, formesDeLaTeteDeTourelle, formesDeLaCapsule, formesDuCristalPose, formesDeLaScie, formesDeLaBalise, formesDuBecDeBalise, canonDeLaForeuse, formesDeLAimant, formesDuChassis, formesDeLaForeuse, formesDeLArme, formesDuPropulseur, formesDuRadar, formesDuVaisseau, formesDuVer, CRISTAL_DU_PRISME, sommetsDUnHypercube, ARETES_DE_L_HYPERCUBE, rampeDeLaMatiere, LIVREES, COULEURS_DE_JOUEUR, ovale, peindreDansUneCase, peindreFormes, rampesDeLaLivree, tonsDeLaLivree, tonsDeLaMatiere, ANCRES_DU_KRAKEN, type Habit } from './rendu-vaisseau.ts'
+import { formesDeLInsecte, formesDuCornu, formesDuCuirassier, formesDuMoucheron, formesDeLaLarve, formesDuCracheur, formesDuColosse, boucheMontee, gabaritDe, tailleDe, placeDOutil, queueDe, tuyeresOmni, formesDuSocleDeTourelle, formesDeLaTeteDeTourelle, formesDeLaCapsule, formesDuCristalPose, formesDeLaScie, formesDeLaBalise, formesDuBecDeBalise, canonDeLaForeuse, formesDeLAimant, formesDuChassis, formesDeLaForeuse, formesDeLArme, formesDuPropulseur, formesDuRadar, formesDuVaisseau, formesDuVer, CRISTAL_DU_PRISME, sommetsDUnHypercube, ARETES_DE_L_HYPERCUBE, rampeDeLaMatiere, LIVREES, COULEURS_DE_JOUEUR, ovale, peindreDansUneCase, peindreFormes, rampesDeLaLivree, tonsDeLaLivree, tonsDeLaMatiere, ANCRES_DU_KRAKEN, type Habit } from './rendu-vaisseau.ts'
 import { peauDe, peauxDe, rampesDeLaPeau, tonsDeLaPeau, type Peau } from './peaux.ts'
 import { boiteDe } from './rendu-vaisseau.ts'
 import { dessinerLAireDuHangar, dessinerLeSolDuHangar, dessinerLesLampesDuHangar } from './hangars.ts'
@@ -1072,7 +1072,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       if (VORTEX) conf = { ...conf, armes: conf.armes.map((a) => corrosionPosee(a, CORROSION_DU_VORTEX)) }
       // (SES ARMES ÉLECTRIQUES ÉLECTROCUTENT — Keko, 24/11 — voir `ELECTROCUTION_DU_VORTEX` ; après l'échelle : ses dégâts y sont)
       if (VORTEX) conf = { ...conf, armes: conf.armes.map(electrocutionPosee) }
-      if (VORTEX) conf = { ...conf, champ: { ...conf.champ, densite: 0 }, station: { ...conf.station, portee: -1 }, invasion: { ...conf.invasion, active: true, sansPortail: true /* (PLUS DE PORTAIL — Keko, 20/11 : voir `sansPortail`) */, continu: { ...conf.invasion.continu, actif: true, ...(FLOT > 0 ? { debut: FLOT, max: FLOT } : {}) }, ...(parametres.has('cornus') ? { cornu: { ...conf.invasion.cornu, debut: 0, montee: 1e-6, part: Number(parametres.get('cornus')) || 0.5 } } : {}), ...(parametres.has('cuirassiers') ? { cuirassier: { ...conf.invasion.cuirassier, debut: 0, montee: 1e-6, part: Number(parametres.get('cuirassiers')) || 0.3 } } : {}), ...(parametres.has('moucherons') ? { moucheron: { ...conf.invasion.moucheron, part: Number(parametres.get('moucherons')) || 0 } } : {}), ...(parametres.has('lourds') ? { cracheurLourd: { ...conf.invasion.cracheurLourd, debut: 0, montee: 1e-6, part: Number(parametres.get('lourds')) || 0.2 } } : {}) /* (`&lourds=P` : cette part de cracheurs lourds dès le départ) */, ...(parametres.has('cracheurs') ? { cracheur: { ...conf.invasion.cracheur, debut: 0, montee: 1e-6, part: Number(parametres.get('cracheurs')) || 0.3 } } : {}) /* (`&cracheurs=P` : cette part de cracheurs dès le départ) */, ...(parametres.has('larves') ? { larve: { ...conf.invasion.larve, debut: 0, montee: 1e-6, part: Number(parametres.get('larves')) || 0.3 } } : {}) /* (`&larves=P` : cette part de larves explosives dès le départ — 0,3 sans nombre) */ /* (`&cornus=P`, `&cuirassiers=P`, `&moucherons=P` : cette part de cornus, de cuirassiers, de moucherons, dès le départ) */, ...(parametres.has('aimant') ? { aimant: Number(parametres.get('aimant')) || 0.2 } : {}) /* (`&aimant=P` : la chance qu'un insecte lâche l'aimant — 0,2 sans nombre) */ /* (ET PLUS DE VAGUES : voir `continu`) */, viePortail: Math.max(1, Number(parametres.get('portail')) || conf.invasion.viePortail) /* (`&portail=N` : la vie du portail au départ, pour voir la fin d'un lien) */ }, ennemi: { ...conf.ennemi, ...INSECTE }, bouclier: { ...conf.bouclier, points: Math.max(conf.bouclier.points, BOUCLIER_DU_VORTEX), delai: 5, plein: 10 } /* (LE BOUCLIER SE RECHARGE EN PART DE LUI-MÊME — Keko, 21/11 : « après 5 secondes sans subir de dégâts, en 10 secondes totalement » ; voir `bouclier.plein`) */, passifs: { ...conf.passifs, critique: conf.passifs.critique + CRITIQUE_DU_VORTEX, critiqueFacteur: FACTEUR_CRITIQUE_DU_VORTEX } }
+      if (VORTEX) conf = { ...conf, champ: { ...conf.champ, densite: 0 }, station: { ...conf.station, portee: -1 }, invasion: { ...conf.invasion, active: true, sansPortail: true /* (PLUS DE PORTAIL — Keko, 20/11 : voir `sansPortail`) */, continu: { ...conf.invasion.continu, actif: true, ...(FLOT > 0 ? { debut: FLOT, max: FLOT } : {}) }, ...(parametres.has('cornus') ? { cornu: { ...conf.invasion.cornu, debut: 0, montee: 1e-6, part: Number(parametres.get('cornus')) || 0.5 } } : {}), ...(parametres.has('cuirassiers') ? { cuirassier: { ...conf.invasion.cuirassier, debut: 0, montee: 1e-6, part: Number(parametres.get('cuirassiers')) || 0.3 } } : {}), ...(parametres.has('moucherons') ? { moucheron: { ...conf.invasion.moucheron, part: Number(parametres.get('moucherons')) || 0 } } : {}), ...(parametres.has('colosse') ? { colosse: { ...conf.invasion.colosse, premier: 2 } } : {}) /* (`&colosse` : le premier colosse à deux secondes) */, ...(parametres.has('lourds') ? { cracheurLourd: { ...conf.invasion.cracheurLourd, debut: 0, montee: 1e-6, part: Number(parametres.get('lourds')) || 0.2 } } : {}) /* (`&lourds=P` : cette part de cracheurs lourds dès le départ) */, ...(parametres.has('cracheurs') ? { cracheur: { ...conf.invasion.cracheur, debut: 0, montee: 1e-6, part: Number(parametres.get('cracheurs')) || 0.3 } } : {}) /* (`&cracheurs=P` : cette part de cracheurs dès le départ) */, ...(parametres.has('larves') ? { larve: { ...conf.invasion.larve, debut: 0, montee: 1e-6, part: Number(parametres.get('larves')) || 0.3 } } : {}) /* (`&larves=P` : cette part de larves explosives dès le départ — 0,3 sans nombre) */ /* (`&cornus=P`, `&cuirassiers=P`, `&moucherons=P` : cette part de cornus, de cuirassiers, de moucherons, dès le départ) */, ...(parametres.has('aimant') ? { aimant: Number(parametres.get('aimant')) || 0.2 } : {}) /* (`&aimant=P` : la chance qu'un insecte lâche l'aimant — 0,2 sans nombre) */ /* (ET PLUS DE VAGUES : voir `continu`) */, viePortail: Math.max(1, Number(parametres.get('portail')) || conf.invasion.viePortail) /* (`&portail=N` : la vie du portail au départ, pour voir la fin d'un lien) */ }, ennemi: { ...conf.ennemi, ...INSECTE }, bouclier: { ...conf.bouclier, points: Math.max(conf.bouclier.points, BOUCLIER_DU_VORTEX), delai: 5, plein: 10 } /* (LE BOUCLIER SE RECHARGE EN PART DE LUI-MÊME — Keko, 21/11 : « après 5 secondes sans subir de dégâts, en 10 secondes totalement » ; voir `bouclier.plein`) */, passifs: { ...conf.passifs, critique: conf.passifs.critique + CRITIQUE_DU_VORTEX, critiqueFacteur: FACTEUR_CRITIQUE_DU_VORTEX } }
       // LE RIVAL EST UN CUIRASSÉ LOURDEMENT ARMÉ (Keko, 14/11, à l'essai : « pour voir si je peux arriver à le tuer avec mon
       // chasseur ») : gros, lent, qui vire mal, très solide, et qui tire trois fois plus souvent, de plus loin ; il ne
       // fuit plus. `&rival=serie` rend le petit rival d'avant. *Chiffres au jugé.*
@@ -1657,6 +1657,61 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const saut = neuf ? Math.round(-2 * G * Math.abs(Math.sin((t - niveauA) * 14)) * (1 - (t - niveauA) / 0.8)) : 0
     motEnRelief(p, dit, x + w / 2, y + Math.round((h - 7 * G) / 2) + saut, 'cristal', GRAS, null, G) // (centré sur ses capitales : sept rangées)
     if (neuf) p.glow(x + w / 2, y + h / 2, w, XP[2], 0.6 * (1 - (t - niveauA) / 0.8))
+  }
+  /**
+   * LA BARRE DU MINI-BOSS (Keko, 28/11 : « une barre de vie qui apparaît quelque part sur l'interface, et une barre de
+   * stagger sous la barre de vie » — voir `invasion.colosse`) : en haut de la vue, au milieu, sous la bande du haut — son
+   * nom, sa vie en cramoisi (la part qu'il vient de perdre reste blanche un instant, puis fond), et dessous, plus mince, SA
+   * JAUGE DE STAGGER en or, qui s'allume au contrôle ; pleine, il est étourdi : elle bat en blanc et se vide le temps de
+   * l'étourdissement. Elle paraît en glissant quand il naît, et s'efface à sa mort.
+   */
+  let grandVu: { id: number; pv: number; depuis: number; traine: number } | null = null
+  function dessinerLaBarreDuGrand(p: Peintre): void {
+    const e = m.ennemis.find((x) => x.grand === true)
+    if (e === undefined || e.sorte === undefined) {
+      grandVu = null
+      return
+    }
+    const pvMax = CONF.ennemi.pv * CONF.invasion[e.sorte].vie
+    if (grandVu === null || grandVu.id !== e.id) grandVu = { id: e.id, pv: e.pv, depuis: t, traine: e.pv }
+    // (la traîne : la vie perdue reste blanche 0,4 s, puis fond)
+    if (e.pv < grandVu.pv) grandVu.depuis = Math.max(grandVu.depuis, t - 0.0001)
+    if (e.pv < grandVu.pv) grandVu = { ...grandVu, pv: e.pv, depuis: t }
+    if (t - grandVu.depuis > 0.4) grandVu.traine = Math.max(e.pv, grandVu.traine - pvMax * 0.6 * (1 / 60))
+    const entre = Math.min(1, (t - (grandVu.depuis === t ? t : grandVu.depuis)) + 1)
+    const bw = Math.min(120, W - 70)
+    const x = Math.round((W - bw) / 2)
+    // (SOUS L'INTERFACE DU HAUT — mesuré en capture : posée au bas de la bande, elle chevauchait l'expérience et le blindage)
+    const y0 = (paysage ? 16 : basDuHud() + 8) - Math.round((1 - entre) * 12)
+    const encre = MATIERES.encre.contour
+    motEnRelief(p, 'COLOSSE', W / 2, y0, 'violet')
+    // (la vie)
+    const y = y0 + 10
+    p.rect(x - 1, y - 1, bw + 2, 7, encre)
+    p.rect(x, y, bw, 5, N.hex('#2a0c14'))
+    const traine = Math.round(bw * Math.max(0, Math.min(1, grandVu.traine / pvMax)))
+    const plein = Math.round(bw * Math.max(0, Math.min(1, e.pv / pvMax)))
+    if (traine > plein) p.rect(x + plein, y, traine - plein, 5, N.WHITE)
+    if (plein > 0) {
+      p.rect(x, y, plein, 5, ROUGE[4])
+      p.rect(x, y, plein, 1, ROUGE[5])
+      p.rect(x, y + 4, plein, 1, ROUGE[2])
+    }
+    // (la jauge de stagger, dessous : trois pixels, l'or ; étourdi, elle bat en blanc et se vide)
+    const st = CONF.invasion.colosse.stagger
+    const ys = y + 7
+    p.rect(x - 1, ys - 1, bw + 2, 5, encre)
+    p.rect(x, ys, bw, 3, N.hex('#2a200c'))
+    const etourdi = (e.stunA ?? -1) > m.t
+    const part = etourdi ? (e.stunA! - m.t) / st.duree : Math.min(1, (e.stagger ?? 0) / st.max)
+    const sp = Math.round(bw * part)
+    const vif = m.t - (e.staggerA ?? -10) < 0.15
+    if (sp > 0) {
+      const bat = etourdi && Math.sin(t * 24) > 0
+      p.rect(x, ys, sp, 3, bat || vif ? N.WHITE : N.hex('#ffb840'))
+      if (!bat && !vif) p.rect(x, ys, sp, 1, N.hex('#ffe49a'))
+      p.glow(x + sp, ys + 1, 5, N.hex('#ffb840'), etourdi ? 0.7 : vif ? 0.6 : 0.25)
+    }
   }
   function dessinerLExperience(p: Peintre, x: number, y: number, large: number): void {
     const inv = m.invasion
@@ -3265,6 +3320,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         // (À GAUCHE DE LA BARRE DE VIE, centrées sur sa hauteur — Keko, 22/11 ; voir `placeDesVies`)
         if (placeDesVies !== null) dessinerLesVies(p, placeDesVies.droite - largeurDesVies(1), Math.round(placeDesVies.milieu - 3.5), 1, false)
       }
+      dessinerLaBarreDuGrand(p)
       dessinerLeRetour(p)
       return
     }
@@ -10334,7 +10390,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // (… SAUF LE CRACHEUR LOURD — Keko, 28/11 : « la rotation des gros tireurs n'est pas fluide, on dirait qu'ils tournent
     // par cran » : quarante-huit poses, c'est un cran de 7,5°, qui se voit sur un insecte deux fois plus grand, tourné vers
     // le vaisseau à chaque image. Peu nombreux, il est peint pour de bon, à son cap exact)
-    if (!blanchi && deforme === undefined && sorte !== 'cracheurLourd') {
+    if (!blanchi && deforme === undefined && sorte !== 'cracheurLourd' && sorte !== 'colosse') {
       const tour = Math.PI * 2
       const q = (a: number, n: number): number => ((Math.round((a / tour) * n) % n) + n) % n
       const ic = q(cap, POSES_DU_CAP)
@@ -10364,7 +10420,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const ouvre = aggro ? 0.55 + 0.45 * Math.sin(morsure) : 0.15
     // (LE CORNU, une fois et demie plus grand ; LE CUIRASSIER, 2,2 fois — voir `formesDuCornu`, `formesDuCuirassier`)
     // (LA LARVE EXPLOSIVE garde sa poche de bile verte, en chasse aussi : c'est elle qu'on lit — voir `formesDeLaLarve`)
-    const formes = sorte === 'cracheurLourd' ? formesDuCracheur(marche, 0, true) : sorte === 'cracheur' ? formesDuCracheur(marche, 0) : sorte === 'larve' ? formesDeLaLarve(marche) : sorte === 'cuirassier' ? formesDuCuirassier(marche, ouvre) : sorte === 'cornu' ? formesDuCornu(marche, ouvre) : sorte === 'moucheron' ? formesDuMoucheron(marche) : formesDeLInsecte(marche, ouvre)
+    const formes = sorte === 'colosse' ? formesDuColosse(marche, ouvre) : sorte === 'cracheurLourd' ? formesDuCracheur(marche, 0, true) : sorte === 'cracheur' ? formesDuCracheur(marche, 0) : sorte === 'larve' ? formesDeLaLarve(marche) : sorte === 'cuirassier' ? formesDuCuirassier(marche, ouvre) : sorte === 'cornu' ? formesDuCornu(marche, ouvre) : sorte === 'moucheron' ? formesDuMoucheron(marche) : formesDeLInsecte(marche, ouvre)
     peindreFormes(p, formes, x, y, sorte === undefined ? 1 : CONF.invasion[sorte].taille, { cap, lumiere: LUMIERE_DU_VOL, reflet: REFLET_DU_VOL, blanc: blanchi ? 1 : 0, matieres: aggro && sorte !== 'larve' ? { bile: 'laser' } : undefined })
   }
   const POSES_DU_CAP = 48
@@ -15726,7 +15782,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         // compte sur la vie de sa sorte, paraît au premier coup, et s'élargit avec sa taille)
         const g = gabaritDInsecte(CONF, e)
         const pvMax = CONF.ennemi.pv * g.vie
-        if (e.pv < pvMax) dessinerUneJauge(p, sx, sy + rayonDe(CONF, e) + 5, Math.round(10 * Math.sqrt(g.taille)), e.pv / pvMax, ROUGE[4], ROUGE[5], false)
+        // (un grand a sa barre dans l'interface — voir `dessinerLaBarreDuGrand`)
+        if (e.pv < pvMax && e.grand !== true) dessinerUneJauge(p, sx, sy + rayonDe(CONF, e) + 5, Math.round(10 * Math.sqrt(g.taille)), e.pv / pvMax, ROUGE[4], ROUGE[5], false)
       }
       return
     }
@@ -19129,6 +19186,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           }
           break
         case 'cracheurVise':
+          break
+        case 'stagger':
+          // (LE GRAND EST ÉTOURDI — voir `ebranler` : un éclair, une onde, une secousse, le son de l'étourdissement)
+          jouer('etourdi', { dx: ev.x - v.x, dy: ev.y - v.y })
+          flashs.push({ x: ev.x, y: ev.y, t0: t, r: 18 })
+          secouer(2.5)
           break
         case 'cracheurCrache':
           // (IL CRACHE : le son du crachat, une petite giclée rouge à la gueule)
