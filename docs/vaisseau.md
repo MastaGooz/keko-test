@@ -9795,3 +9795,19 @@ le rejeton fait des slashes de zone. Ce qui permettrait d'avoir au moins une car
   ne donne qu'un petit par coup. La carte « Zone / portée » grandit `rayon`. À l'écran, le croissant du « Sword slash » de
   pixelfx (la liste `entailles`), d'un sens puis de l'autre, en glace avec les Abyssaux ; la tentacule fouette toujours.
 - Nom « Faucheurs » et chiffres de moi.
+
+### Les Rejetons : le Sacrifice, leur sixième carte (28/11)
+
+Keko : « Je propose le dernier souffle, où le rejeton fait une attaque kamikaze explosive. »
+
+- Son nom : « Sacrifice » — « Dernier souffle » partageait un mot avec le « Souffle » des missiles, et les noms de cartes
+  sont tous différents.
+- `Arme.sacrifice { rayon, part, vitesse, elan, vue }` : sa vie finie (sursis de la Lignée compris), un rejeton — pas un
+  petit — se rue à 220 sur l'insecte le plus proche à 150 (le verrouillé d'abord) et explose au contact, ou après 1,2 s :
+  six fois son coup (alpha et Lignée compris) à tout ce qui est à 22, roches comprises, avec son élément ; chacun tire son
+  critique. Personne en vue : il s'éteint comme avant.
+- Les bornes : une explosion par rejeton, donc au rythme de leur ponte ; elle ne nourrit ni la Mitose ni la Lignée ; la
+  carte « Zone / portée » grandit son rayon.
+- À l'écran : il clignote de plus en plus vite pendant la ruée ; l'explosion des mini-missiles (éclair, onde, « boum ») et
+  une gerbe de chair et de bile, de glace avec les Abyssaux. Chiffres de moi.
+- Les Rejetons ont leurs six cartes : Abyssaux, Mitose, Alpha, Lignée, Faucheurs, Sacrifice.

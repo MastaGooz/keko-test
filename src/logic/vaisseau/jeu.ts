@@ -1340,6 +1340,14 @@ export type Arme = {
    */
   faux?: { rayon: number; ouverture: number; part: number }
   /**
+   * LE SACRIFICE (les Rejetons — Keko, 28/11 : « je propose le dernier souffle, où le rejeton fait une attaque kamikaze
+   * explosive ») : À LA FIN DE SA VIE, un rejeton — pas un petit — ne s'éteint pas : il SE RUE (`Rejeton.ruee`), à `vitesse`,
+   * sur l'insecte le plus proche de lui (le verrouillé d'abord) à `vue`, et EXPLOSE au contact — ou au bout de `elan`
+   * secondes — : `part` fois ses dégâts à tout ce qui est à `rayon`, roches comprises, avec son élément ; chacun tire son
+   * critique. Sans insecte en vue, il s'éteint comme avant. Une explosion par rejeton ; elle ne nourrit ni Mitose ni Lignée.
+   */
+  sacrifice?: { rayon: number; part: number; vitesse: number; elan: number; vue: number }
+  /**
    * UN CRACHAT D'ACIDE (la première arme de la Vouivre, Keko, 16/11 : « un vaisseau alien organique spécialisé dans la
    * corrosion et le toxique ; un crachat : un cône d'acide craché devant, qui laisse une trace — une flaque conique ; le
    * crachat et la flaque infligent le statut ACIDE, qui inflige des dégâts faibles mais augmente les dégâts subis de
@@ -1899,7 +1907,7 @@ export type Monde = {
 }
 
 /** Un rejeton du Kraken (voir `Arme.rejeton`) : son arme, où, sa vitesse, quand il est né, sa proie, son prochain coup. */
-export type Rejeton = { id: number; arme: number; x: number; y: number; vx: number; vy: number; nee: number; cible: number | null; frappeA: number; /** Né d'une Mitose (voir `Arme.mitose`). */ petit?: boolean; /** L'alpha (voir `Arme.alpha`). */ alpha?: boolean; /** Sa lignée (voir `Arme.lignee`) : ce qu'il a gagné de dégâts et de taille (0 à `max`), et de vie, en secondes. */ lignee?: number; sursis?: number; /** Ses slashes comptés, pour alterner leur sens (voir `Arme.faux`). */ fauches?: number }
+export type Rejeton = { id: number; arme: number; x: number; y: number; vx: number; vy: number; nee: number; cible: number | null; frappeA: number; /** Né d'une Mitose (voir `Arme.mitose`). */ petit?: boolean; /** L'alpha (voir `Arme.alpha`). */ alpha?: boolean; /** Sa lignée (voir `Arme.lignee`) : ce qu'il a gagné de dégâts et de taille (0 à `max`), et de vie, en secondes. */ lignee?: number; sursis?: number; /** Ses slashes comptés, pour alterner leur sens (voir `Arme.faux`). */ fauches?: number; /** Depuis quand il se rue pour exploser (voir `Arme.sacrifice`). */ ruee?: number }
 
 /**
  * Une tentacule (voir `Arme.tentacule`) : son arme, son ancre, ce qu'elle fait (au repos, elle s'étend, plantée, elle se
@@ -2062,6 +2070,9 @@ export type Evenement =
   /** Le slash d'un rejeton faucheur (voir `Arme.faux`) : d'où, vers quel cap, dans quel sens, son arc. */
   | { type: 'faucheDeRejeton'; id: number; x: number; y: number; cap: number; sens: number; rayon: number; ouverture: number }
   | { type: 'rejetonFini'; x: number; y: number }
+  /** Un rejeton se rue pour exploser, puis explose (voir `Arme.sacrifice`). */
+  | { type: 'rueeDeRejeton'; id: number; x: number; y: number }
+  | { type: 'sacrificeDeRejeton'; x: number; y: number; rayon: number }
   /** Une vrille d'ombre sort de sa flaque, saisit sa proie, la serre (signalé toutes les `periode` secondes), se fait arracher par un grand, rentre (voir `Arme.vrille`). */
   | { type: 'vrille'; id: number; x: number; y: number }
   /** Le Ver pond un œuf, il éclot, un mini-ver se dissout, un mini-ver mord (voir `Arme.ponte`). */
@@ -5371,13 +5382,55 @@ function menerLesRejetons(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement
     const r = m.rejetons[k]
     const a = c.armes[r.arme]
     const rj = a?.rejeton
-    if (a === undefined || rj === undefined || m.t - r.nee >= (r.petit === true ? (a.mitose?.duree ?? 0) : rj.duree + (r.sursis ?? 0)) || m.phase !== 'vol') {
+    const finDeVie = a !== undefined && rj !== undefined && m.t - r.nee >= (r.petit === true ? (a.mitose?.duree ?? 0) : rj.duree + (r.sursis ?? 0))
+    const sc = r.petit === true ? undefined : a?.sacrifice
+    if (a === undefined || rj === undefined || m.phase !== 'vol' || (finDeVie && sc === undefined)) {
       m.rejetons.splice(k, 1)
       ev.push({ type: 'rejetonFini', x: r.x, y: r.y })
       continue
     }
     // (sa proie : le verrouillé à sa vue, sinon le plus proche de lui)
     const dist = (e: Ennemi): number => Math.hypot(e.corps.x - r.x, e.corps.y - r.y)
+    // (LE SACRIFICE : sa vie finie, il se rue sur l'insecte le plus proche et explose — voir `Arme.sacrifice`)
+    if (finDeVie && sc !== undefined) {
+      let but: Ennemi | undefined
+      const vr = ennemiVerrouille(m)
+      if (vr !== null && vr.asteroide === undefined && dist(vr) <= sc.vue) but = vr
+      else {
+        let dc = sc.vue
+        for (const e of m.ennemis) if (e.asteroide === undefined && e.pv > 0 && dist(e) < dc) (dc = dist(e)), (but = e)
+      }
+      // (personne en vue quand sa vie finit : il s'éteint comme avant)
+      if (but === undefined && r.ruee === undefined) {
+        m.rejetons.splice(k, 1)
+        ev.push({ type: 'rejetonFini', x: r.x, y: r.y })
+        continue
+      }
+      if (r.ruee === undefined) (r.ruee = m.t), ev.push({ type: 'rueeDeRejeton', id: r.id, x: r.x, y: r.y })
+      r.cible = but?.id ?? null
+      if (but !== undefined) {
+        const d = dist(but) || 1
+        r.vx = ((but.corps.x - r.x) / d) * sc.vitesse
+        r.vy = ((but.corps.y - r.y) / d) * sc.vitesse
+        const pas = Math.min(d, sc.vitesse * dt)
+        r.x += ((but.corps.x - r.x) / d) * pas
+        r.y += ((but.corps.y - r.y) / d) * pas
+      }
+      if (but === undefined || dist(but) <= rayonDe(c, but) + 2 || m.t - r.ruee >= sc.elan) {
+        const force = a.degats * sc.part * (r.alpha === true ? (a.alpha?.degats ?? 1) : 1) * (1 + (r.lignee ?? 0))
+        for (const e of [...m.ennemis]) {
+          if ((e.asteroide === undefined && e.pv <= 0) || dist(e) > sc.rayon + rayonDe(c, e)) continue
+          const critique = critiqueSur(c, m, a, e, () => tire(m.graine, m.prochainId++, 12))
+          e.pv -= force * (critique ? facteurSur(c, m, a, e) : 1)
+          effetsDuCoup(c, m, a, e, ev)
+          ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })
+          if (e.pv <= 0) abattreLEnnemi(c, m, e, ev)
+        }
+        ev.push({ type: 'sacrificeDeRejeton', x: r.x, y: r.y, rayon: sc.rayon })
+        m.rejetons.splice(k, 1)
+      }
+      continue
+    }
     let proie: Ennemi | undefined
     const ve = ennemiVerrouille(m)
     if (ve !== null && dist(ve) <= rj.vue) proie = ve

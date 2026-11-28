@@ -1992,6 +1992,26 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
       const perdu = fx.w.ennemis.map((e) => 100000 - e.pv)
       verifier(`Faucheurs : le slash frappe la proie (${perdu[0]}) et son voisin dans l'arc (${perdu[1]}), à la moitié des dégâts, pas l'insecte au loin (${perdu[2]})`, perdu[0] > 0 && perdu[0] % 2 === 0 && perdu[1] > 0 && perdu[2] === 0 && fx.ev.some((e) => e.type === 'faucheDeRejeton'))
     }
+    // (SACRIFICE : sa vie finie, il se rue sur l'insecte et explose — lui et son voisin, pas l'insecte au loin ; sans la carte, rien)
+    {
+      const court = { ...rejeton, cadence: 100, rejeton: { ...rejeton.rejeton, duree: 2 } }
+      const jouer = (arme: object) => {
+        const conf = { ...cfg, armes: [arme as Arme] }
+        const w = nouveauMonde(conf, 3)
+        const places: [number, number][] = [[120, 0], [128, 0], [-300, 0]]
+        places.forEach(([x, y], k) => w.ennemis.push(insecte(k + 1, x, y)))
+        const ev: Evenement[] = []
+        for (let i = 0; i < 60 * 4; i++) {
+          w.ennemis.forEach((e, k) => (e.corps = { ...e.corps, x: places[k][0], y: places[k][1], vx: 0, vy: 0 }))
+          w.vaisseau = { ...w.vaisseau, x: 0, y: 0, vx: 0, vy: 0 }
+          ev.push(...avancerLeMonde(conf, w, 1 / 60, { x: 0, y: 0 }).evenements)
+        }
+        return { ev, perdu: w.ennemis.map((e) => 100000 - e.pv), reste: w.rejetons.length }
+      }
+      const sa = jouer({ ...court, sacrifice: { rayon: 22, part: 6, vitesse: 220, elan: 1.2, vue: 150 } })
+      const sans = jouer(court)
+      verifier(`Sacrifice : sa vie finie, il se rue (${sa.ev.filter((e) => e.type === 'rueeDeRejeton').length}) et explose (${sa.ev.filter((e) => e.type === 'sacrificeDeRejeton').length}) : ${sa.perdu[0] - sans.perdu[0]} à sa proie, ${sa.perdu[1] - sans.perdu[1]} au voisin, ${sa.perdu[2]} au loin ; il n'en reste aucun (${sa.reste}) ; sans la carte, aucune explosion`, sa.ev.filter((e) => e.type === 'sacrificeDeRejeton').length === 1 && sa.perdu[0] - sans.perdu[0] === 24 && sa.perdu[1] - sans.perdu[1] === 24 && sa.perdu[2] === 0 && sa.reste === 0 && sans.ev.every((e) => e.type !== 'sacrificeDeRejeton'))
+    }
     verifier(`Alpha : seul, le premier rejeton est l'alpha et frappe double (${al.perdu} contre ${base.perdu}) ; à trois, un seul alpha (${al3.alphas})`, al.perdu === 2 * base.perdu && base.perdu > 0 && al3.alphas === 1 && al3.grands === 3)
   }
   // (UN INSECTE QUI NE S'ARRÊTE PAS — Keko, 16/11 : « ils poursuivent toujours sans attaquer » : il tourne en rond à la

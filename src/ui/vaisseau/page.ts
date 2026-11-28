@@ -14342,6 +14342,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // chitine devant, deux yeux de bile, une lueur)
       const T_ = Tr
       p.glow(r.x, r.y, 7 * T_, bi[1], 0.2)
+      // (IL SE RUE POUR EXPLOSER — voir `Arme.sacrifice` : il rougeoie, de plus en plus vite)
+      if (r.ruee !== undefined) p.glow(r.x, r.y, 10 * T_, Math.sin((m.t - r.ruee) * (20 + 30 * (m.t - r.ruee))) > 0 ? N.WHITE : bi[2], 0.55)
       const lx = -0.6
       const ly = -0.8
       const cloche = ([[-1.1, 2.6], [0.4, 3.2], [1.7, 2.5]] as [number, number][]).map(([o, rr]): [number, number] => [o * T_, rr * T_])
@@ -18942,6 +18944,23 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
             etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(15, 35), Math.sin(a) * R.range(15, 35), R.range(0.1, 0.2), BILE[1], 1, 1)
           }
           break
+        case 'rueeDeRejeton':
+          break
+        case 'sacrificeDeRejeton': {
+          // (UN REJETON EXPLOSE — voir `Arme.sacrifice` : un éclair, l'onde de sa zone, son « boum », une gerbe de chair et
+          // de bile — de glace avec les Abyssaux)
+          const givre = CONF.armes.some((a) => a.rejeton !== undefined && a.gel !== undefined)
+          jouer('explosionMini', { dx: ev.x - v.x, dy: ev.y - v.y })
+          flashs.push({ x: ev.x, y: ev.y, t0: t, r: ev.rayon * zoneDuVol() * 0.45 })
+          ondesDeZone.push({ x: ev.x, y: ev.y, t0: t, r: ev.rayon * zoneDuVol(), s: Math.max(0.6, (ev.rayon * zoneDuVol()) / RAYON_DU_MISSILE) })
+          for (let i = 0; i < 16; i++) {
+            const a = R.range(0, Math.PI * 2)
+            const vi = R.range(40, 130)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * vi, Math.sin(a) * vi, R.range(0.2, 0.45), givre ? GLACE_DES_ABYSSAUX[1 + (i % 2)] : i % 3 === 0 ? BILE[2] : CHAIR[3 + (i % 2)], 1, i % 4 === 0 ? 2 : 1.5)
+          }
+          secouer(2)
+          break
+        }
         case 'faucheDeRejeton': {
           // (LE SLASH D'UN REJETON FAUCHEUR — voir `Arme.faux` : le croissant du « Sword slash » du dépôt, en petit, sur l'arc
           // que la règle frappe ; la rampe de la chair, de la glace avec les Abyssaux)

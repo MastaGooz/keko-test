@@ -732,8 +732,8 @@ export const MUTATIONS: Mutation[] = [
   // ennemis tués par la nuée donnent leurs cristaux tout de suite, sans les lâcher, et 25 % de plus — chiffre de moi ; voir
   // `Arme.charognards`)
   variation('nuee-charognards', 'nuee', 'Charognards', 'Les ennemis tués par la nuée donnent aussitôt plus de cristaux.', changerA('nuee', (a) => ({ ...a, charognards: { bonus: 0.25 } }))),
-  // LES REJETONS DU KRAKEN (Keko, 28/11 : « OK pour Abyssaux, Mitose et Alpha », puis Lignée et les Faucheurs ; Étreinte,
-  // Dernier souffle, Meute, Garde et Nichée proposées, pas retenues pour l'instant)
+  // LES REJETONS DU KRAKEN (Keko, 28/11 : « OK pour Abyssaux, Mitose et Alpha », puis Lignée, les Faucheurs et le Sacrifice ;
+  // Étreinte, Meute, Garde et Nichée proposées, pas retenues)
   // (« ABYSSAUX », LEUR ÉLÉMENT, le givre — la Tentacule a l'électrocution, la Nuée la brûlure)
   variation('rejetons-abyssaux', 'rejeton', 'Abyssaux', 'Les coups des rejetons appliquent givre.', changerA('rejeton', V.cryo)),
   // (« MITOSE », LEUR VARIATION SUR COUP CRITIQUE : un petit rejeton, 4 s, la moitié des dégâts, trois au plus, qui ne se
@@ -748,6 +748,10 @@ export const MUTATIONS: Mutation[] = [
   // (« FAUCHEURS » — Keko, 28/11 : « un peu comme les tentacules du Kraken, le rejeton fait des slashes de zone » : son coup
   // devient un arc de 34, ±1 rad, à 80 % des dégâts sur tout ce qu'il couvre — nom et chiffres de moi ; voir `Arme.faux`)
   variation('rejetons-faucheurs', 'rejeton', 'Faucheurs', 'Les rejetons fauchent en arc tous les ennemis devant eux.', changerA('rejeton', (a) => ({ ...a, faux: { rayon: 34, ouverture: 1, part: 0.8 } }))),
+  // (« SACRIFICE » — Keko, 28/11 : « je propose le dernier souffle, où le rejeton fait une attaque kamikaze explosive » ; pas
+  // « Dernier souffle » : les missiles ont déjà leur « Souffle » : à la fin de sa vie, il se rue à 220 sur l'insecte le plus
+  // proche à 150 et explose — six fois son coup, sur 22, 1,2 s d'élan au plus — chiffres de moi ; voir `Arme.sacrifice`)
+  variation('rejetons-sacrifice', 'rejeton', 'Sacrifice', 'En fin de vie, un rejeton se rue sur un ennemi et explose.', changerA('rejeton', (a) => ({ ...a, sacrifice: { rayon: 22, part: 6, vitesse: 220, elan: 1.2, vue: 150 } }))),
   // LES CARTES D'ÉLÉMENT (Keko, 24/11 : « des cartes spéciales de chaque élément » ; « des cartes multicolores spéciales qu'on
   // proposera dans le pool des cartes spéciales, si le joueur a au moins une attaque avec l'élément en question » — voir
   // `ELEMENTAIRES` pour leurs chiffres ; leurs noms et leurs textes sont de moi)
