@@ -9997,3 +9997,15 @@ quasiment jamais, et quand elle se lance, on est beaucoup trop en danger. »
   le nez ; quatre filaments qui ondulent derrière. Pour charger, il resserre son manteau, ses filaments se tendent, son
   cœur s'embrase.
 - **Son cœur rougit pour la salve** (Keko : « la sphère verte ne peut pas devenir rouge au moment où il envoie tous les projectiles ? ») : il vire au rouge des télégraphes pendant la préparation, l'est en crachant, et revient au vert au repos ; sa lueur grandit.
+- **La charge refaite** (Keko, 28/11 : « la sphère rouge doit s'activer aussi quand il télégraphe sa charge et qu'il
+  l'exécute ; la charge ne touche absolument jamais un vaisseau en mouvement — la rendre plus dangereuse ; qu'elle traverse
+  tous les autres ennemis, elle se fait arrêter par eux ; et qu'elle détruise les astéroïdes sur sa course ») :
+  - son cœur rougit pour toute attaque, la charge comprise ;
+  - le couloir SUIT le vaisseau pendant le télégraphe et vise où il sera à l'arrivée (sa vitesse comptée sur le temps de
+    la course) ; il ne se fige que les 0,35 dernières secondes — ses bords doublent alors ; il va 70 au-delà de ce point
+    (150 à 280 de long) ; 320 de vitesse ;
+  - elle enchaîne deux courses, la seconde retélégraphiée 0,6 s depuis le point d'arrivée ;
+  - en course, il ne s'écarte de personne (`ecarterLesInsectes` le tient pour immobile : les autres s'écartent) et toute
+    roche qu'il touche éclate, avec son butin.
+  Vérifié : un vaisseau qui file en travers à 45 est percuté ; celui qui fait un pas de côté une fois le couloir figé ne
+  l'est pas par cette course.

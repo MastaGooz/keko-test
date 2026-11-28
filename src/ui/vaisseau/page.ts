@@ -10459,7 +10459,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     const at = m.ennemis.find((e) => e.sorte === 'colosse')?.attaque
     // (SON CŒUR ROUGIT POUR LA SALVE — Keko, 28/11 : « la sphère verte ne peut pas devenir rouge au moment où il envoie tous
     // les projectiles ? » : elle vire au rouge pendant qu'il la prépare, l'est en crachant, et revient au vert au repos)
-    const rouge = at?.sorte !== 'salve' ? 0 : at.phase === 'prepare' ? Math.min(1, (m.t - at.depuis) / 0.6) : at.phase === 'agit' ? 1 : Math.max(0, 1 - (m.t - at.depuis) / 0.5)
+    // (… ET POUR LA CHARGE AUSSI — Keko, 28/11 : « que la sphère rouge s'active aussi quand il télégraphe sa charge et qu'il
+    // l'exécute »)
+    const rouge = at === undefined ? 0 : at.phase === 'prepare' ? Math.min(1, (m.t - at.depuis) / 0.6) : at.phase === 'agit' ? 1 : Math.max(0, 1 - (m.t - at.depuis) / 0.5)
     const COEUR = rouge > 0.5 ? [TOILE[3], TOILE[4], TOILE[6]] : BILE
     const serre = at?.sorte !== 'charge' ? 0 : at.phase === 'prepare' ? Math.min(1, (m.t - at.depuis) / 0.5) : at.phase === 'agit' ? 1 : Math.max(0, 1 - (m.t - at.depuis) / 0.4)
     const ca = Math.cos(cap)
@@ -14634,12 +14636,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const at = e.attaque
       if (e.sorte !== 'colosse' || at === undefined || at.phase !== 'prepare') continue
       p.place(W / 2 - camera.x, centreY() - camera.y)
-      const u = Math.max(0, Math.min(1, (m.t - at.depuis) / A[at.sorte].prepare))
+      const prep = at.sorte === 'charge' ? (at.prep ?? A.charge.prepare) : A.salve.prepare
+      const u = Math.max(0, Math.min(1, (m.t - at.depuis) / prep))
+      // (la charge figée : ses bords s'épaississent d'un trait — il ne visera plus)
+      const fige = at.sorte === 'charge' && m.t - at.depuis >= prep - A.charge.verrou
       const ouvre = 1 - (1 - Math.min(1, (m.t - at.depuis) / 0.12)) ** 3
       const alerte = u > 0.75 && Math.sin((u - 0.75) * (50 + 90 * (u - 0.75))) > 0
       const vif = alerte ? TOILE[6] : TOILE[4]
       if (at.sorte === 'charge') {
-        const L = A.charge.longueur * ouvre
+        const L = (at.longueur ?? A.charge.longueur) * ouvre
         const demi = rayonDe(CONF, e)
         const nx = -at.dy
         const ny = at.dx
@@ -14662,6 +14667,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         p.line(...en(0, -demi), ...en(L, -demi), vif, a)
         p.line(...en(0, demi), ...en(L, demi), vif, a)
         p.line(...en(L, -demi), ...en(L, demi), vif, a)
+        if (fige) {
+          p.line(...en(0, -demi - 1), ...en(L, -demi - 1), vif, a * 0.6)
+          p.line(...en(0, demi + 1), ...en(L, demi + 1), vif, a * 0.6)
+        }
       } else {
         const sv = A.salve
         const r0 = rayonDe(CONF, e) + 3

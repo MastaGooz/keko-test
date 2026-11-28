@@ -6083,23 +6083,49 @@ for (const vortex of [true, false]) {
     let xMin = Infinity
     let crachats = 0
     let perduAvantSalve = -1
+    let premiereFinie = -1
+    let perduPremiere = -1
+    let esquiveFaite = false
     for (let i = 0; i < 60 * duree; i++) {
-      const prep = co.attaque?.phase === 'prepare' && co.attaque.sorte === 'charge'
-      w.vaisseau = { ...w.vaisseau, x: 0, y: esquive && (prep || co.attaque?.phase === 'agit') ? 40 : 0, vx: 0, vy: 0 }
+      // (l'esquive : un pas de côté une fois le couloir figé — avant, il la suivrait)
+      const at = co.attaque
+      const fige = at?.sorte === 'charge' && ((at.phase === 'prepare' && w.t - at.depuis >= (at.prep ?? A.charge.prepare) - A.charge.verrou) || at.phase === 'agit')
+      if (fige && premiereFinie < 0) esquiveFaite = true
+      w.vaisseau = { ...w.vaisseau, x: 0, y: esquive && esquiveFaite ? 40 : 0, vx: 0, vy: 0 }
       for (const e of avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements) {
         ev.push(e)
         if (e.type === 'colosseCharge') x0 = co.corps.x
         if (e.type === 'colosseSalve' && perduAvantSalve < 0) perduAvantSalve = coque0 - (w.coque + w.bouclier)
       }
       xMin = Math.min(xMin, co.corps.x)
+      if (premiereFinie < 0 && x0 !== 0 && co.attaque?.phase !== 'agit') (premiereFinie = i), (perduPremiere = coque0 - (w.coque + w.bouclier))
       crachats = Math.max(crachats, w.tirs.filter((t) => t.arme === 'crachat').length)
     }
-    return { ev, x0, xMin, crachats, perduAvantSalve, perdu: coque0 - (w.coque + w.bouclier), sortes: ev.flatMap((e) => (e.type === 'colossePrepare' ? [e.sorte] : [])) }
+    return { ev, x0, xMin, crachats, perduAvantSalve, perduPremiere, perdu: coque0 - (w.coque + w.bouclier), sortes: ev.flatMap((e) => (e.type === 'colossePrepare' ? [e.sorte] : [])) }
   }
-  const loin = jouer(140, 9)
-  verifier(`le colosse loin : ses attaques ${loin.sortes.join(', ')} ; sa charge part de ${loin.x0.toFixed(0)} et le porte jusqu'à ${loin.xMin.toFixed(0)}, il percute le vaisseau (${loin.perduAvantSalve} perdu) ; sa salve : ${loin.crachats} crachats en vol (${A.salve.n * A.salve.vagues})`, loin.sortes[0] === 'charge' && loin.sortes[1] === 'salve' && loin.perduAvantSalve > 0 && loin.crachats >= A.salve.n * A.salve.vagues - 1)
-  const esquive = jouer(140, 4, true)
-  verifier(`… le vaisseau qui sort du couloir pendant le télégraphe n'est pas percuté (${esquive.perdu} perdu)`, esquive.ev.some((e) => e.type === 'colosseCharge') && esquive.perdu === 0)
+  const loin = jouer(140, 13)
+  verifier(`le colosse loin : ses attaques ${loin.sortes.join(', ')} (deux courses, puis la salve) ; sa dernière course part de ${loin.x0.toFixed(0)} et le porte jusqu'à ${loin.xMin.toFixed(0)}, il percute le vaisseau (${loin.perduAvantSalve} perdu) ; sa salve : ${loin.crachats} crachats en vol (${A.salve.n * A.salve.vagues})`, loin.sortes.slice(0, 3).join() === 'charge,charge,salve' && loin.perduAvantSalve > 0 && loin.crachats >= A.salve.n * A.salve.vagues - 1)
+  const esquive = jouer(140, 5, true)
+  verifier(`… le vaisseau qui sort du couloir une fois qu'il est figé n'est pas percuté par cette course (${esquive.perduPremiere} perdu)`, esquive.ev.some((e) => e.type === 'colosseCharge') && esquive.perduPremiere === 0)
+  {
+    // (UN VAISSEAU QUI FILE EN TRAVERS, à 45 : le couloir vise où il sera — il est percuté)
+    const w = nouveauMonde(cfg, 5)
+    w.invasion.prochainA = 1e9
+    w.prochainColosseA = 1e9
+    w.ennemis.push({ id: 951, corps: { ...nouveauVaisseau(), x: 150, y: 0 }, pv: 1e9, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, sorte: 'colosse', grand: true, mordA: 1e9 })
+    // (et une roche sur sa route, qu'il fera éclater, et un insecte qu'il traversera)
+    const coque0 = w.coque + w.bouclier
+    let charges = 0
+    for (let i = 0; i < 60 * 5 && charges === 0; i++) {
+      w.vaisseau = { ...w.vaisseau, x: 0, y: -60 + 45 * w.t, vx: 0, vy: 45 }
+      for (const e of avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements) if (e.type === 'colosseCharge') charges += 1
+    }
+    for (let i = 0; i < 60 * 1.2; i++) {
+      w.vaisseau = { ...w.vaisseau, x: 0, y: -60 + 45 * w.t, vx: 0, vy: 45 }
+      avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 })
+    }
+    verifier(`… un vaisseau qui file en travers à 45 est percuté quand même : le couloir vise où il sera (${coque0 - (w.coque + w.bouclier)} perdu)`, coque0 - (w.coque + w.bouclier) > 0)
+  }
 }
 
 // (TOUJOURS EN DERNIER : des blocs ajoutés après cette ligne échouaient sans faire échouer `npm run verif` — 17/11)

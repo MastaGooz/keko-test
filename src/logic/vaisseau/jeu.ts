@@ -403,7 +403,15 @@ export const VAISSEAU = {
       // L'ONDE, une troisième — un cercle autour de lui — est retirée : Keko, « personne n'est jamais aussi près de ce boss,
       // elle ne se lance quasiment jamais, et quand elle se lance, on est beaucoup trop en danger ». Étourdi, l'attaque en
       // cours est perdue.)
-      attaques: { premiere: 2.5, pause: 2.2, vue: 220, garde: 70, repos: 0.7, charge: { prepare: 1.1, longueur: 150, vitesse: 280, degats: 5 }, salve: { prepare: 0.8, n: 12, vagues: 2, ecart: 0.4, vitesse: 75, vie: 3, degats: 2 } } },
+      attaques: { premiere: 2.5, pause: 2.2, vue: 220, garde: 70, repos: 0.7, charge: { prepare: 1.1, verrou: 0.35, longueur: 150, depasse: 70, longueurMax: 280, vitesse: 320, degats: 5, enchaine: 2, prepareSuite: 0.6 },
+      // (… LA CHARGE REFAITE — Keko, 28/11 : « elle ne touche absolument jamais un vaisseau en mouvement ; est-ce qu'on peut
+      // pas la rendre plus dangereuse ? » : son couloir SUIT le vaisseau pendant le télégraphe, en visant où il sera — sa
+      // vitesse comptée sur le temps de la course — et ne se FIGE que les `verrou` dernières secondes ; il va jusqu'à
+      // `depasse` au-delà de ce point (de `longueur` à `longueurMax`) ; et elle ENCHAÎNE : `enchaine` courses, la suivante
+      // retélégraphiée `prepareSuite` secondes, du point d'arrivée. « Qu'elle traverse tous les autres ennemis, et détruise
+      // les astéroïdes sur sa course » : en course, il ne s'écarte de personne — ce sont eux qui s'écartent
+      // (`ecarterLesInsectes`) —, et une roche qu'il touche éclate.)
+      salve: { prepare: 0.8, n: 12, vagues: 2, ecart: 0.4, vitesse: 75, vie: 3, degats: 2 } } },
     cracheurLourd: { vie: 6, taille: 2, vitesse: 28 / 40, morsure: 2, butin: 12, debut: 120, montee: 300, part: 0.03, tir: { portee: 115, garde: 75, cadence: 3.2, charge: 0.65, vitesse: 95, vie: 2.6, degats: 2, eventail: { n: 3, ecart: 0.32 } } },
     /**
      * LES TROIS PÉPITES (Keko, 21/11 : « différentes pépites, une petite, une moyenne et une grosse, afin que les ennemis
@@ -1780,7 +1788,7 @@ export type Ennemi = {
   staggerGivreA?: number
   stunA?: number
   /** L'ATTAQUE EN COURS DU COLOSSE (voir `menerLeColosse`) : laquelle, sa phase et depuis quand, sa direction et son départ, s'il a touché, combien de vagues parties. */
-  attaque?: { sorte: 'charge' | 'salve'; phase: 'prepare' | 'agit' | 'repos'; depuis: number; dx: number; dy: number; x0: number; y0: number; touche: boolean; vagues: number }
+  attaque?: { sorte: 'charge' | 'salve'; phase: 'prepare' | 'agit' | 'repos'; depuis: number; dx: number; dy: number; x0: number; y0: number; touche: boolean; vagues: number; /** La charge : la longueur de son couloir, la durée de son télégraphe (la première, ou une suivante). */ longueur?: number; prep?: number }
   /** Quand le colosse pourra attaquer, et combien d'attaques il a lancées. */
   attaqueA?: number
   coups?: number
@@ -3284,7 +3292,8 @@ function ecarterLesInsectes(c: ConfigVaisseau, m: Monde): void {
     if (l === undefined) grille.set(k, [e])
     else l.push(e)
   }
-  const tenu = (e: Ennemi): boolean => (e.tenuA ?? -1) > m.t && e.grand !== true
+  // (… ET LE COLOSSE EN CHARGE : il ne s'écarte de personne, ce sont eux qui s'écartent — voir `invasion.colosse.attaques`)
+  const tenu = (e: Ennemi): boolean => ((e.tenuA ?? -1) > m.t && e.grand !== true) || (e.attaque?.sorte === 'charge' && e.attaque.phase === 'agit')
   for (const e of m.ennemis) {
     if (e.asteroide !== undefined) continue
     const i0 = Math.floor(e.corps.x / cas)
@@ -3677,9 +3686,21 @@ function menerLeColosse(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number, ev: 
   const at = e.attaque
   const age = m.t - at.depuis
   if (at.phase === 'prepare') {
+    // (LA CHARGE VISE : tant qu'elle n'est pas figée, son couloir suit le vaisseau, là où il sera à son arrivée)
+    const ch = A.charge
+    const prep = at.sorte === 'charge' ? (at.prep ?? ch.prepare) : A.salve.prepare
+    if (at.sorte === 'charge' && age < prep - ch.verrou && vise) {
+      const t0 = dj / ch.vitesse
+      const px = v.x + v.vx * t0 - b.x
+      const py = v.y + v.vy * t0 - b.y
+      const d = Math.hypot(px, py) || 1
+      at.dx = px / d
+      at.dy = py / d
+      at.longueur = Math.max(ch.longueur, Math.min(ch.longueurMax, d + ch.depasse))
+    }
     // (immobile, tourné vers son couloir — ou vers le vaisseau)
     e.corps = { ...b, vx: 0, vy: 0, cap: at.sorte === 'charge' ? Math.atan2(at.dy, at.dx) : Math.atan2(v.y - b.y, v.x - b.x) }
-    if (age < A[at.sorte].prepare) return true
+    if (age < prep) return true
     at.phase = 'agit'
     at.depuis = m.t
     at.x0 = b.x
@@ -3693,8 +3714,21 @@ function menerLeColosse(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number, ev: 
     const pas = ch.vitesse * dt
     e.corps = { ...b, x: b.x + at.dx * pas, y: b.y + at.dy * pas, vx: at.dx * ch.vitesse, vy: at.dy * ch.vitesse, cap: Math.atan2(at.dy, at.dx) }
     if (!at.touche && vise && Math.hypot(v.x - e.corps.x, v.y - e.corps.y) <= rayonDe(c, e) + c.rayon) (at.touche = true), frapper(ch.degats)
+    // (LES ROCHES SUR SA COURSE ÉCLATENT)
+    for (const o of [...m.ennemis]) if (o.asteroide !== undefined && Math.hypot(o.corps.x - e.corps.x, o.corps.y - e.corps.y) <= rayonDe(c, e) + o.asteroide.rayon) abattreLEnnemi(c, m, o, ev)
     const auBord = c.arene.active && Math.hypot(e.corps.x, e.corps.y) > c.arene.rayon - rayonDe(c, e)
-    if (Math.hypot(e.corps.x - at.x0, e.corps.y - at.y0) >= ch.longueur || auBord) (at.phase = 'repos'), (at.depuis = m.t), (e.corps = { ...e.corps, vx: 0, vy: 0 })
+    if (Math.hypot(e.corps.x - at.x0, e.corps.y - at.y0) >= (at.longueur ?? ch.longueur) || auBord) {
+      e.corps = { ...e.corps, vx: 0, vy: 0 }
+      // (ELLE ENCHAÎNE : une course de plus, retélégraphiée de là où il est arrivé)
+      if (at.vagues + 1 < ch.enchaine && !auBord) {
+        at.vagues += 1
+        at.phase = 'prepare'
+        at.depuis = m.t
+        at.prep = ch.prepareSuite
+        at.touche = false
+        ev.push({ type: 'colossePrepare', id: e.id, sorte: 'charge', x: e.corps.x, y: e.corps.y })
+      } else (at.phase = 'repos'), (at.depuis = m.t)
+    }
     return true
   }
   if (at.phase === 'agit' && at.sorte === 'salve') {
