@@ -9869,3 +9869,26 @@ texture qu'on met sous les ennemis et sous le joueur, quelque chose d'esthétiqu
   trop petits ; diminue leur nombre et empêche-les d'être trop nombreux à la fois, pour éviter les réactions en chaîne
   infinies : maximum 2 ou 3 à la fois ») : taille 0,9 → 1,35 (le cornu est à 1,5), 8 % → 5 % du flot, et `larve.max` = 3
   larves à la fois, cadavres amorcés compris — au-delà, un petit insecte naît à sa place. `&larves=1` reste borné à trois.
+
+### Le cracheur, l'insecte qui tire (28/11)
+
+Keko : « On va créer un nouvel ennemi qui tire un projectile. Le projectile doit être dans les tons du télégraphe, rouge,
+mais un petit peu plus en avant qu'un télégraphe, qu'on comprenne bien que c'est un projectile. L'ennemi s'approche ; quand
+il est à portée de tir, il tire sur le joueur. Le projectile doit être assez rapide mais évitable, et on fait un essai. Le
+projectile ne touche pas les autres ennemis, il les traverse. On peut le dessiner par-dessus les ennemis, sinon il risque
+de sortir tout d'un coup d'une masse d'ennemis. »
+
+- **La règle** (`invasion.cracheur`, la cinquième `SorteDInsecte`) : 1,5 fois la vie d'un insecte, 1,3 fois sa taille, plus
+  lent (34) ; aucun avant 45 s, puis jusqu'à 7 % du flot en quatre minutes. À 95 du vaisseau il freine et tient sa place
+  (recule sous 60) ; toutes les 2,4 s il vise 0,45 s (`Ennemi.viseA`), puis crache vers où est le vaisseau à cet instant :
+  105 de vitesse (un insecte en fait 40), 2,2 s de vol, deux morsures d'insecte. Figé, sa visée attend.
+- **Le projectile** : un tir ennemi (`m.tirs`, `arme: 'crachat'`) — ces tirs ne touchent que le vaisseau, il traverse donc
+  les insectes. Dessiné APRÈS les insectes (`dessinerLesTirs`) : une boule rouge vif au cœur blanc, cernée de sombre, une
+  lueur et une courte traînée — la rampe des télégraphes, poussée vers le clair.
+- **Le dessin** (`formesDuCracheur`) : un insecte trapu, une carapace violette en deux élytres, une glande de chair percée
+  d'une gueule rouge, deux palpes d'os, quatre pattes ; quand il vise, sa gueule rougit et luit, un éclat blanc juste avant
+  le crachat (`dessinerLesVisees`). Le son du crachat de la Vouivre.
+- Vérifié : il approche jusqu'à ~75, ne vient pas au contact, crache ; le crachat traverse un insecte entre eux sans le
+  blesser, touche un vaisseau immobile, et un pas de côté de 24 l'évite. À plusieurs, son crachat ne touche que le pilote
+  dont c'est le tour (les tirs ennemis ne connaissent qu'un vaisseau) : à reprendre pour la coop. Chiffres de moi.
+- `&cracheurs=P` : cette part de cracheurs dès le départ.

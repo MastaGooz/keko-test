@@ -363,6 +363,17 @@ export const VAISSEAU = {
     // amorcés compris — au-delà, c'est un petit insecte qui naît à sa place)
     larve: { vie: 0.6, taille: 1.35, vitesse: 46 / 40, morsure: 4, butin: 2, debut: 30, montee: 240, part: 0.05, max: 3, explosion: { declenche: 22, rayon: 36, delai: 0.9, auxInsectes: 1 } },
     /**
+     * LE CRACHEUR, L'INSECTE QUI TIRE (Keko, 28/11 : « un ennemi qui tire un projectile, dans les tons du télégraphe, rouge,
+     * mais un peu plus en avant, qu'on comprenne bien que c'est un projectile. L'ennemi s'approche ; quand il est à portée de
+     * tir, il tire sur le joueur. Le projectile doit être assez rapide mais évitable. Il ne touche pas les autres ennemis, il
+     * les traverse ») : les champs des autres sortes, et `tir` : à `portee` du vaisseau, il ralentit et tient sa place —
+     * il recule en deçà de `garde` — ; toutes les `cadence` secondes il VISE `charge` secondes (sa gueule rougit), puis
+     * crache un projectile (`Tir`, `arme: 'crachat'`) vers où est le vaisseau à cet instant, à `vitesse`, qui vole `vie`
+     * secondes et vaut `degats` morsures d'insecte. Le projectile traverse les insectes (les tirs ennemis ne touchent que le
+     * vaisseau). Figé, sa visée attend. *Chiffres de moi.*
+     */
+    cracheur: { vie: 1.5, taille: 1.3, vitesse: 34 / 40, morsure: 1, butin: 4, debut: 45, montee: 240, part: 0.07, tir: { portee: 95, garde: 60, cadence: 2.4, charge: 0.45, vitesse: 105, vie: 2.2, degats: 2 } },
+    /**
      * LES TROIS PÉPITES (Keko, 21/11 : « différentes pépites, une petite, une moyenne et une grosse, afin que les ennemis
      * lootent des ensembles un peu plus variés » — « 1 / 3 / 10 », « chaque ennemi a son butin propre ») : leurs valeurs
      * en points d'expérience, de la plus grosse à la plus petite. Un butin se paie avec les plus grosses d'abord
@@ -405,7 +416,7 @@ export const VAISSEAU = {
      * le cornu, le cuirassier ; une roche, `roche` points par unité de rayon (au moins `rocheMin`). Ne compte que LE COUP
      * FATAL, au pilote qui le porte (voir `Monde.tableau`). *De moi, à rejuger.*
      */
-    points: { insecte: 2, moucheron: 1, cornu: 5, cuirassier: 15, larve: 3, roche: 0.25, rocheMin: 2 },
+    points: { insecte: 2, moucheron: 1, cornu: 5, cuirassier: 15, larve: 3, cracheur: 4, roche: 0.25, rocheMin: 2 },
     /**
      * LA RÉCOMPENSE DE FIN DE PARTIE, EN CRÉDITS (Keko, 22/11 : « une récompense qui dépend du niveau, commun, mais unique
      * pour chaque joueur, car elle prend en compte ses kills — chaque monstre un score en points — et les astéroïdes qu'il a
@@ -1730,6 +1741,8 @@ export type Ennemi = {
   /** ACHEVÉ PAR LA NUÉE (voir `Arme.charognards`) : posé juste avant de l'abattre. */
   devore?: boolean
   /** LA LARVE EXPLOSIVE S'EST AMORCÉE (voir `invasion.larve`) : depuis quand. */
+  /** LE CRACHEUR VISE (voir `invasion.cracheur`) : il crachera à cet instant. */
+  viseA?: number
   amorceA?: number
   /** UNE MORSURE CRITIQUE DE LA NUÉE A PONDU EN LUI (voir `Arme.eclosion`) : jusqu'à quand, et de quelle arme. */
   oeuf?: { jusque: number; arme: number }
@@ -2094,6 +2107,9 @@ export type Evenement =
   | { type: 'morsure'; id: number; x: number; y: number }
   /** Un rejeton naît, fouette sa proie (où elle est), s'éteint (voir `Arme.rejeton`). */
   | { type: 'rejeton'; x: number; y: number }
+  /** Le cracheur vise, puis crache (voir `invasion.cracheur`). */
+  | { type: 'cracheurVise'; id: number; x: number; y: number }
+  | { type: 'cracheurCrache'; id: number; x: number; y: number }
   /** Une larve explosive s'amorce, puis explose (voir `invasion.larve`) ; `touche` : le vaisseau était dans sa zone. */
   | { type: 'larveAmorcee'; id: number; x: number; y: number; rayon: number; delai: number }
   | { type: 'larveExplose'; x: number; y: number; rayon: number; touche: boolean }
@@ -2611,8 +2627,8 @@ function faireNaitreUnEnnemi(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void
 export const rayonDe = (c: ConfigVaisseau, e: Ennemi): number => e.asteroide?.rayon ?? c.ennemi.rayon * (e.sorte === undefined ? 1 : c.invasion[e.sorte].taille)
 /** Les sortes d'insectes autres que le petit : le moucheron (le menu fretin), le cornu (milieu de gamme), le cuirassier (blindé). */
 // (… et la larve explosive — Keko, 28/11, voir `invasion.larve`)
-export type SorteDInsecte = 'moucheron' | 'cornu' | 'cuirassier' | 'larve'
-export const SORTES_D_INSECTES: SorteDInsecte[] = ['moucheron', 'cornu', 'cuirassier', 'larve']
+export type SorteDInsecte = 'moucheron' | 'cornu' | 'cuirassier' | 'larve' | 'cracheur'
+export const SORTES_D_INSECTES: SorteDInsecte[] = ['moucheron', 'cornu', 'cuirassier', 'larve', 'cracheur']
 /** Un butin de `total` points en gemmes (voir `invasion.gemmes`) : les plus grosses d'abord. */
 export function gemmesDuButin(c: ConfigVaisseau, total: number): number[] {
   const g: number[] = []
@@ -3425,6 +3441,30 @@ function conduireLInsecte(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number, ev
     direction = { x: Math.cos(a) * I.errance, y: Math.sin(a) * I.errance }
   } else if (e.fait === 'aggro') {
     direction = { x: (v.x - b.x) / dj, y: (v.y - b.y) / dj }
+    // (LE CRACHEUR : à portée, il tient sa place, vise, crache — voir `invasion.cracheur`)
+    if (e.sorte === 'cracheur' && enVol) {
+      const tr = I.cracheur.tir
+      if (e.viseA !== undefined) {
+        if (fige) e.viseA += dt
+        else if (m.t >= e.viseA) {
+          e.viseA = undefined
+          e.tirA = m.t + tr.cadence
+          const r0 = rayonDe(c, e)
+          const x0 = b.x + Math.cos(b.cap) * r0
+          const y0 = b.y + Math.sin(b.cap) * r0
+          const a = Math.atan2(v.y - y0, v.x - x0)
+          m.tirs.push({ id: m.prochainId++, x: x0, y: y0, vx: Math.cos(a) * tr.vitesse, vy: Math.sin(a) * tr.vitesse, vie: tr.vie, degats: I.morsure * tr.degats, arme: 'crachat' })
+          ev.push({ type: 'cracheurCrache', id: e.id, x: x0, y: y0 })
+        }
+      } else if (!fige && dj <= tr.portee && m.t >= e.tirA) {
+        e.viseA = m.t + tr.charge
+        ev.push({ type: 'cracheurVise', id: e.id, x: b.x, y: b.y })
+      }
+      // (il tient sa place : il glisse vers le vaisseau jusqu'à sa portée, recule en deçà de sa garde, ne bouge pas en visant)
+      if (e.viseA !== undefined) direction = { x: direction.x * 0.02, y: direction.y * 0.02 }
+      else if (dj < tr.garde) direction = { x: -direction.x * 0.6, y: -direction.y * 0.6 }
+      else if (dj <= tr.portee) direction = { x: direction.x * 0.15, y: direction.y * 0.15 }
+    }
     // (la larve explosive ne mord pas : elle explose — voir plus haut)
     if (enVol && !fige && e.sorte !== 'larve' && dj <= c.rayon + rayonDe(c, e) + 2 && m.t >= (e.mordA ?? 0)) {
       e.mordA = m.t + I.cadenceMorsure
@@ -3517,6 +3557,12 @@ function conduireLInsecte(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number, ev
   // (UN CORNU, UN CUIRASSIER vont moins vite — voir `invasion.cornu`)
   const k = (gele ? (e.ralenti ?? 1) : 1) * gabaritDInsecte(c, e).vitesse
   e.corps = voler(c, k !== 1 ? { ...c.ennemi, poussee: c.ennemi.poussee * k, vitesseMax: c.ennemi.vitesseMax * k } : c.ennemi, b, dt, direction, m.detruits).vaisseau
+  // (LE CRACHEUR À PORTÉE FREINE : le vide ne freine presque pas, et sans cela il filait sur le vaisseau — et il fait face
+  // à sa cible pour viser)
+  if (e.sorte === 'cracheur' && e.fait === 'aggro' && Math.hypot(v.x - e.corps.x, v.y - e.corps.y) <= I.cracheur.tir.portee) {
+    const f = Math.exp(-4 * dt)
+    e.corps = { ...e.corps, vx: e.corps.vx * f, vy: e.corps.vy * f, cap: Math.atan2(v.y - e.corps.y, v.x - e.corps.x) }
+  }
   const vit = Math.hypot(e.corps.vx, e.corps.vy)
   if (gele && vit > c.ennemi.vitesseMax * k) e.corps = { ...e.corps, vx: (e.corps.vx * c.ennemi.vitesseMax * k) / vit, vy: (e.corps.vy * c.ennemi.vitesseMax * k) / vit }
   // (… ET N'Y ENTRE PAS : son élan l'y aurait porté ; au bord, il est retenu, sa vitesse vers la tempête perdue — il glisse

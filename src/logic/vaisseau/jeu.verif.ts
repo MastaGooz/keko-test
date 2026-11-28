@@ -5973,5 +5973,37 @@ for (const vortex of [true, false]) {
   verifier(`… figée une seconde pendant son délai, elle explose une seconde plus tard (${((figee.exploseA - figee.amorceeA) / 60).toFixed(2)} s)`, Math.abs((figee.exploseA - figee.amorceeA) / 60 - (ex.delai + 1)) < 0.08)
 }
 
+// LE CRACHEUR (Keko, 28/11 — voir `invasion.cracheur`) : il approche jusqu'à sa portée, s'y tient sans venir au contact,
+// vise puis crache ; le crachat traverse un insecte placé entre eux sans le blesser, et touche le vaisseau immobile ; un
+// vaisseau qui s'écarte d'un pas de côté pendant le vol l'évite
+{
+  const cfg: ConfigVaisseau = { ...VAISSEAU, armes: [], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9 }, derive: { ...VAISSEAU.derive, active: false }, arene: { ...VAISSEAU.arene, active: false } }
+  const tr = cfg.invasion.cracheur.tir
+  const jouer = (esquive: boolean) => {
+    const w = nouveauMonde(cfg, 5)
+    w.invasion.prochainA = 1e9
+    const cr: Ennemi = { id: 920, corps: { ...nouveauVaisseau(), x: 200, y: 0 }, pv: 1e9, fait: 'aggro', roche: null, forage: null, tirA: 0, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, sorte: 'cracheur' }
+    const ecran: Ennemi = { id: 921, corps: { ...nouveauVaisseau(), x: 30, y: 0 }, pv: 1e9, fait: 'marche', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, mordA: 1e9 }
+    w.ennemis.push(cr, ecran)
+    const coque0 = w.coque + w.bouclier
+    let crache = -1
+    let auPlusPres = Infinity
+    let vole = false
+    // (jusqu'à 1,5 s après le premier crachat : le suivant vise là où le vaisseau s'est mis)
+    for (let i = 0; i < 60 * 6 && (crache < 0 || i < crache + 90); i++) {
+      // (le vaisseau ne bouge pas — sauf, à l'esquive, un pas de côté de 24 dès que le crachat part)
+      w.vaisseau = { ...w.vaisseau, x: 0, y: esquive && crache >= 0 ? 24 : 0, vx: 0, vy: 0 }
+      ecran.corps = { ...ecran.corps, x: 30, y: 0, vx: 0, vy: 0 }
+      for (const ev of avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements) if (ev.type === 'cracheurCrache' && crache < 0) crache = i
+      auPlusPres = Math.min(auPlusPres, Math.hypot(cr.corps.x, cr.corps.y))
+      vole ||= w.tirs.some((t) => t.arme === 'crachat')
+    }
+    return { crache, auPlusPres, vole, perdu: coque0 - (w.coque + w.bouclier), ecran: 1e9 - ecran.pv }
+  }
+  const reste = jouer(false)
+  const esquive = jouer(true)
+  verifier(`le cracheur : il approche jusqu'à ${reste.auPlusPres.toFixed(0)} (portée ${tr.portee}, garde ${tr.garde}) sans venir au contact, crache à ${(reste.crache / 60).toFixed(1)} s ; son crachat traverse l'insecte entre eux (${reste.ecran} perdu) et touche le vaisseau immobile (${reste.perdu.toFixed(0)} perdu) ; un pas de côté de 24 l'évite (${esquive.perdu} perdu)`, reste.crache > 0 && reste.auPlusPres > tr.garde * 0.75 && reste.auPlusPres <= tr.portee && reste.vole && reste.ecran === 0 && reste.perdu > 0 && esquive.crache > 0 && esquive.perdu === 0)
+}
+
 // (TOUJOURS EN DERNIER : des blocs ajoutés après cette ligne échouaient sans faire échouer `npm run verif` — 17/11)
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)

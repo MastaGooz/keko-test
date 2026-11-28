@@ -614,6 +614,26 @@ export function formesDeLaLarve(marche: number): Forme[] {
   for (const sg of [-1, 1]) f.push({ pts: barre(6.8, sg * 0.9, 8.4, sg * 0.3, 0.7), mat: 'os', relief: 'plat' })
   return f
 }
+/**
+ * LE CRACHEUR (Keko, 28/11 : « un ennemi qui tire un projectile » — voir `invasion.cracheur`) : un insecte trapu, une
+ * carapace bombée de chitine violette en deux élytres, et devant, SA GLANDE — une poche de chair qui gonfle quand il vise
+ * (`gonfle`, 0 à 1) — percée d'une gueule rouge ; deux palpes d'os, quatre courtes pattes. Dans les unités du petit.
+ */
+export function formesDuCracheur(marche: number, gonfle: number): Forme[] {
+  const f: Forme[] = []
+  for (const s of [-1, 1])
+    for (let k = 0; k < 2; k++) {
+      const pas = Math.sin(marche + k * 2.4 + (s > 0 ? Math.PI : 0)) * 0.9
+      f.push({ pts: barre(-1.5 + k * 2.6, s * 3, -2.4 + k * 2.8 + pas, s * 5.6, 0.9), mat: 'lie', relief: 'plat' })
+    }
+  f.push({ pts: ovale(-1.4, 0, 4.6, 4, 16), mat: 'mauve', relief: 'dome', dome: { x: -1.4, y: 0, rx: 4.6, ry: 4 } })
+  f.push({ pts: barre(-5.8, 0, 2.8, 0, 0.6), mat: 'lie', relief: 'plat' })
+  const g = 2.2 + 0.9 * gonfle
+  f.push({ pts: ovale(3.6, 0, g, g * 0.95, 14), mat: 'chair', relief: 'dome', dome: { x: 3.6, y: 0, rx: g, ry: g * 0.95 } })
+  f.push({ pts: ovale(3.6 + g * 0.55, 0, 0.9 + 0.5 * gonfle, 0.9 + 0.5 * gonfle, 10), mat: 'laser', relief: 'emis' })
+  for (const s of [-1, 1]) f.push({ pts: barre(2.6, s * (g * 0.8), 4.4 + g, s * (g * 0.9 + 0.6), 0.6), mat: 'os', relief: 'plat' })
+  return f
+}
 /** Un trait épais en polygone, de (x0, y0) à (x1, y1). */
 export function barre(x0: number, y0: number, x1: number, y1: number, e: number): [number, number][] {
   const l = Math.hypot(x1 - x0, y1 - y0) || 1
