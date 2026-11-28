@@ -9780,3 +9780,4 @@ actifs, toujours un actif, mais pas plus d'un, soit un rejeton alpha qui fasse p
 - Chiffres de moi. Pistes pas retenues pour l'instant : Lignée, Étreinte, Dernier souffle, Meute, Garde, Nichée.
 - Constaté au passage : `rejeton` n'est pas dans `POSEES`, la carte « Cadence / durée » presse leur ponte sans allonger
   leur vie.
+- **Les crochets de glace des Abyssaux** (Keko, 28/11 : « changer la couleur des pointes pour qu'elles évoquent la glace ; un petit truc visuel qui montre qu'ils ont des crochets de glace ») : le dernier quart de chaque tentacule du bleu au blanc, une griffe de glace recourbée au bout, qui scintille ; la tentacule qui frappe finit en glace, un éclat à sa pointe.

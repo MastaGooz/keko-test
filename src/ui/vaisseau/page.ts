@@ -14242,7 +14242,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // (SES CARTES — Keko, 28/11 : l'ALPHA, une fois et demie plus gros, deux cornes d'os ; le PETIT d'une Mitose, aux six
       // dixièmes ; les ABYSSAUX, leur bile en glace)
       const Tr = TAILLE_DU_REJETON * (r.alpha === true ? 1.5 : r.petit === true ? 0.6 : 1)
-      const bi = CONF.armes[r.arme]?.gel !== undefined ? GLACE_DES_ABYSSAUX : biDeBase
+      const givre = CONF.armes[r.arme]?.gel !== undefined
+      const bi = givre ? GLACE_DES_ABYSSAUX : biDeBase
       const vit = Math.hypot(r.vx, r.vy)
       let etat = cordesDesRejetons.get(r.id)
       if (etat === undefined) {
@@ -14291,9 +14292,25 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           const u = i / MAILLONS
           p.line(c[i - 1][0] + 1, c[i - 1][1] + 1, c[i][0] + 1, c[i][1] + 1, ch[0], 0.8)
           if (u < 0.55) p.line(c[i - 1][0], c[i - 1][1] + 1, c[i][0], c[i][1] + 1, ch[2])
-          p.line(c[i - 1][0], c[i - 1][1], c[i][0], c[i][1], u < 0.4 ? ch[4] : ch[3])
+          // (LES CROCHETS DE GLACE des Abyssaux — Keko, 28/11 : « changer la couleur des pointes pour qu'elles évoquent la
+          // glace ; un petit truc visuel qui montre qu'ils ont des crochets de glace » : le dernier quart de chaque
+          // tentacule givré, du bleu au blanc)
+          p.line(c[i - 1][0], c[i - 1][1], c[i][0], c[i][1], givre && u >= 0.75 ? GLACE_DES_ABYSSAUX[i === MAILLONS - 1 ? 2 : 1] : u < 0.4 ? ch[4] : ch[3])
         }
-        p.px(Math.round(c[MAILLONS - 1][0]), Math.round(c[MAILLONS - 1][1]), bi[2])
+        const bout = c[MAILLONS - 1]
+        if (givre) {
+          // (le crochet : une griffe de glace recourbée au bout, d'un côté puis de l'autre, et un éclat qui scintille)
+          const av = c[MAILLONS - 2]
+          const tl = Math.hypot(bout[0] - av[0], bout[1] - av[1]) || 1
+          const tx = (bout[0] - av[0]) / tl
+          const ty = (bout[1] - av[1]) / tl
+          const cote = k % 2 === 0 ? 1 : -1
+          const gx = bout[0] + (tx * 1.6 - ty * cote * 1.4) * (Tr / TAILLE_DU_REJETON)
+          const gy = bout[1] + (ty * 1.6 + tx * cote * 1.4) * (Tr / TAILLE_DU_REJETON)
+          p.line(bout[0], bout[1], gx, gy, GLACE_DES_ABYSSAUX[1])
+          p.px(Math.round(gx), Math.round(gy), N.WHITE)
+          if (Math.sin(t * 7 + k * 2.3 + r.id) > 0.75) p.glow(gx, gy, 2.5, GLACE_DES_ABYSSAUX[1], 0.5)
+        } else p.px(Math.round(bout[0]), Math.round(bout[1]), bi[2])
       })
       // (le coup de tentacule, s'il fouette : une courbe jusqu'à l'insecte, qui part et revient)
       for (const cp of coupsDeRejeton) {
@@ -14312,11 +14329,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           const bx = q * q * r.x + 2 * q * s * cx + s * s * cp.tx
           const by = q * q * r.y + 2 * q * s * cy + s * s * cp.ty
           p.line(ax, ay, bx, by, ch[0])
-          p.line(ax, ay - 1, bx, by - 1, i < n / 2 ? ch[3] : ch[4])
+          p.line(ax, ay - 1, bx, by - 1, givre && i > n * 0.7 ? GLACE_DES_ABYSSAUX[i === n ? 2 : 1] : i < n / 2 ? ch[3] : ch[4])
           ax = bx
           ay = by
         }
-        p.px(Math.round(ax), Math.round(ay), OS[3])
+        p.px(Math.round(ax), Math.round(ay), givre ? N.WHITE : OS[3])
+        // (le coup givré : un éclat de glace à la pointe)
+        if (givre) p.glow(ax, ay, 3, GLACE_DES_ABYSSAUX[1], 0.55 * tendu)
       }
       // (la cloche : plus longue que large — trois disques le long du cap —, ombrée comme une sphère ; le chapeau de
       // chitine devant, deux yeux de bile, une lueur)
