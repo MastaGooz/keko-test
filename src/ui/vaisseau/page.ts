@@ -14402,12 +14402,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * dit jusqu'où ça frappe ; dans le dernier quart, tout bat en blanc, de plus en plus vite. La zone est celle de la règle
    * (`invasion.larve.explosion.rayon`).
    */
-  const TOILE = ['#140a1c', '#2a1238', '#3a5a0c', '#6a9a14', '#a8d42a', '#e0f870', '#ffffe0'].map((c) => N.hex(c))
+  // (… TOUJOURS DANS LES ROUGES — Keko, 28/11 : « le télégraphe doit toujours être dans le ton rouge plutôt que vert : on va
+  // utiliser tous les télégraphes du jeu de couleur rouge, pour que le joueur identifie le danger et le fait que ce n'est
+  // pas un de ses télégraphes ou un de ses effets » — d'abord la bile verte de la larve)
+  const TOILE = ['#1c0a10', '#38101c', '#5c0c14', '#a01020', '#ff2a3a', '#ff7a5a', '#ffd0a0'].map((c) => N.hex(c))
   function dessinerLesAmorces(p: Peintre): void {
     const ex = CONF.invasion.larve.explosion
     let place = false
-    for (const e of m.ennemis) {
-      if (e.amorceA === undefined) continue
+    // (les larves amorcées, et les cadavres de celles qu'on a abattues — voir `Monde.larvesMortes`)
+    for (const e of amorcees()) {
       if (!place) (p.place(W / 2 - camera.x, centreY() - camera.y), (place = true))
       const u = Math.max(0, Math.min(1, (m.t - e.amorceA) / ex.delai))
       const R = ex.rayon
@@ -14431,8 +14434,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const pustule = (ang: number): number => 0.5 + 0.5 * Math.sin(ang * 18 + g + m.t * 1.5)
       const onde = (d: number): number => Math.max(0, 1 - Math.abs(d - ((m.t * 1.6 + g) % 1) * front) / 0.08)
       p.disc(
-        e.corps.x,
-        e.corps.y,
+        e.x,
+        e.y,
         R,
         (d, ang) => {
           const b = bord(ang)
@@ -14458,18 +14461,24 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     }
     if (place) p.place(0, 0)
   }
+  /** Les larves explosives amorcées : les vivantes, et les cadavres (voir `invasion.larve`). */
+  const amorcees = (): { id: number; x: number; y: number; cap: number; amorceA: number; morte: boolean }[] => [
+    ...m.ennemis.flatMap((e) => (e.amorceA === undefined ? [] : [{ id: e.id, x: e.corps.x, y: e.corps.y, cap: e.corps.cap, amorceA: e.amorceA, morte: false }])),
+    ...m.larvesMortes.map((l) => ({ ...l, morte: true })),
+  ]
   /** LA POCHE D'UNE LARVE AMORCÉE, par-dessus elle : elle gonfle, luit, et bat en blanc sur la fin (voir `dessinerLesAmorces`). */
   function dessinerLesPochesAmorcees(p: Peintre): void {
     const ex = CONF.invasion.larve.explosion
     let place = false
-    for (const e of m.ennemis) {
-      if (e.amorceA === undefined) continue
+    for (const e of amorcees()) {
       if (!place) (p.place(W / 2 - camera.x, centreY() - camera.y), (place = true))
       const u = Math.max(0, Math.min(1, (m.t - e.amorceA) / ex.delai))
       const alerte = u > 0.75 && Math.sin((u - 0.75) * (50 + 90 * (u - 0.75))) > 0
-      const r = rayonDe(CONF, e)
-      const px = e.corps.x - Math.cos(e.corps.cap) * r * 0.3
-      const py = e.corps.y - Math.sin(e.corps.cap) * r * 0.3
+      const r = CONF.ennemi.rayon * CONF.invasion.larve.taille
+      // (LE CADAVRE : la larve abattue reste là, immobile, sous sa poche qui gonfle)
+      if (e.morte) dessinerUnInsecte(p, e.x, e.y, e.cap, 0, false, false, undefined, 'larve')
+      const px = e.x - Math.cos(e.cap) * r * 0.3
+      const py = e.y - Math.sin(e.cap) * r * 0.3
       const gonfle = r * (0.45 + 0.4 * u) * (1 + 0.08 * Math.sin(m.t * (14 + 30 * u)))
       p.circle(px, py, gonfle + 0.8, TOILE[2])
       p.circle(px, py, gonfle, alerte ? N.WHITE : TOILE[4 + Math.round(u)])

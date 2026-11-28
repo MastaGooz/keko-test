@@ -346,9 +346,13 @@ export const VAISSEAU = {
      * autres sortes — elle ne mord pas, `morsure` est ce que vaut SON EXPLOSION, en morsures d'insecte —, et `explosion` :
      * arrivée à `declenche` du vaisseau (de centre à centre ; au plus près de sa coque sinon), elle S'ARRÊTE et S'AMORCE
      * (`Ennemi.amorceA`) ; `delai` secondes plus tard elle explose : le vaisseau dont le centre est à `rayon` d'elle
-     * encaisse le coup. Elle meurt dans son explosion, sans butin ; abattue avant, elle n'explose pas et lâche le sien.
-     * Figée (gel, étourdissement), son compte s'arrête. *Chiffres de moi.*
+     * encaisse le coup. Elle meurt dans son explosion, sans butin. Figée (gel, étourdissement), son compte s'arrête.
+     * *Chiffres de moi.*
      */
+    // (… ET SON CADAVRE EXPLOSE — Keko, 28/11 : « quand ce type d'ennemi est tué, il ne disparaît pas instantanément. Dès
+    // qu'il est tué, il lance automatiquement son attaque explosive. En tout cas, son cadavre lance l'attaque » : abattue —
+    // d'abord, cela annulait l'explosion —, elle lâche son butin et laisse UN CADAVRE (`Monde.larvesMortes`) qui s'amorce à
+    // l'instant, ou garde le compte déjà lancé, et explose de même. Morte dans la tempête, elle ne laisse rien.)
     larve: { vie: 0.6, taille: 0.9, vitesse: 46 / 40, morsure: 4, butin: 2, debut: 30, montee: 240, part: 0.08, explosion: { declenche: 22, rayon: 36, delai: 0.9 } },
     /**
      * LES TROIS PÉPITES (Keko, 21/11 : « différentes pépites, une petite, une moyenne et une grosse, afin que les ennemis
@@ -1889,6 +1893,8 @@ export type Monde = {
   nuees: { arme: number; x: number; y: number; mordA: number; bras: { cible: number; u: number; tx: number; ty: number }[]; /** Ce qu'elle a mangé : la part de dégâts qu'elle a gagnée (0 à `festin.max`). */ croissance: number; /** Les morsures comptées depuis le dernier essaimage (voir `Arme.essaimage`). */ repue?: number; /** Quand la dernière couvée est née (voir `Arme.couvee`). */ couveeA?: number; /** Sa reine (voir `Arme.reine`) : où, son cap, sa proie, posée dessus ou non, sa dernière morsure signalée. */ reine?: { x: number; y: number; cap: number; cible?: number; pose: boolean; mordA: number } }[]
   /** LES REJETONS (voir `Arme.rejeton`). */
   rejetons: Rejeton[]
+  /** LES CADAVRES DES LARVES EXPLOSIVES (voir `invasion.larve`) : où, tournés comment, amorcés depuis quand. */
+  larvesMortes: { id: number; x: number; y: number; cap: number; amorceA: number }[]
   /** LES FLAQUES D'ACIDE (voir `Arme.crachat`) : un cône au sol — sa pointe, son cap, quand il est né, son arme. */
   flaquesAcides: { id: number; arme: number; x: number; y: number; cap: number; nee: number }[]
   /** LES MINES D'ACIDE (voir `Arme.mine`) : d'où elles partent, où elles tombent, quand elles ont été lancées. */
@@ -2178,7 +2184,7 @@ export function nouveauVaisseau(): Vaisseau {
 }
 
 export function nouveauMonde(c: ConfigVaisseau = VAISSEAU, graine = 1): Monde {
-  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, coqueMax: c.coque, tableau: tableauVide(), bouclier: c.bouclier.points, plaques: Array.from({ length: c.plaques }, () => true), intouchableJusque: -1, corruption: 0, dephaseJusque: -100, plaqueCasseeA: 0, renaitJusque: -100, rochesPrises: [], toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, prochaineDeriveA: c.derive.premier, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, vies: c.invasion.vies, miniBoss: 0, boss: 0, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, harpons: [], rafales: [], rafaleDesAiles: 0, salveDesAiles: -1e9, emballements: {}, tracantes: {}, faisceaux: [], sillons: [], ondes: [], balisesLaser: [], scies: [], balises: [], givres: [], tornades: [], novas: [], echardes: [], spheres: [], puits: [], meteores: [], tentacules: [], fouets: [], boutures: [], eclosions: [], nueesFilles: [], deploiement: 0, nuees: [], rejetons: [], flaquesAcides: [], mines: [], fleaux: [], parasites: [], vrilles: [], liens: [], oeufs: [], brochettes: [], miniVers: [], hypercubes: [], des: [], coupes: [], rayonVu: null }
+  return { t: 0, phase: 'vol', vaisseau: nouveauVaisseau(), coque: c.coque, coqueMax: c.coque, tableau: tableauVide(), bouclier: c.bouclier.points, plaques: Array.from({ length: c.plaques }, () => true), intouchableJusque: -1, corruption: 0, dephaseJusque: -100, plaqueCasseeA: 0, renaitJusque: -100, rochesPrises: [], toucheA: -100, forage: null, forages: [], ennemis: [], prochainEnnemiA: c.ennemi.apparait, prochaineDeriveA: c.derive.premier, invasion: { vague: 0, aNaitre: 0, prochainA: c.invasion.premiere, passes: 0, abattus: 0, xp: 0, niveau: 1, retourA: 0, vie: c.invasion.viePortail, vies: c.invasion.vies, miniBoss: 0, boss: 0, finie: false, cadrans: [], nes: 0 }, tirs: [], obus: [], armesA: [], creuse: new Map(), fore: new Map(), detruits: new Set(), pepites: [], minerai: 0, banque: 0, cargaison: cargaisonVide(), refuses: { fer: false, or: false, cristal: false }, tresor: cargaisonVide(), extraction: 0, sorti: false, boostA: -1000, bombes: [], charges: c.bombe.charges, prochainId: 1, graine: graine >>> 0 || 1, verrou: null, crache: false, drones: [], tourelles: [], flaques: [], balayage: null, canal: null, harpons: [], rafales: [], rafaleDesAiles: 0, salveDesAiles: -1e9, emballements: {}, tracantes: {}, faisceaux: [], sillons: [], ondes: [], balisesLaser: [], scies: [], balises: [], givres: [], tornades: [], novas: [], echardes: [], spheres: [], puits: [], meteores: [], tentacules: [], fouets: [], boutures: [], eclosions: [], nueesFilles: [], deploiement: 0, nuees: [], rejetons: [], larvesMortes: [], flaquesAcides: [], mines: [], fleaux: [], parasites: [], vrilles: [], liens: [], oeufs: [], brochettes: [], miniVers: [], hypercubes: [], des: [], coupes: [], rayonVu: null }
 }
 
 /** Un hachage entier déterministe (celui de pixelfx), et un réel dans [0, 1) qui en sort. */
@@ -2461,6 +2467,11 @@ function abattreLEnnemi(c: ConfigVaisseau, m: Monde, e: Ennemi, ev: Evenement[],
   if (!m.ennemis.includes(e)) return
   m.ennemis = m.ennemis.filter((x) => x !== e)
   m.prochainEnnemiA = m.t + c.ennemi.revient
+  // (UNE LARVE EXPLOSIVE ABATTUE LAISSE SON CADAVRE, qui explosera — voir `invasion.larve`, `menerLesLarvesMortes`)
+  if (e.sorte === 'larve' && !sansButin && c.invasion.active) {
+    m.larvesMortes.push({ id: e.id, x: e.corps.x, y: e.corps.y, cap: e.corps.cap, amorceA: e.amorceA ?? m.t })
+    if (e.amorceA === undefined) ev.push({ type: 'larveAmorcee', id: e.id, x: e.corps.x, y: e.corps.y, rayon: c.invasion.larve.explosion.rayon, delai: c.invasion.larve.explosion.delai })
+  }
   // (PONDU PAR LA NUÉE, il éclate en un petit nuage — voir `Arme.eclosion`)
   if (e.oeuf !== undefined && e.oeuf.jusque > m.t && e.asteroide === undefined) {
     const ec = c.armes[e.oeuf.arme]?.eclosion
@@ -3509,6 +3520,24 @@ function conduireLInsecte(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number, ev
     }
   }
   return []
+}
+
+/** LES CADAVRES DES LARVES EXPLOSIVES (voir `invasion.larve`) : leur délai passé, ils explosent comme elle — le vaisseau dans la zone encaisse. */
+function menerLesLarvesMortes(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void {
+  const I = c.invasion
+  const ex = I.larve.explosion
+  for (let k = m.larvesMortes.length - 1; k >= 0; k--) {
+    const l = m.larvesMortes[k]
+    if (m.t - l.amorceA < ex.delai) continue
+    m.larvesMortes.splice(k, 1)
+    const cible = cibleDeLInsecte(m, l)
+    const touche = cible !== null && Math.hypot(cible.v.x - l.x, cible.v.y - l.y) <= ex.rayon
+    ev.push({ type: 'larveExplose', x: l.x, y: l.y, rayon: ex.rayon, touche })
+    if (!touche) continue
+    const degats = I.morsure * I.larve.morsure
+    if (m.equipage === undefined || cible!.k === m.equipage.actif) encaisser(c, m, cible!.v.x, cible!.v.y, degats, ev)
+    else m.equipage.pilotes[cible!.k].morsures.push({ x: cible!.v.x, y: cible!.v.y, degats })
+  }
 }
 
 /** Ce que fait un ennemi pendant `dt` : il chasse le joueur s'il le voit, sinon il mine la roche la plus proche de lui. Rend ses chocs. */
@@ -7579,6 +7608,7 @@ function avancerSansLeJoueur(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenem
     menerLInvasion(c, m, ev)
     menerLesDerives(c, m)
     menerLesRochesPrises(c, m, dt)
+    menerLesLarvesMortes(c, m, ev)
     for (const e of [...m.ennemis]) conduireLEnnemi(c, m, e, dt, ev)
     m.ennemis = m.ennemis.filter((e) => !e.parti)
     ecarterLesInsectes(c, m)
@@ -7770,6 +7800,7 @@ export function avancerLeMonde(c: ConfigVaisseau, m: Monde, dt: number, directio
     else if (m.ennemis.length === 0 && m.t >= m.prochainEnnemiA && Math.hypot(v.x, v.y) >= c.base.calme) faireNaitreUnEnnemi(c, m, ev)
     menerLesDerives(c, m)
     menerLesRochesPrises(c, m, dt)
+    menerLesLarvesMortes(c, m, ev)
     for (const e of [...m.ennemis]) {
       chocs.push(...conduireLEnnemi(c, m, e, dt, ev))
       // (il brûle encore : le lance-flammes l'a touché — mais à sa sortie seulement : dans la flamme, c'est elle qui brûle)

@@ -9844,3 +9844,12 @@ texture qu'on met sous les ennemis et sous le joueur, quelque chose d'esthétiqu
 - **L'explosion** : l'éclatement organique du dépôt (`keko/eclatement-organique`) à la taille de la zone, un éclair, une
   secousse plus forte si elle a touché.
 - `&larves=P` : cette part de larves dès le départ ; `&paix` : le vaisseau sans arme, pour les regarder faire.
+- **Deux changements le jour même** (Keko) :
+  - « Le télégraphe doit toujours être dans le ton rouge plutôt que vert. Car on va utiliser tous les télégraphes du jeu de
+    couleur rouge, pour bien que le joueur identifie le danger et le fait que ce n'est pas un de ses télégraphes ou un de
+    ses effets. » — la toile, ses veines, sa couronne et la poche amorcée passent dans la rampe rouge (`TOILE`). **Règle :
+    tout télégraphe d'ennemi est rouge.** L'explosion, elle, reste de bile.
+  - « Quand ce type d'ennemi est tué, il ne disparaît pas instantanément. Dès qu'il est tué, il lance automatiquement son
+    attaque explosive. En tout cas, son cadavre lance l'attaque explosive. » — abattue, elle lâche son butin et laisse un
+    cadavre (`Monde.larvesMortes`, `menerLesLarvesMortes`) : amorcé à sa mort, ou gardant le compte déjà lancé, il explose
+    de même. La tuer n'annule donc plus l'explosion : on la tue DE LOIN. Morte dans la tempête, elle ne laisse rien.

@@ -5885,8 +5885,8 @@ for (const vortex of [true, false]) {
 }
 
 // LA LARVE EXPLOSIVE (Keko, 28/11 — voir `invasion.larve`) : elle approche plus près que le bord de sa zone, s'arrête,
-// s'amorce, explose après son délai — le vaisseau resté dedans encaisse, celui qui est sorti non ; abattue pendant son
-// délai, elle n'explose pas et lâche son butin ; elle ne mord jamais ; figée, son compte s'arrête
+// s'amorce, explose après son délai — le vaisseau resté dedans encaisse, celui qui est sorti non ; abattue, SON CADAVRE
+// explose quand même, et elle lâche son butin ; elle ne mord jamais ; figée, son compte s'arrête
 {
   const cfg: ConfigVaisseau = { ...VAISSEAU, armes: [], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9, aimant: 0, soin: { ...VAISSEAU.invasion.soin, chance: 0 } }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9 }, derive: { ...VAISSEAU.derive, active: false }, arene: { ...VAISSEAU.arene, active: false } }
   const ex = cfg.invasion.larve.explosion
@@ -5901,17 +5901,12 @@ for (const vortex of [true, false]) {
     let exploseA = -1
     let touche = false
     let mordu = false
-    for (let i = 0; i < 60 * 8 && exploseA < 0 && w.ennemis.length > 0; i++) {
+    for (let i = 0; i < 60 * 8 && exploseA < 0 && (w.ennemis.length > 0 || w.larvesMortes.length > 0); i++) {
       // (le joueur fuit dès qu'elle s'amorce ; sinon il ne bouge pas)
       if (amorceeA >= 0 && fuit) w.vaisseau = { ...w.vaisseau, x: w.vaisseau.x - 2, y: 0, vx: 0, vy: 0 }
       else w.vaisseau = { ...w.vaisseau, x: 0, y: 0, vx: 0, vy: 0 }
       if (amorceeA >= 0 && tuer && i === amorceeA + 10) larve.pv = 0
       if (amorceeA >= 0 && figer && i === amorceeA + 10) larve.figeA = w.t + 1
-      if (tuer && larve.pv <= 0) {
-        // (une arme l'achève : la règle de la mort d'un insecte, par un coup de zone posé sur lui)
-        w.ennemis = w.ennemis.filter((e) => e !== larve)
-        break
-      }
       for (const ev of avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements) {
         if (ev.type === 'larveAmorcee') (amorceeA = i), (amorceeDe = Math.hypot(larve.corps.x - w.vaisseau.x, larve.corps.y - w.vaisseau.y))
         if (ev.type === 'larveExplose') (exploseA = i), (touche = ev.touche)
@@ -5925,7 +5920,26 @@ for (const vortex of [true, false]) {
   const fuite = jouer(true)
   verifier(`… le vaisseau qui sort de la zone pendant le délai n'est pas touché (${fuite.touche}, ${fuite.perdu} perdu)`, fuite.exploseA > 0 && !fuite.touche && fuite.perdu === 0)
   const tuee = jouer(false, true)
-  verifier(`… abattue pendant son délai, elle n'explose pas (${tuee.exploseA}) et le vaisseau ne perd rien (${tuee.perdu})`, tuee.amorceeA > 0 && tuee.exploseA < 0 && tuee.perdu === 0)
+  verifier(`… abattue pendant son délai, son cadavre explose quand même, à l'heure déjà lancée (${((tuee.exploseA - tuee.amorceeA) / 60).toFixed(2)} s) : le vaisseau est touché (${tuee.touche}), et elle a lâché son butin (${tuee.w.pepites.length} cristal au sol, ${tuee.w.invasion.xp} d'expérience déjà ramassée)`, tuee.amorceeA > 0 && Math.abs((tuee.exploseA - tuee.amorceeA) / 60 - ex.delai) < 0.06 && tuee.touche && tuee.w.pepites.length + tuee.w.invasion.xp > 0)
+  {
+    // (abattue au loin, sans s'être amorcée : son cadavre s'amorce à sa mort et explose son délai plus tard, sans toucher)
+    const w = nouveauMonde(cfg, 5)
+    w.invasion.prochainA = 1e9
+    w.ennemis.push({ id: 901, corps: { ...nouveauVaisseau(), x: 200, y: 0 }, pv: 0, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, sorte: 'larve' })
+    let amorcee = -1
+    let explose = -1
+    let touche = true
+    let cadavres = 0
+    for (let i = 0; i < 120 && explose < 0; i++) {
+      w.vaisseau = { ...w.vaisseau, x: 0, y: 0, vx: 0, vy: 0 }
+      for (const ev of avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements) {
+        if (ev.type === 'larveAmorcee') amorcee = i
+        if (ev.type === 'larveExplose') (explose = i), (touche = ev.touche)
+      }
+      cadavres = Math.max(cadavres, w.larvesMortes.length)
+    }
+    verifier(`… abattue à 200 du vaisseau : un cadavre (${cadavres}) s'amorce à sa mort et explose ${((explose - amorcee) / 60).toFixed(2)} s plus tard, sans toucher (${touche}) ; il n'en reste rien (${w.larvesMortes.length})`, cadavres === 1 && amorcee >= 0 && Math.abs((explose - amorcee) / 60 - ex.delai) < 0.06 && !touche && w.larvesMortes.length === 0)
+  }
   const figee = jouer(false, false, true)
   verifier(`… figée une seconde pendant son délai, elle explose une seconde plus tard (${((figee.exploseA - figee.amorceeA) / 60).toFixed(2)} s)`, Math.abs((figee.exploseA - figee.amorceeA) / 60 - (ex.delai + 1)) < 0.08)
 }
