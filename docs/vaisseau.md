@@ -9763,3 +9763,20 @@ peu comme les ennemis. On a un confort de ramassage, et en même temps un moyen 
   cristaux comptent aussitôt, 25 % en plus (`charognards.bonus`, dans `abattreLEnnemi`). L'aimant, la plaque et le soin
   tombent comme avant. Un ennemi mordu mais achevé par autre chose (la brûlure des Lucioles, une autre arme) lâche ses
   cristaux normalement.
+
+### Les Rejetons du Kraken : leurs trois premières cartes (28/11)
+
+Keko, devant neuf pistes : « OK pour Abyssaux, Mitose et Alpha. Par contre, l'alpha, je propose plutôt qu'un des rejetons
+actifs, toujours un actif, mais pas plus d'un, soit un rejeton alpha qui fasse plus de dégâts. Mais c'est tout. »
+
+- **Abyssaux**, leur élément : le givre (`gel`, le même que les grenades givrées). Les coups de rejeton n'appliquaient aucun
+  élément : ils passent maintenant par `effetsDuCoup`. À l'écran, leur bile (lueur, yeux, bout des tentacules) en glace.
+- **Mitose**, sur coup critique (`Arme.mitose { duree, part, max }`) : un petit rejeton (`Rejeton.petit`) naît à côté de
+  celui qui a frappé — 4 s, la moitié des dégâts, trois au plus, hors du compte des trois grands. Un petit ne se divise
+  pas : la réaction ne s'entretient pas. Dessiné aux six dixièmes.
+- **Alpha** (`Arme.alpha { degats }`) : parmi les grands en vie, un seul est l'alpha (`Rejeton.alpha`) — le plus ancien
+  quand il n'y en a pas — et frappe double. Rien d'autre ne change : toujours trois rejetons, la même vie. Dessiné une
+  fois et demie plus gros, deux cornes d'os. (Proposé d'abord en rejeton unique, énorme et permanent : refusé.)
+- Chiffres de moi. Pistes pas retenues pour l'instant : Lignée, Étreinte, Dernier souffle, Meute, Garde, Nichée.
+- Constaté au passage : `rejeton` n'est pas dans `POSEES`, la carte « Cadence / durée » presse leur ponte sans allonger
+  leur vie.

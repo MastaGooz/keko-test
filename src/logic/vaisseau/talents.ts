@@ -732,6 +732,16 @@ export const MUTATIONS: Mutation[] = [
   // ennemis tués par la nuée donnent leurs cristaux tout de suite, sans les lâcher, et 25 % de plus — chiffre de moi ; voir
   // `Arme.charognards`)
   variation('nuee-charognards', 'nuee', 'Charognards', 'Les ennemis tués par la nuée donnent aussitôt plus de cristaux.', changerA('nuee', (a) => ({ ...a, charognards: { bonus: 0.25 } }))),
+  // LES REJETONS DU KRAKEN (Keko, 28/11 : « OK pour Abyssaux, Mitose et Alpha » ; Lignée, Étreinte, Dernier souffle, Meute,
+  // Garde et Nichée proposées, pas retenues pour l'instant)
+  // (« ABYSSAUX », LEUR ÉLÉMENT, le givre — la Tentacule a l'électrocution, la Nuée la brûlure)
+  variation('rejetons-abyssaux', 'rejeton', 'Abyssaux', 'Les coups des rejetons appliquent givre.', changerA('rejeton', V.cryo)),
+  // (« MITOSE », LEUR VARIATION SUR COUP CRITIQUE : un petit rejeton, 4 s, la moitié des dégâts, trois au plus, qui ne se
+  // divise pas — chiffres de moi ; voir `Arme.mitose`)
+  variation('rejetons-mitose', 'rejeton', 'Mitose', 'Un critique d’un rejeton fait naître un petit rejeton éphémère.', changerA('rejeton', (a) => ({ ...a, mitose: { duree: 4, part: 0.5, max: 3 } }))),
+  // (« ALPHA » — Keko : « un des rejetons actifs, toujours un, mais pas plus d'un, soit un alpha qui fasse plus de dégâts.
+  // Mais c'est tout » — d'abord proposé en rejeton unique et permanent : deux fois les dégâts, chiffre de moi ; voir `Arme.alpha`)
+  variation('rejetons-alpha', 'rejeton', 'Alpha', 'Un des rejetons est un alpha, deux fois plus fort.', changerA('rejeton', (a) => ({ ...a, alpha: { degats: 2 } }))),
   // LES CARTES D'ÉLÉMENT (Keko, 24/11 : « des cartes spéciales de chaque élément » ; « des cartes multicolores spéciales qu'on
   // proposera dans le pool des cartes spéciales, si le joueur a au moins une attaque avec l'élément en question » — voir
   // `ELEMENTAIRES` pour leurs chiffres ; leurs noms et leurs textes sont de moi)

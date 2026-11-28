@@ -14219,7 +14219,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   // (… UN PEU PLUS PETITS — Keko, 19/11 : « diminuer un tout petit peu la taille des rejetons en jeu » : tout aux quatre
   // cinquièmes — la cloche, ses tentacules, son chapeau, ses yeux, sa lueur)
   const TAILLE_DU_REJETON = 0.8
-  const LONGUEUR_DU_MAILLON = 1.8 * TAILLE_DU_REJETON
+  /** La bile des rejetons Abyssaux (voir `MUTATIONS`) : la lueur, les yeux, le bout des tentacules, en glace. */
+  const GLACE_DES_ABYSSAUX = ['#2a6a9a', '#7ad0ff', '#e0f8ff'].map((c) => N.hex(c))
   const TENTACULES_DU_REJETON = 5
   const cordesDesRejetons = new Map<number, { cordes: [number, number][][]; cap: number; vu: number; nage: number }>()
   const coupsDeRejeton: { id: number; tx: number; ty: number; t0: number; virage: number }[] = []
@@ -14233,11 +14234,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // et sa bile, comme le rejeton de son dos)
     const ru = rampesDuJoueur()
     const ch = ru?.chair ?? CHAIR
-    const bi = ru?.bile !== undefined ? [ru.bile[1], ru.bile[3], ru.bile[4]] : BILE
+    const biDeBase = ru?.bile !== undefined ? [ru.bile[1], ru.bile[3], ru.bile[4]] : BILE
     const ctRejeton = ru?.chitine?.[3] ?? CHITINE_DU_REJETON
     const ctClaire = ru?.chitine?.[4] ?? CHITINE_CLAIRE
     p.place(W / 2 - camera.x, centreY() - camera.y)
     for (const r of m.rejetons) {
+      // (SES CARTES — Keko, 28/11 : l'ALPHA, une fois et demie plus gros, deux cornes d'os ; le PETIT d'une Mitose, aux six
+      // dixièmes ; les ABYSSAUX, leur bile en glace)
+      const Tr = TAILLE_DU_REJETON * (r.alpha === true ? 1.5 : r.petit === true ? 0.6 : 1)
+      const bi = CONF.armes[r.arme]?.gel !== undefined ? GLACE_DES_ABYSSAUX : biDeBase
       const vit = Math.hypot(r.vx, r.vy)
       let etat = cordesDesRejetons.get(r.id)
       if (etat === undefined) {
@@ -14269,7 +14274,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         const an = autour + ecart * nage
         const ux = Math.cos(an)
         const uy = Math.sin(an)
-        c[0] = [r.x + ux * 2.6 * TAILLE_DU_REJETON, r.y + uy * 2.6 * TAILLE_DU_REJETON]
+        c[0] = [r.x + ux * 2.6 * Tr, r.y + uy * 2.6 * Tr]
         for (let i = 1; i < MAILLONS; i++) {
           const houle = Math.sin(t * 5 + k * 1.7 + i * 0.8) * (0.45 - 0.2 * nage)
           let qx = c[i][0] + ux * 0.3 - uy * houle
@@ -14277,8 +14282,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           const dx = qx - c[i - 1][0]
           const dy = qy - c[i - 1][1]
           const d = Math.hypot(dx, dy) || 1
-          qx = c[i - 1][0] + (dx / d) * LONGUEUR_DU_MAILLON
-          qy = c[i - 1][1] + (dy / d) * LONGUEUR_DU_MAILLON
+          qx = c[i - 1][0] + (dx / d) * 1.8 * Tr
+          qy = c[i - 1][1] + (dy / d) * 1.8 * Tr
           c[i] = [qx, qy]
         }
         // (cernée de sombre, épaisse à la racine, claire dessus)
@@ -14315,7 +14320,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       }
       // (la cloche : plus longue que large — trois disques le long du cap —, ombrée comme une sphère ; le chapeau de
       // chitine devant, deux yeux de bile, une lueur)
-      const T_ = TAILLE_DU_REJETON
+      const T_ = Tr
       p.glow(r.x, r.y, 7 * T_, bi[1], 0.2)
       const lx = -0.6
       const ly = -0.8
@@ -14335,6 +14340,12 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       }
       p.disc(r.x + hx * 1.8 * T_, r.y + hy * 1.8 * T_, 1.9 * T_, (d, ang) => (Math.cos(ang) * lx + Math.sin(ang) * ly > 0.3 && d > 0.4 ? ctClaire : ctRejeton), 1)
       for (const sg of [-1, 1]) p.px(Math.round(r.x + (hx * 2.6 - hy * sg * 1.3) * T_), Math.round(r.y + (hy * 2.6 + hx * sg * 1.3) * T_), bi[2])
+      // (les cornes de l'alpha : deux pointes d'os, devant)
+      if (r.alpha === true)
+        for (const sg of [-1, 1]) {
+          p.line(r.x + (hx * 2.4 - hy * sg * 1.8) * T_, r.y + (hy * 2.4 + hx * sg * 1.8) * T_, r.x + (hx * 4.6 - hy * sg * 2.6) * T_, r.y + (hy * 4.6 + hx * sg * 2.6) * T_, OS[1])
+          p.px(Math.round(r.x + (hx * 4.6 - hy * sg * 2.6) * T_), Math.round(r.y + (hy * 4.6 + hx * sg * 2.6) * T_), OS[3])
+        }
     }
     p.place(0, 0)
   }

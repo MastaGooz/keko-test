@@ -1944,6 +1944,35 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
   verifier(`un insecte à 60 : un rejeton naît, nage jusqu’à lui et le fouette (${un.pv[0]} en 2 s, par 4)`, un.ev.filter((e) => e.type === 'rejeton').length === 1 && un.pv[0] >= 8 && un.pv[0] % 4 === 0 && un.ev.some((e) => e.type === 'coupDeRejeton'))
   const long = elever([[60, 0]], 16)
   verifier(`trois au plus (${long.plus}) ; le premier meurt au bout de 14 s`, long.plus === 3 && long.ev.some((e) => e.type === 'rejetonFini'))
+  // (LEURS CARTES — Keko, 28/11 : Abyssaux, Mitose, Alpha)
+  {
+    const avec = (arme: object, critique: number, duree: number) => {
+      const conf = { ...cfg, armes: [arme as Arme], passifs: { ...cfg.passifs, critique } }
+      const w = nouveauMonde(conf, 3)
+      w.ennemis.push(insecte(1, 60, 0))
+      let petits = 0
+      let alphas = 0
+      let grands = 0
+      for (let i = 0; i < 60 * duree; i++) {
+        w.ennemis[0].corps = { ...w.ennemis[0].corps, x: 60, y: 0, vx: 0, vy: 0 }
+        w.vaisseau = { ...w.vaisseau, x: 0, y: 0, vx: 0, vy: 0 }
+        avancerLeMonde(conf, w, 1 / 60, { x: 0, y: 0 })
+        petits = Math.max(petits, w.rejetons.filter((r) => r.petit === true).length)
+        alphas = Math.max(alphas, w.rejetons.filter((r) => r.alpha === true).length)
+        grands = Math.max(grands, w.rejetons.filter((r) => r.petit !== true).length)
+      }
+      return { w, petits, alphas, grands, perdu: 100000 - w.ennemis[0].pv }
+    }
+    const ab = avec({ ...rejeton, gel: { duree: 1.5, ralenti: 0.5 } }, 0, 2)
+    verifier(`Abyssaux : l'insecte fouetté est sous givre (jusqu'à ${(ab.w.ennemis[0] as Ennemi).geleA?.toFixed(1)} s)`, ((ab.w.ennemis[0] as Ennemi).geleA ?? -1) > ab.w.t && (avec(rejeton, 0, 2).w.ennemis[0] as Ennemi).geleA === undefined)
+    const mi = avec({ ...rejeton, mitose: { duree: 4, part: 0.5, max: 3 } }, 1000, 12)
+    const sansCrit = avec({ ...rejeton, mitose: { duree: 4, part: 0.5, max: 3 } }, 0, 12)
+    verifier(`Mitose : à chaque critique un petit naît — jamais plus de trois (${mi.petits}), et toujours trois grands au plus (${mi.grands}) ; sans critique, aucun (${sansCrit.petits})`, mi.petits === 3 && mi.grands === 3 && sansCrit.petits === 0)
+    const al = avec({ ...rejeton, alpha: { degats: 2 } }, 0, 2)
+    const base = avec(rejeton, 0, 2)
+    const al3 = avec({ ...rejeton, alpha: { degats: 2 } }, 0, 12)
+    verifier(`Alpha : seul, le premier rejeton est l'alpha et frappe double (${al.perdu} contre ${base.perdu}) ; à trois, un seul alpha (${al3.alphas})`, al.perdu === 2 * base.perdu && base.perdu > 0 && al3.alphas === 1 && al3.grands === 3)
+  }
   // (UN INSECTE QUI NE S'ARRÊTE PAS — Keko, 16/11 : « ils poursuivent toujours sans attaquer » : il tourne en rond à la
   // vitesse d'un insecte, 40 ; le rejeton doit le fouetter de loin, sans avoir à le rattraper)
   {

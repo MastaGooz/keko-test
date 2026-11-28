@@ -214,6 +214,14 @@ verifier('le délai passé, ce qui restait à choisir part en réserve', reserve
     verifier(`Couvée : « Cadence / durée » +50 % la fait naître toutes les ${armeAmelioree(couvee, 'cadence', 0.5).couvee?.tous} s au lieu de 0,75, ses larves vivent toujours ${armeAmelioree(couvee, 'cadence', 0.5).couvee?.duree} s`, armeAmelioree(couvee, 'cadence', 0.5).couvee?.tous === 0.5 && armeAmelioree(couvee, 'cadence', 0.5).couvee?.duree === 3)
     verifier(`la Nuée a ${vn.length} variations (${vn.map((v) => v.nom).join(', ')}) ; « Cadence et durée » +50 % fait vivre la nuée fille ${armeAmelioree(fille, 'cadence', 0.5).essaimage?.duree} s au lieu de 6 ; les Lucioles ouvrent la carte « Brûlure »`, vn.length === 6 && vn.every((v) => JSON.stringify(v.appliquer(dn)) !== JSON.stringify(dn)) && armeAmelioree(fille, 'cadence', 0.5).essaimage?.duree === 9 && statsDeLArme(lucioles).includes('feu') && !statsDeLArme(nuee).includes('feu'))
   }
+  {
+    // (LES REJETONS : leurs trois premières cartes ; les Abyssaux ouvrent la carte « Givre »)
+    const rejeton: Arme = { id: 'rejeton', cadence: 3.5, degats: 2, portee: 110, vitesse: 0, vie: 0, dispersion: 0, guide: false, place: 0, rejeton: { max: 3, duree: 14, vitesse: 70, acces: 5, vue: 90, allonge: 32, periode: 0.5 } }
+    const dr: ConfigVaisseau = { ...C, armes: [rejeton] }
+    const vr = MUTATIONS.filter((x) => x.sorte === 'variation' && x.arme === 'rejeton')
+    const abyssaux = mu('rejetons-abyssaux').appliquer(dr).armes[0]
+    verifier(`les Rejetons ont ${vr.length} variations (${vr.map((v) => v.nom).join(', ')}), aucune sans effet ; les Abyssaux ouvrent la carte « Givre »`, vr.length === 3 && vr.every((v) => JSON.stringify(v.appliquer(dr)) !== JSON.stringify(dr)) && statsDeLArme(abyssaux).includes('givre') && !statsDeLArme(rejeton).includes('givre'))
+  }
   verifier('Méduse : la tentacule électrocute, la carte « Électrocution » paraît', statsDeLArme(meduse).includes('electrocution') && !statsDeLArme(tentacule).includes('electrocution'))
   verifier(`Fouet : la piqûre reste, le fouet s'y ajoute — une seconde arme sans tentacule (${fouet?.degats} toutes les ${fouet?.cadence} s)`, avecFouet.armes.length === 2 && avecFouet.armes[0].tentacule !== undefined && fouet.tentacule === undefined && fouet.fouet !== undefined && fouet.degats === 50 && fouet.cadence === 1.2)
 }
