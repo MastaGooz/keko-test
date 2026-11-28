@@ -14074,6 +14074,37 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         p.px(ix + bat, iy - 1, feu ? luciole(j, tic) : alea(j, tic, 52) < 0.25 ? N.WHITE : j % 4 === 0 ? CHAIR[4] : BILE[2])
         if (feu && j % 6 === 0) p.glow(ix, iy, 3, BRAISE_DES_LUCIOLES[1], 0.3)
       }
+      // (LA REINE — Keko, 28/11, voir `Arme.reine` : un gros insecte, tourné vers son cap — un abdomen pâle et rayé, un
+      // thorax et une tête sombres, deux paires d'ailes qui battent ; posée sur sa proie, elle tressaille)
+      const re = n.reine
+      if (re !== undefined && CONF.armes[n.arme]?.reine !== undefined) {
+        const ca = Math.cos(re.cap)
+        const sa = Math.sin(re.cap)
+        const ox = re.x + (re.pose ? (alea(7, tic, 71) - 0.5) * 1.4 : 0)
+        const oy = re.y + (re.pose ? (alea(7, tic, 72) - 0.5) * 1.4 : 0)
+        const en = (le: number, co: number): [number, number] => [ox + ca * le - sa * co, oy + sa * le + ca * co]
+        const bat = tic % 2 === 0
+        for (const co of [-1, 1]) {
+          const [wx, wy] = en(bat ? -1.5 : -0.5, co * (bat ? 4 : 3))
+          p.circle(wx, wy, bat ? 2 : 1.5, feu ? BRAISE_DES_LUCIOLES[4] : N.WHITE, 0.75)
+        }
+        const [ax, ay] = en(-3.5, 0)
+        p.circle(ax, ay, 2.6, CHITINE_SOMBRE)
+        p.circle(ax, ay, 1.9, feu ? BRAISE_DES_LUCIOLES[3] : CHAIR[5])
+        const [rx, ry] = en(-3.5, 0)
+        p.px(Math.round(rx), Math.round(ry), feu ? BRAISE_DES_LUCIOLES[2] : BILE[2])
+        const [qx, qy] = en(-5.5, 0)
+        p.px(Math.round(qx), Math.round(qy), CHITINE_SOMBRE)
+        const [hx, hy] = en(0, 0)
+        p.circle(hx, hy, 1.8, CHITINE_SOMBRE)
+        const [tx, ty] = en(2.4, 0)
+        p.circle(tx, ty, 1.3, CHITINE_SOMBRE)
+        for (const co of [-1, 1]) {
+          const [yx, yy] = en(2.8, co)
+          p.px(Math.round(yx), Math.round(yy), feu ? BRAISE_DES_LUCIOLES[1] : BILE[2])
+        }
+        if (feu) p.glow(ox, oy, 6, BRAISE_DES_LUCIOLES[1], 0.3)
+      }
     }
     // (LES PETITS NUAGES — voir `Arme.eclosion`, `Arme.essaimage` : l'éclosion, qui gonfle d'un coup et se disperse ; la nuée
     // fille, qui chasse seule et s'éclaircit dans sa dernière seconde)

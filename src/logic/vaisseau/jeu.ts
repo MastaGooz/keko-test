@@ -1274,6 +1274,14 @@ export type Arme = {
    */
   couvee?: { tous: number; larves: number; duree: number; rayon: number; part: number; vitesse: number; vue: number }
   /**
+   * LA REINE (la Nuée — Keko, 28/11 : « j'aime la reine, essayons ça ») : UN GROS INSECTE EN PLUS, qui tourne autour du
+   * vaisseau ; il vole à `vitesse` se poser sur l'insecte LE PLUS RÉSISTANT à portée de la nuée — le verrouillé d'abord — et
+   * le mord seul, `part` du budget de la nuée par seconde (fixe : la croissance de la nuée n'y fait rien), avec son élément
+   * et ses critiques, tant qu'il vit et reste à `lache` fois la portée. Une seule reine, une seule proie. L'état est
+   * `Monde.nuees[].reine`.
+   */
+  reine?: { part: number; vitesse: number; lache: number }
+  /**
    * L'ESSAIMAGE (la Nuée — Keko, 27/11 : « la durée augmente le temps du deuxième essaim ») : quand la nuée atteint sa taille
    * maximale (`festin.max`), elle SE DÉDOUBLE — elle retombe à mi-taille, et un second nuage, de `rayon`, part chasser seul
    * `duree` secondes (la carte « Cadence et durée » l'allonge) : il vole à `vitesse` vers l'insecte le plus proche de lui, à
@@ -1818,7 +1826,7 @@ export type Monde = {
   /** LE DÉPLOIEMENT DES TENTACULES (voir `Arme.deploiement`), de 0 (repliées) à 1 (à leur envergure). */
   deploiement: number
   /** LES NUAGES D'INSECTES (voir `Arme.nuee`) : un par arme, où (sur le vaisseau), la dernière morsure signalée, ses bras — leur insecte, leur allongement (0 à 1), le dernier point où il était. */
-  nuees: { arme: number; x: number; y: number; mordA: number; bras: { cible: number; u: number; tx: number; ty: number }[]; /** Ce qu'elle a mangé : la part de dégâts qu'elle a gagnée (0 à `festin.max`). */ croissance: number; /** Les morsures comptées depuis le dernier essaimage (voir `Arme.essaimage`). */ repue?: number; /** Quand la dernière couvée est née (voir `Arme.couvee`). */ couveeA?: number }[]
+  nuees: { arme: number; x: number; y: number; mordA: number; bras: { cible: number; u: number; tx: number; ty: number }[]; /** Ce qu'elle a mangé : la part de dégâts qu'elle a gagnée (0 à `festin.max`). */ croissance: number; /** Les morsures comptées depuis le dernier essaimage (voir `Arme.essaimage`). */ repue?: number; /** Quand la dernière couvée est née (voir `Arme.couvee`). */ couveeA?: number; /** Sa reine (voir `Arme.reine`) : où, son cap, sa proie, posée dessus ou non, sa dernière morsure signalée. */ reine?: { x: number; y: number; cap: number; cible?: number; pose: boolean; mordA: number } }[]
   /** LES REJETONS (voir `Arme.rejeton`). */
   rejetons: Rejeton[]
   /** LES FLAQUES D'ACIDE (voir `Arme.crachat`) : un cône au sol — sa pointe, son cap, quand il est né, son arme. */
@@ -5951,6 +5959,48 @@ function menerLesNuees(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[])
         n.couveeA = m.t
         m.eclosions.push({ arme: i, x: v.x, y: v.y, nee: m.t, jusque: m.t + co.duree, mordA: m.t, larves: co.larves, couvee: true })
         ev.push({ type: 'couvee', x: v.x, y: v.y })
+      }
+    }
+    // (LA REINE : elle garde sa proie, sinon prend la plus résistante à portée ; elle vole s'y poser et la mord — voir `Arme.reine`)
+    const re = a.reine
+    if (re !== undefined) {
+      const r = (n.reine ??= { x: v.x, y: v.y, cap: 0, pose: false, mordA: m.t })
+      let proie = r.cible === undefined ? undefined : m.ennemis.find((e) => e.id === r.cible && e.pv > 0 && dist(e) <= a.portee * re.lache + rayonDe(c, e))
+      if (proie === undefined) {
+        const vr = ennemiVerrouille(m)
+        if (vr !== null && vr.asteroide === undefined && vr.pv > 0 && dist(vr) <= a.portee + rayonDe(c, vr)) proie = vr
+        else for (const e of m.ennemis) if (e.asteroide === undefined && e.pv > 0 && dist(e) <= a.portee + rayonDe(c, e) && (proie === undefined || e.pv > proie.pv)) proie = e
+        r.cible = proie?.id
+        r.pose = false
+      }
+      if (proie === undefined) {
+        // (sans proie, elle tourne autour du vaisseau, et le suit de près)
+        const tx = v.x + Math.cos(m.t * 1.6) * (nu.rayon + 6)
+        const ty = v.y + Math.sin(m.t * 1.6) * (nu.rayon + 6)
+        const k = Math.min(1, dt * 8)
+        if (Math.hypot(tx - r.x, ty - r.y) > 0.5) r.cap = Math.atan2(ty - r.y, tx - r.x)
+        r.x += (tx - r.x) * k
+        r.y += (ty - r.y) * k
+      } else {
+        const d = Math.hypot(proie.corps.x - r.x, proie.corps.y - r.y)
+        const prise = rayonDe(c, proie) * 0.5
+        if (d > 0.5) r.cap = Math.atan2(proie.corps.y - r.y, proie.corps.x - r.x)
+        if (d > prise) {
+          const pas = Math.min(d - prise, re.vitesse * dt)
+          r.x += ((proie.corps.x - r.x) / d) * pas
+          r.y += ((proie.corps.y - r.y) / d) * pas
+        }
+        r.pose = Math.hypot(proie.corps.x - r.x, proie.corps.y - r.y) <= prise + 0.5
+        if (r.pose) {
+          const part = nu.budget * re.part
+          proie.pv -= part * dt
+          if (m.t - r.mordA >= nu.periode) {
+            r.mordA = m.t
+            ev.push({ type: 'morsure', id: proie.id, x: proie.corps.x, y: proie.corps.y })
+            coupDeNuee(c, m, a, i, proie, part * nu.periode, ev, true)
+          }
+          if (proie.pv <= 0) abattreLEnnemi(c, m, proie, ev)
+        }
       }
     }
   })

@@ -1842,6 +1842,11 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
     const cv = jouerN(cou, [[120, 0, 1000]], 3.5, 100)
     const vide = jouerN(cou, [[400, 0, 1000]], 3.5)
     verifier(`Couvée : ${cv.ev.filter((e) => e.type === 'couvee').length} couvées en 3,5 s ; elles mordent l'insecte à 120 (${(1000 - cv.w.ennemis[0].pv).toFixed(1)}), qui n'est pas pondu ; l'insecte à 400, aucune (${vide.ev.filter((e) => e.type === 'couvee').length})`, cv.ev.filter((e) => e.type === 'couvee').length === 3 && cv.w.ennemis[0].pv < 995 && cv.w.ennemis[0].oeuf === undefined && vide.ev.every((e) => e.type !== 'couvee'))
+    // (REINE : elle se pose sur le plus résistant à portée, qui perd bien plus que l'autre ; hors de portée, elle reste au vaisseau)
+    const rei = { ...nuee, reine: { part: 1, vitesse: 140, lache: 1.3 } } as Arme
+    const rn = jouerN(rei, [[40, 0, 1000], [-40, 0, 5000]], 2)
+    const loin = jouerN(rei, [[200, 0, 5000]], 2)
+    verifier(`Reine : sur le plus résistant (proie ${rn.w.nuees[0].reine?.cible}, posée ${rn.w.nuees[0].reine?.pose}), qui perd ${(5000 - rn.w.ennemis[1].pv).toFixed(0)} contre ${(1000 - rn.w.ennemis[0].pv).toFixed(0)} à l'autre ; l'insecte à 200, hors de portée : pas de proie (${loin.w.nuees[0].reine?.cible}), ${5000 - loin.w.ennemis[0].pv} perdu`, rn.w.nuees[0].reine?.cible === 2 && rn.w.nuees[0].reine?.pose === true && 5000 - rn.w.ennemis[1].pv > 2 * (1000 - rn.w.ennemis[0].pv) && loin.w.nuees[0].reine?.cible === undefined && loin.w.ennemis[0].pv === 5000)
     // (ESSAIMAGE : à sa taille maximale, elle se dédouble — mi-taille, une nuée fille, une seule, qui s'éteint au bout de sa durée)
     const ess = { ...nuee, nuee: { ...nuee.nuee, festin: { pas: 0.2, max: 1, fonte: 10 } }, essaimage: { duree: 2, vitesse: 60, rayon: 18, part: 1, laisse: 150, morsures: 3 } } as Arme
     const es = jouerN(ess, [[40, 0, 1e6]], 2.3)

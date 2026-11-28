@@ -9727,3 +9727,17 @@ carte qui génère périodiquement ces mêmes petits insectes qui foncent sur le
 - **Une par une** (Keko, 28/11 : « je voyais une génération 1 par 1, mais un peu plus fréquente ») : une larve toutes les
   0,75 s au lieu de quatre toutes les 3 s — le même total, quatre en vol, chacune sa proie la plus proche.
 - **Essayé et retiré** (Keko, 28/11) : remplacer le nuage par ces seules larves (`&mouches`, une toutes les 0,5 s, six en vol) — « c'est pas terrible ». Le nuage reste l'arme, les larves restent des cartes.
+
+### La Reine de la Nuée (28/11)
+
+Keko, devant cinq pistes (Reine, Tiques, Dard, Ruche, Frelon ; Gavage, Curée, Carapace vivante, Marée, Traîne avant elles :
+« pas convaincu ») : « J'aime la reine, essayons ça. »
+
+- `Arme.reine { part, vitesse, lache }`, l'état dans `Monde.nuees[].reine` : un gros insecte en plus, qui tourne autour du
+  vaisseau ; il vole à 140 se poser sur l'insecte le plus résistant (le plus de vie) à portée de la nuée — le verrouillé
+  d'abord, jamais une roche — et le mord seul : tout le budget de la nuée par seconde, avec son élément, ses critiques, et
+  il pond (Éclosion). Elle garde sa proie tant qu'elle vit et reste à 1,3 fois la portée.
+- Les bornes : une reine, une proie ; ses dégâts sont fixes (la croissance de la nuée n'y fait rien), pas de pour cent de
+  la vie ; la proie reste mordue par le nuage aussi.
+- Son dessin, à la main, dans `dessinerLesNuees` : abdomen pâle rayé, thorax et tête sombres, deux ailes qui battent ; aux
+  couleurs des Lucioles avec elles. Chiffres de moi.

@@ -724,6 +724,10 @@ export const MUTATIONS: Mutation[] = [
   // larve toutes les 0,75 s, 3 s, à 80 — quatre en vol, la moitié du budget à elles quatre —, s'il y a un insecte à 150 — nom et chiffres de
   // moi ; « Cadence / durée » presse son minuteur, sans allonger leur vie ; voir `Arme.couvee`)
   variation('nuee-couvee', 'nuee', 'Couvée', 'Régulièrement, des larves foncent sur les ennemis proches.', changerA('nuee', (a) => ({ ...a, couvee: { tous: 0.75, larves: 1, duree: 3, rayon: 20, part: 0.5, vitesse: 80, vue: 150 } }))),
+  // (« REINE » — Keko, 28/11 : « j'aime la reine, essayons ça » : un gros insecte en plus, sur l'ennemi le plus résistant à
+  // portée ; tout le budget de la nuée à elle seule, fixe, à 140, lâche à 1,3 fois la portée — sa carte contre les gros ;
+  // chiffres de moi ; voir `Arme.reine`)
+  variation('nuee-reine', 'nuee', 'Reine', 'Une reine s’acharne sur l’ennemi le plus résistant.', changerA('nuee', (a) => ({ ...a, reine: { part: 1, vitesse: 140, lache: 1.3 } }))),
   // LES CARTES D'ÉLÉMENT (Keko, 24/11 : « des cartes spéciales de chaque élément » ; « des cartes multicolores spéciales qu'on
   // proposera dans le pool des cartes spéciales, si le joueur a au moins une attaque avec l'élément en question » — voir
   // `ELEMENTAIRES` pour leurs chiffres ; leurs noms et leurs textes sont de moi)
