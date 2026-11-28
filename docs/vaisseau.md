@@ -9756,3 +9756,10 @@ peu comme les ennemis. On a un confort de ramassage, et en même temps un moyen 
   `gagnerLaPepite`, jusqu'à `festin.max` — les dégâts doublés au plus, comme avant. Elle fond toujours sans rien à mordre.
 - Ni l'aimant, ni la plaque, ni le soin (on passe dessus) ; rien pendant l'invincibilité du retour. Chiffre de moi.
 - La Nuée a ses six cartes : Lucioles, Éclosion, Essaimage, Couvée, Reine, Charognards.
+- **Refaits le jour même** (Keko : « il y a déjà le magnétisme qui ramasse les cristaux, ça ferait la même chose. Les
+  ennemis qui sont tués par la nuée rapportent immédiatement leurs cristaux sans les lâcher. Et en plus, on augmente le
+  pourcentage de cristaux gagnés ») : plus de ramassage ni de croissance par les cristaux. Un insecte (pas une roche)
+  achevé par une morsure — du nuage, des larves, de la nuée fille, de la reine : `Ennemi.devore` — ne lâche rien : ses
+  cristaux comptent aussitôt, 25 % en plus (`charognards.bonus`, dans `abattreLEnnemi`). L'aimant, la plaque et le soin
+  tombent comme avant. Un ennemi mordu mais achevé par autre chose (la brûlure des Lucioles, une autre arme) lâche ses
+  cristaux normalement.

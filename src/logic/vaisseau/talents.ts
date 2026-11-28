@@ -728,10 +728,10 @@ export const MUTATIONS: Mutation[] = [
   // portée ; tout le budget de la nuée à elle seule, fixe, à 140, lâche à 1,3 fois la portée — sa carte contre les gros ;
   // chiffres de moi ; voir `Arme.reine`)
   variation('nuee-reine', 'nuee', 'Reine', 'Une reine s’acharne sur l’ennemi le plus résistant.', changerA('nuee', (a) => ({ ...a, reine: { part: 1, vitesse: 140, lache: 1.3 } }))),
-  // (« CHAROGNARDS » — Keko, 28/11 : « on permet à la nuée de ramasser les cristaux, et les cristaux nourrissent la nuée, un
-  // peu comme les ennemis » : +5 % de sa croissance par point de cristal, jusqu'à son maximum — chiffre de moi ; voir
+  // (« CHAROGNARDS » — Keko, 28/11 ; d'abord le ramassage des cristaux à portée, « la même chose » que le Magnétisme : les
+  // ennemis tués par la nuée donnent leurs cristaux tout de suite, sans les lâcher, et 25 % de plus — chiffre de moi ; voir
   // `Arme.charognards`)
-  variation('nuee-charognards', 'nuee', 'Charognards', 'La nuée rapporte les cristaux proches et s’en nourrit.', changerA('nuee', (a) => ({ ...a, charognards: { pas: 0.05 } }))),
+  variation('nuee-charognards', 'nuee', 'Charognards', 'Les ennemis tués par la nuée donnent aussitôt plus de cristaux.', changerA('nuee', (a) => ({ ...a, charognards: { bonus: 0.25 } }))),
   // LES CARTES D'ÉLÉMENT (Keko, 24/11 : « des cartes spéciales de chaque élément » ; « des cartes multicolores spéciales qu'on
   // proposera dans le pool des cartes spéciales, si le joueur a au moins une attaque avec l'élément en question » — voir
   // `ELEMENTAIRES` pour leurs chiffres ; leurs noms et leurs textes sont de moi)

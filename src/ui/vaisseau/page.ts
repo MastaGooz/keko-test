@@ -17437,18 +17437,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       else if (pe.plaque === true) dessinerPlaqueTombee(p, pe.x, pe.y, t, ACIER_DE_LA_PLAQUE, pe.graine)
       // (UN SOIN — voir `invasion.soin` : la croix à la couleur de la barre de vie, l'or, ou le vert des Xénoïdes)
       else if (pe.soin === true) dessinerSoin(p, pe.x, pe.y, t, vieVerte() ? SOIN_VERT : SOIN_OR, pe.graine)
-      else {
-        dessinerPepiteDuVortex(p, pe, t, XP)
-        // (RAPPORTÉE PAR LA NUÉE — voir `Arme.charognards` : trois moucherons la portent, qui tournent et battent de l'aile)
-        if (pe.charogne === true)
-          for (let k = 0; k < 3; k++) {
-            const an = t * 9 + k * 2.1 + pe.graine
-            const ix = Math.round(pe.x + Math.cos(an) * 3.5)
-            const iy = Math.round(pe.y + Math.sin(an) * 3)
-            p.px(ix, iy, CHITINE_SOMBRE)
-            p.px(ix + (Math.floor(t * 24 + k) % 2 === 0 ? 1 : -1), iy - 1, BILE[2])
-          }
-      }
+      else dessinerPepiteDuVortex(p, pe, t, XP)
     // (L'AIMANT PRIS : deux anneaux de la teinte des pépites se referment sur le vaisseau, le temps qu'elles arrivent)
     const ua = (t - aimantA) / 0.9
     if (VORTEX && ua >= 0 && ua < 1)
