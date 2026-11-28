@@ -9726,3 +9726,7 @@ carte qui génère périodiquement ces mêmes petits insectes qui foncent sur le
 - Nom et chiffres de moi, à rejuger. Sans son à la naissance : elle revient toutes les trois secondes.
 - **Une par une** (Keko, 28/11 : « je voyais une génération 1 par 1, mais un peu plus fréquente ») : une larve toutes les
   0,75 s au lieu de quatre toutes les 3 s — le même total, quatre en vol, chacune sa proie la plus proche.
+- **L'essai des mouches** (Keko, 28/11 : « on peut remplacer la nuée normale par ces petites mouches pour tester ? ») :
+  `&mouches` éteint le nuage (`nuee.eteinte` : il ne mord plus, ne se dessine plus) et l'arme n'est plus que des larves —
+  une toutes les 0,5 s, 3 s de vie, six en vol, qui font à elles six le budget de la nuée ; elles pondent (Éclosion).
+  Un essai derrière un paramètre : la Nuée de base ne change pas tant que Keko n'a pas tranché.

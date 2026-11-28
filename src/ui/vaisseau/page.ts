@@ -1096,6 +1096,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       // (L'ARÈNE ET SA TEMPÊTE, au vortex — voir `arene`)
       if (VORTEX) conf = { ...conf, arene: { ...conf.arene, active: true } }
       if (VORTEX) conf = { ...conf, derive: { ...conf.derive, active: parametres.get('roche') !== '0', ...(parametres.has('roche') && parametres.get('roche') !== '0' ? { premier: 2, tousMin: 4, tousMax: 4 } : {}), ...(parametres.has('geante') ? { tailles: { ...conf.derive.tailles, apres: 0, partDebut: 1, partFin: 1 } } : {}) /* (`&geante` : rien que des géantes) */ } }
+      // (`&mouches` — L'ESSAI, Keko, 28/11 : « remplacer la nuée normale par ces petites mouches pour tester » : plus de nuage ;
+      // une larve toutes les 0,5 s, 3 s de vie — six en vol, qui font à elles six le budget de la nuée ; la carte Couvée,
+      // prise en plus, n'y change rien)
+      if (parametres.has('mouches')) conf = { ...conf, armes: conf.armes.map((a) => (a.nuee === undefined ? a : { ...a, nuee: { ...a.nuee, eteinte: true }, couvee: { tous: 0.5, larves: 1, duree: 3, rayon: 20, part: 4 / 6, vitesse: 80, vue: 150 } })) }
       // (`&festin=P` : la nuée part nourrie à P de son maximum — pour voir son nuage grand sans mordre longtemps)
       if (parametres.has('festin')) conf = { ...conf, armes: conf.armes.map((a) => (a.nuee?.festin === undefined ? a : { ...a, nuee: { ...a.nuee, festin: { ...a.nuee.festin, depart: a.nuee.festin.max * Math.max(0, Math.min(1, Number(parametres.get('festin')) || 0)) } } })) }
       // (LA VIE DU VAISSEAU, FOIS `ECHELLE_DE_LA_VIE` — en dernier : tous les points posés plus haut, `&bouclier=N` compris)
@@ -13999,7 +14003,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     p.place(W / 2 - camera.x, centreY() - camera.y)
     for (const n of m.nuees) {
       const nu = CONF.armes[n.arme]?.nuee
-      if (nu === undefined) continue
+      if (nu === undefined || nu.eteinte === true) continue
       // (LE NUAGE GRANDIT AVEC SA CROISSANCE — Keko, 20/11 : « que visuellement la nuée autour du vaisseau augmente en taille
       // selon où elle en est de sa puissance maximum ; au maximum, le nuage peut occuper tout l'espace de sa portée ; que
       // le joueur la voie réduire quand il n'attaque pas » : de son `rayon` à vide jusqu'à sa portée au maximum)

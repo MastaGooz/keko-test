@@ -1252,7 +1252,9 @@ export type Arme = {
   // diminue trop vite ; il peut passer de sa taille 100 % à sa taille minimale en 5 secondes » ; puis 10 : « elle réduit encore trop vite, en une
   // seconde ou deux sa taille a réduit énormément » — la fonte est linéaire, une nuée à moitié pleine fondait en 2,5 s.) Ses dégâts sont `budget` × (1 + croissance) ; la page en multiplie ses moucherons. *Les chiffres sont
   // de moi.*)
-  nuee?: { rayon: number; budget: number; deploiement: number; periode: number; festin?: { pas: number; max: number; /** En combien de secondes sans rien à mordre elle perd tout (voir plus haut). */ fonte: number; /** Sa croissance au départ (0 ; `&festin=P` l'essaie). */ depart?: number } }
+  // (`eteinte` — L'ESSAI DES MOUCHES, Keko, 28/11 : « on peut remplacer la nuée normale par ces petites mouches pour
+  // tester ? » : le nuage ne mord plus et ne se dessine plus ; l'arme n'est plus que sa Couvée, dont les larves pondent)
+  nuee?: { eteinte?: boolean; rayon: number; budget: number; deploiement: number; periode: number; festin?: { pas: number; max: number; /** En combien de secondes sans rien à mordre elle perd tout (voir plus haut). */ fonte: number; /** Sa croissance au départ (0 ; `&festin=P` l'essaie). */ depart?: number } }
   /**
    * L'ÉCLOSION (la Nuée, SA VARIATION SUR COUP CRITIQUE — Keko, 27/11) : une morsure critique de la nuée POND dans l'insecte ;
    * s'il meurt dans les `delai` secondes, il éclate en un petit nuage, de `rayon`, qui mord `duree` secondes ce qui l'entoure
@@ -5900,7 +5902,7 @@ function menerLesNuees(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[])
     n.y = v.y
     // (vers qui il s'étend : tous les insectes à portée, le verrouillé d'abord)
     const dist = (e: Ennemi): number => Math.hypot(e.corps.x - v.x, e.corps.y - v.y)
-    const proches = m.phase === 'vol' ? m.ennemis.filter((e) => dist(e) <= a.portee + rayonDe(c, e)).sort((p, q) => dist(p) - dist(q)) : []
+    const proches = m.phase === 'vol' && nu.eteinte !== true ? m.ennemis.filter((e) => dist(e) <= a.portee + rayonDe(c, e)).sort((p, q) => dist(p) - dist(q)) : []
     const ve = ennemiVerrouille(m)
     if (ve !== null && proches.includes(ve)) proches.splice(proches.indexOf(ve), 1), proches.unshift(ve)
     const vises = new Set(proches.map((e) => e.id))
@@ -6011,7 +6013,7 @@ function menerLesPetitsNuages(c: ConfigVaisseau, m: Monde, dt: number, ev: Evene
       n.x += ((proie.corps.x - n.x) / dp) * pas
       n.y += ((proie.corps.y - n.y) / dp) * pas
     }
-    mordre(a, n.arme, n, la.rayon, (a.nuee.budget * la.part * n.larves) / 4, false)
+    mordre(a, n.arme, n, la.rayon, (a.nuee.budget * la.part * n.larves) / 4, n.couvee === true && a.nuee.eteinte === true)
   }
   for (let k = m.nueesFilles.length - 1; k >= 0; k--) {
     const n = m.nueesFilles[k]
