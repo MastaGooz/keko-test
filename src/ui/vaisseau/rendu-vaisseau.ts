@@ -619,18 +619,28 @@ export function formesDeLaLarve(marche: number): Forme[] {
  * carapace bombée de chitine violette en deux élytres, et devant, SA GLANDE — une poche de chair qui gonfle quand il vise
  * (`gonfle`, 0 à 1) — percée d'une gueule rouge ; deux palpes d'os, quatre courtes pattes. Dans les unités du petit.
  */
-export function formesDuCracheur(marche: number, gonfle: number): Forme[] {
+// (… ET LE CRACHEUR LOURD — Keko, 28/11, voir `invasion.cracheurLourd` : `lourd`, une carapace de chitine sombre à cornes
+// d'os, et TROIS GUEULES en éventail sur sa glande : on lit ses trois crachats avant qu'ils partent)
+export function formesDuCracheur(marche: number, gonfle: number, lourd = false): Forme[] {
   const f: Forme[] = []
   for (const s of [-1, 1])
     for (let k = 0; k < 2; k++) {
       const pas = Math.sin(marche + k * 2.4 + (s > 0 ? Math.PI : 0)) * 0.9
       f.push({ pts: barre(-1.5 + k * 2.6, s * 3, -2.4 + k * 2.8 + pas, s * 5.6, 0.9), mat: 'lie', relief: 'plat' })
     }
-  f.push({ pts: ovale(-1.4, 0, 4.6, 4, 16), mat: 'mauve', relief: 'dome', dome: { x: -1.4, y: 0, rx: 4.6, ry: 4 } })
+  f.push({ pts: ovale(-1.4, 0, 4.6, 4, 16), mat: lourd ? 'chitine' : 'mauve', relief: 'dome', dome: { x: -1.4, y: 0, rx: 4.6, ry: 4 } })
   f.push({ pts: barre(-5.8, 0, 2.8, 0, 0.6), mat: 'lie', relief: 'plat' })
+  if (lourd) {
+    // (ses plaques en travers et ses cornes d'os, en arrière)
+    for (const x of [-3.6, -1.2]) f.push({ pts: barre(x, -3.4, x + 0.6, 3.4, 0.7), mat: 'lie', relief: 'plat' })
+    for (const s of [-1, 1]) f.push({ pts: barre(-4.4, s * 2.6, -7.4, s * 4.4, 0.9), mat: 'os', relief: 'plat' })
+  }
   const g = 2.2 + 0.9 * gonfle
   f.push({ pts: ovale(3.6, 0, g, g * 0.95, 14), mat: 'chair', relief: 'dome', dome: { x: 3.6, y: 0, rx: g, ry: g * 0.95 } })
-  f.push({ pts: ovale(3.6 + g * 0.55, 0, 0.9 + 0.5 * gonfle, 0.9 + 0.5 * gonfle, 10), mat: 'laser', relief: 'emis' })
+  for (const an of lourd ? [-0.75, 0, 0.75] : [0]) {
+    const rg = 0.9 + 0.5 * gonfle - (lourd ? 0.25 : 0)
+    f.push({ pts: ovale(3.6 + Math.cos(an) * g * 0.6, Math.sin(an) * g * 0.6, rg, rg, 10), mat: 'laser', relief: 'emis' })
+  }
   for (const s of [-1, 1]) f.push({ pts: barre(2.6, s * (g * 0.8), 4.4 + g, s * (g * 0.9 + 0.6), 0.6), mat: 'os', relief: 'plat' })
   return f
 }

@@ -6005,5 +6005,22 @@ for (const vortex of [true, false]) {
   verifier(`le cracheur : il approche jusqu'à ${reste.auPlusPres.toFixed(0)} (portée ${tr.portee}, garde ${tr.garde}) sans venir au contact, crache à ${(reste.crache / 60).toFixed(1)} s ; son crachat traverse l'insecte entre eux (${reste.ecran} perdu) et touche le vaisseau immobile (${reste.perdu.toFixed(0)} perdu) ; un pas de côté de 24 l'évite (${esquive.perdu} perdu)`, reste.crache > 0 && reste.auPlusPres > tr.garde * 0.75 && reste.auPlusPres <= tr.portee && reste.vole && reste.ecran === 0 && reste.perdu > 0 && esquive.crache > 0 && esquive.perdu === 0)
 }
 
+// LE CRACHEUR LOURD (Keko, 28/11 — voir `invasion.cracheurLourd`) : trois crachats à la fois, en éventail, celui du
+// milieu sur le vaisseau
+{
+  const cfg: ConfigVaisseau = { ...VAISSEAU, armes: [], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9 }, derive: { ...VAISSEAU.derive, active: false }, arene: { ...VAISSEAU.arene, active: false } }
+  const w = nouveauMonde(cfg, 5)
+  w.invasion.prochainA = 1e9
+  w.ennemis.push({ id: 930, corps: { ...nouveauVaisseau(), x: 220, y: 0 }, pv: 1e9, fait: 'aggro', roche: null, forage: null, tirA: 0, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, sorte: 'cracheurLourd' })
+  let caps: number[] = []
+  for (let i = 0; i < 60 * 8 && caps.length === 0; i++) {
+    w.vaisseau = { ...w.vaisseau, x: 0, y: 0, vx: 0, vy: 0 }
+    for (const ev of avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements) if (ev.type === 'cracheurCrache') caps = w.tirs.filter((t) => t.arme === 'crachat').map((t) => Math.atan2(t.vy, t.vx))
+  }
+  const vers = caps.length === 3 ? Math.atan2(-w.ennemis[0].corps.y, -w.ennemis[0].corps.x) : 0
+  const ecarts = caps.map((a) => Math.atan2(Math.sin(a - vers), Math.cos(a - vers))).sort((a, b) => a - b)
+  verifier(`le cracheur lourd crache ${caps.length} projectiles à la fois, en éventail autour du vaisseau (${ecarts.map((x) => x.toFixed(2)).join(' / ')} rad)`, caps.length === 3 && Math.abs(ecarts[1]) < 0.15 && Math.abs(ecarts[0] + 0.32) < 0.15 && Math.abs(ecarts[2] - 0.32) < 0.15)
+}
+
 // (TOUJOURS EN DERNIER : des blocs ajoutés après cette ligne échouaient sans faire échouer `npm run verif` — 17/11)
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)

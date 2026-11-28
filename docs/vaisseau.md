@@ -9892,3 +9892,17 @@ de sortir tout d'un coup d'une masse d'ennemis. »
   blesser, touche un vaisseau immobile, et un pas de côté de 24 l'évite. À plusieurs, son crachat ne touche que le pilote
   dont c'est le tour (les tirs ennemis ne connaissent qu'un vaisseau) : à reprendre pour la coop. Chiffres de moi.
 - `&cracheurs=P` : cette part de cracheurs dès le départ.
+
+### Le cracheur lourd (28/11)
+
+Keko : « Fabrique-moi un nouveau type d'ennemi qui tire 3 projectiles en éventail. La version plus grosse du tireur numéro 1. »
+
+- `invasion.cracheurLourd`, la sixième `SorteDInsecte`, sur la règle du cracheur (`tirDuCracheur`) : `tir.eventail` — trois
+  crachats à la fois, à 0,32 rad l'un de l'autre, celui du milieu sur le vaisseau (le cracheur simple : un, à 0). Quatre
+  fois la vie du cracheur (6 insectes), taille 2, plus lent (28) ; il tient sa place à 115 (recule sous 75), vise 0,65 s,
+  crache toutes les 3,2 s, ses crachats à 95 et 2,6 s de vol. Aucun avant deux minutes, jusqu'à 3 % du flot. 10 points,
+  12 de butin. Chiffres de moi.
+- Le dessin : celui du cracheur (`formesDuCracheur(…, lourd)`), une carapace de chitine sombre à plaques et cornes d'os,
+  et trois gueules en éventail sur sa glande, qui s'allument ensemble quand il vise. Les crachats sont les mêmes que ceux
+  du cracheur : un seul signe de danger.
+- `&lourds=P` : cette part de cracheurs lourds dès le départ.

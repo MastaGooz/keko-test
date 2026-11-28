@@ -372,7 +372,14 @@ export const VAISSEAU = {
      * secondes et vaut `degats` morsures d'insecte. Le projectile traverse les insectes (les tirs ennemis ne touchent que le
      * vaisseau). Figé, sa visée attend. *Chiffres de moi.*
      */
-    cracheur: { vie: 1.5, taille: 1.3, vitesse: 34 / 40, morsure: 1, butin: 4, debut: 45, montee: 240, part: 0.07, tir: { portee: 95, garde: 60, cadence: 2.4, charge: 0.45, vitesse: 105, vie: 2.2, degats: 2 } },
+    cracheur: { vie: 1.5, taille: 1.3, vitesse: 34 / 40, morsure: 1, butin: 4, debut: 45, montee: 240, part: 0.07, tir: { portee: 95, garde: 60, cadence: 2.4, charge: 0.45, vitesse: 105, vie: 2.2, degats: 2, eventail: { n: 1, ecart: 0 } } },
+    /**
+     * LE CRACHEUR LOURD (Keko, 28/11 : « un nouveau type d'ennemi qui tire 3 projectiles en éventail ; la version plus grosse
+     * du tireur numéro 1 ») : les champs du cracheur ; `eventail` : `n` crachats à la fois, écartés de `ecart` radians l'un
+     * de l'autre, celui du milieu sur le vaisseau. Plus gros, plus dur, plus lent, il vise plus longtemps et de plus loin.
+     * *Chiffres de moi.*
+     */
+    cracheurLourd: { vie: 6, taille: 2, vitesse: 28 / 40, morsure: 2, butin: 12, debut: 120, montee: 300, part: 0.03, tir: { portee: 115, garde: 75, cadence: 3.2, charge: 0.65, vitesse: 95, vie: 2.6, degats: 2, eventail: { n: 3, ecart: 0.32 } } },
     /**
      * LES TROIS PÉPITES (Keko, 21/11 : « différentes pépites, une petite, une moyenne et une grosse, afin que les ennemis
      * lootent des ensembles un peu plus variés » — « 1 / 3 / 10 », « chaque ennemi a son butin propre ») : leurs valeurs
@@ -416,7 +423,7 @@ export const VAISSEAU = {
      * le cornu, le cuirassier ; une roche, `roche` points par unité de rayon (au moins `rocheMin`). Ne compte que LE COUP
      * FATAL, au pilote qui le porte (voir `Monde.tableau`). *De moi, à rejuger.*
      */
-    points: { insecte: 2, moucheron: 1, cornu: 5, cuirassier: 15, larve: 3, cracheur: 4, roche: 0.25, rocheMin: 2 },
+    points: { insecte: 2, moucheron: 1, cornu: 5, cuirassier: 15, larve: 3, cracheur: 4, cracheurLourd: 10, roche: 0.25, rocheMin: 2 },
     /**
      * LA RÉCOMPENSE DE FIN DE PARTIE, EN CRÉDITS (Keko, 22/11 : « une récompense qui dépend du niveau, commun, mais unique
      * pour chaque joueur, car elle prend en compte ses kills — chaque monstre un score en points — et les astéroïdes qu'il a
@@ -2627,8 +2634,10 @@ function faireNaitreUnEnnemi(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void
 export const rayonDe = (c: ConfigVaisseau, e: Ennemi): number => e.asteroide?.rayon ?? c.ennemi.rayon * (e.sorte === undefined ? 1 : c.invasion[e.sorte].taille)
 /** Les sortes d'insectes autres que le petit : le moucheron (le menu fretin), le cornu (milieu de gamme), le cuirassier (blindé). */
 // (… et la larve explosive — Keko, 28/11, voir `invasion.larve`)
-export type SorteDInsecte = 'moucheron' | 'cornu' | 'cuirassier' | 'larve' | 'cracheur'
-export const SORTES_D_INSECTES: SorteDInsecte[] = ['moucheron', 'cornu', 'cuirassier', 'larve', 'cracheur']
+export type SorteDInsecte = 'moucheron' | 'cornu' | 'cuirassier' | 'larve' | 'cracheur' | 'cracheurLourd'
+export const SORTES_D_INSECTES: SorteDInsecte[] = ['moucheron', 'cornu', 'cuirassier', 'larve', 'cracheur', 'cracheurLourd']
+/** LE TIR D'UN CRACHEUR, simple ou lourd (voir `invasion.cracheur`, `invasion.cracheurLourd`) ; un autre insecte n'en a pas. */
+export const tirDuCracheur = (c: ConfigVaisseau, e: Ennemi) => (e.sorte === 'cracheur' ? c.invasion.cracheur.tir : e.sorte === 'cracheurLourd' ? c.invasion.cracheurLourd.tir : undefined)
 /** Un butin de `total` points en gemmes (voir `invasion.gemmes`) : les plus grosses d'abord. */
 export function gemmesDuButin(c: ConfigVaisseau, total: number): number[] {
   const g: number[] = []
@@ -3442,8 +3451,8 @@ function conduireLInsecte(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number, ev
   } else if (e.fait === 'aggro') {
     direction = { x: (v.x - b.x) / dj, y: (v.y - b.y) / dj }
     // (LE CRACHEUR : à portée, il tient sa place, vise, crache — voir `invasion.cracheur`)
-    if (e.sorte === 'cracheur' && enVol) {
-      const tr = I.cracheur.tir
+    const tr = tirDuCracheur(c, e)
+    if (tr !== undefined && enVol) {
       if (e.viseA !== undefined) {
         if (fige) e.viseA += dt
         else if (m.t >= e.viseA) {
@@ -3452,8 +3461,12 @@ function conduireLInsecte(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number, ev
           const r0 = rayonDe(c, e)
           const x0 = b.x + Math.cos(b.cap) * r0
           const y0 = b.y + Math.sin(b.cap) * r0
-          const a = Math.atan2(v.y - y0, v.x - x0)
-          m.tirs.push({ id: m.prochainId++, x: x0, y: y0, vx: Math.cos(a) * tr.vitesse, vy: Math.sin(a) * tr.vitesse, vie: tr.vie, degats: I.morsure * tr.degats, arme: 'crachat' })
+          // (en éventail : `n` crachats, celui du milieu sur le vaisseau — voir `invasion.cracheurLourd`)
+          const a0 = Math.atan2(v.y - y0, v.x - x0)
+          for (let q = 0; q < tr.eventail.n; q++) {
+            const a = a0 + (q - (tr.eventail.n - 1) / 2) * tr.eventail.ecart
+            m.tirs.push({ id: m.prochainId++, x: x0, y: y0, vx: Math.cos(a) * tr.vitesse, vy: Math.sin(a) * tr.vitesse, vie: tr.vie, degats: I.morsure * tr.degats, arme: 'crachat' })
+          }
           ev.push({ type: 'cracheurCrache', id: e.id, x: x0, y: y0 })
         }
       } else if (!fige && dj <= tr.portee && m.t >= e.tirA) {
@@ -3559,7 +3572,8 @@ function conduireLInsecte(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number, ev
   e.corps = voler(c, k !== 1 ? { ...c.ennemi, poussee: c.ennemi.poussee * k, vitesseMax: c.ennemi.vitesseMax * k } : c.ennemi, b, dt, direction, m.detruits).vaisseau
   // (LE CRACHEUR À PORTÉE FREINE : le vide ne freine presque pas, et sans cela il filait sur le vaisseau — et il fait face
   // à sa cible pour viser)
-  if (e.sorte === 'cracheur' && e.fait === 'aggro' && Math.hypot(v.x - e.corps.x, v.y - e.corps.y) <= I.cracheur.tir.portee) {
+  const trc = tirDuCracheur(c, e)
+  if (trc !== undefined && e.fait === 'aggro' && Math.hypot(v.x - e.corps.x, v.y - e.corps.y) <= trc.portee) {
     const f = Math.exp(-4 * dt)
     e.corps = { ...e.corps, vx: e.corps.vx * f, vy: e.corps.vy * f, cap: Math.atan2(v.y - e.corps.y, v.x - e.corps.x) }
   }
