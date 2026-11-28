@@ -10331,7 +10331,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // prenaient un quart de l'image. Un insecte ni blanchi ni pris par le portail est peint une fois par pose — son cap
     // en `POSES_DU_CAP`, le pas de ses pattes en `POSES_DE_LA_MARCHE`, ses mandibules en `POSES_DE_LA_MORSURE` —, gardé,
     // et recopié ; sa lueur de chasse reste dessinée à part)
-    if (!blanchi && deforme === undefined) {
+    // (… SAUF LE CRACHEUR LOURD — Keko, 28/11 : « la rotation des gros tireurs n'est pas fluide, on dirait qu'ils tournent
+    // par cran » : quarante-huit poses, c'est un cran de 7,5°, qui se voit sur un insecte deux fois plus grand, tourné vers
+    // le vaisseau à chaque image. Peu nombreux, il est peint pour de bon, à son cap exact)
+    if (!blanchi && deforme === undefined && sorte !== 'cracheurLourd') {
       const tour = Math.PI * 2
       const q = (a: number, n: number): number => ((Math.round((a / tour) * n) % n) + n) % n
       const ic = q(cap, POSES_DU_CAP)
@@ -15826,6 +15829,24 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         continue
       }
       if (tr.arme === 'crachat') {
+        // (EN FIN DE COURSE, IL SE DISSOUT — Keko, 28/11 : « quand un projectile arrive en fin de course, il disparaît d'un
+        // seul coup ; ce serait bien d'avoir une petite animation de dissolution » : dans ses 0,35 dernières secondes, il
+        // ralentit à l'œil, rapetisse, pâlit, et s'effrite en grains rouges qui s'écartent et s'éteignent)
+        const fin = Math.min(1, tr.vie / 0.35)
+        if (fin < 1) {
+          const k = 1 - fin
+          for (let q = 0; q < 7; q++) {
+            const an = q * 0.9 + tr.id * 1.3
+            const d = 1.5 + k * (5 + (q % 3) * 2)
+            if (Math.sin(q * 7.1 + tr.id) * 0.5 + 0.5 > fin + 0.15) continue
+            p.dot(tr.x + Math.cos(an) * d, tr.y + Math.sin(an) * d, q % 2 === 0 ? TOILE[5] : TOILE[4], fin)
+          }
+          p.glow(tr.x, tr.y, 10 * fin, TOILE[4], 0.6 * fin)
+          p.circle(tr.x, tr.y, 3.3 * fin, TOILE[1], fin)
+          p.circle(tr.x, tr.y, 2.6 * fin, TOILE[4], fin)
+          if (fin > 0.4) p.px(Math.round(tr.x), Math.round(tr.y), TOILE[6])
+          continue
+        }
         // (LE CRACHAT DU CRACHEUR — voir `invasion.cracheur` ; Keko : « dans les tons du télégraphe, rouge, mais un peu plus
         // en avant, qu'on comprenne bien que c'est un projectile » : une boule rouge vif au cœur blanc, cernée de sombre,
         // une lueur, et une courte traînée qui s'éteint derrière elle ; elle bat un peu)

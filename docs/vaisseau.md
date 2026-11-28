@@ -9906,3 +9906,9 @@ Keko : « Fabrique-moi un nouveau type d'ennemi qui tire 3 projectiles en évent
   et trois gueules en éventail sur sa glande, qui s'allument ensemble quand il vise. Les crachats sont les mêmes que ceux
   du cracheur : un seul signe de danger.
 - `&lourds=P` : cette part de cracheurs lourds dès le départ.
+- **Deux retouches** (Keko, 28/11) : « la rotation des gros tireurs n'est pas fluide, on dirait qu'ils tournent par cran »
+  — les insectes sont peints une fois par pose de cap (48, un cran de 7,5°) ; le cracheur lourd, deux fois plus grand et
+  tourné vers le vaisseau à chaque image, est désormais peint pour de bon, à son cap exact (sans les teintes gelé / rongé
+  de l'image gardée). « Quand un projectile arrive en fin de course, il disparaît d'un seul coup : une petite animation de
+  dissolution » — dans ses 0,35 dernières secondes, le crachat rapetisse, pâlit et s'effrite en grains rouges qui
+  s'écartent (`dessinerLesTirs`).
