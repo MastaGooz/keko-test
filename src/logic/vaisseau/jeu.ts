@@ -1282,6 +1282,14 @@ export type Arme = {
    */
   reine?: { part: number; vitesse: number; lache: number }
   /**
+   * LES CHAROGNARDS (la Nuée — Keko, 28/11 : « on permet à la nuée de ramasser les cristaux, et les cristaux nourrissent la
+   * nuée, un peu comme les ennemis : un confort de ramassage, et un moyen de nourrir la nuée en l'absence d'ennemis ») : un
+   * cristal à portée de la nuée est pris par ses moucherons (`Pepite.charogne`) et RAPPORTÉ au vaisseau — comme aimanté, il
+   * finit à bord — ; chaque cristal ramassé la fait grossir de `pas` par point (1, 3 ou 10), jusqu'à `festin.max`. Ni
+   * l'aimant, ni la plaque, ni le soin : on passe dessus.
+   */
+  charognards?: { pas: number }
+  /**
    * L'ESSAIMAGE (la Nuée — Keko, 27/11 : « la durée augmente le temps du deuxième essaim ») : quand la nuée atteint sa taille
    * maximale (`festin.max`), elle SE DÉDOUBLE — elle retombe à mi-taille, et un second nuage, de `rayon`, part chasser seul
    * `duree` secondes (la carte « Cadence et durée » l'allonge) : il vole à `vitesse` vers l'insecte le plus proche de lui, à
@@ -1605,7 +1613,7 @@ export const totalDe = (c: Cargaison): number => c.fer + c.or + c.cristal
 export type Asteroide = { id: number; x: number; y: number; rayon: number; graine: number; angle0: number; vitesseAngulaire: number; minerai: Minerai; richesse: number }
 /** Un laser posé sur sa roche : laquelle, le point d'impact, la part déjà creusée (0 à 1). *Il a visé le rival un temps ; la foreuse ne sert plus qu'aux roches (Keko).* */
 export type Forage = { sorte: 'roche'; cible: number; x: number; y: number; part: number }
-export type Pepite = { id: number; x: number; y: number; vx: number; vy: number; graine: number; minerai: Minerai; /** Sa valeur (au vortex, en points d'expérience) : 1, 3 ou 10 — une petite, une moyenne, une grosse ; 1 si absente. */ valeur?: number; /** EMPORTÉ PAR L'ANNEAU D'UNE BOULE MAGNÉTIQUE (son id — voir `Arme.sphere.magnetisme`) : il se referme avec lui, et compte au centre. */ emportee?: number; /** L'AIMANT (voir `invasion.aimant`) : pris, il attire toutes les pépites. */ aimant?: boolean; /** UNE PLAQUE (voir `recuperation`) : prise, elle restaure une plaque cassée ; personne n'en manque, elle attend. */ plaque?: boolean; /** UN SOIN (voir `invasion.soin`) : pris, il rend du blindage ; personne n'est blessé, il attend. */ soin?: boolean; /** L'instant où l'aimant du JOUEUR l'a prise : elle ne le lâche plus (voir plus bas, « une pépite aimantée »). */ aimanteeA?: number; /** À plusieurs : le pilote qui l'aimante (voir `avancerLEquipage`). */ par?: number }
+export type Pepite = { id: number; x: number; y: number; vx: number; vy: number; graine: number; minerai: Minerai; /** Sa valeur (au vortex, en points d'expérience) : 1, 3 ou 10 — une petite, une moyenne, une grosse ; 1 si absente. */ valeur?: number; /** EMPORTÉ PAR L'ANNEAU D'UNE BOULE MAGNÉTIQUE (son id — voir `Arme.sphere.magnetisme`) : il se referme avec lui, et compte au centre. */ emportee?: number; /** L'AIMANT (voir `invasion.aimant`) : pris, il attire toutes les pépites. */ aimant?: boolean; /** UNE PLAQUE (voir `recuperation`) : prise, elle restaure une plaque cassée ; personne n'en manque, elle attend. */ plaque?: boolean; /** UN SOIN (voir `invasion.soin`) : pris, il rend du blindage ; personne n'est blessé, il attend. */ soin?: boolean; /** L'instant où l'aimant du JOUEUR l'a prise : elle ne le lâche plus (voir plus bas, « une pépite aimantée »). */ aimanteeA?: number; /** À plusieurs : le pilote qui l'aimante (voir `avancerLEquipage`). */ par?: number; /** Rapportée par les moucherons de la nuée (voir `Arme.charognards`). */ charogne?: boolean }
 /** Un choc contre un astéroïde : où, et avec quelle vitesse normale (pour l'étincelle et la vibration). */
 export type Choc = { x: number; y: number; force: number; asteroide: number; /** Le vaisseau a TRAVERSÉ la roche, trop légère pour lui : la part de sa vitesse qu'il y a laissée (roche ÷ vaisseau). */ perce?: number }
 /** Un trait tiré par l'ennemi. */
@@ -5961,6 +5969,15 @@ function menerLesNuees(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[])
         ev.push({ type: 'couvee', x: v.x, y: v.y })
       }
     }
+    // (LES CHAROGNARDS : les cristaux à portée sont pris et rapportés — voir `Arme.charognards`)
+    if (a.charognards !== undefined && c.invasion.active && m.t >= m.renaitJusque)
+      for (const q of m.pepites) {
+        if (q.aimanteeA !== undefined || q.emportee !== undefined || q.aimant === true || q.plaque === true || q.soin === true) continue
+        if (Math.hypot(q.x - v.x, q.y - v.y) > a.portee) continue
+        q.aimanteeA = m.t
+        q.charogne = true
+        if (m.equipage !== undefined) q.par = m.equipage.actif
+      }
     // (LA REINE : elle garde sa proie, sinon prend la plus résistante à portée ; elle vole s'y poser et la mord — voir `Arme.reine`)
     const re = a.reine
     if (re !== undefined) {
@@ -7364,6 +7381,12 @@ function gagnerLaPepite(c: ConfigVaisseau, m: Monde, p: Pepite, ev: Evenement[])
     }
     ev.push({ type: 'aimant', x: p.x, y: p.y })
     return
+  }
+  // (LES CHAROGNARDS : le cristal ramassé nourrit la nuée — voir `Arme.charognards`)
+  for (const n of m.nuees) {
+    const a = c.armes[n.arme]
+    const fe = a?.nuee?.festin
+    if (a?.charognards !== undefined && fe !== undefined) n.croissance = Math.min(fe.max, n.croissance + a.charognards.pas * (p.valeur ?? 1))
   }
   m.invasion.xp += (p.valeur ?? 1) * (c.invasion.gainXp ?? 1)
   while (m.invasion.xp >= xpDuNiveau(c, m.invasion.niveau)) {

@@ -1842,6 +1842,27 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
     const cv = jouerN(cou, [[120, 0, 1000]], 3.5, 100)
     const vide = jouerN(cou, [[400, 0, 1000]], 3.5)
     verifier(`Couvée : ${cv.ev.filter((e) => e.type === 'couvee').length} couvées en 3,5 s ; elles mordent l'insecte à 120 (${(1000 - cv.w.ennemis[0].pv).toFixed(1)}), qui n'est pas pondu ; l'insecte à 400, aucune (${vide.ev.filter((e) => e.type === 'couvee').length})`, cv.ev.filter((e) => e.type === 'couvee').length === 3 && cv.w.ennemis[0].pv < 995 && cv.w.ennemis[0].oeuf === undefined && vide.ev.every((e) => e.type !== 'couvee'))
+    // (CHAROGNARDS : le cristal à portée de la nuée, hors de l'aimant, est rapporté et la nourrit ; sans la carte, il reste là)
+    {
+      const jouerC = (arme: Arme) => {
+        const conf = { ...cfg, armes: [arme], invasion: { ...cfg.invasion, active: true }, forage: { ...cfg.forage, aimant: 10 } }
+        const w = nouveauMonde(conf, 3)
+        w.ennemis = []
+        w.pepites.push({ id: 7001, x: 45, y: 0, vx: 0, vy: 0, graine: 1, minerai: 'fer', valeur: 3 }, { id: 7002, x: 300, y: 0, vx: 0, vy: 0, graine: 2, minerai: 'fer' })
+        let pic = 0
+        for (let i = 0; i < 60 * 2; i++) {
+          w.vaisseau = { ...w.vaisseau, x: 0, y: 0, vx: 0, vy: 0 }
+          w.ennemis = []
+          avancerLeMonde(conf, w, 1 / 60, { x: 0, y: 0 })
+          pic = Math.max(pic, w.nuees[0]?.croissance ?? 0)
+        }
+        return { w, pic }
+      }
+      const fest = { ...nuee, nuee: { ...nuee.nuee, festin: { pas: 0.01, max: 1, fonte: 10 } } } as Arme
+      const avec = jouerC({ ...fest, charognards: { pas: 0.05 } } as Arme)
+      const sans = jouerC(fest)
+      verifier(`Charognards : le cristal de 3 à 45 est rapporté (${!avec.w.pepites.some((q) => q.id === 7001)}) et nourrit la nuée (jusqu'à ${avec.pic.toFixed(2)}) ; celui à 300 reste (${avec.w.pepites.some((q) => q.id === 7002)}) ; sans la carte, celui à 45 reste (${sans.w.pepites.some((q) => q.id === 7001)}), rien ne grossit (${sans.pic})`, !avec.w.pepites.some((q) => q.id === 7001) && Math.abs(avec.pic - 0.15) < 0.02 && avec.w.pepites.some((q) => q.id === 7002) && sans.w.pepites.some((q) => q.id === 7001) && sans.pic === 0)
+    }
     // (REINE : elle se pose sur le plus résistant à portée, qui perd bien plus que l'autre ; hors de portée, elle reste au vaisseau)
     const rei = { ...nuee, reine: { part: 1, vitesse: 140, lache: 1.3 } } as Arme
     const rn = jouerN(rei, [[40, 0, 1000], [-40, 0, 5000]], 2)

@@ -9743,3 +9743,16 @@ Keko, devant cinq pistes (Reine, Tiques, Dard, Ruche, Frelon ; Gavage, Curée, C
   couleurs des Lucioles avec elles. Chiffres de moi.
 - **Redessinée** (Keko, 28/11 : « pas du tout dans la DA du jeu ; un peu plus de texture, un côté plus xénoïde ») : une bête des ruches de la matière du Kraken, à ses couleurs d'apparence — abdomen en anneaux de chair et de chitine cernés de sombre, pustules de bile qui luisent, dard et mandibules d'os, six pattes, quatre ailes en membranes de chair ; ~19 pixels de long au lieu de 8.
 - **Rapetissée** (Keko, 28/11 : « mieux, mais maintenant elle est beaucoup trop grosse ») : aux six dixièmes, ~11 pixels (`S` dans `dessinerLesNuees`).
+
+### Les Charognards de la Nuée (28/11) — sa sixième carte
+
+Keko, devant Charognards, Voracité, Représailles, Bourdonnement, Engluement (Tiques, Dard, Ruche, Frelon avant elles) :
+« J'aime bien l'idée du charognard. On permet à la nuée de ramasser les cristaux, et les cristaux nourrissent la nuée, un
+peu comme les ennemis. On a un confort de ramassage, et en même temps un moyen de nourrir la nuée en l'absence d'ennemis. »
+
+- `Arme.charognards { pas }` : un cristal à portée de la nuée (sa portée, que « Zone / portée » grandit) est pris —
+  `Pepite.charogne`, et aimanté : il finit à bord, comme tout cristal aimanté — ; trois moucherons le portent à l'écran.
+- Chaque cristal ramassé (rapporté ou non) nourrit la nuée : +5 % de croissance par point (1, 3 ou 10), dans
+  `gagnerLaPepite`, jusqu'à `festin.max` — les dégâts doublés au plus, comme avant. Elle fond toujours sans rien à mordre.
+- Ni l'aimant, ni la plaque, ni le soin (on passe dessus) ; rien pendant l'invincibilité du retour. Chiffre de moi.
+- La Nuée a ses six cartes : Lucioles, Éclosion, Essaimage, Couvée, Reine, Charognards.
