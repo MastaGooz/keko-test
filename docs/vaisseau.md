@@ -9996,3 +9996,4 @@ quasiment jamais, et quand elle se lance, on est beaucoup trop en danger. »
   s'allument au passage d'un pouls ; un cœur de bile qui bat sous une fenêtre de chair ; trois yeux rouges en triangle sur
   le nez ; quatre filaments qui ondulent derrière. Pour charger, il resserre son manteau, ses filaments se tendent, son
   cœur s'embrase.
+- **Son cœur rougit pour la salve** (Keko : « la sphère verte ne peut pas devenir rouge au moment où il envoie tous les projectiles ? ») : il vire au rouge des télégraphes pendant la préparation, l'est en crachant, et revient au vert au repos ; sa lueur grandit.

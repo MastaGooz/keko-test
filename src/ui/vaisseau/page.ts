@@ -10457,6 +10457,10 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   function peindreLeColosse(p: Peintre, x: number, y: number, cap: number, _marche: number, _ouvre: number, blanchi: boolean): void {
     const S = CONF.invasion.colosse.taille
     const at = m.ennemis.find((e) => e.sorte === 'colosse')?.attaque
+    // (SON CŒUR ROUGIT POUR LA SALVE — Keko, 28/11 : « la sphère verte ne peut pas devenir rouge au moment où il envoie tous
+    // les projectiles ? » : elle vire au rouge pendant qu'il la prépare, l'est en crachant, et revient au vert au repos)
+    const rouge = at?.sorte !== 'salve' ? 0 : at.phase === 'prepare' ? Math.min(1, (m.t - at.depuis) / 0.6) : at.phase === 'agit' ? 1 : Math.max(0, 1 - (m.t - at.depuis) / 0.5)
+    const COEUR = rouge > 0.5 ? [TOILE[3], TOILE[4], TOILE[6]] : BILE
     const serre = at?.sorte !== 'charge' ? 0 : at.phase === 'prepare' ? Math.min(1, (m.t - at.depuis) / 0.5) : at.phase === 'agit' ? 1 : Math.max(0, 1 - (m.t - at.depuis) / 0.4)
     const ca = Math.cos(cap)
     const sa = Math.sin(cap)
@@ -10506,7 +10510,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       if (dc < 1.7) {
         if (dc > 1.45) return MANTEAU_DU_COLOSSE[1]
         const k = dc / 1.45
-        return BILE[k < 0.35 * (0.7 + 0.3 * pouls) ? 2 : k < 0.75 ? 1 : 0]
+        return COEUR[k < 0.35 * (0.7 + 0.3 * pouls) ? 2 : k < 0.75 ? 1 : 0]
       }
       // L'ÉCHINE D'OS, du nez à la queue, et ses vertèbres
       if (Math.abs(v) * S < 1.3 && u > -2.6 && u < 5.4) return OS_DU_COLOSSE[Math.abs(v) * S < 0.5 ? 3 : (Math.floor(u * 1.4) & 1) === 0 ? 2 : 1]
@@ -10539,7 +10543,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.px(Math.round(ex - 0.3), Math.round(ey - 0.3), N.hex('#ffd0c0'))
     }
     const [cx, cy] = ecran(0.6, 0)
-    p.glow(cx, cy, (2 + pouls) * S, BILE[1], 0.3 + 0.25 * pouls + 0.3 * serre)
+    p.glow(cx, cy, (2 + pouls + rouge) * S, rouge > 0.5 ? TOILE[4] : BILE[1], 0.3 + 0.25 * pouls + 0.3 * serre + 0.3 * rouge)
   }
   const POSES_DU_CAP = 48
   const POSES_DE_LA_MARCHE = 8
