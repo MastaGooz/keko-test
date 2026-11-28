@@ -5884,5 +5884,51 @@ for (const vortex of [true, false]) {
   verifier(`fragmentation : l'explosion projette ${eclats} éclats`, eclats === 6)
 }
 
+// LA LARVE EXPLOSIVE (Keko, 28/11 — voir `invasion.larve`) : elle approche plus près que le bord de sa zone, s'arrête,
+// s'amorce, explose après son délai — le vaisseau resté dedans encaisse, celui qui est sorti non ; abattue pendant son
+// délai, elle n'explose pas et lâche son butin ; elle ne mord jamais ; figée, son compte s'arrête
+{
+  const cfg: ConfigVaisseau = { ...VAISSEAU, armes: [], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9, aimant: 0, soin: { ...VAISSEAU.invasion.soin, chance: 0 } }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9 }, derive: { ...VAISSEAU.derive, active: false }, arene: { ...VAISSEAU.arene, active: false } }
+  const ex = cfg.invasion.larve.explosion
+  const jouer = (fuit: boolean, tuer = false, figer = false) => {
+    const w = nouveauMonde(cfg, 5)
+    w.invasion.prochainA = 1e9
+    const larve: Ennemi = { id: 900, corps: { ...nouveauVaisseau(), x: 90, y: 0 }, pv: cfg.ennemi.pv * cfg.invasion.larve.vie, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, sorte: 'larve' }
+    w.ennemis.push(larve)
+    const coque0 = w.coque + w.bouclier
+    let amorceeA = -1
+    let amorceeDe = -1
+    let exploseA = -1
+    let touche = false
+    let mordu = false
+    for (let i = 0; i < 60 * 8 && exploseA < 0 && w.ennemis.length > 0; i++) {
+      // (le joueur fuit dès qu'elle s'amorce ; sinon il ne bouge pas)
+      if (amorceeA >= 0 && fuit) w.vaisseau = { ...w.vaisseau, x: w.vaisseau.x - 2, y: 0, vx: 0, vy: 0 }
+      else w.vaisseau = { ...w.vaisseau, x: 0, y: 0, vx: 0, vy: 0 }
+      if (amorceeA >= 0 && tuer && i === amorceeA + 10) larve.pv = 0
+      if (amorceeA >= 0 && figer && i === amorceeA + 10) larve.figeA = w.t + 1
+      if (tuer && larve.pv <= 0) {
+        // (une arme l'achève : la règle de la mort d'un insecte, par un coup de zone posé sur lui)
+        w.ennemis = w.ennemis.filter((e) => e !== larve)
+        break
+      }
+      for (const ev of avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements) {
+        if (ev.type === 'larveAmorcee') (amorceeA = i), (amorceeDe = Math.hypot(larve.corps.x - w.vaisseau.x, larve.corps.y - w.vaisseau.y))
+        if (ev.type === 'larveExplose') (exploseA = i), (touche = ev.touche)
+      }
+      if (amorceeA < 0 && w.coque + w.bouclier < coque0) mordu = true
+    }
+    return { w, amorceeA, amorceeDe, exploseA, touche, mordu, perdu: coque0 - (w.coque + w.bouclier), reste: w.ennemis.length }
+  }
+  const reste = jouer(false)
+  verifier(`la larve explosive : elle s'amorce à ${reste.amorceeDe.toFixed(1)} du vaisseau — plus près que le bord de sa zone (${ex.rayon}) —, sans l'avoir mordu (${reste.mordu}) ; elle explose ${((reste.exploseA - reste.amorceeA) / 60).toFixed(2)} s plus tard (${ex.delai}) ; le vaisseau resté dedans est touché (${reste.touche}) et perd ${reste.perdu.toFixed(0)} ; elle n'est plus là (${reste.reste}), aucun cristal lâché (${reste.w.pepites.length})`, reste.amorceeA > 0 && reste.amorceeDe < ex.rayon * 0.8 && !reste.mordu && Math.abs((reste.exploseA - reste.amorceeA) / 60 - ex.delai) < 0.05 && reste.touche && reste.perdu > 0 && reste.reste === 0 && reste.w.pepites.length === 0)
+  const fuite = jouer(true)
+  verifier(`… le vaisseau qui sort de la zone pendant le délai n'est pas touché (${fuite.touche}, ${fuite.perdu} perdu)`, fuite.exploseA > 0 && !fuite.touche && fuite.perdu === 0)
+  const tuee = jouer(false, true)
+  verifier(`… abattue pendant son délai, elle n'explose pas (${tuee.exploseA}) et le vaisseau ne perd rien (${tuee.perdu})`, tuee.amorceeA > 0 && tuee.exploseA < 0 && tuee.perdu === 0)
+  const figee = jouer(false, false, true)
+  verifier(`… figée une seconde pendant son délai, elle explose une seconde plus tard (${((figee.exploseA - figee.amorceeA) / 60).toFixed(2)} s)`, Math.abs((figee.exploseA - figee.amorceeA) / 60 - (ex.delai + 1)) < 0.08)
+}
+
 // (TOUJOURS EN DERNIER : des blocs ajoutés après cette ligne échouaient sans faire échouer `npm run verif` — 17/11)
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)

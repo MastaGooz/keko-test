@@ -583,6 +583,37 @@ export function formesDuMoucheron(marche: number): Forme[] {
   f.push({ pts: barre(5.6, 0, 8.4, 0, 0.8), mat: 'os', relief: 'plat' })
   return f
 }
+/**
+ * LA LARVE EXPLOSIVE (Keko, 28/11 : « un genre de larve volante qui s'approche du joueur et explose dans un genre
+ * d'explosion biologique » — voir `invasion.larve`) : elle vole — deux petites ailes de membrane qui battent (`marche`) —,
+ * une tête et deux anneaux de chitine violette, et derrière, plus grosse que tout le reste, SA POCHE DE BILE, tendue et
+ * veinée : c'est elle qui crève. Dans les unités du petit ; la page la peint à sa taille.
+ */
+export function formesDeLaLarve(marche: number): Forme[] {
+  const f: Forme[] = []
+  const bat = 0.55 + 0.5 * Math.abs(Math.sin(marche * 2))
+  for (const sg of [-1, 1]) {
+    const a = Math.PI - sg * bat
+    const ux = Math.cos(a)
+    const uy = Math.sin(a)
+    const cx = 2 + ux * 3.4
+    const cy = sg * 1.6 + uy * 3.4
+    f.push({ pts: ovale(0, 0, 3.8, 1.8, 12).map(([x, y]): [number, number] => [cx + x * ux - y * uy, cy + x * uy + y * ux]), mat: 'membrane', relief: 'plat', penche: sg })
+  }
+  // SA POCHE DE BILE, et ses veines
+  f.push({ pts: ovale(-3.4, 0, 4.8, 4.4, 16), mat: 'bile', relief: 'dome', dome: { x: -3.4, y: 0, rx: 4.8, ry: 4.4 } })
+  for (const x of [-1.6, -4.2, -6.4]) {
+    const l = 4.4 * Math.sqrt(Math.max(0, 1 - ((x + 3.4) / 4.8) ** 2))
+    f.push({ pts: barre(x, -l, x, l, 0.55), mat: 'lie', relief: 'plat' })
+  }
+  // SES ANNEAUX, SA TÊTE, ses yeux, ses crochets
+  f.push({ pts: ovale(1.7, 0, 2.5, 3, 12), mat: 'mauve', relief: 'cyl' })
+  f.push({ pts: ovale(3.7, 0, 2, 2.4, 12), mat: 'lie', relief: 'cyl' })
+  f.push({ pts: ovale(5.5, 0, 1.7, 1.9, 10), mat: 'mauve', relief: 'dome', dome: { x: 5.5, y: 0, rx: 1.7, ry: 1.9 } })
+  for (const sg of [-1, 1]) f.push({ pts: ovale(6, sg * 1, 0.75, 0.75, 8), mat: 'laser', relief: 'dome', dome: { x: 6, y: sg * 1, rx: 0.75, ry: 0.75 } })
+  for (const sg of [-1, 1]) f.push({ pts: barre(6.8, sg * 0.9, 8.4, sg * 0.3, 0.7), mat: 'os', relief: 'plat' })
+  return f
+}
 /** Un trait épais en polygone, de (x0, y0) à (x1, y1). */
 export function barre(x0: number, y0: number, x1: number, y1: number, e: number): [number, number][] {
   const l = Math.hypot(x1 - x0, y1 - y0) || 1

@@ -9811,3 +9811,36 @@ Keko : « Je propose le dernier souffle, où le rejeton fait une attaque kamikaz
 - À l'écran : il clignote de plus en plus vite pendant la ruée ; l'explosion des mini-missiles (éclair, onde, « boum ») et
   une gerbe de chair et de bile, de glace avec les Abyssaux. Chiffres de moi.
 - Les Rejetons ont leurs six cartes : Abyssaux, Mitose, Alpha, Lignée, Faucheurs, Sacrifice.
+
+### Les armes en pause, les ennemis : la larve explosive (28/11)
+
+Keko : « Je propose de mettre en pause le développement des armes et de passer au développement des ennemis. J'ai besoin
+de changer un petit peu, ça fait beaucoup d'armes et j'en ai un peu marre. On reprendra plus tard là où on s'est arrêté,
+note-le. »
+
+**Où les armes en sont** : le Kraken a ses trois armes à six cartes (Tentacule, Nuée, Rejetons). Restaient prévues six
+armes communes aux Xénoïdes, six cartes chacune ; la Nuée et les Rejetons sont encore ouverts au hangar
+(`ARMES_OUVERTES_A_L_ESSAI`) ; la mesure d'équilibrage du Kraken n'est pas faite.
+
+**La larve explosive** — Keko : « un genre de larve volante qui s'approche du joueur et, une fois assez proche, explose
+dans un genre d'explosion biologique. Elle n'explose pas dès que le joueur est à portée : elle se rapproche un peu plus
+près que la portée maximale. Ensuite, une petite animation télégraphe l'explosion, avec la zone circulaire autour de
+l'ennemi. On va bien se concentrer sur la texture du télégraphe : pas un vulgaire rond rouge, ce serait juste immonde. Une
+texture qu'on met sous les ennemis et sous le joueur, quelque chose d'esthétique. »
+
+- **La règle** (`invasion.larve`, la quatrième `SorteDInsecte`) : 60 % de la vie d'un insecte, 0,9 fois sa taille, un peu
+  plus rapide (46 contre 40) ; aucune avant 30 s, puis jusqu'à 8 % du flot en quatre minutes. À 22 du vaisseau (de centre
+  à centre ; sa zone fait 36), elle s'arrête et s'amorce (`Ennemi.amorceA`) ; 0,9 s plus tard elle explose : le vaisseau
+  dont le centre est dans la zone encaisse quatre morsures d'insecte. Elle ne mord pas. Elle meurt dans son explosion,
+  sans butin ; abattue avant, elle n'explose pas et lâche le sien (2 points). Figée, son compte s'arrête. Son explosion ne
+  blesse pas les autres insectes. Chiffres de moi.
+- **Son dessin** (`formesDeLaLarve`) : deux petites ailes de membrane, une tête et deux anneaux violets, et derrière, plus
+  grosse que le reste, sa poche de bile veinée — verte même en chasse. Amorcée, la poche gonfle, luit, bat en blanc
+  (`dessinerLesPochesAmorcees`).
+- **Le télégraphe** (`dessinerLesAmorces`, dans la couche du sol, sous les insectes et le vaisseau) : une membrane sombre
+  et translucide au bord en lobes ; des veines de bile qui partent de la larve en se tordant, se ramifient, et s'allument
+  du centre vers le bord (elles le touchent aux quatre cinquièmes du délai) ; une couronne de pustules sur le bord, de plus
+  en plus nette ; dans le dernier quart, tout bat en blanc, de plus en plus vite. Un seul `p.disc` nuancé par pixel.
+- **L'explosion** : l'éclatement organique du dépôt (`keko/eclatement-organique`) à la taille de la zone, un éclair, une
+  secousse plus forte si elle a touché.
+- `&larves=P` : cette part de larves dès le départ ; `&paix` : le vaisseau sans arme, pour les regarder faire.

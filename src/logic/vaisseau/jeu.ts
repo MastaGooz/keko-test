@@ -339,6 +339,18 @@ export const VAISSEAU = {
      */
     cuirassier: { vie: 15, taille: 2.2, vitesse: 28 / 40, morsure: 2.5, butin: 21, debut: 180, montee: 300, part: 0.04 },
     /**
+     * LA LARVE EXPLOSIVE (Keko, 28/11 : « un genre de larve volante qui s'approche du joueur et, une fois assez proche,
+     * explose dans un genre d'explosion biologique. Elle n'explose pas dès que le joueur est à portée de l'explosion : elle
+     * se rapproche un peu plus près que la portée maximale. Ensuite, une petite animation télégraphe l'explosion, avec la
+     * zone circulaire autour de l'ennemi, qui permet au joueur de voir que cette zone est un danger ») : les champs des
+     * autres sortes — elle ne mord pas, `morsure` est ce que vaut SON EXPLOSION, en morsures d'insecte —, et `explosion` :
+     * arrivée à `declenche` du vaisseau (de centre à centre ; au plus près de sa coque sinon), elle S'ARRÊTE et S'AMORCE
+     * (`Ennemi.amorceA`) ; `delai` secondes plus tard elle explose : le vaisseau dont le centre est à `rayon` d'elle
+     * encaisse le coup. Elle meurt dans son explosion, sans butin ; abattue avant, elle n'explose pas et lâche le sien.
+     * Figée (gel, étourdissement), son compte s'arrête. *Chiffres de moi.*
+     */
+    larve: { vie: 0.6, taille: 0.9, vitesse: 46 / 40, morsure: 4, butin: 2, debut: 30, montee: 240, part: 0.08, explosion: { declenche: 22, rayon: 36, delai: 0.9 } },
+    /**
      * LES TROIS PÉPITES (Keko, 21/11 : « différentes pépites, une petite, une moyenne et une grosse, afin que les ennemis
      * lootent des ensembles un peu plus variés » — « 1 / 3 / 10 », « chaque ennemi a son butin propre ») : leurs valeurs
      * en points d'expérience, de la plus grosse à la plus petite. Un butin se paie avec les plus grosses d'abord
@@ -381,7 +393,7 @@ export const VAISSEAU = {
      * le cornu, le cuirassier ; une roche, `roche` points par unité de rayon (au moins `rocheMin`). Ne compte que LE COUP
      * FATAL, au pilote qui le porte (voir `Monde.tableau`). *De moi, à rejuger.*
      */
-    points: { insecte: 2, moucheron: 1, cornu: 5, cuirassier: 15, roche: 0.25, rocheMin: 2 },
+    points: { insecte: 2, moucheron: 1, cornu: 5, cuirassier: 15, larve: 3, roche: 0.25, rocheMin: 2 },
     /**
      * LA RÉCOMPENSE DE FIN DE PARTIE, EN CRÉDITS (Keko, 22/11 : « une récompense qui dépend du niveau, commun, mais unique
      * pour chaque joueur, car elle prend en compte ses kills — chaque monstre un score en points — et les astéroïdes qu'il a
@@ -1705,6 +1717,8 @@ export type Ennemi = {
   tenuA?: number
   /** ACHEVÉ PAR LA NUÉE (voir `Arme.charognards`) : posé juste avant de l'abattre. */
   devore?: boolean
+  /** LA LARVE EXPLOSIVE S'EST AMORCÉE (voir `invasion.larve`) : depuis quand. */
+  amorceA?: number
   /** UNE MORSURE CRITIQUE DE LA NUÉE A PONDU EN LUI (voir `Arme.eclosion`) : jusqu'à quand, et de quelle arme. */
   oeuf?: { jusque: number; arme: number }
   /** L'instant où un coup de l'Envergure peut le repousser à nouveau (voir `Arme.deploiement.recul`). */
@@ -2066,6 +2080,9 @@ export type Evenement =
   | { type: 'morsure'; id: number; x: number; y: number }
   /** Un rejeton naît, fouette sa proie (où elle est), s'éteint (voir `Arme.rejeton`). */
   | { type: 'rejeton'; x: number; y: number }
+  /** Une larve explosive s'amorce, puis explose (voir `invasion.larve`) ; `touche` : le vaisseau était dans sa zone. */
+  | { type: 'larveAmorcee'; id: number; x: number; y: number; rayon: number; delai: number }
+  | { type: 'larveExplose'; x: number; y: number; rayon: number; touche: boolean }
   | { type: 'coupDeRejeton'; id: number; x: number; y: number }
   /** Le slash d'un rejeton faucheur (voir `Arme.faux`) : d'où, vers quel cap, dans quel sens, son arc. */
   | { type: 'faucheDeRejeton'; id: number; x: number; y: number; cap: number; sens: number; rayon: number; ouverture: number }
@@ -2574,8 +2591,9 @@ function faireNaitreUnEnnemi(c: ConfigVaisseau, m: Monde, ev: Evenement[]): void
  */
 export const rayonDe = (c: ConfigVaisseau, e: Ennemi): number => e.asteroide?.rayon ?? c.ennemi.rayon * (e.sorte === undefined ? 1 : c.invasion[e.sorte].taille)
 /** Les sortes d'insectes autres que le petit : le moucheron (le menu fretin), le cornu (milieu de gamme), le cuirassier (blindé). */
-export type SorteDInsecte = 'moucheron' | 'cornu' | 'cuirassier'
-export const SORTES_D_INSECTES: SorteDInsecte[] = ['moucheron', 'cornu', 'cuirassier']
+// (… et la larve explosive — Keko, 28/11, voir `invasion.larve`)
+export type SorteDInsecte = 'moucheron' | 'cornu' | 'cuirassier' | 'larve'
+export const SORTES_D_INSECTES: SorteDInsecte[] = ['moucheron', 'cornu', 'cuirassier', 'larve']
 /** Un butin de `total` points en gemmes (voir `invasion.gemmes`) : les plus grosses d'abord. */
 export function gemmesDuButin(c: ConfigVaisseau, total: number): number[] {
   const g: number[] = []
@@ -3349,6 +3367,30 @@ function conduireLInsecte(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number, ev
   else e.fait = 'marche'
   // (FIGÉ — pris dans la glace, paralysé —, il ne mord pas, et ne bouge pas : voir plus bas)
   const fige = (e.figeA ?? -1) > m.t
+  // LA LARVE EXPLOSIVE (voir `invasion.larve`) : assez près, elle s'arrête et s'amorce ; son délai passé, elle explose
+  if (e.sorte === 'larve') {
+    const ex = I.larve.explosion
+    if (e.amorceA === undefined && enVol && !abattu && e.fait === 'aggro' && dj <= Math.max(ex.declenche, c.rayon + rayonDe(c, e) + 4)) {
+      e.amorceA = m.t
+      ev.push({ type: 'larveAmorcee', id: e.id, x: b.x, y: b.y, rayon: ex.rayon, delai: ex.delai })
+    }
+    if (e.amorceA !== undefined) {
+      // (figée, son compte s'arrête)
+      if (fige) e.amorceA += dt
+      e.corps = { ...b, vx: 0, vy: 0 }
+      if (m.t - e.amorceA >= ex.delai) {
+        const touche = enVol && dj <= ex.rayon
+        ev.push({ type: 'larveExplose', x: b.x, y: b.y, rayon: ex.rayon, touche })
+        if (touche) {
+          const degats = I.morsure * I.larve.morsure
+          if (m.equipage === undefined || cible!.k === m.equipage.actif) encaisser(c, m, v.x, v.y, degats, ev)
+          else m.equipage.pilotes[cible!.k].morsures.push({ x: v.x, y: v.y, degats })
+        }
+        abattreLEnnemi(c, m, e, ev, true)
+      }
+      return []
+    }
+  }
   let direction: Vecteur
   if (I.sansPortail && abattu) {
     // LE JOUEUR ABATTU, ILS ERRENT (Keko, 21/11 : « à partir du moment où un ennemi réussit à nous tuer, on laisse les
@@ -3359,7 +3401,8 @@ function conduireLInsecte(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number, ev
     direction = { x: Math.cos(a) * I.errance, y: Math.sin(a) * I.errance }
   } else if (e.fait === 'aggro') {
     direction = { x: (v.x - b.x) / dj, y: (v.y - b.y) / dj }
-    if (enVol && !fige && dj <= c.rayon + rayonDe(c, e) + 2 && m.t >= (e.mordA ?? 0)) {
+    // (la larve explosive ne mord pas : elle explose — voir plus haut)
+    if (enVol && !fige && e.sorte !== 'larve' && dj <= c.rayon + rayonDe(c, e) + 2 && m.t >= (e.mordA ?? 0)) {
       e.mordA = m.t + I.cadenceMorsure
       // (un autre pilote que celui dont c'est le tour : sa morsure l'attend, il l'encaissera à son tour)
       // (« AFFAIBLISSEMENT » : rongé, il mord moins fort — voir `ELEMENTAIRES.affaiblissement`)
