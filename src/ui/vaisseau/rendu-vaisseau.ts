@@ -645,43 +645,62 @@ export function formesDuCracheur(marche: number, gonfle: number, lourd = false):
   return f
 }
 /**
- * LE COLOSSE, LE PREMIER MINI-BOSS (Keko, 28/11 — voir `invasion.colosse`) : un scarabée de siège, quatre fois un petit —
- * une carapace de chitine sombre en deux élytres cerclés de plaques d'os, des épines le long du dos, une tête cuirassée
- * à trois paires d'yeux rouges, de grandes mandibules d'os qui s'ouvrent (`ouvre`), six pattes lourdes. Dans les unités
- * du petit ; la page le peint à sa taille.
+ * LE COLOSSE, LE PREMIER MINI-BOSS (Keko, 28/11 — voir `invasion.colosse`) : d'abord un scarabée de siège à six pattes ; puis
+ * (Keko : « ses formes sont un peu simplistes et grossières ; on dirait un gros scarabée avec des pattes qui marchent, mais
+ * on est dans l'espace, il n'est pas censé marcher. Quelque chose qui renvoie plus à un vaisseau sous une forme insectoïde,
+ * ou un insecte planeur ou voleur ») : UN VAISSEAU-GUÊPE — plus de pattes ; DEUX PAIRES D'AILES de membrane nervurée qui
+ * vibrent (`marche`), plaquées en arrière quand il charge (`replie`, 0 à 1) ; DEUX RÉACTEURS DE BILE aux flancs du
+ * thorax, des poches qui luisent ; un dard d'os au bout de l'abdomen ; des mandibules d'os (`ouvre`). La carapace — tête,
+ * thorax, quatre anneaux d'abdomen — est peinte pixel par pixel par la page (`peindreLeColosse`, sur `CARAPACE_DU_COLOSSE`).
+ * DESSOUS : les ailes, le dard, les mandibules ; DESSUS : les réacteurs et les yeux. Dans les unités du petit.
  */
-// (… ET SA CARAPACE PEINTE AU PIXEL — Keko, 28/11 : « la texture du mini-boss est très flat et peu travaillée comparée aux
-// autres objets du jeu » : ses polygones ne gardent que ce qui dépasse — DESSOUS, les pattes et les mandibules ; DESSUS, les
-// épines et les yeux ; la carapace, le pronotum et la tête sont peints pixel par pixel par la page — `peindreLeColosse` —,
-// sur les ellipses de `CARAPACE_DU_COLOSSE`)
-export function formesDuColosse(marche: number, ouvre: number, couche: 'dessous' | 'dessus'): Forme[] {
+export function formesDuColosse(marche: number, ouvre: number, couche: 'dessous' | 'dessus', replie = 0): Forme[] {
   const f: Forme[] = []
   if (couche === 'dessous') {
+    // LES AILES : deux par flanc, une nervure d'os et deux de chitine ; elles vibrent, et se plaquent en arrière pour charger
     for (const s of [-1, 1])
-      for (let k = 0; k < 3; k++) {
-        const pas = Math.sin(marche + k * 2.1 + (s > 0 ? Math.PI : 0)) * 0.8
-        const x0 = -2.6 + k * 2.4
-        f.push({ pts: barre(x0, s * 2.6, x0 - 0.6 + pas, s * 5.4, 1.2), mat: 'chitine', relief: 'cyl' })
-        f.push({ pts: barre(x0 - 0.6 + pas, s * 5.4, x0 + 0.6 + pas * 1.4, s * 7.1, 0.9), mat: 'chitine', relief: 'cyl' })
-        f.push({ pts: barre(x0 + 0.6 + pas * 1.4, s * 7.1, x0 + 1.1 + pas * 1.4, s * 7.6, 0.6), mat: 'os', relief: 'cyl' })
+      for (const [k, x0, y0, long, large, phi] of [[0, 1.4, 1.9, 7.2, 1.9, 1.72], [1, -0.4, 1.7, 6, 1.6, 2.28]] as const) {
+        const vib = 0.2 * Math.sin(marche * 1.3 + k * 1.9) * (1 - replie)
+        const a = phi + vib + replie * (2.75 - phi)
+        const ux = Math.cos(a)
+        const uy = s * Math.sin(a)
+        const cx = x0 + ux * long * 0.5
+        const cy = s * y0 + uy * long * 0.5
+        f.push({ pts: ovale(0, 0, long * 0.5, large, 14).map(([x, y]): [number, number] => [cx + x * ux - y * uy, cy + x * uy + y * ux]), mat: 'membrane', relief: 'plat', penche: s })
+        f.push({ pts: barre(x0, s * y0, x0 + ux * long * 0.92, s * y0 + uy * long * 0.92, 0.35), mat: 'os', relief: 'plat' })
+        for (const q of [-0.45, 0.45]) {
+          const bx = x0 + ux * long * 0.25 - uy * large * q
+          const by = s * y0 + uy * long * 0.25 + ux * large * q
+          f.push({ pts: barre(bx, by, bx + ux * long * 0.6, by + uy * long * 0.6, 0.22), mat: 'lie', relief: 'plat' })
+        }
       }
-    const o = 0.35 + 0.5 * ouvre
+    // LE DARD
+    f.push({ pts: [[-8.3, -0.9], [-11.4, 0], [-8.3, 0.9]], mat: 'os', relief: 'cyl' })
+    // LES MANDIBULES
+    const o = 0.3 + 0.55 * ouvre
     for (const s of [-1, 1]) {
-      f.push({ pts: barre(5.8, s * 1.4, 8.2, s * (1.6 + o * 1.4), 1.1), mat: 'os', relief: 'cyl' })
-      f.push({ pts: barre(8.2, s * (1.6 + o * 1.4), 9.7, s * (0.5 + o * 0.8), 0.75), mat: 'os', relief: 'cyl' })
+      f.push({ pts: barre(5.4, s * 1.1, 7.4, s * (1.3 + o * 1.2), 0.9), mat: 'os', relief: 'cyl' })
+      f.push({ pts: barre(7.4, s * (1.3 + o * 1.2), 8.6, s * (0.4 + o * 0.7), 0.6), mat: 'os', relief: 'cyl' })
     }
     return f
   }
-  // LES YEUX (les épines du dos, posées sur la suture, la brouillaient : retirées)
-  for (const s of [-1, 1]) for (let k = 0; k < 3; k++) f.push({ pts: ovale(4.7 + k * 0.62, s * (1.45 - k * 0.33), 0.4, 0.4, 8), mat: 'laser', relief: 'emis' })
+  // LES RÉACTEURS DE BILE, aux flancs du thorax ; LES YEUX, deux grands yeux composés
+  for (const s of [-1, 1]) {
+    f.push({ pts: ovale(0.2, s * 3.1, 1.15, 0.85, 12), mat: 'chitine', relief: 'dome', dome: { x: 0.2, y: s * 3.1, rx: 1.15, ry: 0.85 } })
+    f.push({ pts: ovale(-0.3, s * 3.1, 0.6, 0.5, 10), mat: 'bile', relief: 'emis' })
+    f.push({ pts: ovale(5, s * 1.05, 0.75, 0.6, 10), mat: 'laser', relief: 'emis' })
+  }
   return f
 }
-/** LES ELLIPSES DE LA CARAPACE DU COLOSSE (voir `formesDuColosse`), dans ses unités : les deux élytres, le pronotum, la tête. */
-export const CARAPACE_DU_COLOSSE = {
-  elytres: { x: -2.2, y: 1.85, rx: 5, ry: 2.55 },
-  pronotum: { x: 2.1, y: 0, rx: 1.9, ry: 3.3 },
-  tete: { x: 4.5, y: 0, rx: 1.9, ry: 2.4 },
-}
+/** LES PIÈCES DE LA CARAPACE DU COLOSSE (voir `formesDuColosse`), dans ses unités, de l'arrière vers l'avant — la suivante recouvre la précédente : quatre anneaux d'abdomen, le thorax, la tête. */
+export const CARAPACE_DU_COLOSSE: { nom: 'anneau' | 'thorax' | 'tete'; x: number; y: number; rx: number; ry: number }[] = [
+  { nom: 'anneau', x: -7.3, y: 0, rx: 1.5, ry: 1.6 },
+  { nom: 'anneau', x: -5.7, y: 0, rx: 2, ry: 2.3 },
+  { nom: 'anneau', x: -3.8, y: 0, rx: 2.3, ry: 2.8 },
+  { nom: 'anneau', x: -1.7, y: 0, rx: 2.3, ry: 3 },
+  { nom: 'thorax', x: 1.4, y: 0, rx: 2.7, ry: 3.1 },
+  { nom: 'tete', x: 4.6, y: 0, rx: 1.7, ry: 2.1 },
+]
 /** Un trait épais en polygone, de (x0, y0) à (x1, y1). */
 export function barre(x0: number, y0: number, x1: number, y1: number, e: number): [number, number][] {
   const l = Math.hypot(x1 - x0, y1 - y0) || 1

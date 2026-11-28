@@ -6065,5 +6065,46 @@ for (const vortex of [true, false]) {
   verifier(`… le gel net remplit plus que le givre (${st.gel} contre ${st.givre}), l'étourdissement ${st.etourdi}`, st.gel > st.givre && st.etourdi > st.givre && gelNet.etourdissement?.duree === 1)
 }
 
+// LES ATTAQUES DU COLOSSE (Keko, 28/11 — voir `invasion.colosse.attaques`) : loin, il charge dans son couloir et percute le
+// vaisseau qui y reste, pas celui qui en sort ; puis il crache ses couronnes ; puis, tout près, l'onde
+{
+  // (une coque sans fond : ses morsures tueraient le vaisseau immobile avant la fin)
+  const cfg: ConfigVaisseau = { ...VAISSEAU, coque: 1e6, armes: [], champ: { ...VAISSEAU.champ, densite: 0 }, station: { ...VAISSEAU.station, portee: -1 }, invasion: { ...VAISSEAU.invasion, active: true, sansPortail: true, premiere: 1e9 }, ennemi: { ...VAISSEAU.ennemi, apparait: 1e9 }, derive: { ...VAISSEAU.derive, active: false }, arene: { ...VAISSEAU.arene, active: false } }
+  const A = cfg.invasion.colosse.attaques
+  const jouer = (depart: number, duree: number, esquive = false, coups = 0) => {
+    const w = nouveauMonde(cfg, 5)
+    w.invasion.prochainA = 1e9
+    w.prochainColosseA = 1e9
+    const co: Ennemi = { id: 950, corps: { ...nouveauVaisseau(), x: depart, y: 0 }, pv: 1e9, fait: 'aggro', roche: null, forage: null, tirA: 1e9, butin: 0, cargaison: { fer: 0, or: 0, cristal: 0 }, sorte: 'colosse', grand: true, mordA: 1e9, coups }
+    w.ennemis.push(co)
+    const coque0 = w.coque + w.bouclier
+    const ev: Evenement[] = []
+    let x0 = 0
+    let xMin = Infinity
+    let crachats = 0
+    let perduAvantSalve = -1
+    for (let i = 0; i < 60 * duree; i++) {
+      const prep = co.attaque?.phase === 'prepare' && co.attaque.sorte === 'charge'
+      w.vaisseau = { ...w.vaisseau, x: 0, y: esquive && (prep || co.attaque?.phase === 'agit') ? 40 : 0, vx: 0, vy: 0 }
+      for (const e of avancerLeMonde(cfg, w, 1 / 60, { x: 0, y: 0 }).evenements) {
+        ev.push(e)
+        if (e.type === 'colosseCharge') x0 = co.corps.x
+        if (e.type === 'colosseSalve' && perduAvantSalve < 0) perduAvantSalve = coque0 - (w.coque + w.bouclier)
+      }
+      xMin = Math.min(xMin, co.corps.x)
+      crachats = Math.max(crachats, w.tirs.filter((t) => t.arme === 'crachat').length)
+    }
+    return { ev, x0, xMin, crachats, perduAvantSalve, perdu: coque0 - (w.coque + w.bouclier), sortes: ev.flatMap((e) => (e.type === 'colossePrepare' ? [e.sorte] : [])) }
+  }
+  const loin = jouer(140, 9)
+  verifier(`le colosse loin : ses attaques ${loin.sortes.join(', ')} ; sa charge part de ${loin.x0.toFixed(0)} et le porte jusqu'à ${loin.xMin.toFixed(0)}, il percute le vaisseau (${loin.perduAvantSalve} perdu) ; sa salve : ${loin.crachats} crachats en vol (${A.salve.n * A.salve.vagues})`, loin.sortes[0] === 'charge' && loin.sortes[1] === 'salve' && loin.perduAvantSalve > 0 && loin.crachats >= A.salve.n * A.salve.vagues - 1)
+  const esquive = jouer(140, 4, true)
+  verifier(`… le vaisseau qui sort du couloir pendant le télégraphe n'est pas percuté (${esquive.perdu} perdu)`, esquive.ev.some((e) => e.type === 'colosseCharge') && esquive.perdu === 0)
+  // (son tour est à l'onde : deux attaques déjà lancées)
+  const pres = jouer(40, 4, false, 2)
+  const onde = pres.ev.find((e) => e.type === 'colosseOnde')
+  verifier(`le colosse tout près, à son tour d'onde : ${pres.sortes.join(', ')}, qui touche le vaisseau (${onde?.type === 'colosseOnde' && onde.touche})`, pres.sortes[0] === 'onde' && onde?.type === 'colosseOnde' && onde.touche && pres.perdu > 0)
+}
+
 // (TOUJOURS EN DERNIER : des blocs ajoutés après cette ligne échouaient sans faire échouer `npm run verif` — 17/11)
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)

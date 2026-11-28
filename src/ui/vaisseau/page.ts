@@ -10446,69 +10446,65 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
   const IRISE_DU_COLOSSE = [N.hex('#4a3a7a'), N.hex('#3a6a7a'), N.hex('#8a7ac8')]
   const OS_DU_COLOSSE = ['#3a2e20', '#76664a', '#a8987a', '#d6ccb0'].map((c) => N.hex(c))
   const TRAME_DU_COLOSSE = [0, 0.5, 0.125, 0.625, 0.75, 0.25, 0.875, 0.375, 0.1875, 0.6875, 0.0625, 0.5625, 0.9375, 0.4375, 0.8125, 0.3125]
+  // (… EN VAISSEAU-GUÊPE — Keko, 28/11, voir `formesDuColosse` : la carapace est la tête, le thorax et quatre anneaux
+  // d'abdomen ; chaque anneau a son bourrelet d'os à l'avant, le thorax une arête d'os sur le dos et deux plaques ; ses
+  // ailes se plaquent en arrière quand il charge, ses réacteurs de bile s'allument)
   function peindreLeColosse(p: Peintre, x: number, y: number, cap: number, marche: number, ouvre: number, blanchi: boolean): void {
     const S = CONF.invasion.colosse.taille
     const opt = { cap, lumiere: LUMIERE_DU_VOL, reflet: REFLET_DU_VOL, blanc: blanchi ? 1 : 0 }
-    peindreFormes(p, formesDuColosse(marche, ouvre, 'dessous'), x, y, S, opt)
+    // (ses ailes se plaquent pendant qu'il prépare sa charge, et le restent en chargeant)
+    const at = m.ennemis.find((e) => e.sorte === 'colosse')?.attaque
+    const replie = at?.sorte !== 'charge' ? 0 : at.phase === 'prepare' ? Math.min(1, (m.t - at.depuis) / 0.5) : at.phase === 'agit' ? 1 : Math.max(0, 1 - (m.t - at.depuis) / 0.4)
+    peindreFormes(p, formesDuColosse(marche, ouvre, 'dessous', replie), x, y, S, opt)
     const ca = Math.cos(cap)
     const sa = Math.sin(cap)
     const L = LUMIERE_DU_VOL
     const ln = Math.hypot(L.x, L.y, L.z)
-    const C = CARAPACE_DU_COLOSSE
     const R = 9 * S
-    const souffle = 1 + 0.015 * Math.sin(t * 3)
+    const souffle = 1 + 0.02 * Math.sin(t * 3)
     p.shade(x - R, y - R, x + R, y + R, (px, py) => {
       // (dans ses unités : tourné de −cap)
       const dx = (px - x) / S
       const dy = (py - y) / S
       const u = dx * ca + dy * sa
       const v = -dx * sa + dy * ca
-      // (quelle pièce : l'élytre du côté de v, le pronotum, la tête — la plus haute l'emporte)
+      // (la pièce : la dernière qui le couvre, de l'arrière vers l'avant)
       let ex = 0
       let ey = 0
       let piece = ''
       let rx = 1
       let ry = 1
-      const essai = (nom: string, cx: number, cy: number, ax: number, ay: number): void => {
-        const qx = (u - cx) / ax
-        const qy = (v - cy) / ay
-        if (qx * qx + qy * qy <= 1) (ex = qx), (ey = qy), (piece = nom), (rx = ax), (ry = ay)
+      for (const c of CARAPACE_DU_COLOSSE) {
+        const k = c.nom === 'anneau' ? souffle : 1
+        const qx = (u - c.x) / c.rx
+        const qy = (v - c.y) / (c.ry * k)
+        if (qx * qx + qy * qy <= 1) (ex = qx), (ey = qy), (piece = c.nom), (rx = c.rx), (ry = c.ry)
       }
-      const el = C.elytres
-      essai('elytre', el.x, Math.sign(v || 1) * el.y * souffle, el.rx, el.ry * souffle)
-      essai('pronotum', C.pronotum.x, C.pronotum.y, C.pronotum.rx, C.pronotum.ry)
-      essai('tete', C.tete.x, C.tete.y, C.tete.rx, C.tete.ry)
       if (piece === '') return 0
       if (blanchi) return N.WHITE
       const d2 = ex * ex + ey * ey
-      // (le cerne : le dernier pixel du bord)
       const bord = 1 - d2
+      // (le cerne : le dernier pixel du bord)
       if (bord < 2.2 / (Math.min(rx, ry) * S)) return CHITINE_DU_COLOSSE[0]
-      // (la normale de l'ellipsoïde, ramenée à l'écran)
       const h = Math.sqrt(Math.max(0, bord))
       let nu = ex * 0.9
       let nv = ey * 0.9
-      // (LES STRIES le long des élytres, les BOURRELETS D'OS en travers, le sillon du pronotum : ils creusent la normale)
+      // (LE BOURRELET D'OS à l'avant de chaque anneau ; l'ARÊTE D'OS sur le dos du thorax et ses deux plaques ; les stries)
       let os = 0
-      if (piece === 'elytre') {
-        nv += 0.18 * Math.sin(ey * Math.PI * 4.5)
-        const anneau = Math.abs(((u - el.x) / el.rx + 1.2) * 2.6 % 1 - 0.5)
-        if (anneau < 0.09 && d2 < 0.85) os = 1
-        else if (anneau < 0.12 && d2 < 0.85) nu += 0.35
-      } else if (piece === 'pronotum') {
-        nv += 0.25 * Math.sin(ey * Math.PI * 1.5) * (Math.abs(ey) < 0.15 ? 2 : 0)
+      if (piece === 'anneau') {
+        if (ex > 0.62 && ex < 0.86) os = 1
+        nv += 0.15 * Math.sin(ey * Math.PI * 3)
+      } else if (piece === 'thorax') {
+        if (Math.abs(ey) * ry * S < 0.9 && ex > -0.85) os = 1
+        else if (Math.abs(Math.abs(ey) - 0.55) < 0.05) nu -= 0.4
       }
       const sx = nu * ca - nv * sa
       const sy = nu * sa + nv * ca
       const nl = Math.hypot(sx, sy, h) || 1
-      let lum = (sx * L.x + sy * L.y + h * L.z) / (nl * ln)
-      // (les piqûres de la chitine : un bruit fin, en creux)
-      // (… PLUS DE RELIEF — mesuré en capture, le premier passage restait brun et plat : la lumière tirée sur toute la rampe,
-      // assombrie vers le bord du bombé ; les piqûres plus marquées, leur lèvre éclairée ; la suture d'un seul pixel)
+      const lum = (sx * L.x + sy * L.y + h * L.z) / (nl * ln)
+      // (les piqûres de la chitine, en creux, leur lèvre éclairée)
       const bruit = N.fbm(u * 2.4 + (piece === 'tete' ? 30 : 0), v * 2.4, 41, 2)
       const creux = bruit < 0.38 ? -0.28 : bruit < 0.42 ? 0.12 : 0
-      // (la suture entre les élytres)
-      if (piece === 'elytre' && Math.abs(v) * S < 0.7 && u < el.x + el.rx * 0.95) return CHITINE_DU_COLOSSE[0]
       const trame = TRAME_DU_COLOSSE[(Math.floor(px) & 3) * 4 + (Math.floor(py) & 3)] - 0.5
       const base = Math.max(0, Math.min(1, ((lum - 0.15) / 0.8) * (0.55 + 0.45 * h) + creux))
       // (le liseré : le bord tourné vers la lumière s'allume d'un pixel, sous le cerne)
@@ -10520,8 +10516,15 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       return CHITINE_DU_COLOSSE[Math.max(1, Math.min(7, k))]
     })
     peindreFormes(p, formesDuColosse(marche, ouvre, 'dessus'), x, y, S, opt)
-    // (ses yeux battent)
-    if (!blanchi) p.glow(x + ca * 5.3 * S, y + sa * 5.3 * S, 3 * S, N.hex('#ff3a4a'), 0.25 + 0.12 * Math.sin(t * 5))
+    if (blanchi) return
+    // (ses réacteurs de bile luisent — fort quand il charge ; ses yeux battent)
+    const feu = replie > 0.5 ? 1 : 0.35 + 0.15 * Math.sin(t * 6)
+    for (const sg of [-1, 1]) {
+      const rx = x + (ca * -0.3 - sa * sg * 3.1) * S
+      const ry = y + (sa * -0.3 + ca * sg * 3.1) * S
+      p.glow(rx, ry, (2.5 + 2.5 * feu) * S, BILE[1], feu * 0.55)
+    }
+    p.glow(x + ca * 5 * S, y + sa * 5 * S, 3 * S, N.hex('#ff3a4a'), 0.22 + 0.1 * Math.sin(t * 5))
   }
   const POSES_DU_CAP = 48
   const POSES_DE_LA_MARCHE = 8
@@ -14599,6 +14602,70 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       p.ring(e.x, e.y, R * ouvre, 1, alerte ? TOILE[6] : TOILE[4], 0.55 + 0.45 * u)
     }
     if (place) p.place(0, 0)
+  }
+  /**
+   * LES TÉLÉGRAPHES DU COLOSSE (Keko, 28/11 — voir `invasion.colosse.attaques`), rouges et sobres comme celui de la larve :
+   * LA CHARGE, son couloir — deux bords fins, large comme lui, de sa longueur — qui se remplit de lui vers son bout, des
+   * chevrons qui y courent dans son sens ; L'ONDE, le cercle de la larve à son rayon ; LA SALVE, une couronne de traits
+   * courts dans les directions des crachats, qui s'allongent. Dans le dernier quart, tout bat en clair.
+   */
+  function dessinerLesTelegraphesDuColosse(p: Peintre): void {
+    const A = CONF.invasion.colosse.attaques
+    for (const e of m.ennemis) {
+      const at = e.attaque
+      if (e.sorte !== 'colosse' || at === undefined || at.phase !== 'prepare') continue
+      p.place(W / 2 - camera.x, centreY() - camera.y)
+      const u = Math.max(0, Math.min(1, (m.t - at.depuis) / A[at.sorte].prepare))
+      const ouvre = 1 - (1 - Math.min(1, (m.t - at.depuis) / 0.12)) ** 3
+      const alerte = u > 0.75 && Math.sin((u - 0.75) * (50 + 90 * (u - 0.75))) > 0
+      const vif = alerte ? TOILE[6] : TOILE[4]
+      if (at.sorte === 'onde') dessinerUnCercleDeDanger(p, e.corps.x, e.corps.y, A.onde.rayon, u, ouvre, alerte)
+      else if (at.sorte === 'charge') {
+        const L = A.charge.longueur * ouvre
+        const demi = rayonDe(CONF, e)
+        const nx = -at.dy
+        const ny = at.dx
+        const x0 = e.corps.x
+        const y0 = e.corps.y
+        const en = (l: number, c: number): [number, number] => [x0 + at.dx * l + nx * c, y0 + at.dy * l + ny * c]
+        // (le remplissage, de lui vers le bout, et son front)
+        const f = L * u
+        p.poly([en(0, -demi), en(f, -demi), en(f, demi), en(0, demi)], TOILE[3], 0.2 + 0.08 * u)
+        p.line(...en(f, -demi), ...en(f, demi), vif, 0.8)
+        // (les chevrons qui courent dans le couloir, dans son sens)
+        for (let q = 0; q < 6; q++) {
+          const l = ((q / 6 + m.t * 0.9) % 1) * f
+          if (l < 4) continue
+          p.line(...en(l - 4, -demi * 0.5), ...en(l, 0), TOILE[4], 0.35)
+          p.line(...en(l - 4, demi * 0.5), ...en(l, 0), TOILE[4], 0.35)
+        }
+        // (les deux bords et le bout)
+        const a = 0.55 + 0.45 * u
+        p.line(...en(0, -demi), ...en(L, -demi), vif, a)
+        p.line(...en(0, demi), ...en(L, demi), vif, a)
+        p.line(...en(L, -demi), ...en(L, demi), vif, a)
+      } else {
+        const sv = A.salve
+        const r0 = rayonDe(CONF, e) + 3
+        for (let q = 0; q < sv.n * 2; q++) {
+          const an = Math.atan2(at.dy, at.dx) + (q * Math.PI) / sv.n
+          const l = (4 + 10 * u) * ouvre
+          p.line(e.corps.x + Math.cos(an) * r0, e.corps.y + Math.sin(an) * r0, e.corps.x + Math.cos(an) * (r0 + l), e.corps.y + Math.sin(an) * (r0 + l), q % 2 === 0 ? vif : TOILE[3], 0.5 + 0.5 * u)
+        }
+      }
+      p.place(0, 0)
+    }
+  }
+  /** UN CERCLE DE DANGER (le télégraphe de la larve — voir `dessinerLesAmorces`) : le cercle, et le disque qui le remplit jusqu'à `u`. */
+  function dessinerUnCercleDeDanger(p: Peintre, x: number, y: number, R: number, u: number, ouvre: number, alerte: boolean): void {
+    const trait = 1.5 / R
+    p.disc(x, y, R * ouvre, (d) => (d > u - trait ? (alerte ? TOILE[6] : TOILE[4]) : TOILE[3]), (d) => {
+      if (d > u) return 0
+      if (d > u - trait) return 0.8
+      const onde = Math.max(0, Math.sin(d * R * 0.9 - m.t * 9)) ** 6
+      return 0.15 + 0.07 * u + 0.16 * onde
+    })
+    p.ring(x, y, R * ouvre, 1, alerte ? TOILE[6] : TOILE[4], 0.55 + 0.45 * u)
   }
   /** LE CRACHEUR QUI VISE (voir `invasion.cracheur`) : sa gueule rougit et luit de plus en plus, un éclat blanc juste avant le crachat. */
   function dessinerLesVisees(p: Peintre): void {
@@ -19287,6 +19354,29 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           break
         case 'cracheurVise':
           break
+        case 'colossePrepare':
+          jouer('designe', { dx: ev.x - v.x, dy: ev.y - v.y })
+          break
+        case 'colosseCharge':
+          // (IL CHARGE : son élan, une secousse, une gerbe de bile derrière lui)
+          jouer('impulsion', { dx: ev.x - v.x, dy: ev.y - v.y })
+          secouer(1.5)
+          for (let i = 0; i < 10; i++) {
+            const a = R.range(0, Math.PI * 2)
+            etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(30, 80), Math.sin(a) * R.range(30, 80), R.range(0.15, 0.35), i % 2 === 0 ? BILE[2] : BILE[1], 1, 1.5)
+          }
+          break
+        case 'colosseSalve':
+          jouer('crachat', { dx: ev.x - v.x, dy: ev.y - v.y })
+          flashs.push({ x: ev.x, y: ev.y, t0: t, r: 10 })
+          break
+        case 'colosseOnde':
+          // (L'ONDE : un éclair, l'onde de sa zone, une secousse plus forte s'il a touché)
+          jouer('nova', { dx: ev.x - v.x, dy: ev.y - v.y })
+          flashs.push({ x: ev.x, y: ev.y, t0: t, r: ev.rayon * 0.4 })
+          ondesDeZone.push({ x: ev.x, y: ev.y, t0: t, r: ev.rayon, s: Math.max(0.6, ev.rayon / RAYON_DU_MISSILE) })
+          secouer(ev.touche ? 3 : 2)
+          break
         case 'stagger':
           // (LE GRAND EST ÉTOURDI — voir `ebranler` : un éclair, une onde, une secousse, le son de l'étourdissement)
           jouer('etourdi', { dx: ev.x - v.x, dy: ev.y - v.y })
@@ -20538,6 +20628,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     dessinerLesMeteoresAuSol(p)
     dessinerLesFlaquesAcides(p)
     dessinerLesAmorces(p)
+    dessinerLesTelegraphesDuColosse(p)
     dessinerLesMines(p)
     dessinerLesOmbresDesHypercubes(p)
     dessinerLesDesAuSol(p)

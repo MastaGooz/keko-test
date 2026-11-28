@@ -9953,3 +9953,31 @@ remplir un petit peu plus que juste refroidir, mais je te laisse gérer ça. »
   éclairée par la lumière du vol, sur une rampe de chitine de sept tons, tramée ; des stries le long des élytres, des
   bourrelets d'os en travers qui prennent la lumière, des piqûres tirées d'un bruit, une suture sombre, un reflet irisé
   violet-sarcelle en haut des bombés, un cerne d'encre ; les élytres respirent à peine.
+
+### Le colosse refait : un vaisseau-guêpe à trois attaques (28/11)
+
+Keko : « Il faudrait retravailler les formes du colosse, un peu simplistes et grossières. On dirait un gros scarabée avec
+des pattes qui marchent, mais on est dans l'espace : quelque chose qui renvoie plus à un vaisseau sous une forme
+insectoïde, ou un insecte planeur ou voleur. Et qu'il ait au moins 2 ou 3 attaques différentes — une charge avec un
+télégraphe, un trait large qui représente le couloir de sa charge ; pourquoi pas un tir ; je te laisse imaginer le reste.
+Un set de 2 ou 3 moves qui correspondent à un mini-boss, car là, il ne fait rien du tout. »
+
+- **La forme** (`formesDuColosse`, `CARAPACE_DU_COLOSSE`, `peindreLeColosse`) : plus de pattes. Deux paires d'ailes de
+  membrane nervurée qui vibrent et se plaquent en arrière quand il charge ; deux réacteurs de bile aux flancs du thorax,
+  qui luisent, fort en charge ; un dard d'os ; deux grands yeux composés ; des mandibules. La carapace peinte au pixel est
+  désormais la tête, le thorax (arête d'os sur le dos, deux plaques) et quatre anneaux d'abdomen (un bourrelet d'os à
+  l'avant de chacun), qui respirent.
+- **Les attaques** (`invasion.colosse.attaques`, `menerLeColosse`, `Ennemi.attaque`) : il se tient à 70 du vaisseau ;
+  2,5 s après sa naissance puis 2,2 s après chaque attaque, s'il voit le vaisseau (220), il en prépare une — tour à tour :
+  - **la charge** : télégraphe 1,1 s, immobile, ailes plaquées — un couloir rouge large comme lui, de 150, vers où était
+    le vaisseau, qui se remplit de lui vers son bout, des chevrons y courent ; puis il le parcourt à 280 et percute le
+    vaisseau qui y est resté (cinq morsures, une fois) ;
+  - **la salve** : télégraphe 0,8 s — une couronne de traits courts dans les directions des crachats ; puis deux couronnes
+    de douze crachats, à 0,4 s, la seconde décalée d'une demi-maille, un crachat droit sur le vaisseau ;
+  - **l'onde**, si le vaisseau est à 56 de lui (sinon la salve) : le cercle de danger de la larve, rayon 62, 1 s ; puis
+    le vaisseau dedans encaisse quatre morsures.
+  Après chaque attaque, 0,7 s immobile. Étourdi par sa jauge, l'attaque en cours est perdue. Télégraphes rouges et sobres,
+  comme la règle le veut (`dessinerLesTelegraphesDuColosse`, `dessinerUnCercleDeDanger`).
+- Vérifié : loin, la charge puis la salve ; la charge percute le vaisseau resté dans le couloir, pas celui qui en sort
+  pendant le télégraphe ; 24 crachats ; l'onde touche le vaisseau tout près. Vu en capture : le couloir, la couronne de
+  crachats, la nouvelle silhouette. Chiffres de moi.

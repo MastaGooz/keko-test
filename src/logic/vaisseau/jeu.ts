@@ -392,7 +392,18 @@ export const VAISSEAU = {
      * ÉTOURDI `duree` secondes — il ne bouge ni ne mord — et elle repart de zéro ; pendant ce temps, rien ne la remplit.
      * Sans contrôle depuis `repit` secondes, elle fond de `fonte` par seconde. *Chiffres de moi.*
      */
-    colosse: { vie: 60, taille: 4, vitesse: 24 / 40, morsure: 4, butin: 60, debut: 0, montee: 1e-6, part: 0, premier: 150, tous: 180, stagger: { max: 100, givre: 5, givrePas: 0.25, gel: 30, etourdi: 25, duree: 3, fonte: 4, repit: 2 } },
+    colosse: { vie: 60, taille: 4, vitesse: 24 / 40, morsure: 4, butin: 60, debut: 0, montee: 1e-6, part: 0, premier: 150, tous: 180, stagger: { max: 100, givre: 5, givrePas: 0.25, gel: 30, etourdi: 25, duree: 3, fonte: 4, repit: 2 },
+      // (SES ATTAQUES — Keko, 28/11 : « il faudrait qu'il ait au moins 2 ou 3 attaques différentes, comme une charge avec un
+      // télégraphe qui indique un trait large, le couloir de sa charge ; pourquoi pas un tir ; et je te laisse imaginer le
+      // reste — un set de 2 ou 3 moves qui correspondent à un mini-boss, car là, il ne fait rien du tout » : voir
+      // `menerLeColosse`. Il se tient à `garde` du vaisseau ; `pause` secondes après chaque attaque (la première à
+      // `premiere`), s'il voit le vaisseau à `vue`, il en prépare une — LA CHARGE, LA SALVE, L'ONDE tour à tour (l'onde
+      // seulement si le vaisseau est à sa portée, sinon la salve) ; chacune TÉLÉGRAPHIÉE `prepare` secondes, immobile, puis jouée, puis `repos` secondes
+      // immobile. LA CHARGE : un couloir large comme lui, de `longueur`, vers où était le vaisseau ; il le parcourt à
+      // `vitesse`, et le vaisseau qu'il percute encaisse `degats` morsures, une fois. LA SALVE : `vagues` couronnes de `n`
+      // crachats, l'une décalée d'une demi-maille, `ecart` secondes l'une après l'autre. L'ONDE : un cercle de `rayon`
+      // autour de lui ; à la fin, le vaisseau dedans encaisse `degats` morsures. Étourdi, l'attaque en cours est perdue.)
+      attaques: { premiere: 2.5, pause: 2.2, vue: 220, garde: 70, repos: 0.7, charge: { prepare: 1.1, longueur: 150, vitesse: 280, degats: 5 }, salve: { prepare: 0.8, n: 12, vagues: 2, ecart: 0.4, vitesse: 75, vie: 3, degats: 2 }, onde: { prepare: 1, rayon: 62, degats: 4 } } },
     cracheurLourd: { vie: 6, taille: 2, vitesse: 28 / 40, morsure: 2, butin: 12, debut: 120, montee: 300, part: 0.03, tir: { portee: 115, garde: 75, cadence: 3.2, charge: 0.65, vitesse: 95, vie: 2.6, degats: 2, eventail: { n: 3, ecart: 0.32 } } },
     /**
      * LES TROIS PÉPITES (Keko, 21/11 : « différentes pépites, une petite, une moyenne et une grosse, afin que les ennemis
@@ -1768,6 +1779,11 @@ export type Ennemi = {
   staggerA?: number
   staggerGivreA?: number
   stunA?: number
+  /** L'ATTAQUE EN COURS DU COLOSSE (voir `menerLeColosse`) : laquelle, sa phase et depuis quand, sa direction et son départ, s'il a touché, combien de vagues parties. */
+  attaque?: { sorte: 'charge' | 'salve' | 'onde'; phase: 'prepare' | 'agit' | 'repos'; depuis: number; dx: number; dy: number; x0: number; y0: number; touche: boolean; vagues: number }
+  /** Quand le colosse pourra attaquer, et combien d'attaques il a lancées. */
+  attaqueA?: number
+  coups?: number
   viseA?: number
   amorceA?: number
   /** UNE MORSURE CRITIQUE DE LA NUÉE A PONDU EN LUI (voir `Arme.eclosion`) : jusqu'à quand, et de quelle arme. */
@@ -2139,6 +2155,11 @@ export type Evenement =
   | { type: 'cracheurVise'; id: number; x: number; y: number }
   /** La jauge d'un grand est pleine : il est étourdi (voir `ebranler`). */
   | { type: 'stagger'; id: number; x: number; y: number }
+  /** Le colosse prépare une attaque, charge, crache une couronne, frappe d'une onde (voir `menerLeColosse`). */
+  | { type: 'colossePrepare'; id: number; sorte: 'charge' | 'salve' | 'onde'; x: number; y: number }
+  | { type: 'colosseCharge'; id: number; x: number; y: number }
+  | { type: 'colosseSalve'; id: number; x: number; y: number }
+  | { type: 'colosseOnde'; id: number; x: number; y: number; rayon: number; touche: boolean }
   | { type: 'cracheurCrache'; id: number; x: number; y: number }
   /** Une larve explosive s'amorce, puis explose (voir `invasion.larve`) ; `touche` : le vaisseau était dans sa zone. */
   | { type: 'larveAmorcee'; id: number; x: number; y: number; rayon: number; delai: number }
@@ -3467,6 +3488,8 @@ function conduireLInsecte(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number, ev
       return []
     }
   }
+  // LE COLOSSE ATTAQUE (voir `invasion.colosse.attaques`) : pendant une attaque, c'est elle qui le mène
+  if (e.sorte === 'colosse' && menerLeColosse(c, m, e, dt, ev, enVol && !abattu, fige, v, cible?.k)) return []
   let direction: Vecteur
   if (I.sansPortail && abattu) {
     // LE JOUEUR ABATTU, ILS ERRENT (Keko, 21/11 : « à partir du moment où un ennemi réussit à nous tuer, on laisse les
@@ -3505,6 +3528,8 @@ function conduireLInsecte(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number, ev
       else if (dj < tr.garde) direction = { x: -direction.x * 0.6, y: -direction.y * 0.6 }
       else if (dj <= tr.portee) direction = { x: direction.x * 0.15, y: direction.y * 0.15 }
     }
+    // (LE COLOSSE tient sa place à sa garde, entre deux attaques — voir `invasion.colosse.attaques`)
+    if (e.sorte === 'colosse' && dj < I.colosse.attaques.garde) direction = { x: direction.x * 0.1, y: direction.y * 0.1 }
     // (la larve explosive ne mord pas : elle explose — voir plus haut)
     if (enVol && !fige && e.sorte !== 'larve' && dj <= c.rayon + rayonDe(c, e) + 2 && m.t >= (e.mordA ?? 0)) {
       e.mordA = m.t + I.cadenceMorsure
@@ -3622,6 +3647,86 @@ function conduireLInsecte(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number, ev
   return []
 }
 
+/**
+ * LES ATTAQUES DU COLOSSE (voir `invasion.colosse.attaques`) : rend vrai tant qu'une attaque le mène (il ne se conduit pas
+ * lui-même). `vise` : le vaisseau qu'il chasse est en vol ; `k` : son pilote, à plusieurs.
+ */
+function menerLeColosse(c: ConfigVaisseau, m: Monde, e: Ennemi, dt: number, ev: Evenement[], vise: boolean, fige: boolean, v: Vaisseau, k?: number): boolean {
+  const I = c.invasion
+  const A = I.colosse.attaques
+  const b = e.corps
+  // (étourdi, figé : l'attaque en cours est perdue)
+  if (fige) {
+    if (e.attaque !== undefined) (e.attaque = undefined), (e.attaqueA = m.t + A.pause)
+    return false
+  }
+  const frapper = (degats: number): void => {
+    if (m.equipage === undefined || k === undefined || k === m.equipage.actif) encaisser(c, m, v.x, v.y, I.morsure * degats, ev)
+    else m.equipage.pilotes[k].morsures.push({ x: v.x, y: v.y, degats: I.morsure * degats })
+  }
+  const dj = Math.hypot(v.x - b.x, v.y - b.y) || 1
+  e.attaqueA ??= m.t + A.premiere
+  if (e.attaque === undefined) {
+    if (!vise || m.t < e.attaqueA || dj > A.vue) return false
+    const n = e.coups ?? 0
+    // (tour à tour la charge, la salve, l'onde — l'onde seulement si le vaisseau est à sa portée, sinon la salve)
+    const tour = (['charge', 'salve', 'onde'] as const)[n % 3]
+    const sorte: 'charge' | 'salve' | 'onde' = tour === 'onde' && dj > A.onde.rayon * 0.9 ? 'salve' : tour
+    e.coups = n + 1
+    e.attaque = { sorte, phase: 'prepare', depuis: m.t, dx: (v.x - b.x) / dj, dy: (v.y - b.y) / dj, x0: b.x, y0: b.y, touche: false, vagues: 0 }
+    ev.push({ type: 'colossePrepare', id: e.id, sorte, x: b.x, y: b.y })
+  }
+  const at = e.attaque
+  const age = m.t - at.depuis
+  if (at.phase === 'prepare') {
+    // (immobile, tourné vers son couloir — ou vers le vaisseau)
+    e.corps = { ...b, vx: 0, vy: 0, cap: at.sorte === 'charge' ? Math.atan2(at.dy, at.dx) : Math.atan2(v.y - b.y, v.x - b.x) }
+    if (age < A[at.sorte].prepare) return true
+    at.phase = 'agit'
+    at.depuis = m.t
+    at.x0 = b.x
+    at.y0 = b.y
+    if (at.sorte === 'charge') ev.push({ type: 'colosseCharge', id: e.id, x: b.x, y: b.y })
+    if (at.sorte === 'onde') {
+      const touche = vise && dj <= A.onde.rayon
+      ev.push({ type: 'colosseOnde', id: e.id, x: b.x, y: b.y, rayon: A.onde.rayon, touche })
+      if (touche) frapper(A.onde.degats)
+      ;(at.phase = 'repos'), (at.depuis = m.t)
+    }
+    return true
+  }
+  if (at.phase === 'agit' && at.sorte === 'charge') {
+    // (il file dans son couloir ; le vaisseau qu'il percute encaisse, une fois ; au bout, ou au bord de la tempête, il s'arrête)
+    const ch = A.charge
+    const pas = ch.vitesse * dt
+    e.corps = { ...b, x: b.x + at.dx * pas, y: b.y + at.dy * pas, vx: at.dx * ch.vitesse, vy: at.dy * ch.vitesse, cap: Math.atan2(at.dy, at.dx) }
+    if (!at.touche && vise && Math.hypot(v.x - e.corps.x, v.y - e.corps.y) <= rayonDe(c, e) + c.rayon) (at.touche = true), frapper(ch.degats)
+    const auBord = c.arene.active && Math.hypot(e.corps.x, e.corps.y) > c.arene.rayon - rayonDe(c, e)
+    if (Math.hypot(e.corps.x - at.x0, e.corps.y - at.y0) >= ch.longueur || auBord) (at.phase = 'repos'), (at.depuis = m.t), (e.corps = { ...e.corps, vx: 0, vy: 0 })
+    return true
+  }
+  if (at.phase === 'agit' && at.sorte === 'salve') {
+    // (les couronnes, l'une après l'autre ; la première a un crachat droit sur le vaisseau, la suivante est décalée d'une demi-maille)
+    const sv = A.salve
+    e.corps = { ...b, vx: 0, vy: 0 }
+    while (at.vagues < sv.vagues && age >= at.vagues * sv.ecart) {
+      const a0 = Math.atan2(at.dy, at.dx) + (at.vagues % 2) * (Math.PI / sv.n)
+      const r0 = rayonDe(c, e) * 0.8
+      for (let q = 0; q < sv.n; q++) {
+        const a = a0 + (q * Math.PI * 2) / sv.n
+        m.tirs.push({ id: m.prochainId++, x: b.x + Math.cos(a) * r0, y: b.y + Math.sin(a) * r0, vx: Math.cos(a) * sv.vitesse, vy: Math.sin(a) * sv.vitesse, vie: sv.vie, degats: I.morsure * sv.degats, arme: 'crachat' })
+      }
+      at.vagues += 1
+      ev.push({ type: 'colosseSalve', id: e.id, x: b.x, y: b.y })
+    }
+    if (at.vagues >= sv.vagues) (at.phase = 'repos'), (at.depuis = m.t)
+    return true
+  }
+  // (le repos : immobile, puis la pause avant la suivante)
+  e.corps = { ...b, vx: 0, vy: 0 }
+  if (age >= A.repos) (e.attaque = undefined), (e.attaqueA = m.t + A.pause)
+  return true
+}
 /** LES COLOSSES (voir `invasion.colosse`) : le prochain naît à son heure, un seul à la fois ; leur jauge fond sans contrôle. */
 function menerLesColosses(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement[]): void {
   const co = c.invasion.colosse
