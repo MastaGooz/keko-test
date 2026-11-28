@@ -9853,3 +9853,10 @@ texture qu'on met sous les ennemis et sous le joueur, quelque chose d'esthétiqu
     attaque explosive. En tout cas, son cadavre lance l'attaque explosive. » — abattue, elle lâche son butin et laisse un
     cadavre (`Monde.larvesMortes`, `menerLesLarvesMortes`) : amorcé à sa mort, ou gardant le compte déjà lancé, il explose
     de même. La tuer n'annule donc plus l'explosion : on la tue DE LOIN. Morte dans la tempête, elle ne laisse rien.
+- **Le télégraphe épuré** (Keko, 28/11 : « Je trouve le télégraphe trop chargé. On veut une forme circulaire, plus
+  minimaliste, avec moins de détails, mais qui donne sa qualité dans l'animation. Peut-être on dessine le cercle
+  périphérique et on le remplit peu à peu avec un motif certes minimaliste mais animé ») : plus de veines, de lobes ni de
+  pustules. Le cercle de la zone, un trait fin et net, se pose en s'ouvrant (0,12 s) ; un disque translucide le remplit du
+  centre vers le bord, son front souligné — quand le front touche le cercle, ça explose ; dedans, de fines ondes courent
+  vers le bord ; dans le dernier quart, le cercle et le front battent en clair. **À retenir pour les prochains
+  télégraphes : une forme simple, lisible, et la qualité dans l'animation.**

@@ -14395,7 +14395,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * LE TÉLÉGRAPHE DE LA LARVE EXPLOSIVE (Keko, 28/11 : « un télégraphe de la zone circulaire autour de l'ennemi, qui permet
    * au joueur de voir que cette zone est un danger avant l'explosion. On va bien se concentrer sur la texture : pas un
    * vulgaire rond rouge. Une texture qu'on met sous les ennemis et sous le joueur, quelque chose d'esthétique ») : AU SOL,
-   * sous tout le monde, UNE TOILE DE VEINES qui pousse de la larve — une tache sombre et translucide, au bord en lobes,
+   * sous tout le monde. (LE PREMIER, REMPLACÉ — voir plus bas, « épuré » :) UNE TOILE DE VEINES qui pousse de la larve — une tache sombre et translucide, au bord en lobes,
    * comme une membrane posée ; des veines de bile qui partent du centre en se tordant, se ramifient vers le bord et
    * S'ALLUMENT DU CENTRE VERS LE BORD à mesure que le délai passe (elles touchent le bord aux quatre cinquièmes), une onde
    * de lumière qui court dedans ; LE BORD, une couronne de pustules qui gonflent, d'abord pâle, puis nette — c'est lui qui
@@ -14414,50 +14414,30 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       if (!place) (p.place(W / 2 - camera.x, centreY() - camera.y), (place = true))
       const u = Math.max(0, Math.min(1, (m.t - e.amorceA) / ex.delai))
       const R = ex.rayon
-      const g = e.id * 1.7
-      // (elle s'étale en un dixième de seconde ; les veines gagnent le bord aux quatre cinquièmes du délai)
-      const etale = Math.min(1, (m.t - e.amorceA) / 0.1)
-      const front = Math.min(1, u * 1.25)
+      // (… ÉPURÉ — Keko, 28/11 : la toile de veines, « trop chargée. On veut une forme circulaire, plus minimaliste, avec
+      // moins de détails, mais qui donne sa qualité dans l'animation. Peut-être on dessine le cercle périphérique et on le
+      // remplit peu à peu avec un motif certes minimaliste mais animé » : LE CERCLE de la zone, un trait fin et net, qui
+      // se pose en s'ouvrant ; UN DISQUE translucide qui le remplit du centre vers le bord, son front souligné d'un trait —
+      // quand le front touche le cercle, ça explose ; dedans, de fines ondes qui courent vers le bord ; dans le dernier
+      // quart, le cercle et le front battent en clair, de plus en plus vite)
+      const ouvre = 1 - (1 - Math.min(1, (m.t - e.amorceA) / 0.12)) ** 3
       const alerte = u > 0.75 && Math.sin((u - 0.75) * (50 + 90 * (u - 0.75))) > 0
-      const bord = (ang: number): number => (0.93 + 0.04 * Math.sin(ang * 9 + g) + 0.03 * Math.sin(ang * 17 - g * 2)) * etale
-      // (une veine : > 0 dessus — neuf maîtresses qui se tordent, dix-huit rameaux au-delà du milieu ; leur largeur, un
-      // pixel et demi à toute distance)
-      const veine = (d: number, ang: number): number => {
-        const tordu = ang + 0.35 * Math.sin(d * 7 + g) + 0.15 * Math.sin(d * 15 - g)
-        const pix = d * R + 1
-        const v1 = 1 - Math.abs(Math.sin(tordu * 4.5 + g)) / (3.6 / pix)
-        const v2 = d > 0.45 ? 0.8 * (1 - Math.abs(Math.sin(tordu * 9 + 1.3 + g)) / (5.5 / pix)) : 0
-        return Math.max(v1, v2)
-      }
-      // (la couronne : large de deux pixels et demi, des pustules tous les vingt degrés qui tournent doucement)
-      const couronne = 2.5 / R
-      const pustule = (ang: number): number => 0.5 + 0.5 * Math.sin(ang * 18 + g + m.t * 1.5)
-      const onde = (d: number): number => Math.max(0, 1 - Math.abs(d - ((m.t * 1.6 + g) % 1) * front) / 0.08)
+      const front = u
+      const trait = 1.5 / R
       p.disc(
         e.x,
         e.y,
-        R,
-        (d, ang) => {
-          const b = bord(ang)
-          if (d > b - couronne) return alerte ? N.WHITE : TOILE[pustule(ang) > 0.6 ? 6 : 4 + Math.round(u)]
-          const v = veine(d, ang)
-          if (v > 0) {
-            if (d > front * b) return TOILE[2]
-            if (alerte) return TOILE[6]
-            return TOILE[Math.min(6, 3 + Math.round(2 * Math.max(onde(d), 1 - (front * b - d) * 6) + (v > 0.5 ? 1 : 0)))]
-          }
-          return d < 0.22 ? TOILE[1] : TOILE[0]
-        },
-        (d, ang) => {
-          const b = bord(ang)
-          if (d > b) return 0
-          if (d > b - couronne) return (0.3 + 0.7 * u) * (pustule(ang) > 0.35 ? 1 : 0.35)
-          const v = veine(d, ang)
-          if (v > 0) return d > front * b ? 0.35 : 0.9
-          // (le fond : une membrane translucide, plus dense au cœur, qui bat avec le délai)
-          return (0.24 + 0.14 * u + 0.08 * Math.sin(m.t * (6 + 16 * u) + g)) * (1 - 0.35 * d)
+        R * ouvre,
+        (d) => (d > front - trait ? (alerte ? TOILE[6] : TOILE[4]) : TOILE[3]),
+        (d) => {
+          if (d > front) return 0
+          if (d > front - trait) return 0.8
+          // (les ondes : un fil plus clair tous les sept pixels, qui file vers le bord)
+          const onde = Math.max(0, Math.sin(d * R * 0.9 - m.t * 9)) ** 6
+          return 0.15 + 0.07 * u + 0.16 * onde
         },
       )
+      p.ring(e.x, e.y, R * ouvre, 1, alerte ? TOILE[6] : TOILE[4], 0.55 + 0.45 * u)
     }
     if (place) p.place(0, 0)
   }
