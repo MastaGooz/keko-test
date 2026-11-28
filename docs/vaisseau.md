@@ -9781,3 +9781,17 @@ actifs, toujours un actif, mais pas plus d'un, soit un rejeton alpha qui fasse p
 - Constaté au passage : `rejeton` n'est pas dans `POSEES`, la carte « Cadence / durée » presse leur ponte sans allonger
   leur vie.
 - **Les crochets de glace des Abyssaux** (Keko, 28/11 : « changer la couleur des pointes pour qu'elles évoquent la glace ; un petit truc visuel qui montre qu'ils ont des crochets de glace ») : le dernier quart de chaque tentacule du bleu au blanc, une griffe de glace recourbée au bout, qui scintille ; la tentacule qui frappe finit en glace, un éclat à sa pointe.
+
+### Les Rejetons : Lignée et Faucheurs (28/11)
+
+Keko : « Ok pour la carte lignée. Et on va rajouter une autre carte qui fait que, un peu comme les tentacules du Kraken,
+le rejeton fait des slashes de zone. Ce qui permettrait d'avoir au moins une carte qui joue sur les effets de zone. »
+
+- **Lignée** (`Arme.lignee { vie, pas, max, plafond }`) : un rejeton (pas un petit) qui tue un insecte gagne 2 s
+  (`Rejeton.sursis`) et grossit de 10 % — dégâts, et moitié autant à l'écran (`Rejeton.lignee`) —, jusqu'au double ; sa vie
+  entière ne dépasse pas 30 s. Une roche brisée ne compte pas.
+- **Faucheurs** (`Arme.faux { rayon, ouverture, part }`) : le coup du rejeton devient un slash — un arc de 34, ±1 rad autour
+  de sa proie — qui frappe tout ce qu'il couvre, roches comprises, à 80 % des dégâts ; chacun tire son critique, la Mitose
+  ne donne qu'un petit par coup. La carte « Zone / portée » grandit `rayon`. À l'écran, le croissant du « Sword slash » de
+  pixelfx (la liste `entailles`), d'un sens puis de l'autre, en glace avec les Abyssaux ; la tentacule fouette toujours.
+- Nom « Faucheurs » et chiffres de moi.

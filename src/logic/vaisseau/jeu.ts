@@ -1327,6 +1327,19 @@ export type Arme = {
    */
   alpha?: { degats: number }
   /**
+   * LA LIGNÉE (les Rejetons — Keko, 28/11 : « ok pour la carte lignée ») : un rejeton — pas un petit — qui TUE un insecte
+   * gagne `vie` secondes et GROSSIT de `pas` (taille et dégâts), jusqu'à `max` (1 : le double) ; sa vie entière ne dépasse
+   * pas `plafond` secondes. L'état est `Rejeton.lignee`, `Rejeton.sursis`.
+   */
+  lignee?: { vie: number; pas: number; max: number; plafond: number }
+  /**
+   * LES FAUCHEURS (les Rejetons — Keko, 28/11 : « un peu comme les tentacules du Kraken, le rejeton fait des slashes de zone ;
+   * ce qui permettrait d'avoir au moins une carte qui joue sur les effets de zone ») : son coup devient UN SLASH — un arc de
+   * `rayon`, ouvert de `ouverture` de part et d'autre de sa proie —, qui frappe tout ce qu'il couvre, roches comprises, à
+   * `part` des dégâts ; chacun tire son critique. La carte « Zone / portée » grandit son rayon.
+   */
+  faux?: { rayon: number; ouverture: number; part: number }
+  /**
    * UN CRACHAT D'ACIDE (la première arme de la Vouivre, Keko, 16/11 : « un vaisseau alien organique spécialisé dans la
    * corrosion et le toxique ; un crachat : un cône d'acide craché devant, qui laisse une trace — une flaque conique ; le
    * crachat et la flaque infligent le statut ACIDE, qui inflige des dégâts faibles mais augmente les dégâts subis de
@@ -1886,7 +1899,7 @@ export type Monde = {
 }
 
 /** Un rejeton du Kraken (voir `Arme.rejeton`) : son arme, où, sa vitesse, quand il est né, sa proie, son prochain coup. */
-export type Rejeton = { id: number; arme: number; x: number; y: number; vx: number; vy: number; nee: number; cible: number | null; frappeA: number; /** Né d'une Mitose (voir `Arme.mitose`). */ petit?: boolean; /** L'alpha (voir `Arme.alpha`). */ alpha?: boolean }
+export type Rejeton = { id: number; arme: number; x: number; y: number; vx: number; vy: number; nee: number; cible: number | null; frappeA: number; /** Né d'une Mitose (voir `Arme.mitose`). */ petit?: boolean; /** L'alpha (voir `Arme.alpha`). */ alpha?: boolean; /** Sa lignée (voir `Arme.lignee`) : ce qu'il a gagné de dégâts et de taille (0 à `max`), et de vie, en secondes. */ lignee?: number; sursis?: number; /** Ses slashes comptés, pour alterner leur sens (voir `Arme.faux`). */ fauches?: number }
 
 /**
  * Une tentacule (voir `Arme.tentacule`) : son arme, son ancre, ce qu'elle fait (au repos, elle s'étend, plantée, elle se
@@ -2046,6 +2059,8 @@ export type Evenement =
   /** Un rejeton naît, fouette sa proie (où elle est), s'éteint (voir `Arme.rejeton`). */
   | { type: 'rejeton'; x: number; y: number }
   | { type: 'coupDeRejeton'; id: number; x: number; y: number }
+  /** Le slash d'un rejeton faucheur (voir `Arme.faux`) : d'où, vers quel cap, dans quel sens, son arc. */
+  | { type: 'faucheDeRejeton'; id: number; x: number; y: number; cap: number; sens: number; rayon: number; ouverture: number }
   | { type: 'rejetonFini'; x: number; y: number }
   /** Une vrille d'ombre sort de sa flaque, saisit sa proie, la serre (signalé toutes les `periode` secondes), se fait arracher par un grand, rentre (voir `Arme.vrille`). */
   | { type: 'vrille'; id: number; x: number; y: number }
@@ -5356,7 +5371,7 @@ function menerLesRejetons(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement
     const r = m.rejetons[k]
     const a = c.armes[r.arme]
     const rj = a?.rejeton
-    if (a === undefined || rj === undefined || m.t - r.nee >= (r.petit === true ? (a.mitose?.duree ?? 0) : rj.duree) || m.phase !== 'vol') {
+    if (a === undefined || rj === undefined || m.t - r.nee >= (r.petit === true ? (a.mitose?.duree ?? 0) : rj.duree + (r.sursis ?? 0)) || m.phase !== 'vol') {
       m.rejetons.splice(k, 1)
       ev.push({ type: 'rejetonFini', x: r.x, y: r.y })
       continue
@@ -5398,21 +5413,49 @@ function menerLesRejetons(c: ConfigVaisseau, m: Monde, dt: number, ev: Evenement
     // (à portée de tentacule : il fouette)
     if (proie !== undefined && dist(proie) <= rj.allonge + rayonDe(c, proie) && m.t >= r.frappeA) {
       r.frappeA = m.t + rj.periode
-      const critique = critiqueSur(c, m, a, proie, () => tire(m.graine, m.prochainId++, 12))
-      // (l'alpha frappe plus fort, un petit moins — voir `Arme.alpha`, `Arme.mitose` ; et son élément, les Abyssaux givrent)
-      const force = (r.alpha === true ? (a.alpha?.degats ?? 1) : 1) * (r.petit === true ? (a.mitose?.part ?? 1) : 1)
-      proie.pv -= a.degats * force * (critique ? facteurSur(c, m, a, proie) : 1)
-      effetsDuCoup(c, m, a, proie, ev)
-      // (LA MITOSE : son critique le divise — un petit, qui ne se divisera pas)
+      // (l'alpha frappe plus fort, un petit moins, un rejeton de lignée selon ce qu'il a tué — voir `Arme.alpha`,
+      // `Arme.mitose`, `Arme.lignee`)
+      const fa = a.faux
+      const force = (r.alpha === true ? (a.alpha?.degats ?? 1) : 1) * (r.petit === true ? (a.mitose?.part ?? 1) : 1) * (1 + (r.lignee ?? 0)) * (fa?.part ?? 1)
+      // (QUI IL TOUCHE : sa proie ; FAUCHEUR, tout ce qui est dans l'arc de son slash, tourné vers elle — voir `Arme.faux`)
+      const cap = Math.atan2(proie.corps.y - r.y, proie.corps.x - r.x)
+      const dansLArc = (e: Ennemi): boolean => {
+        if (fa === undefined || dist(e) > fa.rayon + rayonDe(c, e)) return false
+        let ec = Math.atan2(e.corps.y - r.y, e.corps.x - r.x) - cap
+        while (ec > Math.PI) ec -= Math.PI * 2
+        while (ec < -Math.PI) ec += Math.PI * 2
+        return Math.abs(ec) <= fa.ouverture
+      }
+      const touches = fa === undefined ? [proie] : m.ennemis.filter((e) => e === proie || ((e.asteroide !== undefined || e.pv > 0) && dansLArc(e)))
+      if (fa !== undefined) ev.push({ type: 'faucheDeRejeton', id: r.id, x: r.x, y: r.y, cap, sens: (r.fauches = (r.fauches ?? 0) + 1) % 2 === 0 ? 1 : -1, rayon: fa.rayon, ouverture: fa.ouverture })
+      ev.push({ type: 'coupDeRejeton', id: r.id, x: proie.corps.x, y: proie.corps.y })
+      let unCritique = false
+      let tues = 0
+      for (const e of touches) {
+        const critique = critiqueSur(c, m, a, e, () => tire(m.graine, m.prochainId++, 12))
+        unCritique ||= critique
+        e.pv -= a.degats * force * (critique ? facteurSur(c, m, a, e) : 1)
+        // (son élément : les Abyssaux givrent)
+        effetsDuCoup(c, m, a, e, ev)
+        ev.push({ type: 'ennemiTouche', id: e.id, x: e.corps.x, y: e.corps.y, critique })
+        if (e.pv <= 0) {
+          if (e.asteroide === undefined) tues += 1
+          abattreLEnnemi(c, m, e, ev)
+        }
+      }
+      // (LA MITOSE : son critique le divise — un petit, qui ne se divisera pas ; un par coup)
       const mi = a.mitose
-      if (critique && mi !== undefined && r.petit !== true && m.rejetons.filter((x) => x.arme === r.arme && x.petit === true).length < mi.max) {
+      if (unCritique && mi !== undefined && r.petit !== true && m.rejetons.filter((x) => x.arme === r.arme && x.petit === true).length < mi.max) {
         const an = tire(m.graine, m.prochainId++, 13) * Math.PI * 2
         m.rejetons.push({ id: m.prochainId++, arme: r.arme, x: r.x + Math.cos(an) * 4, y: r.y + Math.sin(an) * 4, vx: Math.cos(an) * 30, vy: Math.sin(an) * 30, nee: m.t, cible: null, frappeA: m.t + rj.periode, petit: true })
         ev.push({ type: 'rejeton', x: r.x, y: r.y })
       }
-      ev.push({ type: 'coupDeRejeton', id: r.id, x: proie.corps.x, y: proie.corps.y })
-      ev.push({ type: 'ennemiTouche', id: proie.id, x: proie.corps.x, y: proie.corps.y, critique })
-      if (proie.pv <= 0) abattreLEnnemi(c, m, proie, ev)
+      // (LA LIGNÉE : il a tué — il vivra plus longtemps, et grossit ; voir `Arme.lignee`)
+      const li = a.lignee
+      if (li !== undefined && r.petit !== true && tues > 0) {
+        r.sursis = Math.min(Math.max(0, li.plafond - rj.duree), (r.sursis ?? 0) + li.vie * tues)
+        r.lignee = Math.min(li.max, (r.lignee ?? 0) + li.pas * tues)
+      }
     }
   }
 }

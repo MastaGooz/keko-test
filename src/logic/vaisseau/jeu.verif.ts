@@ -1971,6 +1971,27 @@ console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
     const al = avec({ ...rejeton, alpha: { degats: 2 } }, 0, 2)
     const base = avec(rejeton, 0, 2)
     const al3 = avec({ ...rejeton, alpha: { degats: 2 } }, 0, 12)
+    // (LIGNÉE : un rejeton qui tue grossit et gagne du temps ; FAUCHEURS : le voisin dans l'arc est fauché, pas celui de derrière)
+    {
+      const jouer = (arme: object, places: [number, number, number][], duree: number) => {
+        const conf = { ...cfg, armes: [arme as Arme] }
+        const w = nouveauMonde(conf, 3)
+        places.forEach(([x, y, pv], k) => w.ennemis.push({ ...insecte(k + 1, x, y), pv }))
+        const ev: Evenement[] = []
+        for (let i = 0; i < 60 * duree; i++) {
+          for (const e of w.ennemis) if (e.id <= places.length) e.corps = { ...e.corps, x: places[e.id - 1][0], y: places[e.id - 1][1], vx: 0, vy: 0 }
+          w.vaisseau = { ...w.vaisseau, x: 0, y: 0, vx: 0, vy: 0 }
+          ev.push(...avancerLeMonde(conf, w, 1 / 60, { x: 0, y: 0 }).evenements)
+        }
+        return { w, ev }
+      }
+      const li = jouer({ ...rejeton, lignee: { vie: 2, pas: 0.1, max: 1, plafond: 30 } }, [[60, 0, 4], [64, 0, 100000]], 3)
+      const r0 = li.w.rejetons[0]
+      verifier(`Lignée : le rejeton qui a tué a grossi de ${r0?.lignee} et gagné ${r0?.sursis} s`, r0?.lignee === 0.1 && r0?.sursis === 2)
+      const fx = jouer({ ...rejeton, faux: { rayon: 34, ouverture: 1, part: 0.5 } }, [[60, 0, 100000], [60, 12, 100000], [-200, 0, 100000]], 2)
+      const perdu = fx.w.ennemis.map((e) => 100000 - e.pv)
+      verifier(`Faucheurs : le slash frappe la proie (${perdu[0]}) et son voisin dans l'arc (${perdu[1]}), à la moitié des dégâts, pas l'insecte au loin (${perdu[2]})`, perdu[0] > 0 && perdu[0] % 2 === 0 && perdu[1] > 0 && perdu[2] === 0 && fx.ev.some((e) => e.type === 'faucheDeRejeton'))
+    }
     verifier(`Alpha : seul, le premier rejeton est l'alpha et frappe double (${al.perdu} contre ${base.perdu}) ; à trois, un seul alpha (${al3.alphas})`, al.perdu === 2 * base.perdu && base.perdu > 0 && al3.alphas === 1 && al3.grands === 3)
   }
   // (UN INSECTE QUI NE S'ARRÊTE PAS — Keko, 16/11 : « ils poursuivent toujours sans attaquer » : il tourne en rond à la

@@ -732,8 +732,8 @@ export const MUTATIONS: Mutation[] = [
   // ennemis tués par la nuée donnent leurs cristaux tout de suite, sans les lâcher, et 25 % de plus — chiffre de moi ; voir
   // `Arme.charognards`)
   variation('nuee-charognards', 'nuee', 'Charognards', 'Les ennemis tués par la nuée donnent aussitôt plus de cristaux.', changerA('nuee', (a) => ({ ...a, charognards: { bonus: 0.25 } }))),
-  // LES REJETONS DU KRAKEN (Keko, 28/11 : « OK pour Abyssaux, Mitose et Alpha » ; Lignée, Étreinte, Dernier souffle, Meute,
-  // Garde et Nichée proposées, pas retenues pour l'instant)
+  // LES REJETONS DU KRAKEN (Keko, 28/11 : « OK pour Abyssaux, Mitose et Alpha », puis Lignée et les Faucheurs ; Étreinte,
+  // Dernier souffle, Meute, Garde et Nichée proposées, pas retenues pour l'instant)
   // (« ABYSSAUX », LEUR ÉLÉMENT, le givre — la Tentacule a l'électrocution, la Nuée la brûlure)
   variation('rejetons-abyssaux', 'rejeton', 'Abyssaux', 'Les coups des rejetons appliquent givre.', changerA('rejeton', V.cryo)),
   // (« MITOSE », LEUR VARIATION SUR COUP CRITIQUE : un petit rejeton, 4 s, la moitié des dégâts, trois au plus, qui ne se
@@ -742,6 +742,12 @@ export const MUTATIONS: Mutation[] = [
   // (« ALPHA » — Keko : « un des rejetons actifs, toujours un, mais pas plus d'un, soit un alpha qui fasse plus de dégâts.
   // Mais c'est tout » — d'abord proposé en rejeton unique et permanent : deux fois les dégâts, chiffre de moi ; voir `Arme.alpha`)
   variation('rejetons-alpha', 'rejeton', 'Alpha', 'Un des rejetons est un alpha, deux fois plus fort.', changerA('rejeton', (a) => ({ ...a, alpha: { degats: 2 } }))),
+  // (« LIGNÉE » — Keko, 28/11 : « ok pour la carte lignée » : un rejeton qui tue gagne 2 s et grossit de 10 %, jusqu'au double,
+  // 30 s de vie au plus — chiffres de moi ; voir `Arme.lignee`)
+  variation('rejetons-lignee', 'rejeton', 'Lignée', 'Un rejeton qui tue vit plus longtemps et grossit.', changerA('rejeton', (a) => ({ ...a, lignee: { vie: 2, pas: 0.1, max: 1, plafond: 30 } }))),
+  // (« FAUCHEURS » — Keko, 28/11 : « un peu comme les tentacules du Kraken, le rejeton fait des slashes de zone » : son coup
+  // devient un arc de 34, ±1 rad, à 80 % des dégâts sur tout ce qu'il couvre — nom et chiffres de moi ; voir `Arme.faux`)
+  variation('rejetons-faucheurs', 'rejeton', 'Faucheurs', 'Les rejetons fauchent en arc tous les ennemis devant eux.', changerA('rejeton', (a) => ({ ...a, faux: { rayon: 34, ouverture: 1, part: 0.8 } }))),
   // LES CARTES D'ÉLÉMENT (Keko, 24/11 : « des cartes spéciales de chaque élément » ; « des cartes multicolores spéciales qu'on
   // proposera dans le pool des cartes spéciales, si le joueur a au moins une attaque avec l'élément en question » — voir
   // `ELEMENTAIRES` pour leurs chiffres ; leurs noms et leurs textes sont de moi)

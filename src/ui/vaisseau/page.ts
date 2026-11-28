@@ -14241,7 +14241,8 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     for (const r of m.rejetons) {
       // (SES CARTES — Keko, 28/11 : l'ALPHA, une fois et demie plus gros, deux cornes d'os ; le PETIT d'une Mitose, aux six
       // dixièmes ; les ABYSSAUX, leur bile en glace)
-      const Tr = TAILLE_DU_REJETON * (r.alpha === true ? 1.5 : r.petit === true ? 0.6 : 1)
+      // (… et la LIGNÉE : il grossit avec ce qu'il a tué, jusqu'à une fois et demie)
+      const Tr = TAILLE_DU_REJETON * (r.alpha === true ? 1.5 : r.petit === true ? 0.6 : 1) * (1 + 0.5 * (r.lignee ?? 0))
       const givre = CONF.armes[r.arme]?.gel !== undefined
       const bi = givre ? GLACE_DES_ABYSSAUX : biDeBase
       const vit = Math.hypot(r.vx, r.vy)
@@ -18941,6 +18942,14 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
             etincelles.ajouter('etincelle', ev.x, ev.y, Math.cos(a) * R.range(15, 35), Math.sin(a) * R.range(15, 35), R.range(0.1, 0.2), BILE[1], 1, 1)
           }
           break
+        case 'faucheDeRejeton': {
+          // (LE SLASH D'UN REJETON FAUCHEUR — voir `Arme.faux` : le croissant du « Sword slash » du dépôt, en petit, sur l'arc
+          // que la règle frappe ; la rampe de la chair, de la glace avec les Abyssaux)
+          const givre = CONF.armes.some((a) => a.rejeton !== undefined && a.gel !== undefined)
+          const rampe = givre ? [CHAIR[0], CHAIR[1], GLACE_DES_ABYSSAUX[0], GLACE_DES_ABYSSAUX[0], GLACE_DES_ABYSSAUX[1], GLACE_DES_ABYSSAUX[2], N.WHITE] : [...CHAIR, N.WHITE]
+          entailles.push({ s: { cx: ev.x, cy: ev.y, R: ev.rayon * zoneDuVol(), sy: 1, rot: 0, k: 0, a0: ev.cap - ev.sens * ev.ouverture, dir: ev.sens, span: 2 * ev.ouverture, W: 5, t0: t, sweep: 0.09, hold: 0.03, trail: 0.12, ramp: rampe }, t0: t })
+          break
+        }
         case 'laceration': {
           // (UN COUP DE LA RAFALE : son entaille — voir `dessinerLesEntailles` —, un « tchk » plus rare, trois étincelles)
           const elec = CONF.armes.some((a) => a.tentacule !== undefined && a.electrocution !== undefined)
