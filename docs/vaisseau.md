@@ -10030,3 +10030,21 @@ espèce-là. »
   (l'image gardée), le cracheur lourd et le colosse à chaque image.
 - Les formes d'insectes de `rendu-vaisseau.ts` ne servent plus au vortex. Le code dit encore « insecte ».
 - `&bestiaire` : un ennemi de chaque sorte, immobiles en ligne au-dessus du vaisseau (avec `&paix`).
+
+### Les faucheurs : la famille qui charge au corps à corps (28/11)
+
+Keko : « Bon début, mais pas terrible. Je pensais plus aux couleurs et au style ; tu as repris la même forme. Je veux pas
+d'autres versions du mini-boss plus petit, je veux de nouvelles formes. Deux familles : ceux qui se déplacent et ceux qui
+tirent, chacune inspirée du même design en version évoluée. Les tout petits sont beaucoup trop petits. On commence par ceux
+qui me poursuivent et m'attaquent au corps à corps — le très petit, le petit, le moyen, le très gros. Les soldats de base de
+cette espèce, une forme bien à eux, très différente de ceux qui tirent : eux seront centrés autour d'une sphère qui
+deviendra rouge quand ils tirent ; ceux-là, autour d'autre chose. »
+
+- `FAUCHEURS`, `peindreUnFaucheur` : la chair indigo et l'os de l'espèce, mais centrés sur LEURS LAMES — des croissants
+  d'os, cernés et éclairés du côté de la lumière, qui s'ouvrent quand ils mordent ; derrière, un corps de chair peint au
+  pixel ; au lieu d'un cœur rond, des FENTES de bile qui luisent ; de petits yeux rouges ; des rubans de membrane.
+  L'Éclat (le moucheron) : une pointe d'os ; le Crochet (le petit) : un croissant en proue ; le Fendeur (le cornu) :
+  deux pinces et un croissant ; le Bélier (le cuirassier) : trois croissants emboîtés, un bouclier de proue. Les noms
+  sont de moi.
+- Dessinés plus grands que leur taille dans la règle (`vue` : 2,2 / 1,7 / 1,35 / 1,1) — la règle, elle, ne change pas.
+- Les tireurs et la larve restent des raies à cœur pour l'instant (la seconde famille, à venir).

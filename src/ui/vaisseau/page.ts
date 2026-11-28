@@ -10418,7 +10418,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
       const cle = (((ic * POSES_DE_LA_MARCHE + im) * POSES_DE_LA_MORSURE + io) * 2 + (aggro ? 1 : 0)) * 8 + (sorte === undefined ? 0 : 1 + SORTES_D_INSECTES.indexOf(sorte))
       let im_ = imagesDesInsectes.get(cle)
       if (im_ === undefined) {
-        im_ = imageDe(Math.ceil(TAILLE_DE_L_INSECTE * taille) + 2, (p2, c) => peindreLInsecte(p2, c, c, (ic / POSES_DU_CAP) * tour, (im / POSES_DE_LA_MARCHE) * tour, (io / POSES_DE_LA_MORSURE) * tour, false, aggro, sorte))
+        im_ = imageDe(Math.ceil(TAILLE_DE_L_INSECTE * taille * vueDe(sorte)) + 2, (p2, c) => peindreLInsecte(p2, c, c, (ic / POSES_DU_CAP) * tour, (im / POSES_DE_LA_MARCHE) * tour, (io / POSES_DE_LA_MORSURE) * tour, false, aggro, sorte))
         imagesDesInsectes.set(cle, im_)
       }
       const teinte = ronge ? rongee(im_) : im_
@@ -10441,10 +10441,13 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
     // du mini-boss ; j'aimais pas trop les ennemis insectoïdes, on a déjà les Xénoïdes pour les insectes ; le mini-boss
     // semble appartenir à aucune des races qu'on a déjà ; matche les autres ennemis avec cette espèce-là » : chaque sorte est
     // une raie de son espèce — voir `RAIES`, `peindreUneRaie` ; le colosse en est la reine)
-    void ouvre
     void aggro
     if (sorte === 'colosse') return peindreLeColosse(p, x, y, cap, blanchi)
-    peindreUneRaie(p, x, y, cap, RAIES[sorte ?? 'petit'], sorte === undefined ? 1 : CONF.invasion[sorte].taille, marche / 13, morsure, blanchi, 0, 0)
+    const taille = sorte === undefined ? 1 : CONF.invasion[sorte].taille
+    // (LES CHASSEURS AU CORPS À CORPS ONT LEUR FAMILLE — Keko, 28/11, voir `FAUCHEURS` ; ceux qui tirent restent des raies à cœur)
+    const fa = FAUCHEURS[sorte ?? 'petit']
+    if (fa !== undefined) return peindreUnFaucheur(p, x, y, cap, fa, taille * fa.vue, marche / 13, ouvre, blanchi)
+    peindreUneRaie(p, x, y, cap, RAIES[sorte ?? 'petit'], taille, marche / 13, morsure, blanchi, 0, 0)
   }
   /**
    * UNE RAIE DU VIDE, PEINTE AU PIXEL (Keko, 28/11 — d'abord le colosse, puis toute son espèce) : un MANTEAU plat — un nez,
@@ -10457,6 +10460,124 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
    * filaments ; `rouge` (0 à 1) fait virer le cœur au rouge.
    */
   type FormeDeRaie = { nez: number; queue: number; large: number; epaule: number; rond?: boolean; echancrure?: boolean; coeur: { u: number; r: number }; yeux: [number, number][]; filaments: [number, number][]; racine: number; cornes?: boolean; plaques?: boolean; bouches?: [number, number][]; chevrons?: boolean }
+  /**
+   * LES FAUCHEURS, LES SOLDATS DE L'ESPÈCE (Keko, 28/11 : « pas d'autres versions du mini-boss plus petit : de nouvelles
+   * formes. Deux familles : ceux qui se déplacent et ceux qui tirent, chacune le même design en version évoluée ; les tout
+   * petits sont beaucoup trop petits. On commence par ceux qui me poursuivent et m'attaquent au corps à corps : le très
+   * petit, le petit, le moyen, le très gros. Les soldats de base de cette espèce, une forme bien à eux, très différente de
+   * ceux qui tirent — eux seront centrés autour d'une sphère ; ceux-là, autour d'autre chose ») : la chair indigo et l'os
+   * de l'espèce, mais CENTRÉS SUR LEURS LAMES — des croissants d'os, leur arme ; derrière, un CORPS de chair ; au lieu d'un
+   * cœur rond, DES FENTES de bile qui luisent ; de petits yeux rouges ; des RUBANS de membrane qui ondulent. De génération
+   * en génération, plus de lames : L'ÉCLAT (le moucheron) n'est qu'une pointe d'os ; LE CROCHET (le petit) porte un
+   * croissant en proue ; LE FENDEUR (le cornu), deux pinces qui se referment ; LE BÉLIER (le cuirassier), trois croissants
+   * emboîtés, une proue de siège. Leurs lames s'ouvrent quand ils mordent (`ouvre`). `vue` : leur taille à l'écran,
+   * rapportée à leur taille dans la règle (les plus petits sont dessinés plus grands — Keko : « on les voit même pas »).
+   */
+  type Lame = { cu: number; cv: number; r: number; a0: number; a1: number; ep: number }
+  type FormeDeFaucheur = { vue: number; corps: { u: number; rx: number; ry: number }; lames: Lame[]; pointe?: [number, number][]; fentes: { u: number; v: number; l: number }[]; yeux: [number, number][]; rubans: [number, number][]; racine: number }
+  const FAUCHEURS: Partial<Record<SorteDInsecte | 'petit', FormeDeFaucheur>> = {
+    moucheron: { vue: 2.2, corps: { u: -1.2, rx: 2.6, ry: 1.9 }, lames: [], pointe: [[4.4, 0], [0.2, -2.3], [1.2, 0], [0.2, 2.3]], fentes: [{ u: -1, v: 0, l: 1.4 }], yeux: [[1.8, 0]], rubans: [[0, 5]], racine: -3.6 },
+    petit: { vue: 1.7, corps: { u: -1.6, rx: 2.8, ry: 2.1 }, lames: [{ cu: -0.8, cv: 0, r: 4, a0: -1, a1: 1, ep: 0.95 }], fentes: [{ u: -1.4, v: 0, l: 2 }], yeux: [[0.6, -0.7], [0.6, 0.7]], rubans: [[-1.1, 5], [1.1, 5]], racine: -4.2 },
+    cornu: { vue: 1.35, corps: { u: -1.6, rx: 3, ry: 2.5 }, lames: [{ cu: 0.6, cv: 2.9, r: 3.3, a0: -1.62, a1: -0.42, ep: 1 }, { cu: 0.6, cv: -2.9, r: 3.3, a0: 0.42, a1: 1.62, ep: 1 }, { cu: -1, cv: 0, r: 3.2, a0: -0.9, a1: 0.9, ep: 0.7 }], fentes: [{ u: -1.8, v: -0.8, l: 1.8 }, { u: -1.8, v: 0.8, l: 1.8 }], yeux: [[1.4, -0.6], [1.4, 0.6]], rubans: [[-1.5, 5], [0, 6], [1.5, 5]], racine: -4.4 },
+    cuirassier: { vue: 1.1, corps: { u: -2, rx: 3.4, ry: 3 }, lames: [{ cu: -2.2, cv: 0, r: 6.2, a0: -0.62, a1: 0.62, ep: 1.4 }, { cu: -2.2, cv: 0, r: 5.2, a0: -0.78, a1: 0.78, ep: 1.4 }, { cu: -2.2, cv: 0, r: 4.2, a0: -0.95, a1: 0.95, ep: 1.4 }], fentes: [{ u: -2.4, v: -1.3, l: 2 }, { u: -2.1, v: 0, l: 2.4 }, { u: -2.4, v: 1.3, l: 2 }], yeux: [[0.8, -0.9], [0.8, 0.9], [1.2, 0]], rubans: [[-2, 4.5], [-0.7, 5.5], [0.7, 5.5], [2, 4.5]], racine: -5 },
+  }
+  /** Ce qu'une sorte est dessinée plus grande que dans la règle (voir `FAUCHEURS`). */
+  const vueDe = (sorte?: SorteDInsecte): number => FAUCHEURS[sorte ?? 'petit']?.vue ?? 1
+  function peindreUnFaucheur(p: Peintre, x: number, y: number, cap: number, f: FormeDeFaucheur, S: number, temps: number, ouvre: number, blanchi: boolean): void {
+    const ca = Math.cos(cap)
+    const sa = Math.sin(cap)
+    const ecran = (u: number, v: number): [number, number] => [x + (u * ca - v * sa) * S, y + (u * sa + v * ca) * S]
+    const L = LUMIERE_DU_VOL
+    // LES RUBANS de membrane, dessous : deux traits côte à côte, qui ondulent
+    if (!blanchi)
+      f.rubans.forEach(([v0, long], k) => {
+        let [ax, ay] = ecran(f.racine, v0)
+        let [cx, cy] = ecran(f.racine, v0 + 0.5)
+        const n = Math.max(4, Math.round(long * S * 0.6))
+        for (let q = 1; q <= n; q++) {
+          const fr = q / n
+          const houle = Math.sin(temps * 4 + k * 1.9 - fr * 5) * (0.4 + 1.4 * fr)
+          const [bx, by] = ecran(f.racine - fr * long, v0 + houle)
+          const [dx, dy] = ecran(f.racine - fr * long, v0 + houle + 0.5 * (1 - fr))
+          p.line(cx, cy, dx, dy, MANTEAU_DES_RAIES[3])
+          p.line(ax, ay, bx, by, fr < 0.4 ? MANTEAU_DES_RAIES[5] : MANTEAU_DES_RAIES[4])
+          ;(ax = bx), (ay = by), (cx = dx), (cy = dy)
+        }
+      })
+    // LE CORPS de chair, peint au pixel comme la chair des raies : bombé, cerné, un liseré du côté de la lumière
+    const co = f.corps
+    const ln = Math.hypot(L.x, L.y, L.z)
+    const R = (Math.abs(co.u) + Math.max(co.rx, co.ry) + 1) * S
+    const dans = (u: number, v: number): number => ((u - co.u) / co.rx) ** 2 + (v / co.ry) ** 2
+    p.shade(x - R, y - R, x + R, y + R, (px, py) => {
+      const dx = (px - x) / S
+      const dy = (py - y) / S
+      const u = dx * ca + dy * sa
+      const v = -dx * sa + dy * ca
+      const d2 = dans(u, v)
+      if (d2 > 1) return 0
+      if (blanchi) return N.WHITE
+      const e = 1 / S
+      if (dans(u + e, v) > 1 || dans(u - e, v) > 1 || dans(u, v + e) > 1 || dans(u, v - e) > 1) return MANTEAU_DES_RAIES[0]
+      const h = Math.sqrt(1 - d2)
+      const nu = ((u - co.u) / co.rx) * 0.9
+      const nv = (v / co.ry) * 0.9
+      const sx = nu * ca - nv * sa
+      const sy = nu * sa + nv * ca
+      const lum = (sx * L.x + sy * L.y + h * L.z) / ((Math.hypot(sx, sy, h) || 1) * ln)
+      const e2 = 2 / S
+      if (lum > 0.42 && (dans(u + e2, v) > 1 || dans(u - e2, v) > 1 || dans(u, v + e2) > 1 || dans(u, v - e2) > 1)) return MANTEAU_DES_RAIES[7]
+      const trame = TRAME_DES_RAIES[(Math.floor(px) & 3) * 4 + (Math.floor(py) & 3)] - 0.5
+      const k = Math.round(1.5 + Math.max(0, (lum - 0.2) / 0.8) * 5.6 + trame * 0.9)
+      return MANTEAU_DES_RAIES[Math.max(1, Math.min(7, k))]
+    })
+    // LES FENTES de bile, qui luisent et battent
+    if (!blanchi)
+      f.fentes.forEach((fe, k) => {
+        const [a0, b0] = ecran(fe.u - fe.l / 2, fe.v)
+        const [a1, b1] = ecran(fe.u + fe.l / 2, fe.v)
+        p.line(a0, b0, a1, b1, BILE[1])
+        const [m0, n0] = ecran(fe.u - fe.l * 0.25, fe.v)
+        const [m1, n1] = ecran(fe.u + fe.l * 0.25, fe.v)
+        p.line(m0, n0, m1, n1, BILE[2])
+        p.glow((a0 + a1) / 2, (b0 + b1) / 2, (1 + fe.l * 0.6) * S, BILE[1], 0.18 + 0.1 * Math.sin(temps * 5 + k))
+      })
+    // LES LAMES : des croissants d'os, cernés, éclairés du côté de la lumière ; elles s'ouvrent quand il mord
+    const lumiereA = Math.atan2(L.y, L.x)
+    const peindreLame = (l: Lame, passe: 0 | 1): void => {
+      const ecart = 0.12 * ouvre * Math.sign(l.cv || 1)
+      const a0 = l.a0 - (l.cv === 0 ? 0.1 * ouvre : ecart)
+      const a1 = l.a1 + (l.cv === 0 ? 0.1 * ouvre : -ecart)
+      const n = Math.max(6, Math.round((a1 - a0) * l.r * S * 0.9))
+      for (let q = 0; q <= n; q++) {
+        const fr = q / n
+        const a = a0 + (a1 - a0) * fr
+        // (effilée aux deux bouts)
+        const ep = l.ep * Math.min(1, Math.sin(Math.PI * fr) * 2.2 + 0.45)
+        const [px, py] = ecran(l.cu + Math.cos(a) * l.r, l.cv + Math.sin(a) * l.r)
+        if (passe === 0) p.circle(px, py, (ep / 2) * S + 0.7, MANTEAU_DES_RAIES[0])
+        else {
+          const face = Math.cos(cap + a - lumiereA)
+          p.circle(px, py, (ep / 2) * S, blanchi ? N.WHITE : OS_DES_RAIES[face > 0.3 ? 3 : face > -0.3 ? 2 : 1])
+        }
+      }
+    }
+    for (const passe of [0, 1] as const) for (const l of f.lames) peindreLame(l, passe)
+    // LA POINTE d'os de l'éclat
+    if (f.pointe) {
+      p.poly(f.pointe.map(([u, v]) => ecran(u, v)), MANTEAU_DES_RAIES[0])
+      p.poly(f.pointe.map(([u, v]) => ecran(u * 0.88 + 0.15, v * 0.7)), blanchi ? N.WHITE : OS_DES_RAIES[2])
+      const [tx, ty] = ecran(f.pointe[0][0] - 0.6, 0)
+      if (!blanchi) p.px(Math.round(tx), Math.round(ty), OS_DES_RAIES[3])
+    }
+    if (blanchi) return
+    // SES YEUX rouges
+    for (const [u, v] of f.yeux) {
+      const [ex, ey] = ecran(u, v)
+      p.px(Math.round(ex), Math.round(ey), N.hex('#ff3a4a'))
+      if (S >= 2) p.px(Math.round(ex), Math.round(ey) - 1, N.hex('#ffd0c0'))
+    }
+  }
   const RAIES: Record<SorteDInsecte | 'petit', FormeDeRaie> = {
     // (le petit : une raie simple, deux yeux, deux filaments)
     petit: { nez: 5, queue: 4, large: 5, epaule: -0.5, echancrure: true, coeur: { u: 0.3, r: 1.1 }, yeux: [[3.5, -0.8], [3.5, 0.8]], filaments: [[-1.4, 5], [1.4, 5]], racine: -3 },
