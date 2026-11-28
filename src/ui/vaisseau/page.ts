@@ -14090,7 +14090,9 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         const sa = Math.sin(re.cap)
         const ox = re.x + (re.pose ? (alea(7, tic, 71) - 0.5) * 1.2 : 0)
         const oy = re.y + (re.pose ? (alea(7, tic, 72) - 0.5) * 1.2 : 0)
-        const en = (le: number, co: number): [number, number] => [ox + ca * le - sa * co, oy + sa * le + ca * co]
+        // (SA TAILLE — Keko, 28/11 : à 19 pixels de long, « maintenant elle est beaucoup trop grosse » : aux six dixièmes, ~11)
+        const S = 0.6
+        const en = (le: number, co: number): [number, number] => [ox + (ca * le - sa * co) * S, oy + (sa * le + ca * co) * S]
         const trait = (l0: number, c0: number, l1: number, c1: number, couleur: number, alpha = 1): void => {
           const [x0, y0] = en(l0, c0)
           const [x1, y1] = en(l1, c1)
@@ -14105,7 +14107,7 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
           const dc = co * Math.sin(ouv)
           for (let q = 1; q <= 4; q++) {
             const [wx, wy] = en(-0.5 + dl * long * (q / 4), co * 1.2 + dc * long * (q / 4))
-            p.circle(wx, wy, 1.9 - 0.45 * Math.abs(q - 2.5), q % 2 === 0 ? ch[5] : ch[4], 0.42)
+            p.circle(wx, wy, (1.9 - 0.45 * Math.abs(q - 2.5)) * S, q % 2 === 0 ? ch[5] : ch[4], 0.42)
           }
           trait(-0.5, co * 1.2, -0.5 + dl * long, co * 1.2 + dc * long, OS[1], 0.6)
         }
@@ -14125,23 +14127,23 @@ export function monterVaisseau(racine: HTMLElement, build: string): void {
         // (l'abdomen : quatre anneaux qui s'amenuisent et respirent — le cerne, la matière en bandes, la lumière)
         const ANNEAUX: [number, number][] = [[-2.4, 2.5], [-4.6, 2.9], [-6.8, 2.4], [-8.6, 1.5]]
         const souffle = (q: number): number => 1 + 0.07 * Math.sin(t * 5 - q * 0.9)
-        ANNEAUX.forEach(([le, ra], q) => p.circle(...en(le, 0), ra * souffle(q) + 0.8, CHAIR[0]))
-        ANNEAUX.forEach(([le, ra], q) => p.circle(...en(le, 0), ra * souffle(q), q % 2 === 0 ? ch[3] : ct))
-        ANNEAUX.forEach(([le, ra], q) => p.circle(en(le, 0)[0] - 0.6, en(le, 0)[1] - 0.6, Math.max(0.5, ra * 0.45), q % 2 === 0 ? ch[4] : ctClaire))
+        ANNEAUX.forEach(([le, ra], q) => p.circle(...en(le, 0), ra * S * souffle(q) + 0.7, CHAIR[0]))
+        ANNEAUX.forEach(([le, ra], q) => p.circle(...en(le, 0), ra * S * souffle(q), q % 2 === 0 ? ch[3] : ct))
+        ANNEAUX.forEach(([le, ra], q) => p.circle(en(le, 0)[0] - 0.4, en(le, 0)[1] - 0.4, Math.max(0.5, ra * S * 0.45), q % 2 === 0 ? ch[4] : ctClaire))
         // (ses pustules de bile, qui luisent)
         for (const [le, co, ph] of [[-4.2, 1.2, 0], [-5.6, -1.1, 2], [-7.2, 0.6, 4]] as [number, number, number][]) {
           const [bx, by] = en(le, co)
-          p.circle(bx, by, 1, lueur[1])
+          p.circle(bx, by, 0.7, lueur[1])
           p.px(Math.round(bx), Math.round(by), lueur[2])
-          p.glow(bx, by, 3.5, lueur[1], 0.22 + 0.14 * Math.sin(t * 6 + ph))
+          p.glow(bx, by, 2.5, lueur[1], 0.22 + 0.14 * Math.sin(t * 6 + ph))
         }
         // (le thorax, une plaque de chitine)
-        p.circle(...en(0, 0), 3, CHAIR[0])
-        p.circle(...en(0, 0), 2.3, ct)
-        p.circle(en(0, 0)[0] - 0.6, en(0, 0)[1] - 0.6, 1.1, ctClaire)
+        p.circle(...en(0, 0), 2.3 * S + 0.7, CHAIR[0])
+        p.circle(...en(0, 0), 2.3 * S, ct)
+        p.circle(en(0, 0)[0] - 0.4, en(0, 0)[1] - 0.4, 1.1 * S, ctClaire)
         // (la tête, ses yeux de bile, ses mandibules d'os en faux — elles hachent quand elle mord)
-        p.circle(...en(2.9, 0), 2.3, CHAIR[0])
-        p.circle(...en(2.9, 0), 1.6, ct)
+        p.circle(...en(2.9, 0), 1.6 * S + 0.7, CHAIR[0])
+        p.circle(...en(2.9, 0), 1.6 * S, ct)
         const ouvert = re.pose ? Math.abs(Math.sin(t * 16)) : 0.65 + 0.2 * Math.sin(t * 3)
         for (const co of [-1, 1]) {
           trait(4, co * 1.1, 5.4, co * (1.2 + ouvert * 1.5), OS[0])
